@@ -1,0 +1,169 @@
+{
+  "chapter": "CH13_Lightning",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Lightning_Core_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.142174,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lightning_Outer_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.224506,
+      "alpha_min": 0,
+      "alpha_max": 144,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lightning_Noise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "L",
+      "kind": "data",
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lightning_Noise_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "L",
+      "kind": "data",
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lightning_Spark_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.204681,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lightning_Flash_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.397652,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lightning_Impact_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.442039,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lightning_GroundMark_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "power_of_two": true,
+      "mode": "L",
+      "kind": "data",
+      "range": [
+        0,
+        255
+      ],
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lightning_AfterGlow_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.485718,
+      "alpha_min": 0,
+      "alpha_max": 173,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Lightning_ElectricArc_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.156086,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    }
+  ],
+  "count": 10,
+  "expected_count": 10
+}

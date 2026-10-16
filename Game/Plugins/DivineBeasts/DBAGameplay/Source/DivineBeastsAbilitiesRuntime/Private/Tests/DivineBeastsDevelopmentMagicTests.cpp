@@ -20,6 +20,7 @@
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
 #include "Components/SphereComponent.h"
 #include "Definitions/DivineBeastsDevelopmentMagicDefinition.h"
@@ -457,7 +458,14 @@ private:
         Friend->SetActorLocation(FVector(300, 0, 1000));
         FriendCombat->ResetForNewAvatar(2);
         VerifyRejectedWithoutSelfHealing(TEXT("选中友方已换化身"));
-        SourceCombat->AuthoritySelectProjectileTarget(Friend, 1, 2);
+        // Combat单独换代不代表真实角色Gate也已授权新化身；本次重选必须拒绝且保留旧选择，
+        // 否则后续死亡会被错当成“没有选择”并隐式自疗、扣除10秒冷却。
+        Test->TestFalse(TEXT("角色Gate仍属旧代次时不接纳新化身选择"), SourceCombat->AuthoritySelectProjectileTarget(Friend, 1, 2));
+        TWeakObjectPtr<AActor> RejectedSelectionTarget;
+        int32 RejectedSourceGeneration = 0, RejectedTargetGeneration = 0;
+        Test->TestTrue(TEXT("拒绝选择不清空先前友方意图"),
+            SourceCombat->GetSelectedProjectileTargetIntent(RejectedSelectionTarget, RejectedSourceGeneration, RejectedTargetGeneration) &&
+            RejectedSelectionTarget.Get() == Friend && RejectedSourceGeneration == 1 && RejectedTargetGeneration == 1);
         // 旧化身场景故意只推进Combat而未重绑角色身份；本段直接调用既有属性结算回调制造真实死亡，
         // 不用不匹配的身份强行通过攻击资格，也不直接写bDead来伪造治疗死亡保护。
         FGameplayEffectSpec DamageEffect;
@@ -482,28 +490,32 @@ private:
         SpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateRaw(this, &FRealMagicCommand::ObserveProjectile));
         const bool bAccepted = Test->TestTrue(TEXT("服务器受理冰箭起手"), ASC->TryActivateAbility(AbilityHandle, false));
         Test->TestEqual(TEXT("激活当刻未提前发射"), Projectiles.Num(), 0);
+        // 独立写明用户要求，不从待测常量反算；复制快照是施法条和动画的唯一事件输入。
+        const auto* CastFacts = Pawn->FindComponentByClass<UGamePlatformAbilityCastComponent>();
+        if (Test->TestNotNull(TEXT("冰箭真实复制施法组件"), CastFacts))
+            Test->TestEqual(TEXT("冰箭复制施法时长严格2秒"), CastFacts->GetCastFacts().DurationSeconds, 2.0f);
         return bAccepted;
     }
 
     /** 各段由真实Automation帧推进；不篡改GFrameCounter或在同帧重复Tick绕过引擎Timer语义。 */
     bool CheckFrostboltWindupFrame()
     {
-        if (FlightFrames == 13) Test->TestEqual(TEXT("起手0.65秒仍未发射"), Projectiles.Num(), 0);
-        if (FlightFrames == 15)
+        if (FlightFrames == 39) Test->TestEqual(TEXT("起手1.95秒仍未发射"), Projectiles.Num(), 0);
+        if (FlightFrames == 41)
         {
-            Test->TestEqual(TEXT("起手0.75秒恰好一枚权威冰箭"), Projectiles.Num(), 1);
+            Test->TestEqual(TEXT("起手2.05秒恰好一枚权威冰箭"), Projectiles.Num(), 1);
             ASC->RemoveActiveEffectsWithGrantedTags(WindupCooldownTags);
             Test->TestTrue(TEXT("新一轮冰箭起手受理"), ASC->TryActivateAbility(AbilityHandle, false));
             ASC->CancelAbilityHandle(AbilityHandle);
         }
-        if (FlightFrames == 32)
+        if (FlightFrames == 83)
         {
             Test->TestEqual(TEXT("取消起手没有迟到发射"), Projectiles.Num(), 1);
             ASC->RemoveActiveEffectsWithGrantedTags(WindupCooldownTags);
             Test->TestTrue(TEXT("换代前冰箭起手受理"), ASC->TryActivateAbility(AbilityHandle, false));
             Pawn->GetGamePlatformCombatComponent()->ResetForNewAvatar(2);
         }
-        if (FlightFrames < 49) return false;
+        if (FlightFrames < 125) return false;
         Test->TestEqual(TEXT("来源换代没有迟到发射"), Projectiles.Num(), 1);
         return true;
     }

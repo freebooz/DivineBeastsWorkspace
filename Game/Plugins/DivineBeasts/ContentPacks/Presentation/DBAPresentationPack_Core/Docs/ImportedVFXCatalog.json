@@ -1,0 +1,345 @@
+{
+  "entries": [
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Sparks/Legacy/NS_Energy_MagicSpark_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/00_Core/Sparks/Legacy/NS_Energy_MagicSpark_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_MagicSpark_Legacy_a0f2d2c1",
+      "logicalId": "presentation.dba.library.ns_energy_magicspark_legacy_a0f2d2c1@1",
+      "compileErrors": 0,
+      "compileWarnings": 4
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Sparks/Legacy/NS_Energy_MagicSparkSimple_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/00_Core/Sparks/Legacy/NS_Energy_MagicSparkSimple_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_MagicSparkSimple_Legacy_6c6b6304",
+      "logicalId": "presentation.dba.library.ns_energy_magicsparksimple_legacy_6c6b6304@1",
+      "compileErrors": 0,
+      "compileWarnings": 1
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/Legacy/NS_Energy_ChargeOrb_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/01_Cast/Legacy/NS_Energy_ChargeOrb_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_ChargeOrb_Legacy_1291670b",
+      "logicalId": "presentation.dba.library.ns_energy_chargeorb_legacy_1291670b@1",
+      "compileErrors": 0,
+      "compileWarnings": 1
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/Legacy/NS_Ice_FrostboltCharge_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/01_Cast/Legacy/NS_Ice_FrostboltCharge_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Ice_FrostboltCharge_Legacy_e8e367a9",
+      "logicalId": "presentation.dba.library.ns_ice_frostboltcharge_legacy_e8e367a9@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/NS_Arcane_Missiles_Channel",
+      "system": "/DBAPresentationPack_Core/VFX/Library/01_Cast/NS_Arcane_Missiles_Channel",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Arcane_Missiles_Channel_a26d015f",
+      "logicalId": "presentation.dba.library.ns_arcane_missiles_channel_a26d015f@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/NS_Fire_Fireball_Charge",
+      "system": "/DBAPresentationPack_Core/VFX/Library/01_Cast/NS_Fire_Fireball_Charge",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Fire_Fireball_Charge_05b29fec",
+      "logicalId": "presentation.dba.library.ns_fire_fireball_charge_05b29fec@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/NS_Ice_Frostbolt_Charge",
+      "system": "/DBAPresentationPack_Core/VFX/Library/01_Cast/NS_Ice_Frostbolt_Charge",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Ice_Frostbolt_Charge_5b1e0922",
+      "logicalId": "presentation.dba.library.ns_ice_frostbolt_charge_5b1e0922@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/Legacy/NS_Energy_Projectile_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/02_Projectile/Legacy/NS_Energy_Projectile_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_Projectile_Legacy_ae01e1eb",
+      "logicalId": "presentation.dba.library.ns_energy_projectile_legacy_ae01e1eb@1",
+      "compileErrors": 0,
+      "compileWarnings": 1
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/Legacy/NS_Ice_FrostboltProjectile_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/02_Projectile/Legacy/NS_Ice_FrostboltProjectile_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Ice_FrostboltProjectile_Legacy_74206ce3",
+      "logicalId": "presentation.dba.library.ns_ice_frostboltprojectile_legacy_74206ce3@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/NS_Arcane_Missiles_Projectile",
+      "system": "/DBAPresentationPack_Core/VFX/Library/02_Projectile/NS_Arcane_Missiles_Projectile",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Arcane_Missiles_Projectile_6b60fb8f",
+      "logicalId": "presentation.dba.library.ns_arcane_missiles_projectile_6b60fb8f@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/NS_Fire_Fireball_Projectile",
+      "system": "/DBAPresentationPack_Core/VFX/Library/02_Projectile/NS_Fire_Fireball_Projectile",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Fire_Fireball_Projectile_1b0e7ae8",
+      "logicalId": "presentation.dba.library.ns_fire_fireball_projectile_1b0e7ae8@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/NS_Ice_Frostbolt_Projectile",
+      "system": "/DBAPresentationPack_Core/VFX/Library/02_Projectile/NS_Ice_Frostbolt_Projectile",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Ice_Frostbolt_Projectile_6f874b47",
+      "logicalId": "presentation.dba.library.ns_ice_frostbolt_projectile_6f874b47@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/03_Trail/Legacy/NS_Energy_ProjectileTrail_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/03_Trail/Legacy/NS_Energy_ProjectileTrail_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_ProjectileTrail_Legacy_35307f92",
+      "logicalId": "presentation.dba.library.ns_energy_projectiletrail_legacy_35307f92@1",
+      "compileErrors": 0,
+      "compileWarnings": 2
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/04_Beam/Legacy/NS_Energy_Beam_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/04_Beam/Legacy/NS_Energy_Beam_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_Beam_Legacy_3e9589be",
+      "logicalId": "presentation.dba.library.ns_energy_beam_legacy_3e9589be@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/04_Beam/Legacy/NS_Lightning_Bolt_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/04_Beam/Legacy/NS_Lightning_Bolt_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Lightning_Bolt_Legacy_ac21278c",
+      "logicalId": "presentation.dba.library.ns_lightning_bolt_legacy_ac21278c@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/04_Beam/Legacy/NS_Lightning_Chain_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/04_Beam/Legacy/NS_Lightning_Chain_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Lightning_Chain_Legacy_1f0ec273",
+      "logicalId": "presentation.dba.library.ns_lightning_chain_legacy_1f0ec273@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/Legacy/NS_Energy_Impact_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/05_Impact/Legacy/NS_Energy_Impact_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_Impact_Legacy_f26bf51e",
+      "logicalId": "presentation.dba.library.ns_energy_impact_legacy_f26bf51e@1",
+      "compileErrors": 0,
+      "compileWarnings": 2
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/Legacy/NS_Fire_Explosion_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/05_Impact/Legacy/NS_Fire_Explosion_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Fire_Explosion_Legacy_4464a712",
+      "logicalId": "presentation.dba.library.ns_fire_explosion_legacy_4464a712@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/Legacy/NS_Fire_LavaBurst_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/05_Impact/Legacy/NS_Fire_LavaBurst_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Fire_LavaBurst_Legacy_2e14446d",
+      "logicalId": "presentation.dba.library.ns_fire_lavaburst_legacy_2e14446d@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/Legacy/NS_Ice_FrostboltImpact_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/05_Impact/Legacy/NS_Ice_FrostboltImpact_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Ice_FrostboltImpact_Legacy_4cde0ff8",
+      "logicalId": "presentation.dba.library.ns_ice_frostboltimpact_legacy_4cde0ff8@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/NS_Arcane_Missiles_Impact",
+      "system": "/DBAPresentationPack_Core/VFX/Library/05_Impact/NS_Arcane_Missiles_Impact",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Arcane_Missiles_Impact_f4f695ab",
+      "logicalId": "presentation.dba.library.ns_arcane_missiles_impact_f4f695ab@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/NS_Fire_Impact_Burst",
+      "system": "/DBAPresentationPack_Core/VFX/Library/05_Impact/NS_Fire_Impact_Burst",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Fire_Impact_Burst_e8be242c",
+      "logicalId": "presentation.dba.library.ns_fire_impact_burst_e8be242c@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/NS_Ice_Frostbolt_Impact",
+      "system": "/DBAPresentationPack_Core/VFX/Library/05_Impact/NS_Ice_Frostbolt_Impact",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Ice_Frostbolt_Impact_8259045c",
+      "logicalId": "presentation.dba.library.ns_ice_frostbolt_impact_8259045c@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/Legacy/NS_Energy_GroundArea_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/06_Area/Legacy/NS_Energy_GroundArea_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_GroundArea_Legacy_753e1177",
+      "logicalId": "presentation.dba.library.ns_energy_groundarea_legacy_753e1177@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/Legacy/NS_Energy_MagicCircle_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/06_Area/Legacy/NS_Energy_MagicCircle_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_MagicCircle_Legacy_6445b461",
+      "logicalId": "presentation.dba.library.ns_energy_magiccircle_legacy_6445b461@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/Legacy/NS_Ice_FrostNova_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/06_Area/Legacy/NS_Ice_FrostNova_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Ice_FrostNova_Legacy_1baf7d2f",
+      "logicalId": "presentation.dba.library.ns_ice_frostnova_legacy_1baf7d2f@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/NS_Fire_Flamestrike_Area",
+      "system": "/DBAPresentationPack_Core/VFX/Library/06_Area/NS_Fire_Flamestrike_Area",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Fire_Flamestrike_Area_ccc3d47c",
+      "logicalId": "presentation.dba.library.ns_fire_flamestrike_area_ccc3d47c@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/NS_Ice_FrostNova_Burst",
+      "system": "/DBAPresentationPack_Core/VFX/Library/06_Area/NS_Ice_FrostNova_Burst",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Ice_FrostNova_Burst_c2d10b9b",
+      "logicalId": "presentation.dba.library.ns_ice_frostnova_burst_c2d10b9b@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/07_Status/Legacy/NS_Energy_Shield_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/07_Status/Legacy/NS_Energy_Shield_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_Shield_Legacy_f9cf0a5b",
+      "logicalId": "presentation.dba.library.ns_energy_shield_legacy_f9cf0a5b@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/07_Status/Legacy/NS_Nature_PetalsAura_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/07_Status/Legacy/NS_Nature_PetalsAura_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Nature_PetalsAura_Legacy_92f444c9",
+      "logicalId": "presentation.dba.library.ns_nature_petalsaura_legacy_92f444c9@1",
+      "compileErrors": 0,
+      "compileWarnings": 7
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/07_Status/NS_Nature_PetalBloom_Aura",
+      "system": "/DBAPresentationPack_Core/VFX/Library/07_Status/NS_Nature_PetalBloom_Aura",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Nature_PetalBloom_Aura_82dbc6b4",
+      "logicalId": "presentation.dba.library.ns_nature_petalbloom_aura_82dbc6b4@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/08_Space/Legacy/NS_Arcane_Portal_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/08_Space/Legacy/NS_Arcane_Portal_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Arcane_Portal_Legacy_51ce461b",
+      "logicalId": "presentation.dba.library.ns_arcane_portal_legacy_51ce461b@1",
+      "compileErrors": 0,
+      "compileWarnings": 1
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/08_Space/Legacy/NS_Arcane_Teleport_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/08_Space/Legacy/NS_Arcane_Teleport_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Arcane_Teleport_Legacy_d35a0b19",
+      "logicalId": "presentation.dba.library.ns_arcane_teleport_legacy_d35a0b19@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/09_Lifecycle/Legacy/NS_Energy_Summoning_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/09_Lifecycle/Legacy/NS_Energy_Summoning_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Energy_Summoning_Legacy_6f98e116",
+      "logicalId": "presentation.dba.library.ns_energy_summoning_legacy_6f98e116@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/11_World/Legacy/NS_Fire_Loop_Legacy",
+      "system": "/DBAPresentationPack_Core/VFX/Library/11_World/Legacy/NS_Fire_Loop_Legacy",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Fire_Loop_Legacy_5245f9ab",
+      "logicalId": "presentation.dba.library.ns_fire_loop_legacy_5245f9ab@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/ModularGameVFX/ModularGameVFXLibrary/14_Indicator/NS_Fire_Flamestrike_Warning",
+      "system": "/DBAPresentationPack_Core/VFX/Library/14_Indicator/NS_Fire_Flamestrike_Warning",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_Fire_Flamestrike_Warning_c4d47938",
+      "logicalId": "presentation.dba.library.ns_fire_flamestrike_warning_c4d47938@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/Game/ArcaneMage/Niagara/NS_AM_Channel",
+      "system": "/DBAPresentationPack_Core/VFX/Library/Game/ArcaneMage/Niagara/NS_AM_Channel",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_AM_Channel_ed5f003e",
+      "logicalId": "presentation.dba.library.ns_am_channel_ed5f003e@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/Game/FireMage/Niagara/NS_PY_Charge",
+      "system": "/DBAPresentationPack_Core/VFX/Library/Game/FireMage/Niagara/NS_PY_Charge",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_PY_Charge_e9ad032d",
+      "logicalId": "presentation.dba.library.ns_py_charge_e9ad032d@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/Game/FireMage/Niagara/NS_PY_Impact",
+      "system": "/DBAPresentationPack_Core/VFX/Library/Game/FireMage/Niagara/NS_PY_Impact",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_PY_Impact_851ab978",
+      "logicalId": "presentation.dba.library.ns_py_impact_851ab978@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/Game/FireMage/Niagara/NS_PY_Telegraph",
+      "system": "/DBAPresentationPack_Core/VFX/Library/Game/FireMage/Niagara/NS_PY_Telegraph",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_PY_Telegraph_b1191586",
+      "logicalId": "presentation.dba.library.ns_py_telegraph_b1191586@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/Game/FrostMage/Niagara/NS_FM_Frostbolt_Charge",
+      "system": "/DBAPresentationPack_Core/VFX/Library/Game/FrostMage/Niagara/NS_FM_Frostbolt_Charge",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_FM_Frostbolt_Charge_118f3ff4",
+      "logicalId": "presentation.dba.library.ns_fm_frostbolt_charge_118f3ff4@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    },
+    {
+      "source": "/Game/FrostMage/Niagara/NS_FM_FrostNova",
+      "system": "/DBAPresentationPack_Core/VFX/Library/Game/FrostMage/Niagara/NS_FM_FrostNova",
+      "definition": "/DBAPresentationPack_Core/VFX/Library/Definitions/DA_DBA_Imported_NS_FM_FrostNova_3e114394",
+      "logicalId": "presentation.dba.library.ns_fm_frostnova_3e114394@1",
+      "compileErrors": 0,
+      "compileWarnings": 0
+    }
+  ],
+  "healingDefinition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom",
+  "healingSystem": "/DBAPresentationPack_Core/VFX/Library/07_Status/NS_Nature_PetalBloom_Aura",
+  "ruleZh": "运行时由GamePlatformData持有资源租约、GamePlatformPresentation解析、GamePlatformVFX唯一执行；不加载源库Runtime。",
+  "previewDefinitionsPurposeZh": "42份通用瞬时Definition仅供有界开发预览，未无条件注册为玩法目录；正式1号治疗另用Attached定义。",
+  "nativeCompileEvidence": "Saved/Validation/PetalBloomIntegration20261015/CompileReloaded.json"
+}

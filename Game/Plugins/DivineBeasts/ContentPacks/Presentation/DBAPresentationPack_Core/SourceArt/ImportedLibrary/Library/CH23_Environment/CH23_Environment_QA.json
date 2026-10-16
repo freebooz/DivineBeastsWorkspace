@@ -1,0 +1,384 @@
+{
+  "chapter": "CH23_Environment",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Rain_Drop_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.15694,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Rain_Streak_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.218498,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Rain_Splash_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.445877,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Blizzard_WindStreak_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.44101,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Blizzard_Mist_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.186531,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Meteor_FireTrail_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.104137,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Meteor_Smoke_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.124241,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Meteor_RockCrack_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 33.106464,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Meteor_GroundWarning_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 15.925621,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Storm_CloudNoise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "tile_data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 112.748425,
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Storm_CloudNoise_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "tile_data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 121.821201,
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Storm_LightningFlash_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.272392,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Storm_WindStreak_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.296165,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_DarkSky_CloudMask_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 72.676735,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_DarkSky_Vignette_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.435825,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_DarkSky_Noise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "tile_data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 106.128265,
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_MagicStorm_Vortex_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.354267,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_MagicStorm_RadialFlow_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 37.839924,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_MagicStorm_CloudNoise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "tile_data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 120.098499,
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Starfall_Star_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.306496,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Starfall_Trail_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.167545,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Starfall_Glint_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.241287,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Starfall_GroundMark_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 41.839012,
+      "valid": true
+    }
+  ],
+  "count": 23,
+  "expected_count": 23
+}

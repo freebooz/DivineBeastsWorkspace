@@ -162,5 +162,33 @@
     },
     "ManualVisualAccepted": false,
     "CookEvidenceScopeZh": "最终独立Cook结果见Docs/Implementation/BirdFlockManualAcceptance.md本轮执行记录。"
+  },
+  "ImportedVFXLibrary20261015": {
+    "SourceProject": "D:/GameVFX/ModularGameVFX.uproject",
+    "OwnerPlugin": "DBAPresentationPack_Core",
+    "AssetRoot": "/DBAPresentationPack_Core/VFX/Library",
+    "Tool": "Monolith MCP + GamePlatformDeveloperTools native AdvancedCopyPackages",
+    "VisualAssetCount": 1170,
+    "SystemCount": 42,
+    "DefinitionCount": 43,
+    "RuntimeOwner": "GamePlatformVFX",
+    "SourceFrameworkImported": false,
+    "SourcePreserved": true,
+    "DependencyAudit": "Saved/Validation/PetalBloomIntegration20261015/Verification.json",
+    "EvidenceRoot": "Saved/Validation/PetalBloomIntegration20261015",
+    "HealingSystem": "/DBAPresentationPack_Core/VFX/Library/07_Status/NS_Nature_PetalBloom_Aura",
+    "HealingDefinition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom",
+    "NativeCompilePassed": true,
+    "ColdReloadVerified": true,
+    "ClientCookVerified": true,
+    "ServerStripVerified": true,
+    "ManualVisualAccepted": false,
+    "PendingZh": "42系统已冷重载编译；19条历史SpriteSize/RibbonWidth初始化提示待逐效果视觉审查。治疗原系统已PIE取证；其它效果未逐一人工验收，非自动玩法映射。",
+    "NativeCompileErrors": 0,
+    "NativeCompileWarnings": 19,
+    "NativeCompileEvidence": "Saved/Validation/PetalBloomIntegration20261015/CompileReloaded.json",
+    "HealingPIEEvidence": "Saved/Validation/PetalBloomIntegration20261015/PetalFrame/Result.json",
+    "ClientCookEvidence": "Saved/Validation/FoundationM0/6a95a6eb-bd60-485a-b87a-8444d3570146/Cook-FrontEndClient/result.json",
+    "ServerStripEvidence": "Saved/Validation/FoundationM0/20b718c5-252e-487b-afcd-8609d8286d94/Cook-Server/ServerPresentationAudit/ServerPresentationAudit.json"
   }
 }

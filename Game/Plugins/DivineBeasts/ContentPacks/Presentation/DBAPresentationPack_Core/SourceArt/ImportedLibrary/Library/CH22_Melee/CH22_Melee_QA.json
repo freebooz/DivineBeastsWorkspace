@@ -1,0 +1,382 @@
+{
+  "chapter": "CH22_Melee",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Slash_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.264423,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Slash_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.28735,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Slash_Core_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.226196,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Slash_Edge_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.147362,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Slash_Broken_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.216454,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Slash_Noise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "tile_data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 114.721771,
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Slash_Flow_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "tile_data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 74.782253,
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Slash_Flipbook_4x4_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.111248,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Slash_Flipbook_4x4_02.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.069644,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_SwordWave_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.243534,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_SwordWave_Core_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.200661,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_SwordWave_Noise_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "L",
+      "kind": "tile_data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 86.591633,
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Dash_Streak_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.531689,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Dash_AfterimageMask_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        250
+      ],
+      "mean": 49.864407,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Charge_GroundTrail_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 13.85812,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_GroundCrack_Directional_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 8.192417,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_GroundCrack_Directional_02.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 6.834931,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_GroundCrack_Radial_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 9.051412,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_GroundCrack_Radial_02.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 5.716524,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_GroundCrack_GrowthMask_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "mean": 4.329511,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Dust_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.304371,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Dust_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.300446,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Dust_Flipbook_01.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "alpha_coverage": 0.056005,
+      "safe_border_max": 0,
+      "transparent_rgb_max": 0,
+      "valid": true
+    }
+  ],
+  "count": 23,
+  "expected_count": 23
+}

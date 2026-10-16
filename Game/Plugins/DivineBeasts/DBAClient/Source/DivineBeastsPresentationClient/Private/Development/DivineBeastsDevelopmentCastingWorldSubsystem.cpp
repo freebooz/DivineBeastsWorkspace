@@ -205,7 +205,9 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
             if(Instance) PreviousMontageInstanceIds.Add(Instance->GetInstanceID());
         TWeakObjectPtr<UAnimMontage> WeakMontage(Montage);
         // 保持false作用域，不修改Skeleton/Group；有效起始偏移只播放当前剩余阶段。
-        const float PlayedLength=Anim->Montage_Play(Montage,1.0f,EMontagePlayReturnType::MontageLength,static_cast<float>(Elapsed),false);
+        // 冰箭动作映射至服务器复制的完整施法窗口；迟到事件也按同一比例进入剩余动作，避免2秒条配0.7秒动作。
+        const float PlayRate=Name==TEXT("Frostbolt") ? Montage->GetPlayLength()/Facts.DurationSeconds : 1.0f;
+        const float PlayedLength=Anim->Montage_Play(Montage,PlayRate,EMontagePlayReturnType::MontageLength,static_cast<float>(Elapsed)*PlayRate,false);
         // Started可能取消、换Avatar、销毁Actor或扩容Bindings；绝不跨此外调保存TMap元素指针。
         Component=WeakComponent.Get(); Anim=WeakAnim.Get();
         int32 StartedMontageInstanceId=INDEX_NONE;

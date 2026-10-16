@@ -7,6 +7,8 @@ param(
     [string]$EngineRoot,
     [Parameter(Mandatory)][string]$BuildResultPath,
     [string[]]$Prefixes=@('GamePlatform.AbilitySystem.Cast','DivineBeasts.Presentation.DevelopmentCasting'),
+    # UE5.8的StartsWith会补末尾点，单个完整用例名必须走普通名字筛选；报告仍逐项核对。
+    [switch]$ExactTests,
     [ValidateRange(1,500)][int]$ExpectedCount=12,
     [guid]$RunId=[guid]::NewGuid()
 )
@@ -25,7 +27,7 @@ $directory=Join-Path $workspace "Saved/Validation/CastingMonster20261013/Native-
 $null=New-Item -ItemType Directory -Path $directory
 $report=Join-Path $directory 'Report'
 # UE5.8 AutomationCommandline源码明确支持+合并StartsWith筛选，确保只运行本次指定用例。
-$selector=($Prefixes | ForEach-Object {'StartsWith:'+$_}) -join '+'
+$selector=($Prefixes | ForEach-Object {if($ExactTests){$_}else{'StartsWith:'+$_}}) -join '+'
 $arguments=@((Join-Path $workspace 'Game/DivineBeastsArena.uproject'),'/DBAFrontEndPack/Maps/L_DBA_FrontEnd',
     '-unattended','-RenderOffscreen','-nosound','-nosplash','-NoLiveCoding','-stdout','-FullStdOutLogOutput','-DisablePlugins=Monolith',
     '-CustomConfig=VillageDevelopmentClient','-DBADevelopmentSkills','-textconfig',
@@ -35,7 +37,7 @@ $arguments=@((Join-Path $workspace 'Game/DivineBeastsArena.uproject'),'/DBAFront
 $process=Invoke-FoundationProcess -FilePath (Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe') -Arguments $arguments -WorkingDirectory $workspace -OutputDirectory $directory -TimeoutSeconds 900
 if($process.ExitCode -ne 0){throw "真实原生进程失败：$($process.ExitCode)；证据=$directory"}
 $index=Get-Content -LiteralPath (Join-Path $report 'index.json') -Raw | ConvertFrom-Json
-$cases=@($index.tests | Where-Object {$testPath=$_.fullTestPath; @($Prefixes | Where-Object {$testPath.StartsWith($_+'.')}).Count -gt 0})
+$cases=@($index.tests | Where-Object {$testPath=$_.fullTestPath; @($Prefixes | Where-Object {$testPath -eq $_ -or $testPath.StartsWith($_+'.')}).Count -gt 0})
 $failed=@($cases | Where-Object {$_.state -ne 'Success'})
 # 成功与失败均落盘原生结果；不把预期RED改写成绿色，也不靠退出码0掩盖失败断言。
 $result=[ordered]@{Passed=($cases.Count -eq $ExpectedCount -and $failed.Count -eq 0);Count=$cases.Count;Failed=$failed.Count;

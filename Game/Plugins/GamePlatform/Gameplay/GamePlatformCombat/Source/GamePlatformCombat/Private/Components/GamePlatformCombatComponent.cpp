@@ -149,8 +149,13 @@ bool UGamePlatformCombatComponent::AuthoritySelectProjectileTarget(
     AActor* Source=GetOwner();
     if (!IsInGameThread() || bCombatClosing || !IsValid(Source) || !Source->HasAuthority() ||
         Source->IsActorBeingDestroyed() || !GetWorld() || GetWorld()->bIsTearingDown || ExpectedSourceGeneration!=AvatarGeneration) return false;
-    SelectedProjectileTarget.Reset(); SelectedProjectileSourceGeneration=SelectedProjectileTargetGeneration=0;
-    if (!Target) return true;
+    // 只有当前来源显式清空才撤销意图。替换目标必须先通过全部资格检查，失败保留旧弱目标与冻结代次；
+    // 否则已选友方换代/死亡期间一次被拒绝的重选，会把治疗错误降级为自疗并提交冷却。
+    if (!Target)
+    {
+        SelectedProjectileTarget.Reset(); SelectedProjectileSourceGeneration=SelectedProjectileTargetGeneration=0;
+        return true;
+    }
     auto* TargetCombat=IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
     const auto* SourcePolicy=Cast<IGamePlatformCombatant>(Source);
     const auto* TargetPolicy=Cast<IGamePlatformCombatant>(Target);

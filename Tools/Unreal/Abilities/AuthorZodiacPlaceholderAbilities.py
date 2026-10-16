@@ -466,7 +466,9 @@ def migrate_primary_to_healing():
         cdo = unreal.get_default_object(cls) if cls else None
         check(isinstance(definition, unreal.DivineBeastsAbilityDefinition) and isinstance(bp, unreal.Blueprint) and
               isinstance(cdo, unreal.DivineBeastsPlaceholderGameplayAbility), "Primary真实资产/父类缺失：" + hero)
-        check(str(cdo.get_editor_property("AbilityDefinitionId")) == str(primary(identity)), "GA主资产身份异常：" + hero)
+        # UE结构体的str含对象地址；比较引擎稳定导出内容，避免合法Primary身份被不同临时地址误拒绝。
+        check(cdo.get_editor_property("AbilityDefinitionId").export_text() == primary(identity).export_text(),
+              "GA主资产身份异常：" + hero)
         check(cdo.get_editor_property("PlaceholderMode") in (unreal.DivineBeastsPlaceholderAbilityMode.PRIMARY,
               unreal.DivineBeastsPlaceholderAbilityMode.HEALING), "GA已改为其他机制，拒绝覆盖：" + hero)
         profile = unreal.load_asset("/DBAHeroPack_" + hero + "/UI/Abilities/DA_DBA_" + hero + "_PlaceholderUIProfile")

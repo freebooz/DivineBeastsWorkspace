@@ -14,6 +14,8 @@ class DIVINEBEASTSABILITIESRUNTIME_API UDivineBeastsDevelopmentMagicDefinition :
 {
     GENERATED_BODY()
 public:
+    /** 用户指定冰箭权威施法时长（秒）；占位/开发技能共用，同一值发布复制事实并驱动释放计时器。 */
+    static constexpr float FrostboltCastDurationSeconds = 2.0f;
     /** 项目外观语义；服务器仅复制分类身份，不加载对应表现资产。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|DevelopmentMagic")
     EDivineBeastsDevelopmentMagicKind MagicKind = EDivineBeastsDevelopmentMagicKind::Fireball;

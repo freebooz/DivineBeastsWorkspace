@@ -1,0 +1,149 @@
+{
+  "success": true,
+  "textures": {
+    "T_VFX_Shield_SurfaceNoise_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 1,
+      "max": 255,
+      "mean": 146.541,
+      "wrap_mean_delta": 0.964,
+      "wrap_max_delta": 4
+    },
+    "T_VFX_Shield_SurfaceNoise_02.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 145.259,
+      "wrap_mean_delta": 2.214,
+      "wrap_max_delta": 9
+    },
+    "T_VFX_Shield_Hex_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.41198,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Shield_Hex_02.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.41514,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Shield_Ripple_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.34971,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Shield_HitMask_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 11.421
+    },
+    "T_VFX_Shield_Crack_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 8.876
+    },
+    "T_VFX_Shield_Crack_02.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 12.855
+    },
+    "T_VFX_Shield_Broken_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.28883,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Shield_Dissolve_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 114.105,
+      "wrap_mean_delta": 1.674,
+      "wrap_max_delta": 10
+    },
+    "T_VFX_Shield_Distortion_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 138.899,
+      "wrap_mean_delta": 1.32,
+      "wrap_max_delta": 5
+    },
+    "T_VFX_Shield_FresnelBreak_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 13.804,
+      "wrap_mean_delta": 0.0,
+      "wrap_max_delta": 0
+    }
+  },
+  "contact_sheet": "H:\\GameVFX\\MythicVFXLab\\Plugins\\MythicVFX\\Content\\SourceArt\\CH11_MagicShield\\Preview\\CH11_MagicShield_ContactSheet.png",
+  "prompt_set": "H:\\GameVFX\\MythicVFXLab\\Plugins\\MythicVFX\\Content\\SourceArt\\CH11_MagicShield\\CH11_ImageGen_Prompts.md"
+}

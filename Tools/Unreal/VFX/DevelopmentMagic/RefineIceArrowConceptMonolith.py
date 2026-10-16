@@ -101,31 +101,7 @@ lib.recompile_material(crystal);assert unreal.EditorAssetLibrary.save_loaded_ass
 print('CONCEPT_MATERIALS_NATIVE_SAVED')
 ''')
     p.niagara('set_custom_hlsl_text', script_path=MODULE, hlsl=HLSL)
-    for stage, source, name in [('Cast', 'GroundOuter', 'OverheadRune'), ('Flight', 'FrostRibbons', 'RuneRing')]:
-        path = DEST+'/Niagara/NS_DBA_IceArrow_'+stage
-        existing = p.niagara('list_emitters', asset_path=path)
-        exists=any(e['name'] == name for e in existing['emitters'])
-        if exists and options.repair_new_emitters:
-            p.niagara('remove_emitter',asset_path=path,emitter=name)
-            exists=False
-        if not exists:
-            # 真实GPU已暴露DuplicateEmitter别名/生成状态问题；只替换本轮新发射器，原22个保持身份。
-            p.niagara('add_emitter',asset_path=path,emitter_asset='/Niagara/DefaultAssets/Templates/Emitters/Minimal.Minimal',name=name)
-            for key,value in [('SimTarget','GPUComputeSim'),('bLocalSpace','True')]:
-                p.niagara('set_emitter_property',asset_path=path,emitter=name,property=key,value=value)
-            p.niagara('add_module',asset_path=path,emitter=name,usage='emitter_update',module_script='/Niagara/Modules/Emitter/SpawnBurst_Instantaneous.SpawnBurst_Instantaneous',index=0)
-            motion=p.niagara('add_module',asset_path=path,emitter=name,usage='particle_update',module_script=MODULE)
-            raw=p.niagara('get_ordered_modules',asset_path=path,emitter=name)
-            rows=json.loads(raw['result']) if isinstance(raw,dict) and isinstance(raw.get('result'),str) else raw
-            update=next(n for n in rows if n.get('script_path','').split('.')[0]==MODULE)
-            for key,binding in [('Age','Particles.Age'),('Index','Particles.UniqueID')]:
-                p.niagara('set_module_input_binding',asset_path=path,emitter=name,module_node=update['node_guid'],input=key,binding=binding)
-            p.niagara('remove_renderer',asset_path=path,emitter=name,renderer_index=0)
-            p.niagara('add_renderer',asset_path=path,emitter=name,**{'class':'Mesh'})
-            p.niagara('set_renderer_mesh',asset_path=path,emitter=name,renderer_index=0,mesh='/Engine/BasicShapes/Plane')
-            p.niagara('set_renderer_material',asset_path=path,emitter=name,renderer_index=0,material=DEST+'/Materials/MI_DBA_IceArrow_GroundOuter')
-            p.niagara('set_static_switch_value',asset_path=path,emitter=name,module_node='EmitterState',input='Life Cycle Mode',value='Self')
-            p.niagara('set_emitter_loop_profile',asset_path=path,emitter=name,loop_behavior='Once',loop_duration=.15)
+    # 用户改为仅地面法阵，不再由历史精修入口补回顶部或飞行中的空中法阵。
     for stage, emitters in SYSTEMS.items():
         path = DEST+'/Niagara/NS_DBA_IceArrow_'+stage
         operations = []

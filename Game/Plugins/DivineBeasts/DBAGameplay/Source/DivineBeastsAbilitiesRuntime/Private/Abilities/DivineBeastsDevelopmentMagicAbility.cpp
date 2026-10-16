@@ -50,16 +50,18 @@ void UDivineBeastsDevelopmentMagicAbility::ActivateAbility(FGameplayAbilitySpecH
     Motion = Definition->ProjectileMotion; StyleId = Definition->GetPresentationStyleId();
     RemainingProjectiles = Definition->ProjectileCount; ReleasedProjectiles = 0;
     IntervalSeconds = Definition->ProjectileIntervalSeconds;
-    // 冰箭具有0.7秒权威起手窗口，其他瞬发/连发保持既有时序；可选动画失败不改变结算。
+    // 冰箭具有2秒权威起手窗口；同一时长复制至施法条/动画，可选表现失败不改变结算。
     if (auto* CastFacts=Avatar->FindComponentByClass<UGamePlatformAbilityCastComponent>())
         CastFacts->PublishConfirmedCast(ActivationToken,Balance.AbilityId,StyleId,SourceGeneration,
-            RemainingProjectiles>1 ? 1.0f : 0.7f);
+            Definition->MagicKind == EDivineBeastsDevelopmentMagicKind::Frostbolt ?
+                UDivineBeastsDevelopmentMagicDefinition::FrostboltCastDurationSeconds : (RemainingProjectiles>1 ? 1.0f : 0.7f));
     // 发布委托可能同步取消并重新激活；旧发布栈不得释放后继激活的弹体。
     if (CastActivationToken!=ActivationToken || !IsActive()) return;
     if (Definition->MagicKind == EDivineBeastsDevelopmentMagicKind::Frostbolt)
     {
         CastWorld->GetTimerManager().SetTimer(BurstTimer, FTimerDelegate::CreateWeakLambda(this, [this, ActivationToken]()
-            { if (CastActivationToken == ActivationToken) ReleaseNextProjectile(); }), .7f, false);
+            { if (CastActivationToken == ActivationToken) ReleaseNextProjectile(); }),
+            UDivineBeastsDevelopmentMagicDefinition::FrostboltCastDurationSeconds, false);
         return;
     }
     ReleaseNextProjectile();

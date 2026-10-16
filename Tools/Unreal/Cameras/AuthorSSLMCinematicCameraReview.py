@@ -130,6 +130,18 @@ def main():
         if not levels.save_current_level(): raise RuntimeError("电影镜头地图无法保存")
         map_state="created"
     allactors={a.get_actor_label():a for a in actors.get_all_level_actors()}
+    # 电影镜头采用物理曝光；开发场景必须提供室外日光照度，否则游戏实拍全黑。
+    sun=allactors.get("DBA_CameraReview_Sun")
+    if sun:
+        sun_component=sun.get_component_by_class(unreal.DirectionalLightComponent)
+        if sun_component and float(sun_component.get_editor_property("intensity")) < 50000.0:
+            sun_component.set_editor_property("intensity",65000.0)
+            if not levels.save_current_level(): raise RuntimeError("开发场景室外日光修改未能保存")
+    # 真正游戏运行时默认显示35mm电影机位；其它三种机位用于编辑器比较。
+    main_cine=allactors.get("DBA_Cine_35mm")
+    if main_cine and main_cine.get_editor_property("auto_activate_for_player") != unreal.AutoReceiveInput.PLAYER0:
+        main_cine.set_editor_property("auto_activate_for_player",unreal.AutoReceiveInput.PLAYER0)
+        if not levels.save_current_level(): raise RuntimeError("保存默认电影机位失败")
     for label,focal,aperture,_ in VIEWS:
         actor=allactors.get(label)
         if not isinstance(actor,unreal.CineCameraActor): raise RuntimeError("缺少镜头Actor: "+label)

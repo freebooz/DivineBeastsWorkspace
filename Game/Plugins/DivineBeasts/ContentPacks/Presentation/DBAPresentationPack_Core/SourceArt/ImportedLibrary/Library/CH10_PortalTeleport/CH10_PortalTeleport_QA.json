@@ -1,0 +1,185 @@
+{
+  "success": true,
+  "textures": {
+    "T_VFX_Portal_SurfaceNoise_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 119.132,
+      "wrap_mean_delta": 1.401,
+      "wrap_max_delta": 5
+    },
+    "T_VFX_Portal_SurfaceNoise_02.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 125.517,
+      "wrap_mean_delta": 1.88,
+      "wrap_max_delta": 8
+    },
+    "T_VFX_Portal_Vortex_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.50121,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Portal_Vortex_02.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.50121,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Portal_RadialFlow_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 15.379,
+      "wrap_mean_delta": 0.0,
+      "wrap_max_delta": 0
+    },
+    "T_VFX_Portal_OuterRing_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 21.587
+    },
+    "T_VFX_Portal_EdgeNoise_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 11.882,
+      "wrap_mean_delta": 0.0,
+      "wrap_max_delta": 0
+    },
+    "T_VFX_Portal_Ripple_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.35581,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Portal_Depth_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.48049,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Portal_Distortion_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 119.541,
+      "wrap_mean_delta": 2.558,
+      "wrap_max_delta": 11
+    },
+    "T_VFX_Portal_Distortion_02.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 125.82,
+      "wrap_mean_delta": 3.724,
+      "wrap_max_delta": 22
+    },
+    "T_VFX_Portal_Dissolve_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 34.519
+    },
+    "T_VFX_Teleport_DissolveNoise_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 136.916,
+      "wrap_mean_delta": 2.936,
+      "wrap_max_delta": 11
+    },
+    "T_VFX_Teleport_Afterimage_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.33294,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_Teleport_LineMask_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 237,
+      "mean": 15.577
+    }
+  },
+  "contact_sheet": "H:\\GameVFX\\MythicVFXLab\\Plugins\\MythicVFX\\Content\\SourceArt\\CH10_PortalTeleport\\Preview\\CH10_PortalTeleport_ContactSheet.png"
+}

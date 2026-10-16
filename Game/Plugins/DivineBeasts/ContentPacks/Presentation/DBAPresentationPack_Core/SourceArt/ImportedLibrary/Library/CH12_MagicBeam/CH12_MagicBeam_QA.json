@@ -1,0 +1,205 @@
+{
+  "chapter": "CH12_MagicBeam",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Beam_Core_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.449444,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_CoreSharp_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.364479,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_Outer_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.702293,
+      "alpha_min": 0,
+      "alpha_max": 171,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_Noise_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "L",
+      "kind": "data",
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_Noise_02.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "L",
+      "kind": "data",
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_Flow_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "power_of_two": true,
+      "mode": "L",
+      "kind": "data",
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_Flow_02.png",
+      "size": [
+        1024,
+        256
+      ],
+      "power_of_two": true,
+      "mode": "L",
+      "kind": "data",
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_Endpoint_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.478584,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_SourceGlow_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.444695,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_ImpactGlow_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.481171,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_Distortion_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "L",
+      "kind": "data",
+      "range": [
+        0,
+        255
+      ],
+      "seam_mean": 0.0,
+      "seam_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_Beam_Broken_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "power_of_two": true,
+      "mode": "RGBA",
+      "kind": "alpha",
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.238285,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    }
+  ],
+  "count": 12,
+  "expected_count": 12
+}

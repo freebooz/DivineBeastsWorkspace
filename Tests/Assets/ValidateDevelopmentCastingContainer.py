@@ -42,6 +42,10 @@ def required_assets():
                  'ImpactCrystal', 'ImpactFlash', 'Mist', 'Snow', 'Trail'):
         result.append(f'{ice}/Materials/MI_DBA_IceArrow_{name}.uasset')
     result.append(f'{ice}/Definitions/DA_DBA_VFX_DevFrostboltResidue.uasset')
+    # 1号治疗必须发布真实迁移的花瓣绽放及稳定治疗定义，拒绝退回树叶原型。
+    library = 'DBAPresentationPack_Core/Content/VFX/Library'
+    result.extend([f'{library}/07_Status/NS_Nature_PetalBloom_Aura.uasset',
+                   'DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom.uasset'])
     # NM_DBA_IceArrowMotion是已编译系统的EditorOnly制作脚本，不要求其源脚本独立进入发布包。
     return result
 

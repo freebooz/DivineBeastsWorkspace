@@ -6,6 +6,7 @@
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Characters/DivineBeastsCharacter.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
+#include "Definitions/DivineBeastsDevelopmentMagicDefinition.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/GamePlatformCombatant.h"
@@ -198,14 +199,16 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
     if (auto* CastFacts = Avatar->FindComponentByClass<UGamePlatformAbilityCastComponent>())
     {
         CastFacts->PublishConfirmedCast(Token, Balance.AbilityId, CastStyle, AvatarGeneration,
-            RemainingShots > 1 ? 1.0f : 0.7f);
+            PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Frostbolt ?
+                UDivineBeastsDevelopmentMagicDefinition::FrostboltCastDurationSeconds : (RemainingShots > 1 ? 1.0f : 0.7f));
     }
     if (ActivationToken != Token || !IsActive()) return;
     if (PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Frostbolt)
     {
-        // 冰箭先完成0.7秒权威起手，再释放；Timer归本激活，取消/死亡/目标换代仍在统一释放入口拒绝。
+        // 冰箭完成用户指定的2秒权威起手再释放；复制施法条与释放共用时长，取消/换代仍统一拒绝。
         World->GetTimerManager().SetTimer(BurstTimer, FTimerDelegate::CreateWeakLambda(this, [this, Token]()
-            { if (ActivationToken == Token) ReleaseNextProjectile(); }), .7f, false);
+            { if (ActivationToken == Token) ReleaseNextProjectile(); }),
+            UDivineBeastsDevelopmentMagicDefinition::FrostboltCastDurationSeconds, false);
         return;
     }
     ReleaseNextProjectile();

@@ -177,6 +177,10 @@ bool FGamePlatformProjectileSelectionTest::RunTest(const FString&)
     TestNull(TEXT("超出具体技能射程不锁定"),Fixture.SourceCombat->GetSelectedProjectileTarget(100,Generation));
     TestTrue(TEXT("超射程仍保留选择意图，策略不得误认为无选择"), Fixture.SourceCombat->GetSelectedProjectileTargetIntent(IntentTarget, IntentSource, IntentGeneration));
     TestTrue(TEXT("意图弱身份及冻结代次正确"), IntentTarget.Get() == Fixture.Target && IntentSource == 1 && IntentGeneration == 1);
+    TestFalse(TEXT("错误目标代次的替换选择被拒绝"), Fixture.SourceCombat->AuthoritySelectProjectileTarget(Fixture.Target, 1, 2));
+    TestTrue(TEXT("拒绝替换仍保留旧选择意图而非隐式清空"),
+        Fixture.SourceCombat->GetSelectedProjectileTargetIntent(IntentTarget, IntentSource, IntentGeneration) &&
+        IntentTarget.Get() == Fixture.Target && IntentSource == 1 && IntentGeneration == 1);
     TestFalse(TEXT("旧来源取消不能覆盖后继选择"),Fixture.SourceCombat->AuthoritySelectProjectileTarget(nullptr,0,0));
     TestEqual(TEXT("旧取消后当前选择仍在"),Fixture.SourceCombat->GetSelectedProjectileTarget(1000,Generation),Fixture.Target);
     Fixture.TargetCombat->ResetForNewAvatar(2);

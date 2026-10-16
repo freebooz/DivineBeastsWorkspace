@@ -1,0 +1,91 @@
+{
+  "chapter": "CH21_WeaponEnchant",
+  "success": true,
+  "textures": [
+    {
+      "file": "T_VFX_Weapon_EnchantMask_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "packed",
+      "power_of_two": true,
+      "channel_stats": {
+        "R": {
+          "min": 0,
+          "max": 255,
+          "mean": 16.016258
+        },
+        "G": {
+          "min": 0,
+          "max": 255,
+          "mean": 5.171745
+        },
+        "B": {
+          "min": 0,
+          "max": 255,
+          "mean": 1.979061
+        },
+        "A": {
+          "min": 0,
+          "max": 255,
+          "mean": 9.646687
+        }
+      },
+      "corner_max": 0,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_WeaponTrail_Slash_01.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.204987,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_WeaponTrail_Edge_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "RGBA",
+      "kind": "alpha",
+      "power_of_two": true,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0,
+      "alpha_coverage": 0.264996,
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "valid": true
+    },
+    {
+      "file": "T_VFX_WeaponTrail_Flow_01.png",
+      "size": [
+        1024,
+        256
+      ],
+      "mode": "L",
+      "kind": "data",
+      "power_of_two": true,
+      "range": [
+        0,
+        255
+      ],
+      "seam_max": 0,
+      "seam_mean": 0.0,
+      "valid": true
+    }
+  ],
+  "count": 4,
+  "expected_count": 4
+}

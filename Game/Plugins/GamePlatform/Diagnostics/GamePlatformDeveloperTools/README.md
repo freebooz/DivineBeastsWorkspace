@@ -5,6 +5,7 @@
 2026-09-27目录迁移：依赖报告的`layer`显示值由GameFoundation统一为GamePlatform；三层顺序不变，GamePlatformArena按实际MobaCommon路径分类。同步更新引擎自动化映射用例；本轮未取得UE工具链，该C++用例尚未执行，PowerShell架构回归不替代它。
 
 本插件不提供游戏 Runtime 能力，不允许 Client Target、Server Target 或 Shipping Runtime 依赖。核心能力包括：
+- `Migration/GamePlatformAssetMigrationLibrary`：Monolith/Python显式提交完整包名映射，先拒绝越界、缺源、重名和目标覆盖，再由引擎`AdvancedCopyPackages`统一重映射硬/软引用并保存。它不扫描项目业务目录、不复制第三方播放器；失败保留部分目标供审计。Python调用的bool加OutError遵循UE投影：失败返回None，成功返回错误字符串（空字符串为成功）。
 - UE5.8 Data Validation（数据验证）接入。
 - Naming/Dependency/InheritanceBoundary/ClientLeak/ServerLeak/Content/Definition/StableId/GameplayTag/ServerAssetSafety/RPC 静态规则。
 - Asset Registry（资产注册表）驱动的资产审计。

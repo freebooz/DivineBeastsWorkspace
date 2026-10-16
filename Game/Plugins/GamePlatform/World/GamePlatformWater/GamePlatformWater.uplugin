@@ -2,7 +2,7 @@
   "FileVersion": 3,
   "Version": 1,
   "VersionName": "0.1.0",
-  "FriendlyName": "GamePlatformWater 通用水体",
+  "FriendlyName": "GamePlatformWater",
   "Description": "平台水域权威查询、客户端水体与波纹表现、编辑器审查；项目层控制具体关卡及视觉素材。",
   "Category": "GamePlatform/World",
   "CreatedBy": "DivineBeastsWorkspace",

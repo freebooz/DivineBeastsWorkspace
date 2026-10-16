@@ -1,0 +1,154 @@
+{
+  "success": true,
+  "textures": {
+    "T_VFX_MagicCircle_OuterRing_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 17.326
+    },
+    "T_VFX_MagicCircle_InnerRing_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 15.779
+    },
+    "T_VFX_MagicCircle_Geometry_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "power_of_two": true,
+      "alpha_nonzero_coverage": 0.36536,
+      "alpha_corner_max": 0,
+      "transparent_rgb_max": 0
+    },
+    "T_VFX_MagicCircle_CenterSymbol_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 16.342
+    },
+    "T_VFX_MagicCircle_RuneAtlas_01.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 20.124,
+      "cell_nonzero_coverage": [
+        0.07632,
+        0.07759,
+        0.06976,
+        0.0744,
+        0.0938,
+        0.09406,
+        0.09392,
+        0.08752,
+        0.09074,
+        0.10265,
+        0.08762,
+        0.09314,
+        0.1149,
+        0.11577,
+        0.10843,
+        0.11295
+      ]
+    },
+    "T_VFX_MagicCircle_RuneAtlas_02.png": {
+      "size": [
+        1024,
+        1024
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 24.864,
+      "cell_nonzero_coverage": [
+        0.10873,
+        0.10413,
+        0.10214,
+        0.10202,
+        0.11494,
+        0.1104,
+        0.10844,
+        0.10837,
+        0.11458,
+        0.11003,
+        0.10837,
+        0.10826,
+        0.12079,
+        0.1163,
+        0.11467,
+        0.11461
+      ]
+    },
+    "T_VFX_MagicCircle_RadialLines_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 16.275
+    },
+    "T_VFX_MagicCircle_Glyph_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 29.812
+    },
+    "T_VFX_MagicCircle_Noise_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 129.082,
+      "wrap_mean_delta": 3.563,
+      "wrap_max_delta": 13
+    },
+    "T_VFX_MagicCircle_Dissolve_01.png": {
+      "size": [
+        512,
+        512
+      ],
+      "mode": "L",
+      "power_of_two": true,
+      "min": 0,
+      "max": 255,
+      "mean": 66.288
+    }
+  },
+  "contact_sheet": "H:\\GameVFX\\MythicVFXLab\\Plugins\\MythicVFX\\Content\\SourceArt\\CH08_MagicCircle\\Preview\\CH08_MagicCircle_ContactSheet.png"
+}

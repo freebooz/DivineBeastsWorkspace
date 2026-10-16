@@ -20,6 +20,7 @@ public class GamePlatformDeveloperTools : ModuleRules
             "GamePlatformData",
             "GamePlatformCore",
             "AssetRegistry",
+            "AssetTools", // Editor迁移桥只复用引擎重映射复制；客户端/专服不依赖本模块。
             "ContentBrowser",
             "DataValidation",
             "DeveloperSettings",

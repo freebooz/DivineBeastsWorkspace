@@ -18,9 +18,9 @@ float fade=saturate(a/0.065)*saturate((Life-a)/0.18);
 float3 position=float3(0,0,0); float3 scale=float3(1,1,1);
 float4 rotation=float4(0,0,0,1); float2 size=float2(38,38);
 float3 tint=float3(0.65,0.85,1.0); float opacity=fade;
-// 复刻参考图的三层施法结构：脚下展开、背后立阵、上方悬环；原图RGB由专用材质直接读取。
+// 用户指定施法仅保留两层地面法阵；内外层分开高度避免共面，原图RGB由专用材质读取。
 if(Mode==0){float turn=a*.20;position=float3(0,0,6);scale=float3(3.8,3.8,1)*(.25+.75*saturate(a/.24));rotation=float4(0,0,sin(turn*.5),cos(turn*.5));tint=1;opacity=fade*.95;}
-else if(Mode==1){position=float3(-42,0,150);scale=float3(3.05,3.05,1)*(.30+.70*saturate(a/.30));rotation=float4(0,.70710678,0,.70710678);tint=1;opacity=fade*.62;}
+else if(Mode==1){float turn=-a*.25;position=float3(0,0,8);scale=float3(3.05,3.05,1)*(.30+.70*saturate(a/.30));rotation=float4(0,0,sin(turn*.5),cos(turn*.5));tint=1;opacity=fade*.62;}
 else if(Mode==6){float turn=-a*.25;position=float3(0,0,295);scale=float3(2.4,2.4,1)*(.25+.75*saturate(a/.30));rotation=float4(0,0,sin(turn*.5),cos(turn*.5));tint=1;opacity=fade*.50;}
 else if(Mode==2){position=float3(66,0,130+sin(a*4)*3);scale=float3(.30,.30,.95)*(.12+saturate(a/.65)*.88);rotation=float4(0,.70710678,0,.70710678);}
 else if(Mode==3){float angle=i*6.2831853/7+a*.65;float r=110-saturate(a/.70)*18;position=float3(cos(angle)*r,sin(angle)*r,90+((i % 3)*56)+sin(a*3+i)*9);scale=float3(.35,.35,.62)*fade;rotation=normalize(float4(sin(angle)*.12,cos(angle)*.12,0,1));}
@@ -47,10 +47,10 @@ Particles.Color=float4(tint,opacity);
 #endif'''
 # 名称、模式、数量、寿命秒、材质实例、网格；空网格表示Niagara原生Sprite。
 SYSTEMS={
- 'Cast':[('GroundOuter',0,1,1.0,'GroundOuter','Plane'),('GroundInner',1,1,1.0,'GroundInner','Plane'),('Core',2,1,1.0,'Crystal','CrystalShard'),('Orbit',3,7,1.0,'Crystal','CrystalShard'),('Snow',4,24,1.0,'Snow',None),('GatherGlow',5,1,1.0,'ImpactFlash',None),('OverheadRune',6,1,1.0,'GroundOuter','Plane')],
- 'GroundRune':[('Outer',0,1,1.0,'GroundOuter','Plane'),('Inner',1,1,1.0,'GroundInner','Plane')],
+ 'Cast':[('GroundOuter',0,1,2.1,'GroundOuter','Plane'),('GroundInner',1,1,2.1,'GroundInner','Plane')],
+ 'GroundRune':[('Outer',0,1,2.1,'GroundOuter','Plane'),('Inner',1,1,2.1,'GroundInner','Plane')],
  'Launch':[('LaunchFlash',14,1,.18,'ImpactFlash',None),('ReleaseShards',21,7,.35,'Crystal','CrystalShard')],
- 'Flight':[('CrystalArrow',10,1,3.0,'Crystal','CrystalLance'),('FrostRibbons',11,3,3.0,'Trail','TrailRibbon'),('ColdMist',12,18,3.0,'Mist',None),('OrbitShards',13,14,3.0,'Crystal','CrystalShard'),('LaunchFlash',14,1,.18,'ImpactFlash',None),('RuneRing',15,1,3.0,'GroundOuter','Plane')],
+ 'Flight':[('CrystalArrow',10,1,3.0,'Crystal','CrystalLance'),('FrostRibbons',11,3,3.0,'Trail','TrailRibbon'),('ColdMist',12,18,3.0,'Mist',None),('OrbitShards',13,14,3.0,'Crystal','CrystalShard'),('LaunchFlash',14,1,.18,'ImpactFlash',None)],
  'Impact':[('ImpactCore',20,1,.18,'ImpactFlash',None),('BurstShards',21,28,1.35,'ImpactCrystal','CrystalShard'),('IceCrown',22,1,1.45,'ImpactCrystal','IceCrown'),('ImpactMist',23,18,1.55,'Mist',None)],
  'FrostResidue':[('FrozenGround',24,1,3.0,'FrozenGround','Plane'),('FrostRing',25,1,2.4,'GroundOuter','Plane'),('FloorMist',23,10,1.6,'Mist',None)]
 }

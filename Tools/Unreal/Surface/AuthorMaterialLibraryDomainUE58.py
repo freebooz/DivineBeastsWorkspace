@@ -303,6 +303,21 @@ def make_review(unreal,item):
     call=edit.create_material_expression(mat,unreal.MaterialExpressionMaterialFunctionCall,-420,-180)
     if not call or not call.set_material_function(source):
         raise RuntimeError("QA审核材质函数调用初始化失败："+target)
+    # 既有平台水体MF使用DepthNormalized/WaterColor旧接口；新配方则是DepthCm/DeepWaterDepthCm/Color。
+    # 通过只作用于开发QA母材质的适配桥接，保留生产水体函数与正式材质的二进制兼容性。
+    legacy_water_depth=False
+    if item["id"]=="MAT-05-03":
+        graph=edit.get_material_function_expressions(source)
+        actual_inputs={str(x.get_editor_property("input_name"))
+                       for x in graph if isinstance(x,unreal.MaterialExpressionFunctionInput)}
+        actual_outputs={str(x.get_editor_property("output_name"))
+                        for x in graph if isinstance(x,unreal.MaterialExpressionFunctionOutput)}
+        if actual_inputs=={"DepthNormalized","ShallowColor","DeepColor"} and actual_outputs=={"WaterColor"}:
+            legacy_water_depth=True
+        elif (actual_inputs!={p["name"] for p in item["pins"]} or
+              actual_outputs!={o["name"] for o in item["outputs"]}):
+            raise RuntimeError("旧水体材质函数签名未知，不能盲目映射到审核母材质："+target)
+    depth_preview={}
     for ix,p in enumerate(item["pins"]):
         cls={"S":"MaterialExpressionConstant","V2":"MaterialExpressionConstant2Vector",
              "V3":"MaterialExpressionConstant3Vector"}[p["type"]]
@@ -317,12 +332,34 @@ def make_review(unreal,item):
             expression.set_editor_property("g",float(preview[1]))
         else:
             expression.set_editor_property("constant",unreal.LinearColor(*[float(n) for n in preview],1.0))
+        if legacy_water_depth and p["name"] in ("DepthCm","DeepWaterDepthCm"):
+            depth_preview[p["name"]]=expression
+            continue
         if not edit.connect_material_expressions(expression,"",call,p["name"]):
             raise RuntimeError("QA参数无法连接到函数输入："+item["id"]+"."+p["name"])
+    if legacy_water_depth:
+        # 从真实厘米深度与深水阈值计算旧MF所需的0～1深度；分母保护避免日后调零。
+        if set(depth_preview)!={"DepthCm","DeepWaterDepthCm"}:
+            raise RuntimeError("旧水体函数缺少深度参数，拒绝假接线："+target)
+        epsilon=edit.create_material_expression(mat,unreal.MaterialExpressionConstant,-1180,650)
+        threshold=edit.create_material_expression(mat,unreal.MaterialExpressionMax,-890,440)
+        normalized=edit.create_material_expression(mat,unreal.MaterialExpressionDivide,-650,300)
+        if not all((epsilon,threshold,normalized)):
+            raise RuntimeError("旧水体QA归一化节点创建失败："+target)
+        epsilon.set_editor_property("r",0.0001)
+        connections=((depth_preview["DeepWaterDepthCm"],threshold,"A"),
+                     (epsilon,threshold,"B"),
+                     (depth_preview["DepthCm"],normalized,"A"),
+                     (threshold,normalized,"B"),
+                     (normalized,call,"DepthNormalized"))
+        for left,right,pin in connections:
+            if not edit.connect_material_expressions(left,"",right,pin):
+                raise RuntimeError("旧水体QA深度归一化引脚失败："+pin)
+        print("QA_LEGACY_WATER_DEPTH_ADAPTER",target,"DepthCm/DeepWaterDepthCm=>DepthNormalized")
     # 只连接真实输出至可用Material属性，不自动运行Shader编译。
     used=set()
     for out in item["outputs"]:
-        label=out["name"]
+        label=("WaterColor" if legacy_water_depth and out["name"]=="Color" else out["name"])
         prop={"AO":"MP_AMBIENT_OCCLUSION","Roughness":"MP_ROUGHNESS",
               "Metallic":"MP_METALLIC","Normal":"MP_NORMAL",
               "Emissive":"MP_EMISSIVE_COLOR"}.get(label)
