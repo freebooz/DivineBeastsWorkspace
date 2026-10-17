@@ -167,6 +167,7 @@ UE5.8官方技术参考：
 
 - **请求追踪预算**由`UGamePlatformVFXSettings`和原`WorldBudgetRule`维护，仅覆盖Pending/Tracked请求，默认256/512等现有保护值；不等于活跃Niagara System总量，也不能替代GPU/CPU预算。GamePlatformVFX默认使用独立Config=GamePlatformVFX类别并关闭场景预算；SSLM在Game/Config/DefaultGamePlatformVFX.ini使用四档+WorldBudgetRules配置，须由真实ExperienceId和QualityTier匹配并通过项目层UE自动化测试核实生效，不得默认覆盖Village/OpenWorld。
 - **真实实例预算**由UE5.8原生`UNiagaraEffectType`分类/每资产`MaxSystemInstances`控制，单客户端World的120/80/58/40仅是Epic/High/Medium/Low候选总目标。实例统计必须覆盖NDC Reader、其他环境与绕过平台的Niagara调用；7类原生Effect Type须由编辑器制作并在所有平台/画质变体中绑定，只有规格JSON不能生效。
+- **NDC渲染资产门禁**应逐项盘点7类NET、3条NDC及3套共享Reader（合计13份候选原生资产）；必须由UE5.8创建、编译、保存及冷重载，并证明读者确实消费数据和渲染GPU效果。Reader绑定Effect Type与局部Bounds后，还应按空间分区和画质验证。
 - **帧耗时预算**按独立的Niagara CPU、GPU、透明Overdraw和整帧P95/P99管理。候选高画质High 60FPS：GPU≤1.5ms、CPU≤0.6ms、P95≤16.67ms、P99≤20ms；Epic 120FPS需按8.33ms单独验证。GPU/CPU不能简单相加，不能用组件采样或请求计数替代Niagara Insights与打包GPU实测。
 
 ### 9.2 Effect Type / 质量 / 视觉

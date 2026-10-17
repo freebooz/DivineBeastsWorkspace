@@ -6,6 +6,7 @@
   "platform_plugin_path": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX",
   "effect_type_asset_root": "/GamePlatformVFX/Arena/EffectTypes",
   "data_channel_asset_root": "/GamePlatformVFX/Arena/DataChannels",
+  "reader_system_asset_root": "/GamePlatformVFX/Arena/Niagara",
   "effect_types": [
     {
       "asset_name": "NET_GP_ArenaCritical",
@@ -130,6 +131,9 @@
         }
       ],
       "native_asset_status": "not_verified",
+      "reader_system_asset": "NS_GP_ArenaImpactReader",
+      "reader_effect_type_asset": "NET_GP_CombatImpact",
+      "reader_simulation": "GPU",
       "reader_system_status": "not_created",
       "gpu_test_status": "not_tested"
     },
@@ -170,6 +174,9 @@
         }
       ],
       "native_asset_status": "not_verified",
+      "reader_system_asset": "NS_GP_ArenaGroundBurstReader",
+      "reader_effect_type_asset": "NET_GP_CombatImpact",
+      "reader_simulation": "GPU",
       "reader_system_status": "not_created",
       "gpu_test_status": "not_tested"
     },
@@ -210,6 +217,9 @@
         }
       ],
       "native_asset_status": "not_verified",
+      "reader_system_asset": "NS_GP_ArenaAmbientBurstReader",
+      "reader_effect_type_asset": "NET_GP_ArenaAmbient",
+      "reader_simulation": "GPU",
       "reader_system_status": "not_created",
       "gpu_test_status": "not_tested"
     }

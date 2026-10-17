@@ -4,7 +4,8 @@
 
 用户通过Fab取得资源，完成纯内容包迁移后才允许执行apply。
 不调用编译/烘焙/PIE，不调用完整角色AI能力；不自动开启不可见怪物。
-需要提供真正AnimBlueprint和一致的Skeleton，拒绝空图或占位路径。
+支持源Fab自带AnimBlueprint或后续按真实狼骨架制作的项目AnimBlueprint；
+本步骤只准备软路径，不代表动画状态机已审核，更不会启用狼刷怪。
 """
 from __future__ import annotations
 
@@ -41,11 +42,12 @@ def format_object_path(path):
 
 def inspect():
     src=INPUT["Source"]
-    fields=("FabImportedContentDirectory","WolfSkeletalMesh","WolfSkeleton",
-            "WolfAnimationBlueprint")
+    fields=("FabImportedContentDirectory","WolfSkeletalMesh","WolfSkeleton")
     missing=[name for name in fields if not src.get(name)]
     print("VILLAGE_WOLF_CLIENT_BIND_INSPECT",json.dumps({
         "RequiredSourceFieldsMissing":missing,
+        "AnimationBlueprintOrigin":("FabSource" if src.get("WolfAnimationBlueprint") else "PostMigrationSkeletonAuthor"),
+        "AnimationGraphAccepted":False,
         "LicenceSource":INPUT["Status"],
         "RuntimeBoolsChanged":False,"EditorAssetChanged":False,
         "BuildOrCook":False
@@ -72,7 +74,14 @@ def apply():
     src=INPUT["Source"]
     mesh_path=destination_path(src["WolfSkeletalMesh"])
     skeleton_path=destination_path(src["WolfSkeleton"])
-    bp_path=destination_path(src["WolfAnimationBlueprint"])
+    if src.get("WolfAnimationBlueprint"):
+        bp_path=destination_path(src["WolfAnimationBlueprint"])
+    else:
+        # Fab部分动物资源包只含动画序列，后续动画蓝图位于真实动物插件专用目录。
+        spec=json.loads(Path(__file__).with_name("VillageWolfAuthoringSpec.json").read_text(encoding="utf-8-sig"))
+        bp_path=spec["Visual"]["AnimationBlueprintTargetPath"]
+        require(bp_path.startswith("/"+plugin+"/Wolf/Animation/"),
+                "项目后续动画蓝图必须属于已授权动物内容包")
     mesh=unreal.EditorAssetLibrary.load_asset(mesh_path)
     skeleton=unreal.EditorAssetLibrary.load_asset(skeleton_path)
     bp=unreal.EditorAssetLibrary.load_asset(bp_path)
@@ -114,7 +123,7 @@ def apply():
         "WolfAnimationBlueprint":animation_class.get_path_name(),
         "Skeleton":format_object_path(skeleton_path),
         "bClientVisualsVerified":False,"bEnableVillageWolves":False,
-        "Cooked":False,"AnimationGraphAcceptance":"Pending"
+        "Cooked":False,"AnimationGraphAcceptance":"Pending_RequiredBeforeRuntimeEnable"
     },ensure_ascii=False))
 
 

@@ -9,7 +9,7 @@
 
 只有Instant（一次性命中）的Definition可启用。若NDC Asset已就绪且UE5.8写入器有效，FGamePlatformVFXDataChannelBridge（共享瞬时事件桥）写入一条GPU可读记录，现有实例句柄立即按终态清理并保持请求去重；不创建单事件Niagara System。若桥接返回失败，使用既有Niagara原生Spawn/Pool路径。缺少NDC资源的预载申请失败要走项目的定义/资源失败路径，**不能把缺失通道宣称为总可回退成功**；项目进入启用状态前须验收资产齐全性。
 
-当前仅有单条写入API。高并发优化后续必须比较Writer/事件与批量Writer/帧的CPU开销，防止每次写入的分配吞掉共享收益。当前Niagara Editor和独立GPU读者System均未执行制作，默认开关保持false。
+当前已有单条和有界Global批量写入API，但WorldSubsystem生产链仍按事件调用单条路径；后续需要验证批量事件持有、去重/取消、写后读时序，并比较Writer/事件与批量Writer/帧CPU开销，不能将API存在当作实际批量优化已启用。当前Niagara Editor和独立GPU读者System均未执行制作，默认开关保持false。
 
 **UE5.8专项兼容风险：** Epic官方问题跟踪 UE-399252 披露：如果在引擎早期初始化阶段即使将 `fx.Niagara.DataChannels.Enabled`（UE5.8 NDC开关）重复设置为当前默认true，也可能触发Niagara数据接口注册时序断言；当前官方标注影响5.8、目标修复6.0。SSLM不得为了启用本方案在Default*.ini中重复写该开关或借此修改Niagara插件源码。默认NDC功能是否已启用需在真实编辑器启动后只读检查，原生资产生产及运行需单独回归。参考：https://issues.unrealengine.com/issue/UE-399252
 
@@ -19,6 +19,11 @@
 - `/GamePlatformVFX/Arena/EffectTypes/NET_GP_*`（七类中立Effect Type资产）。
 - `/GamePlatformVFX/Arena/DataChannels/NDC_GP_*`（CombatImpact、GroundBurst、AmbientBurst三类原生数据通道）。
 - `/GamePlatformVFX/Arena/Niagara/NS_GP_Arena*`（共享GPU读者/有限生命周期系统）。
+- `NS_GP_ArenaImpactReader`（命中共享GPU读者，Effect Type：NET_GP_CombatImpact）。
+- `NS_GP_ArenaGroundBurstReader`（地面短爆发共享GPU读者，Effect Type：NET_GP_CombatImpact）。
+- `NS_GP_ArenaAmbientBurstReader`（环境短时事件GPU读者，Effect Type：NET_GP_ArenaAmbient）。
+
+以上三项已登记为待制作Niagara System原生资产，不是已生成文件；三套Reader应有符合实际场景的局部Bounds、正确的NDC读取阶段与空闲释放机制，必须验证GPU实际显示。
 
 完整候选清单由 `Tools/Unreal/VFX/Arena/ArenaVFXAssetsSpec_V1.json`（JSON制作契约）维护，审计 `AuditArenaVFXAssets.py` 仅检测文件名和规格，**不等于实际AssetRegistry**。只有通过Unreal Editor/Monolith真实创建、编译、保存、独立重载后才能标记有效。
 

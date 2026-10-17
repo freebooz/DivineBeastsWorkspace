@@ -5,11 +5,7 @@
 #include "Village/DivineBeastsVillageWolfSpawnPolicy.h"
 #include "Characters/DivineBeastsVillageWolf.h"
 #include "Components/GamePlatformAIStateComponent.h"
-<<<<<<< HEAD
-#include "Components/GamePlatformCombatComponent.h" // 服务器死亡判定必须包含完整组件定义。
-=======
-#include "Components/GamePlatformCombatComponent.h"
->>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
+#include "Components/GamePlatformCombatComponent.h" // 服务器死亡事件需完整组件定义。
 #include "Components/GamePlatformExperienceComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/GamePlatformAIDefinition.h"
@@ -69,6 +65,19 @@ void UDivineBeastsVillageWolfWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     Super::OnWorldBeginPlay(InWorld);
     if (&InWorld != GetWorld() || bClosing || !WorldOperation.IsValid()) return;
     ObserveExperience();
+    if (!HasVerifiedAnimalAssets())
+    {
+        // 只在此世界开始时提示一次；避免服务端重复创建隐形狼和每帧刷日志。
+        bool bEnabled = false;
+        bool bVisualVerified = false;
+        if (GConfig)
+        {
+            GConfig->GetBool(TEXT("DivineBeasts.VillageWolves"), TEXT("bEnableVillageWolves"), bEnabled, GGameIni);
+            GConfig->GetBool(TEXT("DivineBeasts.VillageWolves"), TEXT("bClientVisualsVerified"), bVisualVerified, GGameIni);
+        }
+        UE_LOG(LogTemp, Warning, TEXT("VillageWolfInactive: 本世界未满足狼群生成资格；启用=%d，客户端外观已审核=%d，且必须存在正版动物内容包软路径及两份服务器安全资产。"),
+            bEnabled ? 1 : 0, bVisualVerified ? 1 : 0);
+    }
     TryFillWolves();
 }
 
@@ -81,12 +90,23 @@ bool UDivineBeastsVillageWolfWorldSubsystem::HasVerifiedAnimalAssets() const
     GConfig->GetBool(Section, TEXT("bClientVisualsVerified"), bClientAssetsVerified, GGameIni);
     FString DefinitionPath;
     FString WolfClassName;
+    FString WolfMeshPath;
+    FString WolfAnimPath;
     GConfig->GetString(Section, TEXT("WolfAIDefinition"), DefinitionPath, GGameIni);
     GConfig->GetString(Section, TEXT("WolfBlueprintClass"), WolfClassName, GGameIni);
+    GConfig->GetString(Section, TEXT("WolfSkeletalMesh"), WolfMeshPath, GGameIni);
+    GConfig->GetString(Section, TEXT("WolfAnimationBlueprint"), WolfAnimPath, GGameIni);
     const FSoftObjectPath Definition(DefinitionPath);
     const FSoftClassPath WolfBlueprint(WolfClassName);
-    // 两份服务器安全原生资源均必须存在；Fab美术仅客户端加载，绝不允许隐藏攻击怪。
+    const FSoftObjectPath WolfMesh(WolfMeshPath);
+    const FSoftClassPath WolfAnimation(WolfAnimPath);
+    // 专服不加载任何Fab纯美术，但必须检查两个客户端软引用非空且指向受控动物包。
+    // 即使有人误把两个布尔开关提前改成true，也不会在Mesh/AnimBP未配置时刷出透明攻击怪。
+    const FString VisualRoot(TEXT("/DBAContentPack_AnimalsProtofactor/"));
     return bEnabled && bClientAssetsVerified && Definition.IsValid() && WolfBlueprint.IsValid() &&
+        WolfMesh.IsValid() && WolfAnimation.IsValid() &&
+        WolfMesh.GetLongPackageName().StartsWith(VisualRoot) &&
+        WolfAnimation.GetLongPackageName().StartsWith(VisualRoot) &&
         FPackageName::IsValidLongPackageName(Definition.GetLongPackageName()) &&
         FPackageName::DoesPackageExist(Definition.GetLongPackageName()) &&
         FPackageName::IsValidLongPackageName(WolfBlueprint.GetLongPackageName()) &&
@@ -104,10 +124,7 @@ bool UDivineBeastsVillageWolfWorldSubsystem::CaptureApprovedScope(FApprovedScope
     auto* Bootstrap = Instance ? Instance->GetSubsystem<UDivineBeastsServerBootstrapSubsystem>() : nullptr;
     const auto* Lifecycle = ObservedLifecycle.Get();
     const auto* Experience = ObservedExperience.Get();
-<<<<<<< HEAD
-=======
-    // 平台GetReadiness接口非const；保留服务原始接口类型，不改变本桥的只读资格检查职责。
->>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
+    // 平台GetReadiness接口非const；只读取当前世界服务的就绪事实。
     auto* Service = IGamePlatformWorldService::Get(*const_cast<UWorld*>(World));
     if (!Bootstrap || !Lifecycle || !Experience || !Service ||
         Experience->GetWorld() != World || Lifecycle->GetGameInstance() != Instance) return false;
@@ -223,12 +240,11 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
             if (!Nav->ProjectPointToNavigation(Candidate, NavPoint, FVector(130.0f, 130.0f, 550.0f)))
                 continue;
 
-<<<<<<< HEAD
             bool bSafe = true;
             for (const APlayerStart* AnyStart : Starts)
                 if (!FPolicy::IsOutsidePlayerStart(NavPoint.Location, AnyStart->GetActorLocation()))
                 { bSafe = false; break; }
-            // 使用服务器登记的原始生成锚点，避免巡逻/追击后因Actor移走而在旧位置密集补刷。
+            // 使用真实出生锚点而不是追击后的Actor位置，严格保证>30米初始散布间距。
             for (const auto& Entry : WolfSpawnAnchors)
             {
                 const ADivineBeastsVillageWolf* Other = Entry.Key.Get();
@@ -237,20 +253,6 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
                 { bSafe = false; break; }
             }
             if (!bSafe) continue;
-=======
-        bool bSafe = true;
-        for (const APlayerStart* AnyStart : Starts)
-            if (FVector::DistSquared2D(AnyStart->GetActorLocation(), NavPoint.Location) <
-                FMath::Square(PlayerStartSafetyRadiusCm)) { bSafe = false; break; }
-        for (const auto& OtherReference : OwnedWolves)
-        {
-            const auto* Other = OtherReference.Get();
-            if (IsValid(Other) && !Other->IsActorBeingDestroyed() &&
-                FVector::DistSquared2D(Other->GetActorLocation(), NavPoint.Location) <
-                FMath::Square(MinimumWolfSeparationCm)) { bSafe = false; break; }
-        }
-        if (!bSafe) continue;
->>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
 
             FHitResult Ground;
             if (!World->LineTraceSingleByChannel(Ground, NavPoint.Location + FVector(0,0,260),
@@ -469,17 +471,11 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
     ObservedLifecycle.Reset();
     TArray<TObjectPtr<ADivineBeastsVillageWolf>> ToDestroy = MoveTemp(OwnedWolves);
     OwnedWolves.Reset();
-<<<<<<< HEAD
-    // 先释放本世界的锚点账本，再销毁自有Actor，EndPlay期间不会错误重占位置。
+    // 先释放本世界的出生锚点账本，再销毁自己持有的狼Actor和控制器。
     WolfSpawnAnchors.Reset();
     for (const auto& WolfPointer : ToDestroy)
     {
         ADivineBeastsVillageWolf* Wolf = WolfPointer.Get();
-=======
-    for (const auto& WolfReference:ToDestroy)
-    {
-        auto* Wolf=WolfReference.Get();
->>>>>>> 2099daa15f2914ed7e018b3b28408a637afe408e
         if (!IsValid(Wolf)) continue;
         Wolf->OnAuthoritativeDeath().RemoveAll(this);
         Wolf->OnDestroyed.RemoveDynamic(this, &ThisClass::HandleWolfDestroyed);

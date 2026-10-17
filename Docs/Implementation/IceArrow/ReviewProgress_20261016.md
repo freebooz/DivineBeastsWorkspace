@@ -80,3 +80,12 @@
 
 **本次执行环境事实：** 工作空间与UE5.8安装位置已确认，Monolith提供者可解析且代理存活；Niagara工具实调返回“Unreal Editor not running”。共享Runner已有7个长期运行任务，编辑器启动任务进入排队，未获得进程启动证据。故本轮没有新建/改写任何 `.uasset` 或 `.umap`，没有执行新的引擎编译或运行验证；不得利用本节文本替代原生制作。必须等待可用编辑器执行槽位，并保护其他会话的未提交修改。
 
+## 玄霜棱矢A3网格源候选（非UE原生资产）
+
+**新增源码与门禁结果：** A3Validated源OBJ已从工程原样导出并在隔离测试环境完成3项拓扑、UV、逐面法线回归（3通过、0失败；不等同引擎验收）。新增 `ImportIceArrowA3Validated.py` 作为校验SHA-256后执行引擎导入的唯一入口，要求Monolith独占UE5.8会话；当前Monolith没有可用Editor，尚未导入/编译/截图。
+
+**Niagara后续执行入口：** 新增 `AuthorIceArrowA3Monolith.py`，在Monolith确认独占UE5.8后先导入A3修正网格，再复制原`NS_DBA_IceArrow_Flight_A`为独立`NS_DBA_IceArrow_Flight_A3`并仅替换CrystalArrow网格、读取Renderer/诊断、编译保存。当前仅为待运行源代码，**没有完成任何A3原生Niagara图修改**；A2和正式Frostbolt Definition均未触碰。
+
+在既有A2候选之外增量制作 `SourceArt/VFX/IceArrow/Review/SM_DBA_IceArrow_CrystalA3.obj`，为主棱晶增加三条交错附晶刃，保留正X攻击方向、独立闭合几何面、逐面法线与纵向UV（122顶点、228面）。`Tests/Assets/TestIceArrowCrystalA3Geometry.py` 检验拓扑/UV/法线。首次写入工作空间的OBJ其 `vn` 法线记录只有两个分量，**不能导入**；另行修正出的A3候选已在独立环境通过三项几何回归，但尚未同步覆盖工作空间原文件。原A3仍保留作问题追溯，不允许导入；新增 `SM_DBA_IceArrow_CrystalA3Validated.obj` 作为修正法线后的独立可测试源候选，原始A/A2与正式系统不变。同步检验闭合拓扑、法线、UV后，才允许由Monolith导入Review；尚无原生StaticMesh或运行验收证据。该对象**尚未通过Monolith导入为.uasset，也没有替换正式技能资源**。后续只能在Review目录先导入、使用已验证材质实例渲染并与A2实际45°镜头对比，再决定是否切换；不得视为人工视觉通过。
+
+

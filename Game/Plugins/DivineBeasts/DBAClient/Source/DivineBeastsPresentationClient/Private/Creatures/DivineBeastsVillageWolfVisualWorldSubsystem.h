@@ -30,6 +30,10 @@ private:
     FGuid Operation;
     bool bReady = false;
     bool bLoading = false;
+    /** 每个World最多申请一次同组Fab软资源；失败关闭，不随20只狼重复请求。 */
+    bool bVisualLoadAttempted = false;
+    /** 缺失或未审核的客户端资源只输出一次提示，避免大规模狼群刷屏。 */
+    bool bMissingVisualLogged = false;
     bool bClosing = false;
 
     /** 只识别真实复制Actor；该调用可能发生在BeginPlay或迟到生成事件中。 */

@@ -44,3 +44,14 @@
 本内容包新增三个 `VFX/IceArrow/Niagara/Review/NS_DBA_IceArrow_{Cast,Flight,Impact}_A` 候选和相应 Review 材质、网格、纹理、审核地图。正式 Frostbolt Definition 与 Catalog 未替换。
 
 已输出真实三阶段渲染与 68 帧连续编辑器预览；**与选定 A 图高度一致的视觉验收仍未通过**，角色实战、多人性能、四档画质与 Cook 隔离尚未完成。详细记录见工作空间 `Docs/Implementation/IceArrow/ReviewProgress_20261016.md`，实际原生资源清单见本插件 `Docs/IceArrowReviewManifest_20261016.json`。这些审核工具不构成新的正式 VFX 播放框架。
+
+### A3冰晶源网格精修候选（等待原生导入）
+
+`SourceArt/VFX/IceArrow/Review/SM_DBA_IceArrow_CrystalA3.obj` 是在既有A2效果图审查之后新增的独立低面数候选。几何包含一个细长主棱晶和三条不对称附晶刃，采用闭合多面体、逐面法线和纵向UV；不包含服务器碰撞或伤害逻辑。模型源码设计范围约152厘米长，122顶点、228三角面，面向本地正X。候选供Monolith在**拥有工程的UE5.8编辑器**原生导入 `/DBAPresentationPack_Core/VFX/IceArrow/Meshes/Review/`，对比现有A2的45°视角、材质成本及轮廓。导入前不得修改正式Frostbolt Definition或正式Niagara。
+
+新增 `Tests/Assets/TestIceArrowCrystalA3Geometry.py` 进行源OBJ拓扑、法线和UV检查；源文件及测试只能证明几何前提，不代表UE资产、画面或GPU性能验收完成。必须通过真实Editor导入、保存、独立重载和渲染截图后才能决定是否采用A3。
+
+**源文件修订：** 原 `SM_DBA_IceArrow_CrystalA3.obj` 的法线不完整，不可导入；`SM_DBA_IceArrow_CrystalA3Validated.obj` 修正了228个面的三维法线，作为唯一允许执行后续导入检查的A3源文件。两份源稿并存仅为错误追溯，测试入口指向Validated版本；所有正式Niagara及Definition保持不变。
+
+原生导入入口为 `Tools/Unreal/VFX/DevelopmentMagic/ImportIceArrowA3Validated.py` 的 `import_candidate`（A3导入函数），要求项目、版本、独占编辑器标记及源文件摘要全部通过；不存在时才能新建Review下原生网格。该入口尚未在UE编辑器运行。
+

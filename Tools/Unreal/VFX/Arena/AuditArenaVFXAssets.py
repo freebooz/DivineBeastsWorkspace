@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """SSLM竞技场VFX资源规格/文件存在性离线审计。
 
-运行目标：静态确认七类Effect Type候选预算及三类NDC变量协议。
+运行目标：静态确认七类Effect Type、三类NDC、三套GPU Reader候选及预算协议。
 边界：不调用Unreal Editor、不读取.uasset内容、不测GPU；脚本通过不等于真实Niagara资源已验证。
 输入：同目录ArenaVFXAssetsSpec_V1.json；输出：标准JSON报告，可选择严格要求原生资产存在。
 """
@@ -38,6 +38,20 @@ def audit(spec: dict, workspace: Path, require_native: bool = False) -> dict:
     declared = [item.get("asset_name", "") for item in types + channels]
     if len(set(declared)) != len(declared) or not all(declared):
         problems.append("Effect Type/NDC资产名称缺失或重复")
+
+    # Reader是可以实际丢失的独立Niagara System资产；NDC数据通道文件存在不等于可渲染。
+    effect_names = {item.get("asset_name") for item in types}
+    readers = [item.get("reader_system_asset") for item in channels]
+    if (len(readers) != 3 or len(set(readers)) != len(readers) or
+            not all(isinstance(name, str) and name.startswith("NS_GP_Arena") for name in readers) or
+            spec.get("reader_system_asset_root") != "/GamePlatformVFX/Arena/Niagara"):
+        problems.append("三类NDC必须有不同的正式GPU Reader和统一Niagara资产目录")
+    for channel in channels:
+        if (channel.get("reader_effect_type_asset") not in effect_names or
+                channel.get("reader_simulation") != "GPU" or
+                channel.get("reader_system_status") != "not_created" or
+                channel.get("gpu_test_status") != "not_tested"):
+            problems.append(f"{channel.get('asset_name')} Reader Effect Type或GPU验收声明不合法")
 
     sums = {quality: 0 for quality in TIERS}
     for effect in types:
@@ -134,6 +148,18 @@ def audit(spec: dict, workspace: Path, require_native: bool = False) -> dict:
             else:
                 missing.append({"kind": category, "path": str(path.relative_to(workspace)).replace("\\", "/")})
 
+    # 三套Reader与七类NET及三类NDC一样纳入必需原生资产门禁，不能用通道存在性替代Reader。
+    for channel in channels:
+        asset_name = channel.get("reader_system_asset")
+        if not isinstance(asset_name, str) or not asset_name.startswith("NS_GP_Arena"):
+            continue
+        path = plugin / "Content" / "Arena" / "Niagara" / (asset_name + ".uasset")
+        record = {"kind": "reader_system", "path": str(path.relative_to(workspace)).replace("\\", "/")}
+        if path.is_file():
+            found.append(record)
+        else:
+            missing.append(record)
+
     if require_native and missing:
         problems.append("要求的UE原生资产尚未创建或尚未放在规定的Content目录")
     return {
@@ -142,6 +168,7 @@ def audit(spec: dict, workspace: Path, require_native: bool = False) -> dict:
         "candidate_system_caps": sums,
         "native_files_found": found,
         "native_files_missing": missing,
+        "reader_systems_native_verified": False,
         "unreal_native_assets_verified": False,
         "project_config_static_contract": static_config_consistent,
         "project_config_runtime_verified": False,

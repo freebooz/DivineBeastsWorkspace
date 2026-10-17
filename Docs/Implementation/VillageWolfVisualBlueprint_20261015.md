@@ -49,3 +49,17 @@ UDivineBeastsVillageWolfVisualWorldSubsystem（项目客户端狼表现子系统
 已有作者脚本：Tools/Unreal/Creatures/AuthorVillageWolfCoreUE58.py（蓝图/数据资产生成）、VillageWolfAuthoringSpec.json（制作合同）、InspectVillageWolfVisualSourcesUE58.py（狼美术来源检查）。
 
 尚缺：外部Fab狼骨骼、材质、动画蓝图、客户端实际视觉验证，以及正式新手村导航与联机验收。用户本轮不要求编译验证，因此不在本轮启动UBT、Cook、自动化测试或真实多人运行。
+## 2026-10-16 编写补充
+
+原Fab动物包即使仅包含Wolf Skeleton和动画序列，仍可在真正导入后先迁入通用美术内容包，再使用 AuthorLicensedWolfAnimBlueprintUE58.py（动画蓝图底稿作者）生成同骨架ABP_DBA_Wolf。该底稿只是Skeleton身份与PreviewMesh绑定；Idle、Walk、Run、Attack、Hit、Death状态必须按WolfAnimationGraphRecipeV1.json在真实UE编辑器中制作并通过最终审核，不能将空AnimGraph作为已完成动画。
+
+客户端真正加载前会校验UAnimBlueprintGeneratedClass目标骨架是否与USkeletalMesh骨架一致；专服不加载骨骼/动画，仅检查授权内容包的软路径结构；两个安全开关仍为false。本轮无编译/Shader/Cook/多人实景测试。
+## 2026-10-16 客户端动画性能及导入姿态校准
+
+项目客户端每个World最多申请一次狼Mesh/AnimBP世界租约；若资源或骨架不匹配则释放租约，避免20只狼重复加载。正常加载后启用动画更新率优化和按可见性更新骨骼姿态，服务器不受影响。
+
+默认沿用继承Character的SkeletalMesh姿态，仅在真实Fab资产完成编辑器外观审核后，才允许通过WolfVisualYawDegrees、WolfVisualScale、WolfVisualHeightOffsetCm（客户端配置参数）指定狼的实际轴向、尺寸和足底高度。三项参数均限幅，且不修改服务器Capsule碰撞根。
+
+两个客户端发布配置需要分别收录原始Animals资源与Wolf/Animation原生动画蓝图目录，否则软引用不会保证Cook进入正式游戏包；内容迁移作者已按此规则编写，未获得授权资产前不会自动添加空目录。
+
+

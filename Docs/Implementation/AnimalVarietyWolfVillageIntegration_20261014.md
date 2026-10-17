@@ -84,4 +84,33 @@
 - 已有两份 UE5.8 原生资产仍保留：服务器安全狼角色蓝图 BP_DBA_VillageWolf，狼AI定义 DA_DBA_VillageWolfAI。服务端限制最多20只，原始生成点水平间距严格超过30米，22米出生安全区与14秒重生冷却保持不变。
 
 **交付边界：** 当前新增的授权迁移与软引用绑定代码已写入，但由于没有实际Fab正版原始素材，通用动物美术包及可驱动的狼动画蓝图尚未实际创建；本轮没有编译，游戏内仍不会出现狼。需要用户在Fab My Library中完成实际领取/导入，后续才能完成最后的资产迁移及显示。
+## 2026-10-16 第二轮：完成散布合并冲突和动画源兼容性处理
+
+本轮仍遵守用户明确要求：只写代码和作者资产配方，不编译、不Cook、不运行游戏或自动化测试。
+
+- 重新读取最新主分支，发现 DBAServer（项目专用服务器）狼群子系统源文件夹杂旧版5米间距逻辑的Git合并冲突标记。已仅在该狼文件中移除全部实际发现的标记，保留20只上限、30米严格间距与原始出生锚点，未覆盖其它正在进行的VFX任务。工作区只读审查索引冲突数为0，不代表C++编译已通过。
+- 服务端 HasVerifiedAnimalAssets（动物资源许可门禁）额外核对 WolfSkeletalMesh（狼网格）及 WolfAnimationBlueprint（动画蓝图）的非空软路径，并限定两个引用属于 DBAContentPack_AnimalsProtofactor（通用动物美术内容包）。服务端只检查字符串结构，不装载客户端第三方骨骼、材质或贴图。这样即使有人提前将两个开关改为true，资源路径为空也会拒绝生成透明攻击敌人。
+- DivineBeastsVillageWolfVisualWorldSubsystem（客户端狼表现世界子系统）增加与真实UAnimBlueprintGeneratedClass（动画蓝图生成类）的Skeleton（骨架）一致性检测；只接受与狼SkeletalMesh骨架完全相同的动画蓝图，不接受其它动物的错误绑定。
+- 动物内容包迁移作者 StageLicensedAnimalVarietyUE58.py 现在允许 Fab 包只有原生Wolf Skeleton、SkeletalMesh及六类关键动画序列，PhysicsAsset（物理资产）与 AnimBlueprint（动画蓝图）可在授权资产导入后另行制作；不能因此阻断真实狼资源的迁移。
+- 增加 AuthorLicensedWolfAnimBlueprintUE58.py（狼骨架专属动画蓝图底稿作者），使用UE5.8 AnimBlueprintFactory（原生动画蓝图资产工厂）与真实Wolf Skeleton/PreviewMesh建立动画蓝图底稿。底稿尚无完整AnimGraph（动画状态机），状态仍为 SkeletonOnly_NoAnimGraph，绝不冒充完整可运行动画，也不启用刷怪。
+- 统一修正 InspectVillageWolfVisualSourcesUE58.py（美术资源只读检查）读取单一正版Fab清单，避免与另一份旧清单中的路径发生冲突；客户端绑定工具 BindLicensedVillageWolfVisualUE58.py 已允许从源Fab自带AnimBlueprint，或从后续创建的项目动画蓝图两条路径读取。两条路径都不自动批准动画图验收。
+- 新建 WolfAnimationGraphRecipeV1.json（狼动画图制作规范），明确Idle、Walk、Run、Attack、Hit、Death状态、速度/死亡/攻击转换、音效通知与四足骨骼要求，用于后续Editor/Monolith逐项制作，当前只是原生图作者输入规范。
+- 调整迁移脚本的 VillageDevelopmentClient（新手村开发客户端）AlwaysCook（强制烘焙）条目：必须写入明确的ProjectPackagingSettings（项目打包设置）配置段，不能盲目追加到文件尾部其它配置段。
+- 更新下一阶段静态验收源码，加入狼视觉资源软路径及授权包归属检查；本轮未执行该测试。
+
+**最终阻塞**：当前会话仍未获得用户Epic/Fab账户合法领取的ANIMAL VARIETY PACK实际狼网格、骨骼、动画二进制资产；因此真实动物内容插件、完整动画状态机、新手村地图生成点和游戏实测仍无法完成。当前bEnableVillageWolves=false、bClientVisualsVerified=false安全关闭。后续只能在用户完成Fab领取和UE正式导入之后继续真实资产制作、再由用户另行授权编译验证。
+## 2026-10-16 第三轮：资源生命周期、客户端包装与调试提示
+
+按最新指令继续只实施代码与作者流程，仍不执行UBT（虚幻构建工具）、Shader（着色器）编译、Cook（资源烘焙）、自动化测试和实机运行。以下修改均属于已写入源码、**待后续编译验收**。
+
+- `DivineBeastsVillageWolfVisualWorldSubsystem.h/.cpp`（客户端狼表现世界子系统）增加每世界最多一次Fab狼资产租约申请限制，避免最多20只狼导致重复加载；资源配置错误只输出一次错误说明。与骨架不匹配的已加载模型和动画租约立即释放，防止内存持续占用；世界退出时仍统一清理租约和观察事件。
+- 狼客户端骨骼模型启用SkeletalMesh动画更新率优化（Update Rate Optimization，骨骼动画更新频率优化），不可见时停止刷新完整姿态。这不改变Dedicated Server的服务器权威移动、伤害及碰撞。
+- 客户端提供可选的 `WolfVisualYawDegrees`（狼模型Yaw朝向）、`WolfVisualScale`（狼模型缩放）、`WolfVisualHeightOffsetCm`（狼模型高度偏移）三项美术校准键；`Game/Config/DefaultGame.ini`仅留注释示例，默认不覆盖原组件朝向及大小。仅真实Fab网格人工审核后可开启，数值必须有限且受到上下限约束。
+- 服务端新手村World开始时，如果狼资源/配置未满足生成许可，会仅记录一次 `VillageWolfInactive`（狼群未激活）和两项安全开关状态，帮助解释为什么地图看不到狼。没有因此启用透明攻击怪。
+- `StageLicensedAnimalVarietyUE58.py`（授权动物资源原生迁移）在迁移时检查三层内容注册表、项目装配及两份客户端发布配置在迁移过程中是否被其他任务改动，发现变化拒绝覆盖；迁移成功后分别为 `VillageDevelopmentClient`（新手村开发客户端）和 `FrontEndClient`（正式前端客户端）加入 `Animals`（原包狼骨骼/纹理/动画）与 `Wolf/Animation`（后期动画蓝图）两个资源目录的客户端Cook配置。Dedicated Server纯表现隔离不变。
+- 狼持续最多20只、生成点水平距离严格大于30米，PlayerStart（玩家出生点）周围22米保护区不变。未取得Fab真实资产之前 `bEnableVillageWolves=false`、`bClientVisualsVerified=false` 仍不改变。
+
+**阻塞依旧：** 本轮工作区尚无用户Epic/Fab账号正式领取/下载的ANIMAL VARIETY PACK源狼网格、Skeleton及动画序列。实际动画图和通用动物插件不可凭JSON与蓝图底稿冒充。必须在用户授权后导入，才能继续真实资产创作。
+
+
 

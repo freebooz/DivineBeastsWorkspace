@@ -12,6 +12,7 @@
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Misc/ConfigCacheIni.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimBlueprintGeneratedClass.h" // 校验真实动画蓝图生成类与骨骼网格的Skeleton一致。
 
 bool UDivineBeastsVillageWolfVisualWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -25,6 +26,8 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::OnWorldBeginPlay(UWorld& InWo
     Super::OnWorldBeginPlay(InWorld);
     if (bClosing || &InWorld != GetWorld() || InWorld.bIsTearingDown || SpawnHandle.IsValid()) return;
     Operation = FGuid::NewGuid();
+    bVisualLoadAttempted = false;
+    bMissingVisualLogged = false;
     SpawnHandle = InWorld.AddOnActorSpawnedHandler(
         FOnActorSpawned::FDelegate::CreateUObject(this,&ThisClass::ObserveActor));
     for (TActorIterator<ADivineBeastsVillageWolf> It(&InWorld); It; ++It)
@@ -46,21 +49,36 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ObserveActor(AActor* Spawned)
 void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals()
 {
     // 未正式导入Fab或未审核时不替换客户端Mesh，不根据网络存在生成假狼外观。
-    if (bClosing || bLoading || !GConfig) return;
+    if (bClosing || bLoading || bReady || bVisualLoadAttempted || !GConfig) return;
     bool bVerified=false;
     const TCHAR* Section=TEXT("DivineBeasts.VillageWolves");
     GConfig->GetBool(Section,TEXT("bClientVisualsVerified"),bVerified,GGameIni);
-    if (!bVerified) return;
+    if (!bVerified)
+    {
+        // 许可未批准属于正常开发阶段，跳过外观；不产生假的狼资产租约。
+        return;
+    }
     FString MeshName, AnimName;
     GConfig->GetString(Section,TEXT("WolfSkeletalMesh"),MeshName,GGameIni);
     GConfig->GetString(Section,TEXT("WolfAnimationBlueprint"),AnimName,GGameIni);
     WolfMeshPath=FSoftObjectPath(MeshName);
     WolfAnimPath=FSoftObjectPath(AnimName);
-    if (!WolfMeshPath.IsValid() || !WolfAnimPath.IsValid()) return;
+    // 客户端也执行与专服相同的第三方内容包根路径保护；未注册的其它狼材质不允许旁路加载。
+    const FString AnimalContentRoot(TEXT("/DBAContentPack_AnimalsProtofactor/"));
+    if (!WolfMeshPath.IsValid() || !WolfAnimPath.IsValid() ||
+        !WolfMeshPath.GetLongPackageName().StartsWith(AnimalContentRoot) ||
+        !WolfAnimPath.GetLongPackageName().StartsWith(AnimalContentRoot))
+    {
+        if (!bMissingVisualLogged)
+            UE_LOG(LogTemp, Warning, TEXT("VillageWolfVisualConfigMissing: 真实Fab狼骨骼/AnimBlueprint不存在或未归集通用动物包。"));
+        bMissingVisualLogged = true;
+        return;
+    }
     UWorld* World=GetWorld();
     if (!World || World->bIsTearingDown || !World->GetGameInstance()) return;
     auto* Data=IGamePlatformDataService::Get(*World->GetGameInstance());
     if (!Data) return;
+    bVisualLoadAttempted = true;
     bLoading=true;
     const FGuid Expected=Operation;
     TWeakObjectPtr<ThisClass> WeakThis(this);
@@ -78,11 +96,21 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals()
             if (!CurrentWorld || CurrentWorld->bIsTearingDown) return;
             USkeletalMesh* Asset=Cast<USkeletalMesh>(Self->WolfMeshPath.ResolveObject());
             UClass* Animation=Cast<UClass>(Self->WolfAnimPath.ResolveObject());
-            Self->bReady=Result.IsSuccess() && IsValid(Asset) && IsValid(Animation) &&
-                Animation->IsChildOf(UAnimInstance::StaticClass());
+            const UAnimBlueprintGeneratedClass* AnimClass=Cast<UAnimBlueprintGeneratedClass>(Animation);
+            // 不能只凭继承UAnimInstance就接受不匹配的动画蓝图；多人狼群必须严格匹配同一骨架。
+            Self->bReady=Result.IsSuccess() && IsValid(Asset) && IsValid(AnimClass) &&
+                IsValid(Asset->GetSkeleton()) && AnimClass->GetTargetSkeleton()==Asset->GetSkeleton();
             if (!Self->bReady)
             {
-                UE_LOG(LogTemp,Warning,TEXT("VillageWolfVisualRejected: 狼的Fab骨骼或动画蓝图资源尚未完成真实导入/校验。"));
+                // 已加载但与真实狼骨架不匹配的美术不得持续占用世界资源租约和显存。
+                // 失效请求只拒绝本世界这一份租约，不卸载其它系统合法持有的共享资源。
+                const FGamePlatformDataLease RejectedLease = Self->VisualLease;
+                Self->VisualLease = {};
+                if (UGameInstance* Instance = CurrentWorld->GetGameInstance())
+                    if (IGamePlatformDataService* Resources = IGamePlatformDataService::Get(*Instance);
+                        Resources && RejectedLease.IsValid())
+                        Resources->ReleaseResources(RejectedLease);
+                UE_LOG(LogTemp, Warning, TEXT("VillageWolfVisualRejected: 狼骨骼或AnimBlueprint与已审核资源不匹配，已释放本次资源租约。"));
                 return;
             }
             const auto Wolves=Self->ObservedWolves.Array();
@@ -107,15 +135,42 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ApplyVisual(ADivineBeastsVill
     auto* Mesh=Wolf.GetMesh();
     auto* Asset=Cast<USkeletalMesh>(WolfMeshPath.ResolveObject());
     auto* Animation=Cast<UClass>(WolfAnimPath.ResolveObject());
-    if (!IsValid(Mesh) || !IsValid(Asset) || !IsValid(Animation) ||
-        !Animation->IsChildOf(UAnimInstance::StaticClass())) return;
+    const UAnimBlueprintGeneratedClass* AnimClass=Cast<UAnimBlueprintGeneratedClass>(Animation);
+    if (!IsValid(Mesh) || !IsValid(Asset) || !IsValid(AnimClass) ||
+        !IsValid(Asset->GetSkeleton()) || AnimClass->GetTargetSkeleton()!=Asset->GetSkeleton()) return;
     // 客户端SkeletalMesh与AnimBP属于已通过平台租约审查的单一内容包；
     // 骨架轴向与模型比例在原生Editor验收后由导入Profile统一修订，绝不改写服务器胶囊。
     Mesh->SetSkeletalMeshAsset(Asset);
+    // 狼群最多20只：仅客户端开启骨骼动画更新率优化；不可见时停止刷新完整骨骼姿态。
+    // 服务器碰撞、寻路、命中和Actor复制不依赖这份纯表现更新频率。
+    Mesh->bEnableUpdateRateOptimizations = true;
+    Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
     if (bClosing || Wolf.IsActorBeingDestroyed()) return;
     Mesh->SetAnimInstanceClass(Animation);
     if (bClosing || Wolf.IsActorBeingDestroyed()) return;
-    Mesh->SetRelativeLocation(FVector(0.0f,0.0f,-Wolf.GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
+    // 狼与人体模型轴向、比例可能不同；只有美术审核后显式填写的项目参数才覆盖默认变换。
+    // 这些值只作用于客户端视觉骨骼，不能改变服务器胶囊、战斗判定或物理。
+    float HeightOffsetCm = 0.0f;
+    if (GConfig)
+    {
+        constexpr const TCHAR* Section = TEXT("DivineBeasts.VillageWolves");
+        float YawDegrees = 0.0f;
+        if (GConfig->GetFloat(Section, TEXT("WolfVisualYawDegrees"), YawDegrees, GGameIni) &&
+            FMath::IsFinite(YawDegrees) && FMath::Abs(YawDegrees) <= 180.0f)
+            Mesh->SetRelativeRotation(FRotator(0.0f, YawDegrees, 0.0f));
+
+        float VisualScale = 1.0f;
+        if (GConfig->GetFloat(Section, TEXT("WolfVisualScale"), VisualScale, GGameIni) &&
+            FMath::IsFinite(VisualScale) && VisualScale >= 0.5f && VisualScale <= 2.0f)
+            Mesh->SetRelativeScale3D(FVector(VisualScale));
+
+        float ConfiguredHeight = 0.0f;
+        if (GConfig->GetFloat(Section, TEXT("WolfVisualHeightOffsetCm"), ConfiguredHeight, GGameIni) &&
+            FMath::IsFinite(ConfiguredHeight) && FMath::Abs(ConfiguredHeight) <= 150.0f)
+            HeightOffsetCm = ConfiguredHeight;
+    }
+    Mesh->SetRelativeLocation(FVector(0.0f, 0.0f,
+        -Wolf.GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + HeightOffsetCm));
 }
 
 void UDivineBeastsVillageWolfVisualWorldSubsystem::HandleWolfEndPlay(AActor* Ended,EEndPlayReason::Type)
@@ -132,6 +187,8 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::Deinitialize()
     bClosing=true;
     Operation.Invalidate();
     bReady=false; bLoading=false;
+    bVisualLoadAttempted = true;
+    bMissingVisualLogged = false;
     UWorld* World=GetWorld();
     if (World && SpawnHandle.IsValid()) World->RemoveOnActorSpawnedHandler(SpawnHandle);
     SpawnHandle.Reset();

@@ -48,6 +48,12 @@ def validate() -> dict:
                  "OverlapAnyTestByObjectType", "IsOutsidePlayerStart"]:
         if name not in source + server:
             issues.append(f"狼群代码缺少必要的权威保护：{name}")
+    # 正式授权之前两项仍关闭；未来开启时必须先有两个真实客户端软引用，
+    # 服务器只查路径结构和内容包归属，不能Cook或加载纯表现资产。
+    for name in ("WolfSkeletalMesh", "WolfAnimationBlueprint", "VisualRoot",
+                 "WolfAIDefinition", "WolfBlueprintClass"):
+        if name not in server:
+            issues.append(f"缺少防止不可见攻击怪的资源准入：{name}")
 
     # 参考C++候选表达式的数学排列。在理想平地验证20点容量；
     # 实际地图若没有足够可行NavMesh位置，合法运行结果允许少于20只。

@@ -1,0 +1,183 @@
+{
+  "SchemaVersion": 1,
+  "Project": "SSLM",
+  "Status": "Prepared_NotExecuted_WaitingForLicensedWolfSkeleton",
+  "PurposeZh": "基于Fab正版狼Skeleton创建可编辑动画蓝图，只有真实六类动画和UE5.8原生Graph保存后才可进入人工验收。",
+  "Owner": {
+    "Layer": "DivineBeasts第三层项目内容",
+    "ContentPack": "DBAContentPack_AnimalsProtofactor",
+    "AnimBlueprint": "/DBAContentPack_AnimalsProtofactor/Wolf/Animation/ABP_DBA_Wolf",
+    "ServerAllowed": false
+  },
+  "Dependencies": {
+    "SourceManifest": "Tools/Unreal/Creatures/LicensedAnimalVarietyImport.json",
+    "Skeleton": "Source.WolfSkeleton迁移后的真实UE对象路径",
+    "Mesh": "Source.WolfSkeletalMesh迁移后的真实UE对象路径",
+    "Sequences": "Source.WolfAnimationSequences下六个真实UE资产对象路径",
+    "Factory": "Unreal AnimBlueprintFactory，设置TargetSkeleton和PreviewSkeletalMesh",
+    "AllowedWithoutCompilation": true
+  },
+  "Graph": {
+    "AnimationMode": "AnimationBlueprint",
+    "FinalOutput": "WolfFullBodyStateMachine -> FinalAnimationPose",
+    "MainGraph": "AnimGraph",
+    "StateMachine": "SM_WolfFullBody",
+    "InitialState": "Idle",
+    "Variables": [
+      {
+        "Name": "Speed2D",
+        "Type": "float",
+        "Source": "TryGetPawnOwner().GetVelocity().Size2D()",
+        "ClientOnly": true
+      },
+      {
+        "Name": "bIsDead",
+        "Type": "boolean",
+        "Source": "ADivineBeastsVillageWolf.IsWolfAlive()的反向值（未完成权威初始化时不得误判为已死亡）",
+        "ClientOnly": true
+      },
+      {
+        "Name": "AIState",
+        "Type": "EGamePlatformAIPublicState",
+        "Source": "UGamePlatformAIStateComponent.GetSnapshot().PublicState",
+        "ClientOnly": true
+      },
+      {
+        "Name": "bWasHit",
+        "Type": "boolean",
+        "Source": "由已复制的真实Combat事件短时驱动，不能客户端计算伤害",
+        "ClientOnly": true
+      }
+    ],
+    "States": [
+      {
+        "Id": "Idle",
+        "SequenceKey": "Idle",
+        "Loop": true,
+        "DescriptionZh": "待机呼吸/自然耳尾轻动"
+      },
+      {
+        "Id": "Walk",
+        "SequenceKey": "Walk",
+        "Loop": true,
+        "DescriptionZh": "慢速巡逻与返回"
+      },
+      {
+        "Id": "Run",
+        "SequenceKey": "Run",
+        "Loop": true,
+        "DescriptionZh": "高速追击"
+      },
+      {
+        "Id": "Attack",
+        "SequenceKey": "Attack",
+        "Loop": false,
+        "DescriptionZh": "咬击动作，全身播放，命中只能由服务器判定"
+      },
+      {
+        "Id": "Hit",
+        "SequenceKey": "Hit",
+        "Loop": false,
+        "DescriptionZh": "受击短反应，不得锁死移动"
+      },
+      {
+        "Id": "Death",
+        "SequenceKey": "Death",
+        "Loop": false,
+        "DescriptionZh": "仅执行一次，尸体四秒清除"
+      }
+    ],
+    "Transitions": [
+      {
+        "From": "Idle",
+        "To": "Walk",
+        "Condition": "Speed2D > 10 且 非死亡/受击/攻击",
+        "BlendSeconds": 0.15
+      },
+      {
+        "From": "Walk",
+        "To": "Idle",
+        "Condition": "Speed2D <= 10 且 非死亡/受击/攻击",
+        "BlendSeconds": 0.15
+      },
+      {
+        "From": "Walk",
+        "To": "Run",
+        "Condition": "Speed2D > 250 且 非死亡/受击/攻击",
+        "BlendSeconds": 0.15
+      },
+      {
+        "From": "Run",
+        "To": "Walk",
+        "Condition": "Speed2D <= 250 且 Speed2D > 10",
+        "BlendSeconds": 0.15
+      },
+      {
+        "From": "Run",
+        "To": "Idle",
+        "Condition": "Speed2D <= 10",
+        "BlendSeconds": 0.15
+      },
+      {
+        "From": "AnyLivingState",
+        "To": "Attack",
+        "Condition": "复制AIState=Attacking且当前存活，按攻击代次防重复",
+        "BlendSeconds": 0.08
+      },
+      {
+        "From": "AnyLivingState",
+        "To": "Hit",
+        "Condition": "真实Combat受击事件且当前存活",
+        "BlendSeconds": 0.07
+      },
+      {
+        "From": "Attack",
+        "To": "IdleOrWalkOrRun",
+        "Condition": "攻击序列接近完成，依据当前移动速度返回运动态",
+        "BlendSeconds": 0.12
+      },
+      {
+        "From": "Hit",
+        "To": "IdleOrWalkOrRun",
+        "Condition": "受击序列接近完成，依据当前移动速度返回运动态",
+        "BlendSeconds": 0.1
+      },
+      {
+        "From": "AnyState",
+        "To": "Death",
+        "Condition": "服务器复制的死亡事实为真",
+        "BlendSeconds": 0.03
+      },
+      {
+        "From": "Death",
+        "To": "None",
+        "Condition": "禁止从死亡状态离开",
+        "BlendSeconds": 0
+      }
+    ],
+    "RootMotion": "RootMotionDisabled_ReplicatedServerMovementOnly",
+    "AnimationNotifiesPolicy": "客户端Notify仅音效、尘土、爪部装饰特效；禁止ApplyDamage、修改生命或服务器目标。",
+    "EditorAuthoringStepsZh": [
+      "打开Fab官方已授权狼Animation序列，逐一检查骨骼名称、朝向、尺幅及Loop。",
+      "使用真实狼Skeleton生成AnimBlueprint，而不是套用人体Manny/Quinn动画。",
+      "按States新增Idle/Walk/Run/Attack/Hit/Death，连接动画序列输入至各状态输出Pose。",
+      "配置Speed2D变量和攻击/受击/死亡的可信只读状态，连接全部Transitions与FinalAnimationPose。",
+      "角色客户端外观加载后再设置对应AnimBlueprintGeneratedClass；不得在服务器蓝图硬引用。",
+      "完成后必须在独立资源验收流程中编译蓝图、重载资产、检查骨骼匹配及视觉表现；本轮不执行。"
+    ]
+  },
+  "Quality": {
+    "Update": "bUseMultiThreadedAnimationUpdate按实际UE版本支持情况开启",
+    "LOD": "远距离/低档停止耳尾和足部IK，优先保留主体步态",
+    "MaximumActorCount": 20,
+    "NoClientAuthority": true,
+    "NoVisualsWithoutAsset": true
+  },
+  "Evidence": {
+    "BlueprintSaved": false,
+    "AnimationGraphAuthored": false,
+    "AnimationGraphCompiled": false,
+    "Cooked": false,
+    "TwoClientRuntimeVerified": false
+  }
+}

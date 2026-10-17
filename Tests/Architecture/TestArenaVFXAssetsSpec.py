@@ -87,6 +87,22 @@ class ArenaVFXAssetsSpecTests(unittest.TestCase):
         self.assertIn("VFXRequest.ExperienceId = Request.Context.ExperienceId", provider.read_text(encoding="utf-8"))
         self.assertIn("bMatchExperience ? ExperienceId : WorldId", policy.read_text(encoding="utf-8"))
 
+    def test_gpu_readers_are_first_class_native_assets(self):
+        """三套共享Reader必须真实存在才可继续GPU测试；设计规格和文件名不能充当资产。"""
+        report = MODULE.audit(ASSET_SPEC, ROOT)
+        readers = [item for item in report["native_files_found"] + report["native_files_missing"]
+                   if item["kind"] == "reader_system"]
+        self.assertEqual(len(readers), 3)
+        self.assertFalse(report["reader_systems_native_verified"])
+        self.assertEqual(len({entry["reader_system_asset"] for entry in ASSET_SPEC["data_channels"]}), 3)
+
+        wrong = copy.deepcopy(ASSET_SPEC)
+        wrong["data_channels"][1]["reader_system_asset"] = wrong["data_channels"][0]["reader_system_asset"]
+        self.assertFalse(MODULE.audit(wrong, ROOT)["success"])
+        wrong = copy.deepcopy(ASSET_SPEC)
+        wrong["data_channels"][2]["reader_effect_type_asset"] = "NET_GP_NonExistent"
+        self.assertFalse(MODULE.audit(wrong, ROOT)["success"])
+
     def test_native_files_are_not_implicitly_verified(self):
         """仅检测文件名不能声称原生资产、Shader或GPU性能通过。"""
         report = MODULE.audit(ASSET_SPEC, ROOT)

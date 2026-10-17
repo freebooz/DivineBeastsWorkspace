@@ -79,6 +79,8 @@
 4. **证据状态：** 通过项目文件只读返回及精确匹配，已确认独立配置类别、平台默认关闭、项目四档`+`数组、真实ExperienceId透传及7NET/3NDC规格JSON结构保持完整；这不是运行时配置回归、Niagara原生资产、Shader、GPU或5v5验收。离线验证Job `wc_job_9RKG8UmtAqiyEdce`已提交但观察时仍为`agent_queued`，未执行，不得标为Passed。
 5. **编辑器条件：** Monolith注册可见，实际执行报告“Unreal Editor not running”，因此本轮没有创建新的`.uasset`，未启用`bUseSharedBurstChannel`。现有NDC批量API尚未接入有所有权/去重/空间上下文的帧批处理队列，不能冒充共享模拟已投产。
 
+已将原生GPU Reader纳入独立资产门禁：`ArenaVFXAssetsSpec_V1.json`（七类NET＋三类NDC＋三套Reader候选）现在登记`NS_GP_ArenaImpactReader`、`NS_GP_ArenaGroundBurstReader`及`NS_GP_ArenaAmbientBurstReader`，每个Reader均具有中立Effect Type映射和GPU模拟候选。`AuditArenaVFXAssets.py`独立检查`reader_system`原生`.uasset`是否存在，`TestArenaVFXAssetsSpec.py`新增重复Reader名与错误EffectType防回归。上述13项均仅为待原生引擎创建/验收资产，文件路径扫描不能证明Shader或GPU渲染正常；本次仍未启动NDC生产开关。
+
 **后续阻断门禁：** 先取得当前变更的增量模块编译及项目层原生自动化结果，再完成7类NET、3类NDC、共享Reader与真实GPU渲染、Client/Server Cook和MainArena 5v5 P95/P99性能压测；以前一轮模块构建退出码0不能代替本次变更后的构建证据。
 
 **待完成的硬门禁：** 真实UE5.8 Editor / Monolith原生资产创建保存与重载、Niagara读者GPU图、7类NET与各定义绑定、MainArena真实ExperienceId预算及项目配置引擎加载验证、NDC分帧队列及可验证的Islands分区、完整Editor/Client/Server目标编译、Shader、Cook与5v5 P95/P99、人工视觉。上述阶段未完成不得填写“整体优化完成”或“FPS已保证”。
