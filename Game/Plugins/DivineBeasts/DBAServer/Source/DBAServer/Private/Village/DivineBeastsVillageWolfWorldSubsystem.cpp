@@ -4,6 +4,8 @@
 #include "Village/DivineBeastsVillageWolfAIController.h"
 #include "Village/DivineBeastsVillageWolfSpawnPolicy.h"
 #include "Characters/DivineBeastsVillageWolf.h"
+#include "Characters/DivineBeastsVillageNPC.h"
+#include "Characters/DivineBeastsVillageVampire.h"
 #include "Components/GamePlatformAIStateComponent.h"
 #include "Components/GamePlatformCombatComponent.h" // 服务器死亡判定必须包含完整组件定义。
 #include "Components/GamePlatformExperienceComponent.h"
@@ -73,10 +75,11 @@ void UDivineBeastsVillageWolfWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 bool UDivineBeastsVillageWolfWorldSubsystem::HasVerifiedAnimalAssets() const
 {
     if (!GConfig) return false;
-    bool bEnabled = false, bClientAssetsVerified = false;
+    bool bEnabled = false, bClientAssetsVerified = false, bVampireClientAssetsVerified = false;
     const TCHAR* Section = TEXT("DivineBeasts.VillageWolves");
     GConfig->GetBool(Section, TEXT("bEnableVillageWolves"), bEnabled, GGameIni);
     GConfig->GetBool(Section, TEXT("bClientVisualsVerified"), bClientAssetsVerified, GGameIni);
+    GConfig->GetBool(Section, TEXT("bVampireClientVisualsVerified"), bVampireClientAssetsVerified, GGameIni);
     FString DefinitionPath;
     FString WolfClassName;
     GConfig->GetString(Section, TEXT("WolfAIDefinition"), DefinitionPath, GGameIni);
@@ -84,7 +87,7 @@ bool UDivineBeastsVillageWolfWorldSubsystem::HasVerifiedAnimalAssets() const
     const FSoftObjectPath Definition(DefinitionPath);
     const FSoftClassPath WolfBlueprint(WolfClassName);
     // 两份服务器安全资源都必须存在；只检查权威包，不访问客户端模型与动画。
-    return bEnabled && bClientAssetsVerified && Definition.IsValid() && WolfBlueprint.IsValid() &&
+    return bEnabled && bClientAssetsVerified && bVampireClientAssetsVerified && Definition.IsValid() && WolfBlueprint.IsValid() &&
         FPackageName::IsValidLongPackageName(Definition.GetLongPackageName()) &&
         FPackageName::DoesPackageExist(Definition.GetLongPackageName()) &&
         FPackageName::IsValidLongPackageName(WolfBlueprint.GetLongPackageName()) &&
@@ -195,13 +198,17 @@ void UDivineBeastsVillageWolfWorldSubsystem::HandleExperienceChanged(const FGame
     TryFillWolves();
 }
 
-bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdinal, FTransform& OutTransform) const
+bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(
+    int32 SpawnOrdinal, bool bVampire, FTransform& OutTransform) const
 {
     using FPolicy = FDivineBeastsVillageWolfSpawnPolicy;
     UWorld* World = GetWorld();
     auto* Nav = IsValid(World) ? UNavigationSystemV1::GetCurrent(World) : nullptr;
-    const auto* WolfDefaults = GetDefault<ADivineBeastsVillageWolf>();
-    const auto* Capsule = WolfDefaults->GetCapsuleComponent();
+    // 人型怪物胶囊高于野狼；落点和占位都必须按实际要生成的类别计算。
+    const ADivineBeastsVillageWolf* CreatureDefaults = bVampire
+        ? static_cast<const ADivineBeastsVillageWolf*>(GetDefault<ADivineBeastsVillageVampire>())
+        : GetDefault<ADivineBeastsVillageWolf>();
+    const auto* Capsule = CreatureDefaults->GetCapsuleComponent();
     if (!World || World->bIsTearingDown || !Nav || !Capsule ||
         SpawnOrdinal < 0 || SpawnOrdinal >= FPolicy::MaxAliveWolves) return false;
 
@@ -222,7 +229,7 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
 
     // 不再集中在出生点26/34/42米的狭窄三圈；在45至290米范围内有限采样。
     // 优先轮换不同PlayerStart，避免多玩家出生点附近的怪群都集中于第一个出生点。
-    // 真实服务器根据导航、坡度、占位和历史生成锚点裁剪；无安全点则宁可少于20只。
+    // 真实服务器根据导航、坡度、占位和历史生成锚点裁剪；无安全点则宁可少于10只。
     for (int32 StartOffset = 0; StartOffset < Starts.Num(); ++StartOffset)
     {
         const APlayerStart* Start = Starts[(StartOffset + SpawnOrdinal) % Starts.Num()];
@@ -252,7 +259,7 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
             FHitResult Ground;
             if (!World->LineTraceSingleByChannel(Ground, NavPoint.Location + FVector(0,0,260),
                 NavPoint.Location - FVector(0,0,650), ECC_Visibility, Query) ||
-                !Ground.bBlockingHit || Ground.ImpactNormal.Z < WolfDefaults->GetCharacterMovement()->GetWalkableFloorZ())
+                !Ground.bBlockingHit || Ground.ImpactNormal.Z < CreatureDefaults->GetCharacterMovement()->GetWalkableFloorZ())
                 continue;
             const FVector Center = Ground.ImpactPoint + FVector(0,0,HalfHeight + 4);
 
@@ -279,7 +286,103 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(int32 SpawnOrdin
     return false;
 }
 
-bool UDivineBeastsVillageWolfWorldSubsystem::SpawnOneWolf(const FTransform& SpawnAt)
+bool UDivineBeastsVillageWolfWorldSubsystem::FindNPCSpawnTransform(
+    int32 SpawnOrdinal, FTransform& OutTransform) const
+{
+    UWorld* World = GetWorld();
+    auto* Nav = IsValid(World) ? UNavigationSystemV1::GetCurrent(World) : nullptr;
+    const auto* Defaults = GetDefault<ADivineBeastsVillageNPC>();
+    const auto* Capsule = Defaults->GetCapsuleComponent();
+    if (!World || World->bIsTearingDown || !Nav || !Capsule ||
+        SpawnOrdinal < 0 || SpawnOrdinal >= 3) return false;
+
+    TArray<APlayerStart*> Starts;
+    for (TActorIterator<APlayerStart> It(World); It; ++It)
+        if (IsValid(*It) && !It->IsActorBeingDestroyed()) Starts.Add(*It);
+    Starts.Sort([](const APlayerStart& A, const APlayerStart& B)
+        { return A.GetPathName() < B.GetPathName(); });
+    if (Starts.IsEmpty()) return false;
+
+    FCollisionQueryParams Query(TEXT("VillageNPCSafeSpawn"), false);
+    FCollisionObjectQueryParams Occupancy;
+    Occupancy.AddObjectTypesToQuery(ECC_WorldStatic);
+    Occupancy.AddObjectTypesToQuery(ECC_WorldDynamic);
+    Occupancy.AddObjectTypesToQuery(ECC_Pawn);
+    Occupancy.AddObjectTypesToQuery(ECC_PhysicsBody);
+    const float Radius = Capsule->GetScaledCapsuleRadius();
+    const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+    // NPC处于怪物22米禁刷区内部；角度和半径分散，近处便于玩家发现。
+    constexpr float DistancesCm[] = {900.0f, 1400.0f, 1900.0f, 2150.0f};
+    for (int32 StartOffset = 0; StartOffset < Starts.Num(); ++StartOffset)
+    {
+        const APlayerStart* Start = Starts[(SpawnOrdinal + StartOffset) % Starts.Num()];
+        for (float DistanceCm : DistancesCm)
+        for (int32 Direction = 0; Direction < 24; ++Direction)
+        {
+            const int32 Index = (Direction * 7 + SpawnOrdinal * 8) % 24;
+            const float Angle = 2.0f * PI * static_cast<float>(Index) / 24.0f;
+            const FVector Candidate = Start->GetActorLocation() +
+                FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.0f) * DistanceCm;
+            FNavLocation NavPoint;
+            if (!Nav->ProjectPointToNavigation(Candidate, NavPoint, FVector(130, 130, 550)))
+                continue;
+            FHitResult Ground;
+            if (!World->LineTraceSingleByChannel(Ground,
+                    NavPoint.Location + FVector(0, 0, 260),
+                    NavPoint.Location - FVector(0, 0, 650), ECC_Visibility, Query) ||
+                !Ground.bBlockingHit ||
+                Ground.ImpactNormal.Z < Defaults->GetCharacterMovement()->GetWalkableFloorZ())
+                continue;
+            const FVector Center = Ground.ImpactPoint + FVector(0, 0, HalfHeight + 4);
+            bool bSeparated = true;
+            for (const auto& NPC : OwnedNPCs)
+                if (IsValid(NPC) && !NPC->IsActorBeingDestroyed() &&
+                    FVector::DistSquared2D(Center, NPC->GetActorLocation()) < FMath::Square(450.0f))
+                { bSeparated = false; break; }
+            if (!bSeparated || World->OverlapAnyTestByObjectType(Center, FQuat::Identity,
+                    Occupancy, FCollisionShape::MakeCapsule(Radius, HalfHeight), Query))
+                continue;
+            const FVector FacingStart = Start->GetActorLocation() - Center;
+            OutTransform = FTransform(FRotator(0, FacingStart.Rotation().Yaw, 0), Center);
+            return true;
+        }
+    }
+    return false;
+}
+
+void UDivineBeastsVillageWolfWorldSubsystem::TryFillNPCs(const FApprovedScope& Scope)
+{
+    UWorld* World = GetWorld();
+    if (!World || bClosing || World->bIsTearingDown) return;
+    OwnedNPCs.RemoveAll([](const auto& NPC)
+        { return !IsValid(NPC) || NPC->IsActorBeingDestroyed(); });
+    for (int32 Ordinal = OwnedNPCs.Num(); Ordinal < 3; ++Ordinal)
+    {
+        FTransform SpawnAt;
+        if (!FindNPCSpawnTransform(Ordinal, SpawnAt))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("VillageNPCScatterLimited: 已生成%d/3；等待有效导航与地面落点。"),
+                OwnedNPCs.Num());
+            break;
+        }
+        FActorSpawnParameters Spawn;
+        Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
+        auto* NPC = World->SpawnActor<ADivineBeastsVillageNPC>(
+            SpawnAt.GetLocation(), SpawnAt.Rotator(), Spawn);
+        FApprovedScope Current;
+        if (!IsValid(NPC) || !CaptureApprovedScope(Current) || !(Current == Scope))
+        {
+            if (IsValid(NPC)) NPC->Destroy();
+            break;
+        }
+        OwnedNPCs.Add(NPC);
+        OwnedScope = Scope;
+        UE_LOG(LogTemp, Log, TEXT("VillageNPCSpawned: Arissa NPC %d/3，LocationCm=%s"),
+            OwnedNPCs.Num(), *NPC->GetActorLocation().ToString());
+    }
+}
+
+bool UDivineBeastsVillageWolfWorldSubsystem::SpawnOneWolf(const FTransform& SpawnAt, bool bVampire)
 {
     UWorld* World = GetWorld();
     FApprovedScope Original;
@@ -302,8 +405,9 @@ bool UDivineBeastsVillageWolfWorldSubsystem::SpawnOneWolf(const FTransform& Spaw
 
     FActorSpawnParameters Spawn;
     Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
+    UClass* CreatureClass = bVampire ? ADivineBeastsVillageVampire::StaticClass() : WolfActorClass.Get();
     ADivineBeastsVillageWolf* Wolf =
-        World->SpawnActor<ADivineBeastsVillageWolf>(WolfActorClass, SpawnAt.GetLocation(), SpawnAt.Rotator(), Spawn);
+        World->SpawnActor<ADivineBeastsVillageWolf>(CreatureClass, SpawnAt.GetLocation(), SpawnAt.Rotator(), Spawn);
     if (!IsValid(Wolf)) return false;
     Wolf->GetWolfAIState()->SetDefinitionAsset(
         TSoftObjectPtr<UGamePlatformAIDefinition>(SoftDefinition));
@@ -346,6 +450,8 @@ void UDivineBeastsVillageWolfWorldSubsystem::TryFillWolves()
     if (!CaptureApprovedScope(Scope)) return;
     if (OwnedScope.WorldGeneration.IsValid() && !(OwnedScope == Scope))
     { CloseScope(); return; }
+    TryFillNPCs(Scope);
+    if (bClosing) return;
     bCreating = true;
 
     // 实际存活实体与尚未销毁的尸体分开计数；尸体原始出生锚点一直保留到销毁时。
@@ -363,21 +469,22 @@ void UDivineBeastsVillageWolfWorldSubsystem::TryFillWolves()
         if (IsValid(Wolf) && !Wolf->IsActorBeingDestroyed() && Wolf->IsWolfAlive())
             ++Alive;
 
-    // 四只一批、0.2秒间隔，分散NavMesh投射/占位查询的同帧开销；严格20只上限。
+    // 四只一批、0.2秒间隔，分散NavMesh投射/占位查询的同帧开销；严格10只上限。
     int32 SpawnedThisBatch = 0;
     bool bBlocked = false;
     for (int32 Ordinal = Alive; Ordinal < FPolicy::MaxAliveWolves &&
         SpawnedThisBatch < FPolicy::MaxWolvesPerBatch && !bClosing; ++Ordinal)
     {
         FTransform SpawnAt;
-        if (!FindSpawnTransform(Ordinal, SpawnAt))
+        const bool bVampire = Ordinal % 2 == 1;
+        if (!FindSpawnTransform(Ordinal, bVampire, SpawnAt))
         {
             UE_LOG(LogTemp, Warning, TEXT("VillageWolfScatterLimited: 活体%d/上限%d；没有满足>30米出生锚点间距、NavMesh、地形或22米安全区的有效位置。"),
                 Alive, FPolicy::MaxAliveWolves);
             bBlocked = true;
             break;
         }
-        if (!SpawnOneWolf(SpawnAt))
+        if (!SpawnOneWolf(SpawnAt, bVampire))
         {
             UE_LOG(LogTemp, Warning, TEXT("VillageWolfScatterBlocked: 生成或初始化失败，已有活体%d只，禁止生成不可见敌人。"), Alive);
             bBlocked = true;
@@ -473,6 +580,8 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
     ObservedLifecycle.Reset();
     TArray<TObjectPtr<ADivineBeastsVillageWolf>> ToDestroy = MoveTemp(OwnedWolves);
     OwnedWolves.Reset();
+    TArray<TObjectPtr<ADivineBeastsVillageNPC>> NPCsToDestroy = MoveTemp(OwnedNPCs);
+    OwnedNPCs.Reset();
     // 先释放本世界的锚点账本，再销毁自有Actor，EndPlay期间不会错误重占位置。
     WolfSpawnAnchors.Reset();
     for (const auto& WolfPointer : ToDestroy)
@@ -485,6 +594,9 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
         if (!Wolf->IsActorBeingDestroyed() && Wolf->HasAuthority()) Wolf->Destroy();
         if (IsValid(Controller) && !Controller->IsActorBeingDestroyed()) Controller->Destroy();
     }
+    for (const auto& NPCPointer : NPCsToDestroy)
+        if (auto* NPC = NPCPointer.Get(); IsValid(NPC) && !NPC->IsActorBeingDestroyed() && NPC->HasAuthority())
+            NPC->Destroy();
 }
 
 void UDivineBeastsVillageWolfWorldSubsystem::OnWorldEndPlay(UWorld& InWorld)

@@ -185,6 +185,42 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
                 FMath::Abs(Actual.R-Expected.R)<=.008f&&FMath::Abs(Actual.G-Expected.G)<=.008f&&FMath::Abs(Actual.B-Expected.B)<=.008f);
         }
     }
+    // 新导入的加载条四张原稿都必须进入同一真实RHI颜色门禁；遮罩以线性值解释，彩色图以sRGB解释。
+    // 半透明前景在不同Slate目标上可采用直通或预乘RGB，二者都必须还原到相同源色且有实际Alpha输出。
+    struct FLoadingBarProbe { const TCHAR* Name; int32 Row; bool bColor; };
+    const FLoadingBarProbe LoadingBarProbes[] = {
+        {TEXT("BG"),1,true}, {TEXT("FG"),8,true}, {TEXT("Mask"),3,false}, {TEXT("Frame"),1,true}};
+    for(const FLoadingBarProbe& Probe:LoadingBarProbes)
+    {
+        const FString Path=FString::Printf(TEXT("/DBAUIPack_Core/UI/Loading/Textures/T_DBA_UI_LoadingBar_%s_1200x20"),Probe.Name);
+        UTexture2D* LoadingTexture=LoadObject<UTexture2D>(nullptr,*Path);
+        if(!TestNotNull(*Path,LoadingTexture))continue;
+        // 离屏编辑器进程可能先给Texture2D分配占位的运行表面尺寸；实际导入尺寸以下方持久化Source和GPU采样核对。
+        TestTrue(TEXT("加载条颜色角色与sRGB一致"),LoadingTexture->SRGB==Probe.bColor);
+        TestTrue(TEXT("加载条保持无损UI压缩和无Mip"),LoadingTexture->CompressionSettings==TC_EditorIcon
+            &&LoadingTexture->MipGenSettings==TMGS_NoMipmaps&&LoadingTexture->LODGroup==TEXTUREGROUP_UI);
+        FImage LoadingSource;
+        if(!TestTrue(TEXT("加载条真实源像素可读"),LoadingTexture->Source.GetMipImage(LoadingSource,0)))continue;
+        if(!TestTrue(TEXT("加载条源像素格式和尺寸正确"),LoadingSource.Format==ERawImageFormat::BGRA8
+            &&LoadingSource.SizeX==1200&&LoadingSource.SizeY==20))continue;
+        for(const int32 Column:{100,600,1100})
+        {
+            const FVector2f UV((Column+.5f)/1200.f,(Probe.Row+.5f)/20.f);
+            const FColor Raw=*static_cast<const FColor*>(LoadingSource.GetPixelPointer(Column,Probe.Row));
+            const FLinearColor Expected=Probe.bColor ? FLinearColor::FromSRGBColor(Raw)
+                : FLinearColor(Raw.R/255.f,Raw.G/255.f,Raw.B/255.f,Raw.A/255.f);
+            FLinearColor Actual;
+            if(!TestTrue(TEXT("加载条实际GPU纹理渲染回读成功"),DivineBeastsUIColorTests::RenderLinear(LoadingTexture,UV,Actual)))continue;
+            const auto MaxRGBError=[&Expected](const FLinearColor& Value)
+            {
+                return FMath::Max3(FMath::Abs(Value.R-Expected.R),FMath::Abs(Value.G-Expected.G),FMath::Abs(Value.B-Expected.B));
+            };
+            const bool bColorMatches=MaxRGBError(Actual)<=.012f
+                ||(Actual.A>.01f&&MaxRGBError(Actual/Actual.A)<=.012f);
+            TestTrue(*FString::Printf(TEXT("加载条%s像素(%d,%d)原稿到Slate颜色一致，actual=%s expected=%s"),
+                Probe.Name,Column,Probe.Row,*Actual.ToString(),*Expected.ToString()),Actual.A>.1f&&bColorMatches);
+        }
+    }
     // 原稿面板材质还经过自定义HLSL与九宫格UV裁切，单查纹理设置不能覆盖这一环节。
     auto* Texture=LoadObject<UTexture2D>(nullptr,TEXT("/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReference"));
     auto* Material=LoadObject<UMaterialInterface>(nullptr,TEXT("/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelNineSlice"));

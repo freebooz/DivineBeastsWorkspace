@@ -21,8 +21,9 @@ $arenaAssets = 'Game/Plugins/DivineBeasts/DBAArena/Content/UI/'
 $publicCatalog = Get-Content -LiteralPath (Join-Path $workspace ($publicSource+'Private/Screens/DivineBeastsUIScreenCatalog.cpp')) -Raw -Encoding utf8
 $arenaCatalog = Get-Content -LiteralPath (Join-Path $workspace ($arenaSource+'Private/UI/DivineBeastsArenaUIScreenCatalog.cpp')) -Raw -Encoding utf8
 
-# 每一项同时对应工程实际Catalogue中的稳定SurfaceId、所属功能域和蓝图软路径。
-# 当前仅将6个真实基础Widget列为既有交付，其余缺失是未来工作，不伪造为成功。
+# 每项对应真实C++ Catalog中的SurfaceId、领域、父类与视觉资产归属。
+# 原先冻结的22项缺Settings/WorldJournal；当前按最新24项目录补齐，独立Python门禁进一步严格核验父类与必需控件名。
+# 历史6个原始Widget仍作为最早不可删除的资产下限，不以文件存在表示UE运行验收。
 $entries = @(
     @('UI.Screen.Boot','Core','DBAClient','P0','Screens/WBP_DBA_UI_Boot.uasset','Screens/Boot/DivineBeastsBootScreen.h'),
     @('UI.Screen.Login','Account','DBAClient','P0','Screens/WBP_DBA_UI_Login.uasset','Screens/Login/DivineBeastsLoginScreen.h'),
@@ -31,8 +32,10 @@ $entries = @(
     @('UI.Screen.LoadingTravel','Core','DBAClient','P0','Screens/WBP_DBA_UI_LoadingTravel.uasset','Screens/Loading/DivineBeastsLoadingTravelScreen.h'),
     @('UI.Screen.ErrorReconnect','Core','DBAClient','P0','Screens/WBP_DBA_UI_ErrorReconnect.uasset','Screens/Connection/DivineBeastsErrorReconnectScreen.h'),
     @('UI.Screen.SystemMenu','System','DBAClient','P1','Screens/WBP_DBA_UI_SystemMenu.uasset',''),
+    @('UI.Screen.Settings','System','DBAClient','P1','Screens/WBP_DBA_UI_Settings.uasset','Screens/System/DivineBeastsDeviceSettingsScreen.h'),
     @('UI.Screen.Inventory','Inventory','DBAClient','P1','Screens/WBP_DBA_UI_Inventory.uasset','Screens/Inventory/DivineBeastsInventoryScreen.h'),
     @('UI.Screen.Quest','World','DBAClient','P1','Screens/WBP_DBA_UI_Quest.uasset','Screens/World/DivineBeastsQuestScreen.h'),
+    @('UI.Screen.WorldJournal','World','DBAClient','P1','Screens/WBP_DBA_UI_WorldJournal.uasset','Screens/World/DivineBeastsWorldJournalScreen.h'),
     @('UI.Screen.Social','Social','DBAClient','P1','Screens/WBP_DBA_UI_Social.uasset','Screens/Social/DivineBeastsSocialScreenBase.h'),
     @('UI.Screen.LiveOps','LiveOps','DBAClient','P1','Screens/WBP_DBA_UI_LiveOps.uasset','Screens/LiveOps/DivineBeastsLiveOpsScreenBase.h'),
     @('UI.HUD.OpenWorld','World','DBAClient','P1','HUD/WBP_DBA_UI_OpenWorldHUD.uasset','HUD/DivineBeastsOpenWorldHUD.h'),

@@ -205,3 +205,14 @@
 - 新增`RunNoGaeaPCGDevelopment.ps1`整合开发无Gaea阶段，默认只读；`-Apply`先导入/验证6 StaticMesh再创建/独立回读技术审查地图，然后才执行Gold的空间探针、Spawner与G09，且按阶段保存日志/退出码。它不会改动`L_Village_Start`正式地图、原GoldLevel或基础图文件；技术成功仍退出2，因为G01～G16/双Cook尚未完成。
 - 本轮实际执行该入口Plan，`TechSource（六技术网格源）`、`Foundation（30基础资源）`、`Gold（17+3+3+1金标准资产）`文件核验全部退出0，独立运行目录`Saved/Validation/GamePlatformPCG/NoGaeaDevelopment/f8897afb-7173-4783-9904-b9baa21fc366`。`-Apply`实际预检因另外任务UBT占用返回1，证据`NoGaeaDevelopment/1725eb94-522f-4a98-9653-638d47cfecf4`；没有启动Editor或修改资源。随后额外18次有界空闲窗口检测全部观察到其他UBT或编辑器活跃，按设计返回3，没有抢占。
 - 导入脚本碰撞合同、完整OBJ字节/顶点/法线/三角面、禁止Cook、五阶段路由的静态审查`ValidateVillagePCGTechnicalMeshes.py`退出0；PowerShell及Python语法、PCG工具`git diff --check`退出0。**本轮仅代码与本地资源源文件完成，已编译的PCG DLL可用，但最新技术UObject和Gold运行场景仍未在真正Editor验证。**
+
+## 2026-10-17｜全游戏PCG覆盖审查与受控整改
+
+- 完成基础模板、新手村内容包和竞技场真实磁盘审计：68/68个已登记的UE包文件头有效；发现缺少OpenWorld正式世界内容包与Village外围森林正式Realized/Spawner图两项明确缺口。文件头不是UE资产/运行验收。
+- 新增Build/Validation/VerifyPCGGameCoverage.ps1（全游戏PCG覆盖检查）及Tests/Architecture/TestPCGGameCoverage.ps1（静态回归），生成Saved/Validation/GamePlatformPCG/PCGWholeGameCoverage.json；报告严格保留未通过的正式验收状态。
+- 在GamePlatformPCGSpatialDirector.cpp的BuildStaticExecutionPlan（静态计划）中增加原生图绑定、Seed和按需生成模式一致性校验，防止冷启动后使用旧图直接静态烘焙。只影响编辑器静态计划，不向运行时或专服开放装饰生成。
+- 定向UE5.8 PCG Runtime/Editor双模块正式编译成功，UBT实编GamePlatformPCGSpatialDirector.cpp并完成编辑器模块DLL链接；日志Saved/Validation/FoundationM0/1155d017-6643-4455-970c-8ee2e925bb6e/Build/Editor/UBT.log，不代表完整Editor/Client/Server目标通过。
+- 当前UE Editor真实Automation运行GamePlatform.PCG.Editor的8项测试均Success；报告Saved/Validation/GamePlatformPCG/WholeGameReview_20261017/Automation/index.json。
+- 独立Gold冷重开首次触发验证Python提前加载UWorld导致旧World清理Fatal；已修复重复加载。随后修复UE Python反射仅返回空OutError的结果判定，最终冷重开成功：53个非地图原生资源、1张Gold地图、6类地图参与者数量与唯一WorldDirector注册均通过。证据Saved/Validation/GamePlatformPCG/WholeGameReview_20261017/GoldAssetColdReopenVerified.Unreal.log。
+- RunGoldLevelAuthoring.ps1已补Python执行结果强校验：每阶段本次Unreal日志必须包含专属成功标记且无Python错误，即便UE进程退出0也不得漏报异常。
+- 后续准入顺序及项目世界覆盖矩阵参见Docs/Implementation/GamePlatformPCG/PCGWholeGameCoverage_20261017.md。正式Village地图未重写；不伪造原生资产，也不覆盖独立UI工作。

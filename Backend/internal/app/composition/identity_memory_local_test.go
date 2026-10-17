@@ -165,3 +165,57 @@ func TestLocalIdentityPersistentRepositoryPasswordLifecycle(t *testing.T) {
 		t.Fatalf("Logout后Access Token必须失效，实际: %v", err)
 	}
 }
+
+// 同一账号后登录应替换前一会话；错误密码、其他账号及旧设备退出均不能伤及当前会话。
+func TestLocalIdentityLaterLoginReplacesEarlierSession(t *testing.T) {
+	ctx := context.Background()
+	repo := newLocalIdentityPersistentRepository()
+	service, err := identity.NewPersistentService(repo, identity.SystemClock{}, time.Minute, time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"alice", "bob"} {
+		if _, err := service.EnsureAccount(ctx, "divine-beasts", name, "test-only-password"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	first, err := service.LoginPassword(ctx, "divine-beasts", "alice", "test-only-password", "device-a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := service.LoginPassword(ctx, "divine-beasts", "bob", "test-only-password", "device-c")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.LoginPassword(ctx, "divine-beasts", "alice", "wrong-password", "device-b"); !errors.Is(err, identity.ErrInvalidCredentials) {
+		t.Fatal("错误密码必须拒绝")
+	}
+	if _, err := service.Authenticate(ctx, first.AccessToken); err != nil {
+		t.Fatal("失败登录不得撤销旧会话")
+	}
+	second, err := service.LoginPassword(ctx, "divine-beasts", "alice", "test-only-password", "device-b")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.SessionID == first.SessionID {
+		t.Fatal("后登录必须取得新会话")
+	}
+	if _, err := service.Authenticate(ctx, first.AccessToken); !errors.Is(err, identity.ErrInvalidToken) {
+		t.Fatal("前一Access必须失效")
+	}
+	if _, err := service.Refresh(ctx, first.RefreshToken); !errors.Is(err, identity.ErrInvalidToken) {
+		t.Fatal("前一Refresh必须失效")
+	}
+	if _, err := service.Authenticate(ctx, second.AccessToken); err != nil {
+		t.Fatal("后一Access必须有效")
+	}
+	if _, err := service.Authenticate(ctx, other.AccessToken); err != nil {
+		t.Fatal("其他账号不得受影响")
+	}
+	if err := service.Logout(ctx, first.RefreshToken); err != nil {
+		t.Fatal("旧设备重复退出应幂等")
+	}
+	if _, err := service.Authenticate(ctx, second.AccessToken); err != nil {
+		t.Fatal("旧设备退出不得顶掉新会话")
+	}
+}

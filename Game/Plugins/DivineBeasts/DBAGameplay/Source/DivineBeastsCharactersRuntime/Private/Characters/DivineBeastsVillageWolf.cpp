@@ -102,7 +102,8 @@ void ADivineBeastsVillageWolf::OnRep_WolfDead()
 {
     if (bWolfDead)
     {
-        GetCharacterMovement()->StopMovementImmediately();
+        // 先关闭角色移动，固定死亡位置；随后撤销胶囊碰撞时不能让重力把尸体推进地面以下。
+        GetCharacterMovement()->DisableMovement();
         GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }
     OnRep_WolfLife();

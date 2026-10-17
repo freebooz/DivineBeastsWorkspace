@@ -82,6 +82,12 @@ def main() -> None:
         expected = getattr(unreal, class_name, None)
         if expected is None:
             raise RuntimeError("UE5.8缺少反射类：" + class_name)
+        if class_name == "World":
+            # UE5.8禁止先把要切换的地图作为standalone World加载：
+            # 否则EditorLevelLibrary.load_level再次装载同一包时会触发World Memory Leaks Fatal。
+            # 这里仅检查AssetRegistry存在及反射World类型，真正地图对象由下方load_level验证。
+            print("PCG_REOPEN_WORLD_PENDING_LEVEL_SWITCH", path)
+            continue
         obj = assets.load_asset(path)
         if obj is None or not isinstance(obj, expected):
             raise RuntimeError("PCG资源回读类型错误：" + path + "，要求：" + class_name)
@@ -116,9 +122,19 @@ def main() -> None:
 
     directors = [actor for actor in actors if isinstance(actor, director_class)]
     result = directors[0].validate_participant_set()
-    if (result[0] if isinstance(result, tuple) else result) is not True:
+    # UE5.8 Python绑定对bool+FString&输出的BlueprintPure函数有时仅返回OutError字符串。
+    # 该C++函数所有失败分支都会填写非空OutError；空字符串代表注册集合通过。
+    if isinstance(result, str):
+        valid = not result
+    elif isinstance(result, tuple):
+        valid = bool(result) and result[0] is True and not any(
+            isinstance(item, str) and item for item in result[1:]
+        )
+    else:
+        valid = result is True
+    if not valid:
         raise RuntimeError("金标准世界编排器注册集合无效：" + str(result))
-
+    print("PCG_REOPEN_DIRECTOR_VALIDATED", repr(result))
     print("PCG_GOLD_REOPEN_ASSET_TOTAL", len(paths))
     print("PCG_REOPEN_BASIC_CLASSES_PASS；G01～G16、Cook、性能与服务器权威仍另行验收")
 

@@ -319,6 +319,18 @@ def make_sources() -> tuple[dict[str, bytes], dict]:
     return outputs, meta
 
 
+def canonical_repository_text(data: bytes) -> bytes:
+    """规范化Git在Windows检出的CRLF；仍拒绝裸CR和任何非换行字节差异。
+
+    OBJ/MTL/JSON均为生成器维护的UTF-8文本，Manifest的SHA存储跨平台LF真源，
+    不能直接对Windows工作树原始CRLF求和并误判源被篡改。
+    """
+    canonical = data.replace(b"\r\n", b"\n")
+    if b"\r" in canonical:
+        raise ValueError("技术源包含非法裸CR，拒绝按Git换行差异放行")
+    return canonical
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="六类PCG非发行技术几何源创建或只读审核")
     modes = parser.add_mutually_exclusive_group(required=True)
@@ -337,7 +349,7 @@ def main() -> int:
         if not ROOT.is_dir() or {p.name for p in ROOT.iterdir()} != set(files):
             raise ValueError("六类技术源文件集合缺失或出现未知文件")
         for name, data in files.items():
-            if (ROOT / name).read_bytes() != data:
+            if canonical_repository_text((ROOT / name).read_bytes()) != data:
                 raise ValueError("源网格与固定生成参数SHA不一致：" + name)
     print("VILLAGE_PCG_TECHNICAL_MESH_SOURCE_SHA_PASS", len(report["meshSources"]))
     for item in report["meshSources"]:

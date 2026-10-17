@@ -79,22 +79,65 @@ bool UDivineBeastsSystemSettingsViewModel::PreviewDeviceSettings(FGamePlatformDe
     if (!Result.IsSuccess() && bOwnsStagedSettings) CleanupDeviceSettings();
     if (bOwnsPreview)
     {
-        // 异常显示模式必须按真实时间恢复；世界暂停/时间缩放不能延长15秒安全期限。
-        FTSTicker::RemoveTicker(PreviewTimeout);
+        // 设备预览以单调真实时钟计15秒：只在截止点触发一次，不以0.1秒Ticker轮询UI/服务。
+        // 失败时单次重试仍由本页拥有；世界Pause/时间缩放不影响安全回滚。
         PreviewDeadlineSeconds = FPlatformTime::Seconds() + 15.0;
-        const int32 Generation = GetPageGeneration();
-        PreviewTimeout = FTSTicker::GetCoreTicker().AddTicker(TEXT("DBA.SettingsPreviewTimeout"), 0.1f,
-            [WeakThis = TWeakObjectPtr<ThisClass>(this), Generation](float)
-            {
-                auto* VM = WeakThis.Get();
-                if (!VM || !VM->IsPageActive() || VM->GetPageGeneration() != Generation || !VM->bOwnsPreview) return false;
-                if (FPlatformTime::Seconds() >= VM->PreviewDeadlineSeconds && !VM->bCommandInProgress)
-                    VM->RevertDeviceSettings();
-                // 失败仍保留本页预览资格并在后续调度重试；不会把失败冒充已回滚或复活旧页面。
-                return VM->IsPageActive() && VM->GetPageGeneration() == Generation && VM->bOwnsPreview;
-            });
+        SchedulePreviewDeadline(GetPageGeneration(), 15.0);
     }
     return PublishResult(Result);
+}
+
+void UDivineBeastsSystemSettingsViewModel::SchedulePreviewDeadline(
+    int32 ExpectedPageGeneration, double DelaySeconds)
+{
+    FTSTicker::RemoveTicker(PreviewTimeout);
+    PreviewTimeout.Reset();
+    if (!IsPageActive() || !bOwnsPreview ||
+        GetPageGeneration() != ExpectedPageGeneration ||
+        PreviewDeadlineSeconds <= 0.0)
+    {
+        return;
+    }
+    // CoreTicker支持真实时间延时调度，回调只执行一次；不依赖World或每帧轮询。
+    const float Wait = static_cast<float>(FMath::Clamp(DelaySeconds, 0.01, 15.0));
+    PreviewTimeout = FTSTicker::GetCoreTicker().AddTicker(
+        TEXT("DBA.SettingsPreviewDeadline"), Wait,
+        [WeakThis = TWeakObjectPtr<ThisClass>(this), ExpectedPageGeneration](float)
+        {
+            if (auto* VM = WeakThis.Get())
+            {
+                // 先解除本次句柄，随后回滚/重入取消不会误移除未来重试。
+                VM->PreviewTimeout.Reset();
+                VM->HandlePreviewDeadline(ExpectedPageGeneration);
+            }
+            return false; // 一次性到期事件，不创建周期Ticker。
+        });
+}
+
+void UDivineBeastsSystemSettingsViewModel::HandlePreviewDeadline(int32 ExpectedPageGeneration)
+{
+    if (!IsPageActive() || !bOwnsPreview ||
+        GetPageGeneration() != ExpectedPageGeneration) return;
+    const double RemainingSeconds = PreviewDeadlineSeconds - FPlatformTime::Seconds();
+    if (RemainingSeconds > 0.001)
+    {
+        // 极少数调度器提前触发的情况，仍等待同一个绝对截止点。
+        SchedulePreviewDeadline(ExpectedPageGeneration, RemainingSeconds);
+        return;
+    }
+    if (bCommandInProgress)
+    {
+        // 当前命令栈可能同步发布设置事件；短延时等待其退出，避免回滚时重入。
+        SchedulePreviewDeadline(ExpectedPageGeneration, 0.25);
+        return;
+    }
+    if (!RevertDeviceSettings() && IsPageActive() && bOwnsPreview &&
+        GetPageGeneration() == ExpectedPageGeneration)
+    {
+        // 平台取消失败仍保持原预览资格，并在一秒后再执行一次明确的回滚动作。
+        // 不将受理/失败伪装成已回滚；状态和中文失败提示来自原有PublishResult。
+        SchedulePreviewDeadline(ExpectedPageGeneration, 1.0);
+    }
 }
 
 bool UDivineBeastsSystemSettingsViewModel::ConfirmDeviceSettings()

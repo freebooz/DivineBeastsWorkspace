@@ -2,6 +2,7 @@
 #include "Creatures/DivineBeastsVillageWolfVisualWorldSubsystem.h"
 
 #include "Characters/DivineBeastsVillageWolf.h"
+#include "Characters/DivineBeastsVillageVampire.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/GameInstance.h"
@@ -39,82 +40,93 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ObserveActor(AActor* Spawned)
         World->bIsTearingDown || Wolf->GetWorld()!=World || ObservedWolves.Contains(Wolf)) return;
     ObservedWolves.Add(Wolf);
     Wolf->OnEndPlay.AddUniqueDynamic(this,&ThisClass::HandleWolfEndPlay);
-    if (bReady) ApplyVisual(*Wolf);
-    else if (!bLoading) BeginLoadVisuals();
+    const bool bVampire = Wolf->IsA<ADivineBeastsVillageVampire>();
+    const auto& Visual = bVampire ? VampireVisual : WolfVisual;
+    if (Visual.bReady) ApplyVisual(*Wolf);
+    else if (!Visual.bLoading) BeginLoadVisuals(bVampire);
 }
 
-void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals()
+void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals(bool bVampire)
 {
-    // 未正式导入并核验真实模型时不替换客户端Mesh，不根据网络存在生成假狼外观。
-    if (bClosing || bLoading || !GConfig) return;
+    // 每种怪物均需显式通过开发资产门禁；同世界中只申请各自的单份Data租约。
+    FCreatureVisual& Visual = bVampire ? VampireVisual : WolfVisual;
+    if (bClosing || Visual.bLoading || !GConfig) return;
     bool bVerified=false;
     const TCHAR* Section=TEXT("DivineBeasts.VillageWolves");
-    GConfig->GetBool(Section,TEXT("bClientVisualsVerified"),bVerified,GGameIni);
+    GConfig->GetBool(Section,bVampire ? TEXT("bVampireClientVisualsVerified") :
+        TEXT("bClientVisualsVerified"),bVerified,GGameIni);
     if (!bVerified) return;
-    GConfig->GetFloat(Section,TEXT("WolfMeshScale"),WolfMeshScale,GGameIni);
-    GConfig->GetFloat(Section,TEXT("WolfMeshYawDegrees"),WolfMeshYawDegrees,GGameIni);
-    if(!FMath::IsFinite(WolfMeshScale)||WolfMeshScale<0.01f||WolfMeshScale>10.0f||
-        !FMath::IsFinite(WolfMeshYawDegrees)||FMath::Abs(WolfMeshYawDegrees)>360.0f)
+    GConfig->GetFloat(Section,bVampire ? TEXT("VampireMeshScale") : TEXT("WolfMeshScale"),Visual.Scale,GGameIni);
+    GConfig->GetFloat(Section,bVampire ? TEXT("VampireMeshYawDegrees") :
+        TEXT("WolfMeshYawDegrees"),Visual.YawDegrees,GGameIni);
+    if(!FMath::IsFinite(Visual.Scale)||Visual.Scale<0.01f||Visual.Scale>10.0f||
+        !FMath::IsFinite(Visual.YawDegrees)||FMath::Abs(Visual.YawDegrees)>360.0f)
     {
-        UE_LOG(LogTemp,Warning,TEXT("VillageWolfVisualProfileRejected: 模型比例或朝向无效。"));
+        UE_LOG(LogTemp,Warning,TEXT("VillageCreatureVisualProfileRejected: 模型比例或朝向无效。"));
         return;
     }
     FString MeshName, AnimName;
-    GConfig->GetString(Section,TEXT("WolfSkeletalMesh"),MeshName,GGameIni);
-    GConfig->GetString(Section,TEXT("WolfAnimationBlueprint"),AnimName,GGameIni);
-    WolfMeshPath=FSoftObjectPath(MeshName);
-    WolfAnimPath=FSoftObjectPath(AnimName);
-    if (!WolfMeshPath.IsValid() || !WolfAnimPath.IsValid()) return;
+    GConfig->GetString(Section,bVampire ? TEXT("VampireSkeletalMesh") :
+        TEXT("WolfSkeletalMesh"),MeshName,GGameIni);
+    GConfig->GetString(Section,bVampire ? TEXT("VampireAnimationBlueprint") :
+        TEXT("WolfAnimationBlueprint"),AnimName,GGameIni);
+    Visual.MeshPath=FSoftObjectPath(MeshName);
+    Visual.AnimPath=FSoftObjectPath(AnimName);
+    if (!Visual.MeshPath.IsValid() || !Visual.AnimPath.IsValid()) return;
     UWorld* World=GetWorld();
     if (!World || World->bIsTearingDown || !World->GetGameInstance()) return;
     auto* Data=IGamePlatformDataService::Get(*World->GetGameInstance());
     if (!Data) return;
-    bLoading=true;
+    Visual.bLoading=true;
     const FGuid Expected=Operation;
     TWeakObjectPtr<ThisClass> WeakThis(this);
     FGamePlatformResult Accepted;
-    VisualLease=Data->AcquireResources({WolfMeshPath,WolfAnimPath},EGamePlatformDataLifetime::World,this,
-        [WeakThis,Expected](const FGamePlatformDataLease& Lease,const FGamePlatformResult& Result)
+    Visual.Lease=Data->AcquireResources({Visual.MeshPath,Visual.AnimPath},EGamePlatformDataLifetime::World,this,
+        [WeakThis,Expected,bVampire](const FGamePlatformDataLease& Lease,const FGamePlatformResult& Result)
         {
             auto* Self=WeakThis.Get();
+            if (!Self) return;
+            FCreatureVisual& CurrentVisual = bVampire ? Self->VampireVisual : Self->WolfVisual;
             if (!Self || Self->bClosing || Self->Operation!=Expected ||
-                !Self->VisualLease.IsValid() || Self->VisualLease.LeaseId!=Lease.LeaseId ||
-                Self->VisualLease.ScopeId!=Lease.ScopeId || Self->VisualLease.Generation!=Lease.Generation ||
-                Self->VisualLease.IssuerProof!=Lease.IssuerProof) return;
-            Self->bLoading=false;
+                !CurrentVisual.Lease.IsValid() || CurrentVisual.Lease.LeaseId!=Lease.LeaseId ||
+                CurrentVisual.Lease.ScopeId!=Lease.ScopeId || CurrentVisual.Lease.Generation!=Lease.Generation ||
+                CurrentVisual.Lease.IssuerProof!=Lease.IssuerProof) return;
+            CurrentVisual.bLoading=false;
             UWorld* CurrentWorld=Self->GetWorld();
             if (!CurrentWorld || CurrentWorld->bIsTearingDown) return;
-            USkeletalMesh* Asset=Cast<USkeletalMesh>(Self->WolfMeshPath.ResolveObject());
-            UClass* Animation=Cast<UClass>(Self->WolfAnimPath.ResolveObject());
-            Self->bReady=Result.IsSuccess() && IsValid(Asset) && IsValid(Animation) &&
+            USkeletalMesh* Asset=Cast<USkeletalMesh>(CurrentVisual.MeshPath.ResolveObject());
+            UClass* Animation=Cast<UClass>(CurrentVisual.AnimPath.ResolveObject());
+            CurrentVisual.bReady=Result.IsSuccess() && IsValid(Asset) && IsValid(Animation) &&
                 Animation->IsChildOf(UAnimInstance::StaticClass());
-            if (!Self->bReady)
+            if (!CurrentVisual.bReady)
             {
-                UE_LOG(LogTemp,Warning,TEXT("VillageWolfVisualRejected: 狼的骨骼或动画蓝图资源未通过真实导入/校验。"));
+                UE_LOG(LogTemp,Warning,TEXT("VillageCreatureVisualRejected: 怪物骨骼或动画蓝图资源未通过校验。"));
                 return;
             }
             const auto Wolves=Self->ObservedWolves.Array();
             for (const auto& WeakWolf:Wolves)
             {
                 if (Self->bClosing || Self->Operation!=Expected || CurrentWorld->bIsTearingDown) break;
-                if (auto* Wolf=WeakWolf.Get()) Self->ApplyVisual(*Wolf);
+                if (auto* Wolf=WeakWolf.Get(); IsValid(Wolf) &&
+                    Wolf->IsA<ADivineBeastsVillageVampire>() == bVampire) Self->ApplyVisual(*Wolf);
             }
         },Accepted);
     if (!Accepted.IsSuccess())
     {
-        bLoading=false;
-        UE_LOG(LogTemp,Warning,TEXT("VillageWolfVisualRequestDenied: GamePlatformData未接受狼外观租约请求。"));
+        Visual.bLoading=false;
+        UE_LOG(LogTemp,Warning,TEXT("VillageCreatureVisualRequestDenied: GamePlatformData未接受怪物外观租约请求。"));
     }
 }
 
 void UDivineBeastsVillageWolfVisualWorldSubsystem::ApplyVisual(ADivineBeastsVillageWolf& Wolf)
 {
-    if (bClosing || !bReady || !ObservedWolves.Contains(&Wolf) || !IsValid(&Wolf) ||
+    const FCreatureVisual& Visual = Wolf.IsA<ADivineBeastsVillageVampire>() ? VampireVisual : WolfVisual;
+    if (bClosing || !Visual.bReady || !ObservedWolves.Contains(&Wolf) || !IsValid(&Wolf) ||
         Wolf.IsActorBeingDestroyed() || Wolf.GetWorld()!=GetWorld() || !GetWorld() || GetWorld()->bIsTearingDown)
         return;
     auto* Mesh=Wolf.GetMesh();
-    auto* Asset=Cast<USkeletalMesh>(WolfMeshPath.ResolveObject());
-    auto* Animation=Cast<UClass>(WolfAnimPath.ResolveObject());
+    auto* Asset=Cast<USkeletalMesh>(Visual.MeshPath.ResolveObject());
+    auto* Animation=Cast<UClass>(Visual.AnimPath.ResolveObject());
     if (!IsValid(Mesh) || !IsValid(Asset) || !IsValid(Animation) ||
         !Animation->IsChildOf(UAnimInstance::StaticClass())) return;
     // 客户端SkeletalMesh与AnimBP属于已通过平台租约审查的单一内容包；
@@ -123,15 +135,16 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ApplyVisual(ADivineBeastsVill
     if (bClosing || Wolf.IsActorBeingDestroyed()) return;
     Mesh->SetAnimInstanceClass(Animation);
     if (bClosing || Wolf.IsActorBeingDestroyed()) return;
-    Mesh->SetRelativeScale3D(FVector(WolfMeshScale));
-    const FRotator MeshRotation(0.0f, WolfMeshYawDegrees, 0.0f);
+    Mesh->SetRelativeScale3D(FVector(Visual.Scale));
+    const FRotator MeshRotation(0.0f, Visual.YawDegrees, 0.0f);
     const FVector GroundedMeshOffset(0.0f, 0.0f, -Wolf.GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
     Mesh->SetRelativeRotation(MeshRotation);
     Mesh->SetRelativeLocation(GroundedMeshOffset);
     // Character网络平滑会用缓存的初始Mesh偏移重置模拟代理的位置；
     // 只设置RelativeLocation会使远端狼在下一次网络更新后回到胶囊中心并悬空。
     Wolf.CacheInitialMeshOffset(GroundedMeshOffset, MeshRotation);
-    UE_LOG(LogTemp,Log,TEXT("VillageWolfVisualApplied: 已按世界租约装配真实狼模型与动画，Scale=%.3f"),WolfMeshScale);
+    UE_LOG(LogTemp,Log,TEXT("VillageCreatureVisualApplied: 已按世界租约装配怪物模型与动画，Vampire=%d Scale=%.3f"),
+        Wolf.IsA<ADivineBeastsVillageVampire>(), Visual.Scale);
 }
 
 void UDivineBeastsVillageWolfVisualWorldSubsystem::HandleWolfEndPlay(AActor* Ended,EEndPlayReason::Type)
@@ -147,7 +160,8 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::Deinitialize()
     if (bClosing) return;
     bClosing=true;
     Operation.Invalidate();
-    bReady=false; bLoading=false;
+    WolfVisual.bReady=false; WolfVisual.bLoading=false;
+    VampireVisual.bReady=false; VampireVisual.bLoading=false;
     UWorld* World=GetWorld();
     if (World && SpawnHandle.IsValid()) World->RemoveOnActorSpawnedHandler(SpawnHandle);
     SpawnHandle.Reset();
@@ -155,10 +169,14 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::Deinitialize()
     ObservedWolves.Reset();
     for (const auto& WeakWolf:Old)
         if (auto* Wolf=WeakWolf.Get()) Wolf->OnEndPlay.RemoveDynamic(this,&ThisClass::HandleWolfEndPlay);
-    const FGamePlatformDataLease OldLease=VisualLease;
-    VisualLease={};
+    const FGamePlatformDataLease WolfLease=WolfVisual.Lease;
+    const FGamePlatformDataLease VampireLease=VampireVisual.Lease;
+    WolfVisual.Lease={}; VampireVisual.Lease={};
     if (World && World->GetGameInstance())
-        if (auto* Data=IGamePlatformDataService::Get(*World->GetGameInstance()); Data && OldLease.IsValid())
-            Data->ReleaseResources(OldLease);
+        if (auto* Data=IGamePlatformDataService::Get(*World->GetGameInstance()))
+        {
+            if (WolfLease.IsValid()) Data->ReleaseResources(WolfLease);
+            if (VampireLease.IsValid()) Data->ReleaseResources(VampireLease);
+        }
     Super::Deinitialize();
 }

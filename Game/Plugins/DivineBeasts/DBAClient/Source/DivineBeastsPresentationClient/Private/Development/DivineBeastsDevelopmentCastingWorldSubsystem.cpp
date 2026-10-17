@@ -13,6 +13,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/Skeleton.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
@@ -35,6 +36,19 @@ FSoftObjectPath MontagePath(FName Name)
 {
     const FString Asset=TEXT("AM_DBA_Dev")+Name.ToString()+TEXT("Cast");
     return FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/DevelopmentCasting/")+Asset+TEXT(".")+Asset);
+}
+/** 同一施法事实按当前Mesh骨架选用已导入的人型施法动作，不信任网络携带资产路径。 */
+FSoftObjectPath MontagePathForMesh(FName Name, const USkeletalMesh* Mesh)
+{
+    const USkeleton* Skeleton = Mesh ? Mesh->GetSkeleton() : nullptr;
+    const FString SkeletonPath = IsValid(Skeleton) ? Skeleton->GetPathName() : FString();
+    if (SkeletonPath == TEXT("/DBAContentPack_Common/Characters/KachujinGRosales/Kachujin_G_Rosales_Skeleton.Kachujin_G_Rosales_Skeleton"))
+        return FSoftObjectPath(TEXT("/DBAContentPack_Common/Characters/KachujinGRosales/Animations/AM_DBA_Kachujin_Cast.AM_DBA_Kachujin_Cast"));
+    if (SkeletonPath == TEXT("/DBAContentPack_Common/Characters/NPC/Arissa/Arissa_Skeleton.Arissa_Skeleton"))
+        return FSoftObjectPath(TEXT("/DBAContentPack_Common/Characters/NPC/Arissa/Animations/AM_DBA_Arissa_Cast.AM_DBA_Arissa_Cast"));
+    if (SkeletonPath == TEXT("/DBAWorldPack_Village/Creatures/VampireALusth/Vampire_A_Lusth_Skeleton.Vampire_A_Lusth_Skeleton"))
+        return FSoftObjectPath(TEXT("/DBAWorldPack_Village/Creatures/VampireALusth/Animations/AM_DBA_Vampire_Cast.AM_DBA_Vampire_Cast"));
+    return MontagePath(Name);
 }
 FGameplayTag CastSemantic(FName Name)
 { return FGameplayTag::RequestGameplayTag(FName(*(TEXT("Presentation.DivineBeasts.Development.Magic.")+Name.ToString()+TEXT(".Cast"))),false); }
@@ -71,6 +85,9 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::OnWorldBeginPlay(UWorld& Wor
     if(!Data) { UE_LOG(LogTemp,Warning,TEXT("开发施法动画缺少Data服务；权威技能不受影响")); return; }
     TArray<FSoftObjectPath> Paths;
     for(FName Name:{FName(TEXT("Fireball")),FName(TEXT("Frostbolt")),FName(TEXT("ArcaneMissiles"))}) Paths.Add(MontagePath(Name));
+    Paths.Add(FSoftObjectPath(TEXT("/DBAContentPack_Common/Characters/KachujinGRosales/Animations/AM_DBA_Kachujin_Cast.AM_DBA_Kachujin_Cast")));
+    Paths.Add(FSoftObjectPath(TEXT("/DBAContentPack_Common/Characters/NPC/Arissa/Animations/AM_DBA_Arissa_Cast.AM_DBA_Arissa_Cast")));
+    Paths.Add(FSoftObjectPath(TEXT("/DBAWorldPack_Village/Creatures/VampireALusth/Animations/AM_DBA_Vampire_Cast.AM_DBA_Vampire_Cast")));
     FGamePlatformResult Result; const FGuid Token=LifetimeToken;
     TWeakObjectPtr<UDivineBeastsDevelopmentCastingWorldSubsystem> WeakThis(this);
     VisualLease=Data->AcquireResources(Paths,EGamePlatformDataLifetime::World,this,
@@ -169,7 +186,7 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
     auto* Mesh=Character->GetMesh();
     auto* Anim=Mesh ? Mesh->GetAnimInstance() : nullptr;
     const FName Name=CastName(Facts.PresentationStyleId);
-    auto* Montage=Cast<UAnimMontage>(MontagePath(Name).ResolveObject());
+    auto* Montage=Cast<UAnimMontage>(MontagePathForMesh(Name, Mesh ? Mesh->GetSkeletalMeshAsset() : nullptr).ResolveObject());
     auto* Binding=Bindings.Find(Component);
     if(Binding->ActivationId.IsValid() && (Binding->ActivationId!=Facts.ActivationId || Binding->Anim.Get()!=Anim ||
         !Mesh || Binding->SkeletalMesh.Get()!=Mesh->GetSkeletalMeshAsset() || Binding->Montage.Get()!=Montage))
@@ -179,7 +196,7 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
         Component=WeakComponent.Get(); Character=WeakCharacter.Get();
         if(!GetCastWindow(Component,Facts,Elapsed,Remaining) || !IsValid(Character)) return;
         Mesh=Character->GetMesh(); Anim=Mesh ? Mesh->GetAnimInstance() : nullptr;
-        Montage=Cast<UAnimMontage>(MontagePath(Name).ResolveObject()); Binding=Bindings.Find(Component);
+        Montage=Cast<UAnimMontage>(MontagePathForMesh(Name, Mesh ? Mesh->GetSkeletalMeshAsset() : nullptr).ResolveObject()); Binding=Bindings.Find(Component);
     }
     if(!bReady || !Binding || !Montage || !IsValid(Anim) || !Mesh || !Mesh->GetSkeletalMeshAsset() ||
         Montage->GetSkeleton()!=Mesh->GetSkeletalMeshAsset()->GetSkeleton()) return;
@@ -206,7 +223,9 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
         TWeakObjectPtr<UAnimMontage> WeakMontage(Montage);
         // 保持false作用域，不修改Skeleton/Group；有效起始偏移只播放当前剩余阶段。
         // 冰箭动作映射至服务器复制的完整施法窗口；迟到事件也按同一比例进入剩余动作，避免2秒条配0.7秒动作。
-        const float PlayRate=Name==TEXT("Frostbolt") ? Montage->GetPlayLength()/Facts.DurationSeconds : 1.0f;
+        const bool bImportedHumanoidCast = MontagePathForMesh(Name, Mesh->GetSkeletalMeshAsset()) != MontagePath(Name);
+        const float PlayRate=(bImportedHumanoidCast || Name==TEXT("Frostbolt"))
+            ? Montage->GetPlayLength()/Facts.DurationSeconds : 1.0f;
         const float PlayedLength=Anim->Montage_Play(Montage,PlayRate,EMontagePlayReturnType::MontageLength,static_cast<float>(Elapsed)*PlayRate,false);
         // Started可能取消、换Avatar、销毁Actor或扩容Bindings；绝不跨此外调保存TMap元素指针。
         Component=WeakComponent.Get(); Anim=WeakAnim.Get();

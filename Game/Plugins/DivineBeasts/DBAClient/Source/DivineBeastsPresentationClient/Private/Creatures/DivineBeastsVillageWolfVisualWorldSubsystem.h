@@ -24,21 +24,26 @@ private:
     /** 观察的复制狼Actor弱集合，避免跨世界持有对象。 */
     TSet<TWeakObjectPtr<ADivineBeastsVillageWolf>> ObservedWolves;
     FDelegateHandle SpawnHandle;
-    FGamePlatformDataLease VisualLease;
-    FSoftObjectPath WolfMeshPath;
-    FSoftObjectPath WolfAnimPath;
-    /** 经实际模型边界校准的纯客户端导入比例/朝向，不修改权威胶囊或导航代理。 */
-    float WolfMeshScale = 1.0f;
-    float WolfMeshYawDegrees = 0.0f;
+    /** 两种怪物共享观察与生命周期，但各自持有独立的内容包租约。 */
+    struct FCreatureVisual
+    {
+        FGamePlatformDataLease Lease;
+        FSoftObjectPath MeshPath;
+        FSoftObjectPath AnimPath;
+        float Scale = 1.0f;
+        float YawDegrees = 0.0f;
+        bool bReady = false;
+        bool bLoading = false;
+    };
+    FCreatureVisual WolfVisual;
+    FCreatureVisual VampireVisual;
     FGuid Operation;
-    bool bReady = false;
-    bool bLoading = false;
     bool bClosing = false;
 
     /** 只识别真实复制Actor；该调用可能发生在BeginPlay或迟到生成事件中。 */
     void ObserveActor(AActor* Spawned);
     /** 唯一GamePlatformData加载，不允许直接StreamableManager旁路。 */
-    void BeginLoadVisuals();
+    void BeginLoadVisuals(bool bVampire);
     /** 租约及世界代次核对后向本地Mesh组件应用外观。 */
     void ApplyVisual(ADivineBeastsVillageWolf& Wolf);
     /** Actor退出时只删除观察，不Destroy复制Actor或卸载其他人的租约。 */

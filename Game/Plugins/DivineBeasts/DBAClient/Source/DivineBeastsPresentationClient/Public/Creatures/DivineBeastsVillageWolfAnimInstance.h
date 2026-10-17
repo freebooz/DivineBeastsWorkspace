@@ -28,6 +28,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|VillageWolf")
     TObjectPtr<UAnimMontage> BiteMontage;
 
+    /** Vampire同骨架DefaultSlot近战攻击资源；由其AnimBP默认值显式指定。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|VillageWolf")
+    TObjectPtr<UAnimMontage> GreatSwordMontage;
+
     virtual void NativeInitializeAnimation() override;
     virtual void NativeUninitializeAnimation() override;
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;

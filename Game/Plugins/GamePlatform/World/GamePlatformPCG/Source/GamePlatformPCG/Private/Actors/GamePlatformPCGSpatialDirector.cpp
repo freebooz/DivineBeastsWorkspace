@@ -3,6 +3,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SplineComponent.h"
 #include "PCGComponent.h"
+#include "PCGGraph.h"
 #include "Services/GamePlatformPCGSpatialRules.h"
 
 namespace
@@ -182,6 +183,20 @@ bool AGamePlatformPCGWorldDirector::BuildStaticExecutionPlan(
             OutPlan.Reset();
             return false;
         }
+#if WITH_EDITOR
+        // 软引用存在不代表原生PCG组件已绑定正确的图。冷重开或替换图后若仍使用旧图，
+        // 后续烘焙可能产生错误生态结果；本校验仅用于编辑器静态计划，不触发生成或网络操作。
+        UPCGGraph* ApprovedGraph = Participant->Graph.LoadSynchronous();
+        if (!IsValid(ApprovedGraph) ||
+            Participant->PCGComponent->GetGraph() != ApprovedGraph ||
+            Participant->PCGComponent->Seed != Participant->Seed ||
+            Participant->PCGComponent->GenerationTrigger != EPCGComponentGenerationTrigger::GenerateOnDemand)
+        {
+            OutError = TEXT("PCG放置器的Graph、Seed或按需生成模式与原生组件不一致；重新绑定后才能执行静态计划。");
+            OutPlan.Reset();
+            return false;
+        }
+#endif
         OutPlan.Add(Participant);
     }
     OutPlan.Sort([](const AGamePlatformPCGActorBase& A, const AGamePlatformPCGActorBase& B)

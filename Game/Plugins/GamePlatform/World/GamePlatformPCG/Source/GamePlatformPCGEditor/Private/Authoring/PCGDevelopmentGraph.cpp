@@ -9,6 +9,8 @@
 #include "Elements/PCGStaticMeshSpawner.h"
 #include "Elements/PCGProjectionElement.h"
 #include "Elements/PCGSplineSampler.h"
+#include "Elements/PCGDataFromActor.h"
+#include "Components/SplineComponent.h"
 #include "PCGInputOutputSettings.h"
 #include "MeshSelectors/PCGMeshSelectorWeighted.h"
 #include "Components/InstancedStaticMeshComponent.h"
@@ -292,6 +294,24 @@ UPCGGraph* GamePlatformPCGEditor::CreateFoundationTemplateGraph(
         TemplateId == FGamePlatformPCGTemplateIds::ParcelFill ||
         TemplateId == FGamePlatformPCGTemplateIds::CropField)
     {
+        // 官方Get Actor Data只读取当前Actor的SplineComponent，避免将Box+Spline
+        // 合并为PCGUnionData后送入仅接受PolylineData的SplineSampler，导致零输出点。
+        UPCGDataFromActorSettings* SplineSource = nullptr;
+        UPCGNode* SplineSourceNode = Graph->AddNodeOfType(SplineSource);
+        if (!SplineSourceNode || !SplineSource)
+        {
+            Error = TEXT("Foundation样条源读取节点创建失败。");
+            return nullptr;
+        }
+        SplineSource->ActorSelector.ActorFilter = EPCGActorFilter::Self;
+        SplineSource->ActorSelector.bIncludeChildren = false;
+        SplineSource->ComponentSelector.ComponentSelection = EPCGComponentSelection::ByClass;
+        SplineSource->ComponentSelector.ComponentSelectionClass = USplineComponent::StaticClass();
+        SplineSource->Mode = EPCGGetDataFromActorMode::ParseActorComponents;
+        SplineSource->bIgnorePCGGeneratedComponents = true;
+        SplineSource->SetExecuteOnGPU(false);
+        Tail = SplineSourceNode;
+        TailPin = PCGPinConstants::DefaultOutputLabel;
         UPCGSplineSamplerSettings* Sampler = nullptr;
         UPCGNode* SamplerNode = Graph->AddNodeOfType(Sampler);
         if (!SamplerNode || !Sampler)
@@ -333,6 +353,32 @@ UPCGGraph* GamePlatformPCGEditor::CreateFoundationTemplateGraph(
         {
             return nullptr;
         }
+        // UE5.8的WeightedMeshSelector（加权网格选择器）遍历所有输入点，
+        // 并不因SpatialCarve把点密度设为0而自动忽略这些点。
+        // 必须在Carve之后用原生DensityFilter实际删除被排除点，
+        // 否则零密度点仍被实例化到道路、农田或人工锁定区域，破坏空间安全合同。
+        UPCGNode* DensityNode = AddTemplateNode<UPCGDensityFilterSettings>(*Graph, Error);
+        UPCGDensityFilterSettings* Density = DensityNode ?
+            Cast<UPCGDensityFilterSettings>(DensityNode->GetSettings()) : nullptr;
+        if (!Density || !DensityNode)
+        {
+            Error = TEXT("空间排除模板缺少UE5.8原生密度点过滤器。");
+            return nullptr;
+        }
+        Density->LowerBound = 0.001f;
+        Density->UpperBound = 1.0f;
+        Density->bInvertFilter = false;
+        Density->bNormalizeOutputDensity = false;
+#if WITH_EDITORONLY_DATA
+        Density->bKeepZeroDensityPoints = false;
+#endif
+        if (!ConnectGraphPins(*Graph, Tail, TailPin, DensityNode, PCGPinConstants::DefaultInputLabel))
+        {
+            Error = TEXT("空间排除后零密度点过滤器未真正连线，禁止将模板交给Spawner。");
+            return nullptr;
+        }
+        Tail = DensityNode;
+        TailPin = PCGPinConstants::DefaultOutputLabel;
     }
 
     if (TemplateId == FGamePlatformPCGTemplateIds::ScatterSurface ||

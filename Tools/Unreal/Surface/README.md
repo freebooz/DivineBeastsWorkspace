@@ -1,4 +1,9 @@
 # 通用环境表面制作工具
+
+## 2026-10-17 平台通用PBR四通道覆盖函数
+
+新增`AuthorTerrainPBRLayerBlendUE58.py`（平台MF原生作者），在已有`GamePlatformSurface`内制作`MF_GP_PBRLayerBlend`（PBR覆盖函数）。函数接受BaseColor/Normal/Roughness/AO的基础与覆盖两组参数及Coverage（0～1覆盖量），统一输出4项属性并归一化切线空间法线；不含SSLM项目纹理或服务器权威逻辑。首次UE5.8实际创建成功：9输入、4输出、20原生表达式；资产由项目层十层函数化候选真实调用三次，见`Docs/Implementation/TerrainMaterialFunctionIntegration_20261017.md`。已有七个稳定MF/母材质/MPC未替换。客户端Shader、GPU和专用服务器资源剥离仍以正式验证为准。
+
 ## 2026-10-13材质库源码优先制作入口（最新）
 
 - `AuthorMaterialLibraryDomainUE58.py`（60项跨环境表面、VFX和项目角色的真实运算材质函数作者）：`MaterialLibraryDomainRecipes_{Core,World,Surface,Project}.json`（四分领域算法合同）。`--mode inspect`（仅核对路径）／`--mode apply`（实际UE创建）／`--mode review`（创建独立开发QA）／`--mode compile`（最后统一Shader编译），全部有安全拒绝和三层所有权约束。

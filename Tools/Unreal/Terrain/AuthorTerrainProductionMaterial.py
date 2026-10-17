@@ -17,10 +17,33 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[3]
 SOURCES=ROOT/"Tools/Unreal/Terrain/TerrainProductionPBRManifest_v1.json"
 MODE=os.getenv("TERRAIN_PRODUCTION_MATERIAL_MODE","inspect").lower().strip()
+# 明确的可选候选版本：原正式高精母材质与审核MI均不覆盖；保持十层LayerInfo和所有纹理参数名。
+FUNCTION_INTEGRATION=os.getenv("TERRAIN_FUNCTION_INTEGRATION","0").strip()=="1"
 BASE="/DBAPresentationPack_Core/Materials/Terrain"
-MASTER=BASE+"/M_DBA_Terrain_Production10"
-INSTANCE=BASE+"/MI_DBA_Terrain_Production10_Review"
+MASTER=BASE+("/M_DBA_Terrain_Production10_FunctionIntegrated" if FUNCTION_INTEGRATION
+             else "/M_DBA_Terrain_Production10")
+INSTANCE=BASE+("/MI_DBA_Terrain_Production10_FunctionIntegrated_Review" if FUNCTION_INTEGRATION
+               else "/MI_DBA_Terrain_Production10_Review")
 WORLD="/DBAWorldPack_Village"
+
+# 跨项目平台材质函数稳定合同：调用前核对真实输入/输出引脚，禁止函数资产改签后静默错连。
+SHARED_FUNCTIONS={
+ "MacroColor":("Landscape/MF_GP_LandscapeMacroColor",
+               {"BaseColor","MacroTint","MacroNoise","Strength"},{"Color"}),
+ "DistanceDetail":("Landscape/MF_GP_LandscapeDistanceDetail",
+                   {"NearColor","FarColor","StartDistanceCm","EndDistanceCm"},
+                   {"DetailColor","FarWeight"}),
+ "SlopeLayers":("Landscape/MF_GP_LandscapeSlopeLayers",
+                {"SlopeNormalized","SlopeStart","SlopeEnd"},{"Mask"}),
+ "AltitudeLayers":("Landscape/MF_GP_LandscapeAltitudeLayers",
+                   {"HeightCm","LowerHeightCm","UpperHeightCm"},{"Mask"}),
+ "BiomeMask":("Landscape/MF_GP_LandscapeBiomeMask",
+              {"BiomeWeight","SlopeMask","AltitudeMask","LocalWeight"},{"BiomeMask"}),
+ "PBRLayer":("Layers/MF_GP_PBRLayerBlend",
+             {"BaseColor","OverlayColor","BaseNormal","OverlayNormal",
+              "BaseRoughness","OverlayRoughness","BaseAO","OverlayAO","Coverage"},
+             {"BaseColor","Normal","Roughness","AO"}),
+}
 LAYERS=("Grass","ForestSoil","Dirt","Rock","Scree","Sand","Gravel","RoadDirt","FarmSoil","ShoreMud")
 
 def validate_manifest():
@@ -38,7 +61,8 @@ def execute():
  if MODE not in ("inspect","apply","verify"):raise ValueError("模式限inspect/apply/verify")
  paths=validate_manifest()
  if MODE=="inspect":
-  print("TERRAIN_PRODUCTION_MATERIAL_PLAN 10_layers_40_maps client_only_height_switch_moss_snow_wetness")
+  print("TERRAIN_PRODUCTION_MATERIAL_PLAN 10_layers_40_maps client_only_height_switch_moss_snow_wetness",
+        "function_integrated_candidate="+str(FUNCTION_INTEGRATION),MASTER)
   return
  try:import unreal # type: ignore
  except ImportError as exc:raise RuntimeError("必须由UE5.8真实编辑器创建.uasset") from exc
@@ -52,6 +76,22 @@ def execute():
   obj=lib.load_asset(path)
   if not isinstance(obj,unreal.Texture2D):raise RuntimeError("未导入正式Texture2D："+path)
   texture[key]=obj
+ shared_functions={}
+ if FUNCTION_INTEGRATION:
+  for key,(relative,expected_inputs,expected_outputs) in SHARED_FUNCTIONS.items():
+   path="/GamePlatformSurface/MaterialFunctions/"+relative
+   function=lib.load_asset(path)
+   if not isinstance(function,unreal.MaterialFunction):
+    raise RuntimeError("缺少可复用平台MaterialFunction："+path)
+   nodes=matlib.get_material_function_expressions(function)
+   input_names={str(n.get_editor_property("input_name")) for n in nodes
+                if isinstance(n,unreal.MaterialExpressionFunctionInput)}
+   output_names={str(n.get_editor_property("output_name")) for n in nodes
+                 if isinstance(n,unreal.MaterialExpressionFunctionOutput)}
+   if input_names!=expected_inputs or output_names!=expected_outputs:
+    raise RuntimeError("平台材质函数引脚合同发生变化，拒绝接入："+path+" "+
+                       str((input_names,output_names)))
+   shared_functions[key]=function
  def inspect():
   mat=lib.load_asset(MASTER)
   inst=lib.load_asset(INSTANCE)
@@ -60,7 +100,22 @@ def execute():
   nodes=matlib.get_num_material_expressions(mat)
   if nodes<210:raise RuntimeError("已保存正式PBR母材质节点数不符："+str(nodes))
   if inst.get_editor_property("parent")!=mat:raise RuntimeError("项目MI父材质错误")
-  print("TERRAIN_PRODUCTION_MATERIAL_UE_VERIFIED",MASTER,"nodes",nodes)
+  if FUNCTION_INTEGRATION:
+   calls=[e for e in matlib.get_material_expressions(mat)
+          if isinstance(e,unreal.MaterialExpressionMaterialFunctionCall)]
+   actual={}
+   for expr in calls:
+    function=expr.get_editor_property("material_function")
+    if not isinstance(function,unreal.MaterialFunction):
+     raise RuntimeError("材质存在尚未绑定函数的MaterialFunctionCall节点")
+    path=str(function.get_path_name()).split(".")[0]
+    actual[path]=actual.get(path,0)+1
+   expected={"/GamePlatformSurface/MaterialFunctions/"+v[0]:(3 if k=="PBRLayer" else 1)
+             for k,v in SHARED_FUNCTIONS.items()}
+   if actual!=expected:
+    raise RuntimeError("函数化十层母材质缺少真实调用或次数不符："+str((actual,expected)))
+  print("TERRAIN_PRODUCTION_MATERIAL_UE_VERIFIED",MASTER,"nodes",nodes,
+        "function_calls="+str(len(calls)) if FUNCTION_INTEGRATION else "legacy_graph")
   return
  if lib.does_asset_exist(MASTER) or lib.does_asset_exist(INSTANCE):
   inspect()
@@ -82,6 +137,24 @@ def execute():
   if not ok and pin in ("Coordinates","Input","VectorInput"):
    ok=matlib.connect_material_expressions(src,out,dst,"")
   if not ok:raise RuntimeError("材质图节点未连线："+src.get_name()+"→"+pin)
+ def call_shared(name,inputs,x,y):
+  """为候选材质创建真实MaterialFunctionCall并强制完成所有预期输入。"""
+  if not FUNCTION_INTEGRATION or name not in shared_functions:
+   raise RuntimeError("平台材质函数未经过完整接口预检："+name)
+  expected=SHARED_FUNCTIONS[name][1]
+  if set(inputs)!=expected:
+   raise RuntimeError("平台材质函数输入不完整："+name+" "+str(set(inputs)^expected))
+  call=node(unreal.MaterialExpressionMaterialFunctionCall,x,y)
+  if not call.set_material_function(shared_functions[name]):
+   raise RuntimeError("平台函数绑定失败："+name)
+  for pin,(source,output) in inputs.items():
+   wire(source,call,pin,output)
+  return call
+ def extract_shared(source,output,x,y):
+  """使用透传节点把多输出函数结果变为普通表达式，后续层共享同一张图。"""
+  reroute=node(unreal.MaterialExpressionReroute,x,y)
+  wire(source,reroute,"Input",output)
+  return reroute
  def value(v,x,y):
   e=node(unreal.MaterialExpressionConstant,x,y)
   e.set_editor_property("r",float(v))
@@ -149,6 +222,18 @@ def execute():
   out=elements[0]
   for i,v in enumerate(elements[1:],1):out=add(out,v,x+170*i,y+95*i)
   return out
+ def pbr_layer(color,normal,roughness,ao,overlay_color,overlay_normal,
+               overlay_roughness,overlay_ao,mask,x,y):
+  """共享平台四通道覆盖函数，保留各源PBR贴图，而不是套用旧函数固定色值。"""
+  call=call_shared("PBRLayer",{
+   "BaseColor":(color,""),"OverlayColor":overlay_color,
+   "BaseNormal":(normal,""),"OverlayNormal":overlay_normal,
+   "BaseRoughness":(roughness,""),"OverlayRoughness":overlay_roughness,
+   "BaseAO":(ao,""),"OverlayAO":overlay_ao,"Coverage":(mask,"")},x,y)
+  return (extract_shared(call,"BaseColor",x+245,y-220),
+          extract_shared(call,"Normal",x+245,y-60),
+          extract_shared(call,"Roughness",x+245,y+100),
+          extract_shared(call,"AO",x+245,y+260))
  # 独立十层LayerSample，来源与Gaea/PCG校准权重严格同名。
  uv=node(unreal.MaterialExpressionTextureCoordinate,-2400,-2300)
  tile=scalar("TerrainDetailTiling",12,-2200,-2180)
@@ -238,21 +323,55 @@ def execute():
  moss_weight=sat(add(masks_by_layer["Rock"],masks_by_layer["ForestSoil"],2820,-2070),3010,-2070)
  moss_uv=mul(uv,scalar("TerrainMossMacroTiling",2,3090,-2640),3240,-2670)
  moss_noise=sample(moss_texture["Coverage"],"TerrainMossCoverage",moss_uv,3180,-2400)
- moss_strength=mul(moss,moss_weight,3250,-2040)
- moss_mask=sat(mul(moss_strength,moss_noise,3470,-2070,ob="R"),3650,-2070)
+ if FUNCTION_INTEGRATION:
+  # 消费平台宏观颜色函数、距离细节函数；默认轻微变化避免覆盖真实扫描PBR色相。
+  macro_tint=mul(col,vec(.94,.97,.95,2940,-960),3050,-840)
+  macro_call=call_shared("MacroColor",{
+   "BaseColor":(col,""),"MacroTint":(macro_tint,""),
+   "MacroNoise":(moss_noise,"R"),
+   "Strength":(scalar("TerrainMacroColorStrength",.18,3100,-730),"")},
+   3400,-850)
+  macro_color=extract_shared(macro_call,"Color",3610,-850)
+  far_color=mul(macro_color,vec(.97,.99,1.0,3510,-590),3740,-600)
+  distance_call=call_shared("DistanceDetail",{
+   "NearColor":(macro_color,""),"FarColor":(far_color,""),
+   "StartDistanceCm":(scalar("TerrainDistanceFadeStartCm",4000,3530,-350),""),
+   "EndDistanceCm":(scalar("TerrainDistanceFadeEndCm",18000,3560,-130),"")},
+   4020,-670)
+  col=extract_shared(distance_call,"DetailColor",4200,-710)
+  biome_call=call_shared("BiomeMask",{
+   "BiomeWeight":(moss_weight,""),
+   "SlopeMask":(one,""),"AltitudeMask":(one,""),
+   "LocalWeight":(moss_noise,"R")},3450,-2000)
+  moss_mask=sat(mul(moss,biome_call,3680,-1980,ob="BiomeMask"),3890,-1960)
+ else:
+  moss_strength=mul(moss,moss_weight,3250,-2040)
+  moss_mask=sat(mul(moss_strength,moss_noise,3470,-2070,ob="R"),3650,-2070)
  moss_c=sample(moss_texture["BaseColor"],"TerrainMossAlbedo",txuv,2830,-1410)
  moss_n=sample(moss_texture["Normal"],"TerrainMossNormal",txuv,2830,370)
  moss_orm=sample(moss_texture["ORM"],"TerrainMossORM",txuv,2830,1720)
- col=lerp(col,moss_c,moss_mask,3700,-1050,outb="RGB")
- n=norm(lerp(n,moss_n,moss_mask,3700,550,outb="RGB"),3900,750)
- rough=lerp(rough,moss_orm,moss_mask,3750,1500,outb="G")
- ao=lerp(ao,moss_orm,moss_mask,3750,2680,outb="R")
+ if FUNCTION_INTEGRATION:
+  col,n,rough,ao=pbr_layer(col,n,rough,ao,(moss_c,"RGB"),(moss_n,"RGB"),
+                            (moss_orm,"G"),(moss_orm,"R"),moss_mask,4280,-1700)
+ else:
+  col=lerp(col,moss_c,moss_mask,3700,-1050,outb="RGB")
+  n=norm(lerp(n,moss_n,moss_mask,3700,550,outb="RGB"),3900,750)
+  rough=lerp(rough,moss_orm,moss_mask,3750,1500,outb="G")
+  ao=lerp(ao,moss_orm,moss_mask,3750,2680,outb="R")
  # 局部湿润只调整颜色和粗糙度，绝不改变服务器权威碰撞或玩法事实。
  wet=sat(maximum(scalar("VillageWetness",0,3300,3200),
                  global_scalar("GP_Surface_GlobalWetness",3000,3350),3500,3400),3700,3360)
  shade=sub(one,mul(wet,value(.23,3460,3200),3700,3140),3960,3050)
- col=mul(col,shade,4180,-900)
- rough=lerp(rough,value(.36,4100,1620),wet,4390,1550)
+ if FUNCTION_INTEGRATION:
+  wet_color=mul(col,shade,4530,-860)
+  # 湿润对微法线仅做轻度平滑，遮罩由PBRLayer统一应用一次。
+  wet_normal=norm(lerp(n,vec(0,0,1,4380,520),
+                        value(.22,4330,640),4500,580),4670,700)
+  col,n,rough,ao=pbr_layer(col,n,rough,ao,(wet_color,""),(wet_normal,""),
+                            (value(.36,4400,1500),""),(ao,""),wet,4800,950)
+ else:
+  col=mul(col,shade,4180,-900)
+  rough=lerp(rough,value(.36,4100,1620),wet,4390,1550)
  # 与既有VillageSnow世界桥接字段保持一致，默认使用平台正式雪纹理。
  snow_cov=platform_texture("Snow/T_GP_Snow_CoverageNoise")
  snow_col=platform_texture("Weather/T_GP_Weather_SnowAlbedo")
@@ -263,16 +382,42 @@ def execute():
  vn=node(unreal.MaterialExpressionVertexNormalWS,3590,-2950)
  dz=node(unreal.MaterialExpressionDotProduct,3830,-2850)
  wire(vn,dz,"A");wire(vec(0,0,1,3610,-2750),dz,"B")
- snow_slope=sat(dz,4040,-2850)
+ if FUNCTION_INTEGRATION:
+  # 平台坡度/海拔函数由VertexNormalWS、绝对世界Z驱动，避免PixelNormalWS反向依赖Normal。
+  slope_call=call_shared("SlopeLayers",{
+   "SlopeNormalized":(dz,""),
+   "SlopeStart":(scalar("TerrainSnowSlopeStart",.18,3860,-2830),""),
+   "SlopeEnd":(scalar("TerrainSnowSlopeEnd",.88,3850,-2630),"")},
+   4180,-2890)
+  snow_slope=extract_shared(slope_call,"Mask",4370,-2890)
+  world_position=node(unreal.MaterialExpressionWorldPosition,3870,-3410)
+  world_height=node(unreal.MaterialExpressionComponentMask,4070,-3390)
+  world_height.set_editor_property("b",True)
+  wire(world_position,world_height,"Input")
+  altitude_call=call_shared("AltitudeLayers",{
+   "HeightCm":(world_height,""),
+   "LowerHeightCm":(scalar("TerrainSnowHeightStartCm",-200000,3930,-3300),""),
+   "UpperHeightCm":(scalar("TerrainSnowHeightEndCm",-199000,3930,-3100),"")},
+   4370,-3300)
+  snow_altitude=extract_shared(altitude_call,"Mask",4560,-3320)
+ else:
+  snow_slope=sat(dz,4040,-2850)
  snow_uv=mul(uv,scalar("TerrainSnowMacroTiling",2.2,3960,-2520),4210,-2530)
  snow_noise=sample(snow_cov,"VillageSnowCoverageTexture",snow_uv,4380,-2670)
- coverage=sat(mul(mul(snow_amount,snow_slope,4610,-2500),snow_noise,4790,-2510,ob="R"),4950,-2500)
+ snow_coverage=mul(mul(snow_amount,snow_slope,4610,-2500),snow_noise,4790,-2510,ob="R")
+ if FUNCTION_INTEGRATION:
+  snow_coverage=mul(snow_coverage,snow_altitude,4930,-2720)
+ coverage=sat(snow_coverage,4950,-2500)
  snow_color=sample(snow_col,"VillageSnowAlbedoTexture",txuv,4530,-1300)
  snow_norm=sample(snow_nrm,"VillageSnowNormalTexture",txuv,4530,330)
- col=lerp(col,snow_color,coverage,5150,-760,outb="RGB")
- n=norm(lerp(n,snow_norm,coverage,5150,480,outb="RGB"),5340,730)
- rough=lerp(rough,value(.88,4700,1850),coverage,5150,1700)
- ao=lerp(ao,one,coverage,5180,2740)
+ if FUNCTION_INTEGRATION:
+  col,n,rough,ao=pbr_layer(col,n,rough,ao,(snow_color,"RGB"),(snow_norm,"RGB"),
+                            (value(.88,4700,1850),""),(one,""),coverage,5530,100)
+ else:
+  col=lerp(col,snow_color,coverage,5150,-760,outb="RGB")
+  n=norm(lerp(n,snow_norm,coverage,5150,480,outb="RGB"),5340,730)
+  rough=lerp(rough,value(.88,4700,1850),coverage,5150,1700)
+  ao=lerp(ao,one,coverage,5180,2740)
  out=[(col,unreal.MaterialProperty.MP_BASE_COLOR),
       (n,unreal.MaterialProperty.MP_NORMAL),
       (rough,unreal.MaterialProperty.MP_ROUGHNESS),

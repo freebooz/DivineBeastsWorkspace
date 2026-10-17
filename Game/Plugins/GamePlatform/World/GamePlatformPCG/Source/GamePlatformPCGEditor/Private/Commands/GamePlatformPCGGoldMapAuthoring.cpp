@@ -8,6 +8,7 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SplineComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Data/PCGBasePointData.h"
 #include "Editor.h"
 #include "Engine/DirectionalLight.h"
 #include "Engine/Level.h"
@@ -1107,6 +1108,32 @@ bool GamePlatformPCGGoldMap::PreviewGenerated(FString& Error)
             });
         if (!bValid || TotalInstances <= 0)
         {
+            // 原生任务成功结束不等于生成了PCG点或Spawner实例。失败时输出各层实际数量，
+            // 使“采样全空”“输出未连接”“Spawner无受管网格”与空间过滤失败可被区分。
+            // 仅在独立Gold预览出错时诊断，不修改已保存Graph、关卡和服务器权威。
+            const TArray<FPCGTaggedData>& NativeOutputs = Component->GetGeneratedGraphOutput().TaggedData;
+            int64 NativePointCount = 0;
+            int32 UnrecognizedOutputs = 0;
+            for (const FPCGTaggedData& Data : NativeOutputs)
+            {
+                if (const UPCGBasePointData* PointData = Cast<UPCGBasePointData>(Data.Data))
+                {
+                    NativePointCount += PointData->GetNumPoints();
+                }
+                else
+                {
+                    ++UnrecognizedOutputs;
+                }
+            }
+            int32 ManagedCount = 0;
+            Component->ForEachConstManagedResource([&ManagedCount](const UPCGManagedResource*)
+            {
+                ++ManagedCount;
+            });
+            UE_LOG(LogGamePlatformPCG, Warning,
+                TEXT("GP_PCG_PREVIEW_DIAGNOSTIC Label=%s bGenerated=%d TaggedData=%d Points=%lld Unrecognized=%d Managed=%d InspectedISM=%d Instances=%lld GeometryValid=%d"),
+                Spec.Label, Component->bGenerated ? 1 : 0, NativeOutputs.Num(), NativePointCount,
+                UnrecognizedOutputs, ManagedCount, SeenComponents.Num(), TotalInstances, bValid ? 1 : 0);
             Error = FString(TEXT("GoldLevel官方PCG没有产生合法非碰撞实例、越过排除区或超出预算：")) +
                 Spec.Label + TEXT("，实例数=") + FString::Printf(TEXT("%lld"), TotalInstances);
             return false;

@@ -419,6 +419,13 @@
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "CC0狼模型、材质、骨骼和动画蓝图只供客户端表现；权威AI独立位于Village/AI，地图与导航保持服务器可用。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Creatures/VampireALusth",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Creatures/VampireALusth",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "吸血鬼的骨骼、材质和动画仅由客户端租约装配；服务器只Cook项目怪物类与权威AI定义。"
     }
   ],
   "StageOnlyDirectories": [

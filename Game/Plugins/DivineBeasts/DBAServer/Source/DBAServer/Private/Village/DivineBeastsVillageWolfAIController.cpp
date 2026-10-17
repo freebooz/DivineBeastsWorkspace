@@ -2,6 +2,7 @@
 #include "Village/DivineBeastsVillageWolfAIController.h"
 
 #include "Characters/DivineBeastsVillageWolf.h"
+#include "Characters/DivineBeastsVillageVampire.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Engine/World.h"
@@ -64,7 +65,10 @@ bool ADivineBeastsVillageWolfAIController::TryExecuteNativeAttack(AActor& Valida
     Spec.DamageType = EGamePlatformDamageType::Physical;
     Spec.SourceAvatarGeneration = SourceCombat->GetCombatAvatarGeneration();
     Spec.TargetAvatarGeneration = TargetCombat->GetCombatAvatarGeneration();
-    Spec.SourceAbilityId = FName(TEXT("VillageWolf.Bite"));
+    const bool bVampire = Wolf->IsA<ADivineBeastsVillageVampire>();
+    Spec.SourceAbilityId = bVampire
+        ? FName(TEXT("VillageVampire.GreatSwordAttack"))
+        : FName(TEXT("VillageWolf.Bite"));
     Spec.HitContext.bHasValidatedHit = true;
     Spec.HitContext.TraceStart = Start;
     Spec.HitContext.TraceEnd = End;
@@ -77,7 +81,7 @@ bool ADivineBeastsVillageWolfAIController::TryExecuteNativeAttack(AActor& Valida
     // 动画发布失败也不能回滚真实伤害；反伤/死亡重入后禁止再发布新咬击。
     if (bApplied && IsValid(Wolf) && Wolf->IsWolfAlive() && !Wolf->IsActorBeingDestroyed())
         if (auto* Cast = Wolf->FindComponentByClass<UGamePlatformAbilityCastComponent>())
-            Cast->PublishConfirmedCast(Spec.EventId, Spec.SourceAbilityId, FName(TEXT("VillageWolf.Bite")),
+            Cast->PublishConfirmedCast(Spec.EventId, Spec.SourceAbilityId, Spec.SourceAbilityId,
                 Spec.SourceAvatarGeneration, 0.8f);
     return bApplied;
 }

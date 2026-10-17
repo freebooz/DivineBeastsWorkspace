@@ -79,6 +79,72 @@ def check_blueprint_root_contracts(pipeline: str) -> None:
     print("PCG_GOLD_BLUEPRINT_ROOT_STATIC_CONTRACTS_PASS")
 
 
+
+
+def check_crop_spline_source_contract() -> None:
+    """仅检查农田样条源迁移与平台安全边界；真实节点必须由UE5.8另行验收。"""
+    generator = text(PCG / "Source/GamePlatformPCGEditor/Private/Authoring/PCGDevelopmentGraph.cpp")
+    inspector = text(PCG / "Source/GamePlatformPCG/Private/Validation/PCGGraphInspection.cpp")
+    approved = text(PCG / "Source/GamePlatformPCG/Private/Validation/GamePlatformPCGTemplateContract.cpp")
+    editor_test = text(PCG / "Source/GamePlatformPCGEditor/Private/Tests/PCGEditorTests.cpp")
+    script_path = TOOLS / "RepairGoldCropSplineInputUE58.py"
+    script = text(script_path)
+    runner = text(TOOLS / "RunGoldCropSplineRepairUE58.ps1")
+    ast.parse(script, filename=str(script_path))
+
+    for marker in (
+        "UPCGDataFromActorSettings", "EPCGActorFilter::Self",
+        "EPCGComponentSelection::ByClass", "USplineComponent::StaticClass()",
+        "EPCGGetDataFromActorMode::ParseActorComponents",
+        "PCGSplineSamplerConstants::SplineLabel",
+    ):
+        assert marker in generator, f"生成器缺少受限Actor样条源：{marker}"
+    assert "UPCGDataFromActorSettings::StaticClass()" in approved, "PCG合同未批准官方安全查询节点"
+    for marker in (
+        "UnapprovedSplineActorSource", "CropSplineSourceNotConnected",
+        "Source->ActorSelector.ActorFilter != EPCGActorFilter::Self",
+        "Source->ComponentSelector.ComponentSelectionClass != USplineComponent::StaticClass()",
+        "Source->bAlwaysRequeryActors", "SoleEdge(*SplineSourceNode",
+    ):
+        assert marker in inspector, f"PCG图审核缺少失败关闭规则：{marker}"
+    for marker in (
+        "EPCGActorFilter::AllWorldActors", "UBoxComponent::StaticClass()",
+        "GamePlatformPCGInspection::ValidateApprovedGraph(*Profile)",
+    ):
+        assert marker in editor_test, f"Editor原生负向回归未覆盖：{marker}"
+    assert 'PACKAGE = "/Game/Development/Foundation/PCG/Realized/PCG_Gold_Crop"' in script, \
+        "迁移必须严格限制一份Gold Crop开发图"
+    for marker in (
+        "def inspect_graph(", "def assert_source(", "def require_enum(",
+        'if MODE == "inspect":', 'if MODE == "verify":',
+        'graph.remove_edge(', 'graph.add_node_of_type(', 'graph.add_edge(',
+        "save_loaded_asset(", 'if sources:',
+    ):
+        assert marker in script, f"Gold Crop迁移步骤或幂等保护缺失：{marker}"
+    for marker in (
+        "Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool",
+        "UnrealBuildTool", "Get-FileHash", "PCG_Gold_Crop.before.uasset",
+        "SSLM_GOLD_CROP_SPLINE_REPAIR_PASS",
+        "SSLM_GOLD_CROP_SPLINE_VERIFY_PASS",
+        "LogPython: Error:", "Fatal error:",
+    ):
+        assert marker in runner, f"Gold Crop迁移安全/回执门禁缺失：{marker}"
+
+    print("PCG_GOLD_CROP_SPLINE_STATIC_CONTRACT_PASS: source=SelfSpline, guard=fail-closed")
+    recovery = text(TOOLS / "RunGoldCropRecoveryUE58.ps1")
+    for marker in (
+        "GoldCropSplineRepairUE58.ps1",  # 保持以下业务阶段引用真实受控工具，避免旁路
+        "04-Build", "05-EditorAutomation", "06-GeneratePreview", "07-G09",
+        "ReadyForApply", "BlockedByActiveEditorOrUBT",
+        "GoldPreviewAndG09Passed_NotWholeGameProduction",
+        "Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool",
+        "ProductionReady=$false",
+    ):
+        normalized_marker = "RunGoldCropSplineRepairUE58.ps1" if marker == "GoldCropSplineRepairUE58.ps1" else marker
+        assert normalized_marker in recovery, f"Gold恢复编排缺少受控阶段或安全门禁：{normalized_marker}"
+    print("PCG_GOLD_CROP_RECOVERY_PIPELINE_STATIC_PASS")
+
+
 def check() -> None:
     for file in TOOLS.glob("*.py"):
         ast.parse(text(file), filename=str(file))
@@ -151,6 +217,7 @@ def check() -> None:
     assert "'-Apply'" not in pipeline or "if (!$Apply)" in pipeline, \
         "默认模式必须只读，真实创建须明确Apply"
 
+    check_crop_spline_source_contract()
     check_blueprint_root_contracts(pipeline)
     print("PCG_GOLD_AUTHORING_STATIC_CONTRACTS_PASS")
     print("TEMPLATES=12 SUBGRAPHS=7 BLUEPRINTS=11 DEFINITIONS=17 REALIZED=3 PROFILES=3")

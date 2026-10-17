@@ -48,12 +48,35 @@ function Assert-Free([string]$Path) {
 function Invoke-UE([string]$Stage,[string[]]$Arguments) {
     $out = Join-Path $evidence "$Stage.out.log"
     $err = Join-Path $evidence "$Stage.err.log"
-    $args = @($project) + $Arguments + $baseUnrealArgs
+    $unrealLog = Join-Path $evidence "$Stage.Unreal.log"
+    $args = @($project) + $Arguments + $baseUnrealArgs + @("-abslog=$unrealLog")
     $process = Start-Process -FilePath $editor -ArgumentList $args -Wait -PassThru -RedirectStandardOutput $out -RedirectStandardError $err
-    $records.Add(@{Stage=$Stage;ExitCode=$process.ExitCode;StdOut=$out;StdErr=$err})
+    $record = @{Stage=$Stage;ExitCode=$process.ExitCode;StdOut=$out;StdErr=$err;UnrealLog=$unrealLog}
+    $records.Add($record)
     if ($process.ExitCode -ne 0) {
         $tail = @(Get-Content -LiteralPath $out -Tail 18 -ErrorAction SilentlyContinue)
         throw ("UE5.8 " + $Stage + "失败，退出码=" + $process.ExitCode + "。" + [Environment]::NewLine + ($tail -join [Environment]::NewLine))
+    }
+    # UE编辑器-ExecutePythonScript有可能记录LogPython: Error但进程仍返回0；
+    # 必须在本次独立Unreal日志中找到所属阶段的成功标记，避免假阳性验收。
+    $isPython = @($Arguments | Where-Object { $_ -like '-ExecutePythonScript=*' }).Count -gt 0
+    if ($isPython) {
+        $expected = switch ($Stage) {
+            '03-GoldDefinitions' { 'PCG_GOLD_DEFINITIONS_SAVED_TOTAL 17' }
+            '04-RealizedSpawnerGraphs' { 'PCG_GOLD_REALIZED_COMPLETED 3' }
+            '05-GoldLevelMap' { 'UE_PCG_GOLD_LEVEL_MAP_SAVED' }
+            '06-FreshEditorReopen' { 'PCG_REOPEN_BASIC_CLASSES_PASS' }
+            default { throw "未登记的Python执行阶段：$Stage" }
+        }
+        $logBody = if (Test-Path -LiteralPath $unrealLog -PathType Leaf) {
+            Get-Content -LiteralPath $unrealLog -Raw -Encoding UTF8
+        } else { '' }
+        if (!$logBody.Contains($expected) -or $logBody.Contains('LogPython: Error:') -or
+            $logBody.Contains('Fatal error:')) {
+            $record.PythonMarkerVerified = $false
+            throw "UE5.8 Python阶段$Stage无成功标记或脚本实际报错；退出码0不构成验收通过。日志：$unrealLog"
+        }
+        $record.PythonMarkerVerified = $true
     }
     Write-Host ("UE5.8成功：" + $Stage)
 }

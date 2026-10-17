@@ -20,6 +20,13 @@ Commandlet拒绝覆盖已有资产；参数合同不匹配时返回失败并要�
 
 ## 材质函数实现原则
 
+### 2026-10-17 新增通用四通道PBR覆盖函数
+
+`MF_GP_PBRLayerBlend`（通用PBR属性覆盖函数）是新版本资产，保留旧有七个稳定函数原路径和接口。9个输入分别是BaseColor、OverlayColor（基础色与覆盖色）、BaseNormal、OverlayNormal（切线空间法线）、BaseRoughness、OverlayRoughness（粗糙度）、BaseAO、OverlayAO（环境遮蔽）、Coverage（覆盖因子0～1）；4个输出为BaseColor、Normal、Roughness、AO。以同一Coverage混合所有属性，Normal归一化、AO限制0～1。金属度对于普通土壤、岩石、积雪保持0，由项目母材质按需要独立约束；此通用函数不持有天气状态和项目纹理。
+
+已通过`Tools/Unreal/Surface/AuthorTerrainPBRLayerBlendUE58.py`（平台UE5.8原生作者）创建20个实际表达式并保存回读，项目SSLM十层高精函数化候选已用三处函数调用消费。只有客户端才能持有纯表现高精材质；Dedicated Server（专用服务器）发布必须依Server Cook/UnrealPak审计，不能仅凭文件在平台目录推断隔离成功。
+
+
 - `MF_GP_SlopeMask`：世界法线与 World Up（世界向上）的 Dot Product（点积），暴露坡度阈值和锐度。
 - `MF_GP_HeightMask`：Absolute World Position Z（绝对世界位置高度）按起始高度与过渡范围归一化，单位厘米。
 - `MF_GP_WorldNoise`：以世界坐标提供宏观变化，避免相邻网格重复；高频细节仍来自纹理。

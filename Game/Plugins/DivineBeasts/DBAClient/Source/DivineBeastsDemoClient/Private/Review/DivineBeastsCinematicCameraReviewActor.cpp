@@ -260,12 +260,8 @@ void ADivineBeastsCinematicCameraReviewActor::PrintCameraStatus(const FString& M
     {
         ControlsWidget->SetCameraStatus(Message);
     }
-<<<<<<< HEAD
     // 真实UMG面板存在时不绘制重复的屏幕调试文字，保持电影镜头构图清晰。
     if (GEngine && !ControlsWidget)
-=======
-    if (GEngine)
->>>>>>> a30a89d253cfc9afb961866cc58f81159b86950b
     {
         GEngine->AddOnScreenDebugMessage(-1, 8.f, FColor::Cyan,
             FString::Printf(TEXT("SSLM 电影镜头演示: %s"), *Message));

@@ -2,6 +2,15 @@
 
 所属：DivineBeastsWorkspace/Tools/Unreal/Terrain。唯一工程：Game/DivineBeastsArena.uproject（UE5.8），项目实际内容归DBAWorldPack_Village；平台底层机制使用GamePlatformSurfaceEditor与GamePlatformPCGEditor。
 
+## 2026-10-17 十层地形与平台材质函数接入
+
+- `AuthorTerrainProductionMaterial.py`（扫描PBR母材质作者）保持默认原正式母材质不变，只有显式`TERRAIN_FUNCTION_INTEGRATION=1`时创建`M_DBA_Terrain_Production10_FunctionIntegrated`及`MI_DBA_Terrain_Production10_FunctionIntegrated_Review`（全新的客户端候选）。新增8处真实MaterialFunctionCall（函数调用节点），涉及平台宏观颜色、距离细节、坡度、海拔、生态遮罩与3次四通道PBR覆盖。
+- `RunTerrainFunctionCompositionUE58.py`（两资源作者顺序执行器）：`TERRAIN_FUNCTION_COMPOSITION_MODE=inspect/apply/verify`；平台MF与候选资产在UE5.8实际apply保存通过，日志`Game/Saved/Validation/TerrainFunctionComposition_20261017/AuthorApply.log`，原生候选291表达式和8函数调用已回读。
+- `AuthorTerrainFunctionReviewMapUE58.py`（独立审核地图作者）已按`copy`→`apply`→`verify`三个独立UE5.8进程生成、绑定和冷重载`L_DBA_TerrainFunctionReview.umap`，正式Village不变。同进程复制再加载会触发UE5.8世界对象未回收Fatal，已采用独立进程解决。
+- `AuthorTerrainProductionQualityProfiles.py`（高/中/低三档材质MI作者）与`RunTerrainFunctionReviewUE58.py`（独立回读入口）已完成函数化候选三档UE原生保存及冷重载，日志`Game/Saved/Validation/TerrainFunctionComposition_20261017/QualityApplyScalarSafe.log`与`FunctionColdVerify.log`。由于UE5.8当前静态开关写入API失败，候选三档全部继承HeightBlend=false，仅实现可读回的视觉标量差异，未证明性能提升或高度混合质量切换。
+- `Tests/Architecture/TestTerrainMaterialFunctionIntegration.py`（源合同检查）与`Docs/Implementation/TerrainMaterialFunctionIntegration_20261017.md`（实施及未完成门禁）提供检查依据。所有候选仍不得被正式`L_Village_Start`或专服Cook硬引用。
+
+
 ## 2026-10-16 十层PBR真实原生实施增量
 
 - 十种扫描材质正式40份UE Texture2D及10份新Height已由UE5.8导入；`M_DBA_Terrain_Production10`与审核MI保存并通过独立编辑器母材质重载（262表达式）。四份Forest/Rock/Shore/Road权重过滤PCG Graph、1009×1009独立Landscape审核图、四类绑定由真实制作流水线保存；正式Village共享地图未改。

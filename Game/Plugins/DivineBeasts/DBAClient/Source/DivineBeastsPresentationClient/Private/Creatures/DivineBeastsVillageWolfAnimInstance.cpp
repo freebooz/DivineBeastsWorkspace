@@ -3,6 +3,7 @@
 
 #include "Animation/AnimMontage.h"
 #include "Characters/DivineBeastsVillageWolf.h"
+#include "Characters/DivineBeastsVillageVampire.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
@@ -48,6 +49,7 @@ void UDivineBeastsVillageWolfAnimInstance::ReleaseBindings()
     ConsumedBite.Invalidate();
     PlayingBite.Invalidate();
     if (BiteMontage) Montage_Stop(0.0f, BiteMontage);
+    if (GreatSwordMontage) Montage_Stop(0.0f, GreatSwordMontage);
 }
 
 void UDivineBeastsVillageWolfAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -69,6 +71,7 @@ void UDivineBeastsVillageWolfAnimInstance::HandleLifeChanged(ADivineBeastsVillag
         WolfSpeed = 0.0f;
         PlayingBite.Invalidate();
         if (BiteMontage) Montage_Stop(0.05f, BiteMontage);
+        if (GreatSwordMontage) Montage_Stop(0.05f, GreatSwordMontage);
     }
 }
 
@@ -87,30 +90,34 @@ void UDivineBeastsVillageWolfAnimInstance::HandleCastChanged(
         Incoming.PresentationStyleId != Current.PresentationStyleId ||
         Incoming.StartedServerSeconds != Current.StartedServerSeconds || Incoming.DurationSeconds != Current.DurationSeconds)
         return;
-    if (Current.AbilityId != TEXT("VillageWolf.Bite") || Current.PresentationStyleId != TEXT("VillageWolf.Bite")) return;
+    const bool bVampire = Wolf->IsA<ADivineBeastsVillageVampire>();
+    const FName AttackId = bVampire ? FName(TEXT("VillageVampire.GreatSwordAttack")) :
+        FName(TEXT("VillageWolf.Bite"));
+    UAnimMontage* AttackMontage = bVampire ? GreatSwordMontage.Get() : BiteMontage.Get();
+    if (Current.AbilityId != AttackId || Current.PresentationStyleId != AttackId) return;
     if (bWolfDead || Wolf->IsWolfDead() || !Current.bActive)
     {
         const bool bStopOwned = PlayingBite == Current.ActivationId;
         // 先撤销归属再调用可广播的Montage API，防止同步后继通知被外层清理覆盖。
         PlayingBite.Invalidate();
-        if (bStopOwned && BiteMontage) Montage_Stop(0.05f, BiteMontage);
+        if (bStopOwned && AttackMontage) Montage_Stop(0.05f, AttackMontage);
         return;
     }
     if (!Current.ActivationId.IsValid() || Current.ActivationId == ConsumedBite || Current.AvatarGeneration <= 0 ||
         !FMath::IsFinite(Current.StartedServerSeconds) || !FMath::IsFinite(Current.DurationSeconds) ||
-        Current.DurationSeconds <= 0.0f || Current.DurationSeconds > 10.0f || !BiteMontage) return;
+        Current.DurationSeconds <= 0.0f || Current.DurationSeconds > 10.0f || !AttackMontage) return;
     const auto* State = World->GetGameState();
     const double Now = State ? State->GetServerWorldTimeSeconds() : World->GetTimeSeconds();
     if (!FMath::IsFinite(Now)) return;
     const double Elapsed = FMath::Max(0.0, Now - Current.StartedServerSeconds);
     ConsumedBite = Current.ActivationId;
     if (Elapsed >= Current.DurationSeconds) return;
-    const float Length = BiteMontage->GetPlayLength();
+    const float Length = AttackMontage->GetPlayLength();
     if (!FMath::IsFinite(Length) || Length <= 0.0f) return;
     const float Rate = Length / Current.DurationSeconds;
     const float Position = FMath::Clamp(static_cast<float>(Elapsed) * Rate, 0.0f, Length);
     // Montage开始回调也可能同步死亡、卸载或发布下一次攻击；在调用前发布归属供取消者识别。
     PlayingBite = Current.ActivationId;
-    const float Played = Montage_Play(BiteMontage, Rate, EMontagePlayReturnType::MontageLength, Position, false);
+    const float Played = Montage_Play(AttackMontage, Rate, EMontagePlayReturnType::MontageLength, Position, false);
     if (Played <= 0.0f && PlayingBite == Current.ActivationId) PlayingBite.Invalidate();
 }

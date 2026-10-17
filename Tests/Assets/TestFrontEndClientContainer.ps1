@@ -102,7 +102,10 @@ try {
         # 真实蒙皮必须连同完整UE5骨架交付；旧68骨架同名兼容身份不能代替依赖。
         'DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset',
-        'DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Quinn_Simple.uasset',
+        # 十二生肖已替换Manny/Quinn占位模型；要求真实共用模型和动画蓝图进入容器。
+        'DBAContentPack_Common/Content/Characters/KachujinGRosales/Kachujin_G_Rosales.uasset',
+        'DBAContentPack_Common/Content/Characters/KachujinGRosales/Animations/ABP_DBA_Kachujin.uasset',
+        'DBAContentPack_Common/Content/Characters/KachujinGRosales/Animations/BS_DBA_Kachujin_Locomotion.uasset',
         # 网络世界定义必须进入实际IoStore，不以编辑器磁盘文件代替交付。
         'DBAWorldPack_Village/Content/Definitions/DA_DBA_Pawn_WorldCharacter.uasset',
         'DBAWorldPack_Village/Content/Definitions/DA_DBA_Experience_Village_Tutorial.uasset'
@@ -150,6 +153,12 @@ try {
         }
     }
     if ($DevelopmentSkills) {
+        # 村庄开发包同时含三名NPC与混合怪群；表现不进入专服，但必须在客户端容器。
+        $required += 'DBAContentPack_Common/Content/Characters/NPC/Arissa/Arissa.uasset'
+        $required += 'DBAContentPack_Common/Content/Characters/NPC/Arissa/Animations/ABP_DBA_Arissa.uasset'
+        $required += 'DBAWorldPack_Village/Content/Creatures/VampireALusth/Vampire_A_Lusth.uasset'
+        $required += 'DBAWorldPack_Village/Content/Creatures/VampireALusth/Animations/ABP_DBA_Vampire.uasset'
+        $required += 'DBAWorldPack_Village/Content/Creatures/VampireALusth/Animations/AM_DBA_Vampire_Attack.uasset'
         # 魔法定义/GA/成本/冷却与三图标、六VFX都必须在实际容器，不能以本机Editor存在放行。
         $required += 'DivineBeastsArena/Content/Development/DivineBeasts/Abilities/DT_DBA_Zodiac_DevBalance.uasset'
         $magic='DivineBeastsArena/Content/Development/DivineBeasts/Abilities/MagicTests'

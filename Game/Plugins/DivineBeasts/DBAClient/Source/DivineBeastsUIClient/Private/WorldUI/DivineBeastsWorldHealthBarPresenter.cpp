@@ -2,6 +2,7 @@
 #include "WorldUI/DivineBeastsWorldHealthBarPresenter.h"
 #include "Characters/DivineBeastsCharacter.h"
 #include "Characters/DivineBeastsVillageWolf.h" // 狼怪是现有ADivineBeastsCharacter子类，复用相同ASC生命通知。
+#include "Characters/DivineBeastsVillageVampire.h" // 人型怪物沿用同一生命通知，但显示独立名称。
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Components/SceneComponent.h"
@@ -75,7 +76,8 @@ void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSel
     Binding.Request.RequestId = FGuid::NewGuid();
     Binding.Request.SurfaceKey = TEXT("DBA.World.HealthBar"); Binding.Request.StyleId = TEXT("DBA.World.HealthBar");
     Binding.Request.MaxVisibleDistance = 6000.f; Binding.Request.Resource.ResourceId = TEXT("Health");
-    Binding.Request.PrimaryText = FText::FromString(Actor->IsA<ADivineBeastsVillageWolf>() ? TEXT("野狼") :
+    Binding.Request.PrimaryText = FText::FromString(Actor->IsA<ADivineBeastsVillageVampire>() ? TEXT("吸血鬼") :
+        Actor->IsA<ADivineBeastsVillageWolf>() ? TEXT("野狼") :
         Actor->IsA<ADivineBeastsCharacter>() ? TEXT("玩家") : TEXT("目标"));
     Binding.Request.SelectionText = NSLOCTEXT("DivineBeastsWorldUI", "SelectedTarget", "▶ 已选中 ◀");
     Actor->OnDestroyed.AddUniqueDynamic(this, &ThisClass::HandleActorDestroyed);

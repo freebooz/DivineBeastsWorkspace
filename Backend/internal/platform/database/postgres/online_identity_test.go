@@ -22,19 +22,41 @@ func (r identityRow) Scan(dest ...any) error { return r(dest...) }
 type identityTxDouble struct {
 	pgx.Tx
 	rows          []identityRow
+	querySQL      []string
 	execSQL       []string
 	committed     bool
 	commitErr     error
 	readCommitted bool
 }
 
-func (t *identityTxDouble) QueryRow(context.Context, string, ...any) pgx.Row {
+func (t *identityTxDouble) QueryRow(_ context.Context, sql string, _ ...any) pgx.Row {
+	t.querySQL = append(t.querySQL, sql)
+	// 刷新与退出先按摘要找到账号，再按账号→会话顺序加锁；原有行夹具仍专注会话状态。
+	if strings.Contains(sql, "SELECT s.game_id,s.player_id FROM online_identity_refresh_credentials") {
+		return identityRow(func(d ...any) error { *d[0].(*string) = "game"; *d[1].(*string) = "player"; return nil })
+	}
+	if strings.Contains(sql, "SELECT disabled FROM online_identity_accounts") && strings.Contains(sql, "FOR SHARE") {
+		return identityRow(func(d ...any) error { *d[0].(*bool) = false; return nil })
+	}
 	if len(t.rows) == 0 {
 		return identityRow(func(...any) error { return errors.New("unexpected query") })
 	}
 	r := t.rows[0]
 	t.rows = t.rows[1:]
 	return r
+}
+
+// 新登录的事务必须先锁账号、撤销旧会话，再写入新会话及刷新历史。
+func TestOnlineIdentityCreateSessionReplacesOldInOneTransaction(t *testing.T) {
+	tx := &identityTxDouble{rows: []identityRow{func(d ...any) error { *d[0].(*bool) = false; return nil }}}
+	r := &OnlineIdentityRepository{db: identityPoolDouble{tx}}
+	record := identity.StoredSession{Session: identity.Session{GameID: "game", PlayerID: "player", SessionID: "session-new", AccessExpiresAt: time.Now().Add(time.Minute), RefreshExpiresAt: time.Now().Add(time.Hour)}, AccessDigest: strings.Repeat("a", 64), RefreshDigest: strings.Repeat("b", 64)}
+	if err := r.CreateSession(context.Background(), record); err != nil {
+		t.Fatal(err)
+	}
+	if !tx.committed || !tx.readCommitted || len(tx.querySQL) != 1 || !strings.Contains(tx.querySQL[0], "FOR UPDATE") || len(tx.execSQL) != 3 || !strings.Contains(tx.execSQL[0], "UPDATE online_identity_sessions SET revoked=TRUE") || !strings.Contains(tx.execSQL[1], "INSERT INTO online_identity_sessions") || !strings.Contains(tx.execSQL[2], "INSERT INTO online_identity_refresh_credentials") {
+		t.Fatal("撤销旧会话与创建新会话必须按账号串行并在同一事务提交")
+	}
 }
 func (t *identityTxDouble) Exec(_ context.Context, sql string, _ ...any) (pgconn.CommandTag, error) {
 	t.execSQL = append(t.execSQL, sql)

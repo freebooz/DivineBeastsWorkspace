@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""SSLM当前全部插件源码、模块、性能风险候选和人工演示覆盖盘点。
+
+默认只读，--write-docs 才写派生台账。仅基于真实描述/文件/正式编目。
+统计项不可替代UE原生构建、蓝图连线/运行、Insights或人工签收。
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+PLUGINS = ROOT / "Game/Plugins"
+DELIVERY = ROOT / "Docs/Implementation/PluginArchitectureOptimization/PluginDeliveryManifest.json"
+DEMO = ROOT / "Docs/Implementation/PluginDemos/PluginDemoManifest.json"
+OUTPUT = ROOT / "Docs/Implementation/PluginQualityAudit"
+
+# 明确要求人工操作面板或3D演示的视觉、交互、世界插件；不是声称已有原生资产。
+VISUAL_CODE = frozenset((
+    "DBAClient DBAArena DBAGameplay DBAWorlds MobaPresentation GamePlatformArena "
+    "GamePlatformAI GamePlatformAnimation GamePlatformCamera GamePlatformCharacter "
+    "GamePlatformCombat GamePlatformCommerceUI GamePlatformEquipment GamePlatformGameplay "
+    "GamePlatformInput GamePlatformInteraction GamePlatformInventory GamePlatformLoading "
+    "GamePlatformLobby GamePlatformNavigation GamePlatformPCG GamePlatformPresentation "
+    "GamePlatformProgression GamePlatformQuest GamePlatformSFX GamePlatformSettings "
+    "GamePlatformSurface GamePlatformUI GamePlatformVFX GamePlatformVillage "
+    "GamePlatformWater GamePlatformWeather GamePlatformWorld GamePlatformDebug"
+).split())
+PERFORMANCE = {
+    "全世界Actor遍历": re.compile(r"\b(?:GetAllActorsOfClass|GetAllActorsWithTag|GetAllActorsWithInterface)\s*\("),
+    "同步资源加载": re.compile(r"\b(?:LoadSynchronous|StaticLoadObject|LoadObject)\s*[<(]"),
+    "逐帧执行": re.compile(r"\b(?:NativeTick|TickComponent|Tick)\s*\("),
+    "Ticker轮询": re.compile(r"\bAddTicker\s*\("),
+}
+
+
+def load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+def layer_of(path: Path) -> str:
+    name = path.relative_to(PLUGINS).parts[0]
+    return {"GamePlatform": "Platform", "MobaCommon": "Moba"}.get(name, "Project")
+
+
+def audit(root: Path, demo: dict, delivery: dict) -> dict:
+    descriptors = sorted((root / "Game/Plugins").rglob("*.uplugin"))
+    manifest = {p["plugin_id"]: p for p in demo["plugins"]}
+    listed = {p["Id"]: p for p in delivery["Plugins"]}
+    features = defaultdict(list)
+    scenarios = defaultdict(list)
+    for item in demo.get("features", []):
+        features[item["plugin_id"]].append(item)
+    for item in demo.get("scenarios", []):
+        scenarios[item["feature_id"]].append(item)
+    actual = {p.stem: p for p in descriptors}
+    issues = []
+    if len(actual) != len(descriptors):
+        issues.append("物理插件描述存在重复身份")
+    if set(actual) != set(manifest) or set(actual) != set(listed):
+        issues.append("67份真实描述与演示/交付编目的身份集合不一致")
+    results = []
+    module_owners = {}
+    edges = {}
+    performance_count = Counter()
+    for path in descriptors:
+        name = path.stem
+        d = load_json(path)
+        owner = path.parent
+        layer = layer_of(path)
+        modules = d.get("Modules", [])
+        kind = "code" if modules else "content_pack"
+        builds = []
+        for mod in modules:
+            module = mod.get("Name", "")
+            build = owner / "Source" / module / (module + ".Build.cs")
+            if not build.is_file():
+                issues.append(name + "/" + module + " 缺少Build.cs")
+            else:
+                builds.append(build.relative_to(root).as_posix())
+            if module in module_owners:
+                issues.append("重复模块身份：" + module)
+            module_owners[module] = name
+        cpp = [p for p in owner.rglob("*.cpp") if not any(part in ("Intermediate","Binaries","Saved") for part in p.parts)]
+        headers = [p for p in owner.rglob("*.h") if not any(part in ("Intermediate","Binaries","Saved") for part in p.parts)]
+        tests = [p for p in cpp if "Tests" in p.parts]
+        assets = [p for p in owner.rglob("*") if p.is_file() and p.suffix.lower() in (".uasset",".umap")
+                  and not any(part in ("Intermediate","Binaries","Saved") for part in p.parts)]
+        maps = [p for p in assets if p.suffix.lower() == ".umap"]
+        widget_files = [p for p in assets if p.stem.startswith(("WBP_","WB_","BP_UI_"))]
+        candidates = []
+        for p in cpp:
+            if "Tests" in p.parts or any(part.lower().endswith("editor") for part in p.parts):
+                continue
+            for line_no, line in enumerate(p.read_text(encoding="utf-8-sig",errors="replace").splitlines(),1):
+                if line.lstrip().startswith(("//","*","/*","#")):
+                    continue
+                for category,pattern in PERFORMANCE.items():
+                    if pattern.search(line):
+                        performance_count[category] += 1
+                        if sum(c["kind"] == category for c in candidates) < 2:
+                            candidates.append({"kind":category,"file":p.relative_to(root).as_posix(),"line":line_no})
+        deps = [m.get("Name","") for m in d.get("Plugins",[]) if isinstance(m,dict) and m.get("Enabled",True)]
+        edges[name] = deps
+        if len(deps) != len(set(deps)):
+            issues.append(name + " 重复插件依赖")
+        fts = features[name]
+        cases = [s for f in fts for s in scenarios[f["feature_id"]]]
+        need_visual = kind == "content_pack" or name in VISUAL_CODE or bool(widget_files)
+        faults = [v for v in issues if v.startswith(name + "/") or v.startswith(name + " ")]
+        if faults:
+            priority = "P0"
+        elif need_visual and not cases:
+            priority = "P1"
+        elif not tests and kind == "code" or candidates or manifest.get(name,{}).get("feature_audit_status") != "complete":
+            priority = "P2"
+        else:
+            priority = "P3"
+        results.append({
+            "pluginId":name, "layer":layer, "kind":kind, "descriptor":path.relative_to(root).as_posix(),
+            "moduleCount":len(modules), "moduleBuildRules":builds,
+            "cppFiles":len(cpp), "headerFiles":len(headers), "nativeTestFiles":len(tests),
+            "nativeAssets":len(assets), "mapAssets":len(maps), "widgetAssets":len(widget_files),
+            "visualReviewRequired":need_visual,
+            "registeredFeatures":len(fts), "wiredFeatures":sum(x.get("integration_status")=="wired" for x in fts),
+            "registeredScenarios":len(cases),
+            "catalogStatus":manifest.get(name,{}).get("feature_audit_status","missing"),
+            "humanApproved":False, "hasHumanOperationalScenario":bool(cases),
+            "performanceReviewCandidates":candidates,
+            "priority":priority,
+            "workOrder":(
+                "修复描述、编目及构建依赖" if faults else
+                "制作真实UMG/地图+可启动/执行/停止/重置/返回的人工演示案例" if need_visual and not cases else
+                "运行已登记案例、补齐功能分母及人工证据" if need_visual else
+                "原生模块回归、接口/生命周期及候选热点复核"
+            ),
+        })
+    ranks = {"Platform":0,"Moba":1,"Project":2}
+    for source,deps in edges.items():
+        for dep in deps:
+            if dep in actual and ranks[layer_of(actual[dep])] > ranks[layer_of(actual[source])]:
+                issues.append("跨层反向插件依赖："+source+" -> "+dep)
+    results.sort(key=lambda r:r["pluginId"].casefold())
+    return {
+        "schemaVersion":1, "source":"actual uplugin/Build.cs/C++/uasset/umap plus authoritative delivery/demo manifests",
+        "state":"STATIC_INVENTORY_ONLY_NOT_ACCEPTANCE",
+        "limitations":"性能候选不是实测瓶颈；地图/蓝图文件不是UE加载证明；人工签收需要独立真实证据",
+        "pluginCount":len(results), "code":sum(r["kind"]=="code" for r in results),
+        "content":sum(r["kind"]=="content_pack" for r in results),
+        "modules":sum(r["moduleCount"] for r in results),
+        "withLocalNativeTests":sum(r["nativeTestFiles"]>0 for r in results),
+        "visualRequired":sum(r["visualReviewRequired"] for r in results),
+        "visualWithoutOperationalScenario":sum(r["visualReviewRequired"] and not r["registeredScenarios"] for r in results),
+        "demoFeatures":len(demo.get("features",[])), "demoScenarios":len(demo.get("scenarios",[])),
+        "humanApproved":0,
+        "priorityCounts":dict(Counter(r["priority"] for r in results)),
+        "perfCandidates":dict(performance_count),
+        "issues":issues, "plugins":results,
+    }
+
+
+def markdown(report: dict) -> str:
+    lines = [
+        "# SSLM 全量插件质量与可视化人工验收审查台账",
+        "",
+        "> 来源：实际工作树67个插件描述、源码、资源及正式双台账；静态盘点不替代UE编译、蓝图验收、Unreal Insights性能实测或人工签收。",
+        "",
+        "## 基线与处理顺序",
+        "",
+        f"- 代码插件{report['code']}、内容包{report['content']}、声明模块{report['modules']}；已登记演示功能{report['demoFeatures']}、场景{report['demoScenarios']}，人工签收0。",
+        f"- 要求可视化/交互人工验证的插件{report['visualRequired']}，尚无登记操作案例的{report['visualWithoutOperationalScenario']}。功能总分母未逐项评审，不能计算真实覆盖率。",
+        f"- 有本模块原生测试源码的插件{report['withLocalNativeTests']}。没有本地文件不等于项目不存在跨模块自动化测试。",
+        "",
+        "| 插件 | 层级/类别 | 模块 | 源码(.cpp) | 原生资产/地图 | 测试源 | 要求人工界面 | 演示案例 | 编目审查 | 优先级 |",
+        "|---|---|---:|---:|---:|---:|---|---:|---|---|",
+    ]
+    for p in report["plugins"]:
+        fields = [p["pluginId"],p["layer"]+"/"+p["kind"],str(p["moduleCount"]),
+                  str(p["cppFiles"]),str(p["nativeAssets"])+"/"+str(p["mapAssets"]),
+                  str(p["nativeTestFiles"]),("是" if p["visualReviewRequired"] else "否"),
+                  str(p["registeredScenarios"]),p["catalogStatus"],p["priority"]]
+        lines.append("| " + " | ".join(fields) + " |")
+    lines.extend([
+        "", "## 审查与优化规范", "",
+        "- P0：描述/模块/依赖存在明确错误时阻断编译；需结合已有模块闭包、继承与Client/Server Cook门禁进一步复核。",
+        "- P1：可视化或交互插件没有登记操作案例时属于人工验收交付缺口。复用现有DemoHub与开发地图、Widget，不创建另一套入口；必须真实可进入、演示、操作、停止、重置、返回和生成待审证据。",
+        "- P2：对Tick、Ticker、同步加载、全世界Actor搜索进行源码上下文与实际Insights测量，检查多世界隔离、取消/析构、限额和失败收口；文本匹配只属于候选。",
+        "- P3：逐功能验证蓝图父类、依赖、可重入、输入、无障碍、PC/移动端、低中高画质、Dedicated Server资源隔离和多人实际运行。",
+        "- 不可视化的纯服务允许以演示中心可操作诊断页面验收，不强制3D地图；尚无功能分母/原生证据前所有插件均不得标记生产完成。",
+        "",
+    ])
+    if report["issues"]:
+        lines.append("## 本次静态结构问题")
+        lines.extend("- "+item for item in report["issues"])
+    return "\n".join(lines)
+
+
+def main() -> int:
+    parser=argparse.ArgumentParser(description="SSLM全部插件静态质量及可视化验收门禁")
+    parser.add_argument("--summary",action="store_true")
+    parser.add_argument("--write-docs",action="store_true")
+    parser.add_argument("--require-production",action="store_true")
+    args=parser.parse_args()
+    report=audit(ROOT,load_json(DEMO),load_json(DELIVERY))
+    sys.path.insert(0,str(ROOT/"Tests/Architecture"))
+    from ValidatePluginDeliveryManifest import validate
+    report["issues"].extend(validate(ROOT,load_json(DELIVERY)))
+    if args.write_docs and not report["issues"]:
+        OUTPUT.mkdir(parents=True,exist_ok=True)
+        (OUTPUT/"CurrentPluginQualityMatrix.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        (OUTPUT/"CurrentPluginQualityMatrix.md").write_text(markdown(report)+"\n",encoding="utf-8")
+    view={k:v for k,v in report.items() if k!="plugins"} if args.summary else report
+    print(json.dumps(view,ensure_ascii=False,indent=2))
+    if report["issues"]:return 1
+    if args.require_production:
+        print("SSLM_PLUGIN_PRODUCTION_BLOCKED: 无67插件完整原生+人工性能签收",file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__=="__main__":
+    raise SystemExit(main())

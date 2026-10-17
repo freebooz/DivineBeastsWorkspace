@@ -199,6 +199,13 @@ func (r *localIdentityPersistentRepository) CreateSession(
 		return identity.ErrInvalidCredentials
 	}
 
+	// 同账号只允许最后一次成功登录；保留刷新摘要归属供旧设备幂等退出，但旧令牌立即失效。
+	for sessionID, previous := range r.sessions {
+		if previous.GameID == record.GameID && previous.PlayerID == record.PlayerID {
+			r.revokedSession[sessionID] = true
+			delete(r.accessOwners, previous.AccessDigest)
+		}
+	}
 	r.sessions[record.SessionID] = record
 	r.accessOwners[record.AccessDigest] = record.SessionID
 	r.refreshOwners[record.RefreshDigest] = record.SessionID

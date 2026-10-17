@@ -89,7 +89,7 @@ func (r *OnlineIdentityRepository) FindAccount(ctx context.Context, gameID, acco
 	return a, nil
 }
 
-// CreateSession 创建会话和初始刷新摘要为一个事务；账户共享行锁阻止与禁用操作交错后误签发。
+// CreateSession 在同一事务中撤销旧会话并签发新会话；账户独占行锁串行化同账号并发登录。
 func (r *OnlineIdentityRepository) CreateSession(ctx context.Context, s identity.StoredSession) error {
 	if r.db == nil {
 		return identity.ErrUnavailable
@@ -103,10 +103,16 @@ func (r *OnlineIdentityRepository) CreateSession(ctx context.Context, s identity
 	}
 	defer tx.Rollback(ctx)
 	var disabled bool
-	err = tx.QueryRow(ctx, `SELECT disabled FROM online_identity_accounts WHERE game_id=$1 AND player_id=$2 FOR SHARE`, s.GameID, s.PlayerID).Scan(&disabled)
+	err = tx.QueryRow(ctx, `SELECT disabled FROM online_identity_accounts WHERE game_id=$1 AND player_id=$2 FOR UPDATE`, s.GameID, s.PlayerID).Scan(&disabled)
 	if errors.Is(err, pgx.ErrNoRows) || err == nil && disabled {
 		return identity.ErrInvalidCredentials
 	}
+	if err != nil {
+		return identityStorageError(err)
+	}
+	// 先撤销同游戏同玩家的旧Access/Refresh；事务失败则旧会话与新会话一起回滚。
+	_, err = tx.Exec(ctx, `UPDATE online_identity_sessions SET revoked=TRUE
+ WHERE game_id=$1 AND player_id=$2 AND NOT revoked`, s.GameID, s.PlayerID)
 	if err != nil {
 		return identityStorageError(err)
 	}
@@ -160,13 +166,26 @@ func (r *OnlineIdentityRepository) Authenticate(ctx context.Context, digest stri
 	return s, nil
 }
 
-// lockRefreshSession 先由不可变刷新历史定位，再锁定会话；所有刷新/退出使用相同锁顺序。
+// lockRefreshSession 先由不可变摘要定位账号，再共享锁住账号、独占锁住会话。
+// 与CreateSession的账号→会话锁顺序一致，避免新登录与刷新/退出形成死锁。
 // 在锁后另读consumed状态，避免两个并发事务都凭锁前快照轮换成功。
 func lockRefreshSession(ctx context.Context, tx pgx.Tx, digest string) (identity.StoredSession, bool, bool, error) {
+	var gameID, playerID string
+	err := tx.QueryRow(ctx, `SELECT s.game_id,s.player_id FROM online_identity_refresh_credentials c
+ JOIN online_identity_sessions s ON s.session_id=c.session_id WHERE c.digest=$1`, digest).Scan(&gameID, &playerID)
+	if err != nil {
+		return identity.StoredSession{}, false, false, err
+	}
+	var disabled bool
+	err = tx.QueryRow(ctx, `SELECT disabled FROM online_identity_accounts
+ WHERE game_id=$1 AND player_id=$2 FOR SHARE`, gameID, playerID).Scan(&disabled)
+	if err != nil {
+		return identity.StoredSession{}, false, false, err
+	}
 	return scanOnlineIdentitySession(tx.QueryRow(ctx, `SELECT `+onlineIdentitySessionColumns+`
  FROM online_identity_sessions s JOIN online_identity_accounts a ON a.game_id=s.game_id AND a.player_id=s.player_id
  WHERE s.session_id=(SELECT session_id FROM online_identity_refresh_credentials WHERE digest=$1)
- FOR UPDATE OF s FOR SHARE OF a`, digest))
+ FOR UPDATE OF s`, digest))
 }
 
 // Rotate 将消费旧摘要、更新令牌、保存新摘要放入同一事务。重放撤销先提交再返回错误。

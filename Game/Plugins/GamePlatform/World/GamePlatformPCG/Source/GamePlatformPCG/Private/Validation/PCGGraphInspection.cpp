@@ -11,6 +11,9 @@
 #include "Elements/PCGTransformPoints.h"
 #include "Elements/PCGDensityFilter.h"
 #include "Elements/PCGStaticMeshSpawner.h"
+#include "Elements/PCGDataFromActor.h"
+#include "Elements/PCGSplineSampler.h"
+#include "Components/SplineComponent.h"
 #include "MeshSelectors/PCGMeshSelectorWeighted.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Data/PCGBasePointData.h"
@@ -149,6 +152,8 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
     UPCGNode* SchemaWriterNode = nullptr;
     UPCGNode* SchemaValidatorNode = nullptr;
     UPCGNode* SpawnerNode = nullptr;
+    UPCGNode* SplineSourceNode = nullptr;
+    UPCGNode* SplineSamplerNode = nullptr;
 
     for (UPCGNode* Node : Graph.GetNodes())
     {
@@ -160,6 +165,34 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
             return Rejected(TEXT("UnapprovedTemplateNode"));
         }
 
+        // 只允许已验证的自Actor样条来源，禁止通过GetActorData读取世界其他Actor或任意组件。
+        // 这是编辑器静态制图能力，不扩展PCG运行时权限。
+        if (const auto* Source = Cast<UPCGDataFromActorSettings>(Settings))
+        {
+            const bool bSplineTemplate =
+                Profile.TemplateId == FGamePlatformPCGTemplateIds::LinearDresser ||
+                Profile.TemplateId == FGamePlatformPCGTemplateIds::Enclosure ||
+                Profile.TemplateId == FGamePlatformPCGTemplateIds::EnclosureClosed ||
+                Profile.TemplateId == FGamePlatformPCGTemplateIds::ParcelFill ||
+                Profile.TemplateId == FGamePlatformPCGTemplateIds::CropField;
+            if (!bSplineTemplate || SplineSourceNode ||
+                Source->ActorSelector.ActorFilter != EPCGActorFilter::Self ||
+                Source->ActorSelector.bIncludeChildren ||
+                Source->ComponentSelector.ComponentSelection != EPCGComponentSelection::ByClass ||
+                Source->ComponentSelector.ComponentSelectionClass != USplineComponent::StaticClass() ||
+                Source->Mode != EPCGGetDataFromActorMode::ParseActorComponents ||
+                !Source->bIgnorePCGGeneratedComponents ||
+                Source->bAlwaysRequeryActors)
+            {
+                return Rejected(TEXT("UnapprovedSplineActorSource"));
+            }
+            SplineSourceNode = Node;
+        }
+        if (Settings->IsA<UPCGSplineSamplerSettings>())
+        {
+            if (SplineSamplerNode) { return Rejected(TEXT("DuplicateSplineSampler")); }
+            SplineSamplerNode = Node;
+        }
         if (Settings->IsA<UGamePlatformPCGWriteSchemaDefaultsSettings>())
         {
             if (SchemaWriterNode) { return Rejected(TEXT("DuplicateTemplateSchemaWriter")); }
@@ -179,6 +212,16 @@ FGamePlatformResult ValidateTemplateGraph(const UGamePlatformPCGProfileDefinitio
             }
             SpawnerNode = Node;
         }
+    }
+
+    // 旧Foundation纯模板允许在受控迁移前保持原有图；但已实例化的CropField
+    // 必须有受限自Actor样条输入，不能再把Box+Spline复合输入接入Sampler导致0实例。
+    if ((SplineSourceNode && (!SplineSamplerNode ||
+            !SoleEdge(*SplineSourceNode, *SplineSamplerNode, PCGSplineSamplerConstants::SplineLabel))) ||
+        (!bIsAuthoringTemplate && Profile.TemplateId == FGamePlatformPCGTemplateIds::CropField &&
+            (!SplineSourceNode || !SplineSamplerNode)))
+    {
+        return Rejected(TEXT("CropSplineSourceNotConnected"));
     }
 
     UPCGNode* OutputNode = Graph.GetOutputNode();

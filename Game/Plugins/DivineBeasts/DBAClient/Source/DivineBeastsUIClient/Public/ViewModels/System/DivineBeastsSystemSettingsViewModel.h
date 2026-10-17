@@ -34,9 +34,13 @@ private:
     IGamePlatformDeviceSettingsService* GetDeviceService() const;
     bool PublishResult(const FGamePlatformResult& Result);
     void CleanupDeviceSettings();
+    /** 到预览的绝对截止时间仅安排一次 CoreTicker 回调；失败按明确间隔重试，不周期轮询业务。 */
+    void SchedulePreviewDeadline(int32 ExpectedPageGeneration, double DelaySeconds);
+    /** 回调先核对页面代次和预览资格；无法及时取消时保留安全重试，绝不宣称已回滚。 */
+    void HandlePreviewDeadline(int32 ExpectedPageGeneration);
     TWeakObjectPtr<UGameInstance> SettingsGameInstance;
     FGamePlatformDeviceSettingsSubscription DeviceSubscription;
-    /** 仅本页预览期间存在的CoreTicker；确认/回滚/失活精确撤销，不使用世界时间或Widget Tick。 */
+    /** 仅本页预览期间保留一次性真实时间到期回调；确认/回滚/失活撤销，绝不每0.1秒轮询。 */
     FTSTicker::FDelegateHandle PreviewTimeout;
     /** FPlatformTime单调真实秒截止点；0表示无预览，不受Pause或TimeDilation影响。 */
     double PreviewDeadlineSeconds = 0.0;

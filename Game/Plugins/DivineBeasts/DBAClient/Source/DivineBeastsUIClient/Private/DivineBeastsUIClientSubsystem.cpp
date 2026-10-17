@@ -3,7 +3,6 @@
 #include "DivineBeastsUIClientSubsystem.h"
 #include "Social/DivineBeastsPartyUIClientSubsystem.h"
 #include "Development/DivineBeastsPluginDemoMode.h"
-#include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Misc/ConfigCacheIni.h"
@@ -941,19 +940,11 @@ void UDivineBeastsUIClientSubsystem::SyncCharacterPreview()
         ViewState.CurrentStep == TEXT("DBA.Flow.ValidateSelection");
     if (!bCharacterFrontEnd)
     {
+        // UI 仅撤销本地角色选择/创建预览，不负责世界 Pawn 组件的创建或外观授权。
+        // 正式世界角色的外观由 DivineBeastsPresentationClient 中现有
+        // UDivineBeastsCharacterAppearanceWorldSubsystem 在角色生成/世界开始事件挂接，
+        // 再由角色组件订阅真实角色身份与就绪事件异步更新；UI快照不能反向修改Pawn。
         Preview->DeactivatePreviewScene();
-        // 已确认选择仅用于本地Avatar表现；服务器准入/技能身份不由UI写入。
-        if(ViewState.CurrentStep==TEXT("DBA.Flow.InWorld") && !ViewState.SelectedHeroDefinitionId.IsNone())
-        {
-            auto* Controller=GetLocalPlayer()->GetPlayerController(GetWorld());
-            APawn* Pawn=Controller?Controller->GetPawn():nullptr;
-            if(Pawn)
-            {
-                auto* Appearance=Pawn->FindComponentByClass<UDivineBeastsCharacterAppearanceComponent>();
-                if(!Appearance){Appearance=NewObject<UDivineBeastsCharacterAppearanceComponent>(Pawn);Pawn->AddInstanceComponent(Appearance);Appearance->RegisterComponent();}
-                Appearance->ApplyApprovedVisualHero(ViewState.SelectedHeroDefinitionId);
-            }
-        }
         return;
     }
 

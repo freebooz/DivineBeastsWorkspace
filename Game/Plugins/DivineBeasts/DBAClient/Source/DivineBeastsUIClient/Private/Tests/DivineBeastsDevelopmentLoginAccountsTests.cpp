@@ -70,6 +70,7 @@ bool FDivineBeastsDevelopmentAccountBindingsTest::RunTest(const FString&)
     if (!TestNotNull(TEXT("真实十账号容器"), Panel)) { return false; }
     // 测试显式注入无秘密名称，不修改进程环境，避免污染其他原生回归。
     DivineBeasts::UI::DevelopmentLogin::ReadAccountNames(MakeDevelopmentAccountFixture(), Screen->DevelopmentAccountNames);
+    Screen->DevelopmentAccountError = FText::GetEmpty();
     Screen->RefreshDevelopmentAccounts();
     TestEqual(TEXT("完整名称快照显示容器"), Panel->GetVisibility(), ESlateVisibility::SelfHitTestInvisible);
     for (int32 Index = 0; Index < 10; ++Index)

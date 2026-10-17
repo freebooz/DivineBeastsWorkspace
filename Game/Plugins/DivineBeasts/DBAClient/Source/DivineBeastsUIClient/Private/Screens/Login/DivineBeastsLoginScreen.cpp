@@ -292,11 +292,17 @@ void UDivineBeastsLoginScreen::RefreshPluginDevelopmentEntry()
 {
     auto* Launcher = GetGameInstance() ? GetGameInstance()->GetSubsystem<UDivineBeastsPluginDemoLauncher>() : nullptr;
     const bool bAvailable = Launcher && Launcher->IsEntryAvailable();
+#if !UE_BUILD_SHIPPING && !UE_BUILD_TEST
+    // 开发期入口始终留在登录页；缺少启动参数时只禁用操作并显示原因。
+    constexpr bool bShowDevelopmentEntry = true;
+#else
+    constexpr bool bShowDevelopmentEntry = false;
+#endif
     const auto* Model = GetLoginViewModel();
     const bool bBusy = ActiveLoginRequestId.IsValid() || bSubmittingLogin || (Model && Model->GetStateRef().bBusy);
     if (UButton* Button = Cast<UButton>(GetWidgetFromName(TEXT("PluginDevelopmentButton"))))
     {
-        Button->SetVisibility(bAvailable ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+        Button->SetVisibility(bShowDevelopmentEntry ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
         Button->SetIsEnabled(IsActivated() && bAvailable && !bBusy && !Launcher->IsBusy());
         // 仅入口实际可交互时插入Tab环，生产/忙碌状态保持原登录焦点顺序。
         const bool bCanNavigateToDevelopment = Button->GetIsEnabled();
@@ -310,8 +316,10 @@ void UDivineBeastsLoginScreen::RefreshPluginDevelopmentEntry()
     }
     if (UTextBlock* Status = Cast<UTextBlock>(GetWidgetFromName(TEXT("PluginDevelopmentStatus"))))
     {
-        Status->SetText(bAvailable ? Launcher->GetStatusText() : FText::GetEmpty());
-        Status->SetVisibility(bAvailable && !Launcher->GetStatusText().IsEmpty() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        const FText Message = bAvailable ? Launcher->GetStatusText() :
+            FText::FromString(TEXT("插件入口需要从开发启动器打开客户端。"));
+        Status->SetText(bShowDevelopmentEntry ? Message : FText::GetEmpty());
+        Status->SetVisibility(bShowDevelopmentEntry && !Message.IsEmpty() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
     }
 }
 
@@ -390,13 +398,11 @@ void UDivineBeastsLoginScreen::InitializeDevelopmentAccounts()
 {
     DevelopmentAccountNames.Reset(); DevelopmentAccountError = FText::GetEmpty();
 #if !UE_BUILD_SHIPPING && !UE_BUILD_TEST
-    if (FParse::Param(FCommandLine::Get(), TEXT("DBADevelopmentTestAccounts")))
-    {
-        FString Json = FPlatformMisc::GetEnvironmentVariable(TEXT("DBA_DEV_TEST_LOGIN_ACCOUNTS_JSON"));
-        if (!DivineBeasts::UI::DevelopmentLogin::ReadAccountNames(Json, DevelopmentAccountNames))
-        { DevelopmentAccountError = FText::FromString(TEXT("测试账号配置不可用，请从开发启动器重新打开客户端。")); }
-        Json.Reset();
-    }
+    // 十个按钮不再依赖可见性开关；只有完整进程种子存在时才允许提交真实登录。
+    FString Json = FPlatformMisc::GetEnvironmentVariable(TEXT("DBA_DEV_TEST_LOGIN_ACCOUNTS_JSON"));
+    if (!DivineBeasts::UI::DevelopmentLogin::ReadAccountNames(Json, DevelopmentAccountNames))
+    { DevelopmentAccountError = FText::FromString(TEXT("测试账号配置不可用，请从开发启动器重新打开客户端。")); }
+    Json.Reset();
 #endif
 }
 
@@ -425,11 +431,16 @@ void UDivineBeastsLoginScreen::BindDevelopmentAccountEvents(bool bBind)
 void UDivineBeastsLoginScreen::RefreshDevelopmentAccounts()
 {
     const auto* Model = GetLoginViewModel();
-    const bool bAvailable = DevelopmentAccountNames.Num() == 10;
+    const bool bAvailable = DevelopmentAccountNames.Num() == 10 && DevelopmentAccountError.IsEmpty();
+#if !UE_BUILD_SHIPPING && !UE_BUILD_TEST
+    constexpr bool bShowDevelopmentAccounts = true;
+#else
+    constexpr bool bShowDevelopmentAccounts = false;
+#endif
     const bool bCanSubmit = bAvailable && IsActivated() && !bSubmittingLogin &&
         !ActiveLoginRequestId.IsValid() && Model && Model->CanSubmitCredentials();
     if (UWidget* Panel = GetWidgetFromName(TEXT("DevelopmentTestAccountsPanel")))
-    { Panel->SetVisibility(bAvailable ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed); }
+    { Panel->SetVisibility(bShowDevelopmentAccounts ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed); }
     for (int32 Index = 0; Index < 10; ++Index)
     {
         if (UButton* Button = Cast<UButton>(GetWidgetFromName(
@@ -437,7 +448,8 @@ void UDivineBeastsLoginScreen::RefreshDevelopmentAccounts()
         { Button->SetIsEnabled(bCanSubmit); }
         if (UTextBlock* Label = Cast<UTextBlock>(GetWidgetFromName(
             FName(*FString::Printf(TEXT("DevelopmentAccount%02dLabel"), Index + 1)))))
-        { Label->SetText(bAvailable ? FText::FromString(DevelopmentAccountNames[Index]) : FText::GetEmpty()); }
+        { Label->SetText(bAvailable ? FText::FromString(DevelopmentAccountNames[Index]) :
+            FText::FromString(FString::Printf(TEXT("测试账号%02d"), Index + 1))); }
     }
     // 开发容器实际存在时才接入键盘焦点环；忙碌状态由真实按钮禁用，失活不保留旧账号焦点。
     if (bAvailable && LoginButton && AccountInput)

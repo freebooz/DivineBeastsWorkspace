@@ -1,5 +1,12 @@
 # 插件演示中心实际实施进度
 
+## 2026-10-17 插件UI编目覆盖率可复现专项（仅新增检查器，不伪造新案例）
+
+- 增加`Tools/Unreal/PluginDemos/AuditPluginUIReadiness.py`（可打印全67插件逐项审查工作单和`--summary`统计）与`TestPluginUIReadiness.py`（5项负例验证，新增伪造批准状态拒绝）；不改既有`PluginDemoManifest.json`和已保存的Monolith控件。
+- 实际计算：67插件中`unreviewed`63、`partial`4；登记功能4、已接线4、演示案例9、人工批准0。功能能力分母未知（null），全部演示中心ProductionReady=false，`--require-ready`显式拒绝。
+- 公共/竞技UI目录资产清单改由正式C++ Catalog/WBP文件持续核验，不再依赖被Git忽略的旧32份Saved规格。详细源码整改、风险和静态检查证据见`Docs/Implementation/UIPluginArchitectureRemediation_20261017.md`。原生Editor和实际案例交互未执行；已有旧兼容AddToViewport仅限开发演示，未来需先验证再迁入统一层栈。
+
+
 ## 2026-10-16 实时编目缺项与派生覆盖表修复
 
 - 当前真实工作区存在67个插件描述（48个代码／机制插件、19个内容包），原演示编目已列66个，`ValidatePluginDemoManifest.py`通过真实身份校验指出唯一漏登的`DBAWorldPack_MainArena`（主竞技场世界内容包）。现已将其作为`Project/content_pack/unreviewed`（项目层纯内容包，未完成审查）补入正式Schema2编目，不虚构案例或人工签收。

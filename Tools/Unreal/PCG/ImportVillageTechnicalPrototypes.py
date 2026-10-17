@@ -31,7 +31,14 @@ EXPECTED = (
 
 
 def sha(file: Path) -> str:
-    return hashlib.sha256(file.read_bytes()).hexdigest()
+    """按已登记的LF规范化源字节计算SHA；仅容忍Git将文本检出为CRLF。
+
+    对任意其他字节更改及裸CR仍失败，实际导入期间的原始文件SHA由PowerShell另行保护。
+    """
+    normalized = file.read_bytes().replace(b"\r\n", b"\n")
+    if b"\r" in normalized:
+        raise ValueError("技术资源文本包含裸CR，拒绝不受控源")
+    return hashlib.sha256(normalized).hexdigest()
 
 
 def manifest():

@@ -127,3 +127,16 @@
 - **端侧及生产隔离**：`Game/Config/DefaultGame.ini`已明确默认`DirectoriesToNeverCook=(Path="/DBAWorldPack_Village/Development/PCG")`；生产门禁`VerifyVillagePCGProductionSources.py`拒绝所有`Development`和`_Tech`网格，不能因为技术原型源通过SHA就当正式可上架的3A模型或权威碰撞。
 - **最小验证证据**：`ValidateVillagePCGTechnicalMeshes.py（技术几何和生产隔离合同）`执行返回0，核对六份几何三角、面法向、厘米坐标、来源字节、Cook默认排除和生产映射禁止；两份导入相关Python脚本与技术地图脚本AST检查通过，PowerShell作者入口解析与只读`Inspect`通过。正式客户端/服务器目标编译、Cook、DataValidation和实际Gameplay/导航性能仍需独立验收。
 - **无Gaea资源阶段统一入口（本轮）**：`RunNoGaeaPCGDevelopment.ps1`新增默认只读合同、独占UE安全门禁、6项OBJ导入/Editor回读、独立技术地图创作与二次重开、Gold空间/生成预览/G09、逐阶段日志。Plan实测前3项退出0，Apply被共享UBT阻断退出1；此结果是正确安全拒绝，不是UE功能失败。18次有界并发窗口检测仍无独占环境，不停止其他任务。碰撞安全合同和源完整性测试退出0；新技术网格并未变成已导入UStaticMesh，G01～G16和双Cook未执行。
+
+## 2026-10-17｜Gold农田零实例故障与UE5.8安全修复（最新）
+
+- 真实Gold预览在已修正零密度过滤后Canopy成功生成5实例、Rock成功生成22实例，Crop仍为0输出点/0实例。UE5.8原生`GetPolyLineData`不能从Box+Spline复合`UPCGUnionData`直接提取样条。
+- 编辑器生成器为五种线性/地块模板加入官方`UPCGDataFromActorSettings`，只检索当前Actor的`USplineComponent`再连接`SplineSampler.Spline`；平台图审核限制查询范围和组件类型，并由自动化源码测试核验正反边界。已有Gold Crop资源不因源码修改自动迁移。
+- 新增`RepairGoldCropSplineInputUE58.py`及`RunGoldCropSplineRepairUE58.ps1`，对仅一份Gold Crop开发图提供完整哈希备份、真实引擎反射迁移、独立冷读和异常日志门禁。当前其他UE Editor活跃，安全拒绝执行并确认.uasset未发生改变。
+- 最新四份受影响C++独立编译单元以真实MSVC/UE5.8参数通过`/Zs`语法验证，Python与PowerShell工具通过静态检查；尚未完成正式UBT重新链接和新版UE Automation、GeneratePreview、G09/G01～G16及双端Cook。详细见`Docs/Implementation/GamePlatformPCG/GoldCropSplineSourceFix_20261017.md`。
+## 2026-10-17 18:04续接｜Gold Crop受控恢复工具
+
+- 修改Gold Crop迁移脚本：实施前后核对另外两张Gold实际图、金标准地图和两张正式世界地图五项SHA-256；记录JSON结果，不伪造真实生成验收。
+- Tests/Architecture/VerifyPCGGoldAuthoring.py增加Gold Crop源码/安全验证和恢复编排合同，静态测试返回0。
+- RunGoldCropRecoveryUE58.ps1串联单图Inspect/Apply/Verify、PCG双模块增量构建、8项UE Automation、Gold GeneratePreview和G09；默认仅Plan，只有显式Apply才可执行。实际Plan为BlockedByActiveEditorOrUBT；Apply返回2且uasset保持不变，系正确的并发保护。新增流程尚未在独占Editor条件下完成。
+- 完成范围仅为静态/安全准入；实际图迁移、最新UBT链接、正式Village PCG接入、G01～G16和双端Cook仍未完成。
