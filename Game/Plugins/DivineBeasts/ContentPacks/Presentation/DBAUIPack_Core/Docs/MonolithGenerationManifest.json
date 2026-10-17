@@ -2285,5 +2285,33 @@
     "CompileWarnings": 0,
     "RHIAndCook": "待本轮运行证据；Monolith资产编译不代替真实客户端验收",
     "NotesCN": "保留有字原参考图；无字衍生图仅移除嵌入式用户名、密码和登录字样，统一显示动态控件字号16。选中目标仅由事件通知显示血条外框与地面法环，RootLayout已绑定法环材质。"
+  },
+  "LoadingTravelLogoRatioAndSingleStageLine20261016": {
+    "Status": "MonolithCompiledSaved_RHIScreenshotVerified",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LoadingTravel",
+    "ParentClass": "DivineBeastsLoadingTravelScreen",
+    "PreservedBindings": [
+      "LoadProgress",
+      "StageText",
+      "ProgressPercentText"
+    ],
+    "LogoSlotSizeUMG": [
+      320,
+      160
+    ],
+    "LogoAspectRatio": "2:1",
+    "LoadingTextCN": "仅显示由真实加载阶段事件更新的StageText，并置于进度条正上方；隐藏重复标题和百分比文字，保留原有绑定兼容。",
+    "Actions": [
+      "set_slot_property",
+      "compile_widget",
+      "save_asset",
+      "get_widget_tree"
+    ],
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "Evidence": "Saved/Validation/UIColorRHI/LoadingTravel_1920x1080.png",
+    "NotesCN": "已从Monolith回读保存后的控件树：BrandLogo槽位320×160 UMG、2:1；StageText可见，LoadingTitle与ProgressPercentText折叠。原生RHI/Slate截图用于核对实际显示；不是真实跨世界加载或客户端人工验收证据。"
   }
 }
