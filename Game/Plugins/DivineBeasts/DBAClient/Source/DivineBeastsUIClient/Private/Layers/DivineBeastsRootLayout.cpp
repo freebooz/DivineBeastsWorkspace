@@ -361,10 +361,12 @@ void UDivineBeastsRootLayout::HandleCastFactsChanged(UGamePlatformAbilityCastCom
         Incoming.bActive != Facts.bActive) return;
     // 从未发布时没有合法施法身份，保留已绑定的空条，不能制造假技能。
     if (!Facts.ActivationId.IsValid()) return;
-    FText Name;
+    // 表现样式只决定显示名，不是服务器已确认施法的资格白名单。
+    FText Name = NSLOCTEXT("DivineBeastsUI", "ConfirmedCast", "施法中");
     if (Facts.PresentationStyleId == TEXT("DBA.Development.Fireball")) Name = FText::FromString(TEXT("火焰弹 · 施法动作"));
     else if (Facts.PresentationStyleId == TEXT("DBA.Development.Frostbolt")) Name = FText::FromString(TEXT("寒冰箭 · 施法动作"));
     else if (Facts.PresentationStyleId == TEXT("DBA.Development.ArcaneMissiles")) Name = FText::FromString(TEXT("奥术飞弹 · 施法动作"));
+    else if (Facts.PresentationStyleId == TEXT("DBA.Development.Healing")) Name = FText::FromString(TEXT("治疗 · 施法动作"));
     auto* Combat = Pawn->FindComponentByClass<UGamePlatformCombatComponent>();
     auto* Identity = BoundCastIdentity.Get();
     const int32 AvatarGeneration = Identity ? Identity->GetAvatarGeneration() : Combat ? Combat->GetCombatAvatarGeneration() : 0;
@@ -381,10 +383,10 @@ void UDivineBeastsRootLayout::HandleCastFactsChanged(UGamePlatformAbilityCastCom
     Snapshot.TotalSeconds = bValidWindow ? Facts.DurationSeconds : 0;
     Snapshot.RemainingSeconds = bValidWindow
         ? FMath::Clamp(Snapshot.TotalSeconds - FMath::Max(0.0, ServerSeconds - Facts.StartedServerSeconds), 0.0, Snapshot.TotalSeconds) : 0;
-    Snapshot.bActive = Facts.bActive && !Name.IsEmpty() && bValidWindow && Snapshot.RemainingSeconds > 0 &&
+    Snapshot.bActive = Facts.bActive && bValidWindow && Snapshot.RemainingSeconds > 0 &&
         Facts.AvatarGeneration == AvatarGeneration && Combat &&
         !(Combat->GetCombatAvatarGeneration() == AvatarGeneration && Combat->IsCombatDead());
-    // 当前0.7/1秒是已确认动作窗口，弹体已由服务器释放；既不是额外蓄力，也不是UI可打断的资格。
+    // 显示服务器给出的真实窗口；UI不决定起手、释放时机、结束或可打断资格。
     Snapshot.bChanneling = false; Snapshot.bInterruptible = false;
     Snapshot.Revision = ++CastDisplayRevision;
     Widget->ApplyCastSnapshot(Snapshot);

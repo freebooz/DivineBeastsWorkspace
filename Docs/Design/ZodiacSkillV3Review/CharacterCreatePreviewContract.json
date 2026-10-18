@@ -42,7 +42,7 @@
     "八槽战斗UI与创角预览资料不得共用权威技能授予状态；英雄选择并不授予GAS"
   ],
   "approvalGate": {
-    "skillName": "PENDING_HUMAN_REVIEW",
+    "skillName": "APPROVED_USER_SIMPLE_V5",
     "mechanics": "PENDING_HUMAN_REVIEW",
     "visualEffect": "NOT_APPROVED",
     "creationPreviewImage": "NOT_IMPORTED",
@@ -148,5 +148,7 @@
     "制作Niagara正式技能",
     "真实8技能与双客户端联机验证",
     "客户端与专用服务器Cook"
-  ]
+  ],
+  "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018",
+  "displayNameApprovalSource": "Docs/Design/ApprovedSkillDisplayNames_V5.json"
 }

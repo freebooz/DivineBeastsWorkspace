@@ -19,7 +19,7 @@
   },
   "visualIdentity": "玄岩土金；厚重獠牙、低矮重压波",
   "oldUltimateName": "玄鬃裂王座",
-  "reviewUltimateName": "玄鬃裂地",
+  "reviewUltimateName": "连踏",
   "bannedMechanicsNeverRestore": true,
   "previewAssetCreated": false,
   "skillRows": [
@@ -27,7 +27,7 @@
       "displayOrder": 1,
       "slotId": "Primary",
       "abilityId": "dba.ability.boar_eight_tusk_ram@1",
-      "nameZh": "玄鬃冲撞",
+      "nameZh": "獠牙撞",
       "previousV2NameZh": "玄鬃冲撞",
       "roleZh": "基础攻击",
       "historicalSource": {
@@ -35,7 +35,7 @@
         "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
         "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
       },
-      "creatorDescriptionZh": "基础攻击「玄鬃冲撞」：近身重击获得普通攻击气势。一级初调参考：伤害40点/段，最多1段；冷却1秒，射程260厘米，气势消耗0、能量消耗暂为0。方向与命中点应清晰，单击不得穿透不合法目标。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "基础攻击「獠牙撞」：近身重击获得普通攻击气势。一级初调参考：伤害40点/段，最多1段；冷却1秒，射程260厘米，气势消耗0、能量消耗暂为0。方向与命中点应清晰，单击不得穿透不合法目标。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "近身重击获得普通攻击气势",
       "balanceV2Reference": {
         "damageType": "Physical",
@@ -70,18 +70,20 @@
           "爪光／基础攻击实心主体",
           "命中点局部主闪光"
         ],
-        "shortPromptZh": "亥猪·玄鬃「玄鬃冲撞」的真实3D技能效果图，近身重击获得普通攻击气势；玄岩土金；厚重獠牙、低矮重压波。攻击方向预读→爪光／基础攻击实心主体→命中点局部主闪光，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "亥猪·玄鬃「獠牙撞」的真实3D技能效果图，近身重击获得普通攻击气势；玄岩土金；厚重獠牙、低矮重压波。攻击方向预读→爪光／基础攻击实心主体→命中点局部主闪光，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": null,
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "玄鬃冲撞",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 2,
@@ -138,18 +140,20 @@
       },
       "labelHistoricalV2Alias": "裂甲撞锤",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "怒锤",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 3,
       "slotId": "Slot2",
       "abilityId": "dba.ability.boar_eight_pressure_wave@1",
-      "nameZh": "重压冲波",
+      "nameZh": "重压波",
       "previousV2NameZh": "重压冲波",
       "roleZh": "扩展攻击",
       "historicalSource": {
@@ -157,7 +161,7 @@
         "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
         "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
       },
-      "creatorDescriptionZh": "扩展攻击「重压冲波」：自身周围重压冲击。一级初调参考：伤害105点/段，最多1段；冷却10.5秒，射程0厘米，作用半径375厘米，气势消耗0、能量消耗暂为0。公开攻击范围和命中次数，避免隐藏追踪或持续追加伤害。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "扩展攻击「重压波」：自身周围重压冲击。一级初调参考：伤害105点/段，最多1段；冷却10.5秒，射程0厘米，作用半径375厘米，气势消耗0、能量消耗暂为0。公开攻击范围和命中次数，避免隐藏追踪或持续追加伤害。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "自身周围重压冲击",
       "balanceV2Reference": {
         "damageType": "Physical",
@@ -192,24 +196,26 @@
           "第二攻击主体",
           "多段／区域命中"
         ],
-        "shortPromptZh": "亥猪·玄鬃「重压冲波」的真实3D技能效果图，自身周围重压冲击；玄岩土金；厚重獠牙、低矮重压波。扇形或目标预警→第二攻击主体→多段／区域命中，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "亥猪·玄鬃「重压波」的真实3D技能效果图，自身周围重压冲击；玄岩土金；厚重獠牙、低矮重压波。扇形或目标预警→第二攻击主体→多段／区域命中，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": null,
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "重压冲波",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 4,
       "slotId": "Slot4",
       "abilityId": "dba.ability.boar_eight_earthsplit_mane@1",
-      "nameZh": "玄鬃裂地",
+      "nameZh": "连踏",
       "previousV2NameZh": "玄鬃地裂",
       "roleZh": "终极技能",
       "historicalSource": {
@@ -219,7 +225,7 @@
         "legacyNameZh": "玄鬃裂王座",
         "migrationReason": "已取消王印/王阵/王座机制，保留原动作及高光特征"
       },
-      "creatorDescriptionZh": "终极技能「玄鬃裂地」：两段地裂冲击的重甲反扑。一级初调参考：伤害245点/段，最多2段；冷却74秒，射程630厘米，作用半径600厘米，气势消耗25、能量消耗暂为0。提前给出清晰危险区，分段总伤害须单独审核上限，保留走位和打断反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "终极技能「连踏」：两段地裂冲击的重甲反扑。一级初调参考：伤害245点/段，最多2段；冷却74秒，射程630厘米，作用半径600厘米，气势消耗25、能量消耗暂为0。提前给出清晰危险区，分段总伤害须单独审核上限，保留走位和打断反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "两段地裂冲击的重甲反扑",
       "balanceV2Reference": {
         "damageType": "Physical",
@@ -254,24 +260,26 @@
           "终极主体轮廓与最亮爆发",
           "清晰安全消散"
         ],
-        "shortPromptZh": "亥猪·玄鬃「玄鬃裂地」的真实3D技能效果图，两段地裂冲击的重甲反扑；玄岩土金；厚重獠牙、低矮重压波。高优先级范围预警→终极主体轮廓与最亮爆发→清晰安全消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "亥猪·玄鬃「连踏」的真实3D技能效果图，两段地裂冲击的重甲反扑；玄岩土金；厚重獠牙、低矮重压波。高优先级范围预警→终极主体轮廓与最亮爆发→清晰安全消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "玄鬃地裂",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "玄鬃裂地",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 5,
       "slotId": "Slot3",
       "abilityId": "dba.ability.boar_eight_boar_charge@1",
-      "nameZh": "獠撞",
+      "nameZh": "獠冲",
       "previousV2NameZh": "蛮鬃突冲",
       "roleZh": "移动",
       "historicalSource": {
@@ -281,7 +289,7 @@
         "legacyNameZh": "獠撞",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "移动「獠撞」：低姿态直线冲撞。一级初调参考：伤害50点/段，最多1段；合法位移700厘米；冷却16秒，射程760厘米，气势消耗0、能量消耗暂为0。服务器校验起点、落点及碰撞，不能穿越限制区或无限位移。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "移动「獠冲」：低姿态直线冲撞。一级初调参考：伤害50点/段，最多1段；合法位移700厘米；冷却16秒，射程760厘米，气势消耗0、能量消耗暂为0。服务器校验起点、落点及碰撞，不能穿越限制区或无限位移。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "低姿态直线冲撞",
       "balanceV2Reference": {
         "damageType": "Physical",
@@ -317,18 +325,20 @@
           "连续动作残影",
           "合法落地小环"
         ],
-        "shortPromptZh": "亥猪·玄鬃「獠撞」的真实3D技能效果图，低姿态直线冲撞；玄岩土金；厚重獠牙、低矮重压波。位移方向箭头→连续动作残影→合法落地小环，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "亥猪·玄鬃「獠冲」的真实3D技能效果图，低姿态直线冲撞；玄岩土金；厚重獠牙、低矮重压波。位移方向箭头→连续动作残影→合法落地小环，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "蛮鬃突冲",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "獠撞",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 6,
@@ -380,12 +390,14 @@
       },
       "labelHistoricalV2Alias": "铁鬃护体",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "岩甲",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 7,
@@ -444,12 +456,14 @@
       },
       "labelHistoricalV2Alias": "狂鬃震踏",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "震鬃",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 8,
@@ -502,12 +516,15 @@
       },
       "labelHistoricalV2Alias": "玄鬃怒吼",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "鬃吼",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     }
-  ]
+  ],
+  "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
 }

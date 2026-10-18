@@ -35,6 +35,9 @@ class ZodiacSkillV3HeritageTests(unittest.TestCase):
         cls.preview = open_json(PREVIEW)
         cls.icons = open_json(ART)
         cls.heroes = {name: open_json(V3 / f"Hero_{name}.json") for name in HEROES}
+        # 历史名继续在previousNameBeforeSimpleV5中逐项保留；显示名依用户已批准的简洁版。
+        approved = open_json(ROOT / 'Docs/Design/ApprovedSkillDisplayNames_V5.json')
+        cls.approved_names = {row[0]: row[1] for row in approved['entries']}
 
     def test_01_12_heroes_and_96_slots_match_v2_ability_ids(self):
         self.assertEqual(len(self.heroes), 12)
@@ -75,12 +78,14 @@ class ZodiacSkillV3HeritageTests(unittest.TestCase):
                 ("Boar", "玄鬃裂王座", "玄鬃裂地")):
             source = self.heroes[hero]
             self.assertEqual(source["oldUltimateName"], old)
-            self.assertEqual(source["reviewUltimateName"], new)
-            self.assertEqual(source["skillRows"][3]["nameZh"], new)
+            row = source["skillRows"][3]
+            self.assertEqual(row["previousNameBeforeSimpleV5"], new)
+            self.assertEqual(source["reviewUltimateName"], self.approved_names[row["abilityId"]])
+            self.assertEqual(row["nameZh"], self.approved_names[row["abilityId"]])
 
     def test_04_preserve_dragon_historical_six_skills(self):
         rows = self.heroes["Dragon"]["skillRows"]
-        self.assertEqual([r["nameZh"] for r in rows],
+        self.assertEqual([r["previousNameBeforeSimpleV5"] for r in rows],
                          ["苍龙爪光", "雷裁", "苍云雷息", "苍龙定天仪",
                           "御风", "云护", "龙压", "龙域"])
         self.assertEqual(self.heroes["Dragon"]["passiveTrait"]["nameZh"], "天象轮转")
@@ -259,7 +264,10 @@ class ZodiacSkillV3HeritageTests(unittest.TestCase):
                 ]
         }
         for hero, names in expected.items():
-            self.assertEqual([row["nameZh"] for row in self.heroes[hero]["skillRows"]], names)
+            rows = self.heroes[hero]["skillRows"]
+            self.assertEqual([row["previousNameBeforeSimpleV5"] for row in rows], names)
+            self.assertEqual([row["nameZh"] for row in rows],
+                             [self.approved_names[row["abilityId"]] for row in rows])
 
     def test_10_heal_capable_heroes_preserve_v2_safety_roles(self):
         healers = set()

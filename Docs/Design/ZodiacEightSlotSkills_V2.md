@@ -1,5 +1,7 @@
 # SSLM 十二生肖八技能方案 V2.0（可实施设计与资产制作规范）
 
+> **2026-10-18名称更新：** 用户确认采用简洁版96个首推名称。当前`ZodiacEightSlotSkills_V2.json`（数据资产作者真源）的`nameZh`已按 [ApprovedSkillDisplayNames_V5.json](ApprovedSkillDisplayNames_V5.json)（名称批准映射）更新；下文旧名称作为设计沿革保留，不得再次覆盖已批准名称。伤害、治疗、控制、气势及槽位均未因改名调整，数据仍是未投产草案。
+
 **状态：设计数据已写入、96份UE原生定义资产待Monolith制作，未批准投产。**
 
 此方案用8个可装载的主动槽，原有英雄固有被动独立显示、不占技能栏。保留原有 `Primary`（第一技能）和 `Slot4`（终极技能）身份以兼容旧占位技能，不强制替换当前 `_placeholder@1` 的 DefaultAbilitySetId（默认技能集标识）。全部技能数值为一级策划初调候选，并非已经进行单/多人实战平衡的正式数值。

@@ -85,6 +85,18 @@ bool FDivineBeastsCastBarEventBindingTest::RunTest(const FString&)
     // 本用例仅验证同一事实终态通道，不在同一引擎帧强推TimerManager伪造到期。
     TestTrue(TEXT("后继终态由真实组件发布"), CastComponent->CancelConfirmedCast(SecondId));
     TestFalse(TEXT("终态通知收敛"), Bar->GetCastSnapshot().bActive);
+    // 施法资格来自服务器事实，不能因UI未列出某个表现样式名称而丢弃治疗或后续技能。
+    for (const FName Style : {FName(TEXT("DBA.Development.Healing")), FName(TEXT("Test.NewConfirmedCastStyle"))})
+    {
+        const FGuid Id = FGuid::NewGuid();
+        TestTrue(TEXT("发布其他合法施法窗口"), CastComponent->PublishConfirmedCast(
+            Id, TEXT("ability.test.confirmed@1"), Style, 1, 0.7f));
+        TestTrue(TEXT("治疗及未枚举样式仍显示服务器确认进度"), Bar->GetCastSnapshot().bActive);
+        TestFalse(TEXT("缺少专用名称时提供本地化通用标签"), Bar->GetCastSnapshot().DisplayName.IsEmpty());
+        TestEqual(TEXT("其他样式实际展开施法控件"), Bar->GetVisibility(), ESlateVisibility::SelfHitTestInvisible);
+        TestTrue(TEXT("取消其他样式立即隐藏"), CastComponent->CancelConfirmedCast(Id));
+        TestEqual(TEXT("其他样式终态隐藏"), Bar->GetVisibility(), ESlateVisibility::Collapsed);
+    }
     TestTrue(TEXT("可再次发布"), CastComponent->PublishConfirmedCast(
         FGuid::NewGuid(), TEXT("ability.test.fireball@1"), TEXT("DBA.Development.Fireball"), 1, 0.7f));
     const FGuid PreviousScope = Bar->GetCastSnapshot().SourceScopeId;

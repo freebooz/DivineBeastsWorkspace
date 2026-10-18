@@ -164,7 +164,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "影牙斩",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -173,7 +175,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.rat_eight_crescent_blade@1",
           "abilityKey": "crescent_blade",
-          "nameZh": "弦月双刃",
+          "nameZh": "伏牙刺",
           "descriptionZh": "投出两道交错银月牙刃，沿服务器射线判定",
           "intentTarget": "enemy",
           "level": 1,
@@ -215,7 +217,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "弦月双刃",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -224,7 +228,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.rat_eight_cross_fangs@1",
           "abilityKey": "cross_fangs",
-          "nameZh": "交锋裂影",
+          "nameZh": "交牙斩",
           "descriptionZh": "短距离交叉连续切割，中心目标受两段判定",
           "intentTarget": "enemy",
           "level": 1,
@@ -266,7 +270,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "交锋裂影",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -275,7 +281,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.rat_eight_shadow_hunt@1",
           "abilityKey": "shadow_hunt",
-          "nameZh": "影牙围猎",
+          "nameZh": "三影袭",
           "descriptionZh": "三道影牙从目标周边合围，区域命中带多段上限",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -317,7 +323,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "影牙围猎",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -326,7 +334,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.rat_eight_shadow_step@1",
           "abilityKey": "shadow_step",
-          "nameZh": "踏影突闪",
+          "nameZh": "穿隙",
           "descriptionZh": "按服务器校验方向短突进，不能穿越阻挡",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -367,7 +375,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "踏影突闪",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -376,7 +386,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.rat_eight_mist_guard@1",
           "abilityKey": "mist_guard",
-          "nameZh": "影雾护体",
+          "nameZh": "敛影",
           "descriptionZh": "短时间获得16%最大生命护盾，非隐身",
           "intentTarget": "self",
           "level": 1,
@@ -417,7 +427,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "影雾护体",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -426,7 +438,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.rat_eight_shadow_snare@1",
           "abilityKey": "shadow_snare",
-          "nameZh": "掠影缚足",
+          "nameZh": "绊步牙",
           "descriptionZh": "短刃命中使目标减速30%，只取已确认命中",
           "intentTarget": "enemy",
           "level": 1,
@@ -474,7 +486,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "掠影缚足",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -483,7 +497,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.rat_eight_fang_mark@1",
           "abilityKey": "fang_mark",
-          "nameZh": "牙痕追猎",
+          "nameZh": "嗅踪",
           "descriptionZh": "标记目标5秒，下次本人命中增伤15%",
           "intentTarget": "enemy",
           "level": 1,
@@ -531,7 +545,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "牙痕追猎",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -598,7 +614,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玄角撞",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -607,7 +625,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.ox_eight_horn_break@1",
           "abilityKey": "horn_break",
-          "nameZh": "破岩角挑",
+          "nameZh": "破甲角",
           "descriptionZh": "上挑单体并附加重击反馈，不默认击飞",
           "intentTarget": "enemy",
           "level": 1,
@@ -649,7 +667,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "破岩角挑",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -658,7 +678,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.ox_eight_ground_pulse@1",
           "abilityKey": "ground_pulse",
-          "nameZh": "裂土重踏",
+          "nameZh": "裂地踏",
           "descriptionZh": "自身周围扩散地脉冲击，服务器圆形AOE",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -700,7 +720,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "裂土重踏",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -709,7 +731,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.ox_eight_mountain_break@1",
           "abilityKey": "mountain_break",
-          "nameZh": "崩岳裂阵",
+          "nameZh": "立山门",
           "descriptionZh": "向前重击并产生区域震裂，中心短眩晕",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -757,7 +779,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "崩岳裂阵",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -766,7 +790,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.ox_eight_horn_charge@1",
           "abilityKey": "horn_charge",
-          "nameZh": "玄角冲阵",
+          "nameZh": "沉步",
           "descriptionZh": "冲锋至合法前方位置并撞击首个敌人",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -813,7 +837,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玄角冲阵",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -822,7 +848,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.ox_eight_stone_armor@1",
           "abilityKey": "stone_armor",
-          "nameZh": "玄岩战甲",
+          "nameZh": "镇山壁",
           "descriptionZh": "获得22%最大生命护盾，防御特色",
           "intentTarget": "self",
           "level": 1,
@@ -863,7 +889,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玄岩战甲",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -872,7 +900,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.ox_eight_seismic_stun@1",
           "abilityKey": "seismic_stun",
-          "nameZh": "震蹄定身",
+          "nameZh": "顶退",
           "descriptionZh": "有限近身震荡造成0.9秒眩晕",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -920,7 +948,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "震蹄定身",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -929,7 +959,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.ox_eight_steadfast_roar@1",
           "abilityKey": "steadfast_roar",
-          "nameZh": "厚土战吼",
+          "nameZh": "盾阵",
           "descriptionZh": "己方近身单位获得5秒12%伤害减免，不触发治疗",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -971,7 +1001,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "厚土战吼",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -996,7 +1028,7 @@
           "roleZh": "基础攻击",
           "abilityId": "dba.ability.tiger_eight_claw_strike@1",
           "abilityKey": "claw_strike",
-          "nameZh": "白君裂爪",
+          "nameZh": "白虎爪",
           "descriptionZh": "单体爪击，回复普攻气势",
           "intentTarget": "enemy",
           "level": 1,
@@ -1038,7 +1070,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "白君裂爪",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -1047,7 +1081,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.tiger_eight_golden_rake@1",
           "abilityKey": "golden_rake",
-          "nameZh": "白金爪刃",
+          "nameZh": "裂甲爪",
           "descriptionZh": "前方扇形两道爪痕",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -1089,7 +1123,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "白金爪刃",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -1098,7 +1134,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.tiger_eight_tiger_pounce@1",
           "abilityKey": "tiger_pounce",
-          "nameZh": "猛虎连袭",
+          "nameZh": "双爪袭",
           "descriptionZh": "快速两段近战，优先当前锁定敌方",
           "intentTarget": "enemy",
           "level": 1,
@@ -1140,7 +1176,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "猛虎连袭",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -1149,7 +1187,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.tiger_eight_tiger_roar_storm@1",
           "abilityKey": "tiger_roar_storm",
-          "nameZh": "白君啸天",
+          "nameZh": "虎啸扑",
           "descriptionZh": "虎啸后多段金爪暴发，终结技",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -1191,7 +1229,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "白君啸天",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -1200,7 +1240,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.tiger_eight_leaping_claw@1",
           "abilityKey": "leaping_claw",
-          "nameZh": "虎跃猎袭",
+          "nameZh": "虎扑",
           "descriptionZh": "跳扑目标附近合法落点，不能越过禁区",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -1247,7 +1287,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "虎跃猎袭",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -1256,7 +1298,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.tiger_eight_regal_guard@1",
           "abilityKey": "regal_guard",
-          "nameZh": "虎纹护甲",
+          "nameZh": "虎踞",
           "descriptionZh": "金纹短护盾，维持进攻者脆性",
           "intentTarget": "self",
           "level": 1,
@@ -1297,7 +1339,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "虎纹护甲",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -1306,7 +1350,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.tiger_eight_roar_shock@1",
           "abilityKey": "roar_shock",
-          "nameZh": "震山虎啸",
+          "nameZh": "虎啸",
           "descriptionZh": "扇形虎啸短眩晕，明确危险边缘",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -1354,7 +1398,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "震山虎啸",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -1363,7 +1409,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.tiger_eight_battle_fervor@1",
           "abilityKey": "battle_fervor",
-          "nameZh": "威仪昂扬",
+          "nameZh": "开猎",
           "descriptionZh": "本人5秒内普通攻击伤害加成12%",
           "intentTarget": "enemy",
           "level": 1,
@@ -1405,7 +1451,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "威仪昂扬",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -1430,7 +1478,7 @@
           "roleZh": "基础攻击",
           "abilityId": "dba.ability.rabbit_eight_jade_moon_shot@1",
           "abilityKey": "jade_moon_shot",
-          "nameZh": "月玉轻弹",
+          "nameZh": "月辉弹",
           "descriptionZh": "远程单体月辉弹，命中恢复气势",
           "intentTarget": "enemy",
           "level": 1,
@@ -1472,7 +1520,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "月玉轻弹",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -1481,7 +1531,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.rabbit_eight_crescent_arc@1",
           "abilityKey": "crescent_arc",
-          "nameZh": "玉月回旋",
+          "nameZh": "双月斩",
           "descriptionZh": "月环往返两段服务器命中",
           "intentTarget": "enemy",
           "level": 1,
@@ -1523,7 +1573,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玉月回旋",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -1532,7 +1584,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.rabbit_eight_falling_petals@1",
           "abilityKey": "falling_petals",
-          "nameZh": "落英星雨",
+          "nameZh": "落英雨",
           "descriptionZh": "指定区域内花瓣坠击，纯伤害不夹带虚假治疗",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -1574,7 +1626,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "落英星雨",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -1583,7 +1637,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.rabbit_eight_moon_bloom@1",
           "abilityKey": "moon_bloom",
-          "nameZh": "月华绽放",
+          "nameZh": "返影斩",
           "descriptionZh": "范围内敌人受月辉伤害、己方获得12%最大生命治疗",
           "intentTarget": "area_center_mixed",
           "level": 1,
@@ -1630,7 +1684,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "月华绽放",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -1639,7 +1695,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.rabbit_eight_moon_leap@1",
           "abilityKey": "moon_leap",
-          "nameZh": "月影跃迁",
+          "nameZh": "踏月",
           "descriptionZh": "轻跳至合法位置，障碍物裁剪",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -1680,7 +1736,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "月影跃迁",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -1689,7 +1747,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.rabbit_eight_jade_moon_shield@1",
           "abilityKey": "jade_moon_shield",
-          "nameZh": "玉月屏护",
+          "nameZh": "回月",
           "descriptionZh": "对自己或友方赋予短时护盾",
           "intentTarget": "friendly_or_self",
           "level": 1,
@@ -1730,7 +1788,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玉月屏护",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -1739,7 +1799,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.rabbit_eight_lunar_bind@1",
           "abilityKey": "lunar_bind",
-          "nameZh": "月辉束缚",
+          "nameZh": "绊月刃",
           "descriptionZh": "月光圈命中减速35%，不是隐藏长时间硬控",
           "intentTarget": "enemy",
           "level": 1,
@@ -1787,7 +1847,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "月辉束缚",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -1796,7 +1858,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.rabbit_eight_jade_heal@1",
           "abilityKey": "jade_heal",
-          "nameZh": "玉露回春",
+          "nameZh": "回春露",
           "descriptionZh": "治疗一个合法友方22%最大生命，不复活",
           "intentTarget": "friendly_or_self",
           "level": 1,
@@ -1837,7 +1899,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玉露回春",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -1862,7 +1926,7 @@
           "roleZh": "基础攻击",
           "abilityId": "dba.ability.dragon_eight_dragon_claw@1",
           "abilityKey": "dragon_claw",
-          "nameZh": "苍龙爪光",
+          "nameZh": "苍龙爪",
           "descriptionZh": "中近距离龙爪能量命中",
           "intentTarget": "enemy",
           "level": 1,
@@ -1904,7 +1968,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "苍龙爪光",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -1913,7 +1979,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.dragon_eight_cloud_scale@1",
           "abilityKey": "cloud_scale",
-          "nameZh": "云鳞飞刃",
+          "nameZh": "雷裁",
           "descriptionZh": "两枚青云龙鳞追击冻结目标",
           "intentTarget": "enemy",
           "level": 1,
@@ -1955,7 +2021,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "云鳞飞刃",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -1964,7 +2032,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.dragon_eight_azure_breath@1",
           "abilityKey": "azure_breath",
-          "nameZh": "苍云雷息",
+          "nameZh": "雷息",
           "descriptionZh": "前方锥形雷云吐息，服务器扇区规则",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -2006,7 +2074,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "苍云雷息",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -2015,7 +2085,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.dragon_eight_dragon_ascension@1",
           "abilityKey": "dragon_ascension",
-          "nameZh": "苍龙临世",
+          "nameZh": "三象域",
           "descriptionZh": "龙首云气降临产生大范围一次性法术打击",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -2057,7 +2127,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "苍龙临世",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -2066,7 +2138,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.dragon_eight_cloud_stride@1",
           "abilityKey": "cloud_stride",
-          "nameZh": "御云腾跃",
+          "nameZh": "御风",
           "descriptionZh": "云气跃迁，服务端合法落点",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -2107,7 +2179,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "御云腾跃",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -2116,7 +2190,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.dragon_eight_dragon_scale_guard@1",
           "abilityKey": "dragon_scale_guard",
-          "nameZh": "苍鳞护身",
+          "nameZh": "云盾",
           "descriptionZh": "龙鳞护盾保护自己",
           "intentTarget": "self",
           "level": 1,
@@ -2157,7 +2231,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "苍鳞护身",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -2166,7 +2242,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
           "abilityKey": "thunder_cloud_lock",
-          "nameZh": "雷云镇缚",
+          "nameZh": "风压环",
           "descriptionZh": "小范围雷云压制0.9秒眩晕",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -2214,7 +2290,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "雷云镇缚",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -2223,7 +2301,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.dragon_eight_cloud_blessing@1",
           "abilityKey": "cloud_blessing",
-          "nameZh": "苍云庇佑",
+          "nameZh": "风云域",
           "descriptionZh": "区域内己方短时间获得12%最大生命护盾",
           "intentTarget": "friendly_or_self",
           "level": 1,
@@ -2264,7 +2342,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "苍云庇佑",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -2289,7 +2369,7 @@
           "roleZh": "基础攻击",
           "abilityId": "dba.ability.snake_eight_scale_bite@1",
           "abilityKey": "scale_bite",
-          "nameZh": "幽鳞穿刺",
+          "nameZh": "幽鳞刺",
           "descriptionZh": "中程鳞光单体伤害",
           "intentTarget": "enemy",
           "level": 1,
@@ -2331,7 +2411,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "幽鳞穿刺",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -2340,7 +2422,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.snake_eight_venom_spear@1",
           "abilityKey": "venom_spear",
-          "nameZh": "蛇影灵针",
+          "nameZh": "毒牙",
           "descriptionZh": "灵针命中后附加可驱散的三秒低额伤害",
           "intentTarget": "enemy",
           "level": 1,
@@ -2388,7 +2470,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "蛇影灵针",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -2397,7 +2481,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.snake_eight_serpent_arc@1",
           "abilityKey": "serpent_arc",
-          "nameZh": "盘鳞双弹",
+          "nameZh": "双鳞弹",
           "descriptionZh": "左右蛇形两条光弹交叉命中",
           "intentTarget": "enemy",
           "level": 1,
@@ -2439,7 +2523,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "盘鳞双弹",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -2448,7 +2534,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.snake_eight_serpent_maelstrom@1",
           "abilityKey": "serpent_maelstrom",
-          "nameZh": "幽鳞漩阵",
+          "nameZh": "毒阵爆",
           "descriptionZh": "曲线幽鳞三波扩散，区域总伤害需限制",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -2490,7 +2576,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "幽鳞漩阵",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -2499,7 +2587,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.snake_eight_sinuous_dash@1",
           "abilityKey": "sinuous_dash",
-          "nameZh": "蜿影游身",
+          "nameZh": "蛇行",
           "descriptionZh": "侧身游走至合法路径终点",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -2540,7 +2628,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "蜿影游身",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -2549,7 +2639,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.snake_eight_shed_skin@1",
           "abilityKey": "shed_skin",
-          "nameZh": "蜕鳞护体",
+          "nameZh": "蜕鳞",
           "descriptionZh": "蜕下能量鳞甲作为短时盾",
           "intentTarget": "self",
           "level": 1,
@@ -2590,7 +2680,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "蜕鳞护体",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -2599,7 +2691,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.snake_eight_coil_silence@1",
           "abilityKey": "coil_silence",
-          "nameZh": "缠鳞禁言",
+          "nameZh": "蛇纹缚",
           "descriptionZh": "蛇鳞印记使目标沉默1.4秒",
           "intentTarget": "enemy",
           "level": 1,
@@ -2647,7 +2739,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "缠鳞禁言",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -2656,7 +2750,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.snake_eight_venom_mark@1",
           "abilityKey": "venom_mark",
-          "nameZh": "幽蛇蚀印",
+          "nameZh": "毒径",
           "descriptionZh": "目标受到来自施法者的伤害增加8%，5秒",
           "intentTarget": "enemy",
           "level": 1,
@@ -2704,7 +2798,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "幽蛇蚀印",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -2771,7 +2867,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "雷蹄踢",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -2780,7 +2878,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.horse_eight_lightning_line@1",
           "abilityKey": "lightning_line",
-          "nameZh": "奔雷直突",
+          "nameZh": "雷枪",
           "descriptionZh": "前方直线雷芒冲击",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -2822,7 +2920,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "奔雷直突",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -2831,7 +2931,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.horse_eight_hooffall@1",
           "abilityKey": "hooffall",
-          "nameZh": "惊雷践踏",
+          "nameZh": "雷蹄波",
           "descriptionZh": "蹄下环形打击，服务端几何范围",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -2873,7 +2973,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "惊雷践踏",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -2882,7 +2984,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.horse_eight_thunder_stampede@1",
           "abilityKey": "thunder_stampede",
-          "nameZh": "雷蹄万奔",
+          "nameZh": "破阵冲",
           "descriptionZh": "高速冲阵与雷蹄波三段确认",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -2924,7 +3026,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "雷蹄万奔",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -2933,7 +3037,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.horse_eight_wind_charger@1",
           "abilityKey": "wind_charger",
-          "nameZh": "风驰雷跃",
+          "nameZh": "奔雷",
           "descriptionZh": "快速冲刺并对首个接触目标造成轻伤",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -2980,7 +3084,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "风驰雷跃",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -2989,7 +3095,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.horse_eight_thunder_hide@1",
           "abilityKey": "thunder_hide",
-          "nameZh": "雷甲护身",
+          "nameZh": "护驰",
           "descriptionZh": "电弧护体，护盾强度偏低换取机动性",
           "intentTarget": "self",
           "level": 1,
@@ -3030,7 +3136,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "雷甲护身",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -3039,7 +3147,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.horse_eight_hoof_stun@1",
           "abilityKey": "hoof_stun",
-          "nameZh": "震蹄麻痹",
+          "nameZh": "震蹄",
           "descriptionZh": "近距冲击造成0.8秒眩晕",
           "intentTarget": "enemy",
           "level": 1,
@@ -3087,7 +3195,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "震蹄麻痹",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -3096,7 +3206,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.horse_eight_tailwind_aura@1",
           "abilityKey": "tailwind_aura",
-          "nameZh": "追风援护",
+          "nameZh": "驰援",
           "descriptionZh": "附近己方五秒移动速度提升16%",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -3138,7 +3248,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "追风援护",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -3163,7 +3275,7 @@
           "roleZh": "基础攻击",
           "abilityId": "dba.ability.goat_eight_jade_horn@1",
           "abilityKey": "jade_horn",
-          "nameZh": "玉角光刺",
+          "nameZh": "玉角刺",
           "descriptionZh": "短程玉角灵光伤害",
           "intentTarget": "enemy",
           "level": 1,
@@ -3205,7 +3317,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玉角光刺",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -3214,7 +3328,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.goat_eight_jade_beam@1",
           "abilityKey": "jade_beam",
-          "nameZh": "灵玉直射",
+          "nameZh": "引锋光",
           "descriptionZh": "细长玉光束，对首个敌人施加伤害",
           "intentTarget": "enemy",
           "level": 1,
@@ -3256,7 +3370,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "灵玉直射",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -3265,7 +3381,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.goat_eight_rune_ring@1",
           "abilityKey": "rune_ring",
-          "nameZh": "玉符环阵",
+          "nameZh": "玉符环",
           "descriptionZh": "在指定点形成一次性玉符波纹",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -3307,7 +3423,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玉符环阵",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -3316,7 +3434,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.goat_eight_sanctuary_dome@1",
           "abilityKey": "sanctuary_dome",
-          "nameZh": "玉角圣域",
+          "nameZh": "护愿铃",
           "descriptionZh": "圣域对敌低额打击、己方治疗并提供弱护盾",
           "intentTarget": "area_center_mixed",
           "level": 1,
@@ -3368,7 +3486,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玉角圣域",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -3377,7 +3497,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.goat_eight_light_hoof@1",
           "abilityKey": "light_hoof",
-          "nameZh": "踏云轻行",
+          "nameZh": "铃步",
           "descriptionZh": "轻盈滑步，禁止越界",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -3418,7 +3538,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "踏云轻行",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -3427,7 +3549,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.goat_eight_jade_barrier@1",
           "abilityKey": "jade_barrier",
-          "nameZh": "玉障屏护",
+          "nameZh": "守愿",
           "descriptionZh": "指定友方获得22%最大生命短时护盾",
           "intentTarget": "friendly_or_self",
           "level": 1,
@@ -3468,7 +3590,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玉障屏护",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -3477,7 +3601,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.goat_eight_jade_bind@1",
           "abilityKey": "jade_bind",
-          "nameZh": "玉纹禁锢",
+          "nameZh": "缓铃",
           "descriptionZh": "地面符阵减速目标40%",
           "intentTarget": "enemy",
           "level": 1,
@@ -3525,7 +3649,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玉纹禁锢",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -3534,7 +3660,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.goat_eight_healing_dew@1",
           "abilityKey": "healing_dew",
-          "nameZh": "玉露愈合",
+          "nameZh": "回春铃",
           "descriptionZh": "治疗合法友方25%最大生命，不复活",
           "intentTarget": "friendly_or_self",
           "level": 1,
@@ -3575,7 +3701,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玉露愈合",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -3600,7 +3728,7 @@
           "roleZh": "基础攻击",
           "abilityId": "dba.ability.monkey_eight_staff_tap@1",
           "abilityKey": "staff_tap",
-          "nameZh": "灵棍点打",
+          "nameZh": "灵棍点",
           "descriptionZh": "快速近身短棍攻击",
           "intentTarget": "enemy",
           "level": 1,
@@ -3642,7 +3770,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "灵棍点打",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -3651,7 +3781,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.monkey_eight_staff_triple@1",
           "abilityKey": "staff_triple",
-          "nameZh": "棍影三连",
+          "nameZh": "戏棍",
           "descriptionZh": "连续三次小额近身攻击",
           "intentTarget": "enemy",
           "level": 1,
@@ -3693,7 +3823,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "棍影三连",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -3702,7 +3834,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.monkey_eight_cloud_sweep@1",
           "abilityKey": "cloud_sweep",
-          "nameZh": "云棍横扫",
+          "nameZh": "横扫棍",
           "descriptionZh": "近身扇形横扫",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -3744,7 +3876,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "云棍横扫",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -3753,7 +3887,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.monkey_eight_golden_afterimages@1",
           "abilityKey": "golden_afterimages",
-          "nameZh": "万象棍影",
+          "nameZh": "换影台",
           "descriptionZh": "四道残影依次扫过明确判定区域",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -3795,7 +3929,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "万象棍影",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -3804,7 +3940,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.monkey_eight_cloud_flip@1",
           "abilityKey": "cloud_flip",
-          "nameZh": "翻云纵跃",
+          "nameZh": "筋斗",
           "descriptionZh": "翻越非阻挡地形后的合法跳跃落点",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -3845,7 +3981,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "翻云纵跃",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -3854,7 +3992,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.monkey_eight_illusion_guard@1",
           "abilityKey": "illusion_guard",
-          "nameZh": "幻身护主",
+          "nameZh": "替身",
           "descriptionZh": "短时幻身盾，客户端幻影不吸收真实碰撞",
           "intentTarget": "self",
           "level": 1,
@@ -3895,7 +4033,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "幻身护主",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -3904,7 +4044,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.monkey_eight_staff_stun@1",
           "abilityKey": "staff_stun",
-          "nameZh": "定身棍环",
+          "nameZh": "迷烟弹",
           "descriptionZh": "短促定身打击，有限眩晕",
           "intentTarget": "enemy",
           "level": 1,
@@ -3952,7 +4092,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "定身棍环",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -3961,7 +4103,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.monkey_eight_trickster_stride@1",
           "abilityKey": "trickster_stride",
-          "nameZh": "灵猴戏法",
+          "nameZh": "双影戏",
           "descriptionZh": "提高闪避12%四秒，需服务器命中规则支持",
           "intentTarget": "enemy",
           "level": 1,
@@ -4003,7 +4145,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "灵猴戏法",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -4028,7 +4172,7 @@
           "roleZh": "基础攻击",
           "abilityId": "dba.ability.rooster_eight_golden_peck@1",
           "abilityKey": "golden_peck",
-          "nameZh": "金羽啄光",
+          "nameZh": "金羽击",
           "descriptionZh": "远程晨光金羽攻击",
           "intentTarget": "enemy",
           "level": 1,
@@ -4070,7 +4214,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "金羽啄光",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -4079,7 +4225,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.rooster_eight_feather_fan@1",
           "abilityKey": "feather_fan",
-          "nameZh": "金翎飞扇",
+          "nameZh": "破隐羽",
           "descriptionZh": "展开扇形金羽风刃",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -4121,7 +4267,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "金翎飞扇",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -4130,7 +4278,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.rooster_eight_sunrise_wave@1",
           "abilityKey": "sunrise_wave",
-          "nameZh": "晨鸣音浪",
+          "nameZh": "晨鸣波",
           "descriptionZh": "波纹向前传播并造成区域伤害",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -4172,7 +4320,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "晨鸣音浪",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -4181,7 +4331,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.rooster_eight_dawn_resonance@1",
           "abilityKey": "dawn_resonance",
-          "nameZh": "金鸣破晓",
+          "nameZh": "护晓域",
           "descriptionZh": "曙光音波打击敌方并治疗己方10%生命",
           "intentTarget": "area_center_mixed",
           "level": 1,
@@ -4228,7 +4378,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "金鸣破晓",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -4237,7 +4389,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.rooster_eight_feather_glide@1",
           "abilityKey": "feather_glide",
-          "nameZh": "晨羽滑翔",
+          "nameZh": "鸣步",
           "descriptionZh": "短时滑翔位移至合法位置",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -4278,7 +4430,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "晨羽滑翔",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -4287,7 +4441,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.rooster_eight_wing_guard@1",
           "abilityKey": "wing_guard",
-          "nameZh": "金羽翼盾",
+          "nameZh": "金羽盾",
           "descriptionZh": "双翼护盾保护自己或指定友方",
           "intentTarget": "friendly_or_self",
           "level": 1,
@@ -4328,7 +4482,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "金羽翼盾",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -4337,7 +4493,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.rooster_eight_sonic_silence@1",
           "abilityKey": "sonic_silence",
-          "nameZh": "破晓鸣音",
+          "nameZh": "止咒鸣",
           "descriptionZh": "远距离声波使敌人沉默1.2秒",
           "intentTarget": "enemy",
           "level": 1,
@@ -4385,7 +4541,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "破晓鸣音",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -4394,7 +4552,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.rooster_eight_first_light_heal@1",
           "abilityKey": "first_light_heal",
-          "nameZh": "初曦回春",
+          "nameZh": "回春鸣",
           "descriptionZh": "单体治疗己方20%最大生命",
           "intentTarget": "friendly_or_self",
           "level": 1,
@@ -4435,7 +4593,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "初曦回春",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -4460,7 +4620,7 @@
           "roleZh": "基础攻击",
           "abilityId": "dba.ability.dog_eight_guardian_bite@1",
           "abilityKey": "guardian_bite",
-          "nameZh": "天犬咬击",
+          "nameZh": "天犬咬",
           "descriptionZh": "近战单体犬牙攻击",
           "intentTarget": "enemy",
           "level": 1,
@@ -4502,7 +4662,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "天犬咬击",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -4511,7 +4673,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
           "abilityKey": "hunter_pounce",
-          "nameZh": "追猎猛扑",
+          "nameZh": "护主咬",
           "descriptionZh": "短扑后对单体造成伤害",
           "intentTarget": "enemy",
           "level": 1,
@@ -4553,7 +4715,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "追猎猛扑",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -4562,7 +4726,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.dog_eight_spirit_rake@1",
           "abilityKey": "spirit_rake",
-          "nameZh": "灵爪连击",
+          "nameZh": "双灵爪",
           "descriptionZh": "双爪连击当前敌方",
           "intentTarget": "enemy",
           "level": 1,
@@ -4604,7 +4768,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "灵爪连击",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -4613,7 +4779,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.dog_eight_oath_guardian@1",
           "abilityKey": "oath_guardian",
-          "nameZh": "天犬守誓",
+          "nameZh": "天门护",
           "descriptionZh": "对敌有限伤害，同时给范围己方小额治疗与护盾",
           "intentTarget": "area_center_mixed",
           "level": 1,
@@ -4665,7 +4831,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "天犬守誓",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -4674,7 +4842,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.dog_eight_hound_leap@1",
           "abilityKey": "hound_leap",
-          "nameZh": "天犬奔跃",
+          "nameZh": "援步",
           "descriptionZh": "向合法盟友或目标附近跳跃",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -4715,7 +4883,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "天犬奔跃",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -4724,7 +4894,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.dog_eight_guardian_ring@1",
           "abilityKey": "guardian_ring",
-          "nameZh": "护主灵环",
+          "nameZh": "护主",
           "descriptionZh": "指定友方获得20%最大生命护盾",
           "intentTarget": "friendly_or_self",
           "level": 1,
@@ -4765,7 +4935,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "护主灵环",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -4774,7 +4946,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.dog_eight_tracking_slow@1",
           "abilityKey": "tracking_slow",
-          "nameZh": "追迹束缚",
+          "nameZh": "截冲盾",
           "descriptionZh": "追踪标记命中减速32%",
           "intentTarget": "enemy",
           "level": 1,
@@ -4822,7 +4994,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "追迹束缚",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -4831,7 +5005,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.dog_eight_loyal_heal@1",
           "abilityKey": "loyal_heal",
-          "nameZh": "忠魂疗护",
+          "nameZh": "誓愈",
           "descriptionZh": "单体治疗友方18%最大生命",
           "intentTarget": "friendly_or_self",
           "level": 1,
@@ -4872,7 +5046,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "忠魂疗护",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     },
@@ -4897,7 +5073,7 @@
           "roleZh": "基础攻击",
           "abilityId": "dba.ability.boar_eight_tusk_ram@1",
           "abilityKey": "tusk_ram",
-          "nameZh": "玄鬃冲撞",
+          "nameZh": "獠牙撞",
           "descriptionZh": "近身重击获得普通攻击气势",
           "intentTarget": "enemy",
           "level": 1,
@@ -4939,7 +5115,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玄鬃冲撞",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot1",
@@ -4948,7 +5126,7 @@
           "roleZh": "攻击技能一",
           "abilityId": "dba.ability.boar_eight_break_armor@1",
           "abilityKey": "break_armor",
-          "nameZh": "裂甲撞锤",
+          "nameZh": "怒锤",
           "descriptionZh": "单体猛烈撞击，削减护甲机制不单独启用",
           "intentTarget": "enemy",
           "level": 1,
@@ -4990,7 +5168,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "裂甲撞锤",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot2",
@@ -4999,7 +5179,7 @@
           "roleZh": "攻击技能二",
           "abilityId": "dba.ability.boar_eight_pressure_wave@1",
           "abilityKey": "pressure_wave",
-          "nameZh": "重压冲波",
+          "nameZh": "重压波",
           "descriptionZh": "自身周围重压冲击",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -5041,7 +5221,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "重压冲波",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot4",
@@ -5050,7 +5232,7 @@
           "roleZh": "终极技能",
           "abilityId": "dba.ability.boar_eight_earthsplit_mane@1",
           "abilityKey": "earthsplit_mane",
-          "nameZh": "玄鬃地裂",
+          "nameZh": "连踏",
           "descriptionZh": "两波地面裂冲击，中心区域可清楚预警",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -5092,7 +5274,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玄鬃地裂",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot3",
@@ -5101,7 +5285,7 @@
           "roleZh": "移动技能",
           "abilityId": "dba.ability.boar_eight_boar_charge@1",
           "abilityKey": "boar_charge",
-          "nameZh": "蛮鬃突冲",
+          "nameZh": "獠冲",
           "descriptionZh": "撞击首个敌人后停下",
           "intentTarget": "movement_direction",
           "level": 1,
@@ -5148,7 +5332,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "蛮鬃突冲",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot5",
@@ -5157,7 +5343,7 @@
           "roleZh": "防御技能",
           "abilityId": "dba.ability.boar_eight_iron_mane@1",
           "abilityKey": "iron_mane",
-          "nameZh": "铁鬃护体",
+          "nameZh": "岩甲",
           "descriptionZh": "24%最大生命护盾体现生存优势",
           "intentTarget": "self",
           "level": 1,
@@ -5198,7 +5384,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "铁鬃护体",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot6",
@@ -5207,7 +5395,7 @@
           "roleZh": "控制技能",
           "abilityId": "dba.ability.boar_eight_roar_stun@1",
           "abilityKey": "roar_stun",
-          "nameZh": "狂鬃震踏",
+          "nameZh": "震鬃",
           "descriptionZh": "近距震踏造成0.9秒眩晕",
           "intentTarget": "area_or_target",
           "level": 1,
@@ -5255,7 +5443,9 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "狂鬃震踏",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         },
         {
           "slotId": "Slot7",
@@ -5264,7 +5454,7 @@
           "roleZh": "特色／支援技能",
           "abilityId": "dba.ability.boar_eight_rage_focus@1",
           "abilityKey": "rage_focus",
-          "nameZh": "玄鬃怒吼",
+          "nameZh": "鬃吼",
           "descriptionZh": "本人减伤14%并维持五秒",
           "intentTarget": "enemy",
           "level": 1,
@@ -5306,9 +5496,13 @@
             "assetStatus": "NOT_BOUND"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "previousNameBeforeSimpleV5": "玄鬃怒吼",
+          "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
         }
       ]
     }
-  ]
+  ],
+  "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018",
+  "displayNameApprovalSource": "Docs/Design/ApprovedSkillDisplayNames_V5.json"
 }

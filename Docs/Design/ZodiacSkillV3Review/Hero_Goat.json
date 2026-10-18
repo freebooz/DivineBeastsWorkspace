@@ -19,7 +19,7 @@
   },
   "visualIdentity": "浅玉绿、温金；玉角灵铃和圆形圣域",
   "oldUltimateName": "万愿归铃",
-  "reviewUltimateName": "万愿归铃",
+  "reviewUltimateName": "护愿铃",
   "bannedMechanicsNeverRestore": true,
   "previewAssetCreated": false,
   "skillRows": [
@@ -27,7 +27,7 @@
       "displayOrder": 1,
       "slotId": "Primary",
       "abilityId": "dba.ability.goat_eight_jade_horn@1",
-      "nameZh": "玉角光刺",
+      "nameZh": "玉角刺",
       "previousV2NameZh": "玉角光刺",
       "roleZh": "基础攻击",
       "historicalSource": {
@@ -35,7 +35,7 @@
         "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
         "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
       },
-      "creatorDescriptionZh": "基础攻击「玉角光刺」：短程玉角灵光伤害。一级初调参考：伤害28点/段，最多1段；冷却0.9秒，射程560厘米，气势消耗0、能量消耗暂为0。方向与命中点应清晰，单击不得穿透不合法目标。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "基础攻击「玉角刺」：短程玉角灵光伤害。一级初调参考：伤害28点/段，最多1段；冷却0.9秒，射程560厘米，气势消耗0、能量消耗暂为0。方向与命中点应清晰，单击不得穿透不合法目标。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "短程玉角灵光伤害",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -70,24 +70,26 @@
           "爪光／基础攻击实心主体",
           "命中点局部主闪光"
         ],
-        "shortPromptZh": "未羊·玉角「玉角光刺」的真实3D技能效果图，短程玉角灵光伤害；浅玉绿、温金；玉角灵铃和圆形圣域。攻击方向预读→爪光／基础攻击实心主体→命中点局部主闪光，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "未羊·玉角「玉角刺」的真实3D技能效果图，短程玉角灵光伤害；浅玉绿、温金；玉角灵铃和圆形圣域。攻击方向预读→爪光／基础攻击实心主体→命中点局部主闪光，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": null,
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "玉角光刺",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 2,
       "slotId": "Slot1",
       "abilityId": "dba.ability.goat_eight_jade_beam@1",
-      "nameZh": "净光",
+      "nameZh": "引锋光",
       "previousV2NameZh": "灵玉直射",
       "roleZh": "攻击技能",
       "historicalSource": {
@@ -97,7 +99,7 @@
         "legacyNameZh": "净光",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "攻击技能「净光」：细束净玉光轻度伤害。一级初调参考：伤害62点/段，最多1段；冷却5.2秒，射程930厘米，气势消耗0、能量消耗暂为0。抬手、攻击范围可预读，离开攻击方向或及时防御可以反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "攻击技能「引锋光」：细束净玉光轻度伤害。一级初调参考：伤害62点/段，最多1段；冷却5.2秒，射程930厘米，气势消耗0、能量消耗暂为0。抬手、攻击范围可预读，离开攻击方向或及时防御可以反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "细束净玉光轻度伤害",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -132,24 +134,26 @@
           "核心攻击形状",
           "有限命中打击"
         ],
-        "shortPromptZh": "未羊·玉角「净光」的真实3D技能效果图，细束净玉光轻度伤害；浅玉绿、温金；玉角灵铃和圆形圣域。施法姿态和瞄准→核心攻击形状→有限命中打击，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "未羊·玉角「引锋光」的真实3D技能效果图，细束净玉光轻度伤害；浅玉绿、温金；玉角灵铃和圆形圣域。施法姿态和瞄准→核心攻击形状→有限命中打击，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "灵玉直射",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "净光",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 3,
       "slotId": "Slot2",
       "abilityId": "dba.ability.goat_eight_rune_ring@1",
-      "nameZh": "玉符环阵",
+      "nameZh": "玉符环",
       "previousV2NameZh": "玉符环阵",
       "roleZh": "扩展攻击",
       "historicalSource": {
@@ -157,7 +161,7 @@
         "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
         "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
       },
-      "creatorDescriptionZh": "扩展攻击「玉符环阵」：在指定点形成一次性玉符波纹。一级初调参考：伤害83点/段，最多1段；冷却10秒，射程820厘米，作用半径330厘米，气势消耗0、能量消耗暂为0。公开攻击范围和命中次数，避免隐藏追踪或持续追加伤害。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "扩展攻击「玉符环」：在指定点形成一次性玉符波纹。一级初调参考：伤害83点/段，最多1段；冷却10秒，射程820厘米，作用半径330厘米，气势消耗0、能量消耗暂为0。公开攻击范围和命中次数，避免隐藏追踪或持续追加伤害。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "在指定点形成一次性玉符波纹",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -192,24 +196,26 @@
           "第二攻击主体",
           "多段／区域命中"
         ],
-        "shortPromptZh": "未羊·玉角「玉符环阵」的真实3D技能效果图，在指定点形成一次性玉符波纹；浅玉绿、温金；玉角灵铃和圆形圣域。扇形或目标预警→第二攻击主体→多段／区域命中，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "未羊·玉角「玉符环」的真实3D技能效果图，在指定点形成一次性玉符波纹；浅玉绿、温金；玉角灵铃和圆形圣域。扇形或目标预警→第二攻击主体→多段／区域命中，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": null,
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "玉符环阵",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 4,
       "slotId": "Slot4",
       "abilityId": "dba.ability.goat_eight_sanctuary_dome@1",
-      "nameZh": "万愿归铃",
+      "nameZh": "护愿铃",
       "previousV2NameZh": "玉角圣域",
       "roleZh": "终极技能",
       "historicalSource": {
@@ -219,7 +225,7 @@
         "legacyNameZh": "万愿归铃",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "终极技能「万愿归铃」：范围玉铃声波与团队治疗。一级初调参考：伤害110点/段，最多1段；护盾10%最大生命、持续4秒；友军治疗上限15%最大生命；冷却70秒，射程850厘米，作用半径500厘米，气势消耗0、能量消耗暂为0。提前给出清晰危险区，分段总伤害须单独审核上限，保留走位和打断反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "终极技能「护愿铃」：范围玉铃声波与团队治疗。一级初调参考：伤害110点/段，最多1段；护盾10%最大生命、持续4秒；友军治疗上限15%最大生命；冷却70秒，射程850厘米，作用半径500厘米，气势消耗0、能量消耗暂为0。提前给出清晰危险区，分段总伤害须单独审核上限，保留走位和打断反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "范围玉铃声波与团队治疗",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -264,18 +270,20 @@
           "终极主体轮廓与最亮爆发",
           "清晰安全消散"
         ],
-        "shortPromptZh": "未羊·玉角「万愿归铃」的真实3D技能效果图，范围玉铃声波与团队治疗；浅玉绿、温金；玉角灵铃和圆形圣域。高优先级范围预警→终极主体轮廓与最亮爆发→清晰安全消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "未羊·玉角「护愿铃」的真实3D技能效果图，范围玉铃声波与团队治疗；浅玉绿、温金；玉角灵铃和圆形圣域。高优先级范围预警→终极主体轮廓与最亮爆发→清晰安全消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "玉角圣域",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "万愿归铃",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 5,
@@ -327,12 +335,14 @@
       },
       "labelHistoricalV2Alias": "踏云轻行",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "铃步",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 6,
@@ -384,18 +394,20 @@
       },
       "labelHistoricalV2Alias": "玉障屏护",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "守愿",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 7,
       "slotId": "Slot6",
       "abilityId": "dba.ability.goat_eight_jade_bind@1",
-      "nameZh": "安魂",
+      "nameZh": "缓铃",
       "previousV2NameZh": "玉纹禁锢",
       "roleZh": "控制",
       "historicalSource": {
@@ -405,7 +417,7 @@
         "legacyNameZh": "安魂",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "控制「安魂」：安魂声环减速。一级初调参考：伤害18点/段，最多1段；减速40%、持续2.2秒；冷却20秒，射程820厘米，气势消耗0、能量消耗暂为0。持续时间有上限，地面控制范围可见，不允许特效延长服务器控制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "控制「缓铃」：安魂声环减速。一级初调参考：伤害18点/段，最多1段；减速40%、持续2.2秒；冷却20秒，射程820厘米，气势消耗0、能量消耗暂为0。持续时间有上限，地面控制范围可见，不允许特效延长服务器控制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "安魂声环减速",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -442,24 +454,26 @@
           "短控制形状与目标响应",
           "解除控制的明确终态"
         ],
-        "shortPromptZh": "未羊·玉角「安魂」的真实3D技能效果图，安魂声环减速；浅玉绿、温金；玉角灵铃和圆形圣域。敌方范围低成本警示→短控制形状与目标响应→解除控制的明确终态，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "未羊·玉角「缓铃」的真实3D技能效果图，安魂声环减速；浅玉绿、温金；玉角灵铃和圆形圣域。敌方范围低成本警示→短控制形状与目标响应→解除控制的明确终态，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "玉纹禁锢",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "安魂",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 8,
       "slotId": "Slot7",
       "abilityId": "dba.ability.goat_eight_healing_dew@1",
-      "nameZh": "铃印",
+      "nameZh": "回春铃",
       "previousV2NameZh": "玉露愈合",
       "roleZh": "特色／治疗",
       "historicalSource": {
@@ -469,7 +483,7 @@
         "legacyNameZh": "铃印",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "特色／治疗「铃印」：玉露治愈附铃印的柔和视觉。一级初调参考：友军治疗上限25%最大生命；冷却15秒，射程950厘米，气势消耗0、能量消耗暂为0。友军／敌军资格严格区分，治疗与增益只作用于合法友方，不能全图获益。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "特色／治疗「回春铃」：玉露治愈附铃印的柔和视觉。一级初调参考：友军治疗上限25%最大生命；冷却15秒，射程950厘米，气势消耗0、能量消耗暂为0。友军／敌军资格严格区分，治疗与增益只作用于合法友方，不能全图获益。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "玉露治愈附铃印的柔和视觉",
       "balanceV2Reference": {
         "damageType": "Untyped",
@@ -499,18 +513,21 @@
           "特色或治疗主体",
           "有限范围友军获益"
         ],
-        "shortPromptZh": "未羊·玉角「铃印」的真实3D技能效果图，玉露治愈附铃印的柔和视觉；浅玉绿、温金；玉角灵铃和圆形圣域。使用前友军目标指示→特色或治疗主体→有限范围友军获益，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "未羊·玉角「回春铃」的真实3D技能效果图，玉露治愈附铃印的柔和视觉；浅玉绿、温金；玉角灵铃和圆形圣域。使用前友军目标指示→特色或治疗主体→有限范围友军获益，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "玉露愈合",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "铃印",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     }
-  ]
+  ],
+  "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
 }

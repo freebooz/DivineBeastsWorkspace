@@ -19,7 +19,7 @@
   },
   "visualIdentity": "天青石金；犬爪守护和定向天门",
   "oldUltimateName": "天门守阙",
-  "reviewUltimateName": "天门守阙",
+  "reviewUltimateName": "天门护",
   "bannedMechanicsNeverRestore": true,
   "previewAssetCreated": false,
   "skillRows": [
@@ -27,7 +27,7 @@
       "displayOrder": 1,
       "slotId": "Primary",
       "abilityId": "dba.ability.dog_eight_guardian_bite@1",
-      "nameZh": "天犬咬击",
+      "nameZh": "天犬咬",
       "previousV2NameZh": "天犬咬击",
       "roleZh": "基础攻击",
       "historicalSource": {
@@ -35,7 +35,7 @@
         "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
         "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
       },
-      "creatorDescriptionZh": "基础攻击「天犬咬击」：近战单体犬牙攻击。一级初调参考：伤害35点/段，最多1段；冷却0.85秒，射程250厘米，气势消耗0、能量消耗暂为0。方向与命中点应清晰，单击不得穿透不合法目标。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "基础攻击「天犬咬」：近战单体犬牙攻击。一级初调参考：伤害35点/段，最多1段；冷却0.85秒，射程250厘米，气势消耗0、能量消耗暂为0。方向与命中点应清晰，单击不得穿透不合法目标。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "近战单体犬牙攻击",
       "balanceV2Reference": {
         "damageType": "Physical",
@@ -70,24 +70,26 @@
           "爪光／基础攻击实心主体",
           "命中点局部主闪光"
         ],
-        "shortPromptZh": "戌狗·天犬「天犬咬击」的真实3D技能效果图，近战单体犬牙攻击；天青石金；犬爪守护和定向天门。攻击方向预读→爪光／基础攻击实心主体→命中点局部主闪光，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "戌狗·天犬「天犬咬」的真实3D技能效果图，近战单体犬牙攻击；天青石金；犬爪守护和定向天门。攻击方向预读→爪光／基础攻击实心主体→命中点局部主闪光，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": null,
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "天犬咬击",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 2,
       "slotId": "Slot1",
       "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
-      "nameZh": "反咬",
+      "nameZh": "护主咬",
       "previousV2NameZh": "追猎猛扑",
       "roleZh": "攻击技能",
       "historicalSource": {
@@ -97,7 +99,7 @@
         "legacyNameZh": "反咬",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "攻击技能「反咬」：针对威胁目标的近战反咬。一级初调参考：伤害70点/段，最多1段；冷却5.5秒，射程620厘米，气势消耗0、能量消耗暂为0。抬手、攻击范围可预读，离开攻击方向或及时防御可以反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "攻击技能「护主咬」：针对威胁目标的近战反咬。一级初调参考：伤害70点/段，最多1段；冷却5.5秒，射程620厘米，气势消耗0、能量消耗暂为0。抬手、攻击范围可预读，离开攻击方向或及时防御可以反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "针对威胁目标的近战反咬",
       "balanceV2Reference": {
         "damageType": "Physical",
@@ -132,24 +134,26 @@
           "核心攻击形状",
           "有限命中打击"
         ],
-        "shortPromptZh": "戌狗·天犬「反咬」的真实3D技能效果图，针对威胁目标的近战反咬；天青石金；犬爪守护和定向天门。施法姿态和瞄准→核心攻击形状→有限命中打击，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "戌狗·天犬「护主咬」的真实3D技能效果图，针对威胁目标的近战反咬；天青石金；犬爪守护和定向天门。施法姿态和瞄准→核心攻击形状→有限命中打击，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "追猎猛扑",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "反咬",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 3,
       "slotId": "Slot2",
       "abilityId": "dba.ability.dog_eight_spirit_rake@1",
-      "nameZh": "灵爪连击",
+      "nameZh": "双灵爪",
       "previousV2NameZh": "灵爪连击",
       "roleZh": "扩展攻击",
       "historicalSource": {
@@ -157,7 +161,7 @@
         "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
         "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
       },
-      "creatorDescriptionZh": "扩展攻击「灵爪连击」：双爪连击当前敌方。一级初调参考：伤害90点/段，最多2段；冷却9秒，射程400厘米，气势消耗0、能量消耗暂为0。公开攻击范围和命中次数，避免隐藏追踪或持续追加伤害。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "扩展攻击「双灵爪」：双爪连击当前敌方。一级初调参考：伤害90点/段，最多2段；冷却9秒，射程400厘米，气势消耗0、能量消耗暂为0。公开攻击范围和命中次数，避免隐藏追踪或持续追加伤害。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "双爪连击当前敌方",
       "balanceV2Reference": {
         "damageType": "Physical",
@@ -192,24 +196,26 @@
           "第二攻击主体",
           "多段／区域命中"
         ],
-        "shortPromptZh": "戌狗·天犬「灵爪连击」的真实3D技能效果图，双爪连击当前敌方；天青石金；犬爪守护和定向天门。扇形或目标预警→第二攻击主体→多段／区域命中，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "戌狗·天犬「双灵爪」的真实3D技能效果图，双爪连击当前敌方；天青石金；犬爪守护和定向天门。扇形或目标预警→第二攻击主体→多段／区域命中，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": null,
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "灵爪连击",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 4,
       "slotId": "Slot4",
       "abilityId": "dba.ability.dog_eight_oath_guardian@1",
-      "nameZh": "天门守阙",
+      "nameZh": "天门护",
       "previousV2NameZh": "天犬守誓",
       "roleZh": "终极技能",
       "historicalSource": {
@@ -219,7 +225,7 @@
         "legacyNameZh": "天门守阙",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "终极技能「天门守阙」：巨型天门落地阻断关键方向。一级初调参考：伤害170点/段，最多1段；护盾10%最大生命、持续4秒；友军治疗上限8%最大生命；冷却72秒，射程600厘米，作用半径440厘米，气势消耗18、能量消耗暂为0。提前给出清晰危险区，分段总伤害须单独审核上限，保留走位和打断反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "终极技能「天门护」：巨型天门落地阻断关键方向。一级初调参考：伤害170点/段，最多1段；护盾10%最大生命、持续4秒；友军治疗上限8%最大生命；冷却72秒，射程600厘米，作用半径440厘米，气势消耗18、能量消耗暂为0。提前给出清晰危险区，分段总伤害须单独审核上限，保留走位和打断反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "巨型天门落地阻断关键方向",
       "balanceV2Reference": {
         "damageType": "Physical",
@@ -264,18 +270,20 @@
           "终极主体轮廓与最亮爆发",
           "清晰安全消散"
         ],
-        "shortPromptZh": "戌狗·天犬「天门守阙」的真实3D技能效果图，巨型天门落地阻断关键方向；天青石金；犬爪守护和定向天门。高优先级范围预警→终极主体轮廓与最亮爆发→清晰安全消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "戌狗·天犬「天门护」的真实3D技能效果图，巨型天门落地阻断关键方向；天青石金；犬爪守护和定向天门。高优先级范围预警→终极主体轮廓与最亮爆发→清晰安全消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "天犬守誓",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "天门守阙",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 5,
@@ -327,12 +335,14 @@
       },
       "labelHistoricalV2Alias": "天犬奔跃",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "援步",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 6,
@@ -384,18 +394,20 @@
       },
       "labelHistoricalV2Alias": "护主灵环",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "护主",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 7,
       "slotId": "Slot6",
       "abilityId": "dba.ability.dog_eight_tracking_slow@1",
-      "nameZh": "拦门",
+      "nameZh": "截冲盾",
       "previousV2NameZh": "追迹束缚",
       "roleZh": "控制",
       "historicalSource": {
@@ -405,7 +417,7 @@
         "legacyNameZh": "拦门",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "控制「拦门」：门盾轻推阻挡敌方推进。一级初调参考：伤害24点/段，最多1段；减速32%、持续2.4秒；冷却17秒，射程830厘米，气势消耗0、能量消耗暂为0。持续时间有上限，地面控制范围可见，不允许特效延长服务器控制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "控制「截冲盾」：门盾轻推阻挡敌方推进。一级初调参考：伤害24点/段，最多1段；减速32%、持续2.4秒；冷却17秒，射程830厘米，气势消耗0、能量消耗暂为0。持续时间有上限，地面控制范围可见，不允许特效延长服务器控制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "门盾轻推阻挡敌方推进",
       "balanceV2Reference": {
         "damageType": "Physical",
@@ -442,24 +454,26 @@
           "短控制形状与目标响应",
           "解除控制的明确终态"
         ],
-        "shortPromptZh": "戌狗·天犬「拦门」的真实3D技能效果图，门盾轻推阻挡敌方推进；天青石金；犬爪守护和定向天门。敌方范围低成本警示→短控制形状与目标响应→解除控制的明确终态，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "戌狗·天犬「截冲盾」的真实3D技能效果图，门盾轻推阻挡敌方推进；天青石金；犬爪守护和定向天门。敌方范围低成本警示→短控制形状与目标响应→解除控制的明确终态，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "追迹束缚",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "拦门",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 8,
       "slotId": "Slot7",
       "abilityId": "dba.ability.dog_eight_loyal_heal@1",
-      "nameZh": "誓约",
+      "nameZh": "誓愈",
       "previousV2NameZh": "忠魂疗护",
       "roleZh": "特色／治疗",
       "historicalSource": {
@@ -469,7 +483,7 @@
         "legacyNameZh": "誓约",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "特色／治疗「誓约」：短时守誓给予友军治疗与支援。一级初调参考：友军治疗上限18%最大生命；冷却20秒，射程900厘米，气势消耗0、能量消耗暂为0。友军／敌军资格严格区分，治疗与增益只作用于合法友方，不能全图获益。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "特色／治疗「誓愈」：短时守誓给予友军治疗与支援。一级初调参考：友军治疗上限18%最大生命；冷却20秒，射程900厘米，气势消耗0、能量消耗暂为0。友军／敌军资格严格区分，治疗与增益只作用于合法友方，不能全图获益。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "短时守誓给予友军治疗与支援",
       "balanceV2Reference": {
         "damageType": "Untyped",
@@ -499,18 +513,21 @@
           "特色或治疗主体",
           "有限范围友军获益"
         ],
-        "shortPromptZh": "戌狗·天犬「誓约」的真实3D技能效果图，短时守誓给予友军治疗与支援；天青石金；犬爪守护和定向天门。使用前友军目标指示→特色或治疗主体→有限范围友军获益，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "戌狗·天犬「誓愈」的真实3D技能效果图，短时守誓给予友军治疗与支援；天青石金；犬爪守护和定向天门。使用前友军目标指示→特色或治疗主体→有限范围友军获益，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "忠魂疗护",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "誓约",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     }
-  ]
+  ],
+  "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
 }

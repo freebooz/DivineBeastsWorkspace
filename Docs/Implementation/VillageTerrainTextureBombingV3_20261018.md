@@ -2,6 +2,18 @@
 
 > 日期：2026-10-18。适用 Unreal Engine 5.8（虚幻引擎）与唯一工作空间 DivineBeastsWorkspace。统一设计依据为 Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md。所有英文资源名在本文均按所在段落给出中文用途。本文不替代真实UE资产验收日志。
 
+## 2026-10-18 实际执行及原生验收结果（优先于以下技术设计原文）
+
+**正式Village母材质已真实修改，不是仅生成制作脚本。** 本次在UE5.8实际项目对共享 `/DBAWorldPack_Village/Materials/Landscape/M_DBA_Village_LandscapeBridge` 原位增量编辑并保存。正式原始55表达式升级至**81表达式**，真实接入3条UE引擎原生 `Texture_Bombing`（纹理轰炸）函数调用，分别服务Ground BaseColor（地表基础色）、Normal（法线）和ORM（遮蔽/粗糙度/金属度）；统一UV、Tiling（平铺）和Offset（错位）并给法线输入启用Is Normalmap（法线翻转修正）。保留旧Snow（积雪）、Wetness（湿润）和动态MID材质参数。DryColor（干燥乘色）调为白色，不再覆盖V3自然鲜绿的源草地色。
+
+**原生Shader及质量分级**：UE真实日志中三组QualitySwitch（画质切换）节点均报告`Default/Low/High/Medium/Epic`可接线；三组FeatureLevelSwitch（图形特性切换）均报告`ES2/ES3_1/SM5/SM6`等有效分支。低中画质和移动ES3_1走原样单次采样，高、史诗画质的PC路径走原生纹理轰炸；真实UE的 `recompile_material` 未返回错误信息。引擎原生资源保存日志为`Game/Saved/Validation/TerrainBombing_V3_20261018/VillageBombApplyUE.log`，包含`SSLM_V3_TEXTURE_BOMBING_UE_APPLY_SAVED exprCount=81 channels=3 mapUnchanged=true`成功标记。
+
+**独立冷重载及地图依赖门禁已通过**：另一新UE5.8 Editor进程运行verify模式，`VillageBombColdVerifyUE.log`实际返回 `SSLM_V3_TEXTURE_BOMBING_UE_COLD_VERIFY_PASS 81`；随后由正式`VerifyVillageLandscapeBridge.py`（新手村共享地图依赖审计工具）打开真正`L_Village_Start`并成功返回`VILLAGE_SNOW_BRIDGE_ASSET_AUDIT_PASS`（验证日志`VillageBridgeServerIsolationUE.log`）。原共享母材质SHA由`0d2ffe32...`变为`5718c015...`，正式地图SHA继续为`d8ae2fdc...`，未改变地图、碰撞、导航或PCG。备份位于`Saved/ArtReview/VillageTerrainBombingV3/Before`，原生保存与冷重载报告位于`Game/Saved/Validation/VillageTerrainBombingV3/AssetProof.json`。项目地形轰炸原生证据门禁`Tests/Architecture/TestVillageTextureBombingV3.py --require-native`及已有雪层/三层集成检查均通过。
+
+**明快V3颜色落地边界**：运行时高精草地BaseColor/Normal/ORM仍按现行`DivineBeastsVillageSnowWorldSubsystem`客户端世界租约软加载，基础色取V3候选2K扫描色（不是单色Tint）。本轮已实际从该V3扫描源降采样得到256×256初始sRGB草地绿色备用PNG（`SourceArt/Terrain/BombingV3/T_DBA_Village_GroundAlbedoV3Default_Source.png`，SHA256 `0cae6a1933a1034e4a60d873cbe5dc11bd37651e4958bf08f04996f87c495cde`），并通过生成清单复核。但向共享母材质绑定该备用色纹理时检测到**Windows独占文件锁**，因此编辑器静态预览颜色绑定**未完成**；其作者`Tools/Unreal/Terrain/AuthorVillageGroundV3FallbackUE58.py`及来源作者`GenerateVillageBombV3Fallback.ps1`已准备，不能因为源PNG生成而宣称新Texture2D.uasset已产生或绑定生效。其它用户正在使用的UE编辑器不强制关闭。
+
+**尚未验收**：完整D3D12场景画面、六态天气实际可见取图与黑帧问题、移动端性能、Shader GPU开销、Client/Server Cook及人工前后美术签字仍未验证。本次母材质改造并**不等于正式Village地图已绘制全部十种地表Layer**，原10层纹理Dirt锁阻断归此前专项单独追踪。验证按“真实保存/独立UE重载/真实地图依赖”与“GPU性能/视觉签收”分层记录，不因前者通过而宣布全部完成。
+
 ## 一、现有实物及修改目标
 
 真实新手村地图为 DBAWorldPack_Village/Maps/L_Village_Start（正式Village关卡）；正式地形母材质为 DBAWorldPack_Village/Materials/Landscape/M_DBA_Village_LandscapeBridge（中立Landscape桥接母材质）。修改前通过真实UE5.8只读反射确认：母材质55个表达式，Ground三组采样分别为 VillageGroundAlbedoTexture（地表基础色）、VillageGroundNormalTexture（地表法线）及 VillageGroundORMTexture（遮蔽/粗糙度/金属度）。

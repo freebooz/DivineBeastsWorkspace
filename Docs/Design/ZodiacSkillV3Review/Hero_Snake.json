@@ -19,7 +19,7 @@
   },
   "visualIdentity": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
   "oldUltimateName": "万毒归鳞",
-  "reviewUltimateName": "万毒归鳞",
+  "reviewUltimateName": "毒阵爆",
   "bannedMechanicsNeverRestore": true,
   "previewAssetCreated": false,
   "skillRows": [
@@ -27,7 +27,7 @@
       "displayOrder": 1,
       "slotId": "Primary",
       "abilityId": "dba.ability.snake_eight_scale_bite@1",
-      "nameZh": "幽鳞穿刺",
+      "nameZh": "幽鳞刺",
       "previousV2NameZh": "幽鳞穿刺",
       "roleZh": "基础攻击",
       "historicalSource": {
@@ -35,7 +35,7 @@
         "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
         "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
       },
-      "creatorDescriptionZh": "基础攻击「幽鳞穿刺」：中程鳞光单体伤害。一级初调参考：伤害30点/段，最多1段；冷却0.8秒，射程780厘米，气势消耗0、能量消耗暂为0。方向与命中点应清晰，单击不得穿透不合法目标。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "基础攻击「幽鳞刺」：中程鳞光单体伤害。一级初调参考：伤害30点/段，最多1段；冷却0.8秒，射程780厘米，气势消耗0、能量消耗暂为0。方向与命中点应清晰，单击不得穿透不合法目标。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "中程鳞光单体伤害",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -70,18 +70,20 @@
           "爪光／基础攻击实心主体",
           "命中点局部主闪光"
         ],
-        "shortPromptZh": "巳蛇·幽鳞「幽鳞穿刺」的真实3D技能效果图，中程鳞光单体伤害；玄紫孔雀青；S形虹彩鳞片和盘绕光带。攻击方向预读→爪光／基础攻击实心主体→命中点局部主闪光，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "巳蛇·幽鳞「幽鳞刺」的真实3D技能效果图，中程鳞光单体伤害；玄紫孔雀青；S形虹彩鳞片和盘绕光带。攻击方向预读→爪光／基础攻击实心主体→命中点局部主闪光，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": null,
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "幽鳞穿刺",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 2,
@@ -144,18 +146,20 @@
       },
       "labelHistoricalV2Alias": "蛇影灵针",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "毒牙",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 3,
       "slotId": "Slot2",
       "abilityId": "dba.ability.snake_eight_serpent_arc@1",
-      "nameZh": "盘鳞双弹",
+      "nameZh": "双鳞弹",
       "previousV2NameZh": "盘鳞双弹",
       "roleZh": "扩展攻击",
       "historicalSource": {
@@ -163,7 +167,7 @@
         "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
         "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
       },
-      "creatorDescriptionZh": "扩展攻击「盘鳞双弹」：左右蛇形两条光弹交叉命中。一级初调参考：伤害80点/段，最多2段；冷却9秒，射程960厘米，气势消耗0、能量消耗暂为0。公开攻击范围和命中次数，避免隐藏追踪或持续追加伤害。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "扩展攻击「双鳞弹」：左右蛇形两条光弹交叉命中。一级初调参考：伤害80点/段，最多2段；冷却9秒，射程960厘米，气势消耗0、能量消耗暂为0。公开攻击范围和命中次数，避免隐藏追踪或持续追加伤害。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "左右蛇形两条光弹交叉命中",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -198,24 +202,26 @@
           "第二攻击主体",
           "多段／区域命中"
         ],
-        "shortPromptZh": "巳蛇·幽鳞「盘鳞双弹」的真实3D技能效果图，左右蛇形两条光弹交叉命中；玄紫孔雀青；S形虹彩鳞片和盘绕光带。扇形或目标预警→第二攻击主体→多段／区域命中，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "巳蛇·幽鳞「双鳞弹」的真实3D技能效果图，左右蛇形两条光弹交叉命中；玄紫孔雀青；S形虹彩鳞片和盘绕光带。扇形或目标预警→第二攻击主体→多段／区域命中，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": null,
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "盘鳞双弹",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 4,
       "slotId": "Slot4",
       "abilityId": "dba.ability.snake_eight_serpent_maelstrom@1",
-      "nameZh": "万毒归鳞",
+      "nameZh": "毒阵爆",
       "previousV2NameZh": "幽鳞漩阵",
       "roleZh": "终极技能",
       "historicalSource": {
@@ -225,7 +231,7 @@
         "legacyNameZh": "万毒归鳞",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "终极技能「万毒归鳞」：幽鳞漩阵多波扩散。一级初调参考：伤害198点/段，最多3段；冷却67秒，射程940厘米，作用半径475厘米，气势消耗0、能量消耗暂为0。提前给出清晰危险区，分段总伤害须单独审核上限，保留走位和打断反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "终极技能「毒阵爆」：幽鳞漩阵多波扩散。一级初调参考：伤害198点/段，最多3段；冷却67秒，射程940厘米，作用半径475厘米，气势消耗0、能量消耗暂为0。提前给出清晰危险区，分段总伤害须单独审核上限，保留走位和打断反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "幽鳞漩阵多波扩散",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -260,18 +266,20 @@
           "终极主体轮廓与最亮爆发",
           "清晰安全消散"
         ],
-        "shortPromptZh": "巳蛇·幽鳞「万毒归鳞」的真实3D技能效果图，幽鳞漩阵多波扩散；玄紫孔雀青；S形虹彩鳞片和盘绕光带。高优先级范围预警→终极主体轮廓与最亮爆发→清晰安全消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "巳蛇·幽鳞「毒阵爆」的真实3D技能效果图，幽鳞漩阵多波扩散；玄紫孔雀青；S形虹彩鳞片和盘绕光带。高优先级范围预警→终极主体轮廓与最亮爆发→清晰安全消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "幽鳞漩阵",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "万毒归鳞",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 5,
@@ -323,12 +331,14 @@
       },
       "labelHistoricalV2Alias": "蜿影游身",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "蛇行",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 6,
@@ -380,18 +390,20 @@
       },
       "labelHistoricalV2Alias": "蜕鳞护体",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "蜕鳞",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 7,
       "slotId": "Slot6",
       "abilityId": "dba.ability.snake_eight_coil_silence@1",
-      "nameZh": "缠纹",
+      "nameZh": "蛇纹缚",
       "previousV2NameZh": "缠鳞禁言",
       "roleZh": "控制",
       "historicalSource": {
@@ -401,7 +413,7 @@
         "legacyNameZh": "缠纹",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "控制「缠纹」：蛇纹环减速目标。一级初调参考：伤害24点/段，最多1段；沉默1.4秒；冷却19秒，射程840厘米，气势消耗0、能量消耗暂为0。持续时间有上限，地面控制范围可见，不允许特效延长服务器控制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "控制「蛇纹缚」：蛇纹环减速目标。一级初调参考：伤害24点/段，最多1段；沉默1.4秒；冷却19秒，射程840厘米，气势消耗0、能量消耗暂为0。持续时间有上限，地面控制范围可见，不允许特效延长服务器控制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "蛇纹环减速目标",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -438,24 +450,26 @@
           "短控制形状与目标响应",
           "解除控制的明确终态"
         ],
-        "shortPromptZh": "巳蛇·幽鳞「缠纹」的真实3D技能效果图，蛇纹环减速目标；玄紫孔雀青；S形虹彩鳞片和盘绕光带。敌方范围低成本警示→短控制形状与目标响应→解除控制的明确终态，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "巳蛇·幽鳞「蛇纹缚」的真实3D技能效果图，蛇纹环减速目标；玄紫孔雀青；S形虹彩鳞片和盘绕光带。敌方范围低成本警示→短控制形状与目标响应→解除控制的明确终态，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "缠鳞禁言",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "缠纹",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     },
     {
       "displayOrder": 8,
       "slotId": "Slot7",
       "abilityId": "dba.ability.snake_eight_venom_mark@1",
-      "nameZh": "封途",
+      "nameZh": "毒径",
       "previousV2NameZh": "幽蛇蚀印",
       "roleZh": "特色／治疗",
       "historicalSource": {
@@ -465,7 +479,7 @@
         "legacyNameZh": "封途",
         "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
       },
-      "creatorDescriptionZh": "特色／治疗「封途」：地面铺设有限的蛇形限制路径。一级初调参考：伤害38点/段，最多1段；target_vulnerability增益8%、持续5秒（机制待审）；冷却18秒，射程900厘米，气势消耗0、能量消耗暂为0。友军／敌军资格严格区分，治疗与增益只作用于合法友方，不能全图获益。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "creatorDescriptionZh": "特色／治疗「毒径」：地面铺设有限的蛇形限制路径。一级初调参考：伤害38点/段，最多1段；target_vulnerability增益8%、持续5秒（机制待审）；冷却18秒，射程900厘米，气势消耗0、能量消耗暂为0。友军／敌军资格严格区分，治疗与增益只作用于合法友方，不能全图获益。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
       "mechanicsThemeZh": "地面铺设有限的蛇形限制路径",
       "balanceV2Reference": {
         "damageType": "Magic",
@@ -502,18 +516,21 @@
           "特色或治疗主体",
           "有限范围友军获益"
         ],
-        "shortPromptZh": "巳蛇·幽鳞「封途」的真实3D技能效果图，地面铺设有限的蛇形限制路径；玄紫孔雀青；S形虹彩鳞片和盘绕光带。使用前友军目标指示→特色或治疗主体→有限范围友军获益，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "shortPromptZh": "巳蛇·幽鳞「毒径」的真实3D技能效果图，地面铺设有限的蛇形限制路径；玄紫孔雀青；S形虹彩鳞片和盘绕光带。使用前友军目标指示→特色或治疗主体→有限范围友军获益，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
         "reviewState": "PENDING_HUMAN_APPROVAL",
         "actualNiagaraAssetPath": null
       },
       "labelHistoricalV2Alias": "幽蛇蚀印",
       "status": {
-        "skillName": "PENDING_HUMAN_REVIEW",
+        "skillName": "APPROVED_USER_SIMPLE_V5",
         "mechanics": "PENDING_HUMAN_REVIEW",
         "effectImage": "NOT_GENERATED",
         "gameplayAbility": "NOT_AUTHORED",
         "canShowInProductionCreation": false
-      }
+      },
+      "previousNameBeforeSimpleV5": "封途",
+      "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
     }
-  ]
+  ],
+  "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018"
 }

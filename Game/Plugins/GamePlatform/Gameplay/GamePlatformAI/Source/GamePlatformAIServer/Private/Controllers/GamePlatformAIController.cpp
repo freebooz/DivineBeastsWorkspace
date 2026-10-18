@@ -151,6 +151,10 @@ void AGamePlatformAIController::OnPossess(APawn* InPawn)
         RefreshAIActivationGate();
     }
     HomeLocation = InPawn->GetActorLocation();
+    // 同一个控制器重新占有时不能沿用上一只Pawn的巡逻退避或追击刷新时间。
+    LastMoveGoal = HomeLocation;
+    NextPatrolSelectionTime = 0.0;
+    LastMoveRequestTime = -1.0;
     bStoppedForDeath = false;
     LastError = EGamePlatformAIError::None;
 
@@ -432,6 +436,8 @@ void AGamePlatformAIController::HandleCombatEvent(
         }
         Candidates.Reset();
         CurrentTarget.Reset();
+        NextPatrolSelectionTime = 0.0;
+        LastMoveRequestTime = -1.0;
         ResourceAIInstanceGeneration = GetCurrentGeneration();
         RefreshAIActivationGate();
         StartDecisionTimer();
@@ -1086,6 +1092,24 @@ void AGamePlatformAIController::UpdateBlackboardForTarget(
             : Target->GetActorLocation());
 }
 
+AGamePlatformAIController::EIdleMovementAction AGamePlatformAIController::DecideIdleMovement(
+    double DistanceHomeSquared, float PatrolRadius, float ReturnHomeAcceptanceRadius,
+    bool bPatrolling, bool bReturningHome, bool bMovementInProgress, bool bMayRequest)
+{
+    // 已提交的无目标路径交给PathFollowing完成，允许巡逻绕障经过采样圆外侧。
+    // 丢失目标后遗留的追击路径不满足两种意图，不能冒充仍有效的空闲移动。
+    if ((bPatrolling || bReturningHome) && bMovementInProgress)
+        return EIdleMovementAction::ContinueMove;
+    const double ReturnRadius = ReturnHomeAcceptanceRadius > 1.0f ? ReturnHomeAcceptanceRadius : 1.0f;
+    // 正常巡逻使用巡逻范围；脱战/位移后的回家仍保持原有两倍到达容差，避免边界抖动。
+    const double HomeBoundary = bPatrolling && PatrolRadius > ReturnRadius * 2.0
+        ? PatrolRadius : ReturnRadius * 2.0;
+    if (DistanceHomeSquared > HomeBoundary * HomeBoundary)
+        return bMayRequest ? EIdleMovementAction::ReturnHome : EIdleMovementAction::Wait;
+    if (PatrolRadius <= 0.0f || !bMayRequest) return EIdleMovementAction::Wait;
+    return EIdleMovementAction::SelectPatrolGoal;
+}
+
 void AGamePlatformAIController::UpdateNoTargetBehavior()
 {
     APawn* ControlledPawn = GetPawn();
@@ -1100,29 +1124,40 @@ void AGamePlatformAIController::UpdateNoTargetBehavior()
     if (LocalBlackboard)
         LocalBlackboard->SetValueAsBool(GamePlatformAIBlackboardKeys::CanAttack, false);
 
-    const float DistanceHomeSq =
-        FVector::DistSquared(
-            ControlledPawn->GetActorLocation(),
-            HomeLocation);
-
-    const float ReturnRadius =
-        FMath::Max(
-            ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius,
-            1.0f);
-
-    if (DistanceHomeSq > FMath::Square(ReturnRadius * 2.0f))
+    const FGameplayTag MovementIntent = StateComponent
+        ? StateComponent->GetSnapshot().MovementIntentTag : FGameplayTag();
+    const bool bPatrolling = MovementIntent == GamePlatformAITags::Movement_Patrol;
+    const bool bReturningHome = MovementIntent == GamePlatformAITags::Movement_ReturnHome;
+    if (!bPatrolling && !bReturningHome && GetMoveStatus() != EPathFollowingStatus::Idle)
     {
-        RequestReturnHome();
-        return;
+        // 已失去目标的MoveToActor必须撤销；即使此刻还在家附近也不能继续追着旧Actor走。
+        StopMovement();
     }
 
-    if (GetMoveStatus() == EPathFollowingStatus::Idle &&
-        GetServerTimeSeconds() >= NextPatrolSelectionTime)
+    // 使用水平距离：出生胶囊中心与地面导航点的高度差不应触发归家。
+    const EIdleMovementAction Action = DecideIdleMovement(
+        FVector::DistSquared2D(ControlledPawn->GetActorLocation(), HomeLocation),
+        ActiveDefinition->HomePolicy.PatrolRadius, ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius,
+        bPatrolling, bReturningHome, GetMoveStatus() != EPathFollowingStatus::Idle,
+        GetServerTimeSeconds() >= NextPatrolSelectionTime);
+    switch (Action)
     {
+    case EIdleMovementAction::ContinueMove:
+        return;
+    case EIdleMovementAction::ReturnHome:
+        RequestReturnHome();
+        return;
+    case EIdleMovementAction::SelectPatrolGoal:
         if (!RequestPatrolGoal())
         {
             SetPublicState(EGamePlatformAIPublicState::Idle);
         }
+        return;
+    case EIdleMovementAction::Wait:
+        // 两个巡逻点之间仍保留巡逻意图；否则等待一次后又会误套脱战归家的短容差。
+        SetPublicState(EGamePlatformAIPublicState::Idle,
+            bPatrolling ? MovementIntent : FGameplayTag());
+        return;
     }
 }
 
@@ -1208,6 +1243,9 @@ bool AGamePlatformAIController::RequestPatrolGoal()
         return false;
     }
 
+    // 首次无目标立即尝试；失败（含服务尚未创建）后只由现有决策时钟按秒退避重试。
+    NextPatrolSelectionTime = GetServerTimeSeconds() + 1.0;
+
     UGamePlatformNavigationWorldSubsystem* Navigation =
         GetWorld()->GetSubsystem<UGamePlatformNavigationWorldSubsystem>();
 
@@ -1233,8 +1271,6 @@ bool AGamePlatformAIController::RequestPatrolGoal()
     if (!bFound)
     {
         LastError = EGamePlatformAIError::NavigationUnavailable;
-        NextPatrolSelectionTime =
-            GetServerTimeSeconds() + 1.0;
         return false;
     }
 
@@ -1249,13 +1285,26 @@ bool AGamePlatformAIController::RequestPatrolGoal()
     }
 
     if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
-        MoveToLocation(PatrolLocation, ActiveDefinition->HomePolicy.PatrolAcceptanceRadius);
+    {
+        const EPathFollowingRequestResult::Type Result =
+            MoveToLocation(PatrolLocation, ActiveDefinition->HomePolicy.PatrolAcceptanceRadius);
+        if (Result == EPathFollowingRequestResult::Failed)
+        {
+            LastError = EGamePlatformAIError::NavigationUnavailable;
+            return false;
+        }
+        if (Result == EPathFollowingRequestResult::AlreadyAtGoal)
+        {
+            LastError = EGamePlatformAIError::None;
+            SetPublicState(EGamePlatformAIPublicState::Idle, GamePlatformAITags::Movement_Patrol);
+            return true;
+        }
+    }
+    LastError = EGamePlatformAIError::None;
     SetPublicState(
         EGamePlatformAIPublicState::Moving,
         GamePlatformAITags::Movement_Patrol);
 
-    NextPatrolSelectionTime =
-        GetServerTimeSeconds() + 1.0;
     return true;
 }
 
@@ -1274,8 +1323,20 @@ void AGamePlatformAIController::RequestReturnHome()
             HomeLocation);
     }
 
+    NextPatrolSelectionTime = GetServerTimeSeconds() + 1.0;
     if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
-        MoveToLocation(HomeLocation, ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius);
+    {
+        const EPathFollowingRequestResult::Type Result =
+            MoveToLocation(HomeLocation, ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius);
+        if (Result != EPathFollowingRequestResult::RequestSuccessful)
+        {
+            LastError = Result == EPathFollowingRequestResult::Failed
+                ? EGamePlatformAIError::NavigationUnavailable : EGamePlatformAIError::None;
+            SetPublicState(EGamePlatformAIPublicState::Idle);
+            return;
+        }
+    }
+    LastError = EGamePlatformAIError::None;
     SetPublicState(
         EGamePlatformAIPublicState::Moving,
         GamePlatformAITags::Movement_ReturnHome);

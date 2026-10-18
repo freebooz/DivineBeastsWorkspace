@@ -19,12 +19,12 @@
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Rat.json",
       "names": [
         "影牙斩",
-        "咬影",
-        "交锋裂影",
-        "万鼠影袭",
-        "钻缝",
-        "藏尾",
-        "咬筋",
+        "伏牙刺",
+        "交牙斩",
+        "三影袭",
+        "穿隙",
+        "敛影",
+        "绊步牙",
         "嗅踪"
       ],
       "passive": "嗅弱",
@@ -47,13 +47,13 @@
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Ox.json",
       "names": [
         "玄角撞",
-        "裂角",
-        "裂土重踏",
-        "不动玄门",
+        "破甲角",
+        "裂地踏",
+        "立山门",
         "沉步",
-        "镇山护壁",
-        "顶回",
-        "立阵"
+        "镇山壁",
+        "顶退",
+        "盾阵"
       ],
       "passive": "镇山·硬骨",
       "requiredHumanReview": 8,
@@ -74,11 +74,11 @@
       "heroNameZh": "寅虎·白君",
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Tiger.json",
       "names": [
-        "白君轻爪",
-        "裂爪",
-        "猛虎连袭",
-        "白虎啸岭杀",
-        "扑杀",
+        "白虎爪",
+        "裂甲爪",
+        "双爪袭",
+        "虎啸扑",
+        "虎扑",
         "虎踞",
         "虎啸",
         "开猎"
@@ -102,14 +102,14 @@
       "heroNameZh": "卯兔·玉灵",
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Rabbit.json",
       "names": [
-        "月玉轻弹",
-        "玉刃",
-        "落英星雨",
-        "千月回环",
+        "月辉弹",
+        "双月斩",
+        "落英雨",
+        "返影斩",
         "踏月",
         "回月",
-        "月痕",
-        "玉露回春"
+        "绊月刃",
+        "回春露"
       ],
       "passive": "月闪",
       "requiredHumanReview": 8,
@@ -130,14 +130,14 @@
       "heroNameZh": "辰龙·苍龙",
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Dragon.json",
       "names": [
-        "苍龙爪光",
+        "苍龙爪",
         "雷裁",
-        "苍云雷息",
-        "苍龙定天仪",
+        "雷息",
+        "三象域",
         "御风",
-        "云护",
-        "龙压",
-        "龙域"
+        "云盾",
+        "风压环",
+        "风云域"
       ],
       "passive": "天象轮转",
       "requiredHumanReview": 8,
@@ -158,14 +158,14 @@
       "heroNameZh": "巳蛇·幽鳞",
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Snake.json",
       "names": [
-        "幽鳞穿刺",
+        "幽鳞刺",
         "毒牙",
-        "盘鳞双弹",
-        "万毒归鳞",
+        "双鳞弹",
+        "毒阵爆",
         "蛇行",
         "蜕鳞",
-        "缠纹",
-        "封途"
+        "蛇纹缚",
+        "毒径"
       ],
       "passive": "毒记",
       "requiredHumanReview": 8,
@@ -188,12 +188,12 @@
       "names": [
         "雷蹄踢",
         "雷枪",
-        "惊雷践踏",
-        "雷蹄破阵",
+        "雷蹄波",
+        "破阵冲",
         "奔雷",
-        "踏阵",
-        "蹄震",
-        "先至"
+        "护驰",
+        "震蹄",
+        "驰援"
       ],
       "passive": "奔雷之势",
       "requiredHumanReview": 8,
@@ -214,14 +214,14 @@
       "heroNameZh": "未羊·玉角",
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Goat.json",
       "names": [
-        "玉角光刺",
-        "净光",
-        "玉符环阵",
-        "万愿归铃",
+        "玉角刺",
+        "引锋光",
+        "玉符环",
+        "护愿铃",
         "铃步",
         "守愿",
-        "安魂",
-        "铃印"
+        "缓铃",
+        "回春铃"
       ],
       "passive": "灵愿",
       "requiredHumanReview": 8,
@@ -242,14 +242,14 @@
       "heroNameZh": "申猴·灵猴",
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Monkey.json",
       "names": [
-        "灵棍点打",
+        "灵棍点",
         "戏棍",
-        "云棍横扫",
-        "万象戏台",
+        "横扫棍",
+        "换影台",
         "筋斗",
         "替身",
-        "扰心",
-        "百戏"
+        "迷烟弹",
+        "双影戏"
       ],
       "passive": "百戏本能",
       "requiredHumanReview": 8,
@@ -270,14 +270,14 @@
       "heroNameZh": "酉鸡·金鸣",
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Rooster.json",
       "names": [
-        "金羽啄光",
-        "破晓",
-        "晨鸣音浪",
-        "破晓金鸣",
+        "金羽击",
+        "破隐羽",
+        "晨鸣波",
+        "护晓域",
         "鸣步",
-        "金羽",
-        "鸣震",
-        "晨鸣"
+        "金羽盾",
+        "止咒鸣",
+        "回春鸣"
       ],
       "passive": "暗迹",
       "requiredHumanReview": 8,
@@ -298,14 +298,14 @@
       "heroNameZh": "戌狗·天犬",
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Dog.json",
       "names": [
-        "天犬咬击",
-        "反咬",
-        "灵爪连击",
-        "天门守阙",
+        "天犬咬",
+        "护主咬",
+        "双灵爪",
+        "天门护",
         "援步",
         "护主",
-        "拦门",
-        "誓约"
+        "截冲盾",
+        "誓愈"
       ],
       "passive": "守阙",
       "requiredHumanReview": 8,
@@ -326,11 +326,11 @@
       "heroNameZh": "亥猪·玄鬃",
       "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Boar.json",
       "names": [
-        "玄鬃冲撞",
+        "獠牙撞",
         "怒锤",
-        "重压冲波",
-        "玄鬃裂地",
-        "獠撞",
+        "重压波",
+        "连踏",
+        "獠冲",
         "岩甲",
         "震鬃",
         "鬃吼"
@@ -352,6 +352,8 @@
   ],
   "importedNativeV3Assets": 0,
   "approvedEffectImageCount": 0,
-  "readyForCreationScreen": false
+  "readyForCreationScreen": false,
+  "approvedSkillNameCount": 96,
+  "nameApprovalId": "SSLM-SKILL-NAMES-SIMPLE-V5-20261018",
+  "displayNameApprovalSource": "Docs/Design/ApprovedSkillDisplayNames_V5.json"
 }
-

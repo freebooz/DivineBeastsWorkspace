@@ -1,3 +1,4 @@
+// 平台服务器AI控制器合同：由当前Pawn/World拥有感知、资源租约和原生路径；客户端只消费复制的AI公开状态。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -72,6 +73,16 @@ protected:
     virtual bool TryExecuteNativeAttack(AActor& ValidatedTarget) { return false; }
 
 private:
+    // 私有纯规则只投影当前Pawn/World事实；友元仅供模块内部UE回归，不开放玩法调用入口。
+    friend class FAIIdleMovementPolicyTest;
+    enum class EIdleMovementAction { ContinueMove, Wait, ReturnHome, SelectPatrolGoal };
+
+    /** 游戏线程无目标决策：距离为水平平方厘米，半径为厘米；输入来自已校验定义和当前原生路径。
+     * 返回继续已有路径、等待退避、归家或选择巡逻点；不申请导航、不持有世界状态、不执行伤害。 */
+    static EIdleMovementAction DecideIdleMovement(double DistanceHomeSquared, float PatrolRadius,
+        float ReturnHomeAcceptanceRadius, bool bPatrolling, bool bReturningHome,
+        bool bMovementInProgress, bool bMayRequest);
+
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<UAIPerceptionComponent> PlatformPerceptionComponent;
 
@@ -172,10 +183,13 @@ private:
 
     void SetCurrentTarget(AActor* NewTarget);
     void UpdateBlackboardForTarget(AActor* Target);
+    /** 无目标阶段只延续当前巡逻/归家路径，取消旧追击；到达后按当前意图和退避选择下一步。 */
     void UpdateNoTargetBehavior();
     void UpdateTargetBehavior(AActor& Target);
 
+    /** 查询出生锚点周围可达点；原生脑检查MoveTo受理结果，失败保留诊断并有限退避，抵达不会伪报移动。 */
     bool RequestPatrolGoal();
+    /** 归家复用原生PathFollowing；移动失败时发布Idle并允许决策时钟再次尝试。 */
     void RequestReturnHome();
     void RequestChase(AActor& Target);
 
