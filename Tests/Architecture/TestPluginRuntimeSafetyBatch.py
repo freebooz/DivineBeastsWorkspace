@@ -121,6 +121,25 @@ class PluginRuntimeSafetyBatchTests(unittest.TestCase):
         self.assertIn("if (!ShutdownTickerHandle.IsValid())",region)
         self.assertIn("Network.ShutdownIdempotent",tests)
 
+    def test_save_storage_refuses_oversized_write_before_mutating_disk(self):
+        # 本地存档在策略层之外仍要具备独立的字节限额与部分备份清理。
+        # 只检查源码约束；真实UE自动化的随机文件读写需要独占UE环境再执行。
+        base = ROOT / "Game/Plugins/GamePlatform/Application/GamePlatformSave/Source/GamePlatformSaveClient/Private"
+        storage = source(base / "Storage/GamePlatformSaveStorage.cpp")
+        native = source(base / "Tests/GamePlatformSaveStorageTests.cpp")
+        write = storage[storage.index("FGamePlatformResult FGamePlatformSaveStorage::WriteAtomically("):
+                        storage.index("FGamePlatformResult FGamePlatformSaveStorage::DeleteRecordFiles(")]
+        self.assertIn("Encoded.Num() > FGamePlatformSavePolicy::GetMaxEncodedBytes()", write)
+        self.assertIn('TEXT("SaveFileTooLarge")', write)
+        self.assertLess(write.index("Encoded.Num() >"), write.index("PlatformFile.CreateDirectoryTree"))
+        copy_failed = write[write.index("if (!PlatformFile.CopyFile("):
+                            write.index("if (!ReplaceByMove(BackupPath")]
+        self.assertIn("PlatformFile.DeleteFile(*BackupTempPath)", copy_failed)
+        self.assertIn("PlatformFile.DeleteFile(*TempPath)", copy_failed)
+        self.assertIn("GamePlatform.Save.Storage.RejectsOversizedWrite", native)
+        self.assertIn("Files.FileSize(*Primary)", native)
+        self.assertIn("原有主档字节必须原样保留", native)
+
     def test_production_tick_sources_have_unregister_path_in_same_file(self):
         missing=[]
         count=0

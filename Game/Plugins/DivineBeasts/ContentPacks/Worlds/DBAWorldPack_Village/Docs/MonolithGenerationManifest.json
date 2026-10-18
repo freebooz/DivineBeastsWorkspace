@@ -79,5 +79,21 @@
     "AnimBlueprintCompileWarnings": 0,
     "Evidence": "Saved/Validation/VillageEntryLoading20261016/WolfFurLitSidePreview.png",
     "NotesCN": "保留Quaternius CC0原稿不覆盖；派生网格只补UV与毛皮材质，派生咬击和死亡动画使用原骨架。攻击Montage由服务器确认事件驱动，死亡只由复制生命事实驱动；最终落地和联机显示待真实客户端验证。"
+  },
+  "ImportedVampireAnimationAudit20261018": {
+    "Status": "SavedReloadedAndPoseSampled_ClientRuntimePending",
+    "AnimationRoot": "/DBAWorldPack_Village/Creatures/VampireALusth/Animations",
+    "OriginalSkeletonBones": 99,
+    "MeshScale": [1, 1, 1],
+    "MovementSamplesCmPerSecond": [0, 180, 500],
+    "RunningSequenceRateScale": 1.94439,
+    "Actions": ["fbx_import_animation", "edit_blendspace_sample", "add_blendspace_sample", "bake_blend_space", "set_anim_graph_node_property", "compile_blueprint", "save_packages", "reload_packages", "readback"],
+    "AnimBlueprintCompileErrors": 0,
+    "AnimBlueprintCompileWarnings": 0,
+    "ReloadEvidence": "Saved/Validation/CharacterAnimationAudit_20261018/ReloadEvidence.json",
+    "PoseEvidence": "Saved/Validation/CharacterAnimationAudit_20261018/PoseAudit.json",
+    "Report": "Docs/Implementation/ImportedCharacterAnimationAudit_20261018.md",
+    "ManualVisualAccepted": false,
+    "NotesZh": "Vampire原模型弓身姿态保留，装配无额外Pitch/Roll倾斜。修正来源骨长、跑步速率、死亡落地及旧移动片段引用，尚待本轮客户端实际显示验收。"
   }
 }

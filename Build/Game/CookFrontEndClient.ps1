@@ -13,6 +13,8 @@ param([string]$EngineRoot, [switch]$Cook,
     # 默认不向每个独占Stage重复复制数GB的PDB；原始调试符号仍归Game/Binaries。
     # 需要随包调试时显式传-SkipDebugSymbols:$false，不降低配置、不跳过Cook与资产容器检查。
     [switch]$SkipDebugSymbols=$true,
+    # Zen服务实际不可用时显式回退原生文件Cook输出；不关闭IoStore、DDC或现有发布门禁。
+    [switch]$SkipZenStore,
     # 必须匹配当前公共UI与原图的真实RHI颜色报告；资源变化后旧报告拒绝发布。
     [string]$UIColorRHIReport,
     # 默认发行前端保持开发资源隔离；候选技能必须显式选择用户批准的开发客户端配置。
@@ -20,7 +22,7 @@ param([string]$EngineRoot, [switch]$Cook,
     [ValidateRange(1,86400)][int]$TimeoutSeconds=1800, [guid]$RunId=[guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
-$context=$null; $lock=$null; $code=2; $message=''; $details=@{Target='Client';CustomConfig=$CustomConfig}
+$context=$null; $lock=$null; $code=2; $message=''; $details=@{Target='Client';CustomConfig=$CustomConfig;SkipZenStore=[bool]$SkipZenStore}
 try {
     $context=New-FoundationContext 'Cook-FrontEndClient' $RunId
     if (!$Cook) { throw [IO.FileNotFoundException]::new('需显式指定-Cook。') }
@@ -36,16 +38,25 @@ try {
     $details.UIColorRHIReport=[IO.Path]::GetFullPath($UIColorRHIReport)
     $lock=Enter-FoundationEngineLock $engine.Root
     $cookDirectory=Join-Path $context.Directory 'Cooked/WindowsClient'
+    if ($SkipZenStore) {
+        # 文件Cook会拼接完整插件目录，深层验证目录会触发Windows的260字符限制。
+        # 仅此恢复模式使用工作区内独占短路径；不改源资产身份、不复用或清理旧Cook。
+        # UAT要求最终目录仍以平台名结尾，否则Stage会再追加一层WindowsClient。
+        $cookDirectory=Join-Path $context.Workspace ('Saved/C/'+$RunId.ToString('N').Substring(0,8)+'/WindowsClient')
+        if (Test-Path -LiteralPath $cookDirectory) { throw '文件Cook独占短路径已存在，拒绝覆盖。' }
+    }
     $stageDirectory=Join-Path $context.Directory 'Stage'
     $details.CookDirectory=$cookDirectory; $details.StageDirectory=$stageDirectory
     # 三张真实地图与小范围软引用目录共同组成前端回归包；不使用CookAll扩大到全部开发内容。
     $maps=@('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','/DBAFrontEndPack/Maps/L_DBA_CharacterStudio','/DBAWorldPack_Village/Maps/L_Village_Start')
     if($CustomConfig -eq 'VillageDevelopmentClient'){$maps+='/DBAWorldPack_MainArena/Maps/L_DBA_MainArena'}
     $details.Maps=$maps
+    $cookOptions="-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback"
+    if ($SkipZenStore) { $cookOptions += ' -SkipZenStore' }
     $arguments=@($tool.Dll,'BuildCookRun',"-project=$($context.Project)",'-target=DivineBeastsArenaClient',
         '-nop4','-unattended','-utf8output','-cook','-stage','-pak','-skipbuild','-skipbuildeditor','-platform=Win64',
         '-clientconfig=Development','-client','-ddc=NoZenLocalFallback',
-        "-AdditionalCookerOptions=-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback",
+        "-AdditionalCookerOptions=$cookOptions",
         ('-map='+($maps -join '+')), "-CookOutputDir=$cookDirectory", "-stagingdirectory=$stageDirectory")
     if ($SkipDebugSymbols) { $arguments += '-nodebuginfo' }
     $details.SkipDebugSymbols = [bool]$SkipDebugSymbols

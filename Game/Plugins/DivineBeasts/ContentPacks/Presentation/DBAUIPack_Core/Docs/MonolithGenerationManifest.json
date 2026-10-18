@@ -2407,5 +2407,20 @@
     "NativeRegressionRunId": "a42e0272-34fe-42d2-8f47-457f0f753c45",
     "ColorRHIRunId": "673084fd-ac9f-4de8-8f69-6c8611db7d98",
     "FinalEvidence": "Saved/Validation/SkillBar20261018/FinalValidation.json"
+  },
+  "LoadingBarMaskSamplerCookRepair20261018": {
+    "Asset": "/DBAUIPack_Core/UI/Loading/Materials/M_DBA_UI_LoadingBarFill",
+    "Actions": [
+      "set_expression_property",
+      "recompile_material",
+      "save_material",
+      "reload_packages",
+      "get_expression_details"
+    ],
+    "SamplerType": "SAMPLERTYPE_LinearColor",
+    "ValidatedIssueCount": 0,
+    "ColorRHIRunId": "f6a37bc0-ac4f-4eaf-8216-e75aa44380dd",
+    "CookRunId": "efdd7af6-359c-44e0-818f-98ed88a8c479",
+    "Evidence": "Saved/Validation/SkillBar20261018/PackagingRepairs.json"
   }
 }

@@ -616,7 +616,7 @@
       "completionStatus": "not_implemented_by_this_plan",
       "runtimePerformanceStatus": "not_measured_by_this_plan",
       "firstStepFocus": "验证权限、原子性、版本恢复与并发写入失败处理",
-      "alreadyChangedNotes": "",
+      "alreadyChangedNotes": "本批已加存储层编码写入限额与失败备份临时清理，并有原生测试源码及MSVC语法通过；仍需UE真实自动化及跨GameInstance并发取消审查",
       "targetReview": "双端/服务端/编辑器按实际模块职责",
       "sourcePerformanceCandidates": [],
       "tasks": [

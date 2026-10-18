@@ -1,4 +1,12 @@
 # DBAWorldPack_Village（神兽联盟新手村世界内容包）
+## 2026-10-18 V3地形正式原位覆盖（9/10，独立UE冷重载通过）
+
+用户批准直接覆盖后，十层地形稳定BaseColor Texture2D原路径已有9层真实重导入V3色板的派生PNG并在独立UE5.8进程验证；剩余Dirt（泥土）被其他进程文件锁阻断，保留原资产。正式Village地图及中立Landscape母材质SHA未变、原Normal/ORM/Height未变。项目客户端原有VillageSnowWorldSubsystem的草地基础色软路径已更新至V3候选，并配套同一扫描资源的Normal/ORM，保持天气事件和世界异步租约。VillageDevelopmentClient新增Cook与配置，专服三配置已用服务器排除策略生成，不能据此宣称Server Cook已验证。
+
+十二份执行前回退资产及其哈希见Saved/ArtReview/TerrainColorV3FormalCover/Before_20261018/BackupManifest.json；9/10独立冷重载证据与Dirt锁阻断见Docs/Implementation/TerrainColorV3ComplianceReview_20261018.md。实际GPU六态图仍黑帧，真正Client/Server Cook、完整十层和人工最终美术签收未完成，不应标记发布通过。
+Dirt安全恢复脚本为Tools/Unreal/Terrain/ResumeTerrainV3FormalCover.ps1，默认只读。其-Apply仅能在本机同工程编辑器安全关闭、纹理文件独占后执行UE原位覆盖与独立十层冷重载，未满足门禁不得提前尝试。
+
+
 
 本内容包是神兽联盟第三层正式 Village（新手村）世界资产所有者，只承载真实世界内容，不实现平台机制或项目运行时代码。
 

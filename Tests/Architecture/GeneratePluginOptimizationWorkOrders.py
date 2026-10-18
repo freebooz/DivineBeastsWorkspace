@@ -107,6 +107,7 @@ PACK_GOALS = {
 SPECIAL_ALREADY_CHANGED = {
     "GamePlatformSession": "已有同步失败/取消与事实回调保护源码；需要最新UE自动化与双客户端网络验收",
     "GamePlatformTelemetry": "已有重试句柄触发即移除与Shutdown幂等源码；需要UE原生回归和长时指标",
+    "GamePlatformSave": "本批已加存储层编码写入限额与失败备份临时清理，并有原生测试源码及MSVC语法通过；仍需UE真实自动化及跨GameInstance并发取消审查",
     "GamePlatformVFX": "已有鸟群按物种频率刷新优化；需UE Niagara实例性能与人工画面对照",
     "GamePlatformPCG": "已有金标准资产和部分原生验证；正式Village/OpenWorld接线、烘焙与Cook仍待证据",
     "DBAClient": "已有DemoHub及诊断地图快捷入口；仅正式案例和人工审核闭环满足后才可提升",

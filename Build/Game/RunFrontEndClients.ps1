@@ -88,6 +88,7 @@ $gatewayModulePath=Join-Path $PSScriptRoot 'FrontEndClientGateway.psm1'
 Import-Module $gatewayModulePath -Force
 # 在创建任何证据目录或启动客户端前拒绝缺失/非法网关，防止把用户引导到错误的角色档案环境。
 $GatewayUrl=Resolve-FrontEndClientGatewayUrl -GatewayUrl $GatewayUrl
+$gatewayHttpArguments=@(Get-FrontEndClientHttpArguments -GatewayUrl $GatewayUrl)
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $accountConfiguration=Resolve-FrontEndDevelopmentTestAccounts -Enabled:$DevelopmentTestAccounts -AccountsJson ([Environment]::GetEnvironmentVariable('DIVINEBEASTS_DEV_LOGIN_ACCOUNTS_JSON','Process'))
 $developmentToolArguments=@()
@@ -118,6 +119,8 @@ foreach($i in 1..$Count) {
     $info.UseShellExecute=$false; $info.CreateNoWindow=$false; $info.WindowStyle=[Diagnostics.ProcessWindowStyle]::Normal
     Set-FrontEndDevelopmentTestAccountEnvironment -StartInfo $info -Configuration $accountConfiguration
     $info.Environment['DIVINEBEASTS_GATEWAY_BASE_URL']=$GatewayUrl
+    # 只对本机开发网关直连，保留其它HTTP请求的系统代理；参数来自解析后的网关身份。
+    foreach($argument in $gatewayHttpArguments) { $info.ArgumentList.Add($argument) }
     $log=Join-Path $directory "Client$i.log"
     foreach($argument in @('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','-windowed',"-ResX=$WindowWidth","-ResY=$WindowHeight","-WinX=$((($i-1)*40)+20)",'-WinY=40','-nosplash',"-abslog=$log")) {
         $info.ArgumentList.Add($argument)

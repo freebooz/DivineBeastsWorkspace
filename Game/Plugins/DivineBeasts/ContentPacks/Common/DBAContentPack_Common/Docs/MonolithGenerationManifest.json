@@ -30,5 +30,21 @@
   "RuntimeStartupEvidence": "Saved/Validation/CastingMonster20261013/Manual-ce10359d-ff7d-48d3-86e6-34608d4d0ef6/StartupVerified.json",
   "NetworkAccepted": false,
   "ManualVisualAccepted": false,
-  "BoundariesZh": "保存、编译、动作数值、独立重开及最新客户端容器闭包通过；ServerCookVerified表示纯表现剥离，不是服务器播放动作。2026-10-13的旧专服石灵证据已过时；2026-10-14移除后需重新编译、Cook及验收施法效果。"
+  "BoundariesZh": "保存、编译、动作数值、独立重开及最新客户端容器闭包通过；ServerCookVerified表示纯表现剥离，不是服务器播放动作。2026-10-13的旧专服石灵证据已过时；2026-10-14移除后需重新编译、Cook及验收施法效果。",
+  "ImportedHumanoidAnimationAudit20261018": {
+    "Status": "SavedReloadedAndPoseSampled_ClientRuntimePending",
+    "Roles": ["Kachujin", "Arissa"],
+    "OriginalSkeletonBones": {"Kachujin": 75, "Arissa": 73},
+    "MeshScale": [1, 1, 1],
+    "MovementSamplesCmPerSecond": [0, 180, 500],
+    "RunningSequenceRateScale": 1.94439,
+    "Actions": ["fbx_import_animation", "edit_blendspace_sample", "add_blendspace_sample", "bake_blend_space", "set_anim_graph_node_property", "compile_blueprint", "save_packages", "reload_packages", "readback"],
+    "AnimBlueprintCompileErrors": 0,
+    "AnimBlueprintCompileWarnings": 0,
+    "ReloadEvidence": "Saved/Validation/CharacterAnimationAudit_20261018/ReloadEvidence.json",
+    "PoseEvidence": "Saved/Validation/CharacterAnimationAudit_20261018/PoseAudit.json",
+    "Report": "Docs/Implementation/ImportedCharacterAnimationAudit_20261018.md",
+    "ManualVisualAccepted": false,
+    "NotesZh": "保留目标模型原骨架、尺寸及攻击施法Montage身份；修正来源骨长、移动根位移和旧混合空间残留。Arissa死亡披风和附属武器仍有地面穿插，待完整布料/附属物验收。"
+  }
 }

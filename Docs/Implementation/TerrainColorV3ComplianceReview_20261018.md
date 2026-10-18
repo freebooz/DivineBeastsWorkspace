@@ -1,4 +1,24 @@
 # SSLM 十层地形纹理与材质 V3.0 合规审查及实际整改记录
+## 2026-10-18 用户授权正式覆盖：最新执行进度（优先于下文候选阶段历史描述）
+
+用户明确要求直接覆盖地形配色。**当前状态：十层目标9层已在UE5.8原位重新导入并通过另一个独立编辑器进程冷重载；Dirt（泥土）1层仍未更新，原因是其他进程占用文件（Windows错误码32）。不可将9/10视为全部完成。**
+
+已覆盖并通过独立原生回读：Grass（草地）、ForestSoil（林地土）、Rock（岩石）、Scree（碎石坡）、Sand（砂地）、Gravel（砾石）、RoadDirt（土路）、FarmSoil（耕地）、ShoreMud（岸湿泥）。保持十种地形Texture2D稳定路径，只重导入V3派生BaseColor（基础色）；旧法线Normal、ORM（遮蔽/粗糙度/金属度）、Height（高度）原扫描PBR贴图不修改。正式Village地图L_Village_Start.umap和共享M_DBA_Village_LandscapeBridge.uasset执行前后SHA256未改变；不改地图碰撞、导航、地形权重、PCG和权威服务器逻辑。
+
+**正式Village实际客户端装配**：复用原DivineBeastsVillageSnowWorldSubsystem（新手村客户端雪/地表桥接），将草地基础色软引用改成DBAPresentationPack_Core/Materials/Terrain/TexturesV3中的V3草地纹理，同时关联该CC0扫描的WorldPack Normal及ORM；VillageDevelopmentClient配置中写入软路径与客户端Cook目录。不会将客户端高精函数化母材质硬绑定服务器共用地图。修改的是项目客户端源码和配置，尚未运行新客户端Build/Cook与真实客户端视觉审查，不得声称玩家已看到新地面。
+
+**资源隔离**：已将DBAPresentationPack_Core/Materials/Terrain及旧草地客户端目录加入Build/Game/ServerPresentationExclusions.json（服务器表现目录排除规则真源），更新DedicatedServer、VillageServer、VillageDevelopmentServer三个受管配置和专服Pak规则；统一生成后的策略检查通过，未执行真实Client/Server Cook与UnrealPak容器审计。
+
+**恢复、回退与实际证据**：
+- 10项原纹理、Village正式地图、共享母材质共12份执行前二进制与SHA清单，保存在Saved/ArtReview/TerrainColorV3FormalCover/Before_20261018/BackupManifest.json。
+- 原生执行工具：Tools/Unreal/Terrain/ApplyTerrainV3ToFormalTexturesUE58.py；使用真实UE ImportAssetTask而非伪造uasset。实际九项进度为Saved/ArtReview/TerrainColorV3FormalCover/ProgressManifest.json，partialColdVerifyPassed=true、coldVerifyPassed=false、humanReviewPassed=false、pending=Dirt。
+- 原生日志：Game/Saved/Validation/TerrainColorV3FormalCover/Formal10_UEApply_20261018.log（首轮在Dirt保存遇文件锁）、Formal7_UEApply_20261018.log（七项独占覆盖）、Formal9_UEColdVerify_20261018.log（九项独立冷重载）。九项存盘、sRGB、尺寸、来源软路径和磁盘SHA均通过原生回读。
+- 通过静态检查：TestTerrainV3FormalCover.py、ValidateVillageSnowBridgeIntegration.py、TestTerrainColorV3Policy.py、ValidateTerrainProductionIntegration.py，以及ServerPresentationPolicy.py check。
+
+**剩余任务**：文件锁释放后，仅针对Dirt执行独占UE5.8原位导入，再使用另一UE进程检查全部十层。旧六态D3D12场景截图全部为黑帧，GPU/Shader、RVT/PCG视觉融合、移动端与多画质、Client/Server Cook、人工前后对照审查尚未通过。本次用户授权直接覆盖不等于自行放行正式发布质量门禁。下文“不得覆盖正式地图”保留为先前候选制作阶段历史约束，实际本次亦未改动地图文件。
+**剩余Dirt安全恢复入口**：Tools/Unreal/Terrain/ResumeTerrainV3FormalCover.ps1（PowerShell脚本）。默认只读验证12份原资产、九层冷重载报告与Dirt文件锁；仅显式-Apply且Dirt不再被占用、同工程UE编辑器已安全关闭时，才由UE5.8真实导入Dirt，并由第二个独立进程完整冷重载全部十层。检查真实日志成功标记及Python异常、十层SHA/清单；单凭UE退出0不得宣告通过。当前只读预检结果file_locked=True，未执行-Apply。
+
+
 
 日期：2026-10-18；工作空间：DivineBeastsWorkspace；虚幻引擎 UE5.8；当前分支 main。所属：地形/材质/环境色彩专项，不覆盖正式地图。
 

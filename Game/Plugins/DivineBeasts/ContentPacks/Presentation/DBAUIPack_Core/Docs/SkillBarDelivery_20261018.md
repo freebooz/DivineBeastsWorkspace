@@ -47,8 +47,20 @@
 
 本轮编译修复仅包含：槽位循环变量改名以避免遮蔽 `UWidget::Slot`；输入合同测试显式使用int32数组计数以消除重载歧义。其他任务的八主动槽可选C++支持保持原样；本次已审核资产仍为五个原有技能绑定和三格空背景，未擅自迁移该设计。
 
-独立只读代码审查未发现Critical/Important问题；保留两项测试边界：设置关闭用例直接触发关闭回调，授权身份用例主要验证唯一性查询，均不能单独证明完整联网交互。实际打包Client/Server新构建、Cook/Stage、联网背包/组队/技能施放人工验收、最终客户端视觉签收未执行。完整分层状态见 `Saved/Validation/SkillBar20261018/FinalValidation.json`。
+独立只读代码审查未发现Critical/Important问题；保留两项测试边界：设置关闭用例直接触发关闭回调，授权身份用例主要验证唯一性查询，均不能单独证明完整联网交互。此前阶段尚未执行Client构建与Cook/Stage；后续打包结果见下节。联网背包/组队/技能施放及最终客户端视觉仍待人工验收。完整分层状态见 `Saved/Validation/SkillBar20261018/FinalValidation.json`。
 
 用户随后明确要求停止相关占用直接推进。接手时两相关聊天已停止或空闲、原编辑器已退出，因此本任务没有强杀进程或保存/丢弃未知脏包。此前四份资产的旧内存保存状态不能由本轮追溯证明，不将其他任务的RetargetedGrounded文件当作原Grounded包保存证据。
 
 操作前的四个既有控件文件备份位于 `Saved/Validation/SkillBar20261018/Before/`；回退时仅恢复本次对应资产并用引擎重载，不覆盖工作区中其他任务的改动。
+
+## 客户端打包与双窗口人工验收（2026-10-18）
+
+Client完整增量构建通过，RunId `991d79a8-4172-4371-8b66-e39b8797a722`，退出0；参数仍为UE5.8、Win64/Development、`-NoSharedPCH -NoUBA -MaxParallelActions 8`，Client不启用UsePrecompiled。首次MSVC内部崩溃保留失败记录，同参数重试成功，没有为此改源码或清缓存。
+
+`VillageDevelopmentClient` Cook/Stage通过，RunId `efdd7af6-359c-44e0-818f-98ed88a8c479`，UAT及最终门禁均退出0。实际IoStore核对前端547项、施法54项、技能栏26纹理与5控件均齐全；鸟群、音频和草地门禁通过，正式冰箭六阶段实际编译且Niagara/GPU诊断为0。Stage可执行文件哈希与本轮构建一致。
+
+本轮发布修复：加载条材质`M_DBA_UI_LoadingBarFill`的线性UI遮罩采样器从Masks改为LinearColor，Monolith编译、保存、重载和回读通过；原纹理RGB/Alpha不变。真实颜色RHI已重跑通过，RunId `f6a37bc0-ac4f-4eaf-8216-e75aa44380dd`。对无正式运行引用的冰箭A审核候选、飘落物编译器探针添加精确NeverCook目录，源资源仍保留；正式技能和环境闭包门禁继续执行。Zen本机IPv6请求曾被系统代理返回502，本次打包子进程显式绕过本机地址后成功，系统代理未修改。
+
+两个新包客户端已启动并激活真实登录Widget，PID 45028、432，1920×1080、每端60帧，启用player01—player10本地测试账号按钮，没有自动登录。五项后端就绪检查均返回200；复用现有Village服务器17782，不宣称本轮重新构建Server。人工验收请分别登录两个不同账号，检查技能栏、背包、组队、设置、换角色投影及技能施放/冷却/双端反馈。
+
+完整证据：`Saved/Validation/SkillBar20261018/PackagedClientValidation.json`；客户端日志：`Saved/Validation/FrontEndClients/f5962665-8eea-4ae9-ac06-5060727ecd63/Clients.json`所在目录。客户端启动和容器通过不代替联网与视觉人工签收。

@@ -38,7 +38,7 @@ def sha256(path: Path) -> str:
 
 
 def inspect_inputs():
-    if MODE not in {"inspect", "apply", "verify"}:
+    if MODE not in {"inspect", "apply", "verify", "verify_partial"}:
         raise ValueError("仅支持inspect/apply/verify；不得无门禁原位重导入")
     cfg = json.loads(MAPPING.read_text(encoding="utf-8"))
     generation = json.loads(V3_MANIFEST.read_text(encoding="utf-8-sig"))
@@ -190,6 +190,37 @@ def apply(unreal, rows):
     print("SSLM_V3_FORMAL_ASSETS_SAVED_UE count=10 independent_verify_required=true", flush=True)
 
 
+def verify_partial(unreal, rows):
+    """跨编辑器冷重载已成功导入的层；未覆盖层必须与原备份完全一致。
+
+    本模式不能用来把9/10伪装成最终10/10通过，也不能升级人工视觉验收。
+    """
+    progress = REPORT.with_name("ProgressManifest.json")
+    if not progress.is_file() or REPORT.exists():
+        raise RuntimeError("只有完整覆盖记录不存在、部分覆盖记录存在时才允许verify_partial")
+    data = json.loads(progress.read_text(encoding="utf-8"))
+    imported = {r["layer"]: r for r in data["rows"]}
+    pending = {r["layer"] for r in data["pending"]}
+    if set(imported).intersection(pending) or set(imported) | pending != {r["layer"] for r in rows}:
+        raise RuntimeError("部分覆盖进度中的已导入/未完成十层身份不一致")
+    for row in rows:
+        if row["layer"] in imported:
+            check_texture(unreal, row, expect_v3=True)
+            if imported[row["layer"]]["actualSha256"] != sha256(Path(row["destination"])):
+                raise RuntimeError("九层冷重载纹理二进制指纹不同：" + row["layer"])
+        else:
+            check_texture(unreal, row, expect_v3=False)
+            if sha256(Path(row["destination"])) != row["backupSha256"]:
+                raise RuntimeError("未完成的地形层已经改变，不能按待办状态放行：" + row["layer"])
+    data["partialColdVerifyPassed"] = True
+    data["coldVerifyPassed"] = False
+    data["humanReviewPassed"] = False
+    progress.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print("SSLM_V3_FORMAL_PARTIAL_COLD_VERIFY_PASS imported=",
+          len(imported), "pending=", len(pending),
+          "production_acceptance=false", flush=True)
+
+
 def verify(unreal, rows):
     if not REPORT.is_file():
         raise RuntimeError("未发现真实UE apply产物，不能宣称正式覆盖")
@@ -216,6 +247,8 @@ def main():
     ue = unreal_context()
     if MODE == "apply":
         apply(ue, rows)
+    elif MODE == "verify_partial":
+        verify_partial(ue, rows)
     elif MODE == "verify":
         verify(ue, rows)
 

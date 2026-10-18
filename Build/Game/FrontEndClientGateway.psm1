@@ -46,4 +46,22 @@ function Resolve-FrontEndClientGatewayUrl {
     return $GatewayUrl
 }
 
-Export-ModuleMember -Function Resolve-FrontEndClientGatewayUrl
+function Get-FrontEndClientHttpArguments {
+    <#
+    .SYNOPSIS
+    为显式回环网关生成UE原生HttpNoProxy参数，避免系统代理把本地认证请求转发为502。
+    .DESCRIPTION
+    输入沿用网关地址校验；仅Uri.IsLoopback为真时返回一个启动参数，其余地址返回空数组。
+    使用解析后的准确主机名，不以字符串前缀识别本机，不使用通配符，不改系统代理或持久配置。
+    返回值供ProcessStartInfo.ArgumentList使用；无网络、凭据读取或后端副作用。
+    #>
+    [CmdletBinding()]
+    param([AllowNull()][string]$GatewayUrl)
+    $gateway=[uri](Resolve-FrontEndClientGatewayUrl -GatewayUrl $GatewayUrl)
+    if($gateway.IsLoopback) {
+        # UE FParse::Value会在未加引号的逗号处截断；单主机参数只覆盖实际网关。
+        return '-HttpNoProxy=' + $gateway.DnsSafeHost.Trim('[',']')
+    }
+}
+
+Export-ModuleMember -Function Resolve-FrontEndClientGatewayUrl,Get-FrontEndClientHttpArguments

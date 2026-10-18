@@ -104,8 +104,8 @@ class PluginOptimizationWorkOrdersTests(unittest.TestCase):
                          {x["pluginId"] for x in self.entries if x["pluginKind"] == "code"})
 
     def test_key_prior_remediations_remain_pending_runtime_evidence(self):
-        for identity in ("GamePlatformSession", "GamePlatformTelemetry", "GamePlatformVFX",
-                         "GamePlatformPCG", "DBAClient", "GamePlatformUI"):
+        for identity in ("GamePlatformSession", "GamePlatformTelemetry", "GamePlatformSave",
+                         "GamePlatformVFX", "GamePlatformPCG", "DBAClient", "GamePlatformUI"):
             record = next(x for x in self.entries if x["pluginId"] == identity)
             self.assertTrue(record["alreadyChangedNotes"])
             self.assertEqual("not_implemented_by_this_plan", record["completionStatus"])
