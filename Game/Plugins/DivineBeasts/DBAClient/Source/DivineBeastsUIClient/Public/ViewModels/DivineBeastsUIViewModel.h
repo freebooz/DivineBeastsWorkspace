@@ -84,6 +84,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|CharacterPreview")
     void SetCharacterPreviewCameraDistance(float DistanceCentimeters);
 
+    /** UI预览手势按增量调整视距，不改变角色选择或输入上下文。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|CharacterPreview")
+    void AdjustCharacterPreviewCameraDistance(float DeltaCentimeters);
+
+    /** UI预览手势按增量调整镜头焦距，不改变正式竞技镜头。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|CharacterPreview")
+    void AdjustCharacterPreviewCameraFocalLength(float DeltaMillimeters);
+
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Command")
     FGuid RequestWorld(
         FName DesiredExperienceId,

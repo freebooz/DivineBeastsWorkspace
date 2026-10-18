@@ -13,11 +13,14 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsCharacterPreviewScreen : public UDiv
 protected:
     virtual FReply NativeOnMouseButtonDown(const FGeometry&, const FPointerEvent&) override;
     virtual FReply NativeOnMouseButtonUp(const FGeometry&, const FPointerEvent&) override;
+    virtual FReply NativeOnMouseWheel(const FGeometry&, const FPointerEvent&) override;
     virtual FReply NativeOnMouseMove(const FGeometry&, const FPointerEvent&) override;
     virtual void NativeOnMouseCaptureLost(const FCaptureLostEvent&) override;
     virtual void NativeOnDeactivated() override;
     /** 具体页重用既有只读ViewModel的本地预览命令；本抽象页不得自行绕过该命令端口。 */
     virtual void RotatePreviewFromDrag(float DeltaYawDegrees) PURE_VIRTUAL(UDivineBeastsCharacterPreviewScreen::RotatePreviewFromDrag, );
+    virtual void AdjustPreviewCameraDistanceFromWheel(float DeltaCentimeters) PURE_VIRTUAL(UDivineBeastsCharacterPreviewScreen::AdjustPreviewCameraDistanceFromWheel, );
+    virtual void AdjustPreviewCameraFocalLengthFromWheel(float DeltaMillimeters) PURE_VIRTUAL(UDivineBeastsCharacterPreviewScreen::AdjustPreviewCameraFocalLengthFromWheel, );
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UBorder> PreviewDragSurface;
 private:
     /** 只保留捕获身份；所有取消路径清理，不跨页面或世界复用。 */

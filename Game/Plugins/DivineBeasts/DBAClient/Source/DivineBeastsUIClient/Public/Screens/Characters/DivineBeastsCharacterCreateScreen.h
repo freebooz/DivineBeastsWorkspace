@@ -33,6 +33,8 @@ protected:
     /** 激活时绑定本地输入及只读状态事件；失活时全部解绑，不保存业务档案。 */
     virtual void NativeOnActivated() override;
     virtual void RotatePreviewFromDrag(float DeltaYawDegrees) override;
+    virtual void AdjustPreviewCameraDistanceFromWheel(float DeltaCentimeters) override;
+    virtual void AdjustPreviewCameraFocalLengthFromWheel(float DeltaMillimeters) override;
     virtual void NativeOnDeactivated() override;
 
     /** 介绍事件使用平台安全钩子，支持激活期间更换VM；精确解绑原订阅对象。 */

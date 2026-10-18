@@ -49,6 +49,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Accessibility")
     bool bEnableCinematicFocus = true;
 
+    /** 按毫米焦距与传感器宽度计算等效水平视场角；无效输入安全返回0。 */
+    static float CalculateHorizontalFieldOfViewDegrees(float FocalLengthMm, float SensorWidthMm);
+
     /** 数值校验不加载资产，也不修改摄像机。 */
     UFUNCTION(BlueprintPure, Category="GamePlatform|Camera")
     bool IsValidProfile() const;
