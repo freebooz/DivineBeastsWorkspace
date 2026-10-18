@@ -21,6 +21,10 @@ policies = [
     ("S_DBA_Music_Concurrency",unreal.SoundConcurrency),
     ("S_DBA_Ambience_Concurrency",unreal.SoundConcurrency)
 ]
+# 独立PythonScript命令进程的AssetRegistry可能尚未扫描客户端纯内容插件。
+# 先明确同步扫描，避免将磁盘真实.uasset误报成缺失。
+unreal.AssetRegistryHelpers.get_asset_registry().scan_paths_synchronous(
+    ["/DBASFXPack_Core"], True)
 lib=unreal.EditorAssetLibrary
 for folder,wave_name,def_name,expect_loop,has_attenuation in CASES:
     sw=lib.load_asset(f"{ROOT}/{folder}/Waves/{wave_name}")

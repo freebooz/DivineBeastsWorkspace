@@ -20,6 +20,7 @@ int main()
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
 #include "Components/GamePlatformAIStateComponent.h"
+#include "Components/GamePlatformAITargetComponent.h"
 #include "Controllers/GamePlatformAIController.h"
 #include "Data/GamePlatformAIDefinition.h"
 #include "Engine/World.h"
@@ -118,6 +119,50 @@ bool FAIIdleMovementPolicyTest::RunTest(const FString& Parameters)
     Controller->RequestReturnHome();
     TestEqual(TEXT("实际MoveTo被拒绝时保持Idle"), State->GetSnapshot().PublicState, EGamePlatformAIPublicState::Idle);
     TestEqual(TEXT("实际MoveTo失败保留导航诊断"), Controller->GetLastAIError(), EGamePlatformAIError::NavigationUnavailable);
+
+    // 真实候选/感知/Combat通知入口：持续交战不能依赖玩家不断触发新的Sight回调。
+    Controller->bRetainCombatTarget = true;
+    Controller->HomeLocation = FVector::ZeroVector;
+    APawn* TargetA = World->SpawnActor<APawn>();
+    APawn* TargetB = World->SpawnActor<APawn>();
+    auto AddTarget = [](APawn* Target)
+    {
+        auto* Component = NewObject<UGamePlatformAITargetComponent>(Target);
+        Target->AddInstanceComponent(Component); Component->RegisterComponent(); Component->BeginPlay();
+        return Component;
+    };
+    auto* TargetIdentityA = AddTarget(TargetA);
+    AddTarget(TargetB);
+    Controller->UpsertCandidate(TargetA, FVector::ZeroVector, true, false, false);
+    Controller->SetCurrentTarget(TargetA);
+    Controller->Candidates.FindChecked(TargetA).LastSensedTime = -1000.0;
+    Controller->PruneCandidates();
+    TestTrue(TEXT("当前有效目标不因感知记忆超时而消失"), Controller->Candidates.Contains(TargetA));
+    Controller->UpsertCandidate(TargetB, FVector::ZeroVector, true, false, false);
+    TestEqual(TEXT("另一玩家仅靠近不能抢走既有仇恨"), Controller->SelectBestTarget(), static_cast<AActor*>(TargetA));
+
+    FGamePlatformCombatEvent Hit;
+    Hit.EventType = EGamePlatformCombatEventType::Damage;
+    Hit.TargetActor = Pawn; Hit.SourceActor = TargetB; Hit.EventId = FGuid::NewGuid(); Hit.AppliedMagnitude = 12.0f;
+    Controller->HandleCombatEvent(Hit);
+    TestEqual(TEXT("其他玩家的实际伤害可以拉走仇恨"), Controller->CurrentTarget.Get(), static_cast<AActor*>(TargetB));
+    Controller->HandleCombatEvent(Hit);
+    TestEqual(TEXT("重复伤害事件不重复累加仇恨"), Controller->Candidates.FindChecked(TargetB).DamageThreat, 12.0);
+    Hit.SourceActor = TargetA; Hit.EventId = FGuid::NewGuid(); Hit.AppliedMagnitude = 5.0f;
+    Controller->HandleCombatEvent(Hit);
+    TestEqual(TEXT("较少累计伤害不抢走当前目标"), Controller->CurrentTarget.Get(), static_cast<AActor*>(TargetB));
+    Hit.EventId = FGuid::NewGuid(); Hit.AppliedMagnitude = 8.0f;
+    Controller->HandleCombatEvent(Hit);
+    TestEqual(TEXT("累计伤害超过当前目标后转移仇恨"), Controller->CurrentTarget.Get(), static_cast<AActor*>(TargetA));
+    Controller->HomeLocation = FVector(100000.0, 0.0, 0.0);
+    Controller->PruneCandidates();
+    TestTrue(TEXT("已交战目标超过出生点牵引距离仍保留"), Controller->Candidates.Contains(TargetA));
+    TargetIdentityA->AdvanceTargetGeneration();
+    Controller->PruneCandidates();
+    TestFalse(TEXT("换生命代次清理旧仇恨"), Controller->Candidates.Contains(TargetA));
+    TargetB->Destroy();
+    Controller->PruneCandidates();
+    TestTrue(TEXT("目标销毁后清空候选"), Controller->Candidates.IsEmpty());
 
     // 真实Controller死亡入口与后继决策：已有死亡停机规则不能因空闲巡逻恢复而失效。
     FGamePlatformCombatEvent Death;

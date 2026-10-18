@@ -2173,14 +2173,28 @@ void UDivineBeastsApplicationFlowSubsystem::HandleAuthSnapshot(
                     static_cast<int64>(Snapshot.State))
             : FString();
 
-    // 只投影无秘密认证事实，Password/AccessToken/RefreshToken 永不进入流程 ViewState。
+    // 刷新只轮换凭据，不撤销同账号/同认证代次的准入。错误地传空账号会让Session主动断线，
+    // 并清掉TransferOperationId，使旧InWorld流程收不到断线终态而在前端显示黑屏。
+    // 这里仅保留身份投影，受保护请求仍由Online等待刷新，不能绕过凭据有效性校验。
+    const bool bHadAuthentication = ViewState.bAuthenticated;
     ViewState.bAuthenticated =
-        Snapshot.State == EGamePlatformAuthState::Authenticated;
+        (Snapshot.State == EGamePlatformAuthState::Authenticated ||
+         Snapshot.State == EGamePlatformAuthState::Refreshing) &&
+        !Snapshot.AccountId.IsEmpty() && Snapshot.AuthGeneration.IsValid();
+
+    if (bHadAuthentication && !ViewState.bAuthenticated && !bRestartAfterLogout)
+    {
+        // 真正失效先取消旧流程，再由唯一Session Transport离开世界；同步注销回调启动
+        // 干净的人工登录流程，不能留下InWorld页面或自动重放过期票据。
+        UE_LOG(LogTemp, Log, TEXT("[DBA Flow] Authentication ended; restarting login flow."));
+        LogoutAndRestart();
+        return;
+    }
 
     if (Session)
     {
         Session->SetAuthenticationContext(
-            Snapshot.State == EGamePlatformAuthState::Authenticated
+            ViewState.bAuthenticated
                 ? Snapshot.AccountId
                 : FString(),
             Snapshot.AuthGeneration);

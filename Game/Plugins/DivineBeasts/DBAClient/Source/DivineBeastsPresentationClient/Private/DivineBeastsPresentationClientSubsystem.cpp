@@ -6,6 +6,7 @@
 #include "Catalog/DivineBeastsPresentationProjectCatalog.h"
 #include "Context/DivineBeastsProjectContextContributor.h"
 #include "Engine/LocalPlayer.h"
+#include "GameFramework/PlayerController.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Definitions/GamePlatformPrimaryDataAsset.h"
@@ -52,6 +53,17 @@ void UDivineBeastsPresentationClientSubsystem::Initialize(
         EnsureStarterAudioForWorld(Player->GetWorld());
         EnsureAudioLibraryForWorld(Player->GetWorld());
     }
+}
+
+/** 前端/新手村本地Controller就绪时再确认一次音频；同World重复通知无副作用。 */
+void UDivineBeastsPresentationClientSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
+{
+    Super::PlayerControllerChanged(NewPlayerController);
+    if (bClosing || !IsValid(NewPlayerController) || !GetLocalPlayer() ||
+        NewPlayerController->GetLocalPlayer() != GetLocalPlayer()) return;
+    UWorld* World = NewPlayerController->GetWorld();
+    if (!World || World->bIsTearingDown || World != GetLocalPlayer()->GetWorld()) return;
+    EnsureStarterAudioForWorld(World);
 }
 
 void UDivineBeastsPresentationClientSubsystem::Deinitialize()
@@ -630,9 +642,11 @@ void UDivineBeastsPresentationClientSubsystem::HandleLogicalPreloadCompleted(con
         AmbientFauna.Pack.IsValid() && AmbientFauna.Pack.Id == PackHandle.Id &&
         AmbientFauna.Pack.Generation == PackHandle.Generation)
         SubmitPendingEnvironmentFlocks(AmbientFauna);
-    // 音效定义全部预载成功并且目录发布后再启动场景循环；切图/取消不复活旧代请求。
-    if (!bClosing && Fragment.ContentPackId == TEXT("DBA.Audio.Starter") &&
-        StarterAudioPack.Id == PackHandle.Id && StarterAudioPack.Generation == PackHandle.Generation)
+    // 背景音乐或环境目录异步激活后立即触发对应循环。
+    // 只核对当前拥有的有效包句柄和代次，不能再使用旧整包DBA.Audio.Starter身份。
+    if (!bClosing && (
+        (StarterMusicPack.Id == PackHandle.Id && StarterMusicPack.Generation == PackHandle.Generation) ||
+        (StarterAmbiencePack.Id == PackHandle.Id && StarterAmbiencePack.Generation == PackHandle.Generation)))
         SubmitStarterAudioForWorld();
     // 初次天气快照可能在真实VFX/SFX内容包异步加载完成之前到达。
     // Catalog已成功提交后按当前服务器时间重新发布本世界天气一次，

@@ -53,8 +53,10 @@ $editors = @(Get-CimInstance Win32_Process | Where-Object {
 if ($editors.Count -gt 0) { throw '同工程UnrealEditor仍运行，先安全关闭该会话' }
 $folder = Join-Path $root 'Game/Saved/Validation/TerrainColorV3FormalCover'
 if (!(Test-Path $folder)) { New-Item -ItemType Directory -Path $folder -Force | Out-Null }
-$applyLog = Join-Path $folder 'FormalDirt_UEApply_Final.log'
-$verifyLog = Join-Path $folder 'Formal10_UEColdVerify_Final.log'
+# 上一轮因55节点旧桥接SHA门禁提前拒绝，错误日志永久保留供追溯；
+# 使用专属新日志名恢复，不覆盖失败证据，也不重用任务运行产物。
+$applyLog = Join-Path $folder 'FormalDirt_UEApply_AfterBombingBridge.log'
+$verifyLog = Join-Path $folder 'Formal10_UEColdVerify_AfterBombingBridge.log'
 if ((Test-Path $applyLog) -or (Test-Path $verifyLog)) {
     throw '最终处理日志已经存在，不重用既有运行证据'
 }

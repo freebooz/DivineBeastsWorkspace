@@ -364,10 +364,8 @@ void UDivineBeastsLoginScreen::HandleLoginClicked()
     const FString LoginName =
         AccountInput->GetText().ToString().TrimStartAndEnd();
     const FString Password = PasswordInput->GetText().ToString();
-    // 操作音效只在客户端提交，不读取/保留密码；失败不阻止原登录命令。
-    if (ULocalPlayer* Player = GetOwningLocalPlayer())
-        if (auto* Audio = Player->GetSubsystem<UDivineBeastsPresentationClientSubsystem>())
-            Audio->PlayStarterUISound(TEXT("Click"));
+    // 登录按钮的统一单次音效由项目Screen基类OnClicked播放；
+    // 快捷自动登录直接提交命令，不伪造人手点击或重复播放声音。
     SubmitCredentials(LoginName, Password);
 }
 

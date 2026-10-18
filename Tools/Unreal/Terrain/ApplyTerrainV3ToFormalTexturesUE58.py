@@ -76,10 +76,31 @@ def inspect_inputs():
         })
     if len({x["layer"] for x in rows}) != 10 or len({x["asset"] for x in rows}) != 10:
         raise RuntimeError("地形层身份重复")
-    for rel in (MAP, BRIDGE):
-        old = bmap.get(rel)
-        if old is None or sha256(CONTENT / rel) != old["sha256"]:
-            raise RuntimeError("用户未授权改动正式地图或共享母材质，指纹已变")
+    # 世界地图从未获授权改动；保留执行前完整SHA，拒绝任何额外变化。
+    world_backup = bmap.get(MAP)
+    if world_backup is None or sha256(CONTENT / MAP) != world_backup["sha256"]:
+        raise RuntimeError("正式Village地图偏离执行前指纹，禁止重导入")
+    # 先前55节点共享母材质已由用户授权升级为81节点原生Texture Bombing。
+    # 不因旧十层备份不同就误拒绝本次修复，也绝不能无条件忽略共享材质SHA变化。
+    original_bridge = bmap.get(BRIDGE)
+    if original_bridge is None:
+        raise RuntimeError("共享Landscape原始回退记录缺失")
+    actual_bridge_sha = sha256(CONTENT / BRIDGE)
+    if actual_bridge_sha != original_bridge["sha256"]:
+        evidence_path = ROOT / "Game/Saved/Validation/VillageTerrainBombingV3/AssetProof.json"
+        if not evidence_path.is_file():
+            raise RuntimeError("共享材质已修改且没有UE原生纹理轰炸验证报告")
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+        if (evidence.get("material") !=
+                "/DBAWorldPack_Village/Materials/Landscape/M_DBA_Village_LandscapeBridge" or
+            evidence.get("sourceSha256") != original_bridge["sha256"] or
+            evidence.get("materialSha256") != actual_bridge_sha or
+            evidence.get("mapSha256") != world_backup["sha256"] or
+            evidence.get("expressionCount", 0) < 81 or
+            not evidence.get("coldVerifyPassed") or
+            len(evidence.get("roles", [])) != 3):
+            raise RuntimeError("共享材质没有通过完整原生轰炸链路SHA及冷重载门禁")
+        print("SSLM_V3_FORMAL_ACCEPT_VERIFIED_BOMBING_BRIDGE_SHA", actual_bridge_sha, flush=True)
     print("SSLM_V3_FORMAL_INPUTS_VERIFIED 10 BaseColor, 40 PBR original source, 12 safe backups", flush=True)
     return rows
 

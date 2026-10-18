@@ -15,6 +15,8 @@ ADivineBeastsVillageWolfAIController::ADivineBeastsVillageWolfAIController()
 {
     // 原生平台AI计时器是唯一决策驱动，不启用控制器逐帧Tick来扫描玩家。
     PrimaryActorTick.bCanEverTick = false;
+    // SSLM怪物持续追击有效交战目标；由平台按实际累计伤害转移仇恨，不因短时失去感知归家。
+    bRetainCombatTarget = true;
 }
 
 bool ADivineBeastsVillageWolfAIController::TryExecuteNativeAttack(AActor& ValidatedTarget)

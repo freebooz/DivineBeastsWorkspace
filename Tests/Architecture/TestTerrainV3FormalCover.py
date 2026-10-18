@@ -43,6 +43,11 @@ def check():
     assert 'replace_existing", True' in script
     assert 'MODE == "apply"' in script and 'MODE == "verify"' in script
     assert "EditorAssetLibrary" in script and "save_loaded_asset" in script
+    # 新Village共享母材质已经真实升级；Dirt修复必须接受其已审计的81节点SHA，
+    # 但不能直接跳过执行前World/材质回退快照、实际UE证据或冷重载门禁。
+    assert "SSLM_V3_FORMAL_ACCEPT_VERIFIED_BOMBING_BRIDGE_SHA" in script
+    assert 'evidence.get("materialSha256") != actual_bridge_sha' in script
+    assert 'not evidence.get("coldVerifyPassed")' in script
     assert "delete_asset(" not in script and "set_editor_property(\"landscape_material\"" not in script
     assert BACKUP.is_file(), "必须先备份12份原资产"
     backup=json.loads(BACKUP.read_text(encoding="utf-8-sig"))

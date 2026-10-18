@@ -53,7 +53,7 @@ bool FDivineBeastsDevelopmentMagicLifecycleTest::RunTest(const FString&)
     Platform->OnRequestObserved().Remove(Observer);
     Platform->UnregisterProvider(Provider);
     // 即使VFX提供者拒绝命中请求，已预载的命中SFX仍须独立受理且只播放一次。
-    Service->StarterAudioWorld = World.Get(); Service->StarterAudioPack = Pack;
+    Service->StarterAudioWorld = World.Get(); Service->StarterSpellPack = Pack;
     const auto FireImpact = FGameplayTag::RequestGameplayTag(TEXT("Presentation.SSLM.Audio.Spell.Fire.Impact"));
     int32 ImpactAudioCount = 0;
     const FGuid AudioProvider = Platform->RegisterProvider(TEXT("Test.Magic.AudioOnly"), 0,
@@ -75,7 +75,7 @@ bool FDivineBeastsDevelopmentMagicLifecycleTest::RunTest(const FString&)
     TestEqual(TEXT("命中VFX拒绝及同步重入均不吞掉或重复命中音效"), ImpactAudioCount, 1);
     Platform->OnRequestObserved().Remove(AudioObserver);
     Platform->UnregisterProvider(AudioProvider);
-    Service->StarterAudioPack = {}; Service->StarterAudioWorld.Reset();
+    Service->StarterSpellPack = {}; Service->StarterAudioWorld.Reset();
     Service->UnbindDevelopmentMagicWorld();
     TestEqual(TEXT("解绑后所有自有条目撤销"),Service->DevelopmentMagicFlights.Num(),0);
     World->DestroyWorld(false);

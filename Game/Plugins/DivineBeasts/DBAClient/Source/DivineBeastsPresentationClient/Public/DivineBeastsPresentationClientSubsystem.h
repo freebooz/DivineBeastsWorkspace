@@ -50,6 +50,8 @@ class DIVINEBEASTSPRESENTATIONCLIENT_API UDivineBeastsPresentationClientSubsyste
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
+    /** 旅行后本地控制器绑定可能迟于PostLoadMap；事件驱动补齐村庄音乐首次装载。 */
+    virtual void PlayerControllerChanged(APlayerController* NewPlayerController) override;
 
     bool UpdateProjectContext(
         const FDivineBeastsPresentationProjectContext& Context,
@@ -374,8 +376,11 @@ private:
     FDivineBeastsPresentationContentPackHandle WeatherAudioHandle;
     bool bWeatherVisualAttempted = false;
     bool bWeatherAudioAttempted = false;
-    /** 首批音频的世界级内容租约与两个循环请求，实际播放实例仍只归平台SFX。 */
-    FDivineBeastsPresentationContentPackHandle StarterAudioPack;
+    /** 首批客户端音频按播放领域分包预载，UI/技能/音乐/环境任何单类失败不相互阻塞。 */
+    FDivineBeastsPresentationContentPackHandle StarterAudioPack; // UI按钮三音效
+    FDivineBeastsPresentationContentPackHandle StarterSpellPack; // 原型施法三音效
+    FDivineBeastsPresentationContentPackHandle StarterMusicPack; // 当前世界一段背景音乐
+    FDivineBeastsPresentationContentPackHandle StarterAmbiencePack; // 新手村森林氛围
     TWeakObjectPtr<UWorld> StarterAudioWorld;
     FGuid StarterMusicRequestId;
     FGameplayTag StarterMusicTag;

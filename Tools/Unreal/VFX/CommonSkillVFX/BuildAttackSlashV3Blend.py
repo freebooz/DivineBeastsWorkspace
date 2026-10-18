@@ -44,8 +44,8 @@ def frame(u):
     normal=tangent.cross(w).normalized();return i,o,center,normal
 def sheet(u,v,height=0):
     i,o,c,n=frame(u);return i+(o-i)*v+n*height
-verts=[];faces=[];uvs=[];slots=[]
-def patch(fn,nu,nv,slot):
+verts=[];faces=[];uvs=[];slots=[];groups={}
+def patch(fn,nu,nv,slot,group=None):
     offset=len(verts)
     for a in range(nu+1):
         for b in range(nv+1):verts.append(tuple(fn(.0002+.9996*a/nu,b/nv)))
@@ -55,6 +55,7 @@ def patch(fn,nu,nv,slot):
             vv=lambda k:(1+math.cos(k/nv*math.tau))*.5
             uvs.extend((((a/nu,vv(b)),((a+1)/nu,vv(b)),(a/nu,vv(b+1))),((a/nu,vv(b+1)),((a+1)/nu,vv(b)),((a+1)/nu,vv(b+1)))))
             slots.extend((slot,slot))
+    if group:groups[group]=list(range(offset,len(verts)))
 curve('Shape_Outer',outer);curve('Shape_Inner',inner)
 def blade(u,v):
     i,o,c,n=frame(u);phi=v*math.tau
@@ -70,26 +71,50 @@ def ribbon(name,points,width,slot,flatten=.12):
         if name.startswith('Cloud'):radius*=.25+1.1*math.sin(math.pi*u)**2
         return p+side*math.cos(v*math.tau)*radius+n*math.sin(v*math.tau)*radius*flatten
     patch(fn,100 if name.startswith('Cloud') else 96,6 if slot==1 else 4,slot)
-# 薄流膜保留起伏和分离间隙，避免宽白带覆盖暗红刃腹。
-for j,(v,width,height) in enumerate(((.88,2.3,5),(.62,3.2,-9),(.34,4.4,11))):
+# 两条低位薄流膜只承接挥斩，顶部由宽幅火焰体承担，不再铺满平行长丝。
+for j,(v,width,height) in enumerate(((.84,3.6,5),(.30,4.6,-9))):
     pts=[sheet(k/12,v+.13*math.sin(k/12*math.pi*2+j),height*math.sin(math.pi*k/12)) for k in range(13)]
     ribbon('FlowMembrane_'+str(j),pts,width,1,.07)
-# 真实细锋及外围游丝，宽度上限0.45厘米；大部分能量细节由纹理/材质承担。
-for j,v in enumerate((1.0,.93,.49,.07)):
-    pts=[sheet(k/14,v+.035*math.sin(k/14*math.pi*3+j),2.5*math.sin(k/14*math.pi+j)) for k in range(15)]
-    ribbon('Filament_'+str(j),pts,.35 if j==0 else .30 if j==1 else .24,2,.65)
-# 两组非闭合云卷和一条回流云尾，在宽刃内随三维曲面弯曲。
-for name,uv,width,depth in [
- ('Cloud_Primary',[(.33,.18),(.40,.22),(.47,.38),(.51,.59),(.54,.71),(.58,.68),(.59,.51),(.56,.43),(.54,.51)],8.0,14),
- ('Cloud_Secondary',[(.54,.20),(.59,.35),(.63,.56),(.68,.65),(.72,.57),(.71,.40),(.68,.38),(.67,.48)],5.5,-10),
- ('Cloud_ReturnWisp',[(.25,.06),(.34,.08),(.42,.19),(.49,.32),(.52,.38)],1.2,9)]:
-    ribbon(name,[sheet(u,v,depth) for u,v in uv],width,1,.12)
-# 接触处少量短丝，属于同一攻击的视觉反馈；不判断真实命中。
-for j in range(6):
-    p=sheet(.58,1.25,2);delta=Vector((math.cos(j*1.05)*18,math.sin(j*1.05)*14,8+j*2))
-    ribbon('ContactStrand_'+str(j),[p,p+delta*.6,p+delta],.18,2,.6)
+# 只留两条低位内嵌软流痕，移除顶部游丝及放射短丝，避免亚像素线条和断续亮点。
+for j,v in enumerate((.82,.25)):
+    pts=[sheet(.02+k/14*.48,v+.04*math.sin(k/14*math.pi*2+j),2*math.sin(math.pi*k/14)) for k in range(15)]
+    ribbon('Filament_'+str(j),pts,.35,2,.35)
+
+def flame_fold(name,edge_a,edge_b,depths,offset,thickness):
+    """以两条独立轮廓形成宽幅卷瓣及闭合透镜截面，宽度/厚度直接写入真实网格。"""
+    a=[unproject(p,d+offset) for p,d in zip(edge_a,depths)]
+    b=[unproject(p,d+offset) for p,d in zip(edge_b,depths)]
+    curve(name+'_Outer',a);curve(name+'_Inner',b)
+    def fn(u,v):
+        pa=sample(a,u);pb=sample(b,u);center=(pa+pb)*.5
+        tangent=(sample(a,min(1,u+.0002))+sample(b,min(1,u+.0002))-sample(a,max(0,u-.0002))-sample(b,max(0,u-.0002))).normalized()
+        normal=tangent.cross(pa-pb).normalized();angle=v*math.tau
+        # 卷瓣深度和局部厚度分开；中心抬起形成前后交错，不靠共面透明片叠加造厚。
+        bulge=math.sin(math.pi*u)**.8
+        return center+(pa-pb)*.5*math.cos(angle)+normal*(thickness*bulge*math.sin(angle)+8*math.sin(math.pi*u)*math.sin(u*math.pi*1.5))
+    patch(fn,80,12,1,name)
+
+flame_fold('FlameFold_Front',
+ [(630,605),(870,430),(1000,250),(1035,150),(970,105),(905,92)],
+ [(630,605),(760,447),(880,280),(920,180),(934,126),(905,92)],
+ [525,565,610,630,646,651],-24,3.8)
+flame_fold('FlameFold_Middle',
+ [(795,522),(1020,360),(1150,216),(1115,133),(1010,93)],
+ [(795,522),(898,354),(1025,219),(1032,153),(1010,93)],
+ [543,582,615,640,653],8,5.0)
+flame_fold('FlameFold_Back',
+ [(920,420),(1125,300),(1224,198),(1180,120),(1080,89)],
+ [(920,420),(1020,293),(1119,187),(1129,134),(1080,89)],
+ [563,598,621,643,654],30,6.0)
+
+# 同一Mesh/粒子中的有界空气包络，略宽于火焰主体；只承担局部折射，不生成新System。
+def air_shell(u,v):
+    i,o,c,n=frame(u);angle=v*math.tau
+    return c+(o-i)*.61*math.cos(angle)+n*((12+4*math.sin(math.pi*u))*math.sin(angle)+8)
+patch(air_shell,96,8,3,'AirWaveEnvelope')
 data=bpy.data.meshes.new('SM_DBA_AttackSlash_V3');data.from_pydata(verts,[],faces);data.update();obj=bpy.data.objects.new('SM_DBA_AttackSlash_V3',data);runtime.objects.link(obj)
-for name,col in [('Body',(1,.06,.008)),('FlowSheets',(1,.3,.035)),('Filaments',(1,.65,.2))]:
+for name,indices in groups.items():obj.vertex_groups.new(name=name).add(indices,1.,'REPLACE')
+for name,col in [('Body',(1,.06,.008)),('FlowSheets',(1,.3,.035)),('Filaments',(1,.65,.2)),('AirWave',(.1,.1,.1))]:
     mat=bpy.data.materials.new('M_Source_'+name);mat.diffuse_color=(*col,1);data.materials.append(mat)
 layer=data.uv_layers.new(name='FlowUV')
 for p,coords,slot in zip(data.polygons,uvs,slots):
@@ -99,5 +124,5 @@ obj.select_set(True);bpy.context.view_layer.objects.active=obj
 obj['Reference']='Reference_凝锋.png';obj['ManualAccepted']=False
 bpy.ops.export_scene.fbx(filepath=str(OUT/'SM_DBA_AttackSlash_V3.fbx'),use_selection=True,object_types={'MESH'},apply_unit_scale=True,axis_forward='-Y',axis_up='Z',mesh_smooth_type='FACE',add_leaf_bones=False,bake_anim=False)
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'AttackSlashV3.blend'))
-guide=dict(resolution=[1536,1024],camera=list(CAM),lookAt=list(LOOK),fov=60,effectOrigin=list(ORIGIN),outerPixels=OUTER,innerPixels=INNER,depthCm=DEPTH,filamentHalfWidthMaxCm=.35,vertices=len(verts),triangles=len(faces),manualAccepted=False)
+guide=dict(resolution=[1536,1024],camera=list(CAM),lookAt=list(LOOK),fov=60,effectOrigin=list(ORIGIN),outerPixels=OUTER,innerPixels=INNER,depthCm=DEPTH,filamentHalfWidthMaxCm=.35,vertices=len(verts),triangles=len(faces),materialSlots=4,styleRevision='broad_flame_air_02',broadFlameFoldCount=3,lowEmbeddedStrands=2,contactStrands=0,airWaveEnvelope=True,manualAccepted=False)
 (OUT/'ReferenceGuide.json').write_text(json.dumps(guide,indent=2),encoding='utf8');print('ATTACK_SLASH_V3_SOURCE_SAVED',len(faces),'triangles')

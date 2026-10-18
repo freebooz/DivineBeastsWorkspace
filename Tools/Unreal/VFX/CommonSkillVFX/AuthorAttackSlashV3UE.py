@@ -35,7 +35,7 @@ def materials():
         name='M_DBA_SlashV3_'+kind;m=unreal.load_asset(BASE+'/Materials/'+name)
         if m:LIB.delete_all_material_expressions(m)
         else:m=TOOLS.create_asset(name,BASE+'/Materials',unreal.Material,unreal.MaterialFactoryNew())
-        m.set_editor_property('blend_mode',unreal.BlendMode.BLEND_TRANSLUCENT if kind=='Body' else unreal.BlendMode.BLEND_ADDITIVE)
+        m.set_editor_property('blend_mode',unreal.BlendMode.BLEND_ADDITIVE if kind=='Filaments' else unreal.BlendMode.BLEND_TRANSLUCENT)
         m.set_editor_property('two_sided',False);m.set_editor_property('shading_model',unreal.MaterialShadingModel.MSM_UNLIT)
         LIB.set_base_material_usage(m,unreal.MaterialUsage.MATUSAGE_NIAGARA_MESH_PARTICLES,True)
         uv=node(m,unreal.MaterialExpressionTextureCoordinate);age=node(m,unreal.MaterialExpressionParticleRelativeTime);pc=node(m,unreal.MaterialExpressionParticleColor)
@@ -43,6 +43,8 @@ def materials():
         samples=[]
         for j in range(2 if kind!='Filaments' else 0):
             n=node(m,unreal.MaterialExpressionTextureSampleParameter2D);n.set_editor_property('parameter_name','EnergyArt');n.set_editor_property('texture',unreal.load_asset(BASE+'/Textures/T_DBA_SlashV3_Energy_Color'));n.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR)
+            n.set_editor_property('automatic_view_mip_bias',False);n.set_editor_property('mip_value_mode',unreal.TextureMipValueMode.TMVM_MIP_BIAS)
+            bias=scalar(m,'EnergyMipBias',.65);wire(bias,'',n,'Bias')
             uvcode=('return float2(UV.x-Clock*.16,.24+UV.y*.48+sin(UV.x*16-Clock*8)*.013);' if j==0 else 'return float2(UV.x*.91+Clock*.10,.16+UV.y*.50+sin(UV.x*11+Clock*6)*.02);')
             coords=custom(m,['UV','Clock'],uvcode,unreal.CustomMaterialOutputType.CMOT_FLOAT2);wire(uv,'',coords,'UV');wire(age,'',coords,'Clock');wire(coords,'',n,'UVs');samples.append(n)
         code='''float t=saturate(Clock);
@@ -52,20 +54,33 @@ float fade=smoothstep(0,.045,t)*smoothstep(0,.16,1-t);
 float envelope=reveal*retreat*fade*PC.a;
 '''
         if kind=='Filaments':
-            code+='''float across=pow(saturate(1-abs(UV.y*2-1)),.5);
-float travelling=.70+.30*sin(UV.x*21-t*13);
+            code+='''float aa=max(.08,fwidth(UV.y)*1.5);
+float across=1-smoothstep(.25-aa,.9+aa,abs(UV.y*2-1));
+float travelling=.86+.14*sin(UV.x*10-t*7);
 float3 rgb=lerp(float3(1,.17,.012),float3(1,.78,.28),across);
-return float4(rgb*PC.rgb,across*travelling*envelope*.88);'''
+return float4(rgb*PC.rgb,across*travelling*envelope*.28);'''
             names=['UV','Clock','PC'];nodes=[(uv,'','UV'),(age,'','Clock'),(pc,'RGBA','PC')]
         else:
-            code+='''float facing=.60+.40*abs(dot(normalize(N),normalize(V)));
+            code+='''float facing=.28+.72*pow(abs(dot(normalize(N),normalize(V))),.65);
 float weight=Art.a+Aux.a*.55;
 float3 energy=(Art.rgb*Art.a+Aux.rgb*Aux.a*.55)/max(.001,weight);
 float hot=saturate(max(energy.g,energy.b));
-float3 rgb=energy*(.80+hot*1.65)*facing;
-float alpha=saturate(weight*.84);
+float aa=max(.025,fwidth(UV.y)*1.5);
+float edge=smoothstep(0,aa,UV.y)*(1-smoothstep(1-aa,1,UV.y));
+float tide=.86+.14*sin(UV.x*11-t*6+sin(UV.y*4)*.7);
+float heat=smoothstep(.32,.94,UV.y+.055*sin(UV.x*13-t*5));
 '''
-            code+=('return float4(rgb*PC.rgb,alpha*envelope*.86);' if kind=='Body' else 'return float4(rgb*PC.rgb,alpha*envelope*.48);')
+            if kind=='Body':
+                code+='''float3 base=lerp(float3(.27,.008,.002),float3(1,.30,.025),heat);
+float band=exp(-pow((UV.y-(.78+.06*sin(UV.x*14-t*5)))/.11,2));
+float3 rgb=(base*tide+energy*.60+float3(1,.62,.12)*band*(.16+.40*hot))*facing;
+float alpha=saturate(.38+weight*.38)*edge;
+return float4(rgb*PC.rgb,alpha*envelope*.92);'''
+            else:
+                code+='''float3 base=lerp(float3(.38,.012,.002),float3(1,.48,.07),.22+.78*heat);
+float3 rgb=(base*tide+energy*(.60+hot*.40))*facing;
+float alpha=saturate(.30+weight*.45)*edge;
+return float4(rgb*PC.rgb,alpha*envelope*.82);'''
             names=['UV','Clock','PC','Art','Aux','N','V'];nodes=[(uv,'','UV'),(age,'','Clock'),(pc,'RGBA','PC'),(samples[0],'RGBA','Art'),(samples[1],'RGBA','Aux'),(normal,'','N'),(view,'','V')]
         value=custom(m,names,code,unreal.CustomMaterialOutputType.CMOT_FLOAT4)
         for src,pin,dest in nodes:wire(src,pin,value,dest)
@@ -75,7 +90,7 @@ float alpha=saturate(weight*.84);
         alpha=node(m,unreal.MaterialExpressionComponentMask)
         for p in ('r','g','b'):alpha.set_editor_property(p,False)
         alpha.set_editor_property('a',True);wire(value,'',alpha,'')
-        strength=scalar(m,'EmissionStrength',1.9 if kind=='Body' else 1.55 if kind=='FlowSheets' else 3.6)
+        strength=scalar(m,'EmissionStrength',1.9 if kind=='Body' else 2.25 if kind=='FlowSheets' else 2.4)
         emiss=node(m,unreal.MaterialExpressionMultiply);wire(rgb,'',emiss,'A');wire(strength,'',emiss,'B');output(emiss,unreal.MaterialProperty.MP_EMISSIVE_COLOR);output(alpha,unreal.MaterialProperty.MP_OPACITY)
         vertexnormal=node(m,unreal.MaterialExpressionVertexNormalWS)
         amplitude=.8 if kind=='Body' else .10 if kind=='FlowSheets' else .015
@@ -83,11 +98,34 @@ float alpha=saturate(weight*.84);
         for s,p,d in [(uv,'','UV'),(age,'','Clock'),(vertexnormal,'','N')]:wire(s,p,wobble,d)
         output(wobble,unreal.MaterialProperty.MP_WORLD_POSITION_OFFSET)
         LIB.layout_material_expressions(m);LIB.recompile_material(m);save(m)
+    air_material()
     mesh=unreal.load_asset(BASE+'/Meshes/SM_DBA_AttackSlash_V3')
     for i,slot in enumerate(mesh.get_editor_property('static_materials')):
-        key=next((k for k in ('Body','FlowSheets','Filaments') if k in str(slot.material_slot_name)),None);assert key
+        key=next((k for k in ('Body','FlowSheets','Filaments','AirWave') if k in str(slot.material_slot_name)),None);assert key
         mesh.set_material(i,unreal.load_asset(BASE+'/Materials/M_DBA_SlashV3_'+key))
     save(mesh);print('V3_THREE_LAYER_MATERIALS_SAVED')
+
+
+def air_material():
+    """同一粒子的局部空气波动层；显式2D偏移避免恒定透镜，有限包络随粒子寿命归零。"""
+    name='M_DBA_SlashV3_AirWave';m=unreal.load_asset(BASE+'/Materials/'+name)
+    if m:LIB.delete_all_material_expressions(m)
+    else:m=TOOLS.create_asset(name,BASE+'/Materials',unreal.Material,unreal.MaterialFactoryNew())
+    for p,v in [('blend_mode',unreal.BlendMode.BLEND_TRANSLUCENT),('shading_model',unreal.MaterialShadingModel.MSM_UNLIT),('two_sided',False),('refraction_method',unreal.RefractionMode.RM_2D_OFFSET)]:m.set_editor_property(p,v)
+    LIB.set_base_material_usage(m,unreal.MaterialUsage.MATUSAGE_NIAGARA_MESH_PARTICLES,True)
+    uv=node(m,unreal.MaterialExpressionTextureCoordinate);age=node(m,unreal.MaterialExpressionParticleRelativeTime)
+    strength=scalar(m,'HeatHazeStrength',.45)
+    offset=custom(m,['UV','Clock','Strength'],'''float t=saturate(Clock);
+float reveal=smoothstep(UV.x-.10,UV.x+.10,saturate(t/.25)*1.10);
+float retreat=1-smoothstep(UV.x-.14,UV.x+.14,saturate((t-.70)/.30)*1.15);
+float envelope=reveal*retreat*smoothstep(0,.09,t)*smoothstep(0,.18,1-t);
+float mask=pow(saturate(sin(UV.y*3.141593)),1.4)*sin(UV.x*3.141593);
+float2 waves=float2(sin(UV.x*24-t*14+sin(UV.y*9)),cos(UV.x*17+UV.y*11-t*12));
+return waves*(Strength*.003*mask*envelope);''',unreal.CustomMaterialOutputType.CMOT_FLOAT2)
+    for s,p,d in [(uv,'','UV'),(age,'','Clock'),(strength,'','Strength')]:wire(s,p,offset,d)
+    output(offset,unreal.MaterialProperty.MP_REFRACTION)
+    zero=node(m,unreal.MaterialExpressionConstant);zero.set_editor_property('r',0.);output(zero,unreal.MaterialProperty.MP_EMISSIVE_COLOR);output(zero,unreal.MaterialProperty.MP_OPACITY)
+    LIB.layout_material_expressions(m);LIB.recompile_material(m);save(m)
 
 
 def definition():

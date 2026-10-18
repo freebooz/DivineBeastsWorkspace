@@ -6,6 +6,7 @@
 #include "DivineBeastsUIScreen.generated.h"
 
 class UDivineBeastsUIViewModel;
+class UButton;
 
 /**
  * UDivineBeastsUIScreen（神兽联盟项目页面基类）。
@@ -47,6 +48,19 @@ protected:
     virtual void RefreshInitialState() override;
     virtual void OnViewModelStateChanged(int32 Revision, int32 PageGeneration) override;
 private:
+    /** 仅项目层拥有的页面激活期间监听UButton点击，统一映射UI音频而不碰视觉资产。 */
+    void BindButtonAudio();
+    void UnbindButtonAudio();
+    /** 按钮自身仍负责提交业务命令；这里只附加独立客户端音效。 */
+    UFUNCTION() void HandleButtonAudioClick();
+    UFUNCTION() void HandleButtonAudioConfirm();
+    UFUNCTION() void HandleButtonAudioCancel();
+    void PlayButtonAudio(FName ActionId);
+    /** 弱引用确保异步页面销毁后不会延长按钮和Widget树生命周期。 */
+    TArray<TWeakObjectPtr<UButton>> ClickAudioButtons;
+    TArray<TWeakObjectPtr<UButton>> ConfirmAudioButtons;
+    TArray<TWeakObjectPtr<UButton>> CancelAudioButtons;
+
     /** 协调唯一项目VM订阅；旧VM取消命令可同步重入，返回仅继续本次仍有效的选择。 */
     bool ReconcileProjectViewModelBinding();
     /** 精确拥有OnScreenActivated建立的项目状态订阅；Transient不改变资产或保存合同。 */

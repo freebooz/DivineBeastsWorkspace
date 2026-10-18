@@ -36,6 +36,10 @@ struct FGamePlatformAITargetCandidate
     bool bVisible = false;
     bool bHeard = false;
     bool bDamageSource = false;
+    /** 本次目标代次对本AI造成的权威实际伤害；不接受客户端声明，不跨生命继承。 */
+    double DamageThreat = 0.0;
+    /** 权威Combat正常已去重；重复到达的同一事件不能重复计仇恨。 */
+    FGuid LastDamageEventId;
 };
 
 UCLASS()
@@ -65,6 +69,9 @@ public:
         int32 ExpectedResourceGeneration, int32 ExpectedAIInstanceGeneration) const;
 
 protected:
+    /** 项目服务器策略选择持续交战。默认关闭，保持其他宿主原有感知/归家规则。
+     * 启用后有效当前目标不因距离/记忆超时脱战，累计伤害更高者可转移仇恨。 */
+    bool bRetainCombatTarget = false;
     UPROPERTY(EditDefaultsOnly, Category="AI")
     TSoftObjectPtr<UGamePlatformAIDefinition> DefaultDefinition;
 
@@ -175,7 +182,9 @@ private:
         const FVector& Location,
         bool bVisible,
         bool bHeard,
-        bool bDamageSource);
+        bool bDamageSource,
+        double ConfirmedDamage = 0.0,
+        const FGuid& DamageEventId = FGuid());
 
     AActor* SelectBestTarget();
     bool IsCandidateEligible(

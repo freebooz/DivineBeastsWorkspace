@@ -12,12 +12,15 @@ def package_hashes():
             for p in sorted(CONTENT.rglob('*')) if p.suffix in ('.uasset','.umap')}
 report=dict(passed=False,pid=os.getpid(),manualAccepted=False,packagedGPUVerified=False)
 try:
-    before=package_hashes();assert len(before)==12
+    before=package_hashes();assert len(before)==13
     assert unreal.Paths.get_project_file_path().replace('\\','/').endswith('/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject')
     assert unreal.SystemLibrary.get_engine_version().startswith('5.8.')
     mesh=unreal.load_asset(BASE+'/Meshes/SM_DBA_AttackSlash_V3');assert isinstance(mesh,unreal.StaticMesh)
-    slots=mesh.get_editor_property('static_materials');assert len(slots)==3
-    report['materials']=[s.material_interface.get_path_name() for s in slots];assert len(set(report['materials']))==3 and all(p.startswith(BASE+'/Materials/') for p in report['materials'])
+    slots=mesh.get_editor_property('static_materials');assert len(slots)==4
+    report['materials']=[s.material_interface.get_path_name() for s in slots];assert len(set(report['materials']))==4 and all(p.startswith(BASE+'/Materials/') for p in report['materials'])
+    air=unreal.load_asset(BASE+'/Materials/M_DBA_SlashV3_AirWave');assert isinstance(air,unreal.Material)
+    assert air.get_editor_property('refraction_method')==unreal.RefractionMode.RM_2D_OFFSET
+    report['airWave']=dict(material=air.get_path_name(),refraction='bounded explicit 2D offset',lifecycle='same Niagara particle',packagedGPUVerified=False)
     t=unreal.load_asset(BASE+'/Textures/T_DBA_SlashV3_Energy_Color');assert isinstance(t,unreal.Texture2D) and t.get_editor_property('srgb')
     assert t.get_editor_property('compression_settings')==unreal.TextureCompressionSettings.TC_BC7
     assert t.get_editor_property('power_of_two_mode')==unreal.TexturePowerOfTwoSetting.STRETCH_TO_POWER_OF_TWO and t.get_editor_property('max_texture_size')==2048

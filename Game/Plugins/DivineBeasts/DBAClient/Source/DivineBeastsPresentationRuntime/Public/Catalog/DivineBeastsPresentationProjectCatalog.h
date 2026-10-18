@@ -18,8 +18,8 @@ public:
     static FGamePlatformPresentationCatalogFragment BuildWaterVFXFragment();
     /** 天气SFX的项目片段；独立于Niagara，缺声音资源不阻断雨雪画面。 */
     static FGamePlatformPresentationCatalogFragment BuildWeatherSFXFragment();
-    /** 首批客户端音频映射；Definition先经Data租约完整预载，禁止将未交付声音注册成假成功。 */
-    static FGamePlatformPresentationCatalogFragment BuildStarterAudioFragment();
+    /** 首批音频映射；可按UI/Spell/Music.Village/Music.Login/Ambience.Forest筛选，避免相互阻断。 */
+    static FGamePlatformPresentationCatalogFragment BuildStarterAudioFragment(FName Category = NAME_None);
     /** 二期CC0音频库按Category构建真实语义映射；未知分类返回空目录，未加载资产不得假装可用。 */
     static FGamePlatformPresentationCatalogFragment BuildAudioLibraryFragment(FName Category);
     /** 前端角色预览四类可替换自然飘落外观；只生成中立目录映射，无Niagara播放器。 */

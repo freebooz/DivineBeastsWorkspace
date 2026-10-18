@@ -176,7 +176,7 @@ FDivineBeastsPresentationProjectCatalog::BuildWeatherSFXFragment()
 }
 /** SSLM首批音频数据目录：只映射语义到SFX定义身份，具体声音始终属于项目内容包。 */
 FGamePlatformPresentationCatalogFragment
-FDivineBeastsPresentationProjectCatalog::BuildStarterAudioFragment()
+FDivineBeastsPresentationProjectCatalog::BuildStarterAudioFragment(FName Category)
 {
     FGamePlatformPresentationCatalogFragment Fragment;
     Fragment.FragmentId = TEXT("DBA.Presentation.Audio.Starter");
@@ -204,6 +204,13 @@ FDivineBeastsPresentationProjectCatalog::BuildStarterAudioFragment()
     };
     for (const FAudioEntry& Audio : Entries)
     {
+        // 先按类别筛选，其他音频资源标签缺失不得阻止新手村背景音乐启动。
+        if (!Category.IsNone())
+        {
+            const FString EntryName(Audio.Name);
+            const FString Prefix = Category.ToString();
+            if (EntryName != Prefix && !EntryName.StartsWith(Prefix + TEXT("."))) continue;
+        }
         const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(Audio.Tag), false);
         if (!Tag.IsValid())
         {

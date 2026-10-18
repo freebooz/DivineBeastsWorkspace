@@ -10,7 +10,8 @@
 #include "Engine/World.h"
 
 /** 创建客户端World级音频目录并提交真实Data预载请求。
- * 缺声音资产/标签时不登记半成品；避免每帧轮询或创建重复播放组件。
+ * 独立为UI、法术、新手村音乐和环境声建立内容包事务。
+ * 某类定义预载失败不得阻止其他领域的播放；音乐与按钮互相不依赖。
  */
 void UDivineBeastsPresentationClientSubsystem::EnsureStarterAudioForWorld(UWorld* World)
 {
@@ -21,53 +22,79 @@ void UDivineBeastsPresentationClientSubsystem::EnsureStarterAudioForWorld(UWorld
         Player->GetWorld() != World || !PlatformPresentation)
         return;
 
-    // 首版2D音乐/环境只允许主本地玩家提交一次，避免分屏重复叠音。
+    // 一台客户端的世界音乐由第一个LocalPlayer独占，防止分屏双倍播放。
     UGameInstance* Instance = Player->GetGameInstance();
-    if (!Instance || Instance->GetFirstGamePlayer() != Player)
-        return;
+    if (!Instance || Instance->GetFirstGamePlayer() != Player) return;
 
-    if (StarterAudioWorld.Get() == World && StarterAudioPack.IsValid())
+    const FString MapName = World->GetMapName();
+    // 首期只根据正式地图身份启用自动背景音乐，避免开发审核地图误触发。
+    const bool bVillage = MapName.Contains(TEXT("L_Village_Start"), ESearchCase::IgnoreCase);
+    const bool bFrontEnd = MapName.Contains(TEXT("L_DBA_FrontEnd"), ESearchCase::IgnoreCase) ||
+        MapName.Contains(TEXT("L_DBA_CharacterStudio"), ESearchCase::IgnoreCase);
+    if (StarterAudioWorld.Get() != World)
     {
-        FString ExistingError;
-        const auto State = GetContentPackState(StarterAudioPack, ExistingError);
-        if (State == EDivineBeastsPresentationContentPackState::Loading ||
-            State == EDivineBeastsPresentationContentPackState::Active)
+        StopStarterAudioForWorld();
+        StarterAudioWorld = World;
+    }
+
+    auto EnsureGroup = [this, World](FName Group, int32 ExpectedCount,
+        FDivineBeastsPresentationContentPackHandle& Slot)
+    {
+        if (Slot.IsValid())
+        {
+            FString Error;
+            const auto State = GetContentPackState(Slot, Error);
+            if (State == EDivineBeastsPresentationContentPackState::Loading ||
+                State == EDivineBeastsPresentationContentPackState::Active) return;
+            Slot = {};
+        }
+
+        FDivineBeastsPresentationContentPackFragment Pack;
+        Pack.ContentPackId = FName(*(FString(TEXT("DBA.Audio.Starter.")) + Group.ToString()));
+        Pack.Revision = 1;
+        Pack.LifecycleScope = EGamePlatformPresentationContextScope::World;
+        Pack.bRequiredPreload = true;
+        // 在校验GameplayTag之前筛选分类；其它音效的缺陷不会影响本类。
+        Pack.CatalogFragment = FDivineBeastsPresentationProjectCatalog::BuildStarterAudioFragment(Group);
+        Pack.CatalogFragment.FragmentId = Pack.ContentPackId;
+        Pack.CatalogFragment.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
+        Pack.CatalogFragment.OwnerScopeId = Pack.ContentPackId;
+        Pack.CatalogFragment.LifecycleScope = Pack.LifecycleScope;
+        if (Pack.CatalogFragment.Entries.Num() != ExpectedCount)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("SSLM音频分类 %s 不完整，拒绝半包激活。"), *Group.ToString());
             return;
-    }
-    StopStarterAudioForWorld();
+        }
+        FString Error;
+        // Pending句柄先发布给Slot，防止同步完成回调比ActivateContentPack返回更早。
+        const auto Handle = ActivateContentPack(Pack, Error, &Slot);
+        if (!Handle.IsValid())
+        {
+            Slot = {};
+            UE_LOG(LogTemp, Warning, TEXT("SSLM音频分类 %s 预载失败：%s"), *Group.ToString(), *Error);
+        }
+        else if (!bClosing && StarterAudioWorld.Get() == World) Slot = Handle;
+        else if (Handle.IsValid()) DeactivateContentPack(Handle);
+    };
 
-    FDivineBeastsPresentationContentPackFragment Pack;
-    Pack.ContentPackId = TEXT("DBA.Audio.Starter");
-    Pack.Revision = 1;
-    Pack.LifecycleScope = EGamePlatformPresentationContextScope::World;
-    Pack.bRequiredPreload = true;
-    Pack.CatalogFragment = FDivineBeastsPresentationProjectCatalog::BuildStarterAudioFragment();
-    if (Pack.CatalogFragment.Entries.Num() != 9)
+    EnsureGroup(TEXT("UI"), 3, StarterAudioPack);
+    EnsureGroup(TEXT("Spell"), 3, StarterSpellPack);
+    if (bVillage)
     {
-        UE_LOG(LogTemp, Warning, TEXT("SSLM首批音频标签缺失，不挂载部分目录。"));
-        return;
+        EnsureGroup(TEXT("Music.Village"), 1, StarterMusicPack);
+        EnsureGroup(TEXT("Ambience.Forest"), 1, StarterAmbiencePack);
     }
-    Pack.CatalogFragment.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
-    Pack.CatalogFragment.OwnerScopeId = Pack.ContentPackId;
-    Pack.CatalogFragment.LifecycleScope = Pack.LifecycleScope;
-    for (auto& Entry : Pack.CatalogFragment.Entries)
-        Entry.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
+    else if (bFrontEnd)
+        EnsureGroup(TEXT("Music.Login"), 1, StarterMusicPack);
 
-    FString Error;
-    const auto Handle = ActivateContentPack(Pack, Error, &StarterAudioPack);
-    if (!Handle.IsValid())
-    {
-        StarterAudioPack = {};
-        UE_LOG(LogTemp, Warning, TEXT("SSLM音频内容包预载未受理：%s"), *Error);
-        return;
-    }
-    StarterAudioWorld = World;
-    StarterAudioPack = Handle;
+    // 同步完成数据预载时，也保证音乐导演能够在所属句柄登记后启动一次。
+    SubmitStarterAudioForWorld();
 }
 
 /** 先提交循环声音取消，再撤销自身拥有的内容包注册和租约。
  * 世界正在销毁时不再向旧世界发声，由平台SFX World清理实例。
  */
+/** 先取消当前世界背景音乐及环境，再撤销本地玩家所拥有的四个分类目录。 */
 void UDivineBeastsPresentationClientSubsystem::StopStarterAudioForWorld()
 {
     check(IsInGameThread());
@@ -91,37 +118,38 @@ void UDivineBeastsPresentationClientSubsystem::StopStarterAudioForWorld()
     StarterMusicRequestId.Invalidate();
     StarterAmbienceRequestId.Invalidate();
     StarterMusicTag = {};
-    const auto Pack = StarterAudioPack;
+
+    // 先失效本地所有权，后注销目录；同步通知不得重复关闭新世界句柄。
+    const FDivineBeastsPresentationContentPackHandle Packs[] = {
+        StarterAudioPack, StarterSpellPack, StarterMusicPack, StarterAmbiencePack
+    };
     StarterAudioPack = {};
+    StarterSpellPack = {};
+    StarterMusicPack = {};
+    StarterAmbiencePack = {};
     StarterAudioWorld.Reset();
-    if (Pack.IsValid()) DeactivateContentPack(Pack);
+    for (const auto& Pack : Packs)
+        if (Pack.IsValid()) DeactivateContentPack(Pack);
 }
 
 /** 内容包全部完成且目录成功注册后自动播放世界级音乐和森林声音。 */
+/** BGM与环境各自预载成功后独立启动；不因按钮或法术定义失败而静音。 */
 void UDivineBeastsPresentationClientSubsystem::SubmitStarterAudioForWorld()
 {
     check(IsInGameThread());
     UWorld* World = StarterAudioWorld.Get();
     if (bClosing || !World || World->bIsTearingDown || !PlatformPresentation ||
-        !GetLocalPlayer() || GetLocalPlayer()->GetWorld() != World)
-        return;
-    FString Error;
-    if (!StarterAudioPack.IsValid() ||
-        GetContentPackState(StarterAudioPack, Error) != EDivineBeastsPresentationContentPackState::Active)
-        return;
+        !GetLocalPlayer() || GetLocalPlayer()->GetWorld() != World) return;
 
-    // 场景识别仅用于首批原型配乐，正式音乐导演应基于ExperienceId/WorldDefinition。
     const FString MapName = World->GetMapName();
-    const bool bVillage = MapName.Contains(TEXT("Village"), ESearchCase::IgnoreCase);
-    const bool bFrontEnd = MapName.Contains(TEXT("FrontEnd"), ESearchCase::IgnoreCase) ||
-        MapName.Contains(TEXT("CharacterStudio"), ESearchCase::IgnoreCase);
-    if (!bVillage && !bFrontEnd)
-        return;
+    const bool bVillage = MapName.Contains(TEXT("L_Village_Start"), ESearchCase::IgnoreCase);
+    const bool bFrontEnd = MapName.Contains(TEXT("L_DBA_FrontEnd"), ESearchCase::IgnoreCase) ||
+        MapName.Contains(TEXT("L_DBA_CharacterStudio"), ESearchCase::IgnoreCase);
+    if (!bVillage && !bFrontEnd) return;
 
     auto SubmitLoop = [this, World](const TCHAR* TagName, FGuid& OutId, FGameplayTag* OutTag)
     {
-        if (OutId.IsValid() || bClosing || StarterAudioWorld.Get() != World)
-            return;
+        if (OutId.IsValid() || bClosing || StarterAudioWorld.Get() != World) return;
         FGamePlatformPresentationRequest Request;
         Request.RequestId = FGuid::NewGuid();
         Request.SemanticTag = FGameplayTag::RequestGameplayTag(FName(TagName), false);
@@ -137,11 +165,20 @@ void UDivineBeastsPresentationClientSubsystem::SubmitStarterAudioForWorld()
         {
             OutId = Request.RequestId;
             if (OutTag) *OutTag = Request.SemanticTag;
+            // Submitted只代表平台SFX已经接受播放请求，不能代替音频设备实际发声的检查。
+            UE_LOG(LogTemp, Log, TEXT("SSLM场景音频请求已受理：%s；地图：%s"),
+                TagName, *World->GetMapName());
         }
     };
-    SubmitLoop(bVillage ? TEXT("Presentation.SSLM.Audio.Music.Village") :
-        TEXT("Presentation.SSLM.Audio.Music.Login"), StarterMusicRequestId, &StarterMusicTag);
-    if (bVillage)
+
+    FString Error;
+    if (StarterMusicPack.IsValid() &&
+        GetContentPackState(StarterMusicPack, Error) == EDivineBeastsPresentationContentPackState::Active)
+        SubmitLoop(bVillage ? TEXT("Presentation.SSLM.Audio.Music.Village") :
+            TEXT("Presentation.SSLM.Audio.Music.Login"), StarterMusicRequestId, &StarterMusicTag);
+    Error.Reset();
+    if (bVillage && StarterAmbiencePack.IsValid() &&
+        GetContentPackState(StarterAmbiencePack, Error) == EDivineBeastsPresentationContentPackState::Active)
         SubmitLoop(TEXT("Presentation.SSLM.Audio.Ambience.Forest"), StarterAmbienceRequestId, nullptr);
 }
 
@@ -151,11 +188,15 @@ bool UDivineBeastsPresentationClientSubsystem::SubmitStarterOneShot(
 {
     check(IsInGameThread());
     UWorld* World = StarterAudioWorld.Get();
+    // 只有对应音频分类的真实Definition预载完成，才能提交按钮/技能表现请求。
+    const FString TagName(Semantic);
+    const auto& Pack = TagName.StartsWith(TEXT("Presentation.SSLM.Audio.UI."))
+        ? StarterAudioPack : StarterSpellPack;
     if (bClosing || !World || World->bIsTearingDown || !PlatformPresentation ||
-        Location.ContainsNaN() || !StarterAudioPack.IsValid())
+        Location.ContainsNaN() || !Pack.IsValid())
         return false;
     FString Error;
-    if (GetContentPackState(StarterAudioPack, Error) != EDivineBeastsPresentationContentPackState::Active)
+    if (GetContentPackState(Pack, Error) != EDivineBeastsPresentationContentPackState::Active)
         return false;
 
     FGamePlatformPresentationRequest Request;

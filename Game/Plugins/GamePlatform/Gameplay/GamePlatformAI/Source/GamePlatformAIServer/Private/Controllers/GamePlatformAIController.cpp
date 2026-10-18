@@ -396,7 +396,9 @@ void AGamePlatformAIController::HandleCombatEvent(
             Event.SourceActor->GetActorLocation(),
             false,
             false,
-            true);
+            true,
+            Event.AppliedMagnitude,
+            Event.EventId);
         EvaluateDecision();
     }
 
@@ -829,8 +831,10 @@ void AGamePlatformAIController::PruneCandidates()
     TArray<TWeakObjectPtr<AActor>> ToRemove;
     for (const TPair<TWeakObjectPtr<AActor>, FGamePlatformAITargetCandidate>& Pair : Candidates)
     {
+        const bool bRetainedCombat = bRetainCombatTarget &&
+            (Pair.Key == CurrentTarget || Pair.Value.DamageThreat > 0.0);
         if (!Pair.Key.IsValid() ||
-            Now - Pair.Value.LastSensedTime > Memory ||
+            (!bRetainedCombat && Now - Pair.Value.LastSensedTime > Memory) ||
             !IsCandidateEligible(Pair.Value))
         {
             ToRemove.Add(Pair.Key);
@@ -859,8 +863,14 @@ void AGamePlatformAIController::PruneCandidates()
     Candidates.GenerateValueArray(RankedCandidates);
     auto* Removed = GamePlatformAICandidateRetention::SelectRetained(
         RankedCandidates.GetData(), RankedCandidates.GetData() + RankedCandidates.Num(),
-        static_cast<std::size_t>(MaxCandidates), [](const auto& A, const auto& B)
+        static_cast<std::size_t>(MaxCandidates), [this](const auto& A, const auto& B)
         {
+            // 容量仍有界；高仇恨优先保留，同分保护正在交战的目标，避免感知噪声挤掉它。
+            if (bRetainCombatTarget)
+            {
+                if (A.DamageThreat != B.DamageThreat) return A.DamageThreat > B.DamageThreat;
+                if ((A.Actor == CurrentTarget) != (B.Actor == CurrentTarget)) return A.Actor == CurrentTarget;
+            }
             if (A.LastSensedTime != B.LastSensedTime) { return A.LastSensedTime > B.LastSensedTime; }
             // 同时间按稳定EntityId显式排序，不依赖TMap扫描顺序。
             if (A.EntityId.A != B.EntityId.A) { return A.EntityId.A < B.EntityId.A; }
@@ -881,7 +891,9 @@ void AGamePlatformAIController::UpsertCandidate(
     const FVector& Location,
     bool bVisible,
     bool bHeard,
-    bool bDamageSource)
+    bool bDamageSource,
+    double ConfirmedDamage,
+    const FGuid& DamageEventId)
 {
     if (!IsValid(Actor) || Actor == GetPawn() || !ActiveDefinition)
     {
@@ -901,6 +913,14 @@ void AGamePlatformAIController::UpsertCandidate(
     const bool bNew = !Candidates.Contains(Key);
     FGamePlatformAITargetCandidate& Candidate =
         Candidates.FindOrAdd(Key);
+
+    if (!bNew && (Candidate.EntityId != Provider->GetAITargetEntityId() ||
+        Candidate.Generation != Provider->GetAITargetGeneration()))
+    {
+        // 同一个Actor换化身后不可继承旧生命的仇恨或锁定；本次新感知可重新建立候选。
+        Candidate = {};
+        if (CurrentTarget == Key) SetCurrentTarget(nullptr);
+    }
 
     Candidate.Actor = Actor;
     Candidate.EntityId = Provider->GetAITargetEntityId();
@@ -923,6 +943,15 @@ void AGamePlatformAIController::UpsertCandidate(
     Candidate.bHeard = Candidate.bHeard || bHeard;
     Candidate.bDamageSource =
         Candidate.bDamageSource || bDamageSource;
+
+    if (bRetainCombatTarget && bDamageSource && FMath::IsFinite(ConfirmedDamage) &&
+        ConfirmedDamage > 0.0 && DamageEventId.IsValid() && Candidate.LastDamageEventId != DamageEventId)
+    {
+        // 只消费本Pawn Combat确认的实际伤害，不把Sight/Damage感知强度冒充伤害。
+        // 先计分再容量裁剪，容量已满时新的高仇恨来源仍能替换低分候选。
+        Candidate.DamageThreat = FMath::Min(1.0e12, Candidate.DamageThreat + ConfirmedDamage);
+        Candidate.LastDamageEventId = DamageEventId;
+    }
 
     if (bNew)
     {
@@ -966,6 +995,20 @@ AActor* AGamePlatformAIController::SelectBestTarget()
         if (!CandidateKey.bEligible)
         {
             continue;
+        }
+
+        if (bRetainCombatTarget && Best)
+        {
+            if (Candidate.DamageThreat != Best->DamageThreat)
+            {
+                if (Candidate.DamageThreat > Best->DamageThreat) { Best = &Candidate; BestKey = CandidateKey; }
+                continue;
+            }
+            if ((Candidate.Actor == CurrentTarget) != (Best->Actor == CurrentTarget))
+            {
+                if (Candidate.Actor == CurrentTarget) { Best = &Candidate; BestKey = CandidateKey; }
+                continue;
+            }
         }
 
         if (!Best ||
@@ -1013,7 +1056,10 @@ bool AGamePlatformAIController::IsCandidateEligible(
         }
     }
 
-    if (ActiveDefinition &&
+    // 持续交战只豁免出生点距离；死亡、跨世界、身份代次和Provider资格始终优先拒绝。
+    const bool bRetainedCombat = bRetainCombatTarget &&
+        (Candidate.Actor == CurrentTarget || Candidate.DamageThreat > 0.0);
+    if (!bRetainedCombat && ActiveDefinition &&
         ActiveDefinition->HomePolicy.LeashRadius > 0.0f &&
         FVector::DistSquared(
             HomeLocation,
@@ -1184,7 +1230,7 @@ void AGamePlatformAIController::UpdateTargetBehavior(AActor& Target)
             GetPawn()->GetActorLocation(),
             Target.GetActorLocation());
 
-    if (!Candidate->bVisible && Candidate->bHeard)
+    if (!Candidate->bVisible && Candidate->bHeard && !bRetainCombatTarget)
     {
         if (UBlackboardComponent* LocalBlackboard =
             GetBlackboardComponent())

@@ -107,7 +107,13 @@
     650
   ],
   "filamentHalfWidthMaxCm": 0.35,
-  "vertices": 11745,
-  "triangles": 19856,
+  "vertices": 9097,
+  "triangles": 16256,
+  "materialSlots": 4,
+  "styleRevision": "broad_flame_air_02",
+  "broadFlameFoldCount": 3,
+  "lowEmbeddedStrands": 2,
+  "contactStrands": 0,
+  "airWaveEnvelope": true,
   "manualAccepted": false
 }

@@ -1,0 +1,5034 @@
+{
+  "schemaVersion": 6,
+  "projectCode": "SSLM",
+  "editionZh": "历史原稿优先的十二生肖八技能 V6.0 人工审核稿",
+  "status": "PENDING_HUMAN_APPROVAL",
+  "sourceHistoricalLibraryFile": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+  "sourceCurrentDraft": "Docs/Design/ZodiacEightSlotSkills_V2.json",
+  "currentNamesApproval": "Docs/Design/ApprovedSkillDisplayNames_V5.json",
+  "sourceHistorySnapshot": "Docs/Design/ZodiacSkillV3Review/",
+  "decision": "V6_USER_REVIEW_ONLY_V5_CURRENT_UNCHANGED",
+  "heroCount": 12,
+  "activeSkillCount": 96,
+  "passiveCount": 12,
+  "activeSlots": [
+    {
+      "order": 1,
+      "slotId": "Primary",
+      "kindZh": "普攻",
+      "source": "新版扩展"
+    },
+    {
+      "order": 2,
+      "slotId": "Slot1",
+      "kindZh": "攻击一",
+      "source": "早期Q"
+    },
+    {
+      "order": 3,
+      "slotId": "Slot2",
+      "kindZh": "攻击二",
+      "source": "新版扩展"
+    },
+    {
+      "order": 4,
+      "slotId": "Slot4",
+      "kindZh": "终极",
+      "source": "早期R删旧王印联动"
+    },
+    {
+      "order": 5,
+      "slotId": "Slot3",
+      "kindZh": "移动",
+      "source": "早期E"
+    },
+    {
+      "order": 6,
+      "slotId": "Slot5",
+      "kindZh": "防御",
+      "source": "早期C"
+    },
+    {
+      "order": 7,
+      "slotId": "Slot6",
+      "kindZh": "控制",
+      "source": "早期W"
+    },
+    {
+      "order": 8,
+      "slotId": "Slot7",
+      "kindZh": "特色",
+      "source": "早期F"
+    }
+  ],
+  "rules": [
+    "原12个英雄完整角色名优先恢复，但不改已发布Hero.Zodiac.*、AssetId、GameplayTag。",
+    "早期六项核心招式优先恢复，其中因废止旧王印或超过4字而调整的名字留旧名作历史别名。",
+    "被动另列，不占8个可装载槽；部分治疗由未羊主导，卯兔存在条件性自愈，其他生肖原有支援不被强制改为治疗。",
+    "旧五行、三合六合六冲、全局神兽印记、王印能量和王印争夺全部不恢复；个体技能定向状态标记需独立定义。",
+    "现有V2一级伤害与CD只作为旧参考，恢复历史复杂玩法必须重新平衡；不给未经实现的GAS技能授权。",
+    "视觉图只是后续绘制文字配方，未生成、未审核、未导入；创建角色页面须后续采用已审核的8项展示图及独立被动卡。"
+  ],
+  "productionChangesMade": 0,
+  "nativeAssetsCreated": 0,
+  "buildPerformed": false,
+  "heroes": [
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "earlyCharacterFullNameZh": "子鼠·影牙灵君",
+      "currentHeroDisplayNameZh": "子鼠·影牙灵君",
+      "currentProjectShortAliasZh": "潜入刺客／嗅弱追猎",
+      "battleRoleZh": "潜入刺客／嗅弱追猎",
+      "passive": {
+        "nameZh": "嗅弱",
+        "descriptionZh": "仅提示一定范围内低血与落单目标方向，不显示精确坐标",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "影银与灰紫；鼠牙弧刃和短促影痕",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.rat_eight_fang_cut@1",
+          "proposedNameZh": "影牙斩",
+          "currentApprovedV5NameZh": "影牙斩",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "近身横切目标一次，作为获得常规气势的基础攻击。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 32,
+            "hitCount": 1,
+            "projectedMaxDamage": 32,
+            "cooldownSeconds": 0.8,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 220,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 32,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "影银与灰紫；鼠牙弧刃和短促影痕",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「影牙斩」为核心的独特动作主体：近身横切目标一次，作为获得常规气势的基础攻击。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "子鼠·影牙（历史全称：子鼠·影牙灵君）施放「影牙斩」。近身横切目标一次，作为获得常规气势的基础攻击。。以影银与灰紫；鼠牙弧刃和短促影痕为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.rat_eight_crescent_blade@1",
+          "proposedNameZh": "咬影",
+          "currentApprovedV5NameZh": "伏牙刺",
+          "earlyOriginalNameZh": "咬影",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "向前低伏牙突；侧背命中有额外伤害并附短流血，可被正面防御及转向反制。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 68,
+            "hitCount": 2,
+            "projectedMaxDamage": 136,
+            "cooldownSeconds": 4.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 850,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 68,
+                "hitCount": 2,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "影银与灰紫；鼠牙弧刃和短促影痕",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「咬影」为核心的独特动作主体：向前低伏牙突；侧背命中有额外伤害并附短流血，可被正面防御及转向反制。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "子鼠·影牙（历史全称：子鼠·影牙灵君）施放「咬影」。向前低伏牙突；侧背命中有额外伤害并附短流血，可被正面防御及转向反制。。以影银与灰紫；鼠牙弧刃和短促影痕为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.rat_eight_cross_fangs@1",
+          "proposedNameZh": "交牙斩",
+          "currentApprovedV5NameZh": "交牙斩",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "两道影牙交错切割，正面中心目标最多承受两段伤害。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 92,
+            "hitCount": 2,
+            "projectedMaxDamage": 184,
+            "cooldownSeconds": 8,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 350,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 92,
+                "hitCount": 2,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "影银与灰紫；鼠牙弧刃和短促影痕",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「交牙斩」为核心的独特动作主体：两道影牙交错切割，正面中心目标最多承受两段伤害。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "子鼠·影牙（历史全称：子鼠·影牙灵君）施放「交牙斩」。两道影牙交错切割，正面中心目标最多承受两段伤害。。以影银与灰紫；鼠牙弧刃和短促影痕为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.rat_eight_shadow_hunt@1",
+          "proposedNameZh": "万鼠影袭",
+          "currentApprovedV5NameZh": "三影袭",
+          "earlyOriginalNameZh": "万鼠盗王印",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "按合法落点连续最多三次影袭，尾段对低血目标增伤；换位仅依赖本次合法目标，不附带额外全局玩法结算。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 190,
+            "hitCount": 3,
+            "projectedMaxDamage": 570,
+            "cooldownSeconds": 62,
+            "momentumCost": 20,
+            "energyCost": 0,
+            "rangeCm": 900,
+            "radiusCm": 320,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 190,
+                "hitCount": 3,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "影银与灰紫；鼠牙弧刃和短促影痕",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「万鼠影袭」为核心的独特动作主体：按合法落点连续最多三次影袭，尾段对低血目标增伤；换位仅依赖本次合法目标，不附带额外全局玩法结算。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "子鼠·影牙（历史全称：子鼠·影牙灵君）施放「万鼠影袭」。按合法落点连续最多三次影袭，尾段对低血目标增伤；换位仅依赖本次合法目标，不附带额外全局玩法结算。。以影银与灰紫；鼠牙弧刃和短促影痕为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.rat_eight_shadow_step@1",
+          "proposedNameZh": "钻缝",
+          "currentApprovedV5NameZh": "穿隙",
+          "earlyOriginalNameZh": "钻缝",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "沿墙边或草隙短穿行，入口与出口均需服务器判定，不能穿封闭墙体。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 13,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 700,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "movement",
+                "distanceCm": 660,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "影银与灰紫；鼠牙弧刃和短促影痕",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「钻缝」为核心的独特动作主体：沿墙边或草隙短穿行，入口与出口均需服务器判定，不能穿封闭墙体。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "子鼠·影牙（历史全称：子鼠·影牙灵君）施放「钻缝」。沿墙边或草隙短穿行，入口与出口均需服务器判定，不能穿封闭墙体。。以影银与灰紫；鼠牙弧刃和短促影痕为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.rat_eight_mist_guard@1",
+          "proposedNameZh": "藏尾",
+          "currentApprovedV5NameZh": "敛影",
+          "earlyOriginalNameZh": "藏尾",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "极短收尾入影获得短促避选或加速并留下幻尾诱饵；避选时长与反隐效果待评审。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 20,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.16,
+                "durationSeconds": 4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "影银与灰紫；鼠牙弧刃和短促影痕",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「藏尾」为核心的独特动作主体：极短收尾入影获得短促避选或加速并留下幻尾诱饵；避选时长与反隐效果待评审。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "子鼠·影牙（历史全称：子鼠·影牙灵君）施放「藏尾」。极短收尾入影获得短促避选或加速并留下幻尾诱饵；避选时长与反隐效果待评审。。以影银与灰紫；鼠牙弧刃和短促影痕为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.rat_eight_shadow_snare@1",
+          "proposedNameZh": "咬筋",
+          "currentApprovedV5NameZh": "绊步牙",
+          "earlyOriginalNameZh": "咬筋",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "跃咬脚踝造成减速，特殊条件下有限抑制目标下一次位移；不是稳定定身。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 24,
+            "hitCount": 1,
+            "projectedMaxDamage": 24,
+            "cooldownSeconds": 17,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 800,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 24,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "control",
+                "controlType": "slow",
+                "durationSeconds": 2.2,
+                "slowFraction": 0.3
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "影银与灰紫；鼠牙弧刃和短促影痕",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「咬筋」为核心的独特动作主体：跃咬脚踝造成减速，特殊条件下有限抑制目标下一次位移；不是稳定定身。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "子鼠·影牙（历史全称：子鼠·影牙灵君）施放「咬筋」。跃咬脚踝造成减速，特殊条件下有限抑制目标下一次位移；不是稳定定身。。以影银与灰紫；鼠牙弧刃和短促影痕为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.rat_eight_fang_mark@1",
+          "proposedNameZh": "嗅踪",
+          "currentApprovedV5NameZh": "嗅踪",
+          "earlyOriginalNameZh": "嗅踪",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "限定范围内显示低血和落单目标的大致方向，不提供全图透视或精确位置。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 42,
+            "hitCount": 1,
+            "projectedMaxDamage": 42,
+            "cooldownSeconds": 19,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 850,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 42,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "buff",
+                "buffType": "next_hit_bonus",
+                "magnitudeFraction": 0.15,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "影银与灰紫；鼠牙弧刃和短促影痕",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「嗅踪」为核心的独特动作主体：限定范围内显示低血和落单目标的大致方向，不提供全图透视或精确位置。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "子鼠·影牙（历史全称：子鼠·影牙灵君）施放「嗅踪」。限定范围内显示低血和落单目标的大致方向，不提供全图透视或精确位置。。以影银与灰紫；鼠牙弧刃和短促影痕为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "原V2的第8槽包含直接伤害增伤标记，新版历史嗅踪改为侦察；隐身避选与三段跃迁都需独立服务器校验。",
+      "oldV5ChangedNames": 5
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "earlyCharacterFullNameZh": "丑牛·镇山玄角",
+      "currentHeroDisplayNameZh": "丑牛·镇山玄角",
+      "currentProjectShortAliasZh": "防线坦克／山门反推",
+      "battleRoleZh": "防线坦克／山门反推",
+      "passive": {
+        "nameZh": "镇山",
+        "descriptionZh": "站稳时逐渐提高正面减伤，后方受击与被迫移动不受该增益保护",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "赭金岩棕和青玉；双角、岩门与震波",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.ox_eight_horn_strike@1",
+          "proposedNameZh": "玄角撞",
+          "currentApprovedV5NameZh": "玄角撞",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "低头用玄角撞击近处单体，命中产生碎岩冲击。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 38,
+            "hitCount": 1,
+            "projectedMaxDamage": 38,
+            "cooldownSeconds": 0.95,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 225,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 38,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "赭金岩棕和青玉；双角、岩门与震波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「玄角撞」为核心的独特动作主体：低头用玄角撞击近处单体，命中产生碎岩冲击。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "丑牛·玄角（历史全称：丑牛·镇山玄角）施放「玄角撞」。低头用玄角撞击近处单体，命中产生碎岩冲击。。以赭金岩棕和青玉；双角、岩门与震波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.ox_eight_horn_break@1",
+          "proposedNameZh": "裂角",
+          "currentApprovedV5NameZh": "破甲角",
+          "earlyOriginalNameZh": "裂角",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "正前方角顶附短时破甲，命中墙边目标产生额外震荡；护甲系统需服务器实现。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 74,
+            "hitCount": 1,
+            "projectedMaxDamage": 74,
+            "cooldownSeconds": 5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 340,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 74,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "赭金岩棕和青玉；双角、岩门与震波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「裂角」为核心的独特动作主体：正前方角顶附短时破甲，命中墙边目标产生额外震荡；护甲系统需服务器实现。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "丑牛·玄角（历史全称：丑牛·镇山玄角）施放「裂角」。正前方角顶附短时破甲，命中墙边目标产生额外震荡；护甲系统需服务器实现。。以赭金岩棕和青玉；双角、岩门与震波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.ox_eight_ground_pulse@1",
+          "proposedNameZh": "裂地踏",
+          "currentApprovedV5NameZh": "裂地踏",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "重踏地面释放一次圆形地脉冲击，范围边界与起手清晰。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 96,
+            "hitCount": 1,
+            "projectedMaxDamage": 96,
+            "cooldownSeconds": 10,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 370,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 96,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "赭金岩棕和青玉；双角、岩门与震波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「裂地踏」为核心的独特动作主体：重踏地面释放一次圆形地脉冲击，范围边界与起手清晰。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "丑牛·玄角（历史全称：丑牛·镇山玄角）施放「裂地踏」。重踏地面释放一次圆形地脉冲击，范围边界与起手清晰。。以赭金岩棕和青玉；双角、岩门与震波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.ox_eight_mountain_break@1",
+          "proposedNameZh": "不动玄门",
+          "currentApprovedV5NameZh": "立山门",
+          "earlyOriginalNameZh": "不动玄门",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "前方升起可被攻击的定向巨石门，拦截部分位移与投射物，门前震退敌人；所有拦截只按石门自身持续时间及真实碰撞结算。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 222,
+            "hitCount": 1,
+            "projectedMaxDamage": 222,
+            "cooldownSeconds": 66,
+            "momentumCost": 20,
+            "energyCost": 0,
+            "rangeCm": 550,
+            "radiusCm": 540,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 222,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "control",
+                "controlType": "stun",
+                "durationSeconds": 0.8,
+                "slowFraction": 0
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "赭金岩棕和青玉；双角、岩门与震波",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「不动玄门」为核心的独特动作主体：前方升起可被攻击的定向巨石门，拦截部分位移与投射物，门前震退敌人；所有拦截只按石门自身持续时间及真实碰撞结算。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "丑牛·玄角（历史全称：丑牛·镇山玄角）施放「不动玄门」。前方升起可被攻击的定向巨石门，拦截部分位移与投射物，门前震退敌人；所有拦截只按石门自身持续时间及真实碰撞结算。。以赭金岩棕和青玉；双角、岩门与震波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.ox_eight_horn_charge@1",
+          "proposedNameZh": "沉步",
+          "currentApprovedV5NameZh": "沉步",
+          "earlyOriginalNameZh": "沉步",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "稳步顶盾推进并提高抗扰，转向慢，不能按高速冲锋结算。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 45,
+            "hitCount": 1,
+            "projectedMaxDamage": 45,
+            "cooldownSeconds": 16,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 750,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 45,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "movement",
+                "distanceCm": 760,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "赭金岩棕和青玉；双角、岩门与震波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「沉步」为核心的独特动作主体：稳步顶盾推进并提高抗扰，转向慢，不能按高速冲锋结算。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "丑牛·玄角（历史全称：丑牛·镇山玄角）施放「沉步」。稳步顶盾推进并提高抗扰，转向慢，不能按高速冲锋结算。。以赭金岩棕和青玉；双角、岩门与震波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.ox_eight_stone_armor@1",
+          "proposedNameZh": "镇山护壁",
+          "currentApprovedV5NameZh": "镇山壁",
+          "earlyOriginalNameZh": "镇山",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "进入正面守护姿态，部分承伤转护盾，结束轻反震；为避免被动重名采用镇山护壁。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 23,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.22,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "赭金岩棕和青玉；双角、岩门与震波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「镇山护壁」为核心的独特动作主体：进入正面守护姿态，部分承伤转护盾，结束轻反震；为避免被动重名采用镇山护壁。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "丑牛·玄角（历史全称：丑牛·镇山玄角）施放「镇山护壁」。进入正面守护姿态，部分承伤转护盾，结束轻反震；为避免被动重名采用镇山护壁。。以赭金岩棕和青玉；双角、岩门与震波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.ox_eight_seismic_stun@1",
+          "proposedNameZh": "顶回",
+          "currentApprovedV5NameZh": "顶退",
+          "earlyOriginalNameZh": "顶回",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "向前猛顶并击退正面冲锋者，可被侧绕；区别于V2单纯眩晕。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 28,
+            "hitCount": 1,
+            "projectedMaxDamage": 28,
+            "cooldownSeconds": 18,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 375,
+            "radiusCm": 260,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 28,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "control",
+                "controlType": "stun",
+                "durationSeconds": 0.9,
+                "slowFraction": 0
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "赭金岩棕和青玉；双角、岩门与震波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「顶回」为核心的独特动作主体：向前猛顶并击退正面冲锋者，可被侧绕；区别于V2单纯眩晕。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "丑牛·玄角（历史全称：丑牛·镇山玄角）施放「顶回」。向前猛顶并击退正面冲锋者，可被侧绕；区别于V2单纯眩晕。。以赭金岩棕和青玉；双角、岩门与震波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.ox_eight_steadfast_roar@1",
+          "proposedNameZh": "立阵",
+          "currentApprovedV5NameZh": "盾阵",
+          "earlyOriginalNameZh": "立阵",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "建立固定盾阵，阵后友军获得减伤和抗击退；离开范围即失效。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 24,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 520,
+            "actions": [
+              {
+                "kind": "buff",
+                "buffType": "damage_reduction",
+                "magnitudeFraction": 0.12,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "赭金岩棕和青玉；双角、岩门与震波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「立阵」为核心的独特动作主体：建立固定盾阵，阵后友军获得减伤和抗击退；离开范围即失效。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "丑牛·玄角（历史全称：丑牛·镇山玄角）施放「立阵」。建立固定盾阵，阵后友军获得减伤和抗击退；离开范围即失效。。以赭金岩棕和青玉；双角、岩门与震波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "山门、顶回以及战阵要求权威碰撞、可破坏构筑物及服务器推力；V2仍仅有短眩晕与护盾。",
+      "oldV5ChangedNames": 5
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "earlyCharacterFullNameZh": "寅虎·啸岭白君",
+      "currentHeroDisplayNameZh": "寅虎·啸岭白君",
+      "currentProjectShortAliasZh": "爆发战士／猎物破甲",
+      "battleRoleZh": "爆发战士／猎物破甲",
+      "passive": {
+        "nameZh": "裂甲",
+        "descriptionZh": "持续命中同一敌人叠加有限防御削减，换目标减弱",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "白金与暖金；爪痕、虎吼、跃扑",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.tiger_eight_claw_strike@1",
+          "proposedNameZh": "白虎爪",
+          "currentApprovedV5NameZh": "白虎爪",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "短距离白虎爪击，为近战普攻积累气势。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 36,
+            "hitCount": 1,
+            "projectedMaxDamage": 36,
+            "cooldownSeconds": 0.75,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 240,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 36,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "白金与暖金；爪痕、虎吼、跃扑",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「白虎爪」为核心的独特动作主体：短距离白虎爪击，为近战普攻积累气势。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "寅虎·白君（历史全称：寅虎·啸岭白君）施放「白虎爪」。短距离白虎爪击，为近战普攻积累气势。。以白金与暖金；爪痕、虎吼、跃扑为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.tiger_eight_golden_rake@1",
+          "proposedNameZh": "裂爪",
+          "currentApprovedV5NameZh": "裂甲爪",
+          "earlyOriginalNameZh": "裂爪",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "白金爪击叠加可限制的裂甲层数，集中攻击同一猎物收益较高。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 76,
+            "hitCount": 2,
+            "projectedMaxDamage": 152,
+            "cooldownSeconds": 4.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 620,
+            "radiusCm": 280,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 76,
+                "hitCount": 2,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "白金与暖金；爪痕、虎吼、跃扑",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「裂爪」为核心的独特动作主体：白金爪击叠加可限制的裂甲层数，集中攻击同一猎物收益较高。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "寅虎·白君（历史全称：寅虎·啸岭白君）施放「裂爪」。白金爪击叠加可限制的裂甲层数，集中攻击同一猎物收益较高。。以白金与暖金；爪痕、虎吼、跃扑为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.tiger_eight_tiger_pounce@1",
+          "proposedNameZh": "双爪袭",
+          "currentApprovedV5NameZh": "双爪袭",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "交错两道虎爪迅速斩击，目标可格挡或位移避免第二段。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 100,
+            "hitCount": 2,
+            "projectedMaxDamage": 200,
+            "cooldownSeconds": 8.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 550,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 100,
+                "hitCount": 2,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "白金与暖金；爪痕、虎吼、跃扑",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「双爪袭」为核心的独特动作主体：交错两道虎爪迅速斩击，目标可格挡或位移避免第二段。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "寅虎·白君（历史全称：寅虎·啸岭白君）施放「双爪袭」。交错两道虎爪迅速斩击，目标可格挡或位移避免第二段。。以白金与暖金；爪痕、虎吼、跃扑为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.tiger_eight_tiger_roar_storm@1",
+          "proposedNameZh": "啸岭扑杀",
+          "currentApprovedV5NameZh": "虎啸扑",
+          "earlyOriginalNameZh": "白虎啸岭杀",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "虎啸警示后扑杀锁定目标，最后以重爪结算；不依赖跨英雄身份或全局连锁收益。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 236,
+            "hitCount": 3,
+            "projectedMaxDamage": 708,
+            "cooldownSeconds": 59,
+            "momentumCost": 23,
+            "energyCost": 0,
+            "rangeCm": 700,
+            "radiusCm": 480,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 236,
+                "hitCount": 3,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "白金与暖金；爪痕、虎吼、跃扑",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「啸岭扑杀」为核心的独特动作主体：虎啸警示后扑杀锁定目标，最后以重爪结算；不依赖跨英雄身份或全局连锁收益。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "寅虎·白君（历史全称：寅虎·啸岭白君）施放「啸岭扑杀」。虎啸警示后扑杀锁定目标，最后以重爪结算；不依赖跨英雄身份或全局连锁收益。。以白金与暖金；爪痕、虎吼、跃扑为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.tiger_eight_leaping_claw@1",
+          "proposedNameZh": "扑杀",
+          "currentApprovedV5NameZh": "虎扑",
+          "earlyOriginalNameZh": "扑杀",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "向合法猎物落点猛扑，命中产生有限伤害，可被门盾拦截。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 40,
+            "hitCount": 1,
+            "projectedMaxDamage": 40,
+            "cooldownSeconds": 13.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 750,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 40,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "movement",
+                "distanceCm": 710,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "白金与暖金；爪痕、虎吼、跃扑",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「扑杀」为核心的独特动作主体：向合法猎物落点猛扑，命中产生有限伤害，可被门盾拦截。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "寅虎·白君（历史全称：寅虎·啸岭白君）施放「扑杀」。向合法猎物落点猛扑，命中产生有限伤害，可被门盾拦截。。以白金与暖金；爪痕、虎吼、跃扑为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.tiger_eight_regal_guard@1",
+          "proposedNameZh": "虎踞",
+          "currentApprovedV5NameZh": "虎踞",
+          "earlyOriginalNameZh": "虎踞",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "低伏防御短时增加韧性和面向猎物减伤，不免疫集火。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 20,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.14,
+                "durationSeconds": 4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "白金与暖金；爪痕、虎吼、跃扑",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「虎踞」为核心的独特动作主体：低伏防御短时增加韧性和面向猎物减伤，不免疫集火。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "寅虎·白君（历史全称：寅虎·啸岭白君）施放「虎踞」。低伏防御短时增加韧性和面向猎物减伤，不免疫集火。。以白金与暖金；爪痕、虎吼、跃扑为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.tiger_eight_roar_shock@1",
+          "proposedNameZh": "虎啸",
+          "currentApprovedV5NameZh": "虎啸",
+          "earlyOriginalNameZh": "虎啸",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "扇形虎啸减速敌人，符合孤立条件者短暂失衡，不无条件群眩。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 26,
+            "hitCount": 1,
+            "projectedMaxDamage": 26,
+            "cooldownSeconds": 19,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 550,
+            "radiusCm": 340,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 26,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "control",
+                "controlType": "stun",
+                "durationSeconds": 0.7,
+                "slowFraction": 0
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "白金与暖金；爪痕、虎吼、跃扑",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「虎啸」为核心的独特动作主体：扇形虎啸减速敌人，符合孤立条件者短暂失衡，不无条件群眩。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "寅虎·白君（历史全称：寅虎·啸岭白君）施放「虎啸」。扇形虎啸减速敌人，符合孤立条件者短暂失衡，不无条件群眩。。以白金与暖金；爪痕、虎吼、跃扑为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.tiger_eight_battle_fervor@1",
+          "proposedNameZh": "开猎",
+          "currentApprovedV5NameZh": "开猎",
+          "earlyOriginalNameZh": "开猎",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "标定一名猎物并给方向提示，专注输出加成；猎物靠队友保护时效果减弱。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 18,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "buff",
+                "buffType": "damage_bonus",
+                "magnitudeFraction": 0.12,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "白金与暖金；爪痕、虎吼、跃扑",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「开猎」为核心的独特动作主体：标定一名猎物并给方向提示，专注输出加成；猎物靠队友保护时效果减弱。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "寅虎·白君（历史全称：寅虎·啸岭白君）施放「开猎」。标定一名猎物并给方向提示，专注输出加成；猎物靠队友保护时效果减弱。。以白金与暖金；爪痕、虎吼、跃扑为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "裂甲层数/重伤必须真正接入Combat结算，不能只改技能名。",
+      "oldV5ChangedNames": 3
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "earlyCharacterFullNameZh": "卯兔·踏月玉灵",
+      "currentHeroDisplayNameZh": "卯兔·踏月玉灵",
+      "currentProjectShortAliasZh": "高机动剑士／月影反击",
+      "battleRoleZh": "高机动剑士／月影反击",
+      "passive": {
+        "nameZh": "月闪",
+        "descriptionZh": "极短有效闪避窗成功时强化下一次月刃及回身反击",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "月白浅玉、淡粉；月环玉刃、轻花瓣",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.rabbit_eight_jade_moon_shot@1",
+          "proposedNameZh": "月辉弹",
+          "currentApprovedV5NameZh": "月辉弹",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "射出单枚月辉弹作远程基础攻击，命中积累普攻气势。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 29,
+            "hitCount": 1,
+            "projectedMaxDamage": 29,
+            "cooldownSeconds": 0.85,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 950,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 29,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "月白浅玉、淡粉；月环玉刃、轻花瓣",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「月辉弹」为核心的独特动作主体：射出单枚月辉弹作远程基础攻击，命中积累普攻气势。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "卯兔·玉灵（历史全称：卯兔·踏月玉灵）施放「月辉弹」。射出单枚月辉弹作远程基础攻击，命中积累普攻气势。。以月白浅玉、淡粉；月环玉刃、轻花瓣为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.rabbit_eight_crescent_arc@1",
+          "proposedNameZh": "玉刃",
+          "currentApprovedV5NameZh": "双月斩",
+          "earlyOriginalNameZh": "玉刃",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "双月刃轻斩，若刚完成成功闪避可追加一次有限反击。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 62,
+            "hitCount": 2,
+            "projectedMaxDamage": 124,
+            "cooldownSeconds": 5.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 960,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 62,
+                "hitCount": 2,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "月白浅玉、淡粉；月环玉刃、轻花瓣",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「玉刃」为核心的独特动作主体：双月刃轻斩，若刚完成成功闪避可追加一次有限反击。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "卯兔·玉灵（历史全称：卯兔·踏月玉灵）施放「玉刃」。双月刃轻斩，若刚完成成功闪避可追加一次有限反击。。以月白浅玉、淡粉；月环玉刃、轻花瓣为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.rabbit_eight_falling_petals@1",
+          "proposedNameZh": "落英月雨",
+          "currentApprovedV5NameZh": "落英雨",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "指定区域落下月玉花瓣形成圆形伤害区；非治疗技能。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 80,
+            "hitCount": 1,
+            "projectedMaxDamage": 80,
+            "cooldownSeconds": 10.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 920,
+            "radiusCm": 330,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 80,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "月白浅玉、淡粉；月环玉刃、轻花瓣",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「落英月雨」为核心的独特动作主体：指定区域落下月玉花瓣形成圆形伤害区；非治疗技能。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "卯兔·玉灵（历史全称：卯兔·踏月玉灵）施放「落英月雨」。指定区域落下月玉花瓣形成圆形伤害区；非治疗技能。。以月白浅玉、淡粉；月环玉刃、轻花瓣为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.rabbit_eight_moon_bloom@1",
+          "proposedNameZh": "千月回环",
+          "currentApprovedV5NameZh": "返影斩",
+          "earlyOriginalNameZh": "千月回环",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "借有效月影和目标依次闪击，最后回到起点附近；历史回身机制为主，不将V2群疗自动并入。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 168,
+            "hitCount": 1,
+            "projectedMaxDamage": 168,
+            "cooldownSeconds": 64,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 850,
+            "radiusCm": 470,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 168,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "healing",
+                "maxHealthFraction": 0.12,
+                "allowRevive": false
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "月白浅玉、淡粉；月环玉刃、轻花瓣",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「千月回环」为核心的独特动作主体：借有效月影和目标依次闪击，最后回到起点附近；历史回身机制为主，不将V2群疗自动并入。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "卯兔·玉灵（历史全称：卯兔·踏月玉灵）施放「千月回环」。借有效月影和目标依次闪击，最后回到起点附近；历史回身机制为主，不将V2群疗自动并入。。以月白浅玉、淡粉；月环玉刃、轻花瓣为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.rabbit_eight_moon_leap@1",
+          "proposedNameZh": "踏月",
+          "currentApprovedV5NameZh": "踏月",
+          "earlyOriginalNameZh": "踏月",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "短距离踏月位移，合法完美闪避窗成功时部分返还冷却。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 12,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 650,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "movement",
+                "distanceCm": 650,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "月白浅玉、淡粉；月环玉刃、轻花瓣",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「踏月」为核心的独特动作主体：短距离踏月位移，合法完美闪避窗成功时部分返还冷却。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "卯兔·玉灵（历史全称：卯兔·踏月玉灵）施放「踏月」。短距离踏月位移，合法完美闪避窗成功时部分返还冷却。。以月白浅玉、淡粉；月环玉刃、轻花瓣为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.rabbit_eight_jade_moon_shield@1",
+          "proposedNameZh": "回月",
+          "currentApprovedV5NameZh": "回月",
+          "earlyOriginalNameZh": "回月",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "回到最近月影或退后，清除减速并小额自疗；不能无限重置位置。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 17,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 800,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.16,
+                "durationSeconds": 4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "月白浅玉、淡粉；月环玉刃、轻花瓣",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「回月」为核心的独特动作主体：回到最近月影或退后，清除减速并小额自疗；不能无限重置位置。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "卯兔·玉灵（历史全称：卯兔·踏月玉灵）施放「回月」。回到最近月影或退后，清除减速并小额自疗；不能无限重置位置。。以月白浅玉、淡粉；月环玉刃、轻花瓣为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.rabbit_eight_lunar_bind@1",
+          "proposedNameZh": "月痕",
+          "currentApprovedV5NameZh": "绊月刃",
+          "earlyOriginalNameZh": "月痕",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "投出月刃造成减速，已积累限定层数者可短暂定身。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 22,
+            "hitCount": 1,
+            "projectedMaxDamage": 22,
+            "cooldownSeconds": 18,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 850,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 22,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "control",
+                "controlType": "slow",
+                "durationSeconds": 2,
+                "slowFraction": 0.35
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "月白浅玉、淡粉；月环玉刃、轻花瓣",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「月痕」为核心的独特动作主体：投出月刃造成减速，已积累限定层数者可短暂定身。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "卯兔·玉灵（历史全称：卯兔·踏月玉灵）施放「月痕」。投出月刃造成减速，已积累限定层数者可短暂定身。。以月白浅玉、淡粉；月环玉刃、轻花瓣为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.rabbit_eight_jade_heal@1",
+          "proposedNameZh": "月影",
+          "currentApprovedV5NameZh": "回春露",
+          "earlyOriginalNameZh": "月影",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "生成可受击的短暂月影残像；攻击残像的敌人暴露，非原V2的友军治疗。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 16,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 1000,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "healing",
+                "maxHealthFraction": 0.22,
+                "allowRevive": false
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "月白浅玉、淡粉；月环玉刃、轻花瓣",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「月影」为核心的独特动作主体：生成可受击的短暂月影残像；攻击残像的敌人暴露，非原V2的友军治疗。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "卯兔·玉灵（历史全称：卯兔·踏月玉灵）施放「月影」。生成可受击的短暂月影残像；攻击残像的敌人暴露，非原V2的友军治疗。。以月白浅玉、淡粉；月环玉刃、轻花瓣为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "历史月影假身、回月自疗及千月回环闪击与V2的治疗型终极及第8槽配置冲突，需优先确定角色转为闪避剑士。",
+      "oldV5ChangedNames": 5
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "earlyCharacterFullNameZh": "辰龙·御霄苍龙",
+      "currentHeroDisplayNameZh": "辰龙·御霄苍龙",
+      "currentProjectShortAliasZh": "天象法师／风云雷领域",
+      "battleRoleZh": "天象法师／风云雷领域",
+      "passive": {
+        "nameZh": "天象轮转",
+        "descriptionZh": "风云雷依技能顺序提供限定强化，独立于历史天印与五行关系系统",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "碧蓝苍青和云白玉金；龙首、鳞云、雷柱",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.dragon_eight_dragon_claw@1",
+          "proposedNameZh": "苍龙爪",
+          "currentApprovedV5NameZh": "苍龙爪",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "以凝练苍青龙爪光对近处目标造成一次魔法打击。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 34,
+            "hitCount": 1,
+            "projectedMaxDamage": 34,
+            "cooldownSeconds": 0.85,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 450,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 34,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "碧蓝苍青和云白玉金；龙首、鳞云、雷柱",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「苍龙爪」为核心的独特动作主体：以凝练苍青龙爪光对近处目标造成一次魔法打击。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "辰龙·苍龙（历史全称：辰龙·御霄苍龙）施放「苍龙爪」。以凝练苍青龙爪光对近处目标造成一次魔法打击。。以碧蓝苍青和云白玉金；龙首、鳞云、雷柱为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.dragon_eight_cloud_scale@1",
+          "proposedNameZh": "雷裁",
+          "currentApprovedV5NameZh": "雷裁",
+          "earlyOriginalNameZh": "雷裁",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "指定落点下落一道青白雷柱，有可辨识地面预警。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 67,
+            "hitCount": 2,
+            "projectedMaxDamage": 134,
+            "cooldownSeconds": 5.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 1030,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 67,
+                "hitCount": 2,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "碧蓝苍青和云白玉金；龙首、鳞云、雷柱",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「雷裁」为核心的独特动作主体：指定落点下落一道青白雷柱，有可辨识地面预警。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "辰龙·苍龙（历史全称：辰龙·御霄苍龙）施放「雷裁」。指定落点下落一道青白雷柱，有可辨识地面预警。。以碧蓝苍青和云白玉金；龙首、鳞云、雷柱为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.dragon_eight_azure_breath@1",
+          "proposedNameZh": "雷息",
+          "currentApprovedV5NameZh": "雷息",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "向前方锥形吐出云雷龙息，服务器按扇区结算有限伤害。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 100,
+            "hitCount": 1,
+            "projectedMaxDamage": 100,
+            "cooldownSeconds": 10,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 900,
+            "radiusCm": 340,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 100,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "碧蓝苍青和云白玉金；龙首、鳞云、雷柱",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「雷息」为核心的独特动作主体：向前方锥形吐出云雷龙息，服务器按扇区结算有限伤害。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "辰龙·苍龙（历史全称：辰龙·御霄苍龙）施放「雷息」。向前方锥形吐出云雷龙息，服务器按扇区结算有限伤害。。以碧蓝苍青和云白玉金；龙首、鳞云、雷柱为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.dragon_eight_dragon_ascension@1",
+          "proposedNameZh": "苍龙定天",
+          "currentApprovedV5NameZh": "三象域",
+          "earlyOriginalNameZh": "苍龙定天仪",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "指定风云雷场域按风压、云幕、雷裁三阶段推进，每段可反制；旧天印收束已删除。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 236,
+            "hitCount": 1,
+            "projectedMaxDamage": 236,
+            "cooldownSeconds": 72,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 1000,
+            "radiusCm": 590,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 236,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "碧蓝苍青和云白玉金；龙首、鳞云、雷柱",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「苍龙定天」为核心的独特动作主体：指定风云雷场域按风压、云幕、雷裁三阶段推进，每段可反制；旧天印收束已删除。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "辰龙·苍龙（历史全称：辰龙·御霄苍龙）施放「苍龙定天」。指定风云雷场域按风压、云幕、雷裁三阶段推进，每段可反制；旧天印收束已删除。。以碧蓝苍青和云白玉金；龙首、鳞云、雷柱为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.dragon_eight_cloud_stride@1",
+          "proposedNameZh": "御风",
+          "currentApprovedV5NameZh": "御风",
+          "earlyOriginalNameZh": "御风",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "踏风短距位移，路径附近友军可获得轻微短时助速。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 16,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 720,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "movement",
+                "distanceCm": 720,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "碧蓝苍青和云白玉金；龙首、鳞云、雷柱",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「御风」为核心的独特动作主体：踏风短距位移，路径附近友军可获得轻微短时助速。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "辰龙·苍龙（历史全称：辰龙·御霄苍龙）施放「御风」。踏风短距位移，路径附近友军可获得轻微短时助速。。以碧蓝苍青和云白玉金；龙首、鳞云、雷柱为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.dragon_eight_dragon_scale_guard@1",
+          "proposedNameZh": "云护",
+          "currentApprovedV5NameZh": "云盾",
+          "earlyOriginalNameZh": "云护",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "为自己及附近友军覆上有上限的云盾，降低部分远程伤害。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 22,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.18,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "碧蓝苍青和云白玉金；龙首、鳞云、雷柱",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「云护」为核心的独特动作主体：为自己及附近友军覆上有上限的云盾，降低部分远程伤害。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "辰龙·苍龙（历史全称：辰龙·御霄苍龙）施放「云护」。为自己及附近友军覆上有上限的云盾，降低部分远程伤害。。以碧蓝苍青和云白玉金；龙首、鳞云、雷柱为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
+          "proposedNameZh": "龙压",
+          "currentApprovedV5NameZh": "风压环",
+          "earlyOriginalNameZh": "龙压",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "释放双圈风压，外推内牵并可条件短麻痹；V2纯眩晕不足，需补权威推拉。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 32,
+            "hitCount": 1,
+            "projectedMaxDamage": 32,
+            "cooldownSeconds": 20,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 870,
+            "radiusCm": 200,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 32,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "control",
+                "controlType": "stun",
+                "durationSeconds": 0.9,
+                "slowFraction": 0
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "碧蓝苍青和云白玉金；龙首、鳞云、雷柱",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「龙压」为核心的独特动作主体：释放双圈风压，外推内牵并可条件短麻痹；V2纯眩晕不足，需补权威推拉。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "辰龙·苍龙（历史全称：辰龙·御霄苍龙）施放「龙压」。释放双圈风压，外推内牵并可条件短麻痹；V2纯眩晕不足，需补权威推拉。。以碧蓝苍青和云白玉金；龙首、鳞云、雷柱为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.dragon_eight_cloud_blessing@1",
+          "proposedNameZh": "龙域",
+          "currentApprovedV5NameZh": "风云域",
+          "earlyOriginalNameZh": "龙域",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "展开局部风云雷领域：限制突进、削弱局部远程视线并有限持续打击；离开领域可反制。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 25,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 780,
+            "radiusCm": 360,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.12,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "碧蓝苍青和云白玉金；龙首、鳞云、雷柱",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「龙域」为核心的独特动作主体：展开局部风云雷领域：限制突进、削弱局部远程视线并有限持续打击；离开领域可反制。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "辰龙·苍龙（历史全称：辰龙·御霄苍龙）施放「龙域」。展开局部风云雷领域：限制突进、削弱局部远程视线并有限持续打击；离开领域可反制。。以碧蓝苍青和云白玉金；龙首、鳞云、雷柱为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "雷裁保留；龙压真正推拉、龙域风云雷持续机制、苍龙定天三阶段不是V2单段伤害或群盾。",
+      "oldV5ChangedNames": 4
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "earlyCharacterFullNameZh": "巳蛇·幽鳞玄蛇",
+      "currentHeroDisplayNameZh": "巳蛇·幽鳞玄蛇",
+      "currentProjectShortAliasZh": "毒伤法师／路径封锁",
+      "battleRoleZh": "毒伤法师／路径封锁",
+      "passive": {
+        "nameZh": "毒记",
+        "descriptionZh": "记录本人蛇毒路径的接触次数，使有限持续毒效果有确定性收益",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.snake_eight_scale_bite@1",
+          "proposedNameZh": "幽鳞刺",
+          "currentApprovedV5NameZh": "幽鳞刺",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "中距离单鳞针造成一次魔法普攻打击。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 30,
+            "hitCount": 1,
+            "projectedMaxDamage": 30,
+            "cooldownSeconds": 0.8,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 780,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 30,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「幽鳞刺」为核心的独特动作主体：中距离单鳞针造成一次魔法普攻打击。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "巳蛇·幽鳞（历史全称：巳蛇·幽鳞玄蛇）施放「幽鳞刺」。中距离单鳞针造成一次魔法普攻打击。。以玄紫孔雀青；S形虹彩鳞片和盘绕光带为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.snake_eight_venom_spear@1",
+          "proposedNameZh": "毒牙",
+          "currentApprovedV5NameZh": "毒牙",
+          "earlyOriginalNameZh": "毒牙",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "蛇牙毒针单体命中后附有限持续毒伤与条件抑疗；不能无限叠毒。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 55,
+            "hitCount": 1,
+            "projectedMaxDamage": 55,
+            "cooldownSeconds": 5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 1000,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 55,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "buff",
+                "buffType": "damage_over_time",
+                "magnitudeFraction": 0.05,
+                "durationSeconds": 3
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「毒牙」为核心的独特动作主体：蛇牙毒针单体命中后附有限持续毒伤与条件抑疗；不能无限叠毒。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "巳蛇·幽鳞（历史全称：巳蛇·幽鳞玄蛇）施放「毒牙」。蛇牙毒针单体命中后附有限持续毒伤与条件抑疗；不能无限叠毒。。以玄紫孔雀青；S形虹彩鳞片和盘绕光带为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.snake_eight_serpent_arc@1",
+          "proposedNameZh": "双鳞弹",
+          "currentApprovedV5NameZh": "双鳞弹",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "左右两枚蛇鳞能量弹交错命中，单目标最多两段。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 80,
+            "hitCount": 2,
+            "projectedMaxDamage": 160,
+            "cooldownSeconds": 9,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 960,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 80,
+                "hitCount": 2,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「双鳞弹」为核心的独特动作主体：左右两枚蛇鳞能量弹交错命中，单目标最多两段。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "巳蛇·幽鳞（历史全称：巳蛇·幽鳞玄蛇）施放「双鳞弹」。左右两枚蛇鳞能量弹交错命中，单目标最多两段。。以玄紫孔雀青；S形虹彩鳞片和盘绕光带为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.snake_eight_serpent_maelstrom@1",
+          "proposedNameZh": "万毒归鳞",
+          "currentApprovedV5NameZh": "毒阵爆",
+          "earlyOriginalNameZh": "万毒归鳞",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "将本人铺设的毒纹引为三波毒潮：减速、抑疗、末段毒爆；离场可减伤。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 198,
+            "hitCount": 3,
+            "projectedMaxDamage": 594,
+            "cooldownSeconds": 67,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 940,
+            "radiusCm": 475,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 198,
+                "hitCount": 3,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「万毒归鳞」为核心的独特动作主体：将本人铺设的毒纹引为三波毒潮：减速、抑疗、末段毒爆；离场可减伤。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "巳蛇·幽鳞（历史全称：巳蛇·幽鳞玄蛇）施放「万毒归鳞」。将本人铺设的毒纹引为三波毒潮：减速、抑疗、末段毒爆；离场可减伤。。以玄紫孔雀青；S形虹彩鳞片和盘绕光带为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.snake_eight_sinuous_dash@1",
+          "proposedNameZh": "蛇行",
+          "currentApprovedV5NameZh": "蛇行",
+          "earlyOriginalNameZh": "蛇行",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "贴地S形合法滑行，经过自身毒带可有限加速。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 13,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 670,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "movement",
+                "distanceCm": 680,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「蛇行」为核心的独特动作主体：贴地S形合法滑行，经过自身毒带可有限加速。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "巳蛇·幽鳞（历史全称：巳蛇·幽鳞玄蛇）施放「蛇行」。贴地S形合法滑行，经过自身毒带可有限加速。。以玄紫孔雀青；S形虹彩鳞片和盘绕光带为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.snake_eight_shed_skin@1",
+          "proposedNameZh": "蜕鳞",
+          "currentApprovedV5NameZh": "蜕鳞",
+          "earlyOriginalNameZh": "蜕鳞",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "蜕下一层鳞影，清除轻度减速并短时减伤，留弱毒雾。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 21,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.15,
+                "durationSeconds": 4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「蜕鳞」为核心的独特动作主体：蜕下一层鳞影，清除轻度减速并短时减伤，留弱毒雾。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "巳蛇·幽鳞（历史全称：巳蛇·幽鳞玄蛇）施放「蜕鳞」。蜕下一层鳞影，清除轻度减速并短时减伤，留弱毒雾。。以玄紫孔雀青；S形虹彩鳞片和盘绕光带为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.snake_eight_coil_silence@1",
+          "proposedNameZh": "缠纹",
+          "currentApprovedV5NameZh": "蛇纹缚",
+          "earlyOriginalNameZh": "缠纹",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "布下蛇纹环，踩中减速，停留过久可短缠足；历史不是无条件沉默。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 24,
+            "hitCount": 1,
+            "projectedMaxDamage": 24,
+            "cooldownSeconds": 19,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 840,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 24,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "control",
+                "controlType": "silence",
+                "durationSeconds": 1.4,
+                "slowFraction": 0
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「缠纹」为核心的独特动作主体：布下蛇纹环，踩中减速，停留过久可短缠足；历史不是无条件沉默。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "巳蛇·幽鳞（历史全称：巳蛇·幽鳞玄蛇）施放「缠纹」。布下蛇纹环，踩中减速，停留过久可短缠足；历史不是无条件沉默。。以玄紫孔雀青；S形虹彩鳞片和盘绕光带为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.snake_eight_venom_mark@1",
+          "proposedNameZh": "封途",
+          "currentApprovedV5NameZh": "毒径",
+          "earlyOriginalNameZh": "封途",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "沿合法地面铺有限蛇形毒径，成熟后可引爆，敌人可绕开。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 38,
+            "hitCount": 1,
+            "projectedMaxDamage": 38,
+            "cooldownSeconds": 18,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 900,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 38,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "buff",
+                "buffType": "target_vulnerability",
+                "magnitudeFraction": 0.08,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "玄紫孔雀青；S形虹彩鳞片和盘绕光带",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「封途」为核心的独特动作主体：沿合法地面铺有限蛇形毒径，成熟后可引爆，敌人可绕开。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "巳蛇·幽鳞（历史全称：巳蛇·幽鳞玄蛇）施放「封途」。沿合法地面铺有限蛇形毒径，成熟后可引爆，敌人可绕开。。以玄紫孔雀青；S形虹彩鳞片和盘绕光带为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "历史缠纹为先减速后条件缠足，V2为沉默；封途为可绕行毒径，V2只有单体易伤标记。",
+      "oldV5ChangedNames": 3
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "earlyCharacterFullNameZh": "午马·赤焰雷蹄",
+      "currentHeroDisplayNameZh": "午马·赤焰雷蹄",
+      "currentProjectShortAliasZh": "游骑先锋／冲锋救援",
+      "battleRoleZh": "游骑先锋／冲锋救援",
+      "passive": {
+        "nameZh": "奔雷之势",
+        "descriptionZh": "直线奔跑累积冲势，急停与被减速降低层数，强化有限冲击与支援",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "青电蓝和银白；长线蹄印、踏波",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.horse_eight_thunder_hoof@1",
+          "proposedNameZh": "雷蹄踢",
+          "currentApprovedV5NameZh": "雷蹄踢",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "向近身敌人雷蹄踢击，普通攻击获取气势。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 37,
+            "hitCount": 1,
+            "projectedMaxDamage": 37,
+            "cooldownSeconds": 0.75,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 245,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 37,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "青电蓝和银白；长线蹄印、踏波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「雷蹄踢」为核心的独特动作主体：向近身敌人雷蹄踢击，普通攻击获取气势。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "午马·雷蹄（历史全称：午马·赤焰雷蹄）施放「雷蹄踢」。向近身敌人雷蹄踢击，普通攻击获取气势。。以青电蓝和银白；长线蹄印、踏波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.horse_eight_lightning_line@1",
+          "proposedNameZh": "雷枪",
+          "currentApprovedV5NameZh": "雷枪",
+          "earlyOriginalNameZh": "雷枪",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "雷枪前刺伤害随近期冲势有限变化，不能无限累加。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 68,
+            "hitCount": 1,
+            "projectedMaxDamage": 68,
+            "cooldownSeconds": 5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 850,
+            "radiusCm": 190,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 68,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "青电蓝和银白；长线蹄印、踏波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「雷枪」为核心的独特动作主体：雷枪前刺伤害随近期冲势有限变化，不能无限累加。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "午马·雷蹄（历史全称：午马·赤焰雷蹄）施放「雷枪」。雷枪前刺伤害随近期冲势有限变化，不能无限累加。。以青电蓝和银白；长线蹄印、踏波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.horse_eight_hooffall@1",
+          "proposedNameZh": "雷蹄波",
+          "currentApprovedV5NameZh": "雷蹄波",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "重踏地面产生单次环形电纹冲击。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 90,
+            "hitCount": 1,
+            "projectedMaxDamage": 90,
+            "cooldownSeconds": 9,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 325,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 90,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "青电蓝和银白；长线蹄印、踏波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「雷蹄波」为核心的独特动作主体：重踏地面产生单次环形电纹冲击。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "午马·雷蹄（历史全称：午马·赤焰雷蹄）施放「雷蹄波」。重踏地面产生单次环形电纹冲击。。以青电蓝和银白；长线蹄印、踏波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.horse_eight_thunder_stampede@1",
+          "proposedNameZh": "雷蹄破阵",
+          "currentApprovedV5NameZh": "破阵冲",
+          "earlyOriginalNameZh": "雷蹄破王阵",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "预告一条冲锋线后高速破阵，沿途合法碰撞并于终点释放蹄震；删除旧王阵关系。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 226,
+            "hitCount": 3,
+            "projectedMaxDamage": 678,
+            "cooldownSeconds": 62,
+            "momentumCost": 20,
+            "energyCost": 0,
+            "rangeCm": 940,
+            "radiusCm": 470,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 226,
+                "hitCount": 3,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "青电蓝和银白；长线蹄印、踏波",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「雷蹄破阵」为核心的独特动作主体：预告一条冲锋线后高速破阵，沿途合法碰撞并于终点释放蹄震；删除旧王阵关系。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "午马·雷蹄（历史全称：午马·赤焰雷蹄）施放「雷蹄破阵」。预告一条冲锋线后高速破阵，沿途合法碰撞并于终点释放蹄震；删除旧王阵关系。。以青电蓝和银白；长线蹄印、踏波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.horse_eight_wind_charger@1",
+          "proposedNameZh": "奔雷",
+          "currentApprovedV5NameZh": "奔雷",
+          "earlyOriginalNameZh": "奔雷",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "进入高速奔跑，沿直线积累冲势，急转向或受控损失冲势。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 38,
+            "hitCount": 1,
+            "projectedMaxDamage": 38,
+            "cooldownSeconds": 10.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 800,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 38,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "movement",
+                "distanceCm": 830,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "青电蓝和银白；长线蹄印、踏波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「奔雷」为核心的独特动作主体：进入高速奔跑，沿直线积累冲势，急转向或受控损失冲势。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "午马·雷蹄（历史全称：午马·赤焰雷蹄）施放「奔雷」。进入高速奔跑，沿直线积累冲势，急转向或受控损失冲势。。以青电蓝和银白；长线蹄印、踏波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.horse_eight_thunder_hide@1",
+          "proposedNameZh": "踏阵",
+          "currentApprovedV5NameZh": "护驰",
+          "earlyOriginalNameZh": "踏阵",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "冲锋期间获得有限韧性与减伤，被硬控中断时仍然结束冲势。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 18,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.13,
+                "durationSeconds": 4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "青电蓝和银白；长线蹄印、踏波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「踏阵」为核心的独特动作主体：冲锋期间获得有限韧性与减伤，被硬控中断时仍然结束冲势。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "午马·雷蹄（历史全称：午马·赤焰雷蹄）施放「踏阵」。冲锋期间获得有限韧性与减伤，被硬控中断时仍然结束冲势。。以青电蓝和银白；长线蹄印、踏波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.horse_eight_hoof_stun@1",
+          "proposedNameZh": "蹄震",
+          "currentApprovedV5NameZh": "震蹄",
+          "earlyOriginalNameZh": "蹄震",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "雷蹄震地打断邻近突进，冲势足够时额外击退；不是持续硬控。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 25,
+            "hitCount": 1,
+            "projectedMaxDamage": 25,
+            "cooldownSeconds": 17,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 450,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 25,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "control",
+                "controlType": "stun",
+                "durationSeconds": 0.8,
+                "slowFraction": 0
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "青电蓝和银白；长线蹄印、踏波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「蹄震」为核心的独特动作主体：雷蹄震地打断邻近突进，冲势足够时额外击退；不是持续硬控。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "午马·雷蹄（历史全称：午马·赤焰雷蹄）施放「蹄震」。雷蹄震地打断邻近突进，冲势足够时额外击退；不是持续硬控。。以青电蓝和银白；长线蹄印、踏波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.horse_eight_tailwind_aura@1",
+          "proposedNameZh": "先至",
+          "currentApprovedV5NameZh": "驰援",
+          "earlyOriginalNameZh": "先至",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "按有效战区或濒危友军方向迅速赶援，抵达提供短护盾；不作任意逃生。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 23,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 700,
+            "radiusCm": 420,
+            "actions": [
+              {
+                "kind": "buff",
+                "buffType": "movement_speed",
+                "magnitudeFraction": 0.16,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "青电蓝和银白；长线蹄印、踏波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「先至」为核心的独特动作主体：按有效战区或濒危友军方向迅速赶援，抵达提供短护盾；不作任意逃生。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "午马·雷蹄（历史全称：午马·赤焰雷蹄）施放「先至」。按有效战区或濒危友军方向迅速赶援，抵达提供短护盾；不作任意逃生。。以青电蓝和银白；长线蹄印、踏波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "原雷蹄破阵为真实移动冲锋而非静态三段伤害；先至须真正向盟友赶援。",
+      "oldV5ChangedNames": 4
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "earlyCharacterFullNameZh": "未羊·玉角灵铃",
+      "currentHeroDisplayNameZh": "未羊·玉角灵铃",
+      "currentProjectShortAliasZh": "治疗辅助／守愿反爆发",
+      "battleRoleZh": "治疗辅助／守愿反爆发",
+      "passive": {
+        "nameZh": "灵愿",
+        "descriptionZh": "治疗与护盾增加受护者的受击预警，不叠加历史愿印关联体系",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "浅玉绿、温金；玉角灵铃和圆形圣域",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.goat_eight_jade_horn@1",
+          "proposedNameZh": "玉角刺",
+          "currentApprovedV5NameZh": "玉角刺",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "玉角灵光短刺命中近处敌人。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 28,
+            "hitCount": 1,
+            "projectedMaxDamage": 28,
+            "cooldownSeconds": 0.9,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 560,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 28,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "浅玉绿、温金；玉角灵铃和圆形圣域",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「玉角刺」为核心的独特动作主体：玉角灵光短刺命中近处敌人。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "未羊·玉角（历史全称：未羊·玉角灵铃）施放「玉角刺」。玉角灵光短刺命中近处敌人。。以浅玉绿、温金；玉角灵铃和圆形圣域为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.goat_eight_jade_beam@1",
+          "proposedNameZh": "净光",
+          "currentApprovedV5NameZh": "引锋光",
+          "earlyOriginalNameZh": "净光",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "净玉光命中敌人造成轻伤、命中有效友军则微量治疗；敌友双模式必须互斥判定。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 62,
+            "hitCount": 1,
+            "projectedMaxDamage": 62,
+            "cooldownSeconds": 5.2,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 930,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 62,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "浅玉绿、温金；玉角灵铃和圆形圣域",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「净光」为核心的独特动作主体：净玉光命中敌人造成轻伤、命中有效友军则微量治疗；敌友双模式必须互斥判定。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "未羊·玉角（历史全称：未羊·玉角灵铃）施放「净光」。净玉光命中敌人造成轻伤、命中有效友军则微量治疗；敌友双模式必须互斥判定。。以浅玉绿、温金；玉角灵铃和圆形圣域为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.goat_eight_rune_ring@1",
+          "proposedNameZh": "玉符环",
+          "currentApprovedV5NameZh": "玉符环",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "在指定点激活玉符环，产生一次区域伤害波纹。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 83,
+            "hitCount": 1,
+            "projectedMaxDamage": 83,
+            "cooldownSeconds": 10,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 820,
+            "radiusCm": 330,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 83,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "浅玉绿、温金；玉角灵铃和圆形圣域",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「玉符环」为核心的独特动作主体：在指定点激活玉符环，产生一次区域伤害波纹。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "未羊·玉角（历史全称：未羊·玉角灵铃）施放「玉符环」。在指定点激活玉符环，产生一次区域伤害波纹。。以浅玉绿、温金；玉角灵铃和圆形圣域为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.goat_eight_sanctuary_dome@1",
+          "proposedNameZh": "万愿归铃",
+          "currentApprovedV5NameZh": "护愿铃",
+          "earlyOriginalNameZh": "万愿归铃",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "摇响群体灵铃，持续有限治疗、短护盾及轻控制净化；敌方仅受软压制。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 110,
+            "hitCount": 1,
+            "projectedMaxDamage": 110,
+            "cooldownSeconds": 70,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 850,
+            "radiusCm": 500,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 110,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.1,
+                "durationSeconds": 4
+              },
+              {
+                "kind": "healing",
+                "maxHealthFraction": 0.15,
+                "allowRevive": false
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "浅玉绿、温金；玉角灵铃和圆形圣域",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「万愿归铃」为核心的独特动作主体：摇响群体灵铃，持续有限治疗、短护盾及轻控制净化；敌方仅受软压制。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "未羊·玉角（历史全称：未羊·玉角灵铃）施放「万愿归铃」。摇响群体灵铃，持续有限治疗、短护盾及轻控制净化；敌方仅受软压制。。以浅玉绿、温金；玉角灵铃和圆形圣域为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.goat_eight_light_hoof@1",
+          "proposedNameZh": "铃步",
+          "currentApprovedV5NameZh": "铃步",
+          "earlyOriginalNameZh": "铃步",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "向合法低血友军短距铃步并给少量落点治疗。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 14.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 600,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "movement",
+                "distanceCm": 600,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "浅玉绿、温金；玉角灵铃和圆形圣域",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「铃步」为核心的独特动作主体：向合法低血友军短距铃步并给少量落点治疗。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "未羊·玉角（历史全称：未羊·玉角灵铃）施放「铃步」。向合法低血友军短距铃步并给少量落点治疗。。以浅玉绿、温金；玉角灵铃和圆形圣域为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.goat_eight_jade_barrier@1",
+          "proposedNameZh": "守愿",
+          "currentApprovedV5NameZh": "守愿",
+          "earlyOriginalNameZh": "守愿",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "提前守愿：仅一次阻止受护者致命伤害并给弱盾，触发后进入长冷却；免死机制另审。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 19,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 790,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.22,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "浅玉绿、温金；玉角灵铃和圆形圣域",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「守愿」为核心的独特动作主体：提前守愿：仅一次阻止受护者致命伤害并给弱盾，触发后进入长冷却；免死机制另审。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "未羊·玉角（历史全称：未羊·玉角灵铃）施放「守愿」。提前守愿：仅一次阻止受护者致命伤害并给弱盾，触发后进入长冷却；免死机制另审。。以浅玉绿、温金；玉角灵铃和圆形圣域为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.goat_eight_jade_bind@1",
+          "proposedNameZh": "安魂",
+          "currentApprovedV5NameZh": "缓铃",
+          "earlyOriginalNameZh": "安魂",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "安魂铃声减慢敌人并削弱其下一次爆发，偏守护型软控。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 18,
+            "hitCount": 1,
+            "projectedMaxDamage": 18,
+            "cooldownSeconds": 20,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 820,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 18,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "control",
+                "controlType": "slow",
+                "durationSeconds": 2.2,
+                "slowFraction": 0.4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "浅玉绿、温金；玉角灵铃和圆形圣域",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「安魂」为核心的独特动作主体：安魂铃声减慢敌人并削弱其下一次爆发，偏守护型软控。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "未羊·玉角（历史全称：未羊·玉角灵铃）施放「安魂」。安魂铃声减慢敌人并削弱其下一次爆发，偏守护型软控。。以浅玉绿、温金；玉角灵铃和圆形圣域为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.goat_eight_healing_dew@1",
+          "proposedNameZh": "铃印",
+          "currentApprovedV5NameZh": "回春铃",
+          "earlyOriginalNameZh": "铃印",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "为友军施加短祈愿符提高下一次治疗并净化一次轻控；不是直接治疗回血技。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 15,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 950,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "healing",
+                "maxHealthFraction": 0.25,
+                "allowRevive": false
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "浅玉绿、温金；玉角灵铃和圆形圣域",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「铃印」为核心的独特动作主体：为友军施加短祈愿符提高下一次治疗并净化一次轻控；不是直接治疗回血技。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "未羊·玉角（历史全称：未羊·玉角灵铃）施放「铃印」。为友军施加短祈愿符提高下一次治疗并净化一次轻控；不是直接治疗回血技。。以浅玉绿、温金；玉角灵铃和圆形圣域为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "历史净光双模式、守愿一次免死及铃印净化远比V2纯伤害／护盾／直接治疗复杂，需严格限制生存窗口。",
+      "oldV5ChangedNames": 4
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "earlyCharacterFullNameZh": "申猴·灵猴戏圣",
+      "currentHeroDisplayNameZh": "申猴·灵猴戏圣",
+      "currentProjectShortAliasZh": "分身扰阵／换位骗招",
+      "battleRoleZh": "分身扰阵／换位骗招",
+      "passive": {
+        "nameZh": "百戏本能",
+        "descriptionZh": "假身能模仿动作但不造成高额权威伤害；击中假身的敌人暴露反击窗口",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "灵金云白；棍锋回旋、戏法假身",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.monkey_eight_staff_tap@1",
+          "proposedNameZh": "灵棍点",
+          "currentApprovedV5NameZh": "灵棍点",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "近身快速金棍点打一次。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 34,
+            "hitCount": 1,
+            "projectedMaxDamage": 34,
+            "cooldownSeconds": 0.72,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 260,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 34,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "灵金云白；棍锋回旋、戏法假身",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「灵棍点」为核心的独特动作主体：近身快速金棍点打一次。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "申猴·灵猴（历史全称：申猴·灵猴戏圣）施放「灵棍点」。近身快速金棍点打一次。。以灵金云白；棍锋回旋、戏法假身为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.monkey_eight_staff_triple@1",
+          "proposedNameZh": "戏棍",
+          "currentApprovedV5NameZh": "戏棍",
+          "earlyOriginalNameZh": "戏棍",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "棍击目标；若敌人刚误击假身则追加有限背击收益。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 74,
+            "hitCount": 3,
+            "projectedMaxDamage": 222,
+            "cooldownSeconds": 5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 300,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 74,
+                "hitCount": 3,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "灵金云白；棍锋回旋、戏法假身",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「戏棍」为核心的独特动作主体：棍击目标；若敌人刚误击假身则追加有限背击收益。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "申猴·灵猴（历史全称：申猴·灵猴戏圣）施放「戏棍」。棍击目标；若敌人刚误击假身则追加有限背击收益。。以灵金云白；棍锋回旋、戏法假身为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.monkey_eight_cloud_sweep@1",
+          "proposedNameZh": "横扫棍",
+          "currentApprovedV5NameZh": "横扫棍",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "金棍大范围扇形横扫，结算有边界的正面伤害。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 89,
+            "hitCount": 1,
+            "projectedMaxDamage": 89,
+            "cooldownSeconds": 8.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 380,
+            "radiusCm": 300,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 89,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "灵金云白；棍锋回旋、戏法假身",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「横扫棍」为核心的独特动作主体：金棍大范围扇形横扫，结算有边界的正面伤害。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "申猴·灵猴（历史全称：申猴·灵猴戏圣）施放「横扫棍」。金棍大范围扇形横扫，结算有边界的正面伤害。。以灵金云白；棍锋回旋、戏法假身为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.monkey_eight_golden_afterimages@1",
+          "proposedNameZh": "万象戏台",
+          "currentApprovedV5NameZh": "换影台",
+          "earlyOriginalNameZh": "万象戏台",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "展开短时戏台与可见假身，可在假身间有限换位并在结束时轻扰乱；不是纯四段爆伤。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 208,
+            "hitCount": 4,
+            "projectedMaxDamage": 832,
+            "cooldownSeconds": 58,
+            "momentumCost": 20,
+            "energyCost": 0,
+            "rangeCm": 650,
+            "radiusCm": 450,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 208,
+                "hitCount": 4,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "灵金云白；棍锋回旋、戏法假身",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「万象戏台」为核心的独特动作主体：展开短时戏台与可见假身，可在假身间有限换位并在结束时轻扰乱；不是纯四段爆伤。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "申猴·灵猴（历史全称：申猴·灵猴戏圣）施放「万象戏台」。展开短时戏台与可见假身，可在假身间有限换位并在结束时轻扰乱；不是纯四段爆伤。。以灵金云白；棍锋回旋、戏法假身为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.monkey_eight_cloud_flip@1",
+          "proposedNameZh": "筋斗",
+          "currentApprovedV5NameZh": "筋斗",
+          "earlyOriginalNameZh": "筋斗",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "合法落点翻筋斗越过低矮障碍，不穿墙。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 11.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 850,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "movement",
+                "distanceCm": 820,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "灵金云白；棍锋回旋、戏法假身",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「筋斗」为核心的独特动作主体：合法落点翻筋斗越过低矮障碍，不穿墙。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "申猴·灵猴（历史全称：申猴·灵猴戏圣）施放「筋斗」。合法落点翻筋斗越过低矮障碍，不穿墙。。以灵金云白；棍锋回旋、戏法假身为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.monkey_eight_illusion_guard@1",
+          "proposedNameZh": "替身",
+          "currentApprovedV5NameZh": "替身",
+          "earlyOriginalNameZh": "替身",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "主动或受击前与真实已生成假身换位并短减伤；无假身时退化为短盾。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 17,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.15,
+                "durationSeconds": 4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "灵金云白；棍锋回旋、戏法假身",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「替身」为核心的独特动作主体：主动或受击前与真实已生成假身换位并短减伤；无假身时退化为短盾。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "申猴·灵猴（历史全称：申猴·灵猴戏圣）施放「替身」。主动或受击前与真实已生成假身换位并短减伤；无假身时退化为短盾。。以灵金云白；棍锋回旋、戏法假身为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.monkey_eight_staff_stun@1",
+          "proposedNameZh": "扰心",
+          "currentApprovedV5NameZh": "迷烟弹",
+          "earlyOriginalNameZh": "扰心",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "戏法烟弹减速并短时扰乱锁定，命中假身附近敌人时短失衡。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 30,
+            "hitCount": 1,
+            "projectedMaxDamage": 30,
+            "cooldownSeconds": 17,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 420,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 30,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "control",
+                "controlType": "stun",
+                "durationSeconds": 0.75,
+                "slowFraction": 0
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "灵金云白；棍锋回旋、戏法假身",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「扰心」为核心的独特动作主体：戏法烟弹减速并短时扰乱锁定，命中假身附近敌人时短失衡。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "申猴·灵猴（历史全称：申猴·灵猴戏圣）施放「扰心」。戏法烟弹减速并短时扰乱锁定，命中假身附近敌人时短失衡。。以灵金云白；棍锋回旋、戏法假身为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.monkey_eight_trickster_stride@1",
+          "proposedNameZh": "百戏",
+          "currentApprovedV5NameZh": "双影戏",
+          "earlyOriginalNameZh": "百戏",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "生成最多两个假身模拟起手，二次释放可与其中一个合法换位；假身可被揭露。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 20,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "buff",
+                "buffType": "evasion",
+                "magnitudeFraction": 0.12,
+                "durationSeconds": 4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "灵金云白；棍锋回旋、戏法假身",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「百戏」为核心的独特动作主体：生成最多两个假身模拟起手，二次释放可与其中一个合法换位；假身可被揭露。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "申猴·灵猴（历史全称：申猴·灵猴戏圣）施放「百戏」。生成最多两个假身模拟起手，二次释放可与其中一个合法换位；假身可被揭露。。以灵金云白；棍锋回旋、戏法假身为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "真实假身与换位需要服务端游戏实体或权威状态，V2仅伤害和闪避增益，不能用Niagara假身替代。",
+      "oldV5ChangedNames": 3
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "earlyCharacterFullNameZh": "酉鸡·金翎晨鸣",
+      "currentHeroDisplayNameZh": "酉鸡·金翎晨鸣",
+      "currentProjectShortAliasZh": "揭隐辅助／信息预警",
+      "battleRoleZh": "揭隐辅助／信息预警",
+      "passive": {
+        "nameZh": "暗迹",
+        "descriptionZh": "侦测一定范围潜行与分身行为的方向事件，不具有全图恒定视野",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.rooster_eight_golden_peck@1",
+          "proposedNameZh": "金羽击",
+          "currentApprovedV5NameZh": "金羽击",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "发射单枚曦金羽光，造成远程普攻伤害。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 30,
+            "hitCount": 1,
+            "projectedMaxDamage": 30,
+            "cooldownSeconds": 0.88,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 760,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 30,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「金羽击」为核心的独特动作主体：发射单枚曦金羽光，造成远程普攻伤害。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "酉鸡·金鸣（历史全称：酉鸡·金翎晨鸣）施放「金羽击」。发射单枚曦金羽光，造成远程普攻伤害。。以晨曦金和青蓝；金羽扇面、日轮声环为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.rooster_eight_feather_fan@1",
+          "proposedNameZh": "破晓",
+          "currentApprovedV5NameZh": "破隐羽",
+          "earlyOriginalNameZh": "破晓",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "扇形金羽光刃击中已揭露目标或分身时收益提高，具备反伪装职责。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 67,
+            "hitCount": 1,
+            "projectedMaxDamage": 67,
+            "cooldownSeconds": 5.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 1000,
+            "radiusCm": 270,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 67,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「破晓」为核心的独特动作主体：扇形金羽光刃击中已揭露目标或分身时收益提高，具备反伪装职责。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "酉鸡·金鸣（历史全称：酉鸡·金翎晨鸣）施放「破晓」。扇形金羽光刃击中已揭露目标或分身时收益提高，具备反伪装职责。。以晨曦金和青蓝；金羽扇面、日轮声环为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.rooster_eight_sunrise_wave@1",
+          "proposedNameZh": "晨鸣波",
+          "currentApprovedV5NameZh": "晨鸣波",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "向前释放晨鸣声环，造成有范围的魔法伤害。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 86,
+            "hitCount": 1,
+            "projectedMaxDamage": 86,
+            "cooldownSeconds": 9.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 850,
+            "radiusCm": 325,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 86,
+                "hitCount": 1,
+                "type": "Magic"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「晨鸣波」为核心的独特动作主体：向前释放晨鸣声环，造成有范围的魔法伤害。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "酉鸡·金鸣（历史全称：酉鸡·金翎晨鸣）施放「晨鸣波」。向前释放晨鸣声环，造成有范围的魔法伤害。。以晨曦金和青蓝；金羽扇面、日轮声环为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.rooster_eight_dawn_resonance@1",
+          "proposedNameZh": "破晓金鸣",
+          "currentApprovedV5NameZh": "护晓域",
+          "earlyOriginalNameZh": "破晓王鸣",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "召唤大范围破晓明域揭露潜行与假身、给队友短反偷袭护盾，不自动沿用V2群疗。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 190,
+            "hitCount": 1,
+            "projectedMaxDamage": 190,
+            "cooldownSeconds": 68,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 880,
+            "radiusCm": 520,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 190,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "healing",
+                "maxHealthFraction": 0.1,
+                "allowRevive": false
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「破晓金鸣」为核心的独特动作主体：召唤大范围破晓明域揭露潜行与假身、给队友短反偷袭护盾，不自动沿用V2群疗。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "酉鸡·金鸣（历史全称：酉鸡·金翎晨鸣）施放「破晓金鸣」。召唤大范围破晓明域揭露潜行与假身、给队友短反偷袭护盾，不自动沿用V2群疗。。以晨曦金和青蓝；金羽扇面、日轮声环为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.rooster_eight_feather_glide@1",
+          "proposedNameZh": "鸣步",
+          "currentApprovedV5NameZh": "鸣步",
+          "earlyOriginalNameZh": "鸣步",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "向可疑暗迹方向短距位移并短暂增强局部侦测。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 14,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 690,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "movement",
+                "distanceCm": 660,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「鸣步」为核心的独特动作主体：向可疑暗迹方向短距位移并短暂增强局部侦测。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "酉鸡·金鸣（历史全称：酉鸡·金翎晨鸣）施放「鸣步」。向可疑暗迹方向短距位移并短暂增强局部侦测。。以晨曦金和青蓝；金羽扇面、日轮声环为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.rooster_eight_wing_guard@1",
+          "proposedNameZh": "金羽",
+          "currentApprovedV5NameZh": "金羽盾",
+          "earlyOriginalNameZh": "金羽",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "给自己或友军附上金羽盾，敌方从隐匿发起攻击时有明确反揭示反馈。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 19,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 750,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.16,
+                "durationSeconds": 4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「金羽」为核心的独特动作主体：给自己或友军附上金羽盾，敌方从隐匿发起攻击时有明确反揭示反馈。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "酉鸡·金鸣（历史全称：酉鸡·金翎晨鸣）施放「金羽」。给自己或友军附上金羽盾，敌方从隐匿发起攻击时有明确反揭示反馈。。以晨曦金和青蓝；金羽扇面、日轮声环为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.rooster_eight_sonic_silence@1",
+          "proposedNameZh": "鸣震",
+          "currentApprovedV5NameZh": "止咒鸣",
+          "earlyOriginalNameZh": "鸣震",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "扇形鸣震，对正在隐藏或刚显形者短沉默，并令假身破相；普通目标软控。",
+          "currentV2CandidateStats": {
+            "damageType": "Magic",
+            "baseDamage": 20,
+            "hitCount": 1,
+            "projectedMaxDamage": 20,
+            "cooldownSeconds": 18,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 850,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 20,
+                "hitCount": 1,
+                "type": "Magic"
+              },
+              {
+                "kind": "control",
+                "controlType": "silence",
+                "durationSeconds": 1.2,
+                "slowFraction": 0
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「鸣震」为核心的独特动作主体：扇形鸣震，对正在隐藏或刚显形者短沉默，并令假身破相；普通目标软控。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "酉鸡·金鸣（历史全称：酉鸡·金翎晨鸣）施放「鸣震」。扇形鸣震，对正在隐藏或刚显形者短沉默，并令假身破相；普通目标软控。。以晨曦金和青蓝；金羽扇面、日轮声环为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.rooster_eight_first_light_heal@1",
+          "proposedNameZh": "晨鸣",
+          "currentApprovedV5NameZh": "回春鸣",
+          "earlyOriginalNameZh": "晨鸣",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "短时照亮区域并给出隐身、陷阱、埋伏方向提示；不提供全图视野。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 17,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 920,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "healing",
+                "maxHealthFraction": 0.2,
+                "allowRevive": false
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「晨鸣」为核心的独特动作主体：短时照亮区域并给出隐身、陷阱、埋伏方向提示；不提供全图视野。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "酉鸡·金鸣（历史全称：酉鸡·金翎晨鸣）施放「晨鸣」。短时照亮区域并给出隐身、陷阱、埋伏方向提示；不提供全图视野。。以晨曦金和青蓝；金羽扇面、日轮声环为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "角色首先是反潜行与情报辅助，历史晨鸣不等于V2直接治疗，破晓金鸣必须有揭隐边界。",
+      "oldV5ChangedNames": 5
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "earlyCharacterFullNameZh": "戌狗·守阙天犬",
+      "currentHeroDisplayNameZh": "戌狗·守阙天犬",
+      "currentProjectShortAliasZh": "护主半坦／突进拦截",
+      "battleRoleZh": "护主半坦／突进拦截",
+      "passive": {
+        "nameZh": "守阙",
+        "descriptionZh": "为一位绑定友军维护限定护卫强度，远离受护目标收益降低",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "天青石金；犬爪守护和定向天门",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.dog_eight_guardian_bite@1",
+          "proposedNameZh": "天犬咬",
+          "currentApprovedV5NameZh": "天犬咬",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "近身以天犬犬牙短咬目标。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 35,
+            "hitCount": 1,
+            "projectedMaxDamage": 35,
+            "cooldownSeconds": 0.85,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 250,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 35,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "天青石金；犬爪守护和定向天门",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「天犬咬」为核心的独特动作主体：近身以天犬犬牙短咬目标。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "戌狗·天犬（历史全称：戌狗·守阙天犬）施放「天犬咬」。近身以天犬犬牙短咬目标。。以天青石金；犬爪守护和定向天门为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
+          "proposedNameZh": "反咬",
+          "currentApprovedV5NameZh": "护主咬",
+          "earlyOriginalNameZh": "反咬",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "优先反咬最近攻击誓约友军的敌人，降低其下一次攻击效果。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 70,
+            "hitCount": 1,
+            "projectedMaxDamage": 70,
+            "cooldownSeconds": 5.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 620,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 70,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "天青石金；犬爪守护和定向天门",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「反咬」为核心的独特动作主体：优先反咬最近攻击誓约友军的敌人，降低其下一次攻击效果。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "戌狗·天犬（历史全称：戌狗·守阙天犬）施放「反咬」。优先反咬最近攻击誓约友军的敌人，降低其下一次攻击效果。。以天青石金；犬爪守护和定向天门为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.dog_eight_spirit_rake@1",
+          "proposedNameZh": "双灵爪",
+          "currentApprovedV5NameZh": "双灵爪",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "双爪连续追击同一敌人，最多两次命中。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 90,
+            "hitCount": 2,
+            "projectedMaxDamage": 180,
+            "cooldownSeconds": 9,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 400,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 90,
+                "hitCount": 2,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "天青石金；犬爪守护和定向天门",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「双灵爪」为核心的独特动作主体：双爪连续追击同一敌人，最多两次命中。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "戌狗·天犬（历史全称：戌狗·守阙天犬）施放「双灵爪」。双爪连续追击同一敌人，最多两次命中。。以天青石金；犬爪守护和定向天门为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.dog_eight_oath_guardian@1",
+          "proposedNameZh": "天门守阙",
+          "currentApprovedV5NameZh": "天门护",
+          "earlyOriginalNameZh": "天门守阙",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "在被守护友军前立大型定向天门，拦截部分投射物和正面冲锋，可绕后或集火破坏。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 170,
+            "hitCount": 1,
+            "projectedMaxDamage": 170,
+            "cooldownSeconds": 72,
+            "momentumCost": 18,
+            "energyCost": 0,
+            "rangeCm": 600,
+            "radiusCm": 440,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 170,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.1,
+                "durationSeconds": 4
+              },
+              {
+                "kind": "healing",
+                "maxHealthFraction": 0.08,
+                "allowRevive": false
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "天青石金；犬爪守护和定向天门",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「天门守阙」为核心的独特动作主体：在被守护友军前立大型定向天门，拦截部分投射物和正面冲锋，可绕后或集火破坏。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "戌狗·天犬（历史全称：戌狗·守阙天犬）施放「天门守阙」。在被守护友军前立大型定向天门，拦截部分投射物和正面冲锋，可绕后或集火破坏。。以天青石金；犬爪守护和定向天门为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.dog_eight_hound_leap@1",
+          "proposedNameZh": "援步",
+          "currentApprovedV5NameZh": "援步",
+          "earlyOriginalNameZh": "援步",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "朝受护友军合法位置快速援步并获得短时保护。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 13.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 760,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "movement",
+                "distanceCm": 700,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "天青石金；犬爪守护和定向天门",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「援步」为核心的独特动作主体：朝受护友军合法位置快速援步并获得短时保护。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "戌狗·天犬（历史全称：戌狗·守阙天犬）施放「援步」。朝受护友军合法位置快速援步并获得短时保护。。以天青石金；犬爪守护和定向天门为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.dog_eight_guardian_ring@1",
+          "proposedNameZh": "护主",
+          "currentApprovedV5NameZh": "护主",
+          "earlyOriginalNameZh": "护主",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "立即挡到誓约对象面前并承担关键伤害，附可打破的门盾；限单目标。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 19,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 780,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.2,
+                "durationSeconds": 4
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "天青石金；犬爪守护和定向天门",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「护主」为核心的独特动作主体：立即挡到誓约对象面前并承担关键伤害，附可打破的门盾；限单目标。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "戌狗·天犬（历史全称：戌狗·守阙天犬）施放「护主」。立即挡到誓约对象面前并承担关键伤害，附可打破的门盾；限单目标。。以天青石金；犬爪守护和定向天门为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.dog_eight_tracking_slow@1",
+          "proposedNameZh": "拦门",
+          "currentApprovedV5NameZh": "截冲盾",
+          "earlyOriginalNameZh": "拦门",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "向前立门盾打断突进，成功碰撞者短晕，区别于V2仅减速。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 24,
+            "hitCount": 1,
+            "projectedMaxDamage": 24,
+            "cooldownSeconds": 17,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 830,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 24,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "control",
+                "controlType": "slow",
+                "durationSeconds": 2.4,
+                "slowFraction": 0.32
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "天青石金；犬爪守护和定向天门",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「拦门」为核心的独特动作主体：向前立门盾打断突进，成功碰撞者短晕，区别于V2仅减速。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "戌狗·天犬（历史全称：戌狗·守阙天犬）施放「拦门」。向前立门盾打断突进，成功碰撞者短晕，区别于V2仅减速。。以天青石金；犬爪守护和定向天门为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.dog_eight_loyal_heal@1",
+          "proposedNameZh": "誓约",
+          "currentApprovedV5NameZh": "誓愈",
+          "earlyOriginalNameZh": "誓约",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "指定唯一誓约友军，敌人伤害此人将成为本人反击威胁目标；不自动转化为单体治疗。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 20,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 900,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "healing",
+                "maxHealthFraction": 0.18,
+                "allowRevive": false
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "天青石金；犬爪守护和定向天门",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「誓约」为核心的独特动作主体：指定唯一誓约友军，敌人伤害此人将成为本人反击威胁目标；不自动转化为单体治疗。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "戌狗·天犬（历史全称：戌狗·守阙天犬）施放「誓约」。指定唯一誓约友军，敌人伤害此人将成为本人反击威胁目标；不自动转化为单体治疗。。以天青石金；犬爪守护和定向天门为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "誓约专责绑定一位友军，拦门和天门须有真实拦截规则；V2第8槽单体治疗不是历史主体。",
+      "oldV5ChangedNames": 4
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "earlyCharacterFullNameZh": "亥猪·岩甲玄鬃",
+      "currentHeroDisplayNameZh": "亥猪·岩甲玄鬃",
+      "currentProjectShortAliasZh": "续航坦克／低血反扑",
+      "battleRoleZh": "续航坦克／低血反扑",
+      "passive": {
+        "nameZh": "战意",
+        "descriptionZh": "近期承伤与低血累积可见战意层数，脱战衰减，禁止无限叠加",
+        "occupiesSlot": false,
+        "originalSource": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md（2026-06-28）",
+        "implementation": "DESIGN_ONLY"
+      },
+      "heroVisualDNA": "玄岩土金；厚重獠牙、低矮重压波",
+      "skills": [
+        {
+          "displayOrder": 1,
+          "slotId": "Primary",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.boar_eight_tusk_ram@1",
+          "proposedNameZh": "獠牙撞",
+          "currentApprovedV5NameZh": "獠牙撞",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "近身獠牙短撞，获得普通攻击气势。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 40,
+            "hitCount": 1,
+            "projectedMaxDamage": 40,
+            "cooldownSeconds": 1,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 260,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 40,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "利用射程与格挡",
+          "visualEffectDesign": {
+            "visualDNA": "玄岩土金；厚重獠牙、低矮重压波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「獠牙撞」为核心的独特动作主体：近身獠牙短撞，获得普通攻击气势。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "亥猪·玄鬃（历史全称：亥猪·岩甲玄鬃）施放「獠牙撞」。近身獠牙短撞，获得普通攻击气势。。以玄岩土金；厚重獠牙、低矮重压波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 2,
+          "slotId": "Slot1",
+          "roleZh": "主动攻击一",
+          "abilityId": "dba.ability.boar_eight_break_armor@1",
+          "proposedNameZh": "怒锤",
+          "currentApprovedV5NameZh": "怒锤",
+          "earlyOriginalNameZh": "怒锤",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "重锤对前方造成伤害，并按近期承伤和自身已损生命获得有限加成。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 78,
+            "hitCount": 1,
+            "projectedMaxDamage": 78,
+            "cooldownSeconds": 6,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 410,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 78,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "侧移或打断起手",
+          "visualEffectDesign": {
+            "visualDNA": "玄岩土金；厚重獠牙、低矮重压波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「怒锤」为核心的独特动作主体：重锤对前方造成伤害，并按近期承伤和自身已损生命获得有限加成。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "亥猪·玄鬃（历史全称：亥猪·岩甲玄鬃）施放「怒锤」。重锤对前方造成伤害，并按近期承伤和自身已损生命获得有限加成。。以玄岩土金；厚重獠牙、低矮重压波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期Q技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 3,
+          "slotId": "Slot2",
+          "roleZh": "主动攻击二",
+          "abilityId": "dba.ability.boar_eight_pressure_wave@1",
+          "proposedNameZh": "重压波",
+          "currentApprovedV5NameZh": "重压波",
+          "earlyOriginalNameZh": null,
+          "sourceType": "V2_EXPANSION",
+          "descriptionZh": "原地重踏爆发一次环形震荡，边缘可预判。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 105,
+            "hitCount": 1,
+            "projectedMaxDamage": 105,
+            "cooldownSeconds": 10.5,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 375,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 105,
+                "hitCount": 1,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "离开扇区／目标范围",
+          "visualEffectDesign": {
+            "visualDNA": "玄岩土金；厚重獠牙、低矮重压波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「重压波」为核心的独特动作主体：原地重踏爆发一次环形震荡，边缘可预判。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "亥猪·玄鬃（历史全称：亥猪·岩甲玄鬃）施放「重压波」。原地重踏爆发一次环形震荡，边缘可预判。。以玄岩土金；厚重獠牙、低矮重压波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "新版补充技能；动作与V2一级初调参考挂钩"
+        },
+        {
+          "displayOrder": 4,
+          "slotId": "Slot4",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.boar_eight_earthsplit_mane@1",
+          "proposedNameZh": "玄鬃裂地",
+          "currentApprovedV5NameZh": "连踏",
+          "earlyOriginalNameZh": "玄鬃裂王座",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "重甲姿态连续三段地裂推进：推开、震荡、低血重锤结算；不依赖旧王座。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 245,
+            "hitCount": 2,
+            "projectedMaxDamage": 490,
+            "cooldownSeconds": 74,
+            "momentumCost": 25,
+            "energyCost": 0,
+            "rangeCm": 630,
+            "radiusCm": 600,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 245,
+                "hitCount": 2,
+                "type": "Physical"
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "注意长前摇、预警圈并寻找退出路线",
+          "visualEffectDesign": {
+            "visualDNA": "玄岩土金；厚重獠牙、低矮重压波",
+            "visualKeyframes": [
+              "大型危险区预警与蓄势",
+              "以「玄鬃裂地」为核心的独特动作主体：重甲姿态连续三段地裂推进：推开、震荡、低血重锤结算；不依赖旧王座。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "亥猪·玄鬃（历史全称：亥猪·岩甲玄鬃）施放「玄鬃裂地」。重甲姿态连续三段地裂推进：推开、震荡、低血重锤结算；不依赖旧王座。。以玄岩土金；厚重獠牙、低矮重压波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期R技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 5,
+          "slotId": "Slot3",
+          "roleZh": "移动",
+          "abilityId": "dba.ability.boar_eight_boar_charge@1",
+          "proposedNameZh": "獠撞",
+          "currentApprovedV5NameZh": "獠冲",
+          "earlyOriginalNameZh": "獠撞",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "低头沿合法路径直线獠撞并顶开首个目标，侧移可反制。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 50,
+            "hitCount": 1,
+            "projectedMaxDamage": 50,
+            "cooldownSeconds": 16,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 760,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 50,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "movement",
+                "distanceCm": 700,
+                "serverNavValidation": true
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "路径阻挡／合法落点校验",
+          "visualEffectDesign": {
+            "visualDNA": "玄岩土金；厚重獠牙、低矮重压波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「獠撞」为核心的独特动作主体：低头沿合法路径直线獠撞并顶开首个目标，侧移可反制。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "亥猪·玄鬃（历史全称：亥猪·岩甲玄鬃）施放「獠撞」。低头沿合法路径直线獠撞并顶开首个目标，侧移可反制。。以玄岩土金；厚重獠牙、低矮重压波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期E技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 6,
+          "slotId": "Slot5",
+          "roleZh": "防御",
+          "abilityId": "dba.ability.boar_eight_iron_mane@1",
+          "proposedNameZh": "岩甲",
+          "currentApprovedV5NameZh": "岩甲",
+          "earlyOriginalNameZh": "岩甲",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "释放岩甲护盾并于破盾时产生有限反震，低血时减伤强化；不免疫全部伤害。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 22,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "shield",
+                "maxHealthFraction": 0.24,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "绕行、消耗防御或避开防护方向",
+          "visualEffectDesign": {
+            "visualDNA": "玄岩土金；厚重獠牙、低矮重压波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「岩甲」为核心的独特动作主体：释放岩甲护盾并于破盾时产生有限反震，低血时减伤强化；不免疫全部伤害。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "亥猪·玄鬃（历史全称：亥猪·岩甲玄鬃）施放「岩甲」。释放岩甲护盾并于破盾时产生有限反震，低血时减伤强化；不免疫全部伤害。。以玄岩土金；厚重獠牙、低矮重压波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期C技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 7,
+          "slotId": "Slot6",
+          "roleZh": "控制",
+          "abilityId": "dba.ability.boar_eight_roar_stun@1",
+          "proposedNameZh": "震鬃",
+          "currentApprovedV5NameZh": "震鬃",
+          "earlyOriginalNameZh": "震鬃",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "炸鬃震踏使近身敌人减速，岩甲仍在时才允许短击退。",
+          "currentV2CandidateStats": {
+            "damageType": "Physical",
+            "baseDamage": 31,
+            "hitCount": 1,
+            "projectedMaxDamage": 31,
+            "cooldownSeconds": 20,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 450,
+            "radiusCm": 265,
+            "actions": [
+              {
+                "kind": "damage",
+                "baseMagnitude": 31,
+                "hitCount": 1,
+                "type": "Physical"
+              },
+              {
+                "kind": "control",
+                "controlType": "stun",
+                "durationSeconds": 0.9,
+                "slowFraction": 0
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "预判或状态抗性反制",
+          "visualEffectDesign": {
+            "visualDNA": "玄岩土金；厚重獠牙、低矮重压波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「震鬃」为核心的独特动作主体：炸鬃震踏使近身敌人减速，岩甲仍在时才允许短击退。",
+              "命中结果确认及短促消散"
+            ],
+            "mainScenePromptZh": "亥猪·玄鬃（历史全称：亥猪·岩甲玄鬃）施放「震鬃」。炸鬃震踏使近身敌人减速，岩甲仍在时才允许短击退。。以玄岩土金；厚重獠牙、低矮重压波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期W技能；仅剔除已废止的全局规则"
+        },
+        {
+          "displayOrder": 8,
+          "slotId": "Slot7",
+          "roleZh": "特色／支援",
+          "abilityId": "dba.ability.boar_eight_rage_focus@1",
+          "proposedNameZh": "鬃吼",
+          "currentApprovedV5NameZh": "鬃吼",
+          "earlyOriginalNameZh": "鬃吼",
+          "sourceType": "EARLY_SKILL_ADAPTED",
+          "descriptionZh": "吼声提高本人战意与身后队友的短减伤，不强制嘲讽。",
+          "currentV2CandidateStats": {
+            "damageType": "Untyped",
+            "baseDamage": 0,
+            "hitCount": 1,
+            "projectedMaxDamage": 0,
+            "cooldownSeconds": 23,
+            "momentumCost": 0,
+            "energyCost": 0,
+            "rangeCm": 0,
+            "radiusCm": 0,
+            "actions": [
+              {
+                "kind": "buff",
+                "buffType": "damage_reduction",
+                "magnitudeFraction": 0.14,
+                "durationSeconds": 5
+              }
+            ]
+          },
+          "revisionNeedsRebalance": true,
+          "playerCounterplayZh": "针对目标、范围、时长进行反制",
+          "visualEffectDesign": {
+            "visualDNA": "玄岩土金；厚重獠牙、低矮重压波",
+            "visualKeyframes": [
+              "方向／合法范围预读",
+              "以「鬃吼」为核心的独特动作主体：吼声提高本人战意与身后队友的短减伤，不强制嘲讽。",
+              "清晰护盾／状态结束提示"
+            ],
+            "mainScenePromptZh": "亥猪·玄鬃（历史全称：亥猪·岩甲玄鬃）施放「鬃吼」。吼声提高本人战意与身后队友的短减伤，不强制嘲讽。。以玄岩土金；厚重獠牙、低矮重压波为配色与形状基线。45°斜俯视真实3D游戏视角，表现明确范围、起手、释放方向、受击结果，少量装饰碎粒，明亮可读；不要旧王印、五行克制或旧阵营图腾。",
+            "previewImageAssetPath": null,
+            "actualNiagaraAssetPath": null,
+            "reviewState": "NOT_GENERATED"
+          },
+          "originalUserApprovalState": "NAME_ONLY_V5_APPROVED_FOR_OLDER_DRAFT",
+          "currentV6ApprovalState": "PENDING_USER_REVIEW",
+          "implementedStatus": "NOT_IMPLEMENTED",
+          "noteZh": "继承早期F技能；仅剔除已废止的全局规则"
+        }
+      ],
+      "keyMigrationRiskZh": "历史终极为三段重踏且按低血加成，V2只有两段伤害，需要重新平衡高额输出。",
+      "oldV5ChangedNames": 2
+    }
+  ]
+}
