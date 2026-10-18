@@ -193,6 +193,10 @@ private:
     void RequestReturnHome();
     void RequestChase(AActor& Target);
 
+    /** 仅记录已发生的原生空闲移动请求；Goal为空表示导航尚未提供目标点，NavigationError保留查询错误，Verbose默认关闭。 */
+    void LogIdleMovementRequest(const TCHAR* Movement, const TCHAR* Result, const FVector* Goal = nullptr,
+        const TCHAR* NavigationError = TEXT("None")) const;
+
     void SetPublicState(
         EGamePlatformAIPublicState NewState,
         const FGameplayTag& MovementIntent = FGameplayTag(),

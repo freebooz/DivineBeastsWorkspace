@@ -51,9 +51,33 @@ bool FDivineBeastsDevelopmentMagicLifecycleTest::RunTest(const FString&)
     Service->HandleDevelopmentMagicFacts(Projectile,Facts);
     TestEqual(TEXT("普通重复事实不重播"),FlightSubmissions,1);
     Platform->OnRequestObserved().Remove(Observer);
+    Platform->UnregisterProvider(Provider);
+    // 即使VFX提供者拒绝命中请求，已预载的命中SFX仍须独立受理且只播放一次。
+    Service->StarterAudioWorld = World.Get(); Service->StarterAudioPack = Pack;
+    const auto FireImpact = FGameplayTag::RequestGameplayTag(TEXT("Presentation.SSLM.Audio.Spell.Fire.Impact"));
+    int32 ImpactAudioCount = 0;
+    const FGuid AudioProvider = Platform->RegisterProvider(TEXT("Test.Magic.AudioOnly"), 0,
+        FGamePlatformPresentationProviderHandler::CreateLambda([&](const FGamePlatformPresentationRequest& Request)
+        { return Request.SemanticTag == FireImpact; }));
+    const auto AudioObserver = Platform->OnRequestObserved().AddLambda(
+        [&](const FGamePlatformPresentationRequest& Request, EGamePlatformPresentationSubmitResult Result)
+        {
+            if (Request.SemanticTag == FireImpact && Result == EGamePlatformPresentationSubmitResult::Submitted)
+            {
+                ++ImpactAudioCount;
+                TestTrue(TEXT("音效使用服务器复制命中中心"), Request.SourceLocation.Equals(Facts.ImpactLocation));
+                Service->HandleDevelopmentMagicFacts(Projectile, Facts);
+            }
+        });
+    Facts.bFinished = true; Facts.bImpacted = true; Facts.ImpactLocation = FVector(200, 20, 100);
+    Service->HandleDevelopmentMagicFacts(Projectile, Facts);
+    Service->HandleDevelopmentMagicFacts(Projectile, Facts);
+    TestEqual(TEXT("命中VFX拒绝及同步重入均不吞掉或重复命中音效"), ImpactAudioCount, 1);
+    Platform->OnRequestObserved().Remove(AudioObserver);
+    Platform->UnregisterProvider(AudioProvider);
+    Service->StarterAudioPack = {}; Service->StarterAudioWorld.Reset();
     Service->UnbindDevelopmentMagicWorld();
     TestEqual(TEXT("解绑后所有自有条目撤销"),Service->DevelopmentMagicFlights.Num(),0);
-    Platform->UnregisterProvider(Provider);
     World->DestroyWorld(false);
     return true;
 }

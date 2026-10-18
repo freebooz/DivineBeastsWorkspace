@@ -1,6 +1,7 @@
 // 存档存储回归：本地临时夹具验证主档/备份超限在读取前拒绝，不测生产用户数据。
 #include "Storage/GamePlatformSaveStorage.h"
 #include "Policy/GamePlatformSavePolicy.h"
+#include "Storage/GamePlatformSaveProcessSlotLease.h"
 #include "Misc/AutomationTest.h"
 #include "HAL/PlatformFileManager.h"
 #include "Misc/Paths.h"
@@ -77,6 +78,48 @@ bool FSaveOversizedWriteTest::RunTest(const FString&)
     }
     Files.DeleteFile(*Primary);
     Files.DeleteDirectory(*Folder);
+    return true;
+}
+
+
+/**
+ * 同一进程多个GameInstance可能指向相同ProjectSavedDir：物理槽位应当跨实例独占。
+ * 取消/销毁旧实例只撤销回调，线程池仍持有的租约必须延迟释放至磁盘IO实际结束。
+ * 本用例使用随机纯值摘要，不创建文件、不连接后端，也不声称跨进程文件锁。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSaveProcessSlotLeaseLifecycleTest,
+    "GamePlatform.Save.Storage.ProcessSlotLeaseLifecycle",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSaveProcessSlotLeaseLifecycleTest::RunTest(const FString&)
+{
+    const FString StableId = FGuid::NewGuid().ToString(EGuidFormats::Digits);
+    const FString OtherId = FGuid::NewGuid().ToString(EGuidFormats::Digits);
+    TestFalse(TEXT("空物理槽位身份必须拒绝"),
+        FGamePlatformSaveProcessSlotLease::TryAcquire(TEXT("")).IsValid());
+
+    TSharedPtr<FGamePlatformSaveProcessSlotLease, ESPMode::ThreadSafe> Owner =
+        FGamePlatformSaveProcessSlotLease::TryAcquire(StableId);
+    TestTrue(TEXT("首个GameInstance获得当前存档槽位"), Owner.IsValid());
+    TSharedPtr<FGamePlatformSaveProcessSlotLease, ESPMode::ThreadSafe> Worker = Owner;
+
+    TestFalse(TEXT("另一GameInstance不能在旧IO期间占用同槽位"),
+        FGamePlatformSaveProcessSlotLease::TryAcquire(StableId).IsValid());
+    auto Unrelated = FGamePlatformSaveProcessSlotLease::TryAcquire(OtherId);
+    TestTrue(TEXT("不同存档槽位可并行操作"), Unrelated.IsValid());
+
+    Owner.Reset(); // 模拟GameInstance注销，只撤销主线程所有权
+    TestFalse(TEXT("旧后台任务未结束前，取消回调不能提前释放进程锁"),
+        FGamePlatformSaveProcessSlotLease::TryAcquire(StableId).IsValid());
+    Worker.Reset(); // 模拟线程池完成最后一次文件访问
+
+    auto NextInstance = FGamePlatformSaveProcessSlotLease::TryAcquire(StableId);
+    TestTrue(TEXT("旧后台IO结束后，新GameInstance可重新取得同槽位"), NextInstance.IsValid());
+    TestFalse(TEXT("旧实例与新实例的锁仍不允许重复授予"),
+        FGamePlatformSaveProcessSlotLease::TryAcquire(StableId).IsValid());
+    NextInstance.Reset();
+    Unrelated.Reset();
     return true;
 }
 #endif

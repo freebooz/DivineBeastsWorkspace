@@ -34,6 +34,9 @@
 #include "Targeting/GamePlatformAITargetSelectionRules.h"
 #include "TimerManager.h"
 
+// 默认静默；开发专服通过LogCmds启用，仅记录移动请求和真实状态变化，不增加采样时钟。
+DEFINE_LOG_CATEGORY_STATIC(LogGamePlatformAI, Log, All);
+
 namespace
 {
 /** 服务器AI的只读Gate：弱Controller和两种代次保护，事实从实际Controller读取，无固定成功或项目依赖。 */
@@ -1252,6 +1255,7 @@ bool AGamePlatformAIController::RequestPatrolGoal()
     if (!Navigation)
     {
         LastError = EGamePlatformAIError::NavigationUnavailable;
+        LogIdleMovementRequest(TEXT("Patrol"), TEXT("NoNavigationSubsystem"), nullptr, TEXT("NavigationUnavailable"));
         return false;
     }
 
@@ -1271,6 +1275,9 @@ bool AGamePlatformAIController::RequestPatrolGoal()
     if (!bFound)
     {
         LastError = EGamePlatformAIError::NavigationUnavailable;
+        // 导航失败只作诊断；记录稳定错误码，避免日志引入跨DLL未导出的枚举反射符号。
+        LogIdleMovementRequest(TEXT("Patrol"), TEXT("NoReachablePoint"), nullptr,
+            *FString::Printf(TEXT("NavigationError(%d)"), static_cast<int32>(NavigationError)));
         return false;
     }
 
@@ -1288,14 +1295,16 @@ bool AGamePlatformAIController::RequestPatrolGoal()
     {
         const EPathFollowingRequestResult::Type Result =
             MoveToLocation(PatrolLocation, ActiveDefinition->HomePolicy.PatrolAcceptanceRadius);
+        LastError = Result == EPathFollowingRequestResult::Failed
+            ? EGamePlatformAIError::NavigationUnavailable : EGamePlatformAIError::None;
+        LogIdleMovementRequest(TEXT("Patrol"), Result == EPathFollowingRequestResult::Failed ? TEXT("Failed")
+            : Result == EPathFollowingRequestResult::AlreadyAtGoal ? TEXT("AlreadyAtGoal") : TEXT("RequestSuccessful"), &PatrolLocation);
         if (Result == EPathFollowingRequestResult::Failed)
         {
-            LastError = EGamePlatformAIError::NavigationUnavailable;
             return false;
         }
         if (Result == EPathFollowingRequestResult::AlreadyAtGoal)
         {
-            LastError = EGamePlatformAIError::None;
             SetPublicState(EGamePlatformAIPublicState::Idle, GamePlatformAITags::Movement_Patrol);
             return true;
         }
@@ -1328,10 +1337,12 @@ void AGamePlatformAIController::RequestReturnHome()
     {
         const EPathFollowingRequestResult::Type Result =
             MoveToLocation(HomeLocation, ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius);
+        LastError = Result == EPathFollowingRequestResult::Failed
+            ? EGamePlatformAIError::NavigationUnavailable : EGamePlatformAIError::None;
+        LogIdleMovementRequest(TEXT("ReturnHome"), Result == EPathFollowingRequestResult::Failed ? TEXT("Failed")
+            : Result == EPathFollowingRequestResult::AlreadyAtGoal ? TEXT("AlreadyAtGoal") : TEXT("RequestSuccessful"), &HomeLocation);
         if (Result != EPathFollowingRequestResult::RequestSuccessful)
         {
-            LastError = Result == EPathFollowingRequestResult::Failed
-                ? EGamePlatformAIError::NavigationUnavailable : EGamePlatformAIError::None;
             SetPublicState(EGamePlatformAIPublicState::Idle);
             return;
         }
@@ -1395,10 +1406,39 @@ void AGamePlatformAIController::SetPublicState(
         return;
     }
 
+    const FGamePlatformAIStateSnapshot& Before = StateComponent->GetSnapshot();
+    const bool bChanged = Before.PublicState != NewState || Before.MovementIntentTag != MovementIntent ||
+        Before.CombatIntentTag != CombatIntent;
     StateComponent->SetServerPublicState(NewState);
     StateComponent->SetServerIntentTags(
         MovementIntent,
         CombatIntent);
+
+    // 合并本次状态/意图写入后再输出，重复决策不记录；同一实体的后续位置可作为实际位移证据。
+    const APawn* ControlledPawn = GetPawn();
+    if (bChanged && StateComponent && IsValid(ControlledPawn))
+    {
+        const FGamePlatformAIStateSnapshot& Snapshot = StateComponent->GetSnapshot();
+        UE_LOG(LogGamePlatformAI, Verbose,
+            TEXT("AIState Pawn=%s AIEntityId=%s Generation=%d Revision=%d PublicState=%s MovementIntent=%s CombatIntent=%s Target=%s Location=%s Home=%s LastError=%s"),
+            *GetNameSafe(ControlledPawn), *Snapshot.AIEntityId.ToString(), Snapshot.AIInstanceGeneration, Snapshot.StateRevision,
+            *UEnum::GetValueAsString(Snapshot.PublicState), *Snapshot.MovementIntentTag.ToString(), *Snapshot.CombatIntentTag.ToString(),
+            *Snapshot.CurrentTargetEntityId.ToString(), *ControlledPawn->GetActorLocation().ToString(), *HomeLocation.ToString(),
+            *UEnum::GetValueAsString(LastError));
+    }
+}
+
+void AGamePlatformAIController::LogIdleMovementRequest(
+    const TCHAR* Movement, const TCHAR* Result, const FVector* Goal, const TCHAR* NavigationError) const
+{
+    const APawn* ControlledPawn = GetPawn();
+    if (!ControlledPawn || !StateComponent) return;
+    const FGamePlatformAIStateSnapshot& Snapshot = StateComponent->GetSnapshot();
+    UE_LOG(LogGamePlatformAI, Verbose,
+        TEXT("AIMovementRequest Pawn=%s AIEntityId=%s Generation=%d Movement=%s Result=%s Target=%s Location=%s Goal=%s Home=%s LastError=%s NavigationError=%s"),
+        *GetNameSafe(ControlledPawn), *Snapshot.AIEntityId.ToString(), Snapshot.AIInstanceGeneration, Movement, Result,
+        *Snapshot.CurrentTargetEntityId.ToString(), *ControlledPawn->GetActorLocation().ToString(),
+        Goal ? *Goal->ToString() : TEXT("Unavailable"), *HomeLocation.ToString(), *UEnum::GetValueAsString(LastError), NavigationError);
 }
 
 bool AGamePlatformAIController::IsSelfDead() const

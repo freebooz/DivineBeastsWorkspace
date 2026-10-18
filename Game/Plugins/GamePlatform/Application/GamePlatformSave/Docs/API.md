@@ -150,6 +150,8 @@ SaveService->DeleteRecordAsync(
 - 回调始终在 Game Thread；
 - GameInstance 销毁时仍登记的请求会收到 `Cancelled`；
 - 已经进入操作系统的后台磁盘调用不会被危险地强杀；旧代次结果不会重新进入新 GameInstance；
+- 同一进程不同 GameInstance 共用 `FGamePlatformSaveProcessSlotLease`（物理槽位租约）；旧实例取消不会立刻放开正在运行的后台读写/删除，待线程池实际 IO 完成或本次回调拥有的租约结束后，新实例才可申请同一槽位。重试遇 `SaveSlotBusy` 必须等待真实完成并按业务规则重新提交，不得循环忙等；
+- 当前是**进程内**互斥，不是多个独立 Client 进程共享 Saved 目录的 OS 文件锁；不将其宣称为跨进程事务或服务端存储一致性证明。
 - Callback 执行期间 Save 服务拒绝同步反入，避免状态表在回调栈中被重入修改；
 - 调用方 Lambda 如捕获 UObject，应自行使用 `TWeakObjectPtr` 或等效生命周期保护。
 

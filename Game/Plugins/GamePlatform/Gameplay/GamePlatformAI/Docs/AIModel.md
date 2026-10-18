@@ -14,4 +14,8 @@ AIInstanceGeneration 在 UnPossess/复用边界推进；异步 Definition/Brain 
 
 首次无导航、可达点查询失败和原生MoveTo失败统一按1秒退避重试；不会发布虚假的Moving。原生AlreadyAtGoal发布Idle，巡逻间等待保留巡逻意图，下一次选择仍属于同一巡逻范围。重新占有与权威重生清除旧巡逻退避；零巡逻半径明确停用游走，但不关闭脱战归家。
 
+开发专服追加`-LogCmds="LogGamePlatformAI Verbose"`可将既有移动请求与真实状态/意图变化写入文本日志。`AIMovementRequest`包含Pawn、AIEntityId、代次、巡逻/归家、MoveTo结果、目标实体、当下位置、目标点、出生锚点及LastError；NavigationError保留平台导航查询的具体错误，区分无NavData、未注册过滤器与无路径，避免统一AI错误掩盖根因。`AIState`包含最终公开状态/意图及位置。没有新增Tick、计时器或逐帧日志。验收必须按同一AIEntityId与代次比较后续位置，确认无目标巡逻真实位移及再次选点；单条RequestSuccessful仅表示移动请求受理，不能证明路径完成或角色移动。无可达点时Goal为Unavailable，实际导航查询失败与MoveTo失败通过Result区分。
+
 2026-10-18验证：`AIWorldPolicyTests.cpp`新增`GamePlatform.AI.Movement.IdlePatrolLifecycle`，包含16个纯规则输入及真实控制器首次请求、无导航退避、MoveTo拒绝、死亡停机和重新占有调用。生产私有函数及同组断言在`Saved/Validation/MonsterPatrolPolicy/`独立MSVC抽取编译，旧条件失败、新条件16项通过；该证据只覆盖纯规则。UE Automation、真实Village NavMesh恢复、专服移动/客户端动画与联机验收由主流程另行执行，不能将此记录视为已通过。
+
+2026-10-18后续实测：原生AI生命周期在Editor及真实Development Server上通过；最终Server测试报告 `Saved/Validation/FoundationM0/22298c1f-5339-4607-918b-1b03031ed463/NavigationServerRegression/result.json` 实际2项Success（含导航冷缓存）、0失败、进程退出0。最终Server构建 `7c17ea7e-d4b2-4244-a7c3-c95b914c3ea9` 与Cook `76fee423-823e-429c-bd37-f61ef64a063c` 通过。实际Village专服10条 `VillageWolfSpawned` 与10个AI实体/代次按出生XY逐一匹配；每只均有连续巡逻请求和真实水平位移，观测最大离初始位置为360.834—403.238cm，超过旧160cm误归家范围。偶发原生可达点查询失败通过既有退避恢复，未将请求受理当作移动证明。证据 `Saved/Validation/SkillBar20261018/PatrolAfterNavigationFix.json`；客户端动画和联机人工验收仍独立待确认。

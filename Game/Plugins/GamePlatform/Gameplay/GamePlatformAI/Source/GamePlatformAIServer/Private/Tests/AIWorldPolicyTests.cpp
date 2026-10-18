@@ -71,7 +71,7 @@ void VerifyIdleMovement(TDecide&& Decide, TCheck&& Check)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAIIdleMovementPolicyTest, "GamePlatform.AI.Movement.IdlePatrolLifecycle",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::ServerContext | EAutomationTestFlags::EngineFilter)
 bool FAIIdleMovementPolicyTest::RunTest(const FString& Parameters)
 {
     (void)Parameters;

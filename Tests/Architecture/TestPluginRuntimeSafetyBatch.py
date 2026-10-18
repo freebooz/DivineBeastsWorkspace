@@ -140,6 +140,29 @@ class PluginRuntimeSafetyBatchTests(unittest.TestCase):
         self.assertIn("Files.FileSize(*Primary)", native)
         self.assertIn("原有主档字节必须原样保留", native)
 
+    def test_save_process_slot_is_exclusive_across_game_instances_until_worker_ends(self):
+        # 本测试验证实现接线和原生用例覆盖；不是模拟磁盘上的并发IO通过。
+        base = ROOT / "Game/Plugins/GamePlatform/Application/GamePlatformSave/Source/GamePlatformSaveClient/Private"
+        lease = source(base / "Storage/GamePlatformSaveProcessSlotLease.h")
+        subsystem = source(base / "Subsystems/GamePlatformSaveSubsystem.cpp")
+        private_header = source(base / "Subsystems/GamePlatformSaveSubsystem.h")
+        native = source(base / "Tests/GamePlatformSaveStorageTests.cpp")
+        self.assertIn("FGamePlatformSaveProcessSlotLease::TryAcquire(StableStorageId)", subsystem)
+        self.assertIn("Pending.ProcessSlotLease = MoveTemp(ProcessSlotLease)", subsystem)
+        self.assertIn("TSharedPtr<FGamePlatformSaveProcessSlotLease, ESPMode::ThreadSafe>", private_header)
+        # 三条异步路径全部应把同一租约复制给工作线程，防止GI取消先释放真实IO锁。
+        self.assertEqual(3, subsystem.count("PendingRequests.FindChecked(Handle.Id).ProcessSlotLease"))
+        self.assertIn("[WeakThis, Handle, ProcessSlotLease, RecordCopy = Record]", subsystem)
+        self.assertIn("[WeakThis, Handle, Key, StableStorageId, ProcessSlotLease]", subsystem)
+        self.assertIn("[WeakThis, Handle, StableStorageId, ProcessSlotLease]", subsystem)
+        self.assertEqual(3, subsystem.count("(void)ProcessSlotLease"))
+        self.assertIn("FScopeLock Lock(&Mutex())", lease)
+        self.assertIn("ActiveStorageIds().Contains(StableStorageId)", lease)
+        self.assertIn("ActiveStorageIds().Remove(StableStorageId)", lease)
+        self.assertIn("GamePlatform.Save.Storage.ProcessSlotLeaseLifecycle", native)
+        self.assertIn("旧后台任务未结束前，取消回调不能提前释放进程锁", native)
+        self.assertIn("旧后台IO结束后，新GameInstance可重新取得同槽位", native)
+
     def test_production_tick_sources_have_unregister_path_in_same_file(self):
         missing=[]
         count=0

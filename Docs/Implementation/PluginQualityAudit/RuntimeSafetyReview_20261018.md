@@ -16,9 +16,16 @@
 
 - Session（会话）独立原生内核：Debug/Release（调试/发布）各编译成功，CTest各1/1项通过；原始日志位于 `Saved/Validation/GamePlatformSession/Verify-97fdde22a1d64ffc8ba7d7fbd5ecb60e`。脚本修复系统未配置CMake（构建工具）命令导致的假阻断；综合联调门禁仍按设计返回2。
 - 鸟群发布策略Python回归43/43通过；合成Cook（资源烘焙）规则3/3通过；修复后的统一鸟群源码集成检查通过。
-- 上轮跨插件运行安全静态回归10/10通过；本批增加Save写入安全检查后，运行安全静态回归11/11通过；Telemetry（遥测）架构门禁通过；平台模块图2项、目标装配17项、服务器生命周期5项通过。
+- 上轮跨插件运行安全静态回归10/10通过；加入Save写入及进程内跨GameInstance租约安全合同后，运行安全静态回归12/12通过；GamePlatformSave架构静态门禁退出0；当前67插件台账/工作单重新生成与一致性核对退出0；Telemetry（遥测）架构门禁通过；平台模块图2项、目标装配17项、服务器生命周期5项通过。
 - Ticker静态盘点：生产代码21个文件、23处注册，33处注销调用；该计数不代表路径已在所有异常/断线场景实际执行。
 
 ## 仍然阻断正式生产验收
 
 新增Session/Telemetry UE原生Automation（自动化）尚未执行；最新代码未完成正式UBT编译链接、真实网络/多人测试、Niagara GPU性能、客户端/专用服务器独立Cook和人工视觉点击验收。现有DemoHub（插件演示中心）可映射19插件至13张诊断地图，但53个需视觉交互域中仍有51个未登记正式可操作案例，人工签收为0。活动UE Editor（编辑器）及他人的未提交资源均未被本批抢占或覆盖，未提交主分支。
+## 2026-10-18 续接：GamePlatformSave跨GameInstance共享槽位防并发
+
+- 上文存档段落所列“旧实例取消后释放忙碌表、后台IO仍在进行”的风险已做源码级补强：新增私有`FGamePlatformSaveProcessSlotLease`（进程物理槽位租约），使用互斥的稳定StorageId登记表和线程安全共享所有权，`BeginRequest`（申请）发现另一个GameInstance仍持有同一实际存档路径时返回`SaveSlotBusy`。Save、Load、Delete的线程池任务均分别捕获本次租约，旧GameInstance撤销Pending与Callback不能提前解锁仍运行的IO。
+- 原生测试源码增加`GamePlatform.Save.Storage.ProcessSlotLeaseLifecycle`（租约生命周期），检查同槽拒绝、异槽并行、Owner销毁/Worker仍持有、真实任务最后引用释放后再获取。此测试当前仅已编写，尚未在UE引擎实际执行。
+- 本批真实对`GamePlatformSaveClient`（存档客户端模块）Unity编译单元使用锁定UE5.8/MSVC与缓存UBT响应文件执行`/Zs`（C++语法检查），**经保持UHT生成宏对应行号后退出码0**。这不是正式UHT重新生成、UE模块编译链接、独立Client或多实例写入验收。
+- 此方案仅支持单进程不同GameInstance。**跨独立Client进程共用ProjectSavedDir仍无系统级文件互斥保证**；应在发布配置隔离数据根，并单独确定是否需要OS级文件锁。真实文件读写/取消竞态、失败备份恢复与完整Cook继续阻断发布。
+- 2026-10-18受控尝试使用`Build/Game/BuildFoundation.ps1 -Editor -OnlyModules GamePlatformSaveClient -AdditionalPlugins GamePlatformSave`（存档模块定向正式构建），工程互斥锁发现另一Foundation构建或Cook占用，**返回2 / NotExecuted（未执行）**，并没有执行最新UE模块编译；证据：`Saved/Validation/FoundationM0/73cc9707-b535-410f-b72c-fffa64093888/Build`。未强制解除锁或停止其他任务。

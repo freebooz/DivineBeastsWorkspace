@@ -202,6 +202,16 @@ AActor* UGamePlatformCombatComponent::GetSelectedProjectileTarget(float MaximumR
     OutTargetGeneration=SelectedProjectileTargetGeneration; return Target;
 }
 
+FVector UGamePlatformCombatComponent::GetCombatTargetPoint() const
+{
+    const AActor* Owner = GetOwner();
+    if (!IsValid(Owner)) return FVector::ZeroVector;
+    FVector Center, Extent;
+    Owner->GetActorBounds(true, Center, Extent, false);
+    return !Center.ContainsNaN() && !Extent.ContainsNaN() && !Extent.IsNearlyZero()
+        ? Center : Owner->GetActorLocation();
+}
+
 float UGamePlatformCombatComponent::GetCombatHealth() const
 {
     const UGamePlatformCombatAttributeSet* Attributes = GetCombatAttributeSet();

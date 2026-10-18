@@ -50,6 +50,7 @@ void UDivineBeastsPresentationClientSubsystem::Initialize(
         BindDevelopmentMagicWorld(Player->GetWorld());
         StartDefaultWorldBirdFlock(Player->GetWorld());
         EnsureStarterAudioForWorld(Player->GetWorld());
+        EnsureAudioLibraryForWorld(Player->GetWorld());
     }
 }
 
@@ -76,6 +77,7 @@ void UDivineBeastsPresentationClientSubsystem::Deinitialize()
     StopAllAmbientBirdFlocks();
     StopAllAmbientFauna();
     StopStarterAudioForWorld();
+    StopAudioLibraryForWorld();
     UnregisterProjectState();
     UnbindWeatherWorld();
     WeatherVisualHandle = {};
@@ -317,6 +319,8 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
         // 先发送音乐/声景取消请求，必须早于World目录撤销，否则已提交循环声无法按语义停止。
         StopStarterAudioForWorld();
         if (WasSuperseded()) return false;
+        StopAudioLibraryForWorld();
+        if (WasSuperseded()) return false;
         DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
         if (WasSuperseded()) return false;
         StopFrontEndFoliage();
@@ -349,7 +353,11 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
         ResumeEnvironmentFlocksAfterContextChange();
     }
     if (bWorldScopeChanged && !WasSuperseded())
-        EnsureStarterAudioForWorld(GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr);
+    {
+        UWorld* Current = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
+        EnsureStarterAudioForWorld(Current);
+        EnsureAudioLibraryForWorld(Current);
+    }
     return !WasSuperseded();
 }
 
@@ -361,6 +369,7 @@ void UDivineBeastsPresentationClientSubsystem::ResetForAccountSwitch()
     UnbindEnvironmentFlockCompletion();
     StopFrontEndFoliage();
     StopStarterAudioForWorld();
+    StopAudioLibraryForWorld();
     StopAllAmbientBirdFlocks();
     StopAllAmbientFauna();
     TArray<FDivineBeastsPresentationContentPackHandle> ActiveHandles;
@@ -390,7 +399,9 @@ void UDivineBeastsPresentationClientSubsystem::ResetForAccountSwitch()
             HandleWeatherSnapshot(Weather->GetCurrentSnapshot());
     }
     // 切换账号撤销旧租约后重建当前世界的可选客户端音频。
-    EnsureStarterAudioForWorld(GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr);
+    UWorld* CurrentAudioWorld = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
+    EnsureStarterAudioForWorld(CurrentAudioWorld);
+    EnsureAudioLibraryForWorld(CurrentAudioWorld);
 }
 
 FGamePlatformPresentationContextPatch
@@ -838,6 +849,7 @@ void UDivineBeastsPresentationClientSubsystem::HandleWorldCleanup(
     if (!World) return;
     if (DevelopmentMagicWorld.Get() == World) UnbindDevelopmentMagicWorld();
     if (StarterAudioWorld.Get() == World) StopStarterAudioForWorld();
+    if (AudioLibraryWorld.Get() == World) StopAudioLibraryForWorld();
     if (World != LocalWorld)
     {
         // LocalPlayer可能已进入新世界；只撤销真正绑定旧世界的环境意图。
@@ -883,6 +895,7 @@ void UDivineBeastsPresentationClientSubsystem::HandlePostLoadMap(UWorld* World)
         BindDevelopmentMagicWorld(World);
         StartDefaultWorldBirdFlock(World);
         EnsureStarterAudioForWorld(World);
+        EnsureAudioLibraryForWorld(World);
     }
 }
 /**

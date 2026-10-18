@@ -181,14 +181,17 @@ bool UDivineBeastsPresentationClientSubsystem::PlayStarterUISound(FName ActionId
 }
 
 /** 根据已授权项目魔法视觉事实增补音效，不自己创建法术或者判定命中。 */
-void UDivineBeastsPresentationClientSubsystem::PlayStarterSpellSound(
+bool UDivineBeastsPresentationClientSubsystem::PlayStarterSpellSound(
     const FName SpellName, const bool bImpact, const FVector& Location)
 {
+    // 奥术飞弹复用已入库的奥术脉冲，飞行与命中分别提交，阶段去重归弹体事实适配。
+    if (SpellName == TEXT("ArcaneMissiles"))
+        return PlayAudioLibraryClip(TEXT("Spell.ArcaneCast"), Location);
     const TCHAR* Semantic =
         SpellName == TEXT("Frostbolt") ? (bImpact ?
             TEXT("Presentation.SSLM.Audio.Spell.Frost.Impact") :
             TEXT("Presentation.SSLM.Audio.Spell.Frost.Cast")) :
         SpellName == TEXT("Fireball") && bImpact ?
             TEXT("Presentation.SSLM.Audio.Spell.Fire.Impact") : nullptr;
-    if (Semantic) SubmitStarterOneShot(Semantic, SpellName, Location);
+    return Semantic && SubmitStarterOneShot(Semantic, SpellName, Location);
 }

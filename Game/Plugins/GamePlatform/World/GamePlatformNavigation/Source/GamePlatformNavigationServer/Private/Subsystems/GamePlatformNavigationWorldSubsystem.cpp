@@ -854,8 +854,10 @@ bool UGamePlatformNavigationWorldSubsystem::ResolveQueryContext(
         return false;
     }
 
+    // NavData::GetQueryFilter只读已有缓存，冷启动时自定义平台过滤器必定尚未存在。
+    // 引擎工厂负责初始化/缓存，并接收当前世界服务作为查询上下文；不能依赖别的查询偶然预热。
     OutFilter =
-        OutNavData->GetQueryFilter(*FilterClass);
+        UNavigationQueryFilter::GetQueryFilter(*OutNavData, this, *FilterClass);
 
     if (!OutFilter.IsValid())
     {

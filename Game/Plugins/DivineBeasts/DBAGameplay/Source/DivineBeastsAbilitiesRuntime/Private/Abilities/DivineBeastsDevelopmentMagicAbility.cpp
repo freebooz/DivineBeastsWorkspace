@@ -83,7 +83,7 @@ void UDivineBeastsDevelopmentMagicAbility::ReleaseNextProjectile()
     { EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true); return; }
     const FVector AimOrigin=Source->GetActorLocation()+FVector(0,0,50);
     const FVector Direction = bHadFrozenTarget ?
-        (Target->GetActorLocation()-AimOrigin).GetSafeNormal() : Source->GetActorForwardVector().GetSafeNormal();
+        (TargetCombat->GetCombatTargetPoint()-AimOrigin).GetSafeNormal() : Source->GetActorForwardVector().GetSafeNormal();
     const FVector Start = Source->GetActorLocation() + FVector(0, 0, 50) + Direction * 50;
     FActorSpawnParameters Spawn; Spawn.Owner = Source; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     FGamePlatformCombatSpec Shot = CastSpec; Shot.EventId = FGuid::NewGuid();

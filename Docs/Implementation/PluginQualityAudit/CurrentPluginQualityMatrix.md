@@ -12,10 +12,10 @@
 | 插件 | 层级/类别 | 模块 | 源码(.cpp) | 原生资产/地图 | 测试源 | 要求人工界面 | 诊断图快捷入口 | 正式演示案例 | 编目审查 | 优先级 |
 |---|---|---:|---:|---:|---:|---|---|---:|---|---|
 | DBAArena | Project/code | 3 | 24 | 6/0 | 8 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
-| DBAClient | Project/code | 6 | 198 | 1/0 | 62 | 是 | 有（待人工检查） | 2 | partial | P2 |
-| DBAContentPack_Common | Project/content_pack | 0 | 0 | 102/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAClient | Project/code | 6 | 202 | 1/0 | 62 | 是 | 有（待人工检查） | 2 | partial | P2 |
+| DBAContentPack_Common | Project/content_pack | 0 | 0 | 129/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAFrontEndPack | Project/content_pack | 0 | 0 | 53/2 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAGameplay | Project/code | 3 | 41 | 229/0 | 11 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| DBAGameplay | Project/code | 3 | 42 | 229/0 | 12 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | DBAHeroPack_Boar | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAHeroPack_Dog | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAHeroPack_Dragon | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
@@ -28,12 +28,12 @@
 | DBAHeroPack_Rooster | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAHeroPack_Snake | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAHeroPack_Tiger | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAPresentationPack_Core | Project/content_pack | 0 | 0 | 1664/1 | 0 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| DBAPresentationPack_Core | Project/content_pack | 0 | 0 | 1780/1 | 0 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | DBAServer | Project/code | 1 | 12 | 0/0 | 5 | 否 | 无 | 0 | unreviewed | P2 |
-| DBASFXPack_Core | Project/content_pack | 0 | 0 | 5/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAUIPack_Core | Project/content_pack | 0 | 0 | 167/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBASFXPack_Core | Project/content_pack | 0 | 0 | 105/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAUIPack_Core | Project/content_pack | 0 | 0 | 194/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAWorldPack_MainArena | Project/content_pack | 0 | 0 | 4/1 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAWorldPack_Village | Project/content_pack | 0 | 0 | 190/1 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAWorldPack_Village | Project/content_pack | 0 | 0 | 204/1 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAWorlds | Project/code | 1 | 7 | 0/0 | 2 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | GamePlatformAbilitySystem | Platform/code | 1 | 11 | 0/0 | 5 | 否 | 无 | 0 | unreviewed | P2 |
 | GamePlatformAI | Platform/code | 2 | 20 | 0/0 | 8 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |

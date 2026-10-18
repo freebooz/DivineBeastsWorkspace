@@ -75,8 +75,8 @@
         "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/DivineBeastsUIClient.Build.cs",
         "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/DivineBeastsDemoClient.Build.cs"
       ],
-      "cppFiles": 198,
-      "headerFiles": 149,
+      "cppFiles": 202,
+      "headerFiles": 150,
       "nativeTestFiles": 62,
       "nativeAssets": 1,
       "mapAssets": 0,
@@ -110,7 +110,7 @@
       "cppFiles": 0,
       "headerFiles": 0,
       "nativeTestFiles": 0,
-      "nativeAssets": 102,
+      "nativeAssets": 129,
       "mapAssets": 0,
       "widgetAssets": 0,
       "visualReviewRequired": true,
@@ -163,9 +163,9 @@
         "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/DivineBeastsCharactersRuntime.Build.cs",
         "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/DivineBeastsAbilitiesRuntime.Build.cs"
       ],
-      "cppFiles": 41,
+      "cppFiles": 42,
       "headerFiles": 31,
-      "nativeTestFiles": 11,
+      "nativeTestFiles": 12,
       "nativeAssets": 229,
       "mapAssets": 0,
       "widgetAssets": 0,
@@ -504,7 +504,7 @@
       "cppFiles": 0,
       "headerFiles": 0,
       "nativeTestFiles": 0,
-      "nativeAssets": 1664,
+      "nativeAssets": 1780,
       "mapAssets": 1,
       "widgetAssets": 0,
       "visualReviewRequired": true,
@@ -564,7 +564,7 @@
       "cppFiles": 0,
       "headerFiles": 0,
       "nativeTestFiles": 0,
-      "nativeAssets": 5,
+      "nativeAssets": 105,
       "mapAssets": 0,
       "widgetAssets": 0,
       "visualReviewRequired": true,
@@ -590,9 +590,9 @@
       "cppFiles": 0,
       "headerFiles": 0,
       "nativeTestFiles": 0,
-      "nativeAssets": 167,
+      "nativeAssets": 194,
       "mapAssets": 0,
-      "widgetAssets": 69,
+      "widgetAssets": 70,
       "visualReviewRequired": true,
       "registeredFeatures": 0,
       "wiredFeatures": 0,
@@ -642,7 +642,7 @@
       "cppFiles": 0,
       "headerFiles": 0,
       "nativeTestFiles": 0,
-      "nativeAssets": 190,
+      "nativeAssets": 204,
       "mapAssets": 1,
       "widgetAssets": 0,
       "visualReviewRequired": true,
@@ -1644,7 +1644,7 @@
         "Game/Plugins/GamePlatform/Application/GamePlatformSave/Source/GamePlatformSaveClient/GamePlatformSaveClient.Build.cs"
       ],
       "cppFiles": 7,
-      "headerFiles": 6,
+      "headerFiles": 7,
       "nativeTestFiles": 2,
       "nativeAssets": 0,
       "mapAssets": 0,
@@ -1729,12 +1729,12 @@
         {
           "kind": "Ticker轮询",
           "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/Source/GamePlatformSession/Private/GamePlatformSessionClientSubsystem.cpp",
-          "line": 617
+          "line": 633
         },
         {
           "kind": "Ticker轮询",
           "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/Source/GamePlatformSession/Private/Transport/GamePlatformUESessionTransport.cpp",
-          "line": 139
+          "line": 168
         }
       ],
       "priority": "P2",
@@ -1856,12 +1856,12 @@
         {
           "kind": "Ticker轮询",
           "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Sinks/GamePlatformTelemetryNetworkSink.cpp",
-          "line": 239
+          "line": 244
         },
         {
           "kind": "Ticker轮询",
           "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Sinks/GamePlatformTelemetryNetworkSink.cpp",
-          "line": 388
+          "line": 421
         }
       ],
       "priority": "P2",
@@ -1935,12 +1935,12 @@
         {
           "kind": "逐帧执行",
           "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Environment/GamePlatformBirdFlockActor.cpp",
-          "line": 193
+          "line": 200
         },
         {
           "kind": "逐帧执行",
           "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Environment/GamePlatformBirdFlockActor.cpp",
-          "line": 195
+          "line": 202
         }
       ],
       "priority": "P1",

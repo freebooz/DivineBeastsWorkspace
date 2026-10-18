@@ -6,6 +6,7 @@
 // 租约属于本次实际IO的共享所有权，最后一个持有者释放时才重新开放槽位。
 // 这是进程内保护，不宣称提供多进程文件锁或服务器权威存储事务。
 
+#include "CoreMinimal.h"
 #include "Containers/Set.h"
 #include "HAL/CriticalSection.h"
 #include "Misc/ScopeLock.h"

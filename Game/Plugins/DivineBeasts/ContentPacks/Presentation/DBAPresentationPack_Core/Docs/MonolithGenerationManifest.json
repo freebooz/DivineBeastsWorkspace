@@ -259,5 +259,29 @@
     "ManualVisualAccepted": false,
     "EvidenceRoot": "Saved/Validation/HealingReimport20261018",
     "NoteZh": "保留原RGB/材质/三维运动；烘焙与真实竞技GPU仍未验收，不沿用旧Cook作本次发布证明。"
+  },
+  "CommonAttackSlashV2Review20261018": {
+    "ScopeZh": "用户指定攻击设计图左上弧刃单个原生审核候选；通过前不扩展其他类型。",
+    "AssetRoot": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V2/AttackSlash",
+    "System": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V2/AttackSlash/Niagara/NS_DBA_AttackSlash_V2",
+    "Definition": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V2/AttackSlash/Definitions/DA_DBA_VFX_AttackSlashV2_Review",
+    "ReviewMap": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V2/AttackSlash/Review/L_DBA_Review_AttackSlashV2",
+    "SourceRoot": "SourceArt/VFX/CommonSkillVFX/V2/AttackSlash",
+    "EmitterCount": 1,
+    "ParticlesPerInstance": 1,
+    "MeshMaterialSlots": 3,
+    "MeshTriangles": 23040,
+    "Simulation": "CPU",
+    "ColdReloadCompiled": true,
+    "ColdProcessExitCode": 0,
+    "TenInstanceLifecyclePassed": true,
+    "NativeSequenceFrames": 31,
+    "ManualVisualAccepted": false,
+    "ZodiacBindingsChanged": false,
+    "PackagedGPUVerified": false,
+    "ClientCookVerified": false,
+    "ServerCookVerified": false,
+    "EvidenceRoot": "Saved/Validation/CommonSkillVFX/AttackSlashV2",
+    "NoteZh": "仅审核样本，不进入正式扫描/路由；不以单Emitter或编译指令估算冒充DrawCall/GPU毫秒已达标。"
   }
 }

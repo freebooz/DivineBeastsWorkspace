@@ -2280,7 +2280,16 @@
     "RootLayout": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
     "SelectionOutline": "/DBAUIPack_Core/UI/World/Materials/M_DBA_TargetSelectionOutline",
     "SelectionRing": "/DBAUIPack_Core/UI/World/Materials/M_DBA_TargetSelectionRing",
-    "Actions": ["import_texture", "duplicate_material", "set_widget_brush", "add_widget", "set_cdo_property", "compile_blueprint", "save_asset", "reload_and_readback"],
+    "Actions": [
+      "import_texture",
+      "duplicate_material",
+      "set_widget_brush",
+      "add_widget",
+      "set_cdo_property",
+      "compile_blueprint",
+      "save_asset",
+      "reload_and_readback"
+    ],
     "CompileErrors": 0,
     "CompileWarnings": 0,
     "RHIAndCook": "待本轮运行证据；Monolith资产编译不代替真实客户端验收",
@@ -2319,7 +2328,18 @@
     "Project": "Game/DivineBeastsArena.uproject",
     "MonolithVersion": "0.23.0",
     "Asset": "/DBAUIPack_Core/UI/World/Materials/M_DBA_TargetSelectionRing",
-    "Actions": ["connect_material_parameter_to_emissive", "compile_material", "save_asset", "reload_packages", "readback_material_graph", "set_ring_width_0_04", "set_opacity_1_0", "recompile_material", "save_material", "readback_expression_properties"],
+    "Actions": [
+      "connect_material_parameter_to_emissive",
+      "compile_material",
+      "save_asset",
+      "reload_packages",
+      "readback_material_graph",
+      "set_ring_width_0_04",
+      "set_opacity_1_0",
+      "recompile_material",
+      "save_material",
+      "readback_expression_properties"
+    ],
     "CompileErrors": 0,
     "NotesCN": "目标法环颜色参数同时驱动底色和自发光；此前重新装载后回读连接。本轮通过Monolith将环宽常量设为0.04、透明度乘数设为1.0，编译保存后回读两项参数；双客户端重新登录新手村后，近处友方目标脚下法环已能看清。"
   },
@@ -2332,7 +2352,16 @@
     "RootLayout": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
     "RootLayoutProperty": "CombatFloatingTextClass",
     "NamedWidget": "FeedbackText",
-    "Actions": ["create_widget_blueprint", "add_widget", "set_widget_property", "set_cdo_property", "compile_blueprint", "save_asset", "reload_packages", "readback_widget_tree_and_parent"],
+    "Actions": [
+      "create_widget_blueprint",
+      "add_widget",
+      "set_widget_property",
+      "set_cdo_property",
+      "compile_blueprint",
+      "save_asset",
+      "reload_packages",
+      "readback_widget_tree_and_parent"
+    ],
     "CompileErrors": 0,
     "CompileWarnings": 0,
     "AccessibilityErrors": 0,
@@ -2422,5 +2451,38 @@
     "ColorRHIRunId": "f6a37bc0-ac4f-4eaf-8216-e75aa44380dd",
     "CookRunId": "efdd7af6-359c-44e0-818f-98ed88a8c479",
     "Evidence": "Saved/Validation/SkillBar20261018/PackagingRepairs.json"
+  },
+  "CompactHUDAndCastRepair20261018": {
+    "EditorBuildRunId": "0ebe200a-b478-4e0a-953e-23e40873a1ff",
+    "Assets": [
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD",
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+      "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_CastBar"
+    ],
+    "RegressionPassed": 8,
+    "CastFillRGBA": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "CompiledSavedReloaded": true,
+    "RuntimeManualAccepted": false,
+    "RegressionRunId": "821a198f-6201-464c-baac-9e0abd9d6a65",
+    "RemovedWidgets": [
+      "CombatHUD.ActionBarPortrait",
+      "old CombatHUD.ActionBarStatus",
+      "AbilityBar.SkillBarMomentum"
+    ],
+    "CombinedCookStatus": "Passed",
+    "MomentumOwner": "CombatHUD.ActionBarStatus",
+    "ColorRHIRunId": "db56b7ce-3373-48b3-bc04-0ce8a51684ee",
+    "Tool": "Monolith 0.23.0",
+    "CastRHIImagesInspected": [
+      "CastProgress_25.png",
+      "CastProgress_75.png"
+    ],
+    "ClientCookRunId": "fc4ef6e5-714f-4f65-a5a7-2eeccebddc41",
+    "FinalEvidence": "Saved/Validation/SkillBar20261018/LatestReleaseValidation.json"
   }
 }

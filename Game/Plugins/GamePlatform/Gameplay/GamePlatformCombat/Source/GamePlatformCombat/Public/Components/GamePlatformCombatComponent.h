@@ -78,6 +78,11 @@ public:
      * 不复制选择列表、不查询UI、不跨世界引用；调用方不得把此查询当作伤害授权。 */
     AActor* GetSelectedProjectileTarget(float MaximumRangeCm,int32& OutTargetGeneration) const;
 
+    /** GT只读瞄准点（世界厘米）：取当前启用碰撞的包围盒中心，无碰撞时退回Actor原点。
+     * 施法起射、服务器追踪及确认命中表现共用；不依赖骨骼、Niagara或客户端模型资源。
+     * 不提供命中资格或伤害授权，调用者仍须检查世界、存活与化身代次。 */
+    FVector GetCombatTargetPoint() const;
+
     /**
      * GT服务器只读选中意图，不做存活/距离/化身过滤；true表示当前控制者曾明确选择目标。
      * 弱目标可因销毁/GC而为空，但双方冻结代次仍保留，治疗等策略可拒绝失效选择而不是误自疗。

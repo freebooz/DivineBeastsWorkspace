@@ -83,9 +83,9 @@ void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSel
     Binding.Request.PrimaryText = FText::FromString(Actor->IsA<ADivineBeastsVillageVampire>() ? TEXT("吸血鬼") :
         Actor->IsA<ADivineBeastsVillageWolf>() ? TEXT("野狼") :
         Actor->IsA<ADivineBeastsCharacter>() ? TEXT("玩家") : TEXT("目标"));
-    Binding.Request.SelectionText = NSLOCTEXT("DivineBeastsWorldUI", "SelectedTarget", "▶ 已选中 ◀");
-    // 怪物选中只保留脚下法环与单行箭头/颜色提示；血条本身不绘制边框。
-    Binding.Request.bCompactSelection = Actor->IsA<ADivineBeastsVillageWolf>();
+    // 项目名称板已移除选中框/标记Widget；也不再向名称添加箭头或已选中文案。
+    Binding.Request.SelectionText = FText::GetEmpty();
+    Binding.Request.bCompactSelection = false;
     Actor->OnDestroyed.AddUniqueDynamic(this, &ThisClass::HandleActorDestroyed);
     Actor->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleActorEndPlay);
     const uint64 Generation = ObservationGeneration;

@@ -19,13 +19,13 @@
 
 彩色图启用 sRGB，独立 Alpha 关闭 sRGB；全部使用无损 UI 压缩 `TC_EditorIcon`、`TEXTUREGROUP_UI`、无 Mip、Clamp 与双线性采样。调色参数保持默认，控件纹理乘色为白色。RGBA 的 Alpha 已完整，当前普通 Image/Brush 直接使用 RGBA；独立遮罩供需要单独透明度输入的材质使用，禁止将其再次乘到已有 Alpha 上造成透明度平方。
 
-技能与功能槽48×48逻辑像素；图标纹理32×32，界面中24×24。施法与气势轨道高3逻辑像素。技能栏727×94，在 CombatHUD 内锚定底部中心，位置为零；根裁切只去除审核稿记录的极低 Alpha 重采样尾迹。字体和输入控件不整体缩放。现有状态条、头像移至技能栏上方，保留实际数据绑定。
+技能与功能槽48×48逻辑像素；图标纹理32×32，界面中24×24。施法与气势轨道高3逻辑像素。技能栏727×94，在 CombatHUD 内锚定底部中心，位置为零；根裁切只去除审核稿记录的极低 Alpha 重采样尾迹。字体和输入控件不整体缩放。按用户后续要求，已删除技能栏上方重复的头像和生命、能量、气势面板；左上角原有角色信息保留。底部 `ActionBarStatus` 改为气势专用控件，沿用根布局的 Pawn/ASC 事件绑定。
 
 原图八个技能框中，五个仍对应 `PrimaryAbilitySlot`、`ActiveAbilitySlot1`、`UltimateAbilitySlot`、`ActiveAbilitySlot2`、`PassiveAbilitySlot`；另外三格仅显示空背景。五个真实槽改为自身可命中，各自只覆盖48×48区域，修复图标/文字不接收指针后槽位无法点击或显示提示的问题；被动和未授权槽仍由原生命令门禁拒绝施法。不能将空格视作新增可用技能。无 Pawn 或技能未授权时仍遵守既有禁用显示。
 
 ## 事件与交互
 
-施法沿用 `GamePlatformCastProgressWidget` 的状态通知及引擎动画。气势通过 `DivineBeastsPlayerStatusPanel` 的当前 Pawn / ASC ViewModel 事件进入蓝图：比例钳制至0—1，投影到527像素轨道；无有效容量时隐藏游标。首次快照、换 Pawn 和来源清理沿用原生类，新增蓝图没有 Tick 或计时器轮询。
+施法沿用 `GamePlatformCastProgressWidget` 的状态通知及引擎动画，使用技能栏顶部554×3区域，仅在服务器确认的有效施法窗口内显示。气势通过 `DivineBeastsPlayerStatusPanel` 的当前 Pawn / ASC ViewModel 事件进入蓝图：比例钳制至0—1，投影到527像素轨道；无有效容量时隐藏18×18游标。首次快照、换 Pawn 和来源清理沿用原生类，新增蓝图没有 Tick 或计时器轮询。
 
 背包按钮调用拥有者 LocalPlayer 的既有背包入口，再次点击关闭页面或取消在途打开。组队按钮明确打开 `UI.Party.Panel`，本地已有同一面板时复用，不增加业务订阅。齿轮直接调用 `OpenSystemSettings`，关闭本协调器的背包/日志后进入真实设置页；从菜单进入时保留父菜单，直接进入时关闭设置恢复世界输入。左右键与前后导航在三个按钮之间显式连接，边缘允许退出；悬停添加细碧绿轮廓，常态保留审核纹理。蓝图路由已保存重载；配套原生代码已完成实际编译与回归，新编辑器已加载同步后的项目DLL。
 
@@ -64,3 +64,17 @@ Client完整增量构建通过，RunId `991d79a8-4172-4371-8b66-e39b8797a722`，
 两个新包客户端已启动并激活真实登录Widget，PID 45028、432，1920×1080、每端60帧，启用player01—player10本地测试账号按钮，没有自动登录。五项后端就绪检查均返回200；复用现有Village服务器17782，不宣称本轮重新构建Server。人工验收请分别登录两个不同账号，检查技能栏、背包、组队、设置、换角色投影及技能施放/冷却/双端反馈。
 
 完整证据：`Saved/Validation/SkillBar20261018/PackagedClientValidation.json`；客户端日志：`Saved/Validation/FrontEndClients/f5962665-8eea-4ae9-ac06-5060727ecd63/Clients.json`所在目录。客户端启动和容器通过不代替联网与视觉人工签收。
+
+## 施法前景不可见修复（2026-10-18，后续验证独立记录）
+
+真实 `WBP_DBA_UI_CastBar.CastProgressBar.FillColorAndOpacity` 回读为 `(0,0,0,0)`，前景即使收到百分比也完全透明。已通过正式项目的 Monolith 改为白色不透明乘色 `(1,1,1,1)`，编译、精确保存、重载及再次回读通过；纹理 RGB/Alpha、554×3尺寸保持不变。
+
+根布局原先仅允许三种开发技能样式显示施法条，导致治疗和其他已确认施法被 UI 名称白名单过滤。现改为服务器事实决定有效窗口，样式只影响显示名；治疗显示治疗名称，未知样式显示“施法中”。不修改服务器施法时长或释放资格，不为瞬发技能制造假进度。
+
+`CastBarEventBinding` 增加治疗和新增样式事件；新增 `DivineBeasts.UI.SkillBar.RHICastProgress` 直接绘制已保存 HUD，在25%和75%读取真实RHI像素验证亮玉青前景宽度，并验证取消后隐藏。上述新增代码与新资产仍需本轮新DLL、RHI和Cook验证；此前章节的通过记录不覆盖本次修复。当前状态见 `Saved/Validation/SkillBar20261018/CastProgressRepair.json`。
+
+### 本次修复的实际交付验证
+
+完整UI Editor增量构建 `0ebe200a-b478-4e0a-953e-23e40873a1ff` 通过。8项最小受影响原生回归 `821a198f-6201-464c-baac-9e0abd9d6a65` 全部Success、0失败、退出0；包含已保存HUD的25%/75%施法前景真实RHI验证，图片已实际打开核对。颜色门禁 `db56b7ce-3373-48b3-bc04-0ce8a51684ee` 通过。新Client构建及Cook/Stage分别为 `bd375c92-e202-48e4-8370-6a9f9f6d8e64`、`fc4ef6e5-714f-4f65-a5a7-2eeccebddc41`，均通过；实际容器含施法、HUD、气势控件和两段平衡站姿动画。
+
+新版双客户端PID23600/64800均存活，真实登录控件已激活且无致命错误。用户此前通过Escape停止Computer Use，本轮没有恢复桌面输入；登录入世界、背包/组队/设置交互、实际角色技能施放与最终站姿视觉仍待人工签收。已启动窗口不等于这些步骤已完成。完整分层证据：`Saved/Validation/SkillBar20261018/LatestReleaseValidation.json`。

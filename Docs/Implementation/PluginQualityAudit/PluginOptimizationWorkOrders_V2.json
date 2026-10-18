@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "status": "DESIGN_WORK_ORDERS_ONLY_NOT_IMPLEMENTATION",
   "sourceFile": "Docs/Implementation/PluginQualityAudit/CurrentPluginQualityMatrix.json",
-  "sourceSha256": "ced68a5c7e7028510a7d3147661408c4a66c2a5f9840749a5d6bc13de412805c",
+  "sourceSha256": "1c54fd8b388096b9de68bf1eab0563a8b0394fc6eb1be2c526071dbbe1e7496d",
   "sourceLimitations": "来自静态审查；功能分母未知。所有工作单均未由本脚本签署完成，所有人工签收保持未验证。",
   "globalPrerequisites": [
     "M0 核对全部当前身份与功能分母",
@@ -603,7 +603,7 @@
       "moduleBuildRules": [
         "Game/Plugins/GamePlatform/Application/GamePlatformSave/Source/GamePlatformSaveClient/GamePlatformSaveClient.Build.cs"
       ],
-      "sourceFileCount": 13,
+      "sourceFileCount": 14,
       "nativeAssetCount": 0,
       "nativeMapCount": 0,
       "moduleNativeTestFileCount": 2,
@@ -616,7 +616,7 @@
       "completionStatus": "not_implemented_by_this_plan",
       "runtimePerformanceStatus": "not_measured_by_this_plan",
       "firstStepFocus": "验证权限、原子性、版本恢复与并发写入失败处理",
-      "alreadyChangedNotes": "本批已加存储层编码写入限额与失败备份临时清理，并有原生测试源码及MSVC语法通过；仍需UE真实自动化及跨GameInstance并发取消审查",
+      "alreadyChangedNotes": "已加存储层写入限额、备份临时清理和进程内跨GameInstance同槽互斥；旧实例取消时后台线程仍持有租约；原生用例源码已补，仍需最新版UE UHT/模块链接、真实并发IO、跨进程隔离及人工确认",
       "targetReview": "双端/服务端/编辑器按实际模块职责",
       "sourcePerformanceCandidates": [],
       "tasks": [
@@ -777,12 +777,12 @@
         {
           "kind": "Ticker轮询",
           "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/Source/GamePlatformSession/Private/GamePlatformSessionClientSubsystem.cpp",
-          "line": 617
+          "line": 633
         },
         {
           "kind": "Ticker轮询",
           "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/Source/GamePlatformSession/Private/Transport/GamePlatformUESessionTransport.cpp",
-          "line": 139
+          "line": 168
         }
       ],
       "tasks": [
@@ -860,12 +860,12 @@
         {
           "kind": "Ticker轮询",
           "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Sinks/GamePlatformTelemetryNetworkSink.cpp",
-          "line": 239
+          "line": 244
         },
         {
           "kind": "Ticker轮询",
           "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Sinks/GamePlatformTelemetryNetworkSink.cpp",
-          "line": 388
+          "line": 421
         }
       ],
       "tasks": [
@@ -1628,7 +1628,7 @@
         "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/DivineBeastsUIClient.Build.cs",
         "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/DivineBeastsDemoClient.Build.cs"
       ],
-      "sourceFileCount": 347,
+      "sourceFileCount": 352,
       "nativeAssetCount": 1,
       "nativeMapCount": 0,
       "moduleNativeTestFileCount": 62,
@@ -2636,12 +2636,12 @@
         {
           "kind": "逐帧执行",
           "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Environment/GamePlatformBirdFlockActor.cpp",
-          "line": 193
+          "line": 200
         },
         {
           "kind": "逐帧执行",
           "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Environment/GamePlatformBirdFlockActor.cpp",
-          "line": 195
+          "line": 202
         }
       ],
       "tasks": [
@@ -2775,10 +2775,10 @@
         "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/DivineBeastsCharactersRuntime.Build.cs",
         "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/DivineBeastsAbilitiesRuntime.Build.cs"
       ],
-      "sourceFileCount": 72,
+      "sourceFileCount": 73,
       "nativeAssetCount": 229,
       "nativeMapCount": 0,
-      "moduleNativeTestFileCount": 11,
+      "moduleNativeTestFileCount": 12,
       "visualReviewRequired": true,
       "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase",
       "diagnosticIsFormalScenario": false,
@@ -3742,7 +3742,7 @@
       "declaredModuleCount": 0,
       "moduleBuildRules": [],
       "sourceFileCount": 0,
-      "nativeAssetCount": 102,
+      "nativeAssetCount": 129,
       "nativeMapCount": 0,
       "moduleNativeTestFileCount": 0,
       "visualReviewRequired": true,
@@ -4722,7 +4722,7 @@
       "declaredModuleCount": 0,
       "moduleBuildRules": [],
       "sourceFileCount": 0,
-      "nativeAssetCount": 1664,
+      "nativeAssetCount": 1780,
       "nativeMapCount": 1,
       "moduleNativeTestFileCount": 0,
       "visualReviewRequired": true,
@@ -4792,7 +4792,7 @@
       "declaredModuleCount": 0,
       "moduleBuildRules": [],
       "sourceFileCount": 0,
-      "nativeAssetCount": 5,
+      "nativeAssetCount": 105,
       "nativeMapCount": 0,
       "moduleNativeTestFileCount": 0,
       "visualReviewRequired": true,
@@ -4862,7 +4862,7 @@
       "declaredModuleCount": 0,
       "moduleBuildRules": [],
       "sourceFileCount": 0,
-      "nativeAssetCount": 167,
+      "nativeAssetCount": 194,
       "nativeMapCount": 0,
       "moduleNativeTestFileCount": 0,
       "visualReviewRequired": true,
@@ -5002,7 +5002,7 @@
       "declaredModuleCount": 0,
       "moduleBuildRules": [],
       "sourceFileCount": 0,
-      "nativeAssetCount": 190,
+      "nativeAssetCount": 204,
       "nativeMapCount": 1,
       "moduleNativeTestFileCount": 0,
       "visualReviewRequired": true,

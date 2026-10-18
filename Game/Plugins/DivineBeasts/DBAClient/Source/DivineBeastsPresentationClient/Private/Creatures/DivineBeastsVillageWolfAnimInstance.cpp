@@ -8,6 +8,9 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/GameStateBase.h"
+#include "DivineBeastsPresentationClientSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
 
 void UDivineBeastsVillageWolfAnimInstance::NativeInitializeAnimation()
 {
@@ -16,6 +19,7 @@ void UDivineBeastsVillageWolfAnimInstance::NativeInitializeAnimation()
     bClosing = false;
     bWolfDead = false;
     WolfSpeed = 0.0f;
+    bLifeSnapshotInitialized = false;
     auto* Wolf = Cast<ADivineBeastsVillageWolf>(TryGetPawnOwner());
     UWorld* World = GetWorld();
     if (!IsValid(Wolf) || !World || World->bIsTearingDown || World->GetNetMode() == NM_DedicatedServer)
@@ -47,6 +51,7 @@ void UDivineBeastsVillageWolfAnimInstance::ReleaseBindings()
     ObservedWolf.Reset();
     ObservedCast.Reset();
     ConsumedBite.Invalidate();
+    bLifeSnapshotInitialized = false;
     PlayingBite.Invalidate();
     if (BiteMontage) Montage_Stop(0.0f, BiteMontage);
     if (GreatSwordMontage) Montage_Stop(0.0f, GreatSwordMontage);
@@ -61,13 +66,36 @@ void UDivineBeastsVillageWolfAnimInstance::NativeUpdateAnimation(float DeltaSeco
         ? GroundSpeedCmPerSecond : 0.0f;
 }
 
+void UDivineBeastsVillageWolfAnimInstance::EmitWolfAudio(FName ClipId, const FGuid& EventId)
+{
+    auto* Wolf = ObservedWolf.Get();
+    UWorld* World = GetWorld();
+    if (bClosing || !IsValid(Wolf) || Wolf->IsActorBeingDestroyed() || !World ||
+        World->bIsTearingDown || Wolf->GetWorld() != World ||
+        World->GetNetMode() == NM_DedicatedServer) return;
+    auto* Instance = World->GetGameInstance();
+    auto* FirstPlayer = Instance ? Instance->GetFirstGamePlayer() : nullptr;
+    auto* Presentation = FirstPlayer
+        ? FirstPlayer->GetSubsystem<UDivineBeastsPresentationClientSubsystem>() : nullptr;
+    if (!Presentation) return;
+    // 远端动画与服务器攻击身份无关的纯表现，不写入生命/伤害。
+    if (EventId.IsValid())
+        Presentation->PlayAudioLibraryFactClip(ClipId, Wolf->GetActorLocation(), EventId);
+    else
+        Presentation->PlayAudioLibraryClip(ClipId, Wolf->GetActorLocation());
+}
+
 void UDivineBeastsVillageWolfAnimInstance::HandleLifeChanged(ADivineBeastsVillageWolf* Wolf)
 {
     if (bClosing || !IsValid(Wolf) || ObservedWolf.Get() != Wolf || Wolf->GetWorld() != GetWorld() ||
         Wolf->IsActorBeingDestroyed()) return;
+    const bool bHadLifeSnapshot = bLifeSnapshotInitialized;
+    const bool bWasDead = bWolfDead;
     bWolfDead = Wolf->IsWolfDead();
+    bLifeSnapshotInitialized = true;
     if (bWolfDead)
     {
+        if (bHadLifeSnapshot && !bWasDead) EmitWolfAudio(TEXT("Creature.Grunt"));
         WolfSpeed = 0.0f;
         PlayingBite.Invalidate();
         if (BiteMontage) Montage_Stop(0.05f, BiteMontage);
@@ -119,5 +147,8 @@ void UDivineBeastsVillageWolfAnimInstance::HandleCastChanged(
     // Montage开始回调也可能同步死亡、卸载或发布下一次攻击；在调用前发布归属供取消者识别。
     PlayingBite = Current.ActivationId;
     const float Played = Montage_Play(AttackMontage, Rate, EMontagePlayReturnType::MontageLength, Position, false);
-    if (Played <= 0.0f && PlayingBite == Current.ActivationId) PlayingBite.Invalidate();
+    if (Played <= 0.0f && PlayingBite == Current.ActivationId)
+        PlayingBite.Invalidate();
+    else if (Played > 0.0f && PlayingBite == Current.ActivationId && !bWolfDead)
+        EmitWolfAudio(bVampire ? TEXT("Combat.SwishHeavy") : TEXT("Creature.Bark"), Current.ActivationId);
 }

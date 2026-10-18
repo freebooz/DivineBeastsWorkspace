@@ -20,6 +20,8 @@ public:
     static FGamePlatformPresentationCatalogFragment BuildWeatherSFXFragment();
     /** 首批客户端音频映射；Definition先经Data租约完整预载，禁止将未交付声音注册成假成功。 */
     static FGamePlatformPresentationCatalogFragment BuildStarterAudioFragment();
+    /** 二期CC0音频库按Category构建真实语义映射；未知分类返回空目录，未加载资产不得假装可用。 */
+    static FGamePlatformPresentationCatalogFragment BuildAudioLibraryFragment(FName Category);
     /** 前端角色预览四类可替换自然飘落外观；只生成中立目录映射，无Niagara播放器。 */
     static FGamePlatformPresentationCatalogFragment BuildFrontEndFoliageFragment(FName StyleId);
 

@@ -45,6 +45,11 @@ private:
     FGuid ConsumedBite;
     FGuid PlayingBite;
     bool bClosing = true;
+    /** 初始化时只建立生命快照；首次见到已经死亡的复制狼不应倒放死亡声音。 */
+    bool bLifeSnapshotInitialized = false;
+
+    /** 用本World首个LocalPlayer的正式客户端音频目录播放，可选失败不影响怪物动作。 */
+    void EmitWolfAudio(FName ClipId, const FGuid& EventId = FGuid());
 
     /** 解绑旧Mesh作用域；只停止本实例自己的Montage，不触碰服务器资格。 */
     void ReleaseBindings();

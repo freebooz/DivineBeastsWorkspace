@@ -7,6 +7,7 @@
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/SceneComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -180,6 +181,36 @@ bool FGamePlatformProjectileHomingTest::RunTest(const FString&)
     TestTrue(TEXT("无选中目标仍可施放"),Straight->AuthorityInitialize(Fixture.CastSpec(),Motion,FVector::ForwardVector));
     Straight->Tick(0.1f);
     TestTrue(TEXT("无目标维持直线"),Straight->GetActorLocation().Equals(FVector(100,0,0),0.1));
+    return true;
+}
+
+// 目标原点可能位于脚底；锁定与命中表现使用真实碰撞中心，伤害仍经过服务器扫掠。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileTargetCenterTest,
+    "GamePlatform.Combat.Projectile.TargetCollisionCenter",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileTargetCenterTest::RunTest(const FString&)
+{
+    FProjectileTestWorld Fixture;
+    if (!Fixture.Initialize()) return false;
+    auto* Collision = CastChecked<USphereComponent>(Fixture.Target->GetRootComponent());
+    auto* FootOrigin = NewObject<USceneComponent>(Fixture.Target);
+    Fixture.Target->AddInstanceComponent(FootOrigin);
+    Fixture.Target->SetRootComponent(FootOrigin);
+    FootOrigin->RegisterComponent();
+    FootOrigin->SetWorldLocation(FVector(200, 0, 0));
+    Collision->AttachToComponent(FootOrigin, FAttachmentTransformRules::KeepRelativeTransform);
+    Collision->SetRelativeLocation(FVector(0, 0, 100));
+    const FVector Center(200, 0, 100);
+    TestTrue(TEXT("目标中心区别于脚底Actor原点"), Fixture.TargetCombat->GetCombatTargetPoint().Equals(Center, .1));
+    auto Spec = Fixture.CastSpec(); Spec.Target = Fixture.Target;
+    Spec.TargetAvatarGeneration = Fixture.TargetCombat->GetCombatAvatarGeneration();
+    FGamePlatformCombatProjectileMotion Motion; Motion.RangeCm = 500;
+    auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+    TestTrue(TEXT("选中脚底原点目标后可锁定"), Projectile->AuthorityInitialize(Spec, Motion, Center.GetSafeNormal()));
+    for (int32 Step = 0; Step < 8 && !Projectile->IsFlightFinished(); ++Step) Projectile->Tick(.05f);
+    TestTrue(TEXT("服务器确认实际命中"), Projectile->GetFlightFacts().bImpacted);
+    TestTrue(TEXT("复制给VFX与SFX的命中点为碰撞中心"), Projectile->GetFlightFacts().ImpactLocation.Equals(Center, .1));
+    TestEqual(TEXT("中心定位不重复结算伤害"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
     return true;
 }
 

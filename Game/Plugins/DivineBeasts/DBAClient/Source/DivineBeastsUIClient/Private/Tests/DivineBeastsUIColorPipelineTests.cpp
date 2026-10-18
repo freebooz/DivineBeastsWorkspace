@@ -23,6 +23,8 @@
 #include "ICommonInputModule.h" // CommonUI读取的是模块持有的运行设置实例，不是类默认对象。
 #include "Components/Image.h"
 #include "Panels/Combat/DivineBeastsPlayerStatusPanel.h"
+#include "Components/GamePlatformCastProgressWidget.h"
+#include "Components/ProgressBar.h"
 
 namespace DivineBeastsUIColorTests
 {
@@ -428,6 +430,83 @@ bool FDivineBeastsSkillBarRHIReportTest::RunTest(const FString&)
             TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD.WBP_DBA_UI_CombatHUD_C"),
             *Name, Size, *this, false, true));
     }
+    return bPassed;
+}
+
+/** 实际合成HUD中的3像素施法前景，防止Alpha=0导致数值/曲线测试通过而屏幕完全不可见。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCastBarRHIProgressTest,
+    "DivineBeasts.UI.SkillBar.RHICastProgress",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCastBarRHIProgressTest::RunTest(const FString&)
+{
+    if (GUsingNullRHI) { AddError(TEXT("施法前景必须使用真实RHI验证")); return false; }
+    UClass* Class = LoadClass<UUserWidget>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD.WBP_DBA_UI_CombatHUD_C"));
+    if (!TestNotNull(TEXT("实际HUD类"), Class)) return false;
+    TStrongObjectPtr<UUserWidget> HUD(NewObject<UUserWidget>(GetTransientPackage(), Class));
+    if (!HUD->Initialize()) return false;
+    auto* CastBar = Cast<UGamePlatformCastProgressWidget>(HUD->GetWidgetFromName(TEXT("CastBar")));
+    auto* Progress = CastBar ? Cast<UProgressBar>(CastBar->GetWidgetFromName(TEXT("CastProgressBar"))) : nullptr;
+    if (!TestNotNull(TEXT("HUD内实际施法前景"), Progress)) return false;
+    TestTrue(TEXT("原稿前景保持白色不透明乘色"), Progress->GetFillColorAndOpacity().Equals(FLinearColor::White));
+    ICommonInputModule::GetSettings().LoadData();
+    const auto SlateWidget = HUD->TakeWidget();
+    constexpr int32 Width = 1920, Height = 1080;
+    TStrongObjectPtr<UTextureRenderTarget2D> Target(NewObject<UTextureRenderTarget2D>());
+    Target->ClearColor = FLinearColor::Transparent;
+    Target->InitCustomFormat(Width, Height, PF_FloatRGBA, true);
+    Target->UpdateResourceImmediate(true);
+    auto* Renderer = new FWidgetRenderer(false, true);
+    FGamePlatformUICastProgressState State;
+    State.SourceScopeId = FGuid::NewGuid(); State.CastInstanceId = TEXT("RHI.ConfirmedCast");
+    State.TotalSeconds = 2.; State.RemainingSeconds = 2.; State.bActive = true; State.Revision = 1;
+    CastBar->BindCastSource(State.SourceScopeId);
+    CastBar->ApplyCastSnapshot(State);
+    const auto Draw = [&](TArray<FFloat16Color>& Pixels)
+    {
+        Renderer->DrawWidget(Target.Get(), SlateWidget, FVector2D(Width, Height), 0.f);
+        FlushRenderingCommands();
+        return Target->GameThread_GetRenderTargetResource()->ReadFloat16Pixels(Pixels)
+            && Pixels.Num() == Width * Height;
+    };
+    TArray<FFloat16Color> Baseline;
+    if (!Draw(Baseline)) { BeginCleanup(Renderer); return false; }
+    if (GShaderCompilingManager) GShaderCompilingManager->FinishAllCompilation();
+    if (!Draw(Baseline)) { BeginCleanup(Renderer); return false; }
+    const FGeometry Geometry = Progress->GetCachedGeometry();
+    const FVector2D Origin = Geometry.LocalToAbsolute(FVector2D::ZeroVector);
+    const FVector2D Extent = Geometry.GetLocalSize();
+    TestTrue(TEXT("施法前景保持554×3实际尺寸"), Extent.Equals(FVector2D(554., 3.), .01));
+    bool bPassed = true;
+    for (const float Fraction : { .25f, .75f })
+    {
+        State.RemainingSeconds = State.TotalSeconds * (1. - Fraction); ++State.Revision;
+        CastBar->ApplyCastSnapshot(State);
+        TArray<FFloat16Color> Pixels;
+        if (!Draw(Pixels)) { bPassed = false; break; }
+        int32 VisibleFill = 0;
+        const int32 Y = FMath::Clamp(FMath::FloorToInt(Origin.Y + Extent.Y * .5), 0, Height - 1);
+        for (int32 LocalX = 0; LocalX < FMath::FloorToInt(Extent.X); ++LocalX)
+        {
+            const int32 X = FMath::Clamp(FMath::FloorToInt(Origin.X + LocalX + .5), 0, Width - 1);
+            const auto Before = Baseline[Y * Width + X].GetFloats();
+            const auto After = Pixels[Y * Width + X].GetFloats();
+            if ((After.G + After.B) - (Before.G + Before.B) > .1f) ++VisibleFill;
+        }
+        bPassed &= TestTrue(*FString::Printf(TEXT("施法%.0f%%的真实可见前景宽度%d"), Fraction * 100, VisibleFill),
+            FMath::Abs(VisibleFill - Extent.X * Fraction) < 12.);
+        const FString Path = FPaths::ProjectSavedDir() / TEXT("Validation/UIColorRHI/SkillBar") /
+            FString::Printf(TEXT("CastProgress_%02d.png"), FMath::RoundToInt(Fraction * 100));
+        IFileManager::Get().MakeDirectory(*FPaths::GetPath(Path), true);
+        TUniquePtr<FArchive> Writer(IFileManager::Get().CreateFileWriter(*Path));
+        bPassed &= Writer && FImageUtils::ExportRenderTarget2DAsPNG(Target.Get(), *Writer);
+        if (Writer) Writer->Close();
+    }
+    State.bActive = false; State.RemainingSeconds = 0.; ++State.Revision;
+    CastBar->ApplyCastSnapshot(State);
+    TestEqual(TEXT("真实终态隐藏施法条"), CastBar->GetVisibility(), ESlateVisibility::Collapsed);
+    CastBar->ClearCastSource();
+    BeginCleanup(Renderer);
     return bPassed;
 }
 #endif

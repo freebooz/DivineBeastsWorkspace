@@ -44,3 +44,9 @@
 本内容包新增三个 `VFX/IceArrow/Niagara/Review/NS_DBA_IceArrow_{Cast,Flight,Impact}_A` 候选和相应 Review 材质、网格、纹理、审核地图。正式 Frostbolt Definition 与 Catalog 未替换。
 
 已输出真实三阶段渲染与 68 帧连续编辑器预览；**与选定 A 图高度一致的视觉验收仍未通过**，角色实战、多人性能、四档画质与 Cook 隔离尚未完成。详细记录见工作空间 `Docs/Implementation/IceArrow/ReviewProgress_20261016.md`，实际原生资源清单见本插件 `Docs/IceArrowReviewManifest_20261016.json`。这些审核工具不构成新的正式 VFX 播放框架。
+
+## SSLM 攻击弧刃V2审核候选（2026-10-18）
+
+`VFX/CommonSkillVFX/Review/V2/AttackSlash`新增一个弧刃斩击样本：一个CPU Emitter/粒子、三材质三维宽刃/流带/云纹网格、Instant Definition和CombatCast审核Effect Type。`SourceArt/VFX/CommonSkillVFX/V2/AttackSlash`保留11条Bezier曲线与可编辑`.blend`。原生地图为`Review/L_DBA_Review_AttackSlashV2`。
+
+已通过Monolith制作保存、独立UE冷加载编译、十实例有限生命周期与31帧原生序列检查。**人工视觉仍待审核**；没有更新正式生肖技能或生产扫描，未完成打包GPU/四档质量/Cook验收。详细说明见工作空间`Docs/Implementation/VFX/SSLM攻击弧刃V2审核样本_20261018.md`，证据归`Saved/Validation/CommonSkillVFX/AttackSlashV2`。通过前不制作其他效果。

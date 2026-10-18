@@ -236,7 +236,7 @@ void UDivineBeastsPlaceholderGameplayAbility::ReleaseNextProjectile()
     { EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true); return; }
     const FVector AimOrigin=Source->GetActorLocation()+FVector(0,0,50);
     const FVector Direction = bHadFrozenTarget ?
-        (Target->GetActorLocation()-AimOrigin).GetSafeNormal() : Source->GetActorForwardVector().GetSafeNormal();
+        (TargetCombat->GetCombatTargetPoint()-AimOrigin).GetSafeNormal() : Source->GetActorForwardVector().GetSafeNormal();
     if (Direction.IsNearlyZero())
     {
         EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);

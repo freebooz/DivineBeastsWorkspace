@@ -51,7 +51,7 @@ bool AGamePlatformCombatProjectile::AuthorityInitialize(const FGamePlatformComba
     HomingTarget = Spec.Target.Get(); HomingTargetAvatarGeneration = Spec.TargetAvatarGeneration;
     HomingCenter = Origin;
     if (!HasCurrentHomingTarget() || (bHasHomingTarget &&
-        FVector::DistSquared(Origin,HomingTarget->GetActorLocation()) > FMath::Square(Motion.RangeCm)))
+        FVector::DistSquared(Origin,HomingTarget->FindComponentByClass<UGamePlatformCombatComponent>()->GetCombatTargetPoint()) > FMath::Square(Motion.RangeCm)))
     {
         CastSpec={}; HomingTarget.Reset(); bHasHomingTarget=false; return false;
     }
@@ -83,7 +83,8 @@ bool AGamePlatformCombatProjectile::HasCurrentHomingTarget() const
 
 FVector AGamePlatformCombatProjectile::AdvanceHomingPosition(float StepSeconds)
 {
-    const FVector Desired=(HomingTarget->GetActorLocation()-HomingCenter).GetSafeNormal();
+    const FVector TargetCenter = HomingTarget->FindComponentByClass<UGamePlatformCombatComponent>()->GetCombatTargetPoint();
+    const FVector Desired=(TargetCenter-HomingCenter).GetSafeNormal();
     if (!Desired.IsNearlyZero()) Axis=Desired;
     // 传递正交截面；换轴后先补偿当前相位偏移，保证本段从真实当前位置连续起步。
     RadialY=(RadialY-Axis*FVector::DotProduct(RadialY,Axis)).GetSafeNormal();
@@ -163,6 +164,13 @@ void AGamePlatformCombatProjectile::FinishFlight(const FHitResult* Hit)
         AActor* Target = Hit->GetActor();
         auto* SourceCombat = IsValid(CastSpec.Source.Get()) ? CastSpec.Source->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
         auto* TargetCombat = IsValid(Target) ? Target->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+        // 物理Sweep仍决定是否被遮挡及命中哪个实体；复制的表现点统一放在实际受击实体中心。
+        // 不把穿入胶囊中心的视觉定位冒充新的碰撞证据；Damage.HitContext保留真实表面命中。
+        if (TargetCombat && !TargetCombat->IsCombatDead())
+        {
+            Facts.ImpactLocation = TargetCombat->GetCombatTargetPoint();
+            SetActorLocation(Facts.ImpactLocation, false);
+        }
         if (HasCurrentSource() && HasCurrentHomingTarget() && SourceCombat && TargetCombat && Target != CastSpec.Source.Get())
         {
             FGamePlatformCombatSpec Damage = CastSpec;

@@ -175,6 +175,25 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
     }
     if (DevelopmentMagicBindingToken != Token || !IsValid(Actor)) return;
     Flight = DevelopmentMagicFlights.Find(Actor); if (!Flight) return;
+    // 音效独立消费同一服务器阶段事实，不被Niagara预载/受理失败连带静音。
+    // 外调前锁住本阶段，拒绝同步重入重复发声；失败可在后续真实事实/资源通知时重试。
+    const bool bImpactAudio = Snapshot.bFinished && Snapshot.bImpacted;
+    if ((!Snapshot.bFinished || bImpactAudio) &&
+        !(bImpactAudio ? Snapshot.ImpactLocation : Actor->GetActorLocation()).ContainsNaN() &&
+        !(bImpactAudio ? Flight->bImpactAudioSubmitted : Flight->bFlightAudioSubmitted))
+    {
+        if (bImpactAudio) Flight->bImpactAudioSubmitted = true;
+        else Flight->bFlightAudioSubmitted = true;
+        const bool bAudioAccepted = PlayStarterSpellSound(Name, bImpactAudio,
+            bImpactAudio ? Snapshot.ImpactLocation : Actor->GetActorLocation());
+        if (Token != DevelopmentMagicBindingToken || !IsValid(Actor)) return;
+        Flight = DevelopmentMagicFlights.Find(Actor); if (!Flight) return;
+        if (!bAudioAccepted)
+        {
+            if (bImpactAudio) Flight->bImpactAudioSubmitted = false;
+            else Flight->bFlightAudioSubmitted = false;
+        }
+    }
     FString Error;
     if (GetContentPackState(DevelopmentMagicPack, Error) != EDivineBeastsPresentationContentPackState::Active) return;
     const auto Submit = [this, Actor, &Snapshot, Name, Token](bool bImpact)
@@ -206,13 +225,6 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
         {
             if (bImpact) Current->bImpactSubmitted=false;
             else if (Current->FlightRequestId==Request.RequestId) Current->FlightRequestId.Invalidate();
-        }
-        else if (IsValid(Actor) && !Actor->IsActorBeingDestroyed())
-        {
-            // 首批寒冰/火球音效复用真实弹道复制事实；声效是可选表现，不改变服务器技能裁决。
-            // SFX使用独立RequestId，不会与本次VFX的请求身份互相吞没。
-            PlayStarterSpellSound(Name, bImpact,
-                bImpact ? Snapshot.ImpactLocation : Actor->GetActorLocation());
         }
     };
     if (!Snapshot.bFinished) Submit(false);
@@ -344,4 +356,6 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentHealingFeedback(
     Request.Lifetime=EGamePlatformPresentationLifetime::Timed;
     // 平台确认反馈已按EventId/类型去重；重入或重复请求仍由唯一请求ID/作用域服务收敛。
     SubmitProjectRequest(Request);
+    // 治疗音效由同一确认事件身份驱动，与治疗Niagara独立；音效失败不影响GAS实际治疗。
+    PlayAudioLibraryFactClip(TEXT("Spell.Healing"), Feet, Event.EventId);
 }

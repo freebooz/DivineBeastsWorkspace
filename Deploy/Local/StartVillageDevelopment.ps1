@@ -9,7 +9,9 @@ param([Parameter(Mandatory)][string]$ServerExe,
     [Parameter(Mandatory)][string]$ControlBaseUrl,
     [Parameter(Mandatory)][string]$PlayerDataBaseUrl,
     [string]$RegionId='us-west',[ValidateRange(1024,65535)][int]$Port=17781,
-    [switch]$DevelopmentArena,[switch]$DevelopmentMonsters,[guid]$RunId=[guid]::NewGuid())
+    [switch]$DevelopmentArena,[switch]$DevelopmentMonsters,
+    # 仅打开AI事件日志，用于核对真实巡逻位移；不改变AI配置或行为。
+    [switch]$AIMovementDiagnostics,[guid]$RunId=[guid]::NewGuid())
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
@@ -46,9 +48,10 @@ foreach($taskArgument in @('/DBAWorldPack_Village/Maps/L_Village_Start','-Server
     '-DBADevelopmentSkills','-textconfig','-server','-nullrhi','-nosound','-unattended','-nosplash','-nosteam',"-port=$Port",'-MULTIHOME=127.0.0.1',"-abslog=$taskLog")){$taskInfo.ArgumentList.Add($taskArgument)}
 if($DevelopmentArena){$taskInfo.ArgumentList.Add('-DBADevelopmentArena')}
 if($DevelopmentMonsters){$taskInfo.ArgumentList.Add('-DBADevelopmentMonsters')}
+if($AIMovementDiagnostics){$taskInfo.ArgumentList.Add('-LogCmds=LogGamePlatformAI Verbose')}
 $taskChild=[Diagnostics.Process]::Start($taskInfo)
 $taskRecord=[pscustomobject]@{PID=$taskChild.Id;StartUtcTicks=$taskChild.StartTime.ToUniversalTime().Ticks.ToString();Exe=$taskExe;
-    ServerId=$taskServerId;BootId=$taskBoot;Port=$Port;Log=$taskLog;PlayerDataConfigured=$true;PlayerAdmissionVerified=$false}
+    ServerId=$taskServerId;BootId=$taskBoot;Port=$Port;Log=$taskLog;PlayerDataConfigured=$true;PlayerAdmissionVerified=$false;AIMovementDiagnostics=[bool]$AIMovementDiagnostics}
 $taskRecord|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $taskDirectory 'Server.json') -Encoding utf8
 $taskRecord|ConvertTo-Json
 } catch {

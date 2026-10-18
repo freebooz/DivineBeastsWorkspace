@@ -15,11 +15,13 @@ param([string]$EngineRoot, [switch]$Cook, [ValidateSet('Client','Server')][strin
     [switch]$Pak,
     # 可选仅省略Stage中的PDB等调试符号，缓解磁盘不足；不改变构建模式、Cook内容或测试门禁。
     [switch]$SkipDebugSymbols,
+    # 本机Zen不可用时显式使用原生文件Cook；仍保留Stage及服务器内容剥离门禁。
+    [switch]$SkipZenStore,
     [string[]]$Maps = @('/Game/Development/Foundation/Maps/L_FoundationBootstrap','/Game/Development/Foundation/Maps/L_FoundationSandbox'),
     [ValidateRange(1,86400)][int]$TimeoutSeconds = 1800, [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
-$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Maps=$Maps; Configuration='Development'; Platform='Win64'; CustomConfig=$CustomConfig; Pak=[bool]$Pak; SkipDebugSymbols=[bool]$SkipDebugSymbols }
+$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Maps=$Maps; Configuration='Development'; Platform='Win64'; CustomConfig=$CustomConfig; Pak=[bool]$Pak; SkipDebugSymbols=[bool]$SkipDebugSymbols; SkipZenStore=[bool]$SkipZenStore }
 try {
     $context = New-FoundationContext "Cook-$Target" $RunId
     if (-not $Cook) { throw [IO.FileNotFoundException]::new('需显式指定-Cook。') }
@@ -69,11 +71,17 @@ try {
     $lock = Enter-FoundationEngineLock $engine.Root
     # UE单平台-outputdir不自动附加平台；Stage仅在目录末段匹配CookPlatform时使用原路径。
     $cookDirectory = Join-Path $context.Directory "Cooked/Windows$Target"
+    if ($SkipZenStore) {
+        # 文件Cook拼接插件长路径，沿用前端Cook已验证的独占短目录策略。
+        $cookDirectory = Join-Path $context.Workspace ('Saved/C/'+$RunId.ToString('N').Substring(0,8)+"/Windows$Target")
+        if (Test-Path -LiteralPath $cookDirectory) { throw '文件Cook独占短路径已存在，拒绝覆盖。' }
+    }
     $stageDirectory = Join-Path $context.Directory 'Stage'
     $details.CookDirectory = $cookDirectory; $details.StageDirectory = $stageDirectory
     # Cook只由AdditionalCookerOptions选择角色/开发配置；不向UAT顶层传CustomConfig。
     # UBT ConfigCache仍会读取全局CustomConfig并改变Stage配置层；专服必须保留收据DedicatedServer剥离规则。
     $additionalCookerOptions = "-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback"
+    if ($SkipZenStore) { $additionalCookerOptions += ' -SkipZenStore' }
     if ($Target -eq 'Server' -and @($serverPresentationPolicy.CookerArguments).Count -gt 0) {
         # FoundationStandalone仍保留原开发许可；只给Server Cooker追加逐目录+Key。
         # UE5.8 ConfigCacheIni按ArrayAdd处理独立token；不用同名Set、清数组或逗号拼接。
