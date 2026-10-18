@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 3,
+  "project": "SSLM",
+  "titleZh": "创角界面历史技能V3图文预览合同",
+  "status": "DESIGN_REVIEW_ONLY_NOT_CONNECTED_OR_IMPORTED",
+  "source": "Docs/Design/ZodiacSkillV3Review/ReviewIndex.json",
+  "date": "2026-10-18",
+  "existingAssetsAndClasses": {
+    "uiWidget": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate",
+    "nativePageClass": "UDivineBeastsCharacterCreateScreen（角色创建页）",
+    "nativeViewModel": "UDivineBeastsCharacterCreateViewModel（角色创建介绍视图模型）",
+    "currentProfile": "UDivineBeastsCharacterCreationProfile（作者介绍独立资产）",
+    "profileLocationExample": "/DBAUIPack_Core/UI/Profiles/CharacterCreation/DA_DBA_CharacterCreation_Dragon",
+    "currentSkillLimit": 5,
+    "currentSkillField": "FDivineBeastsHeroOverview.Abilities（旧5条）、SkillIntroductionText（纯文字）",
+    "effectImageFieldExists": false,
+    "uiImages8AlreadyBound": false,
+    "startupAndNetwork": "本地创建页通过GamePlatformData普通实例租约预加载角色介绍；不触发GAS授予或专服Niagara播放"
+  },
+  "reviewLayout": {
+    "structure": "左12生肖可点名录→中真实角色3D预览→右1固有被动卡+8技能格图文可滚动→底创建按钮",
+    "oldWidgetMustPreserve": true,
+    "passiveOccupiesActionSlot": false,
+    "cardCount": 8,
+    "columns": 2,
+    "rows": 4,
+    "skillCardOrder": "按八槽当前屏幕顺序1—8显示，不按UAbilitySet中的数组顺序",
+    "detailOnClick": "右侧点击技能查看完整创角说明、CD、范围、控制或治疗规则、图像关键帧和预审状态（均从客户端编辑器已批准的显示资产读取）",
+    "frameIllustrationAspectRatio": "16:9",
+    "frameRecommendedImportMaxSizePx": [
+      1024,
+      576
+    ],
+    "characterPreviewMustRemainInteractive": true,
+    "safety": "整页AI效果样稿仅用于人审；不应直接替换正式技能图标、服务器GAS资源或Niagara系统"
+  },
+  "requiredPostApprovalCppChanges": [
+    "UDivineBeastsCharacterCreationProfile保留旧Entries==5兼容，以显式v3配置追加8项展示及被动，不允许误覆盖已发布配置；必须带版本和人工审核标识",
+    "FDivineBeastsHeroOverviewAbility增加展示SlotId、详细描述、可选的已审效果预览软图路径、ImageReviewId/Version；草案不可伪装正式",
+    "UDivineBeastsCharacterCreateViewModel增加新客户端预览图片的单用途GamePlatformData异步资源租约；换英雄/失活时先撤销再释放；未批准图片绝不加载",
+    "UDivineBeastsCharacterCreateScreen绑定技能卡滚动区及被动独立卡；仅当真实图回读和审核标记一致时显示，空图显示明确“效果图待审核”",
+    "八槽战斗UI与创角预览资料不得共用权威技能授予状态；英雄选择并不授予GAS"
+  ],
+  "approvalGate": {
+    "skillName": "PENDING_HUMAN_REVIEW",
+    "mechanics": "PENDING_HUMAN_REVIEW",
+    "visualEffect": "NOT_APPROVED",
+    "creationPreviewImage": "NOT_IMPORTED",
+    "minimumConditions": [
+      "历史名称与V2别名映射明确",
+      "96技能逐项中文说明通过人工审核",
+      "独立真实效果图逐项人工审核，视觉与技能动作一致",
+      "已批准视觉图原生导入后回读尺寸、哈希和图像归属",
+      "全部8技能的PreviewImage可用且不误当Niagara贴图",
+      "各生肖创建页切换后当前英雄的8图8文及被动都准确，无旧图回弹",
+      "技能正式GAS运行准入另行审核，不能以创角效果图通过代替联机"
+    ]
+  },
+  "heroDisplaySources": [
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Rat.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Ox.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Tiger.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Rabbit.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Dragon.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Snake.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Horse.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Goat.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Monkey.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Rooster.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Dog.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "designReviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Boar.json",
+      "effectImageCountRequired": 8,
+      "approvedImages": 0,
+      "visibleInProductionCreation": false
+    }
+  ],
+  "notExecuted": [
+    "UE5.8 C++构建和反射更新",
+    "Monolith创建或修改Widget / DA / Texture2D",
+    "制作Niagara正式技能",
+    "真实8技能与双客户端联机验证",
+    "客户端与专用服务器Cook"
+  ]
+}

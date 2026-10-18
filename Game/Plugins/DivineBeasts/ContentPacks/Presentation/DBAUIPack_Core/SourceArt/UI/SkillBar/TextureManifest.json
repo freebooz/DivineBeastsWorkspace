@@ -1,6 +1,6 @@
 {
   "SchemaVersion": 1,
-  "Status": "HumanApproved_ImportedSavedReloaded_RHIPending",
+  "Status": "HumanApproved_ImportedSavedReloaded",
   "HumanApproval": "2026-10-18：审核通过，继续执行",
   "ProvenanceRoot": "Saved/ArtReview/AbilityBar_20261018_v02",
   "Engine": "UE5.8",
@@ -327,7 +327,7 @@
     "TextureAddress": "Clamp",
     "AlphaContract": "straight / unassociated; Color.RGB+Mask.A，或直接Color.RGBA，二选一；禁止重复乘两份Alpha",
     "ImportDestination": "/DBAUIPack_Core/UI/Textures/SkillBar",
-    "ImportExecuted": false
+    "ImportExecuted": true
   },
   "Assumptions": [
     "未指定长度的3像素条采用256像素宽的候选",
@@ -339,5 +339,6 @@
   "VisualVerification": "离线审核图，不是UE渲染或RHI验收",
   "Version": "20261018_v02",
   "AssemblyLayout": "AssemblyLayout.json",
-  "BottomAlignment": "VisibleContentBottomFlush"
+  "BottomAlignment": "VisibleContentBottomFlush",
+  "RuntimeValidationEvidence": "Docs/SkillBarDelivery_20261018.md and Saved/Validation/SkillBar20261018/FinalValidation.json"
 }

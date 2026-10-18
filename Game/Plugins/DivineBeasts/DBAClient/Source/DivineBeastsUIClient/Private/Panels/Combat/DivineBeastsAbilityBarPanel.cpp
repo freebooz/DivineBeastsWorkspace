@@ -208,12 +208,12 @@ void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
     if (IsValid(PassiveAbilitySlot))
     {
         TSet<FName> DistinctActiveInputSlots;
-        for (const FGamePlatformUISlotState& Slot : AbilitySlots)
+        for (const FGamePlatformUISlotState& GrantedSlot : AbilitySlots)
         {
-            const FString SlotTag = Slot.SlotId.ToString();
+            const FString SlotTag = GrantedSlot.SlotId.ToString();
             if (SlotTag == TEXT("Platform.Ability.Input.DivineBeasts.Primary") ||
                 SlotTag.StartsWith(TEXT("Platform.Ability.Input.DivineBeasts.Slot")))
-                DistinctActiveInputSlots.Add(Slot.SlotId);
+                DistinctActiveInputSlots.Add(GrantedSlot.SlotId);
         }
         PassiveAbilitySlot->SetVisibility(
             DistinctActiveInputSlots.Num() == 8 ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);

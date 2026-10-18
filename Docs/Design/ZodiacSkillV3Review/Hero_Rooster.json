@@ -1,0 +1,511 @@
+{
+  "schemaVersion": 3,
+  "projectCode": "SSLM",
+  "heroId": "Hero.Zodiac.Rooster",
+  "heroNameZh": "酉鸡·金鸣",
+  "sourceV1": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md",
+  "sourceV2": "Docs/Design/ZodiacEightSlotSkills_V2.json",
+  "sourceArt": "Docs/Art/ZodiacSkillIconPrompts.json",
+  "status": "PENDING_HUMAN_REVIEW",
+  "slotCount": 8,
+  "passiveTrait": {
+    "nameZh": "暗迹",
+    "currentV2NameZh": "破晓之羽",
+    "historicalSource": "Final_v1_2026-06-28",
+    "summaryZh": "对已受控制目标的攻击有额外奖励（策划草案）",
+    "visualLanguageZh": "晨曦金和青蓝；金羽扇面、日轮声环",
+    "existingIcon": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Passive_DawnSpirit_V1",
+    "status": "PENDING_HUMAN_REVIEW_NOT_IMPLEMENTED"
+  },
+  "visualIdentity": "晨曦金和青蓝；金羽扇面、日轮声环",
+  "oldUltimateName": "破晓王鸣",
+  "reviewUltimateName": "破晓金鸣",
+  "bannedMechanicsNeverRestore": true,
+  "previewAssetCreated": false,
+  "skillRows": [
+    {
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.rooster_eight_golden_peck@1",
+      "nameZh": "金羽啄光",
+      "previousV2NameZh": "金羽啄光",
+      "roleZh": "基础攻击",
+      "historicalSource": {
+        "date": "2026-10-18",
+        "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
+        "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
+      },
+      "creatorDescriptionZh": "基础攻击「金羽啄光」：远程晨光金羽攻击。一级初调参考：伤害30点/段，最多1段；冷却0.88秒，射程760厘米，气势消耗0、能量消耗暂为0。方向与命中点应清晰，单击不得穿透不合法目标。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "mechanicsThemeZh": "远程晨光金羽攻击",
+      "balanceV2Reference": {
+        "damageType": "Magic",
+        "baseDamage": 30,
+        "hitCount": 1,
+        "projectedMaxDamage": 30,
+        "cooldownSeconds": 0.88,
+        "momentumCost": 0,
+        "energyCost": 0,
+        "rangeCm": 760,
+        "radiusCm": 0,
+        "actions": [
+          {
+            "kind": "damage",
+            "baseMagnitude": 30,
+            "hitCount": 1,
+            "type": "Magic"
+          }
+        ]
+      },
+      "iconReference": {
+        "existingTexturePath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_BasicAttack_FeatherStrike_V1",
+        "artMotif": "FeatherStrike",
+        "status": "EXISTING_ICON_VISUAL_REFERENCE_ONLY_NOT_APPROVED_FOR_NEW_NAME"
+      },
+      "imageConcept": {
+        "preexistingUserApprovedSkillEffectImagePath": null,
+        "proposedPreviewImagePath": null,
+        "visualHeroDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+        "keyframes": [
+          "攻击方向预读",
+          "爪光／基础攻击实心主体",
+          "命中点局部主闪光"
+        ],
+        "shortPromptZh": "酉鸡·金鸣「金羽啄光」的真实3D技能效果图，远程晨光金羽攻击；晨曦金和青蓝；金羽扇面、日轮声环。攻击方向预读→爪光／基础攻击实心主体→命中点局部主闪光，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "reviewState": "PENDING_HUMAN_APPROVAL",
+        "actualNiagaraAssetPath": null
+      },
+      "labelHistoricalV2Alias": null,
+      "status": {
+        "skillName": "PENDING_HUMAN_REVIEW",
+        "mechanics": "PENDING_HUMAN_REVIEW",
+        "effectImage": "NOT_GENERATED",
+        "gameplayAbility": "NOT_AUTHORED",
+        "canShowInProductionCreation": false
+      }
+    },
+    {
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.rooster_eight_feather_fan@1",
+      "nameZh": "破晓",
+      "previousV2NameZh": "金翎飞扇",
+      "roleZh": "攻击技能",
+      "historicalSource": {
+        "document": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md",
+        "date": "2026-06-28",
+        "legacySlot": "Q",
+        "legacyNameZh": "破晓",
+        "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
+      },
+      "creatorDescriptionZh": "攻击技能「破晓」：晨光金羽光刃。一级初调参考：伤害67点/段，最多1段；冷却5.5秒，射程1000厘米，作用半径270厘米，气势消耗0、能量消耗暂为0。抬手、攻击范围可预读，离开攻击方向或及时防御可以反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "mechanicsThemeZh": "晨光金羽光刃",
+      "balanceV2Reference": {
+        "damageType": "Magic",
+        "baseDamage": 67,
+        "hitCount": 1,
+        "projectedMaxDamage": 67,
+        "cooldownSeconds": 5.5,
+        "momentumCost": 0,
+        "energyCost": 0,
+        "rangeCm": 1000,
+        "radiusCm": 270,
+        "actions": [
+          {
+            "kind": "damage",
+            "baseMagnitude": 67,
+            "hitCount": 1,
+            "type": "Magic"
+          }
+        ]
+      },
+      "iconReference": {
+        "existingTexturePath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Active01_FeatherFan_V1",
+        "artMotif": "FeatherFan",
+        "status": "EXISTING_ICON_VISUAL_REFERENCE_ONLY_NOT_APPROVED_FOR_NEW_NAME"
+      },
+      "imageConcept": {
+        "preexistingUserApprovedSkillEffectImagePath": null,
+        "proposedPreviewImagePath": null,
+        "visualHeroDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+        "keyframes": [
+          "施法姿态和瞄准",
+          "核心攻击形状",
+          "有限命中打击"
+        ],
+        "shortPromptZh": "酉鸡·金鸣「破晓」的真实3D技能效果图，晨光金羽光刃；晨曦金和青蓝；金羽扇面、日轮声环。施法姿态和瞄准→核心攻击形状→有限命中打击，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "reviewState": "PENDING_HUMAN_APPROVAL",
+        "actualNiagaraAssetPath": null
+      },
+      "labelHistoricalV2Alias": "金翎飞扇",
+      "status": {
+        "skillName": "PENDING_HUMAN_REVIEW",
+        "mechanics": "PENDING_HUMAN_REVIEW",
+        "effectImage": "NOT_GENERATED",
+        "gameplayAbility": "NOT_AUTHORED",
+        "canShowInProductionCreation": false
+      }
+    },
+    {
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.rooster_eight_sunrise_wave@1",
+      "nameZh": "晨鸣音浪",
+      "previousV2NameZh": "晨鸣音浪",
+      "roleZh": "扩展攻击",
+      "historicalSource": {
+        "date": "2026-10-18",
+        "document": "Docs/Design/ZodiacEightSlotSkills_V2.json",
+        "migrationReason": "扩展攻击或普通攻击，为8槽新增独立定位"
+      },
+      "creatorDescriptionZh": "扩展攻击「晨鸣音浪」：波纹向前传播并造成区域伤害。一级初调参考：伤害86点/段，最多1段；冷却9.5秒，射程850厘米，作用半径325厘米，气势消耗0、能量消耗暂为0。公开攻击范围和命中次数，避免隐藏追踪或持续追加伤害。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "mechanicsThemeZh": "波纹向前传播并造成区域伤害",
+      "balanceV2Reference": {
+        "damageType": "Magic",
+        "baseDamage": 86,
+        "hitCount": 1,
+        "projectedMaxDamage": 86,
+        "cooldownSeconds": 9.5,
+        "momentumCost": 0,
+        "energyCost": 0,
+        "rangeCm": 850,
+        "radiusCm": 325,
+        "actions": [
+          {
+            "kind": "damage",
+            "baseMagnitude": 86,
+            "hitCount": 1,
+            "type": "Magic"
+          }
+        ]
+      },
+      "iconReference": {
+        "existingTexturePath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Active02_SonicRing_V1",
+        "artMotif": "SonicRing",
+        "status": "EXISTING_ICON_VISUAL_REFERENCE_ONLY_NOT_APPROVED_FOR_NEW_NAME"
+      },
+      "imageConcept": {
+        "preexistingUserApprovedSkillEffectImagePath": null,
+        "proposedPreviewImagePath": null,
+        "visualHeroDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+        "keyframes": [
+          "扇形或目标预警",
+          "第二攻击主体",
+          "多段／区域命中"
+        ],
+        "shortPromptZh": "酉鸡·金鸣「晨鸣音浪」的真实3D技能效果图，波纹向前传播并造成区域伤害；晨曦金和青蓝；金羽扇面、日轮声环。扇形或目标预警→第二攻击主体→多段／区域命中，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "reviewState": "PENDING_HUMAN_APPROVAL",
+        "actualNiagaraAssetPath": null
+      },
+      "labelHistoricalV2Alias": null,
+      "status": {
+        "skillName": "PENDING_HUMAN_REVIEW",
+        "mechanics": "PENDING_HUMAN_REVIEW",
+        "effectImage": "NOT_GENERATED",
+        "gameplayAbility": "NOT_AUTHORED",
+        "canShowInProductionCreation": false
+      }
+    },
+    {
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.rooster_eight_dawn_resonance@1",
+      "nameZh": "破晓金鸣",
+      "previousV2NameZh": "金鸣破晓",
+      "roleZh": "终极技能",
+      "historicalSource": {
+        "document": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md",
+        "date": "2026-06-28",
+        "legacySlot": "R",
+        "legacyNameZh": "破晓王鸣",
+        "migrationReason": "已取消王印/王阵/王座机制，保留原动作及高光特征"
+      },
+      "creatorDescriptionZh": "终极技能「破晓金鸣」：曙光大日轮打击与治疗。一级初调参考：伤害190点/段，最多1段；友军治疗上限10%最大生命；冷却68秒，射程880厘米，作用半径520厘米，气势消耗0、能量消耗暂为0。提前给出清晰危险区，分段总伤害须单独审核上限，保留走位和打断反制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "mechanicsThemeZh": "曙光大日轮打击与治疗",
+      "balanceV2Reference": {
+        "damageType": "Magic",
+        "baseDamage": 190,
+        "hitCount": 1,
+        "projectedMaxDamage": 190,
+        "cooldownSeconds": 68,
+        "momentumCost": 0,
+        "energyCost": 0,
+        "rangeCm": 880,
+        "radiusCm": 520,
+        "actions": [
+          {
+            "kind": "damage",
+            "baseMagnitude": 190,
+            "hitCount": 1,
+            "type": "Magic"
+          },
+          {
+            "kind": "healing",
+            "maxHealthFraction": 0.1,
+            "allowRevive": false
+          }
+        ]
+      },
+      "iconReference": {
+        "existingTexturePath": "/DBAHeroPack_Rooster/UI/Abilities/T_DBA_Rooster_Ultimate_DawnRadiance_V1",
+        "artMotif": "DawnRadiance",
+        "status": "EXISTING_ICON_VISUAL_REFERENCE_ONLY_NOT_APPROVED_FOR_NEW_NAME"
+      },
+      "imageConcept": {
+        "preexistingUserApprovedSkillEffectImagePath": null,
+        "proposedPreviewImagePath": null,
+        "visualHeroDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+        "keyframes": [
+          "高优先级范围预警",
+          "终极主体轮廓与最亮爆发",
+          "清晰安全消散"
+        ],
+        "shortPromptZh": "酉鸡·金鸣「破晓金鸣」的真实3D技能效果图，曙光大日轮打击与治疗；晨曦金和青蓝；金羽扇面、日轮声环。高优先级范围预警→终极主体轮廓与最亮爆发→清晰安全消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "reviewState": "PENDING_HUMAN_APPROVAL",
+        "actualNiagaraAssetPath": null
+      },
+      "labelHistoricalV2Alias": "金鸣破晓",
+      "status": {
+        "skillName": "PENDING_HUMAN_REVIEW",
+        "mechanics": "PENDING_HUMAN_REVIEW",
+        "effectImage": "NOT_GENERATED",
+        "gameplayAbility": "NOT_AUTHORED",
+        "canShowInProductionCreation": false
+      }
+    },
+    {
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.rooster_eight_feather_glide@1",
+      "nameZh": "鸣步",
+      "previousV2NameZh": "晨羽滑翔",
+      "roleZh": "移动",
+      "historicalSource": {
+        "document": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md",
+        "date": "2026-06-28",
+        "legacySlot": "E",
+        "legacyNameZh": "鸣步",
+        "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
+      },
+      "creatorDescriptionZh": "移动「鸣步」：晨鸣轻步前移。一级初调参考：合法位移660厘米；冷却14秒，射程690厘米，气势消耗0、能量消耗暂为0。服务器校验起点、落点及碰撞，不能穿越限制区或无限位移。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "mechanicsThemeZh": "晨鸣轻步前移",
+      "balanceV2Reference": {
+        "damageType": "Untyped",
+        "baseDamage": 0,
+        "hitCount": 1,
+        "projectedMaxDamage": 0,
+        "cooldownSeconds": 14,
+        "momentumCost": 0,
+        "energyCost": 0,
+        "rangeCm": 690,
+        "radiusCm": 0,
+        "actions": [
+          {
+            "kind": "movement",
+            "distanceCm": 660,
+            "serverNavValidation": true
+          }
+        ]
+      },
+      "iconReference": null,
+      "imageConcept": {
+        "preexistingUserApprovedSkillEffectImagePath": null,
+        "proposedPreviewImagePath": null,
+        "visualHeroDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+        "keyframes": [
+          "位移方向箭头",
+          "连续动作残影",
+          "合法落地小环"
+        ],
+        "shortPromptZh": "酉鸡·金鸣「鸣步」的真实3D技能效果图，晨鸣轻步前移；晨曦金和青蓝；金羽扇面、日轮声环。位移方向箭头→连续动作残影→合法落地小环，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "reviewState": "PENDING_HUMAN_APPROVAL",
+        "actualNiagaraAssetPath": null
+      },
+      "labelHistoricalV2Alias": "晨羽滑翔",
+      "status": {
+        "skillName": "PENDING_HUMAN_REVIEW",
+        "mechanics": "PENDING_HUMAN_REVIEW",
+        "effectImage": "NOT_GENERATED",
+        "gameplayAbility": "NOT_AUTHORED",
+        "canShowInProductionCreation": false
+      }
+    },
+    {
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.rooster_eight_wing_guard@1",
+      "nameZh": "金羽",
+      "previousV2NameZh": "金羽翼盾",
+      "roleZh": "防御",
+      "historicalSource": {
+        "document": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md",
+        "date": "2026-06-28",
+        "legacySlot": "C",
+        "legacyNameZh": "金羽",
+        "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
+      },
+      "creatorDescriptionZh": "防御「金羽」：金羽护盾边界清晰。一级初调参考：护盾16%最大生命、持续4秒；冷却19秒，射程750厘米，气势消耗0、能量消耗暂为0。护盾容量与时间受限，敌方可消耗或绕开，不能无条件免死。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "mechanicsThemeZh": "金羽护盾边界清晰",
+      "balanceV2Reference": {
+        "damageType": "Untyped",
+        "baseDamage": 0,
+        "hitCount": 1,
+        "projectedMaxDamage": 0,
+        "cooldownSeconds": 19,
+        "momentumCost": 0,
+        "energyCost": 0,
+        "rangeCm": 750,
+        "radiusCm": 0,
+        "actions": [
+          {
+            "kind": "shield",
+            "maxHealthFraction": 0.16,
+            "durationSeconds": 4
+          }
+        ]
+      },
+      "iconReference": null,
+      "imageConcept": {
+        "preexistingUserApprovedSkillEffectImagePath": null,
+        "proposedPreviewImagePath": null,
+        "visualHeroDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+        "keyframes": [
+          "半透盾边界成型",
+          "容量响应高光",
+          "破盾后快速消散"
+        ],
+        "shortPromptZh": "酉鸡·金鸣「金羽」的真实3D技能效果图，金羽护盾边界清晰；晨曦金和青蓝；金羽扇面、日轮声环。半透盾边界成型→容量响应高光→破盾后快速消散，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "reviewState": "PENDING_HUMAN_APPROVAL",
+        "actualNiagaraAssetPath": null
+      },
+      "labelHistoricalV2Alias": "金羽翼盾",
+      "status": {
+        "skillName": "PENDING_HUMAN_REVIEW",
+        "mechanics": "PENDING_HUMAN_REVIEW",
+        "effectImage": "NOT_GENERATED",
+        "gameplayAbility": "NOT_AUTHORED",
+        "canShowInProductionCreation": false
+      }
+    },
+    {
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.rooster_eight_sonic_silence@1",
+      "nameZh": "鸣震",
+      "previousV2NameZh": "破晓鸣音",
+      "roleZh": "控制",
+      "historicalSource": {
+        "document": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md",
+        "date": "2026-06-28",
+        "legacySlot": "W",
+        "legacyNameZh": "鸣震",
+        "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
+      },
+      "creatorDescriptionZh": "控制「鸣震」：扇形声环短沉默。一级初调参考：伤害20点/段，最多1段；沉默1.2秒；冷却18秒，射程850厘米，气势消耗0、能量消耗暂为0。持续时间有上限，地面控制范围可见，不允许特效延长服务器控制。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "mechanicsThemeZh": "扇形声环短沉默",
+      "balanceV2Reference": {
+        "damageType": "Magic",
+        "baseDamage": 20,
+        "hitCount": 1,
+        "projectedMaxDamage": 20,
+        "cooldownSeconds": 18,
+        "momentumCost": 0,
+        "energyCost": 0,
+        "rangeCm": 850,
+        "radiusCm": 0,
+        "actions": [
+          {
+            "kind": "damage",
+            "baseMagnitude": 20,
+            "hitCount": 1,
+            "type": "Magic"
+          },
+          {
+            "kind": "control",
+            "controlType": "silence",
+            "durationSeconds": 1.2,
+            "slowFraction": 0
+          }
+        ]
+      },
+      "iconReference": null,
+      "imageConcept": {
+        "preexistingUserApprovedSkillEffectImagePath": null,
+        "proposedPreviewImagePath": null,
+        "visualHeroDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+        "keyframes": [
+          "敌方范围低成本警示",
+          "短控制形状与目标响应",
+          "解除控制的明确终态"
+        ],
+        "shortPromptZh": "酉鸡·金鸣「鸣震」的真实3D技能效果图，扇形声环短沉默；晨曦金和青蓝；金羽扇面、日轮声环。敌方范围低成本警示→短控制形状与目标响应→解除控制的明确终态，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "reviewState": "PENDING_HUMAN_APPROVAL",
+        "actualNiagaraAssetPath": null
+      },
+      "labelHistoricalV2Alias": "破晓鸣音",
+      "status": {
+        "skillName": "PENDING_HUMAN_REVIEW",
+        "mechanics": "PENDING_HUMAN_REVIEW",
+        "effectImage": "NOT_GENERATED",
+        "gameplayAbility": "NOT_AUTHORED",
+        "canShowInProductionCreation": false
+      }
+    },
+    {
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.rooster_eight_first_light_heal@1",
+      "nameZh": "晨鸣",
+      "previousV2NameZh": "初曦回春",
+      "roleZh": "特色／治疗",
+      "historicalSource": {
+        "document": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md",
+        "date": "2026-06-28",
+        "legacySlot": "F",
+        "legacyNameZh": "晨鸣",
+        "migrationReason": "保留旧技能核心幻想，旧三合/五行/印记逻辑一律弃用"
+      },
+      "creatorDescriptionZh": "特色／治疗「晨鸣」：晨鸣显露附近战区并给予友军有限治疗。一级初调参考：友军治疗上限20%最大生命；冷却17秒，射程920厘米，气势消耗0、能量消耗暂为0。友军／敌军资格严格区分，治疗与增益只作用于合法友方，不能全图获益。本条为创角预览和GAS制作的待审核设计，所有玩法、数值和效果图尚未得到正式授权。",
+      "mechanicsThemeZh": "晨鸣显露附近战区并给予友军有限治疗",
+      "balanceV2Reference": {
+        "damageType": "Untyped",
+        "baseDamage": 0,
+        "hitCount": 1,
+        "projectedMaxDamage": 0,
+        "cooldownSeconds": 17,
+        "momentumCost": 0,
+        "energyCost": 0,
+        "rangeCm": 920,
+        "radiusCm": 0,
+        "actions": [
+          {
+            "kind": "healing",
+            "maxHealthFraction": 0.2,
+            "allowRevive": false
+          }
+        ]
+      },
+      "iconReference": null,
+      "imageConcept": {
+        "preexistingUserApprovedSkillEffectImagePath": null,
+        "proposedPreviewImagePath": null,
+        "visualHeroDNA": "晨曦金和青蓝；金羽扇面、日轮声环",
+        "keyframes": [
+          "使用前友军目标指示",
+          "特色或治疗主体",
+          "有限范围友军获益"
+        ],
+        "shortPromptZh": "酉鸡·金鸣「晨鸣」的真实3D技能效果图，晨鸣显露附近战区并给予友军有限治疗；晨曦金和青蓝；金羽扇面、日轮声环。使用前友军目标指示→特色或治疗主体→有限范围友军获益，主体和方向清晰，45度游戏摄像机，明亮环境，不使用无关大量碎粒；无界面文字、边框或水印；与现有生肖角色及60枚图标保持视觉一致；不含血腥、旧王印、五行克制或阵营机制。",
+        "reviewState": "PENDING_HUMAN_APPROVAL",
+        "actualNiagaraAssetPath": null
+      },
+      "labelHistoricalV2Alias": "初曦回春",
+      "status": {
+        "skillName": "PENDING_HUMAN_REVIEW",
+        "mechanics": "PENDING_HUMAN_REVIEW",
+        "effectImage": "NOT_GENERATED",
+        "gameplayAbility": "NOT_AUTHORED",
+        "canShowInProductionCreation": false
+      }
+    }
+  ]
+}

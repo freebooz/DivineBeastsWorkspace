@@ -57,6 +57,16 @@ bool FDivineBeastsVillageSnowBridgeContractTest::RunTest(const FString& Paramete
         TestTrue(TEXT("宏观雪纹理使用合法软对象路径"), Config->SnowCoverageTexture.IsValid());
         TestTrue(TEXT("雪色贴图只存软引用"), Config->SnowAlbedoTexture.IsValid());
         TestTrue(TEXT("雪法线贴图只存软引用"), Config->SnowNormalTexture.IsValid());
+        // 新正式视觉合同：V3草地色与该CC0扫描的法线/ORM配对，不回退到历史黄褐色基础色。
+        TestEqual(TEXT("正式Village客户端应使用已创建V3.0草地色软路径"),
+            Config->GroundAlbedoTexture.ToString(),
+            FString(TEXT("/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Grass_BaseColor_V3.T_DBA_Terrain_Grass_BaseColor_V3")));
+        TestEqual(TEXT("正式Village草地法线来自同一CC0纹理组"),
+            Config->GroundNormalTexture.ToString(),
+            FString(TEXT("/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_Normal.T_DBA_Terrain_Grass_Normal")));
+        TestEqual(TEXT("正式Village草地ORM来自同一CC0纹理组"),
+            Config->GroundORMTexture.ToString(),
+            FString(TEXT("/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_ORM.T_DBA_Terrain_Grass_ORM")));
         TestTrue(TEXT("Village苔藓材质通过项目第三层软引用配置"),
             Config->MossSnowRockMaterial.IsValid());
         TestTrue(TEXT("苔藓组件标记不为空"),

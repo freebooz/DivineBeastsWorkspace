@@ -1,6 +1,6 @@
 {
   "SchemaVersion": 1,
-  "Status": "HumanApproved_ImplementedInSavedWidgetBlueprints_RHIPending",
+  "Status": "HumanApproved_ImportedSavedReloaded",
   "HumanApproval": "2026-10-18：审核通过，继续执行",
   "Units": "SlateUnit at application scale 1 / offline pixel",
   "ArtworkCoordinateScale": 0.34,
@@ -390,5 +390,6 @@
     }
   ],
   "SkillMappingNote": "参考图八格；保留现有五个命名控件与只读事件绑定，另三格仅为空位候选，不创建业务技能。",
-  "ReadOnlyEditorEvidence": "Evidence/ExistingCombatHUD_WidgetTree.json"
+  "ReadOnlyEditorEvidence": "Evidence/ExistingCombatHUD_WidgetTree.json",
+  "RuntimeValidationEvidence": "Docs/SkillBarDelivery_20261018.md and Saved/Validation/SkillBar20261018/FinalValidation.json"
 }

@@ -27,7 +27,7 @@
 
 施法沿用 `GamePlatformCastProgressWidget` 的状态通知及引擎动画。气势通过 `DivineBeastsPlayerStatusPanel` 的当前 Pawn / ASC ViewModel 事件进入蓝图：比例钳制至0—1，投影到527像素轨道；无有效容量时隐藏游标。首次快照、换 Pawn 和来源清理沿用原生类，新增蓝图没有 Tick 或计时器轮询。
 
-背包按钮调用拥有者 LocalPlayer 的既有背包入口，再次点击关闭页面或取消在途打开。组队按钮明确打开 `UI.Party.Panel`，本地已有同一面板时复用，不增加业务订阅。齿轮直接调用 `OpenSystemSettings`，关闭本协调器的背包/日志后进入真实设置页；从菜单进入时保留父菜单，直接进入时关闭设置恢复世界输入。左右键与前后导航在三个按钮之间显式连接，边缘允许退出；悬停添加细碧绿轮廓，常态保留审核纹理。蓝图路由已保存重载；配套原生代码等待共享编辑器空闲后的增量编译，当前运行DLL尚未获得这些修复。
+背包按钮调用拥有者 LocalPlayer 的既有背包入口，再次点击关闭页面或取消在途打开。组队按钮明确打开 `UI.Party.Panel`，本地已有同一面板时复用，不增加业务订阅。齿轮直接调用 `OpenSystemSettings`，关闭本协调器的背包/日志后进入真实设置页；从菜单进入时保留父菜单，直接进入时关闭设置恢复世界输入。左右键与前后导航在三个按钮之间显式连接，边缘允许退出；悬停添加细碧绿轮廓，常态保留审核纹理。蓝图路由已保存重载；配套原生代码已完成实际编译与回归，新编辑器已加载同步后的项目DLL。
 
 技能加载仍为英雄定义 → 服务器 AbilitySet/GAS 授权 → OwnerOnly 快照 → 本地 ViewModel → 已保存技能格。十二生肖的60条授权配置与UIProfile逐项核对一致，输入为普通攻击、被动、Slot1、Slot2、Slot4；猪生肖的正式资源名为 `Boar`。名称、描述、等级和禁用原因按槽位与技能双重身份投影，详情单独改变也会刷新；空槽与换角色清除旧详情。重复授权槽全部拒绝，显示和点击共享唯一性检查。连续冷却保留引擎材质动画，文字仅显示冷却状态，不新增业务轮询或冻结的秒数倒计时。
 
@@ -35,8 +35,20 @@
 
 已通过：26份纹理导入阻断审计、26份 UE 原生导出与审核 PNG 的逐通道完全一致检查、31份资产保存和重载、5个控件蓝图零错误与零警告编译。新增功能按钮的静态可访问性检查零问题。
 
-本轮已通过：技能栏按钮蓝图再次编译零错误零警告、保存和独立重载；十二生肖60条配置映射核验；`ValidateZodiacAbilityIntegration.py` 52/52静态断言。新增加三个原生回归：`DivineBeasts.UI.Combat.AbilityDetailsProjection`、`DivineBeasts.UI.Combat.AbilityGrantIdentity`、`DivineBeasts.UI.SystemMenu.SkillBarSettingsClose`，覆盖详情事件、冲突授权和实际CommonUI Router输入模式恢复，尚未编译运行。
+本轮已通过：技能栏按钮蓝图再次编译零错误零警告、保存和独立重载；十二生肖60条配置映射核验；`ValidateZodiacAbilityIntegration.py` 52/52静态断言。新增三个原生回归 `DivineBeasts.UI.Combat.AbilityDetailsProjection`、`DivineBeasts.UI.Combat.AbilityGrantIdentity`、`DivineBeasts.UI.SystemMenu.SkillBarSettingsClose` 已实际运行成功，覆盖详情事件、冲突授权和实际CommonUI Router输入模式恢复。
 
-待完成：`DivineBeastsUIClient` 最小增量编译、上述三个新测试及必要的技能租约/重构/按钮路由回归；执行 `DivineBeasts.UI.Color.SourceToSlate`、`DivineBeasts.UI.SkillBar.EventProjection` 与 `DivineBeasts.UI.SkillBar.RHIBottomFlush`。共享编辑器仍由动画、治疗特效任务使用，按已批准的空闲后重启流程继续。实际客户端交互、Cook/Stage 和最终人工视觉验收单独记录，源图预览及静态审计不能替代这些结论。
+2026-10-18最终自动验证结果：
+
+- `DivineBeastsUIClient` 模块构建退出0；因运行回归发现旧依赖DLL与新组件头文件不一致，进一步以相同锁定参数完成全 `DivineBeastsArenaEditor` 增量构建，退出0，正式产物证据为 `Eligible`。完整构建RunId：`8ee975af-01e6-4cd4-b2a7-396838d13e73`。保持 `-UsePrecompiled -AdditionalPlugins DBAServer -NoSharedPCH -NoUBA -MaxParallelActions 8`，未Clean/Rebuild或清缓存。
+- 计划中的15项原生回归，加气势事件、底部RHI及受影响输入语义合同，共18项实际Success、0失败、进程退出0。报告：`Saved/Validation/FoundationM0/a42e0272-34fe-42d2-8f47-457f0f753c45/SkillBarRegression/result.json`。
+- `DivineBeasts.UI.Color.SourceToSlate` 使用新DLL执行，1项Success、0失败、退出0，包含26份新技能栏纹理。正式颜色报告：`Game/Saved/Validation/UIColorRHI/Latest.json`，RunId `673084fd-ac9f-4de8-8f69-6c8611db7d98`。
+- 实际打开并检查1280×720、1920×1080、2560×1440的RHI图片：端饰、槽位、三按钮及底部装配保持，最底行均有599个Alpha>0.1像素。截图：`Game/Saved/Validation/UIColorRHI/SkillBar/CombatHUD_<分辨率>.png`。无Pawn时技能格为空、施法前景与气势游标隐藏，未为截图伪造角色授权。检查使用原生线性浮点RHI导出，没有使用错误Gamma的Monolith widget截图。
+- 编辑器已重开，Monolith确认正式项目和UE5.8.0；五份已保存控件的父类、树、48×48命中区域、3像素条和底部锚点重新回读，全部 `BS_UP_TO_DATE`，当前脏包0。
+
+本轮编译修复仅包含：槽位循环变量改名以避免遮蔽 `UWidget::Slot`；输入合同测试显式使用int32数组计数以消除重载歧义。其他任务的八主动槽可选C++支持保持原样；本次已审核资产仍为五个原有技能绑定和三格空背景，未擅自迁移该设计。
+
+独立只读代码审查未发现Critical/Important问题；保留两项测试边界：设置关闭用例直接触发关闭回调，授权身份用例主要验证唯一性查询，均不能单独证明完整联网交互。实际打包Client/Server新构建、Cook/Stage、联网背包/组队/技能施放人工验收、最终客户端视觉签收未执行。完整分层状态见 `Saved/Validation/SkillBar20261018/FinalValidation.json`。
+
+用户随后明确要求停止相关占用直接推进。接手时两相关聊天已停止或空闲、原编辑器已退出，因此本任务没有强杀进程或保存/丢弃未知脏包。此前四份资产的旧内存保存状态不能由本轮追溯证明，不将其他任务的RetargetedGrounded文件当作原Grounded包保存证据。
 
 操作前的四个既有控件文件备份位于 `Saved/Validation/SkillBar20261018/Before/`；回退时仅恢复本次对应资产并用引擎重载，不覆盖工作区中其他任务的改动。

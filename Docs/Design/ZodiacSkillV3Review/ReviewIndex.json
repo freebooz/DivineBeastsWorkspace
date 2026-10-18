@@ -1,0 +1,357 @@
+{
+  "schemaVersion": 3,
+  "nameZh": "SSLM十二生肖技能历史继承V3审稿索引",
+  "date": "2026-10-18",
+  "sourceHistoricalLibraryFile": "神兽联盟_王者争霸_十二生肖角色及技能设计_Final_v1.md",
+  "sourceCurrentDraft": "Docs/Design/ZodiacEightSlotSkills_V2.json",
+  "status": "PENDING_HUMAN_REVIEW",
+  "counts": {
+    "hero": 12,
+    "skill": 96,
+    "legacy": 72,
+    "previewApproved": 0
+  },
+  "stableAbilityIdUniqueCount": 96,
+  "heroRecords": [
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroNameZh": "子鼠·影牙",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Rat.json",
+      "names": [
+        "影牙斩",
+        "咬影",
+        "交锋裂影",
+        "万鼠影袭",
+        "钻缝",
+        "藏尾",
+        "咬筋",
+        "嗅踪"
+      ],
+      "passive": "嗅弱",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroNameZh": "丑牛·玄角",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Ox.json",
+      "names": [
+        "玄角撞",
+        "裂角",
+        "裂土重踏",
+        "不动玄门",
+        "沉步",
+        "镇山护壁",
+        "顶回",
+        "立阵"
+      ],
+      "passive": "镇山·硬骨",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroNameZh": "寅虎·白君",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Tiger.json",
+      "names": [
+        "白君轻爪",
+        "裂爪",
+        "猛虎连袭",
+        "白虎啸岭杀",
+        "扑杀",
+        "虎踞",
+        "虎啸",
+        "开猎"
+      ],
+      "passive": "裂甲",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroNameZh": "卯兔·玉灵",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Rabbit.json",
+      "names": [
+        "月玉轻弹",
+        "玉刃",
+        "落英星雨",
+        "千月回环",
+        "踏月",
+        "回月",
+        "月痕",
+        "玉露回春"
+      ],
+      "passive": "月闪",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroNameZh": "辰龙·苍龙",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Dragon.json",
+      "names": [
+        "苍龙爪光",
+        "雷裁",
+        "苍云雷息",
+        "苍龙定天仪",
+        "御风",
+        "云护",
+        "龙压",
+        "龙域"
+      ],
+      "passive": "天象轮转",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroNameZh": "巳蛇·幽鳞",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Snake.json",
+      "names": [
+        "幽鳞穿刺",
+        "毒牙",
+        "盘鳞双弹",
+        "万毒归鳞",
+        "蛇行",
+        "蜕鳞",
+        "缠纹",
+        "封途"
+      ],
+      "passive": "毒记",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroNameZh": "午马·雷蹄",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Horse.json",
+      "names": [
+        "雷蹄踢",
+        "雷枪",
+        "惊雷践踏",
+        "雷蹄破阵",
+        "奔雷",
+        "踏阵",
+        "蹄震",
+        "先至"
+      ],
+      "passive": "奔雷之势",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroNameZh": "未羊·玉角",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Goat.json",
+      "names": [
+        "玉角光刺",
+        "净光",
+        "玉符环阵",
+        "万愿归铃",
+        "铃步",
+        "守愿",
+        "安魂",
+        "铃印"
+      ],
+      "passive": "灵愿",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroNameZh": "申猴·灵猴",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Monkey.json",
+      "names": [
+        "灵棍点打",
+        "戏棍",
+        "云棍横扫",
+        "万象戏台",
+        "筋斗",
+        "替身",
+        "扰心",
+        "百戏"
+      ],
+      "passive": "百戏本能",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroNameZh": "酉鸡·金鸣",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Rooster.json",
+      "names": [
+        "金羽啄光",
+        "破晓",
+        "晨鸣音浪",
+        "破晓金鸣",
+        "鸣步",
+        "金羽",
+        "鸣震",
+        "晨鸣"
+      ],
+      "passive": "暗迹",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroNameZh": "戌狗·天犬",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Dog.json",
+      "names": [
+        "天犬咬击",
+        "反咬",
+        "灵爪连击",
+        "天门守阙",
+        "援步",
+        "护主",
+        "拦门",
+        "誓约"
+      ],
+      "passive": "守阙",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroNameZh": "亥猪·玄鬃",
+      "reviewFile": "Docs/Design/ZodiacSkillV3Review/Hero_Boar.json",
+      "names": [
+        "玄鬃冲撞",
+        "怒锤",
+        "重压冲波",
+        "玄鬃裂地",
+        "獠撞",
+        "岩甲",
+        "震鬃",
+        "鬃吼"
+      ],
+      "passive": "战意",
+      "requiredHumanReview": 8,
+      "clientPreviewPaths": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "gameplayStatus": "NOT_AUTHORED"
+    }
+  ],
+  "importedNativeV3Assets": 0,
+  "approvedEffectImageCount": 0,
+  "readyForCreationScreen": false
+}
+

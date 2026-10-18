@@ -174,3 +174,53 @@ FDivineBeastsPresentationProjectCatalog::BuildWeatherSFXFragment()
 {
     return MakeWeatherFragment(false);
 }
+/** SSLM首批音频数据目录：只映射语义到SFX定义身份，具体声音始终属于项目内容包。 */
+FGamePlatformPresentationCatalogFragment
+FDivineBeastsPresentationProjectCatalog::BuildStarterAudioFragment()
+{
+    FGamePlatformPresentationCatalogFragment Fragment;
+    Fragment.FragmentId = TEXT("DBA.Presentation.Audio.Starter");
+    Fragment.Revision = 1;
+    Fragment.Scope = EGamePlatformPresentationCatalogScope::Project;
+    Fragment.OwnerScopeId = FDivineBeastsProjectCatalog::GetProjectId();
+    Fragment.LifecycleScope = EGamePlatformPresentationContextScope::World;
+    struct FAudioEntry
+    {
+        const TCHAR* Name;
+        const TCHAR* Tag;
+        const TCHAR* DefinitionId;
+    };
+    static const FAudioEntry Entries[] =
+    {
+        { TEXT("UI.Click"), TEXT("Presentation.SSLM.Audio.UI.Click"), TEXT("presentation.dba.audio.ui.click@1") },
+        { TEXT("UI.Confirm"), TEXT("Presentation.SSLM.Audio.UI.Confirm"), TEXT("presentation.dba.audio.ui.confirm@1") },
+        { TEXT("UI.Cancel"), TEXT("Presentation.SSLM.Audio.UI.Cancel"), TEXT("presentation.dba.audio.ui.cancel@1") },
+        { TEXT("Spell.Frost.Cast"), TEXT("Presentation.SSLM.Audio.Spell.Frost.Cast"), TEXT("presentation.dba.audio.spell.frost.cast@1") },
+        { TEXT("Spell.Frost.Impact"), TEXT("Presentation.SSLM.Audio.Spell.Frost.Impact"), TEXT("presentation.dba.audio.spell.frost.impact@1") },
+        { TEXT("Spell.Fire.Impact"), TEXT("Presentation.SSLM.Audio.Spell.Fire.Impact"), TEXT("presentation.dba.audio.spell.fire.impact@1") },
+        { TEXT("Music.Login"), TEXT("Presentation.SSLM.Audio.Music.Login"), TEXT("presentation.dba.audio.music.login@1") },
+        { TEXT("Music.Village"), TEXT("Presentation.SSLM.Audio.Music.Village"), TEXT("presentation.dba.audio.music.village@1") },
+        { TEXT("Ambience.Forest"), TEXT("Presentation.SSLM.Audio.Ambience.Forest"), TEXT("presentation.dba.audio.ambience.forest@1") }
+    };
+    for (const FAudioEntry& Audio : Entries)
+    {
+        const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(Audio.Tag), false);
+        if (!Tag.IsValid())
+        {
+            // 任意必要标签未登记时不发布半套目录；内容包必须原子预载和注册。
+            Fragment.Entries.Reset();
+            return Fragment;
+        }
+        FGamePlatformPresentationCatalogEntry Entry;
+        Entry.EntryId = FName(*(FString(TEXT("DBA.Audio.")) + Audio.Name));
+        Entry.SemanticTag = Tag;
+        Entry.ContextQuery.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
+        Entry.ProviderChannel = TEXT("SFX");
+        Entry.DefinitionId = FName(Audio.DefinitionId);
+        Entry.Scope = EGamePlatformPresentationCatalogScope::Project;
+        Entry.ContentRevision = TEXT("1");
+        Fragment.Entries.Add(MoveTemp(Entry));
+    }
+    return Fragment;
+}
+
