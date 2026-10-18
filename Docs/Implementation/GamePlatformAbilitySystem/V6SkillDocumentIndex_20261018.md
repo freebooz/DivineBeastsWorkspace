@@ -38,6 +38,12 @@
 | 29 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Components/DivineBeastsCharacterComponent.cpp` | 订阅GAS倍速变化并按Hero基础速度控制移动和蹲行 | **源码新增，未编译** | 单双客户端移动和AI/NPC速度验收 |
 | 30 | `Tests/Architecture/TestV6SlowIntegration.py` | 新减速GAS/属性/角色移动桥接及四生肖待审门禁 | **纯静态回归8/8通过，UE未编译** | 原生属性变化/GE到期/网络延迟和游走移动验证 |
 
+
+| 31 | `Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Components/GamePlatformCombatComponent.h` 与对应CPP | `ApplyForcedDisplacement`（平台权威推拉）＋ `BuildDisplacementVelocity`（纯方向速度函数） | **本批新增C++，待UE5.8编译** | 胶囊碰撞、同步事件去重及网络移动实测 |
+| 32 | `Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Private/Tests/GamePlatformCombatDisplacementTests.cpp` | 平台推/拉几何速度与非法参数原生测试源码 | **新增C++原生测试，尚未运行** | `GamePlatform.Combat.Displacement.V6.Geometry`（平台方向测试） |
+| 33 | `Tests/Architecture/TestV6ForcedDisplacement.py` | 强制位移服务器输入与稳定SkillID、GA模式及禁授门禁 | **新增非编译静态回归** | 不能替代UE原生验证 |
+| 34 | `Docs/Implementation/GamePlatformAbilitySystem/V6ControlSkillImplementationMatrix_20261018.json` 中 `forcedDisplacementReview` | 丑牛、辰龙、午马、亥猪推拉适配候选，逐项保留历史机制缺口 | **新增4项候选、上线批准0项** | 下一阶段额外服务端条件／分环状态机验收 |
+
 ## 需要原生创建而当前不存在的资产台账
 
 | 资产类别 | 目标数量 | 是否已生成 | 禁止伪造的证据 |
@@ -55,4 +61,4 @@
 
 先完成V6技能名称／机制签审，建立原生DataAsset；每个技能审核`AbilityId`、英雄身份、8槽输入、GAS执行模式、Cost/Cooldown实际GE、ServerOnly/预测策略、施法/命中/取消、VFX语义及角色创建展示。不能只靠96项静态JSON判断已实现96个技能。
 
-**实施规则：** 本批不编译，不写任何虚假.uasset，不修改已运行旧占位Hero默认技能集，不恢复旧五行、王印、三合六合六冲及共鸣玩法，不自动提交Git。
+**实施规则：** 本批不编译，不写任何虚假.uasset，不修改已运行旧占位Hero默认技能集，不恢复旧五行、王印、三合六合六冲及共鸣玩法；新修改经必要非编译门禁后按用户要求仅提交本任务文件到主分支。

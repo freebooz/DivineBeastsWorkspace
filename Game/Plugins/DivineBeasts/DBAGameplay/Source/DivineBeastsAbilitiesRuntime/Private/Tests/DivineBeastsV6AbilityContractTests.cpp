@@ -127,4 +127,39 @@ bool FDivineBeastsV6DamageSlowContractTest::RunTest(const FString&)
     return true;
 }
 
+
+/** 无地图版本的项目动作验证：真实平台投射速度和历史复合规则另由服务端原生测试验收。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FDivineBeastsV6DamageDisplacementContractTest,
+    "DivineBeasts.Abilities.V6.DamageDisplacementContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsV6DamageDisplacementContractTest::RunTest(const FString&)
+{
+    FDivineBeastsEightSlotDraftAction Displacement;
+    Displacement.ActionKindId = TEXT("displacement");
+    Displacement.ModifierId = TEXT("push");
+    Displacement.Magnitude = 400.0f;
+    Displacement.HitCount = 1;
+    Displacement.DurationSeconds = 0.0f;
+    TestTrue(TEXT("推离水平速度400cm/s可通过单段合同"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageDisplacementAction(Displacement, false));
+    TestFalse(TEXT("推离不能冒充牵引"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageDisplacementAction(Displacement, true));
+    Displacement.ModifierId = TEXT("pull");
+    TestTrue(TEXT("牵引水平速度400cm/s可通过单段合同"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageDisplacementAction(Displacement, true));
+    Displacement.Magnitude = 801.0f;
+    TestFalse(TEXT("超过平台安全速度800cm/s应拒绝"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageDisplacementAction(Displacement, true));
+    Displacement.Magnitude = 400.0f;
+    Displacement.DurationSeconds = 0.5f;
+    TestFalse(TEXT("推拉不允许把持续秒数错当位移距离"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageDisplacementAction(Displacement, true));
+    Displacement.DurationSeconds = 0.0f;
+    Displacement.HitCount = 2;
+    TestFalse(TEXT("两次推拉须由独立历史技能状态机实现"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageDisplacementAction(Displacement, true));
+    return true;
+}
 #endif

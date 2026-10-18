@@ -32,7 +32,11 @@ enum class EDivineBeastsV6NativeMode : uint8
     DamageAndSilence,
     RadialDamageAndStun,
     /** Append-only: single hit followed by an independent GAS slow with replicated speed multiplier. */
-    DamageAndSlow
+    DamageAndSlow,
+    /** 权威XY推离和牵引，原有执行模式枚举序号不变。 */
+    DamageAndPush,
+    RadialDamageAndPush,
+    RadialDamageAndPull
 };
 
 /**
@@ -58,6 +62,9 @@ public:
     /** Slow（减速）的真实数值定义，不兼容眩晕/沉默或未批准的控制位移。 */
     static bool IsValidDamageSlowAction(
         const FDivineBeastsEightSlotDraftAction& ControlAction);
+    /** 独立Push/Pull（推/拉）动作：幅度是水平速度，不是目标位移距离。 */
+    static bool IsValidDamageDisplacementAction(
+        const FDivineBeastsEightSlotDraftAction& DisplacementAction, bool bPull);
 
     /** 编辑器显式设置的V6执行模式；不依据技能名称或可选视觉效果猜测行为。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|V6")

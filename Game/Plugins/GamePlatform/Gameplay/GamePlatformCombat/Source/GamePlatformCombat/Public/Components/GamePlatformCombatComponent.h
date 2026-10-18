@@ -124,6 +124,24 @@ public:
         float SlowFraction,
         float DurationSeconds);
 
+    /** 平台中立方向计算：零分离、过高落差、不合法方向或速度均拒绝。 */
+    static bool BuildDisplacementVelocity(
+        const FVector& Epicenter,
+        const FVector& TargetPosition,
+        EGamePlatformDisplacementMode Mode,
+        float HorizontalSpeedCmPerSecond,
+        FVector& OutVelocity);
+
+    /** GT服务器排队真实CharacterMovement移动，不将其伪装为传送或确定的落点。
+     * Epicenter由权威施法逻辑传入；对目标身份、距离、世界、地面状态与近端胶囊路径失败关闭。
+     */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat|Displacement")
+    FGamePlatformCombatResult ApplyForcedDisplacement(
+        const FGamePlatformCombatSpec& InSpec,
+        EGamePlatformDisplacementMode Mode,
+        FVector Epicenter,
+        float HorizontalSpeedCmPerSecond);
+
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
     bool RemoveControl(EGamePlatformControlType ControlType);
 

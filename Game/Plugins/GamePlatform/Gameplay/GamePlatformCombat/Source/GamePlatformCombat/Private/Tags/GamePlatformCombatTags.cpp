@@ -28,6 +28,7 @@ namespace GamePlatformCombatTags
 
     // 已废弃的历史表现标识保留注册，不再由服务器结算发布。
     UE_DEFINE_GAMEPLAY_TAG(Result_Critical, "Combat.Result.Critical");
+    UE_DEFINE_GAMEPLAY_TAG(Result_DisplacementQueued, "Combat.Result.DisplacementQueued");
     UE_DEFINE_GAMEPLAY_TAG(Result_ControlResisted, "Combat.Result.ControlResisted");
 
     UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Damage, "GameplayCue.Combat.Damage");

@@ -291,16 +291,36 @@ bool UDivineBeastsV6GameplayAbility::IsValidDamageSlowAction(
         ControlAction.DurationSeconds <= MaxV6ControlSeconds;
 }
 
+
+bool UDivineBeastsV6GameplayAbility::IsValidDamageDisplacementAction(
+    const FDivineBeastsEightSlotDraftAction& DisplacementAction, bool bPull)
+{
+    const bool bModeMatches = bPull
+        ? DisplacementAction.ModifierId == TEXT("pull")
+        : DisplacementAction.ModifierId == TEXT("push");
+    return DisplacementAction.ActionKindId == TEXT("displacement") &&
+        bModeMatches && DisplacementAction.HitCount == 1 &&
+        FMath::IsFinite(DisplacementAction.Magnitude) &&
+        DisplacementAction.Magnitude >= 100.0f && DisplacementAction.Magnitude <= 800.0f &&
+        FMath::IsFinite(DisplacementAction.DurationSeconds) &&
+        FMath::IsNearlyZero(DisplacementAction.DurationSeconds);
+}
+
 bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
     const UDivineBeastsAbilityDefinition& Definition,
     const FDivineBeastsAbilityBalanceRow& Balance, FString& OutError) const
 {
     OutError.Reset();
+    const bool bDisplacementMode =
+        ExecutionMode == EDivineBeastsV6NativeMode::DamageAndPush ||
+        ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPush ||
+        ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPull;
     const bool bDamageControlMode =
         ExecutionMode == EDivineBeastsV6NativeMode::DamageAndStun ||
         ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSilence ||
         ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun ||
-        ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSlow;
+        ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSlow ||
+        bDisplacementMode;
     if (!Definition.bV6NativeApproved || Definition.bEightSlotDraftOnly ||
         !Definition.ValidateDefinition().IsSuccess() ||
         ExecutionMode == EDivineBeastsV6NativeMode::Unsupported ||
@@ -314,14 +334,20 @@ bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
     const bool bHasLegalRange = Balance.CastRangeCm >= 0.0f &&
         Balance.CastRangeCm <= MaxV6RangeCm;
     const bool bSingleHit = Action.HitCount == 1;
+    // 平台受迫移动原语仅支持≤1400cm内可信目标；防止远程技能先伤害再因超距假失败。
+    const bool bDisplacementRangeAllowed =
+        !bDisplacementMode || Balance.CastRangeCm <= 1400.0f;
     if (bDamageControlMode)
     {
-        // 只允许一次确定性伤害和一种有限时控制；Slow单独走原生MovementSpeedMultiplier属性。
+        // 第二动作不能隐式改变为其他模式；推拉与Slow、眩晕、沉默均有严格不同的合同。
         const FDivineBeastsEightSlotDraftAction& ControlAction = Definition.DraftActions[1];
         const bool bSilence = ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSilence;
-        const bool bControlValid = ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSlow
-            ? IsValidDamageSlowAction(ControlAction)
-            : IsValidDamageControlAction(ControlAction, bSilence);
+        const bool bPull = ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPull;
+        const bool bControlValid = bDisplacementMode
+            ? IsValidDamageDisplacementAction(ControlAction, bPull)
+            : ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSlow
+                ? IsValidDamageSlowAction(ControlAction)
+                : IsValidDamageControlAction(ControlAction, bSilence);
         if (!bControlValid)
         {
             OutError = TEXT("V6伤害与控制动作不匹配：减速、眩晕、沉默不能互相替代，其他历史机制需独立实现。");
@@ -358,6 +384,7 @@ bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
             Definition.DraftTargetModeId == TEXT("area_or_target");
         break;
     case EDivineBeastsV6NativeMode::DamageAndSlow:
+    case EDivineBeastsV6NativeMode::DamageAndPush:
     case EDivineBeastsV6NativeMode::DamageAndStun:
     case EDivineBeastsV6NativeMode::DamageAndSilence:
         bAllowed = bHasLegalRange && Balance.CastRangeCm > 0.0f &&
@@ -365,6 +392,8 @@ bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
             Definition.DraftTargetModeId == TEXT("enemy");
         break;
     case EDivineBeastsV6NativeMode::RadialDamageAndStun:
+    case EDivineBeastsV6NativeMode::RadialDamageAndPush:
+    case EDivineBeastsV6NativeMode::RadialDamageAndPull:
         bAllowed = bHasLegalRange && Balance.AreaRadiusCm > 0.0f &&
             Balance.AreaRadiusCm <= MaxV6AreaRadiusCm && MagnitudeMatchesDamage() &&
             Definition.DraftTargetModeId == TEXT("area_or_target");
@@ -404,9 +433,9 @@ bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
         bAllowed = false;
         break;
     }
-    if (!bAllowed)
+    if (!bAllowed || !bDisplacementRangeAllowed)
     {
-        OutError = TEXT("V6数据与可执行原语不一致：多段、减速、真实位移、印记联动或复合机制须独立实现。");
+        OutError = TEXT("V6数据与执行原语不一致：超过权威推拉距离、错误目标/动作或未审核历史复合玩法。");
         return false;
     }
     if (Balance.CooldownSeconds > 0.0f && ApprovedCooldownTags.IsEmpty())
@@ -464,7 +493,8 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
     FVector FrozenAreaCenter = FVector::ZeroVector;
     bool bProjectileHadFrozenTarget = false;
     bool bValidTarget = false;
-    if (ExecutionMode == EDivineBeastsV6NativeMode::ForwardDamage)
+    if (ExecutionMode == EDivineBeastsV6NativeMode::ForwardDamage ||
+        ExecutionMode == EDivineBeastsV6NativeMode::DamageAndPush)
         bValidTarget = TraceV6ForwardEnemy(Source, Hero, Balance.CastRangeCm, SingleTarget);
     else if (ExecutionMode == EDivineBeastsV6NativeMode::SingleProjectile)
     {
@@ -482,7 +512,9 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
                  SingleTarget.AvatarGeneration, false));
     }
     else if (ExecutionMode == EDivineBeastsV6NativeMode::RadialDamage ||
-             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun)
+             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun ||
+             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPush ||
+             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPull)
         bValidTarget = BuildV6AreaTargets(Source, Hero, Combat, Balance, AreaTargets, FrozenAreaCenter);
     else if (ExecutionMode == EDivineBeastsV6NativeMode::SafeDash)
     {
@@ -549,7 +581,9 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
             return false;
         // 实时重核：普通技能按当前角色/目标距离，范围技能按提交前冻结的中心和原始半径。
         if (ExecutionMode == EDivineBeastsV6NativeMode::RadialDamage ||
-            ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun)
+            ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun ||
+            ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPush ||
+            ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPull)
         {
             if (!IsV6AreaCenterValid(Source, FrozenAreaCenter, Balance.CastRangeCm) ||
                 Target->GetActorLocation().ContainsNaN() ||
@@ -565,7 +599,8 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
         if (!IsValid(TargetCombat)) return false;
 
         FV6TargetSnapshot Actual = Snapshot;
-        if (ExecutionMode == EDivineBeastsV6NativeMode::ForwardDamage)
+        if (ExecutionMode == EDivineBeastsV6NativeMode::ForwardDamage ||
+            ExecutionMode == EDivineBeastsV6NativeMode::DamageAndPush)
         {
             // 瞬时前向攻击必须再次击中同一Pawn；Commit回调里走开或被遮挡，不允许旧射线造成伤害。
             FV6TargetSnapshot UpdatedHit;
@@ -603,6 +638,9 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
         case EDivineBeastsV6NativeMode::DamageAndStun:
         case EDivineBeastsV6NativeMode::DamageAndSilence:
         case EDivineBeastsV6NativeMode::RadialDamageAndStun:
+        case EDivineBeastsV6NativeMode::DamageAndPush:
+        case EDivineBeastsV6NativeMode::RadialDamageAndPush:
+        case EDivineBeastsV6NativeMode::RadialDamageAndPull:
         {
             // 跨两次GameplayEffect不是原子事务；必须先有真实伤害，再独立请求控制。
             // 如伤害触发死亡、复活或换Pawn，不得使用已经失效的源/目标继续施控。
@@ -613,7 +651,9 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
                 return true; // 伤害已经执行，后续控制失败不得伪造全技能未命中
 
             const bool bAreaControl =
-                ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun;
+                ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun ||
+                ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPush ||
+                ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPull;
             const bool bStillInRange = bAreaControl
                 ? (IsV6AreaCenterValid(Source, FrozenAreaCenter, Balance.CastRangeCm) &&
                    !Target->GetActorLocation().ContainsNaN() &&
@@ -637,8 +677,23 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
             ControlSpec.EventId = FGuid::NewGuid();
             ControlSpec.SourceAbilityId = Balance.AbilityId;
             ControlSpec.Magnitude = ControlAction.DurationSeconds;
-            const FGamePlatformCombatResult ControlResult =
-                ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSlow
+            const bool bDisplace =
+                ExecutionMode == EDivineBeastsV6NativeMode::DamageAndPush ||
+                ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPush ||
+                ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPull;
+            // 服务器冻结的范围中心决定风环推拉方向，不能从客户端特效坐标取得。
+            const FVector DisplacementOrigin =
+                bAreaControl ? FrozenAreaCenter : Source->GetActorLocation();
+            if (bDisplace)
+                ControlSpec.Magnitude = ControlAction.Magnitude; // XY速度，非持续秒数
+            const FGamePlatformCombatResult ControlResult = bDisplace
+                ? Combat->ApplyForcedDisplacement(
+                    ControlSpec,
+                    ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPull
+                        ? EGamePlatformDisplacementMode::PullToward
+                        : EGamePlatformDisplacementMode::PushAway,
+                    DisplacementOrigin, ControlAction.Magnitude)
+                : ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSlow
                     ? Combat->ApplySlow(ControlSpec, ControlAction.Magnitude, ControlAction.DurationSeconds)
                     : Combat->ApplyControl(
                         ControlSpec,
@@ -736,9 +791,12 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
         }
     }
     else if (ExecutionMode == EDivineBeastsV6NativeMode::RadialDamage ||
-             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun)
+             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun ||
+             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPush ||
+             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndPull)
     {
-        // 非原子AOE：每个目标有独立真实战斗结果。一个目标在Commit回调中死亡、
+        // 非原子AOE：伤害与移动使用不同权威事件，目标中心与身份由服务器冻结。
+        // 一个目标在Commit回调中死亡、
         // 移出范围或抵抗控制时，跳过该目标但不抹掉已发生的其它目标伤害。
         bool bAnyApplied = false;
         for (const FV6TargetSnapshot& Target : AreaTargets)

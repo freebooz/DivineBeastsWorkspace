@@ -24,6 +24,42 @@
   "nativeDefinitionsAuthored": 0,
   "approvedV6ControlSkills": 0,
   "warningZh": "12项控制都具备V2单段伤害+对应状态的源码候选（含4项GAS减速），但仍全部待UE编译/网络移动及历史特殊规则审核，不能声称12项V6历史控制已完工。",
+
+  "forcedDisplacementReview": {
+    "status": "NATIVE_PRIMITIVE_SOURCE_ONLY_NOT_HISTORICAL_SKILL_COMPLETE",
+    "approvedForServerGrants": 0,
+    "notesZh": "原生Push/Pull只排队有界XY速度。历史顶回需扇形命中和冲锋打断；龙压需内牵外推双环分阶段；蹄震需冲势条件；震鬃需岩甲在场。均不可仅选一个模式就批准V6技能。",
+    "candidates": [
+      {
+        "abilityId": "dba.ability.ox_eight_seismic_stun@1",
+        "nameZh": "顶回",
+        "modesSuggested": ["RadialDamageAndPush"],
+        "missingMechanicsZh": "定向扇形角顶、前方合法冲锋识别及真实打断规则",
+        "approved": false
+      },
+      {
+        "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
+        "nameZh": "龙压",
+        "modesSuggested": ["RadialDamageAndPush", "RadialDamageAndPull"],
+        "missingMechanicsZh": "双圈内牵外推、分环半径、环间优先级及条件短麻痹的服务器状态机",
+        "approved": false
+      },
+      {
+        "abilityId": "dba.ability.horse_eight_hoof_stun@1",
+        "nameZh": "蹄震",
+        "modesSuggested": ["DamageAndPush"],
+        "missingMechanicsZh": "冲势累计与阈值鉴权，只有满足冲势时才允许附加推离",
+        "approved": false
+      },
+      {
+        "abilityId": "dba.ability.boar_eight_roar_stun@1",
+        "nameZh": "震鬃",
+        "modesSuggested": ["RadialDamageAndPush"],
+        "missingMechanicsZh": "近距减速和岩甲存续校验，岩甲尚存才触发有限击退",
+        "approved": false
+      }
+    ]
+  },
   "items": [
     {
       "mode": "DamageAndSlow",

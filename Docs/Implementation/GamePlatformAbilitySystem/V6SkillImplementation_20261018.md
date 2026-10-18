@@ -218,3 +218,35 @@ DBAClient/DivineBeastsUIClient与DivineBeastsPresentationClient（只读8槽显�
 - 合并审核范围：中文注释覆盖GE持续效果、属性复制/限幅、ServerOnly应用与重入去重、角色移动及蹲行恢复、死亡换代清理；未审核或尚未实现的历史技能额外效果仍明确禁授，且没有新增客户端任意命令或第二套战斗结算系统。
 
 - 默认全部V6`canGrantToServer=false`、`nativeAssetCount=0`，任何模式、矩阵和静态测试变化均不得自动解除审批禁令。
+
+## 十二、V6平台强制位移原语与生肖推拉候选实施（源代码阶段）
+
+**实施范围：** 在现有GamePlatformCombat（通用战斗模块）提供仅服务器能执行的`ApplyForcedDisplacement`（强制位移操作），SSLM项目层`UDivineBeastsV6GameplayAbility`（V6能力执行类）追加三个独立数据驱动模式。保持已批准V5显示名、96个稳定技能ID、旧默认占位技能集合不变。本批按先前指令不编译、不Cook、不修改.uasset；根据用户新指令，仅提交本任务文件到`main`，其他会话未提交文件不纳入。
+
+### 真实权威行为与安全边界
+
+1. `BuildDisplacementVelocity`（服务器推拉XY向量构建）仅接受`PushAway`（推离中心）或`PullToward`（拉向中心）模式。拒绝中心距目标25厘米以内、垂直差超过160厘米、水平速度低于100或高于800厘米/秒、未知模式及非有限坐标；不允许在上一次合法速度值残留时错误继续。
+2. `ApplyForcedDisplacement`（服务器权威排队接口）使用已有`FGamePlatformCombatSpec`（战斗规格）及其唯一事件GUID、来源/目标Avatar代次、源目标世界与生存资格；禁止自身为目标、远程跨世界施加、无注册`CharacterMovement`（角色移动组件）或非地面状态的目标，目标/施法者距离不超过1400厘米，受影响实体距权威中心不超过700厘米。
+3. 近端按目标`UCapsuleComponent`（胶囊碰撞）做真实`SweepSingleByChannel`（扫掠）；发现阻挡立即拒绝。随后由服务器调用现有`CharacterMovement->Launch`（角色运动组件排队XY强制速度），后续每个物理子步继续负责碰撞与网络运动。**结果事件为`DisplacementQueued`（强制移动已排队），绝不当作完成预期位移距离或成功打断冲锋。**
+4. `MarkEventCompleted`（同源事件幂等账本）保证同一GUID不能重复施加；移动仅发送服务端已确认排队的中立战斗事件。客户端不拥有方向、位移距离、击退速度的权威RPC，也没有独立的VFX碰撞判定。自动网络平滑、落点安全和多人冲锋对抗尚需UE运行证据。
+
+### V6数据合同与实际适用范围
+
+追加`DamageAndPush`（单体向前伤害＋定向推离）、`RadialDamageAndPush`（范围伤害＋区域向外推离）、`RadialDamageAndPull`（范围伤害＋区域向内牵引）。所有三种模式必须有两个严格动作，先单次服务器伤害再单次`displacement`（强制移动），第二动作`ModifierId=push/pull`（推/拉）、速度100～800厘米/秒、持续时间0、仅一段；`Balance.CastRangeCm`（技能射程）不能超过1400厘米。
+
+第二阶段操作在`CommitAbility`（真正GAS消耗/冷却提交）和`ApplyDamage`（平台权威伤害）成功后，再确认目标化身、友军关系、距离、阻挡和区域中心；以独立事件GUID排队移动。若目标被本次攻击击杀、近端通道受阻或目标在回调中失效，则不进行强制移动，但保留已结算伤害。不能将两段非原子操作伪造回滚。
+
+本批不授予生产技能：`Docs/Implementation/GamePlatformAbilitySystem/V6ControlSkillImplementationMatrix_20261018.json`（V6控制槽评审矩阵）增加四项**历史推拉候选**：
+- 丑牛`顶回`：可复用`RadialDamageAndPush`但仍缺前向扇形、冲锋判定与打断。
+- 辰龙`龙压`：单次原语不足以模拟内圈拉近、外圈推离同时存在，必须另外实现双环时序、空间分区及条件短麻痹。
+- 午马`蹄震`：只有冲势达到已批准阈值时才可附带推离，需要服务器气势/冲势状态门禁。
+- 亥猪`震鬃`：需核验岩甲在场及减速流程后才能推进，不可直接无条件推离。
+
+以上都是低层原语适配候选，**完整V6历史技能批准数仍为0，96项正式GA／GE/Definition仍不存在**。项目层不可用单一基础推拉模式替代多阶段历史终极或防御技能。
+
+### 测试、风险与回退
+
+- `Tests/Architecture/TestV6ForcedDisplacement.py`（推拉权威源码合同及8+静态回归）：检查速度、两端代次、胶囊扫掠、事件ID、伤害前置、GA两动作与4项历史候选审批隔离。它不是UE原生运行结果。
+- `GamePlatformCombatDisplacementTests.cpp`（平台纯向量正反向原生测试）及`DivineBeastsV6AbilityContractTests.cpp`（V6推拉动作测试）需后续编译并执行UE5.8原生测试，当前只有源码。
+- 强制位移网络同步需要实测对象：移动组件地面/空中模式变化、墙边突进和角落阻挡、多来源重复GUID、2人及5v5网络移动、物理更新顺序、濒死后取消、背向控制与低FPS。UE结果未取得前保持禁止授予。
+- 回退只需不签发新的V6 GA和AbilitySet；用户现有12个占位集合以及早期显示名均不变。

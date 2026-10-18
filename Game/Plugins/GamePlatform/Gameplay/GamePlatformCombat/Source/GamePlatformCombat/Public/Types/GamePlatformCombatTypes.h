@@ -12,7 +12,9 @@ enum class EGamePlatformCombatEventType : uint8
     ControlResisted, // 仅保留历史枚举序号兼容；已取消按数值韧性抵抗控制。
     ControlRemoved,
     Death,
-    RespawnReset
+    RespawnReset,
+    /** 服务器已排队CharacterMovement受迫移动，并非目标到达确认。 */
+    DisplacementQueued
 };
 
 /** EGamePlatformDamageType（跨游戏通用伤害类型）。 */
@@ -58,4 +60,12 @@ enum class EGamePlatformControlType : uint8
     Silence,
     /** 仅新增枚举尾值，不改变已序列化Stun/Silence序号；真实减速由独立ApplySlow入口实现。 */
     Slow
+};
+
+/** 通用受迫移动方向，不复用眩晕/减速标签或旧类型枚举序号。 */
+UENUM(BlueprintType)
+enum class EGamePlatformDisplacementMode : uint8
+{
+    PushAway,
+    PullToward
 };

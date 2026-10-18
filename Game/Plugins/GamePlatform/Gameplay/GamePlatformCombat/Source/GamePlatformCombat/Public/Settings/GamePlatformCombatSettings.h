@@ -45,6 +45,14 @@ public:
     UPROPERTY(Config, EditAnywhere, Category="Control", meta=(ClampMin="0.1", ClampMax="10.0"))
     float MaxSlowDuration = 10.0f;
 
+    /** 受迫移动最多800cm/s；实际碰撞与最终移动距离归CharacterMovement。 */
+    UPROPERTY(Config, EditAnywhere, Category="Displacement", meta=(ClampMin="100", ClampMax="800"))
+    float MaxDisplacementSpeedCmPerSecond = 800.0f;
+
+    /** 受迫移动需验证施法者至目标距离，默认不超过1400厘米。 */
+    UPROPERTY(Config, EditAnywhere, Category="Displacement", meta=(ClampMin="100", ClampMax="1400"))
+    float MaxDisplacementSourceRangeCm = 1400.0f;
+
     UPROPERTY(Config, EditAnywhere, Category="Targeting")
     bool bAllowSelfDamage = false;
 

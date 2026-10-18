@@ -34,6 +34,8 @@ namespace GamePlatformCombatTags
     // 历史暴击结果标签只作资产兼容，当前战斗不产生暴击结果。
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Result_Critical);
     // 历史结果标签保留已发布身份；当前控制流程不再根据数值韧性产生抵抗事件。
+    /** 受迫移动仅确认服务器已排队速度，不能声明最终距离/落点。 */
+    GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Result_DisplacementQueued);
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Result_ControlResisted);
 
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Damage);
