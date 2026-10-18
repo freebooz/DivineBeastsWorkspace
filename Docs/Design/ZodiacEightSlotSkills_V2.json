@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "catalogName": "SSLM Zodiac Eight Active Skill Design Catalog",
   "catalogNameZh": "SSLM十二生肖八槽技能设计真源",
-  "draftVersion": "2.0.0",
+  "draftVersion": "2.2.0",
   "damageSemantics": "BaseDamage为单次服务器确认命中的一级基础伤害，HitCount为单目标最大段数；多段技能的单目标总伤害需在正式平衡时逐项审核，不等于已经达到竞技平衡。",
   "balanceStatus": "LEVEL1_CANDIDATE_NOT_BALANCED",
   "projectCode": "SSLM",
@@ -123,7 +123,8 @@
           "abilityId": "dba.ability.rat_eight_fang_cut@1",
           "abilityKey": "fang_cut",
           "nameZh": "影牙斩",
-          "descriptionZh": "单体近战短斩；合法命中恢复少量气势",
+          "descriptionZh": "以短促牙刃切击近处单个敌人。每次命中造成32点物理基础伤害。施法准备时间0.12秒，冷却0.8秒，消耗0点气势，施放距离2.2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“子鼠·影牙·影牙斩”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以短促牙刃切击近处单个敌人。每次命中造成32点物理基础伤害。施法准备时间0.12秒，冷却0.8秒，消耗0点气势，施放距离2.2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：起手压低重心，刃缘收束为细窄银青亮线；释放时只有一道贴近刃口的弧形牙光，命中出现短小锐利切痕，余光迅速收拢。避免把普通短斩画成远程巨刃。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -153,7 +154,8 @@
               "Presentation.DBA.Hero.Rat.fang_cut.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -161,10 +163,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.12
         },
         {
           "slotId": "Slot1",
@@ -174,7 +178,8 @@
           "abilityId": "dba.ability.rat_eight_crescent_blade@1",
           "abilityKey": "crescent_blade",
           "nameZh": "弦月双刃",
-          "descriptionZh": "投出两道交错银月牙刃，沿服务器射线判定",
+          "descriptionZh": "投出两道交错的弦月牙刃攻击选定敌人。每次命中造成68点物理基础伤害，单个目标最多2段。施法准备时间0.22秒，冷却4.5秒，消耗0点气势，施放距离8.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“子鼠·影牙·弦月双刃”的单项技能效果概念图。技能定位：攻击技能一；作用对象：敌方目标。机制依据：投出两道交错的弦月牙刃攻击选定敌人。每次命中造成68点物理基础伤害，单个目标最多2段。施法准备时间0.22秒，冷却4.5秒，消耗0点气势，施放距离8.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：两枚轮廓纤薄的弦月刃以前后错位的轨迹交叉前进，保留两个可辨主体及各自短尾迹；交会点出现克制的银青火花，不能叠成一堵不透明光墙。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -204,7 +209,8 @@
               "Presentation.DBA.Hero.Rat.crescent_blade.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -212,10 +218,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.22
         },
         {
           "slotId": "Slot2",
@@ -225,7 +233,8 @@
           "abilityId": "dba.ability.rat_eight_cross_fangs@1",
           "abilityKey": "cross_fangs",
           "nameZh": "交锋裂影",
-          "descriptionZh": "短距离交叉连续切割，中心目标受两段判定",
+          "descriptionZh": "对锁定敌人进行两段近身交叉切割。每次命中造成92点物理基础伤害，单个目标最多2段。施法准备时间0.18秒，冷却8秒，消耗0点气势，施放距离3.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“子鼠·影牙·交锋裂影”的单项技能效果概念图。技能定位：攻击技能二；作用对象：敌方目标。机制依据：对锁定敌人进行两段近身交叉切割。每次命中造成92点物理基础伤害，单个目标最多2段。施法准备时间0.18秒，冷却8秒，消耗0点气势，施放距离3.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：近处形成先斜后反斜的两次短刃切线，第二次切线与第一次组成明确叉形；英雄动作与命中点保持前后关系，不增加瞬移分身或远距离追踪弹。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -255,7 +264,8 @@
               "Presentation.DBA.Hero.Rat.cross_fangs.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -263,10 +273,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.18
         },
         {
           "slotId": "Slot4",
@@ -276,7 +288,8 @@
           "abilityId": "dba.ability.rat_eight_shadow_hunt@1",
           "abilityKey": "shadow_hunt",
           "nameZh": "影牙围猎",
-          "descriptionZh": "三道影牙从目标周边合围，区域命中带多段上限",
+          "descriptionZh": "以三道影牙合围打击指定区域。每次命中造成190点物理基础伤害，单个目标最多3段。施法准备时间0.65秒，冷却62秒，消耗20点气势，施放距离9米，作用半径3.2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“子鼠·影牙·影牙围猎”的单项技能效果概念图。技能定位：终极技能；作用对象：指定区域或目标。机制依据：以三道影牙合围打击指定区域。每次命中造成190点物理基础伤害，单个目标最多3段。施法准备时间0.65秒，冷却62秒，消耗20点气势，施放距离9米，作用半径3.2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：以区域中心为焦点，三个牙形能量轮廓沿不同方位依次内收，体现三次有限打击；地面边界清晰、中央留有可读空间，残影不作为额外独立攻击者。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -306,7 +319,8 @@
               "Presentation.DBA.Hero.Rat.shadow_hunt.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -314,10 +328,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.65
         },
         {
           "slotId": "Slot3",
@@ -327,7 +343,8 @@
           "abilityId": "dba.ability.rat_eight_shadow_step@1",
           "abilityKey": "shadow_step",
           "nameZh": "踏影突闪",
-          "descriptionZh": "按服务器校验方向短突进，不能穿越阻挡",
+          "descriptionZh": "沿指定方向迅速移动到合法落点。最大移动距离6.6米，落点受合法路径与阻挡限制。施法准备时间0秒，冷却13秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“子鼠·影牙·踏影突闪”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：沿指定方向迅速移动到合法落点。最大移动距离6.6米，落点受合法路径与阻挡限制。施法准备时间0秒，冷却13秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：用起点短促收束、紧贴地面的窄影轨迹和终点轻微扩散表现一次短突进；起终点轮廓明确，不能用穿墙、永久隐身或传送门暗示额外能力。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Untyped",
@@ -356,7 +373,8 @@
               "Presentation.DBA.Hero.Rat.shadow_step.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -364,10 +382,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0
         },
         {
           "slotId": "Slot5",
@@ -377,7 +397,8 @@
           "abilityId": "dba.ability.rat_eight_mist_guard@1",
           "abilityKey": "mist_guard",
           "nameZh": "影雾护体",
-          "descriptionZh": "短时间获得16%最大生命护盾，非隐身",
+          "descriptionZh": "凝聚影雾保护自身。提供相当于受护者最大生命16%的护盾，持续4秒。施法准备时间0秒，冷却20秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“子鼠·影牙·影雾护体”的单项技能效果概念图。技能定位：防御技能；作用对象：自身。机制依据：凝聚影雾保护自身。提供相当于受护者最大生命16%的护盾，持续4秒。施法准备时间0秒，冷却20秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：薄而通透的影雾沿身体外缘形成有限护盾面，轮廓以分段光缘而非浓黑烟团表达；主体仍清楚可见，盾破或结束时从边缘碎散。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
@@ -406,7 +427,8 @@
               "Presentation.DBA.Hero.Rat.mist_guard.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -414,10 +436,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0
         },
         {
           "slotId": "Slot6",
@@ -427,7 +451,8 @@
           "abilityId": "dba.ability.rat_eight_shadow_snare@1",
           "abilityKey": "shadow_snare",
           "nameZh": "掠影缚足",
-          "descriptionZh": "短刃命中使目标减速30%，只取已确认命中",
+          "descriptionZh": "以短刃命中敌人并削弱其移动速度。每次命中造成24点物理基础伤害；使命中的敌方减速30%，持续2.2秒。施法准备时间0.2秒，冷却17秒，消耗0点气势，施放距离8米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“子鼠·影牙·掠影缚足”的单项技能效果概念图。技能定位：控制技能；作用对象：敌方目标。机制依据：以短刃命中敌人并削弱其移动速度。每次命中造成24点物理基础伤害；使命中的敌方减速30%，持续2.2秒。施法准备时间0.2秒，冷却17秒，消耗0点气势，施放距离8米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：短刃先产生清晰的小型命中点，再在受击者足边浮现稀疏的牙形拖曳纹；减速通过地面间歇拖尾表现，不画成完全捆死的铁链或眩晕星环。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -463,7 +488,8 @@
               "Presentation.DBA.Hero.Rat.shadow_snare.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -471,10 +497,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.2
         },
         {
           "slotId": "Slot7",
@@ -484,7 +512,8 @@
           "abilityId": "dba.ability.rat_eight_fang_mark@1",
           "abilityKey": "fang_mark",
           "nameZh": "牙痕追猎",
-          "descriptionZh": "标记目标5秒，下次本人命中增伤15%",
+          "descriptionZh": "命中敌人并留下仅供本人追猎的牙痕。每次命中造成42点物理基础伤害；标记保留5秒，本人下一次命中伤害提高15%。施法准备时间0.15秒，冷却19秒，消耗0点气势，施放距离8.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“子鼠·影牙·牙痕追猎”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：敌方目标。机制依据：命中敌人并留下仅供本人追猎的牙痕。每次命中造成42点物理基础伤害；标记保留5秒，本人下一次命中伤害提高15%。施法准备时间0.15秒，冷却19秒，消耗0点气势，施放距离8.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：目标身上出现一枚大小克制的成对牙痕符记，标记边缘轻微呼吸；后续强化命中时印记向中心折叠并熄灭，不使用全队增伤光环或持续流血画面。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -520,7 +549,8 @@
               "Presentation.DBA.Hero.Rat.fang_mark.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -528,10 +558,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.15
         }
       ]
     },
@@ -557,7 +589,8 @@
           "abilityId": "dba.ability.ox_eight_horn_strike@1",
           "abilityKey": "horn_strike",
           "nameZh": "玄角撞",
-          "descriptionZh": "牛角近身撞击；合法命中获得气势",
+          "descriptionZh": "以玄角近身撞击单个敌人。每次命中造成38点物理基础伤害。施法准备时间0.28秒，冷却0.95秒，消耗0点气势，施放距离2.25米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“丑牛·玄角·玄角撞”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以玄角近身撞击单个敌人。每次命中造成38点物理基础伤害。施法准备时间0.28秒，冷却0.95秒，消耗0点气势，施放距离2.25米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：角尖凝出紧密的赭金硬质亮面，碰撞瞬间在接触处形成一小圈厚实冲击纹；重心稳定、质感沉着，碎屑控制在少量无尖锐伤害表现的岩片。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -587,7 +620,8 @@
               "Presentation.DBA.Hero.Ox.horn_strike.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -595,10 +629,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.28
         },
         {
           "slotId": "Slot1",
@@ -608,7 +644,8 @@
           "abilityId": "dba.ability.ox_eight_horn_break@1",
           "abilityKey": "horn_break",
           "nameZh": "破岩角挑",
-          "descriptionZh": "上挑单体并附加重击反馈，不默认击飞",
+          "descriptionZh": "以角部上挑对单个敌人施加重击。每次命中造成74点物理基础伤害。施法准备时间0.45秒，冷却5秒，消耗0点气势，施放距离3.4米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“丑牛·玄角·破岩角挑”的单项技能效果概念图。技能定位：攻击技能一；作用对象：敌方目标。机制依据：以角部上挑对单个敌人施加重击。每次命中造成74点物理基础伤害。施法准备时间0.45秒，冷却5秒，消耗0点气势，施放距离3.4米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：角尖自下向上带出一段短而厚的弯曲光痕，命中点表现压缩后迸开的岩纹；保持目标贴地的示意姿态，不用腾空抛飞画面暗示击飞。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -638,7 +675,8 @@
               "Presentation.DBA.Hero.Ox.horn_break.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -646,10 +684,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.45
         },
         {
           "slotId": "Slot2",
@@ -659,7 +699,8 @@
           "abilityId": "dba.ability.ox_eight_ground_pulse@1",
           "abilityKey": "ground_pulse",
           "nameZh": "裂土重踏",
-          "descriptionZh": "自身周围扩散地脉冲击，服务器圆形AOE",
+          "descriptionZh": "重踏地面并向周围扩散冲击。每次命中造成96点物理基础伤害。施法准备时间0.5秒，冷却10秒，消耗0点气势，作用半径3.7米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“丑牛·玄角·裂土重踏”的单项技能效果概念图。技能定位：攻击技能二；作用对象：指定区域或目标。机制依据：重踏地面并向周围扩散冲击。每次命中造成96点物理基础伤害。施法准备时间0.5秒，冷却10秒，消耗0点气势，作用半径3.7米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：蹄下起始点向外推出一圈贴地的低矮地脉波，环形外缘清楚、内部地面可见；岩屑沿环缘少量跳起，不能做成遮挡整片战场的尘暴。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -689,7 +730,8 @@
               "Presentation.DBA.Hero.Ox.ground_pulse.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -697,10 +739,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.5
         },
         {
           "slotId": "Slot4",
@@ -710,7 +754,8 @@
           "abilityId": "dba.ability.ox_eight_mountain_break@1",
           "abilityKey": "mountain_break",
           "nameZh": "崩岳裂阵",
-          "descriptionZh": "向前重击并产生区域震裂，中心短眩晕",
+          "descriptionZh": "向前重击并在区域中心震慑敌人。每次命中造成222点物理基础伤害；使命中的敌方眩晕0.8秒。施法准备时间1秒，冷却66秒，消耗20点气势，施放距离5.5米，作用半径5.4米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“丑牛·玄角·崩岳裂阵”的单项技能效果概念图。技能定位：终极技能；作用对象：指定区域或目标。机制依据：向前重击并在区域中心震慑敌人。每次命中造成222点物理基础伤害；使命中的敌方眩晕0.8秒。施法准备时间1秒，冷却66秒，消耗20点气势，施放距离5.5米，作用半径5.4米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：前方地面出现有限宽度的震裂扇区，重击落点最亮，裂纹向外逐级减弱；中央命中有短促眩晕轮廓，裂纹不发展为真实地形塌陷或无限蔓延。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -746,7 +791,8 @@
               "Presentation.DBA.Hero.Ox.mountain_break.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -754,10 +800,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 1.0
         },
         {
           "slotId": "Slot3",
@@ -767,7 +815,8 @@
           "abilityId": "dba.ability.ox_eight_horn_charge@1",
           "abilityKey": "horn_charge",
           "nameZh": "玄角冲阵",
-          "descriptionZh": "冲锋至合法前方位置并撞击首个敌人",
+          "descriptionZh": "沿前方合法路径冲锋并撞击首个接触敌人。每次命中造成45点物理基础伤害；最大移动距离7.6米，落点受合法路径与阻挡限制。施法准备时间0.25秒，冷却16秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“丑牛·玄角·玄角冲阵”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：沿前方合法路径冲锋并撞击首个接触敌人。每次命中造成45点物理基础伤害；最大移动距离7.6米，落点受合法路径与阻挡限制。施法准备时间0.25秒，冷却16秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：角部构成冲锋楔形主体，窄幅贴地尘迹指明方向；前方接触点产生一次压缩冲击，撞停位置明确，禁止贯穿连续多个目标的无止境冲锋构图。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Physical",
@@ -802,7 +851,8 @@
               "Presentation.DBA.Hero.Ox.horn_charge.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -810,10 +860,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.25
         },
         {
           "slotId": "Slot5",
@@ -823,7 +875,8 @@
           "abilityId": "dba.ability.ox_eight_stone_armor@1",
           "abilityKey": "stone_armor",
           "nameZh": "玄岩战甲",
-          "descriptionZh": "获得22%最大生命护盾，防御特色",
+          "descriptionZh": "以玄岩护甲保护自身。提供相当于受护者最大生命22%的护盾，持续5秒。施法准备时间0.15秒，冷却23秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“丑牛·玄角·玄岩战甲”的单项技能效果概念图。技能定位：防御技能；作用对象：自身。机制依据：以玄岩护甲保护自身。提供相当于受护者最大生命22%的护盾，持续5秒。施法准备时间0.15秒，冷却23秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：岩质盾片按身体主要受击面形成疏密有序的包覆，关节与面部保留透视空间；护盾有温暖内缘和沉稳外壳，不把角色永久石化或替换成新模型。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
@@ -852,7 +905,8 @@
               "Presentation.DBA.Hero.Ox.stone_armor.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -860,10 +914,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.15
         },
         {
           "slotId": "Slot6",
@@ -873,7 +929,8 @@
           "abilityId": "dba.ability.ox_eight_seismic_stun@1",
           "abilityKey": "seismic_stun",
           "nameZh": "震蹄定身",
-          "descriptionZh": "有限近身震荡造成0.9秒眩晕",
+          "descriptionZh": "以近身震蹄使区域敌人短暂眩晕。每次命中造成28点物理基础伤害；使命中的敌方眩晕0.9秒。施法准备时间0.4秒，冷却18秒，消耗0点气势，施放距离3.75米，作用半径2.6米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“丑牛·玄角·震蹄定身”的单项技能效果概念图。技能定位：控制技能；作用对象：指定区域或目标。机制依据：以近身震蹄使区域敌人短暂眩晕。每次命中造成28点物理基础伤害；使命中的敌方眩晕0.9秒。施法准备时间0.4秒，冷却18秒，消耗0点气势，施放距离3.75米，作用半径2.6米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：蹄下形成紧凑的单次震荡环，敌人受击点附一个短促头顶震颤符号；眩晕反馈与地面范围相互独立，不绘制长时间禁足牢笼。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -909,7 +966,8 @@
               "Presentation.DBA.Hero.Ox.seismic_stun.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -917,10 +975,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.4
         },
         {
           "slotId": "Slot7",
@@ -930,7 +990,8 @@
           "abilityId": "dba.ability.ox_eight_steadfast_roar@1",
           "abilityKey": "steadfast_roar",
           "nameZh": "厚土战吼",
-          "descriptionZh": "己方近身单位获得5秒12%伤害减免，不触发治疗",
+          "descriptionZh": "以战吼为附近己方提供短时减伤。获得12%减伤，持续5秒。施法准备时间0.3秒，冷却24秒，消耗0点气势，作用半径5.2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“丑牛·玄角·厚土战吼”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：指定区域或目标。机制依据：以战吼为附近己方提供短时减伤。获得12%减伤，持续5秒。施法准备时间0.3秒，冷却24秒，消耗0点气势，作用半径5.2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：战吼由胸前向外推开低饱和的厚实波纹，受益者身边只保留几片护纹；用防护面和柔和边缘表达减伤，不出现治疗光束或生命恢复符号。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Untyped",
@@ -960,7 +1021,8 @@
               "Presentation.DBA.Hero.Ox.steadfast_roar.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -968,10 +1030,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         }
       ]
     },
@@ -997,7 +1061,8 @@
           "abilityId": "dba.ability.tiger_eight_claw_strike@1",
           "abilityKey": "claw_strike",
           "nameZh": "白君裂爪",
-          "descriptionZh": "单体爪击，回复普攻气势",
+          "descriptionZh": "以利爪快速撕击近处单个敌人。每次命中造成36点物理基础伤害。施法准备时间0.18秒，冷却0.75秒，消耗0点气势，施放距离2.4米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“寅虎·白君·白君裂爪”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以利爪快速撕击近处单个敌人。每次命中造成36点物理基础伤害。施法准备时间0.18秒，冷却0.75秒，消耗0点气势，施放距离2.4米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一次爪击形成短促、紧密的白金爪缘亮痕，命中聚焦于单个近身点；保持爪的前进方向与手臂动作一致，不绘制血痕或大面积飞溅。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -1027,7 +1092,8 @@
               "Presentation.DBA.Hero.Tiger.claw_strike.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1035,10 +1101,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.18
         },
         {
           "slotId": "Slot1",
@@ -1048,7 +1116,8 @@
           "abilityId": "dba.ability.tiger_eight_golden_rake@1",
           "abilityKey": "golden_rake",
           "nameZh": "白金爪刃",
-          "descriptionZh": "前方扇形两道爪痕",
+          "descriptionZh": "向前挥出两道扇形爪刃。每次命中造成76点物理基础伤害，单个目标最多2段。施法准备时间0.3秒，冷却4.5秒，消耗0点气势，施放距离6.2米，作用半径2.8米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“寅虎·白君·白金爪刃”的单项技能效果概念图。技能定位：攻击技能一；作用对象：指定区域或目标。机制依据：向前挥出两道扇形爪刃。每次命中造成76点物理基础伤害，单个目标最多2段。施法准备时间0.3秒，冷却4.5秒，消耗0点气势，施放距离6.2米，作用半径2.8米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：两道有明确间距的白金弧刃展开为有限扇形，前缘清晰、末端变薄；角色和敌人轮廓都能从刃间空隙看见，避免铺满屏幕的交错刀网。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -1078,7 +1147,8 @@
               "Presentation.DBA.Hero.Tiger.golden_rake.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1086,10 +1156,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         },
         {
           "slotId": "Slot2",
@@ -1099,7 +1171,8 @@
           "abilityId": "dba.ability.tiger_eight_tiger_pounce@1",
           "abilityKey": "tiger_pounce",
           "nameZh": "猛虎连袭",
-          "descriptionZh": "快速两段近战，优先当前锁定敌方",
+          "descriptionZh": "对当前敌人实施两段快速近战连袭。每次命中造成100点物理基础伤害，单个目标最多2段。施法准备时间0.2秒，冷却8.5秒，消耗0点气势，施放距离5.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“寅虎·白君·猛虎连袭”的单项技能效果概念图。技能定位：攻击技能二；作用对象：敌方目标。机制依据：对当前敌人实施两段快速近战连袭。每次命中造成100点物理基础伤害，单个目标最多2段。施法准备时间0.2秒，冷却8.5秒，消耗0点气势，施放距离5.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：两次近身爪影以前后节奏错开，第一击略收、第二击更集中；残迹只说明连续动作，不新增远距离跳跃、分身实体或第三次命中。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -1129,7 +1202,8 @@
               "Presentation.DBA.Hero.Tiger.tiger_pounce.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1137,10 +1211,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.2
         },
         {
           "slotId": "Slot4",
@@ -1150,7 +1226,8 @@
           "abilityId": "dba.ability.tiger_eight_tiger_roar_storm@1",
           "abilityKey": "tiger_roar_storm",
           "nameZh": "白君啸天",
-          "descriptionZh": "虎啸后多段金爪暴发，终结技",
+          "descriptionZh": "以虎啸引出三段区域爪光打击。每次命中造成236点物理基础伤害，单个目标最多3段。施法准备时间0.8秒，冷却59秒，消耗23点气势，施放距离7米，作用半径4.8米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“寅虎·白君·白君啸天”的单项技能效果概念图。技能定位：终极技能；作用对象：指定区域或目标。机制依据：以虎啸引出三段区域爪光打击。每次命中造成236点物理基础伤害，单个目标最多3段。施法准备时间0.8秒，冷却59秒，消耗23点气势，施放距离7米，作用半径4.8米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：虎啸起手后，区域内三组有限爪光依次落下，主体呈有力的白金切面与虎纹节奏；威胁边缘始终可见，不用全屏白闪代替终极技能辨识。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -1180,7 +1257,8 @@
               "Presentation.DBA.Hero.Tiger.tiger_roar_storm.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1188,10 +1266,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.8
         },
         {
           "slotId": "Slot3",
@@ -1201,7 +1281,8 @@
           "abilityId": "dba.ability.tiger_eight_leaping_claw@1",
           "abilityKey": "leaping_claw",
           "nameZh": "虎跃猎袭",
-          "descriptionZh": "跳扑目标附近合法落点，不能越过禁区",
+          "descriptionZh": "跃向前方合法落点并攻击接触目标。每次命中造成40点物理基础伤害；最大移动距离7.1米，落点受合法路径与阻挡限制。施法准备时间0.18秒，冷却13.5秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“寅虎·白君·虎跃猎袭”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：跃向前方合法落点并攻击接触目标。每次命中造成40点物理基础伤害；最大移动距离7.1米，落点受合法路径与阻挡限制。施法准备时间0.18秒，冷却13.5秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：以单条清楚的弧形跃迁轨迹连接起终点，前爪在落点形成小型打击光；保留飞跃高度与地面范围的区分，不表现穿越封闭障碍或无敌状态。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Physical",
@@ -1236,7 +1317,8 @@
               "Presentation.DBA.Hero.Tiger.leaping_claw.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1244,10 +1326,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.18
         },
         {
           "slotId": "Slot5",
@@ -1257,7 +1341,8 @@
           "abilityId": "dba.ability.tiger_eight_regal_guard@1",
           "abilityKey": "regal_guard",
           "nameZh": "虎纹护甲",
-          "descriptionZh": "金纹短护盾，维持进攻者脆性",
+          "descriptionZh": "以虎纹护盾短时保护自身。提供相当于受护者最大生命14%的护盾，持续4秒。施法准备时间0.1秒，冷却20秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“寅虎·白君·虎纹护甲”的单项技能效果概念图。技能定位：防御技能；作用对象：自身。机制依据：以虎纹护盾短时保护自身。提供相当于受护者最大生命14%的护盾，持续4秒。施法准备时间0.1秒，冷却20秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：盾面沿肩胸与外轮廓浮出少量虎纹，形成轻薄而有棱面的保护层；护盾中心透明、边缘清楚，不能遮掉英雄面部或制造厚重坦克轮廓。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
@@ -1286,7 +1371,8 @@
               "Presentation.DBA.Hero.Tiger.regal_guard.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1294,10 +1380,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.1
         },
         {
           "slotId": "Slot6",
@@ -1307,7 +1395,8 @@
           "abilityId": "dba.ability.tiger_eight_roar_shock@1",
           "abilityKey": "roar_shock",
           "nameZh": "震山虎啸",
-          "descriptionZh": "扇形虎啸短眩晕，明确危险边缘",
+          "descriptionZh": "以扇形虎啸震慑前方敌人。每次命中造成26点物理基础伤害；使命中的敌方眩晕0.7秒。施法准备时间0.35秒，冷却19秒，消耗0点气势，施放距离5.5米，作用半径3.4米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“寅虎·白君·震山虎啸”的单项技能效果概念图。技能定位：控制技能；作用对象：指定区域或目标。机制依据：以扇形虎啸震慑前方敌人。每次命中造成26点物理基础伤害；使命中的敌方眩晕0.7秒。施法准备时间0.35秒，冷却19秒，消耗0点气势，施放距离5.5米，作用半径3.4米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：从口部前方推出有限扇形的压力纹，波面是稀疏透亮的弧层；命中附短暂眩晕提示，扇形危险边界保持独立，不表现恐惧逃跑或击退。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -1343,7 +1432,8 @@
               "Presentation.DBA.Hero.Tiger.roar_shock.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1351,10 +1441,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.35
         },
         {
           "slotId": "Slot7",
@@ -1364,8 +1456,9 @@
           "abilityId": "dba.ability.tiger_eight_battle_fervor@1",
           "abilityKey": "battle_fervor",
           "nameZh": "威仪昂扬",
-          "descriptionZh": "本人5秒内普通攻击伤害加成12%",
-          "intentTarget": "enemy",
+          "descriptionZh": "振奋自身并强化短时间内的普通攻击。本人普通攻击伤害提高12%，持续5秒。施法准备时间0.1秒，冷却18秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“寅虎·白君·威仪昂扬”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：自身。机制依据：振奋自身并强化短时间内的普通攻击。本人普通攻击伤害提高12%，持续5秒。施法准备时间0.1秒，冷却18秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：虎纹光线沿本体武器或爪缘有节奏地亮起，胸前出现简洁的威仪符纹；增益集中在自身，不指向敌人，不画成范围治疗或全队强化光阵。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
+          "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
           "baseDamage": 0,
@@ -1394,7 +1487,8 @@
               "Presentation.DBA.Hero.Tiger.battle_fervor.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1402,10 +1496,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.1
         }
       ]
     },
@@ -1431,7 +1527,8 @@
           "abilityId": "dba.ability.rabbit_eight_jade_moon_shot@1",
           "abilityKey": "jade_moon_shot",
           "nameZh": "月玉轻弹",
-          "descriptionZh": "远程单体月辉弹，命中恢复气势",
+          "descriptionZh": "发射一枚月辉轻弹攻击单个敌人。每次命中造成29点法术基础伤害。施法准备时间0.2秒，冷却0.85秒，消耗0点气势，施放距离9.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“卯兔·玉灵·月玉轻弹”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：发射一枚月辉轻弹攻击单个敌人。每次命中造成29点法术基础伤害。施法准备时间0.2秒，冷却0.85秒，消耗0点气势，施放距离9.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：掌前形成一枚小而饱满的月玉光珠，飞行轨迹纤细、命中只产生清亮小光瓣；以温润玉质与月辉层次表达轻盈感，不扩张成大型月轮。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -1461,7 +1558,8 @@
               "Presentation.DBA.Hero.Rabbit.jade_moon_shot.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1469,10 +1567,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.2
         },
         {
           "slotId": "Slot1",
@@ -1482,7 +1582,8 @@
           "abilityId": "dba.ability.rabbit_eight_crescent_arc@1",
           "abilityKey": "crescent_arc",
           "nameZh": "玉月回旋",
-          "descriptionZh": "月环往返两段服务器命中",
+          "descriptionZh": "以往返月环对选定敌人造成两段打击。每次命中造成62点法术基础伤害，单个目标最多2段。施法准备时间0.35秒，冷却5.5秒，消耗0点气势，施放距离9.6米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“卯兔·玉灵·玉月回旋”的单项技能效果概念图。技能定位：攻击技能一；作用对象：敌方目标。机制依据：以往返月环对选定敌人造成两段打击。每次命中造成62点法术基础伤害，单个目标最多2段。施法准备时间0.35秒，冷却5.5秒，消耗0点气势，施放距离9.6米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一枚薄透玉月环沿去程和回程各留下可区分的短弧迹，主环与轮廓保持完整；用两段轨迹表达往返，不增加第三个环或无期限绕场飞行。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -1512,7 +1613,8 @@
               "Presentation.DBA.Hero.Rabbit.crescent_arc.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1520,10 +1622,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.35
         },
         {
           "slotId": "Slot2",
@@ -1533,7 +1637,8 @@
           "abilityId": "dba.ability.rabbit_eight_falling_petals@1",
           "abilityKey": "falling_petals",
           "nameZh": "落英星雨",
-          "descriptionZh": "指定区域内花瓣坠击，纯伤害不夹带虚假治疗",
+          "descriptionZh": "召来花瓣星雨打击指定区域。每次命中造成80点法术基础伤害。施法准备时间0.55秒，冷却10.5秒，消耗0点气势，施放距离9.2米，作用半径3.3米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“卯兔·玉灵·落英星雨”的单项技能效果概念图。技能定位：攻击技能二；作用对象：指定区域或目标。机制依据：召来花瓣星雨打击指定区域。每次命中造成80点法术基础伤害。施法准备时间0.55秒，冷却10.5秒，消耗0点气势，施放距离9.2米，作用半径3.3米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：少量结构清楚的玉质花瓣从上方分散落入地面圆域，落点以细小星辉收束；花瓣有重心和方向，不将整个空间填成浓雾，也不加入友方治疗光。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Magic",
@@ -1563,7 +1668,8 @@
               "Presentation.DBA.Hero.Rabbit.falling_petals.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1571,10 +1677,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.55
         },
         {
           "slotId": "Slot4",
@@ -1584,7 +1692,8 @@
           "abilityId": "dba.ability.rabbit_eight_moon_bloom@1",
           "abilityKey": "moon_bloom",
           "nameZh": "月华绽放",
-          "descriptionZh": "范围内敌人受月辉伤害、己方获得12%最大生命治疗",
+          "descriptionZh": "令月华在区域内绽放并分别伤敌、治疗己方。每次命中造成168点法术基础伤害；为合法己方恢复其最大生命12%，无法复活。施法准备时间0.8秒，冷却64秒，消耗0点气势，施放距离8.5米，作用半径4.7米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“卯兔·玉灵·月华绽放”的单项技能效果概念图。技能定位：终极技能；作用对象：同一范围中心内的敌方与己方，分别结算。机制依据：令月华在区域内绽放并分别伤敌、治疗己方。每次命中造成168点法术基础伤害；为合法己方恢复其最大生命12%，无法复活。施法准备时间0.8秒，冷却64秒，消耗0点气势，施放距离8.5米，作用半径4.7米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：中央月玉花形向外展开，敌方一侧以锐利短月瓣表达命中，友方一侧以柔和向内光流表达回复；两类效果用形状和方向区分，区域外缘不被花瓣遮挡。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_center_mixed",
           "level": 1,
           "damageType": "Magic",
@@ -1619,7 +1728,8 @@
               "Presentation.DBA.Hero.Rabbit.moon_bloom.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1627,10 +1737,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.8
         },
         {
           "slotId": "Slot3",
@@ -1640,7 +1752,8 @@
           "abilityId": "dba.ability.rabbit_eight_moon_leap@1",
           "abilityKey": "moon_leap",
           "nameZh": "月影跃迁",
-          "descriptionZh": "轻跳至合法位置，障碍物裁剪",
+          "descriptionZh": "轻跃至指定方向的合法位置。最大移动距离6.5米，落点受合法路径与阻挡限制。施法准备时间0秒，冷却12秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“卯兔·玉灵·月影跃迁”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：轻跃至指定方向的合法位置。最大移动距离6.5米，落点受合法路径与阻挡限制。施法准备时间0秒，冷却12秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：起点月影收细、途中留一条低矮轻盈弧迹、终点散开少量柔光花瓣；单次落点清楚，不表现可持续飞行、穿墙或隐身。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Untyped",
@@ -1669,7 +1782,8 @@
               "Presentation.DBA.Hero.Rabbit.moon_leap.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1677,10 +1791,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0
         },
         {
           "slotId": "Slot5",
@@ -1690,7 +1806,8 @@
           "abilityId": "dba.ability.rabbit_eight_jade_moon_shield@1",
           "abilityKey": "jade_moon_shield",
           "nameZh": "玉月屏护",
-          "descriptionZh": "对自己或友方赋予短时护盾",
+          "descriptionZh": "为自己或指定友方提供月玉护盾。提供相当于受护者最大生命16%的护盾，持续4秒。施法准备时间0.15秒，冷却17秒，消耗0点气势，施放距离8米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“卯兔·玉灵·玉月屏护”的单项技能效果概念图。技能定位：防御技能；作用对象：自己或合法友方。机制依据：为自己或指定友方提供月玉护盾。提供相当于受护者最大生命16%的护盾，持续4秒。施法准备时间0.15秒，冷却17秒，消耗0点气势，施放距离8米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：半透明月弧围成稳定的薄护面，玉质高光温和，受保护者全身可见；护盾受到冲击时局部亮起，结束向外化作稀疏月屑，不与治疗流混淆。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "friendly_or_self",
           "level": 1,
           "damageType": "Untyped",
@@ -1719,7 +1836,8 @@
               "Presentation.DBA.Hero.Rabbit.jade_moon_shield.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1727,10 +1845,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.15
         },
         {
           "slotId": "Slot6",
@@ -1740,7 +1860,8 @@
           "abilityId": "dba.ability.rabbit_eight_lunar_bind@1",
           "abilityKey": "lunar_bind",
           "nameZh": "月辉束缚",
-          "descriptionZh": "月光圈命中减速35%，不是隐藏长时间硬控",
+          "descriptionZh": "以月辉命中并减缓敌人移动。每次命中造成22点法术基础伤害；使命中的敌方减速35%，持续2秒。施法准备时间0.3秒，冷却18秒，消耗0点气势，施放距离8.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“卯兔·玉灵·月辉束缚”的单项技能效果概念图。技能定位：控制技能；作用对象：敌方目标。机制依据：以月辉命中并减缓敌人移动。每次命中造成22点法术基础伤害；使命中的敌方减速35%，持续2秒。施法准备时间0.3秒，冷却18秒，消耗0点气势，施放距离8.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一枚月光印落在目标足边，外圈以断续弧带造成拖曳感；减速环贴地且保留出口空隙，不画成囚禁牢笼或冻结雕像。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -1776,7 +1897,8 @@
               "Presentation.DBA.Hero.Rabbit.lunar_bind.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1784,10 +1906,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         },
         {
           "slotId": "Slot7",
@@ -1797,7 +1921,8 @@
           "abilityId": "dba.ability.rabbit_eight_jade_heal@1",
           "abilityKey": "jade_heal",
           "nameZh": "玉露回春",
-          "descriptionZh": "治疗一个合法友方22%最大生命，不复活",
+          "descriptionZh": "以玉露为自己或单个合法友方恢复生命。为合法己方恢复其最大生命22%，无法复活。施法准备时间0.45秒，冷却16秒，消耗0点气势，施放距离10米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“卯兔·玉灵·玉露回春”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：自己或合法友方。机制依据：以玉露为自己或单个合法友方恢复生命。为合法己方恢复其最大生命22%，无法复活。施法准备时间0.45秒，冷却16秒，消耗0点气势，施放距离10米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一滴温润玉露由施法方向汇入受益者胸前或肩侧，形成短促向内绽放的柔光；治疗粒子数量少、流向清楚，不出现攻击爆裂、复活身影或离体灵魂。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "friendly_or_self",
           "level": 1,
           "damageType": "Untyped",
@@ -1826,7 +1951,8 @@
               "Presentation.DBA.Hero.Rabbit.jade_heal.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1834,10 +1960,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.45
         }
       ]
     },
@@ -1863,7 +1991,8 @@
           "abilityId": "dba.ability.dragon_eight_dragon_claw@1",
           "abilityKey": "dragon_claw",
           "nameZh": "苍龙爪光",
-          "descriptionZh": "中近距离龙爪能量命中",
+          "descriptionZh": "以中近距离的龙爪能量打击单个敌人。每次命中造成34点法术基础伤害。施法准备时间0.25秒，冷却0.85秒，消耗0点气势，施放距离4.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“辰龙·苍龙·苍龙爪光”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以中近距离的龙爪能量打击单个敌人。每次命中造成34点法术基础伤害。施法准备时间0.25秒，冷却0.85秒，消耗0点气势，施放距离4.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：掌前凝出有限尺寸的龙爪光形，指尖轮廓有力，命中后迅速收拢为云鳞微光；神兽气质来自能量结构，不新增实体巨龙或遮挡英雄的龙躯。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -1893,7 +2022,8 @@
               "Presentation.DBA.Hero.Dragon.dragon_claw.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1901,10 +2031,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.25
         },
         {
           "slotId": "Slot1",
@@ -1914,7 +2046,8 @@
           "abilityId": "dba.ability.dragon_eight_cloud_scale@1",
           "abilityKey": "cloud_scale",
           "nameZh": "云鳞飞刃",
-          "descriptionZh": "两枚青云龙鳞追击冻结目标",
+          "descriptionZh": "以两枚云鳞飞刃分两次攻击选定敌人。每次命中造成67点法术基础伤害，单个目标最多2段。施法准备时间0.4秒，冷却5.5秒，消耗0点气势，施放距离10.3米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“辰龙·苍龙·云鳞飞刃”的单项技能效果概念图。技能定位：攻击技能一；作用对象：敌方目标。机制依据：以两枚云鳞飞刃分两次攻击选定敌人。每次命中造成67点法术基础伤害，单个目标最多2段。施法准备时间0.4秒，冷却5.5秒，消耗0点气势，施放距离10.3米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：两枚饱满而薄透的龙鳞前后错位飞行，鳞缘有云气内卷，命中是两次清晰的鳞光碎散；不出现冰封、束缚或眩晕符号。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -1944,7 +2077,8 @@
               "Presentation.DBA.Hero.Dragon.cloud_scale.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -1952,10 +2086,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.4
         },
         {
           "slotId": "Slot2",
@@ -1965,7 +2101,8 @@
           "abilityId": "dba.ability.dragon_eight_azure_breath@1",
           "abilityKey": "azure_breath",
           "nameZh": "苍云雷息",
-          "descriptionZh": "前方锥形雷云吐息，服务器扇区规则",
+          "descriptionZh": "向前方锥形区域释放雷云吐息。每次命中造成100点法术基础伤害。施法准备时间0.6秒，冷却10秒，消耗0点气势，施放距离9米，作用半径3.4米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“辰龙·苍龙·苍云雷息”的单项技能效果概念图。技能定位：攻击技能二；作用对象：指定区域或目标。机制依据：向前方锥形区域释放雷云吐息。每次命中造成100点法术基础伤害。施法准备时间0.6秒，冷却10秒，消耗0点气势，施放距离9米，作用半径3.4米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：雷云从口部或已审核施法部位向前形成有限锥形，云气为疏薄载体，雷息主体指向明确；锥区地面边缘持续可读，不生成遮蔽敌人的厚云墙。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Magic",
@@ -1995,7 +2132,8 @@
               "Presentation.DBA.Hero.Dragon.azure_breath.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2003,10 +2141,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.6
         },
         {
           "slotId": "Slot4",
@@ -2016,7 +2156,8 @@
           "abilityId": "dba.ability.dragon_eight_dragon_ascension@1",
           "abilityKey": "dragon_ascension",
           "nameZh": "苍龙临世",
-          "descriptionZh": "龙首云气降临产生大范围一次性法术打击",
+          "descriptionZh": "以龙首云气对指定区域施加一次重击。每次命中造成236点法术基础伤害。施法准备时间1秒，冷却72秒，消耗0点气势，施放距离10米，作用半径5.9米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“辰龙·苍龙·苍龙临世”的单项技能效果概念图。技能定位：终极技能；作用对象：指定区域或目标。机制依据：以龙首云气对指定区域施加一次重击。每次命中造成236点法术基础伤害。施法准备时间1秒，冷却72秒，消耗0点气势，施放距离10米，作用半径5.9米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：大型但有限的龙首云气轮廓自上方压向中心，生效帧由清楚的环缘与一次下压冲击构成；云首只是视觉意象，不绘制可独立追击的召唤龙。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Magic",
@@ -2046,7 +2187,8 @@
               "Presentation.DBA.Hero.Dragon.dragon_ascension.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2054,10 +2196,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 1.0
         },
         {
           "slotId": "Slot3",
@@ -2067,7 +2211,8 @@
           "abilityId": "dba.ability.dragon_eight_cloud_stride@1",
           "abilityKey": "cloud_stride",
           "nameZh": "御云腾跃",
-          "descriptionZh": "云气跃迁，服务端合法落点",
+          "descriptionZh": "借云气移动到前方合法落点。最大移动距离7.2米，落点受合法路径与阻挡限制。施法准备时间0.2秒，冷却16秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“辰龙·苍龙·御云腾跃”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：借云气移动到前方合法落点。最大移动距离7.2米，落点受合法路径与阻挡限制。施法准备时间0.2秒，冷却16秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：起点云气托起、途中一条凝练云带、落点云纹向外舒展，三者连成单次运动；英雄不消失于传送门，不画成永久飞行状态。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Untyped",
@@ -2096,7 +2241,8 @@
               "Presentation.DBA.Hero.Dragon.cloud_stride.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2104,10 +2250,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.2
         },
         {
           "slotId": "Slot5",
@@ -2117,7 +2265,8 @@
           "abilityId": "dba.ability.dragon_eight_dragon_scale_guard@1",
           "abilityKey": "dragon_scale_guard",
           "nameZh": "苍鳞护身",
-          "descriptionZh": "龙鳞护盾保护自己",
+          "descriptionZh": "以苍鳞护盾保护自身。提供相当于受护者最大生命18%的护盾，持续5秒。施法准备时间0.2秒，冷却22秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“辰龙·苍龙·苍鳞护身”的单项技能效果概念图。技能定位：防御技能；作用对象：自身。机制依据：以苍鳞护盾保护自身。提供相当于受护者最大生命18%的护盾，持续5秒。施法准备时间0.2秒，冷却22秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：数片可数的半透明龙鳞沿本体外侧构成有层次的护盾，鳞片间保留透视空隙；受击时只在接触片上增亮，不使用全屏电弧覆盖。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
@@ -2146,7 +2295,8 @@
               "Presentation.DBA.Hero.Dragon.dragon_scale_guard.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2154,10 +2304,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.2
         },
         {
           "slotId": "Slot6",
@@ -2167,7 +2319,8 @@
           "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
           "abilityKey": "thunder_cloud_lock",
           "nameZh": "雷云镇缚",
-          "descriptionZh": "小范围雷云压制0.9秒眩晕",
+          "descriptionZh": "以有限雷云打击并眩晕区域敌人。每次命中造成32点法术基础伤害；使命中的敌方眩晕0.9秒。施法准备时间0.45秒，冷却20秒，消耗0点气势，施放距离8.7米，作用半径2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“辰龙·苍龙·雷云镇缚”的单项技能效果概念图。技能定位：控制技能；作用对象：指定区域或目标。机制依据：以有限雷云打击并眩晕区域敌人。每次命中造成32点法术基础伤害；使命中的敌方眩晕0.9秒。施法准备时间0.45秒，冷却20秒，消耗0点气势，施放距离8.7米，作用半径2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：小范围云纹在地面闭合，短促雷线向中心落下，命中点附有限的眩晕回响；雷云范围与落点明确，不延伸为持续天气或连锁电击。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Magic",
@@ -2203,7 +2356,8 @@
               "Presentation.DBA.Hero.Dragon.thunder_cloud_lock.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2211,10 +2365,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.45
         },
         {
           "slotId": "Slot7",
@@ -2224,7 +2380,8 @@
           "abilityId": "dba.ability.dragon_eight_cloud_blessing@1",
           "abilityKey": "cloud_blessing",
           "nameZh": "苍云庇佑",
-          "descriptionZh": "区域内己方短时间获得12%最大生命护盾",
+          "descriptionZh": "为选定己方周围提供短时云鳞护盾。提供相当于受护者最大生命12%的护盾，持续5秒。施法准备时间0.35秒，冷却25秒，消耗0点气势，施放距离7.8米，作用半径3.6米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“辰龙·苍龙·苍云庇佑”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：自己或合法友方。机制依据：为选定己方周围提供短时云鳞护盾。提供相当于受护者最大生命12%的护盾，持续5秒。施法准备时间0.35秒，冷却25秒，消耗0点气势，施放距离7.8米，作用半径3.6米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：受益者身边浮现轻薄云鳞护面，友方区域以通透环缘连接，中心保留人物视线；明确为防护视觉，不增加治疗玉露、复活光柱或敌方伤害爆炸。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "friendly_or_self",
           "level": 1,
           "damageType": "Untyped",
@@ -2253,7 +2410,8 @@
               "Presentation.DBA.Hero.Dragon.cloud_blessing.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2261,10 +2419,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.35
         }
       ]
     },
@@ -2290,7 +2450,8 @@
           "abilityId": "dba.ability.snake_eight_scale_bite@1",
           "abilityKey": "scale_bite",
           "nameZh": "幽鳞穿刺",
-          "descriptionZh": "中程鳞光单体伤害",
+          "descriptionZh": "以中程鳞光穿刺单个敌人。每次命中造成30点法术基础伤害。施法准备时间0.2秒，冷却0.8秒，消耗0点气势，施放距离7.8米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“巳蛇·幽鳞·幽鳞穿刺”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以中程鳞光穿刺单个敌人。每次命中造成30点法术基础伤害。施法准备时间0.2秒，冷却0.8秒，消耗0点气势，施放距离7.8米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一枚细长而不尖锐恐怖的鳞光沿稳定轨迹前进，尾迹只有少量流线；命中像鳞片折光般短促展开，不出现毒液、创口或血液。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -2320,7 +2481,8 @@
               "Presentation.DBA.Hero.Snake.scale_bite.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2328,10 +2490,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.2
         },
         {
           "slotId": "Slot1",
@@ -2341,7 +2505,8 @@
           "abilityId": "dba.ability.snake_eight_venom_spear@1",
           "abilityKey": "venom_spear",
           "nameZh": "蛇影灵针",
-          "descriptionZh": "灵针命中后附加可驱散的三秒低额伤害",
+          "descriptionZh": "以蛇影灵针命中并附加短时持续伤害。每次命中造成55点法术基础伤害；附加持续伤害效果，持续3秒。施法准备时间0.3秒，冷却5秒，消耗0点气势，施放距离10米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“巳蛇·幽鳞·蛇影灵针”的单项技能效果概念图。技能定位：攻击技能一；作用对象：敌方目标。机制依据：以蛇影灵针命中并附加短时持续伤害。每次命中造成55点法术基础伤害；附加持续伤害效果，持续3秒。施法准备时间0.3秒，冷却5秒，消耗0点气势，施放距离10米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：细针状能量有清楚的头部与细尾，命中后留下小型鳞纹脉动，后续伤害以同一标记的克制闪烁表达；不持续生成成群弹体或铺地毒雾。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -2377,7 +2542,8 @@
               "Presentation.DBA.Hero.Snake.venom_spear.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2385,10 +2551,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         },
         {
           "slotId": "Slot2",
@@ -2398,7 +2566,8 @@
           "abilityId": "dba.ability.snake_eight_serpent_arc@1",
           "abilityKey": "serpent_arc",
           "nameZh": "盘鳞双弹",
-          "descriptionZh": "左右蛇形两条光弹交叉命中",
+          "descriptionZh": "使两道蛇形光弹交叉攻击同一敌人。每次命中造成80点法术基础伤害，单个目标最多2段。施法准备时间0.35秒，冷却9秒，消耗0点气势，施放距离9.6米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“巳蛇·幽鳞·盘鳞双弹”的单项技能效果概念图。技能定位：攻击技能二；作用对象：敌方目标。机制依据：使两道蛇形光弹交叉攻击同一敌人。每次命中造成80点法术基础伤害，单个目标最多2段。施法准备时间0.35秒，冷却9秒，消耗0点气势，施放距离9.6米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：左右两条弯曲轨迹各有一枚清楚的鳞光弹头，在目标附近交叉后消散；流线强调蛇行而不是随机卷曲，不能增加缠绕硬控或额外召唤生物。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -2428,7 +2597,8 @@
               "Presentation.DBA.Hero.Snake.serpent_arc.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2436,10 +2606,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.35
         },
         {
           "slotId": "Slot4",
@@ -2449,7 +2621,8 @@
           "abilityId": "dba.ability.snake_eight_serpent_maelstrom@1",
           "abilityKey": "serpent_maelstrom",
           "nameZh": "幽鳞漩阵",
-          "descriptionZh": "曲线幽鳞三波扩散，区域总伤害需限制",
+          "descriptionZh": "以三波幽鳞光纹打击指定区域。每次命中造成198点法术基础伤害，单个目标最多3段。施法准备时间0.85秒，冷却67秒，消耗0点气势，施放距离9.4米，作用半径4.75米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“巳蛇·幽鳞·幽鳞漩阵”的单项技能效果概念图。技能定位：终极技能；作用对象：指定区域或目标。机制依据：以三波幽鳞光纹打击指定区域。每次命中造成198点法术基础伤害，单个目标最多3段。施法准备时间0.85秒，冷却67秒，消耗0点气势，施放距离9.4米，作用半径4.75米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：三道有间隔的鳞纹波在区域内由内向外推进，亮度逐级变化而边界始终清楚；每一波保持低矮通透，不叠为不透明旋风或无穷持续漩涡。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Magic",
@@ -2479,7 +2652,8 @@
               "Presentation.DBA.Hero.Snake.serpent_maelstrom.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2487,10 +2661,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.85
         },
         {
           "slotId": "Slot3",
@@ -2500,7 +2676,8 @@
           "abilityId": "dba.ability.snake_eight_sinuous_dash@1",
           "abilityKey": "sinuous_dash",
           "nameZh": "蜿影游身",
-          "descriptionZh": "侧身游走至合法路径终点",
+          "descriptionZh": "沿合法路径轻巧游移至侧前方。最大移动距离6.8米，落点受合法路径与阻挡限制。施法准备时间0秒，冷却13秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“巳蛇·幽鳞·蜿影游身”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：沿合法路径轻巧游移至侧前方。最大移动距离6.8米，落点受合法路径与阻挡限制。施法准备时间0秒，冷却13秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：地面用一条平顺弯曲的短鳞光带提示行进，起点和终点都以少量光鳞收束；不表现穿墙、隐身、替身实体或瞬间跨越全场。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Untyped",
@@ -2529,7 +2706,8 @@
               "Presentation.DBA.Hero.Snake.sinuous_dash.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2537,10 +2715,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0
         },
         {
           "slotId": "Slot5",
@@ -2550,7 +2730,8 @@
           "abilityId": "dba.ability.snake_eight_shed_skin@1",
           "abilityKey": "shed_skin",
           "nameZh": "蜕鳞护体",
-          "descriptionZh": "蜕下能量鳞甲作为短时盾",
+          "descriptionZh": "以蜕下的能量鳞甲构成短时护盾。提供相当于受护者最大生命15%的护盾，持续4秒。施法准备时间0.1秒，冷却21秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“巳蛇·幽鳞·蜕鳞护体”的单项技能效果概念图。技能定位：防御技能；作用对象：自身。机制依据：以蜕下的能量鳞甲构成短时护盾。提供相当于受护者最大生命15%的护盾，持续4秒。施法准备时间0.1秒，冷却21秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：外层能量鳞片轻轻错位剥离后围合为护盾，角色本体完整可见；蜕鳞只作干净的能量视觉，不表现真实脱皮、肉体变形或恐怖生物细节。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
@@ -2579,7 +2760,8 @@
               "Presentation.DBA.Hero.Snake.shed_skin.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2587,10 +2769,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.1
         },
         {
           "slotId": "Slot6",
@@ -2600,7 +2784,8 @@
           "abilityId": "dba.ability.snake_eight_coil_silence@1",
           "abilityKey": "coil_silence",
           "nameZh": "缠鳞禁言",
-          "descriptionZh": "蛇鳞印记使目标沉默1.4秒",
+          "descriptionZh": "命中敌人并短时封锁其施法。每次命中造成24点法术基础伤害；使命中的敌方沉默1.4秒。施法准备时间0.3秒，冷却19秒，消耗0点气势，施放距离8.4米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“巳蛇·幽鳞·缠鳞禁言”的单项技能效果概念图。技能定位：控制技能；作用对象：敌方目标。机制依据：命中敌人并短时封锁其施法。每次命中造成24点法术基础伤害；使命中的敌方沉默1.4秒。施法准备时间0.3秒，冷却19秒，消耗0点气势，施放距离8.4米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：目标附近形成简洁鳞纹禁言印，细线在印内闭合后短暂稳定；用施法流中断的小型符纹表达沉默，不用头部眩晕星环或脚部捆绑暗示额外控制。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -2636,7 +2821,8 @@
               "Presentation.DBA.Hero.Snake.coil_silence.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2644,10 +2830,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         },
         {
           "slotId": "Slot7",
@@ -2657,7 +2845,8 @@
           "abilityId": "dba.ability.snake_eight_venom_mark@1",
           "abilityKey": "venom_mark",
           "nameZh": "幽蛇蚀印",
-          "descriptionZh": "目标受到来自施法者的伤害增加8%，5秒",
+          "descriptionZh": "为敌人留下施法者专属的易伤蚀印。每次命中造成38点法术基础伤害；目标受到来自施法者的伤害提高8%，持续5秒。施法准备时间0.25秒，冷却18秒，消耗0点气势，施放距离9米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“巳蛇·幽鳞·幽蛇蚀印”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：敌方目标。机制依据：为敌人留下施法者专属的易伤蚀印。每次命中造成38点法术基础伤害；目标受到来自施法者的伤害提高8%，持续5秒。施法准备时间0.25秒，冷却18秒，消耗0点气势，施放距离9米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：鳞纹印记沿目标外缘局部浮现，后续命中时朝施法来源方向短亮；强调单个目标与施法者联系，不画成全场敌人共同易伤的巨大法阵。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -2693,7 +2882,8 @@
               "Presentation.DBA.Hero.Snake.venom_mark.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2701,10 +2891,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.25
         }
       ]
     },
@@ -2730,7 +2922,8 @@
           "abilityId": "dba.ability.horse_eight_thunder_hoof@1",
           "abilityKey": "thunder_hoof",
           "nameZh": "雷蹄踢",
-          "descriptionZh": "单体蹄击，命中获得气势",
+          "descriptionZh": "以雷蹄近身踢击单个敌人。每次命中造成37点物理基础伤害。施法准备时间0.18秒，冷却0.75秒，消耗0点气势，施放距离2.45米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“午马·雷蹄·雷蹄踢”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以雷蹄近身踢击单个敌人。每次命中造成37点物理基础伤害。施法准备时间0.18秒，冷却0.75秒，消耗0点气势，施放距离2.45米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：蹄缘聚起短促电纹，踢击接触点出现紧凑放射线与低矮冲击圈；电光只强调瞬间力量，不延伸为自动连锁到附近敌人的雷网。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -2760,7 +2953,8 @@
               "Presentation.DBA.Hero.Horse.thunder_hoof.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2768,10 +2962,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.18
         },
         {
           "slotId": "Slot1",
@@ -2781,7 +2977,8 @@
           "abilityId": "dba.ability.horse_eight_lightning_line@1",
           "abilityKey": "lightning_line",
           "nameZh": "奔雷直突",
-          "descriptionZh": "前方直线雷芒冲击",
+          "descriptionZh": "向前方直线释放奔雷冲击。每次命中造成68点物理基础伤害。施法准备时间0.3秒，冷却5秒，消耗0点气势，施放距离8.5米，作用半径1.9米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“午马·雷蹄·奔雷直突”的单项技能效果概念图。技能定位：攻击技能一；作用对象：指定区域或目标。机制依据：向前方直线释放奔雷冲击。每次命中造成68点物理基础伤害。施法准备时间0.3秒，冷却5秒，消耗0点气势，施放距离8.5米，作用半径1.9米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一条窄而清楚的雷芒沿地面向前延伸，头部集中、两侧碎光稀疏；直线方向与攻击宽度可一眼识别，不用四散雷蛇扩大威胁范围。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -2811,7 +3008,8 @@
               "Presentation.DBA.Hero.Horse.lightning_line.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2819,10 +3017,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         },
         {
           "slotId": "Slot2",
@@ -2832,7 +3032,8 @@
           "abilityId": "dba.ability.horse_eight_hooffall@1",
           "abilityKey": "hooffall",
           "nameZh": "惊雷践踏",
-          "descriptionZh": "蹄下环形打击，服务端几何范围",
+          "descriptionZh": "重踏地面对周围敌人施加环形打击。每次命中造成90点物理基础伤害。施法准备时间0.4秒，冷却9秒，消耗0点气势，作用半径3.25米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“午马·雷蹄·惊雷践踏”的单项技能效果概念图。技能定位：攻击技能二；作用对象：指定区域或目标。机制依据：重踏地面对周围敌人施加环形打击。每次命中造成90点物理基础伤害。施法准备时间0.4秒，冷却9秒，消耗0点气势，作用半径3.25米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：蹄下的一次圆环冲击向外扫过，电纹沿外缘运行而中央地面可见；保留轻重有序的环缘与命中点，不加入未登记的眩晕头标。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -2862,7 +3063,8 @@
               "Presentation.DBA.Hero.Horse.hooffall.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2870,10 +3072,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.4
         },
         {
           "slotId": "Slot4",
@@ -2883,7 +3087,8 @@
           "abilityId": "dba.ability.horse_eight_thunder_stampede@1",
           "abilityKey": "thunder_stampede",
           "nameZh": "雷蹄万奔",
-          "descriptionZh": "高速冲阵与雷蹄波三段确认",
+          "descriptionZh": "以三段雷蹄波打击指定区域。每次命中造成226点物理基础伤害，单个目标最多3段。施法准备时间0.75秒，冷却62秒，消耗20点气势，施放距离9.4米，作用半径4.7米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“午马·雷蹄·雷蹄万奔”的单项技能效果概念图。技能定位：终极技能；作用对象：指定区域或目标。机制依据：以三段雷蹄波打击指定区域。每次命中造成226点物理基础伤害，单个目标最多3段。施法准备时间0.75秒，冷却62秒，消耗20点气势，施放距离9.4米，作用半径4.7米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：三条前后有节奏的雷蹄波组成终极技能主形，路径方向一致、间隔可读；雷纹有力量但不全屏过曝，额外奔马仅可作模糊能量意象而非召唤单位。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -2913,7 +3118,8 @@
               "Presentation.DBA.Hero.Horse.thunder_stampede.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2921,10 +3127,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.75
         },
         {
           "slotId": "Slot3",
@@ -2934,7 +3142,8 @@
           "abilityId": "dba.ability.horse_eight_wind_charger@1",
           "abilityKey": "wind_charger",
           "nameZh": "风驰雷跃",
-          "descriptionZh": "快速冲刺并对首个接触目标造成轻伤",
+          "descriptionZh": "高速冲刺至合法前方位置并打击接触目标。每次命中造成38点物理基础伤害；最大移动距离8.3米，落点受合法路径与阻挡限制。施法准备时间0.12秒，冷却10.5秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“午马·雷蹄·风驰雷跃”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：高速冲刺至合法前方位置并打击接触目标。每次命中造成38点物理基础伤害；最大移动距离8.3米，落点受合法路径与阻挡限制。施法准备时间0.12秒，冷却10.5秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：窄幅风带与蹄形雷纹共同指向冲刺终点，接触处出现一次小型冲击；拖尾随运动渐细，不能遮挡起点敌人或表现无敌穿行。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Physical",
@@ -2969,7 +3178,8 @@
               "Presentation.DBA.Hero.Horse.wind_charger.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -2977,10 +3187,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.12
         },
         {
           "slotId": "Slot5",
@@ -2990,7 +3202,8 @@
           "abilityId": "dba.ability.horse_eight_thunder_hide@1",
           "abilityKey": "thunder_hide",
           "nameZh": "雷甲护身",
-          "descriptionZh": "电弧护体，护盾强度偏低换取机动性",
+          "descriptionZh": "以轻型电弧护盾保护自身。提供相当于受护者最大生命13%的护盾，持续4秒。施法准备时间0.1秒，冷却18秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“午马·雷蹄·雷甲护身”的单项技能效果概念图。技能定位：防御技能；作用对象：自身。机制依据：以轻型电弧护盾保护自身。提供相当于受护者最大生命13%的护盾，持续4秒。施法准备时间0.1秒，冷却18秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：身体外缘形成薄透的电纹护面，电线数量有限且沿轮廓短跳；主体动作保持轻快，不画成厚重岩甲、持续伤害电场或大面积折射球。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
@@ -3019,7 +3232,8 @@
               "Presentation.DBA.Hero.Horse.thunder_hide.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3027,10 +3241,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.1
         },
         {
           "slotId": "Slot6",
@@ -3040,7 +3256,8 @@
           "abilityId": "dba.ability.horse_eight_hoof_stun@1",
           "abilityKey": "hoof_stun",
           "nameZh": "震蹄麻痹",
-          "descriptionZh": "近距冲击造成0.8秒眩晕",
+          "descriptionZh": "以近距离蹄击使单个敌人短暂眩晕。每次命中造成25点物理基础伤害；使命中的敌方眩晕0.8秒。施法准备时间0.25秒，冷却17秒，消耗0点气势，施放距离4.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“午马·雷蹄·震蹄麻痹”的单项技能效果概念图。技能定位：控制技能；作用对象：敌方目标。机制依据：以近距离蹄击使单个敌人短暂眩晕。每次命中造成25点物理基础伤害；使命中的敌方眩晕0.8秒。施法准备时间0.25秒，冷却17秒，消耗0点气势，施放距离4.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：接触点为紧凑蹄形雷印，向上只延展短促震颤符号；眩晕时长通过迅速衰减的外圈表达，不增加连续电流束缚或击飞姿态。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -3076,7 +3293,8 @@
               "Presentation.DBA.Hero.Horse.hoof_stun.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3084,10 +3302,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.25
         },
         {
           "slotId": "Slot7",
@@ -3097,7 +3317,8 @@
           "abilityId": "dba.ability.horse_eight_tailwind_aura@1",
           "abilityKey": "tailwind_aura",
           "nameZh": "追风援护",
-          "descriptionZh": "附近己方五秒移动速度提升16%",
+          "descriptionZh": "以追风气流提高附近己方移动速度。附近己方移动速度提高16%，持续5秒。施法准备时间0.2秒，冷却23秒，消耗0点气势，施放距离7米，作用半径4.2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“午马·雷蹄·追风援护”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：指定区域或目标。机制依据：以追风气流提高附近己方移动速度。附近己方移动速度提高16%，持续5秒。施法准备时间0.2秒，冷却23秒，消耗0点气势，施放距离7米，作用半径4.2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：友方足边出现同向流动的轻风环与细长行进线，风从背后推进而不遮挡脚步；表达移动增益，不添加治疗、护盾或敌方减速区域。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Untyped",
@@ -3127,7 +3348,8 @@
               "Presentation.DBA.Hero.Horse.tailwind_aura.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3135,10 +3357,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.2
         }
       ]
     },
@@ -3164,7 +3388,8 @@
           "abilityId": "dba.ability.goat_eight_jade_horn@1",
           "abilityKey": "jade_horn",
           "nameZh": "玉角光刺",
-          "descriptionZh": "短程玉角灵光伤害",
+          "descriptionZh": "以短程玉角灵光攻击单个敌人。每次命中造成28点法术基础伤害。施法准备时间0.22秒，冷却0.9秒，消耗0点气势，施放距离5.6米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“未羊·玉角·玉角光刺”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以短程玉角灵光攻击单个敌人。每次命中造成28点法术基础伤害。施法准备时间0.22秒，冷却0.9秒，消耗0点气势，施放距离5.6米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：角形玉光短促前探，主形温润、尖端方向清楚，命中有少量清脆折光；仅保留一个攻击主体，不把普攻画作群体治疗花海。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -3194,7 +3419,8 @@
               "Presentation.DBA.Hero.Goat.jade_horn.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3202,10 +3428,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.22
         },
         {
           "slotId": "Slot1",
@@ -3215,7 +3443,8 @@
           "abilityId": "dba.ability.goat_eight_jade_beam@1",
           "abilityKey": "jade_beam",
           "nameZh": "灵玉直射",
-          "descriptionZh": "细长玉光束，对首个敌人施加伤害",
+          "descriptionZh": "向前方发出细长玉光并攻击首个敌人。每次命中造成62点法术基础伤害。施法准备时间0.35秒，冷却5.2秒，消耗0点气势，施放距离9.3米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“未羊·玉角·灵玉直射”的单项技能效果概念图。技能定位：攻击技能一；作用对象：敌方目标。机制依据：向前方发出细长玉光并攻击首个敌人。每次命中造成62点法术基础伤害。施法准备时间0.35秒，冷却5.2秒，消耗0点气势，施放距离9.3米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一条受控的细长玉质光束连接施法点与第一个命中点，中心柔亮、边缘清楚；命中后停止延伸，不表现贯穿无限目标或持续激光扫射。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -3245,7 +3474,8 @@
               "Presentation.DBA.Hero.Goat.jade_beam.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3253,10 +3483,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.35
         },
         {
           "slotId": "Slot2",
@@ -3266,7 +3498,8 @@
           "abilityId": "dba.ability.goat_eight_rune_ring@1",
           "abilityKey": "rune_ring",
           "nameZh": "玉符环阵",
-          "descriptionZh": "在指定点形成一次性玉符波纹",
+          "descriptionZh": "在指定位置展开一次玉符环形打击。每次命中造成83点法术基础伤害。施法准备时间0.5秒，冷却10秒，消耗0点气势，施放距离8.2米，作用半径3.3米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“未羊·玉角·玉符环阵”的单项技能效果概念图。技能定位：攻击技能二；作用对象：指定区域或目标。机制依据：在指定位置展开一次玉符环形打击。每次命中造成83点法术基础伤害。施法准备时间0.5秒，冷却10秒，消耗0点气势，施放距离8.2米，作用半径3.3米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：地面玉符沿圆域依次点亮后向中心收成一次波纹，符纹疏密有序、留出地表；攻击边缘与装饰符号区分，不能生成持续治疗泉。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Magic",
@@ -3296,7 +3529,8 @@
               "Presentation.DBA.Hero.Goat.rune_ring.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3304,10 +3538,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.5
         },
         {
           "slotId": "Slot4",
@@ -3317,7 +3553,8 @@
           "abilityId": "dba.ability.goat_eight_sanctuary_dome@1",
           "abilityKey": "sanctuary_dome",
           "nameZh": "玉角圣域",
-          "descriptionZh": "圣域对敌低额打击、己方治疗并提供弱护盾",
+          "descriptionZh": "建立同时伤敌、护佑并治疗己方的玉角圣域。每次命中造成110点法术基础伤害；提供相当于受护者最大生命10%的护盾，持续4秒；为合法己方恢复其最大生命15%，无法复活。施法准备时间1秒，冷却70秒，消耗0点气势，施放距离8.5米，作用半径5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“未羊·玉角·玉角圣域”的单项技能效果概念图。技能定位：终极技能；作用对象：同一范围中心内的敌方与己方，分别结算。机制依据：建立同时伤敌、护佑并治疗己方的玉角圣域。每次命中造成110点法术基础伤害；提供相当于受护者最大生命10%的护盾，持续4秒；为合法己方恢复其最大生命15%，无法复活。施法准备时间1秒，冷却70秒，消耗0点气势，施放距离8.5米，作用半径5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：圣域以通透玉质穹面和清楚地面环界为主体，敌方命中采用向外短纹，友方治疗采用向内玉露，护盾保留独立薄面；三层效果各有空间，不叠成浓密白光。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_center_mixed",
           "level": 1,
           "damageType": "Magic",
@@ -3357,7 +3594,8 @@
               "Presentation.DBA.Hero.Goat.sanctuary_dome.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3365,10 +3603,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 1.0
         },
         {
           "slotId": "Slot3",
@@ -3378,7 +3618,8 @@
           "abilityId": "dba.ability.goat_eight_light_hoof@1",
           "abilityKey": "light_hoof",
           "nameZh": "踏云轻行",
-          "descriptionZh": "轻盈滑步，禁止越界",
+          "descriptionZh": "轻盈移动至前方合法落点。最大移动距离6米，落点受合法路径与阻挡限制。施法准备时间0秒，冷却14.5秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“未羊·玉角·踏云轻行”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：轻盈移动至前方合法落点。最大移动距离6米，落点受合法路径与阻挡限制。施法准备时间0秒，冷却14.5秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：足边的少量玉光云纹连接一次平滑位移，起点轻收、终点轻展；动作朴素清楚，不画成跨越高墙的飞行、隐身或传送门。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Untyped",
@@ -3407,7 +3648,8 @@
               "Presentation.DBA.Hero.Goat.light_hoof.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3415,10 +3657,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0
         },
         {
           "slotId": "Slot5",
@@ -3428,7 +3672,8 @@
           "abilityId": "dba.ability.goat_eight_jade_barrier@1",
           "abilityKey": "jade_barrier",
           "nameZh": "玉障屏护",
-          "descriptionZh": "指定友方获得22%最大生命短时护盾",
+          "descriptionZh": "以玉障为自己或指定友方提供护盾。提供相当于受护者最大生命22%的护盾，持续5秒。施法准备时间0.2秒，冷却19秒，消耗0点气势，施放距离7.9米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“未羊·玉角·玉障屏护”的单项技能效果概念图。技能定位：防御技能；作用对象：自己或合法友方。机制依据：以玉障为自己或指定友方提供护盾。提供相当于受护者最大生命22%的护盾，持续5秒。施法准备时间0.2秒，冷却19秒，消耗0点气势，施放距离7.9米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：受益者迎击方向出现干净的弧形玉障，并以薄轮廓包覆周身；玉面有真实厚薄和温润高光，中心透明，不画出额外反弹弹道。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "friendly_or_self",
           "level": 1,
           "damageType": "Untyped",
@@ -3457,7 +3702,8 @@
               "Presentation.DBA.Hero.Goat.jade_barrier.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3465,10 +3711,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.2
         },
         {
           "slotId": "Slot6",
@@ -3478,7 +3726,8 @@
           "abilityId": "dba.ability.goat_eight_jade_bind@1",
           "abilityKey": "jade_bind",
           "nameZh": "玉纹禁锢",
-          "descriptionZh": "地面符阵减速目标40%",
+          "descriptionZh": "以地面玉纹命中并减缓敌人移动。每次命中造成18点法术基础伤害；使命中的敌方减速40%，持续2.2秒。施法准备时间0.35秒，冷却20秒，消耗0点气势，施放距离8.2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“未羊·玉角·玉纹禁锢”的单项技能效果概念图。技能定位：控制技能；作用对象：敌方目标。机制依据：以地面玉纹命中并减缓敌人移动。每次命中造成18点法术基础伤害；使命中的敌方减速40%，持续2.2秒。施法准备时间0.35秒，冷却20秒，消耗0点气势，施放距离8.2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：目标足边形成断续玉纹环，纹路向行进反方向拖曳；减速通过地面纹和短尾迹表达，不把名字中的禁锢画成长时间根缚或牢笼。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -3514,7 +3763,8 @@
               "Presentation.DBA.Hero.Goat.jade_bind.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3522,10 +3772,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.35
         },
         {
           "slotId": "Slot7",
@@ -3535,7 +3787,8 @@
           "abilityId": "dba.ability.goat_eight_healing_dew@1",
           "abilityKey": "healing_dew",
           "nameZh": "玉露愈合",
-          "descriptionZh": "治疗合法友方25%最大生命，不复活",
+          "descriptionZh": "以玉露恢复自己或指定友方的生命。为合法己方恢复其最大生命25%，无法复活。施法准备时间0.55秒，冷却15秒，消耗0点气势，施放距离9.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“未羊·玉角·玉露愈合”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：自己或合法友方。机制依据：以玉露恢复自己或指定友方的生命。为合法己方恢复其最大生命25%，无法复活。施法准备时间0.55秒，冷却15秒，消耗0点气势，施放距离9.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：数滴清透玉露汇向受益者，生效时形成短促柔和的向内光环；保留人物轮廓及治疗流向，不出现复活仪式、持续喷泉或敌方爆炸。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "friendly_or_self",
           "level": 1,
           "damageType": "Untyped",
@@ -3564,7 +3817,8 @@
               "Presentation.DBA.Hero.Goat.healing_dew.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3572,10 +3826,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.55
         }
       ]
     },
@@ -3601,7 +3857,8 @@
           "abilityId": "dba.ability.monkey_eight_staff_tap@1",
           "abilityKey": "staff_tap",
           "nameZh": "灵棍点打",
-          "descriptionZh": "快速近身短棍攻击",
+          "descriptionZh": "以短棍快速点打近处单个敌人。每次命中造成34点物理基础伤害。施法准备时间0.15秒，冷却0.72秒，消耗0点气势，施放距离2.6米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“申猴·灵猴·灵棍点打”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以短棍快速点打近处单个敌人。每次命中造成34点物理基础伤害。施法准备时间0.15秒，冷却0.72秒，消耗0点气势，施放距离2.6米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：棍端起手有一小点集中的温金亮光，点打命中形成短促圆形压纹；棍身与手臂动作清楚，不生成巨大延长棍影或额外分身攻击。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -3631,7 +3888,8 @@
               "Presentation.DBA.Hero.Monkey.staff_tap.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3639,10 +3897,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.15
         },
         {
           "slotId": "Slot1",
@@ -3652,7 +3912,8 @@
           "abilityId": "dba.ability.monkey_eight_staff_triple@1",
           "abilityKey": "staff_triple",
           "nameZh": "棍影三连",
-          "descriptionZh": "连续三次小额近身攻击",
+          "descriptionZh": "对近处敌人连续施加三次棍击。每次命中造成74点物理基础伤害，单个目标最多3段。施法准备时间0.2秒，冷却5秒，消耗0点气势，施放距离3米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“申猴·灵猴·棍影三连”的单项技能效果概念图。技能定位：攻击技能一；作用对象：敌方目标。机制依据：对近处敌人连续施加三次棍击。每次命中造成74点物理基础伤害，单个目标最多3段。施法准备时间0.2秒，冷却5秒，消耗0点气势，施放距离3米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：三个先后错开的短棍残迹具有清楚节奏，命中光点逐次收束，主体棍保持唯一；不得以密集模糊拖尾暗示无限连击。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -3682,7 +3943,8 @@
               "Presentation.DBA.Hero.Monkey.staff_triple.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3690,10 +3952,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.2
         },
         {
           "slotId": "Slot2",
@@ -3703,7 +3967,8 @@
           "abilityId": "dba.ability.monkey_eight_cloud_sweep@1",
           "abilityKey": "cloud_sweep",
           "nameZh": "云棍横扫",
-          "descriptionZh": "近身扇形横扫",
+          "descriptionZh": "以云棍横扫前方近身扇区。每次命中造成89点物理基础伤害。施法准备时间0.3秒，冷却8.5秒，消耗0点气势，施放距离3.8米，作用半径3米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“申猴·灵猴·云棍横扫”的单项技能效果概念图。技能定位：攻击技能二；作用对象：指定区域或目标。机制依据：以云棍横扫前方近身扇区。每次命中造成89点物理基础伤害。施法准备时间0.3秒，冷却8.5秒，消耗0点气势，施放距离3.8米，作用半径3米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：横向棍影带出一条低而宽度受控的云弧，扇区外缘清楚，云气薄而有流向；不增设击退飞散的人物姿态或远程云浪。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -3733,7 +3998,8 @@
               "Presentation.DBA.Hero.Monkey.cloud_sweep.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3741,10 +4007,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         },
         {
           "slotId": "Slot4",
@@ -3754,7 +4022,8 @@
           "abilityId": "dba.ability.monkey_eight_golden_afterimages@1",
           "abilityKey": "golden_afterimages",
           "nameZh": "万象棍影",
-          "descriptionZh": "四道残影依次扫过明确判定区域",
+          "descriptionZh": "以四道有限棍影依次扫过指定区域。每次命中造成208点物理基础伤害，单个目标最多4段。施法准备时间0.7秒，冷却58秒，消耗20点气势，施放距离6.5米，作用半径4.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“申猴·灵猴·万象棍影”的单项技能效果概念图。技能定位：终极技能；作用对象：指定区域或目标。机制依据：以四道有限棍影依次扫过指定区域。每次命中造成208点物理基础伤害，单个目标最多4段。施法准备时间0.7秒，冷却58秒，消耗20点气势，施放距离6.5米，作用半径4.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：四道有明显先后节奏的能量棍影进入同一清楚区域，主体温金与疏薄云纹相配；影子只是打击残像，不构成可持续战斗的召唤分身。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -3784,7 +4053,8 @@
               "Presentation.DBA.Hero.Monkey.golden_afterimages.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3792,10 +4062,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.7
         },
         {
           "slotId": "Slot3",
@@ -3805,7 +4077,8 @@
           "abilityId": "dba.ability.monkey_eight_cloud_flip@1",
           "abilityKey": "cloud_flip",
           "nameZh": "翻云纵跃",
-          "descriptionZh": "翻越非阻挡地形后的合法跳跃落点",
+          "descriptionZh": "翻跃至前方合法落点。最大移动距离8.2米，落点受合法路径与阻挡限制。施法准备时间0.05秒，冷却11.5秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“申猴·灵猴·翻云纵跃”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：翻跃至前方合法落点。最大移动距离8.2米，落点受合法路径与阻挡限制。施法准备时间0.05秒，冷却11.5秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一条短而利落的翻跃弧线从起点连接到终点，途中留下少量云纹，落点轻轻外展；不能以翻墙、传送或无敌球体表现额外功能。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Untyped",
@@ -3834,7 +4107,8 @@
               "Presentation.DBA.Hero.Monkey.cloud_flip.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3842,10 +4116,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.05
         },
         {
           "slotId": "Slot5",
@@ -3855,7 +4131,8 @@
           "abilityId": "dba.ability.monkey_eight_illusion_guard@1",
           "abilityKey": "illusion_guard",
           "nameZh": "幻身护主",
-          "descriptionZh": "短时幻身盾，客户端幻影不吸收真实碰撞",
+          "descriptionZh": "以短时幻身护盾保护自身。提供相当于受护者最大生命15%的护盾，持续4秒。施法准备时间0.1秒，冷却17秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“申猴·灵猴·幻身护主”的单项技能效果概念图。技能定位：防御技能；作用对象：自身。机制依据：以短时幻身护盾保护自身。提供相当于受护者最大生命15%的护盾，持续4秒。施法准备时间0.1秒，冷却17秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：本体外侧出现一个疏薄、略错位的保护轮廓，幻影边缘清晰而内部透明；把幻影限制为视觉护盾，不描绘会独立格挡或吸引仇恨的第二角色。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
@@ -3884,7 +4161,8 @@
               "Presentation.DBA.Hero.Monkey.illusion_guard.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3892,10 +4170,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.1
         },
         {
           "slotId": "Slot6",
@@ -3905,7 +4185,8 @@
           "abilityId": "dba.ability.monkey_eight_staff_stun@1",
           "abilityKey": "staff_stun",
           "nameZh": "定身棍环",
-          "descriptionZh": "短促定身打击，有限眩晕",
+          "descriptionZh": "以短促棍环打击并使单个敌人眩晕。每次命中造成30点物理基础伤害；使命中的敌方眩晕0.75秒。施法准备时间0.25秒，冷却17秒，消耗0点气势，施放距离4.2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“申猴·灵猴·定身棍环”的单项技能效果概念图。技能定位：控制技能；作用对象：敌方目标。机制依据：以短促棍环打击并使单个敌人眩晕。每次命中造成30点物理基础伤害；使命中的敌方眩晕0.75秒。施法准备时间0.25秒，冷却17秒，消耗0点气势，施放距离4.2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：棍端接触后在命中点展开一个小型短环，目标上方出现迅速消退的震颤印；强调短眩晕，不绘制持续封锁脚部的牢笼或额外击飞。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -3941,7 +4222,8 @@
               "Presentation.DBA.Hero.Monkey.staff_stun.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -3949,10 +4231,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.25
         },
         {
           "slotId": "Slot7",
@@ -3962,8 +4246,9 @@
           "abilityId": "dba.ability.monkey_eight_trickster_stride@1",
           "abilityKey": "trickster_stride",
           "nameZh": "灵猴戏法",
-          "descriptionZh": "提高闪避12%四秒，需服务器命中规则支持",
-          "intentTarget": "enemy",
+          "descriptionZh": "施展戏法并短时提高自身闪避能力。自身获得12%闪避增益，持续4秒。施法准备时间0.1秒，冷却20秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“申猴·灵猴·灵猴戏法”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：自身。机制依据：施展戏法并短时提高自身闪避能力。自身获得12%闪避增益，持续4秒。施法准备时间0.1秒，冷却20秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：本体外缘出现少量有节奏的错位光线，脚步方向用轻云弧提示，真正身体位置始终可辨；不表现百分百免疫、永久隐身或可独立行动的分身。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
+          "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
           "baseDamage": 0,
@@ -3992,7 +4277,8 @@
               "Presentation.DBA.Hero.Monkey.trickster_stride.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4000,10 +4286,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.1
         }
       ]
     },
@@ -4029,7 +4317,8 @@
           "abilityId": "dba.ability.rooster_eight_golden_peck@1",
           "abilityKey": "golden_peck",
           "nameZh": "金羽啄光",
-          "descriptionZh": "远程晨光金羽攻击",
+          "descriptionZh": "以晨光金羽攻击单个敌人。每次命中造成30点法术基础伤害。施法准备时间0.22秒，冷却0.88秒，消耗0点气势，施放距离7.6米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“酉鸡·金鸣·金羽啄光”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以晨光金羽攻击单个敌人。每次命中造成30点法术基础伤害。施法准备时间0.22秒，冷却0.88秒，消耗0点气势，施放距离7.6米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一枚主羽有清楚羽轴与简化羽片，沿稳定轨迹飞向目标，尾端仅少量晨光；命中碎成几片短亮羽光，不生成整群真实鸟类。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -4059,7 +4348,8 @@
               "Presentation.DBA.Hero.Rooster.golden_peck.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4067,10 +4357,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.22
         },
         {
           "slotId": "Slot1",
@@ -4080,7 +4372,8 @@
           "abilityId": "dba.ability.rooster_eight_feather_fan@1",
           "abilityKey": "feather_fan",
           "nameZh": "金翎飞扇",
-          "descriptionZh": "展开扇形金羽风刃",
+          "descriptionZh": "向前方扇区释放金翎风刃。每次命中造成67点法术基础伤害。施法准备时间0.35秒，冷却5.5秒，消耗0点气势，施放距离10米，作用半径2.7米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“酉鸡·金鸣·金翎飞扇”的单项技能效果概念图。技能定位：攻击技能一；作用对象：指定区域或目标。机制依据：向前方扇区释放金翎风刃。每次命中造成67点法术基础伤害。施法准备时间0.35秒，冷却5.5秒，消耗0点气势，施放距离10米，作用半径2.7米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：数枚视觉羽片组织成一个清楚扇面，主边缘锐利、内部留空；装饰羽片不是额外命中次数，不能以密集羽墙遮住敌人轮廓。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Magic",
@@ -4110,7 +4403,8 @@
               "Presentation.DBA.Hero.Rooster.feather_fan.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4118,10 +4412,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.35
         },
         {
           "slotId": "Slot2",
@@ -4131,7 +4427,8 @@
           "abilityId": "dba.ability.rooster_eight_sunrise_wave@1",
           "abilityKey": "sunrise_wave",
           "nameZh": "晨鸣音浪",
-          "descriptionZh": "波纹向前传播并造成区域伤害",
+          "descriptionZh": "向前方区域推出晨鸣音浪。每次命中造成86点法术基础伤害。施法准备时间0.45秒，冷却9.5秒，消耗0点气势，施放距离8.5米，作用半径3.25米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“酉鸡·金鸣·晨鸣音浪”的单项技能效果概念图。技能定位：攻击技能二；作用对象：指定区域或目标。机制依据：向前方区域推出晨鸣音浪。每次命中造成86点法术基础伤害。施法准备时间0.45秒，冷却9.5秒，消耗0点气势，施放距离8.5米，作用半径3.25米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：低矮的音浪弧线一层层递减前行，主波头部清楚，地面威胁边界独立；用稀疏折光线表现声音，不使用厚雾或无方向的爆光球。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Magic",
@@ -4161,7 +4458,8 @@
               "Presentation.DBA.Hero.Rooster.sunrise_wave.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4169,10 +4467,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.45
         },
         {
           "slotId": "Slot4",
@@ -4182,7 +4482,8 @@
           "abilityId": "dba.ability.rooster_eight_dawn_resonance@1",
           "abilityKey": "dawn_resonance",
           "nameZh": "金鸣破晓",
-          "descriptionZh": "曙光音波打击敌方并治疗己方10%生命",
+          "descriptionZh": "以曙光音波打击敌方并治疗区域己方。每次命中造成190点法术基础伤害；为合法己方恢复其最大生命10%，无法复活。施法准备时间0.9秒，冷却68秒，消耗0点气势，施放距离8.8米，作用半径5.2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“酉鸡·金鸣·金鸣破晓”的单项技能效果概念图。技能定位：终极技能；作用对象：同一范围中心内的敌方与己方，分别结算。机制依据：以曙光音波打击敌方并治疗区域己方。每次命中造成190点法术基础伤害；为合法己方恢复其最大生命10%，无法复活。施法准备时间0.9秒，冷却68秒，消耗0点气势，施放距离8.8米，作用半径5.2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：曙光主弧由中心向外舒展，敌方命中采用短促锐羽，友方回复采用向内柔羽；明亮但不过曝，用形状与流向同时区分友敌效果，避免全屏白闪。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_center_mixed",
           "level": 1,
           "damageType": "Magic",
@@ -4217,7 +4518,8 @@
               "Presentation.DBA.Hero.Rooster.dawn_resonance.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4225,10 +4527,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.9
         },
         {
           "slotId": "Slot3",
@@ -4238,7 +4542,8 @@
           "abilityId": "dba.ability.rooster_eight_feather_glide@1",
           "abilityKey": "feather_glide",
           "nameZh": "晨羽滑翔",
-          "descriptionZh": "短时滑翔位移至合法位置",
+          "descriptionZh": "沿指定方向短时滑行至合法位置。最大移动距离6.6米，落点受合法路径与阻挡限制。施法准备时间0.08秒，冷却14秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“酉鸡·金鸣·晨羽滑翔”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：沿指定方向短时滑行至合法位置。最大移动距离6.6米，落点受合法路径与阻挡限制。施法准备时间0.08秒，冷却14秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一条贴近地面的羽光气流连接起终点，角色保持已审核姿态，终点羽光收拢；不画成长期滞空、飞越封闭障碍或无敌金身。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Untyped",
@@ -4267,7 +4572,8 @@
               "Presentation.DBA.Hero.Rooster.feather_glide.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4275,10 +4581,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.08
         },
         {
           "slotId": "Slot5",
@@ -4288,7 +4596,8 @@
           "abilityId": "dba.ability.rooster_eight_wing_guard@1",
           "abilityKey": "wing_guard",
           "nameZh": "金羽翼盾",
-          "descriptionZh": "双翼护盾保护自己或指定友方",
+          "descriptionZh": "以金羽护盾保护自己或指定友方。提供相当于受护者最大生命16%的护盾，持续4秒。施法准备时间0.15秒，冷却19秒，消耗0点气势，施放距离7.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“酉鸡·金鸣·金羽翼盾”的单项技能效果概念图。技能定位：防御技能；作用对象：自己或合法友方。机制依据：以金羽护盾保护自己或指定友方。提供相当于受护者最大生命16%的护盾，持续4秒。施法准备时间0.15秒，冷却19秒，消耗0点气势，施放距离7.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：两道简洁羽翼形护面在受益者外侧闭合，羽片数量有限、中心通透；受击位置局部亮起，不把护盾误画成治疗光柱或攻击羽刃。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "friendly_or_self",
           "level": 1,
           "damageType": "Untyped",
@@ -4317,7 +4626,8 @@
               "Presentation.DBA.Hero.Rooster.wing_guard.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4325,10 +4635,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.15
         },
         {
           "slotId": "Slot6",
@@ -4338,7 +4650,8 @@
           "abilityId": "dba.ability.rooster_eight_sonic_silence@1",
           "abilityKey": "sonic_silence",
           "nameZh": "破晓鸣音",
-          "descriptionZh": "远距离声波使敌人沉默1.2秒",
+          "descriptionZh": "以远距离鸣音命中并使敌人短时沉默。每次命中造成20点法术基础伤害；使命中的敌方沉默1.2秒。施法准备时间0.3秒，冷却18秒，消耗0点气势，施放距离8.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“酉鸡·金鸣·破晓鸣音”的单项技能效果概念图。技能定位：控制技能；作用对象：敌方目标。机制依据：以远距离鸣音命中并使敌人短时沉默。每次命中造成20点法术基础伤害；使命中的敌方沉默1.2秒。施法准备时间0.3秒，冷却18秒，消耗0点气势，施放距离8.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一束方向清楚的稀疏声纹到达目标，形成小型收口鸣印，原施法光线在印内中断；不添加眩晕星环、击退姿态或大面积睡眠云。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Magic",
@@ -4374,7 +4687,8 @@
               "Presentation.DBA.Hero.Rooster.sonic_silence.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4382,10 +4696,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         },
         {
           "slotId": "Slot7",
@@ -4395,7 +4711,8 @@
           "abilityId": "dba.ability.rooster_eight_first_light_heal@1",
           "abilityKey": "first_light_heal",
           "nameZh": "初曦回春",
-          "descriptionZh": "单体治疗己方20%最大生命",
+          "descriptionZh": "以初曦柔光恢复自己或单个合法友方生命。为合法己方恢复其最大生命20%，无法复活。施法准备时间0.45秒，冷却17秒，消耗0点气势，施放距离9.2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“酉鸡·金鸣·初曦回春”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：自己或合法友方。机制依据：以初曦柔光恢复自己或单个合法友方生命。为合法己方恢复其最大生命20%，无法复活。施法准备时间0.45秒，冷却17秒，消耗0点气势，施放距离9.2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一束克制晨光与少量柔软羽屑汇入受益者，生效为短时向内光环；光感温暖清澈，不出现复活形象、攻击爆炸或持续喷射。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "friendly_or_self",
           "level": 1,
           "damageType": "Untyped",
@@ -4424,7 +4741,8 @@
               "Presentation.DBA.Hero.Rooster.first_light_heal.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4432,10 +4750,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.45
         }
       ]
     },
@@ -4461,7 +4781,8 @@
           "abilityId": "dba.ability.dog_eight_guardian_bite@1",
           "abilityKey": "guardian_bite",
           "nameZh": "天犬咬击",
-          "descriptionZh": "近战单体犬牙攻击",
+          "descriptionZh": "以犬牙近身打击单个敌人。每次命中造成35点物理基础伤害。施法准备时间0.18秒，冷却0.85秒，消耗0点气势，施放距离2.5米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“戌狗·天犬·天犬咬击”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以犬牙近身打击单个敌人。每次命中造成35点物理基础伤害。施法准备时间0.18秒，冷却0.85秒，消耗0点气势，施放距离2.5米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：牙形能量贴近已审核攻击动作，接触点出现一次干净的短弧碎光；神兽勇健感来自姿态与光形，不表现撕咬血肉、恐怖犬首或创口。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -4491,7 +4812,8 @@
               "Presentation.DBA.Hero.Dog.guardian_bite.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4499,10 +4821,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.18
         },
         {
           "slotId": "Slot1",
@@ -4512,7 +4836,8 @@
           "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
           "abilityKey": "hunter_pounce",
           "nameZh": "追猎猛扑",
-          "descriptionZh": "短扑后对单体造成伤害",
+          "descriptionZh": "以追猎姿态重击单个敌人。每次命中造成70点物理基础伤害。施法准备时间0.25秒，冷却5.5秒，消耗0点气势，施放距离6.2米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“戌狗·天犬·追猎猛扑”的单项技能效果概念图。技能定位：攻击技能一；作用对象：敌方目标。机制依据：以追猎姿态重击单个敌人。每次命中造成70点物理基础伤害。施法准备时间0.25秒，冷却5.5秒，消耗0点气势，施放距离6.2米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：角色以明确前倾的发力姿态击中近处目标，犬牙形光集中在命中点；动作残迹不被画成长距离瞬移，冲击保持单次而非多重扑击。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -4542,7 +4867,8 @@
               "Presentation.DBA.Hero.Dog.hunter_pounce.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4550,10 +4876,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.25
         },
         {
           "slotId": "Slot2",
@@ -4563,7 +4891,8 @@
           "abilityId": "dba.ability.dog_eight_spirit_rake@1",
           "abilityKey": "spirit_rake",
           "nameZh": "灵爪连击",
-          "descriptionZh": "双爪连击当前敌方",
+          "descriptionZh": "以双爪连续攻击当前敌人。每次命中造成90点物理基础伤害，单个目标最多2段。施法准备时间0.22秒，冷却9秒，消耗0点气势，施放距离4米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“戌狗·天犬·灵爪连击”的单项技能效果概念图。技能定位：攻击技能二；作用对象：敌方目标。机制依据：以双爪连续攻击当前敌人。每次命中造成90点物理基础伤害，单个目标最多2段。施法准备时间0.22秒，冷却9秒，消耗0点气势，施放距离4米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：左右两条爪光按先后交错进入同一近身目标，前后层次清楚、命中点有限；不产生额外追踪弹、长距离位移或血色飞溅。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -4593,7 +4922,8 @@
               "Presentation.DBA.Hero.Dog.spirit_rake.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4601,10 +4931,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.22
         },
         {
           "slotId": "Slot4",
@@ -4614,7 +4946,8 @@
           "abilityId": "dba.ability.dog_eight_oath_guardian@1",
           "abilityKey": "oath_guardian",
           "nameZh": "天犬守誓",
-          "descriptionZh": "对敌有限伤害，同时给范围己方小额治疗与护盾",
+          "descriptionZh": "守护誓约区域的己方并对敌人施加有限打击。每次命中造成170点物理基础伤害；提供相当于受护者最大生命10%的护盾，持续4秒；为合法己方恢复其最大生命8%，无法复活。施法准备时间0.8秒，冷却72秒，消耗18点气势，施放距离6米，作用半径4.4米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“戌狗·天犬·天犬守誓”的单项技能效果概念图。技能定位：终极技能；作用对象：同一范围中心内的敌方与己方，分别结算。机制依据：守护誓约区域的己方并对敌人施加有限打击。每次命中造成170点物理基础伤害；提供相当于受护者最大生命10%的护盾，持续4秒；为合法己方恢复其最大生命8%，无法复活。施法准备时间0.8秒，冷却72秒，消耗18点气势，施放距离6米，作用半径4.4米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：中心誓纹向外形成清楚守护环，己方获得独立薄盾与向内回复光，敌方只出现短促牙形冲击；防护为主、打击克制，不用持续召唤天犬实体。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_center_mixed",
           "level": 1,
           "damageType": "Physical",
@@ -4654,7 +4987,8 @@
               "Presentation.DBA.Hero.Dog.oath_guardian.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4662,10 +4996,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.8
         },
         {
           "slotId": "Slot3",
@@ -4675,7 +5011,8 @@
           "abilityId": "dba.ability.dog_eight_hound_leap@1",
           "abilityKey": "hound_leap",
           "nameZh": "天犬奔跃",
-          "descriptionZh": "向合法盟友或目标附近跳跃",
+          "descriptionZh": "向队友或目标附近的合法落点跳跃。最大移动距离7米，落点受合法路径与阻挡限制。施法准备时间0.1秒，冷却13.5秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“戌狗·天犬·天犬奔跃”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：向队友或目标附近的合法落点跳跃。最大移动距离7米，落点受合法路径与阻挡限制。施法准备时间0.1秒，冷却13.5秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：一条利落的跳跃弧迹指向落点，起点轻收、终点犬纹轻展，友方仅作为位置参照；不画出落地伤害爆炸、群体治疗或瞬间穿墙。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Untyped",
@@ -4704,7 +5041,8 @@
               "Presentation.DBA.Hero.Dog.hound_leap.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4712,10 +5050,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.1
         },
         {
           "slotId": "Slot5",
@@ -4725,7 +5065,8 @@
           "abilityId": "dba.ability.dog_eight_guardian_ring@1",
           "abilityKey": "guardian_ring",
           "nameZh": "护主灵环",
-          "descriptionZh": "指定友方获得20%最大生命护盾",
+          "descriptionZh": "以护主灵环为自己或指定友方提供护盾。提供相当于受护者最大生命20%的护盾，持续4秒。施法准备时间0.15秒，冷却19秒，消耗0点气势，施放距离7.8米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“戌狗·天犬·护主灵环”的单项技能效果概念图。技能定位：防御技能；作用对象：自己或合法友方。机制依据：以护主灵环为自己或指定友方提供护盾。提供相当于受护者最大生命20%的护盾，持续4秒。施法准备时间0.15秒，冷却19秒，消耗0点气势，施放距离7.8米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：受益者周围展开薄透的犬纹守护弧，主盾面与地面灵环层次分开；保持面部和脚步可见，不增加嘲讽箭头、反伤针刺或治疗粒子。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "friendly_or_self",
           "level": 1,
           "damageType": "Untyped",
@@ -4754,7 +5095,8 @@
               "Presentation.DBA.Hero.Dog.guardian_ring.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4762,10 +5104,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.15
         },
         {
           "slotId": "Slot6",
@@ -4775,7 +5119,8 @@
           "abilityId": "dba.ability.dog_eight_tracking_slow@1",
           "abilityKey": "tracking_slow",
           "nameZh": "追迹束缚",
-          "descriptionZh": "追踪标记命中减速32%",
+          "descriptionZh": "以追踪印记命中并减慢敌人移动。每次命中造成24点物理基础伤害；使命中的敌方减速32%，持续2.4秒。施法准备时间0.25秒，冷却17秒，消耗0点气势，施放距离8.3米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“戌狗·天犬·追迹束缚”的单项技能效果概念图。技能定位：控制技能；作用对象：敌方目标。机制依据：以追踪印记命中并减慢敌人移动。每次命中造成24点物理基础伤害；使命中的敌方减速32%，持续2.4秒。施法准备时间0.25秒，冷却17秒，消耗0点气势，施放距离8.3米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：单个目标足边出现简洁追迹纹，行进反方向留短促拖曳线，命中光点与减速印分离；不画作完全根缚、锁链囚禁或永久暴露标记。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -4811,7 +5156,8 @@
               "Presentation.DBA.Hero.Dog.tracking_slow.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4819,10 +5165,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.25
         },
         {
           "slotId": "Slot7",
@@ -4832,7 +5180,8 @@
           "abilityId": "dba.ability.dog_eight_loyal_heal@1",
           "abilityKey": "loyal_heal",
           "nameZh": "忠魂疗护",
-          "descriptionZh": "单体治疗友方18%最大生命",
+          "descriptionZh": "以忠魂守护之光恢复自己或单个合法友方生命。为合法己方恢复其最大生命18%，无法复活。施法准备时间0.4秒，冷却20秒，消耗0点气势，施放距离9米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“戌狗·天犬·忠魂疗护”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：自己或合法友方。机制依据：以忠魂守护之光恢复自己或单个合法友方生命。为合法己方恢复其最大生命18%，无法复活。施法准备时间0.4秒，冷却20秒，消耗0点气势，施放距离9米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：简洁犬纹在受益者身旁短暂展开，柔光从守护方向汇入身体后迅速收束；表现生命恢复而非灵魂离体、亡者复活或幽灵生物。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "friendly_or_self",
           "level": 1,
           "damageType": "Untyped",
@@ -4861,7 +5210,8 @@
               "Presentation.DBA.Hero.Dog.loyal_heal.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4869,10 +5219,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.4
         }
       ]
     },
@@ -4898,7 +5250,8 @@
           "abilityId": "dba.ability.boar_eight_tusk_ram@1",
           "abilityKey": "tusk_ram",
           "nameZh": "玄鬃冲撞",
-          "descriptionZh": "近身重击获得普通攻击气势",
+          "descriptionZh": "以玄鬃之力近身重击单个敌人。每次命中造成40点物理基础伤害。施法准备时间0.3秒，冷却1秒，消耗0点气势，施放距离2.6米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“亥猪·玄鬃·玄鬃冲撞”的单项技能效果概念图。技能定位：基础攻击；作用对象：敌方目标。机制依据：以玄鬃之力近身重击单个敌人。每次命中造成40点物理基础伤害。施法准备时间0.3秒，冷却1秒，消耗0点气势，施放距离2.6米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：厚实的短冲击形由鬃缘能量与接触点压纹组成，重心沉稳；碎屑少而大、方向明确，不表现残酷獠牙穿刺或大量尘烟。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -4928,7 +5281,8 @@
               "Presentation.DBA.Hero.Boar.tusk_ram.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4936,10 +5290,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         },
         {
           "slotId": "Slot1",
@@ -4949,7 +5305,8 @@
           "abilityId": "dba.ability.boar_eight_break_armor@1",
           "abilityKey": "break_armor",
           "nameZh": "裂甲撞锤",
-          "descriptionZh": "单体猛烈撞击，削减护甲机制不单独启用",
+          "descriptionZh": "以猛烈撞锤打击单个敌人。每次命中造成78点物理基础伤害。施法准备时间0.5秒，冷却6秒，消耗0点气势，施放距离4.1米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“亥猪·玄鬃·裂甲撞锤”的单项技能效果概念图。技能定位：攻击技能一；作用对象：敌方目标。机制依据：以猛烈撞锤打击单个敌人。每次命中造成78点物理基础伤害。施法准备时间0.5秒，冷却6秒，消耗0点气势，施放距离4.1米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：命中处出现紧凑的装甲压纹与一次短裂光，视觉强调重击重量；不把技能名称中的裂甲演成真实装备破碎、永久降甲或额外控制。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "enemy",
           "level": 1,
           "damageType": "Physical",
@@ -4979,7 +5336,8 @@
               "Presentation.DBA.Hero.Boar.break_armor.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -4987,10 +5345,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.5
         },
         {
           "slotId": "Slot2",
@@ -5000,7 +5360,8 @@
           "abilityId": "dba.ability.boar_eight_pressure_wave@1",
           "abilityKey": "pressure_wave",
           "nameZh": "重压冲波",
-          "descriptionZh": "自身周围重压冲击",
+          "descriptionZh": "向周围推出一次重压冲击。每次命中造成105点物理基础伤害。施法准备时间0.55秒，冷却10.5秒，消耗0点气势，作用半径3.75米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“亥猪·玄鬃·重压冲波”的单项技能效果概念图。技能定位：攻击技能二；作用对象：指定区域或目标。机制依据：向周围推出一次重压冲击。每次命中造成105点物理基础伤害。施法准备时间0.55秒，冷却10.5秒，消耗0点气势，作用半径3.75米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：低矮而厚实的地面压力环从本体扩开，前缘轮廓清楚，中央地面和人物脚部可见；避免烟尘填满圆域或加入未登记的减速提示。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -5030,7 +5391,8 @@
               "Presentation.DBA.Hero.Boar.pressure_wave.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -5038,10 +5400,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.55
         },
         {
           "slotId": "Slot4",
@@ -5051,7 +5415,8 @@
           "abilityId": "dba.ability.boar_eight_earthsplit_mane@1",
           "abilityKey": "earthsplit_mane",
           "nameZh": "玄鬃地裂",
-          "descriptionZh": "两波地面裂冲击，中心区域可清楚预警",
+          "descriptionZh": "以两波地面裂冲打击指定区域。每次命中造成245点物理基础伤害，单个目标最多2段。施法准备时间1.1秒，冷却74秒，消耗25点气势，施放距离6.3米，作用半径6米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“亥猪·玄鬃·玄鬃地裂”的单项技能效果概念图。技能定位：终极技能；作用对象：指定区域或目标。机制依据：以两波地面裂冲打击指定区域。每次命中造成245点物理基础伤害，单个目标最多2段。施法准备时间1.1秒，冷却74秒，消耗25点气势，施放距离6.3米，作用半径6米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：两道前后分明的裂冲沿地面推进，中心强、边缘弱，危险外缘贯穿整个关键帧；地裂作为可控能量纹，不表现真实地形永久破坏或额外眩晕。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -5081,7 +5446,8 @@
               "Presentation.DBA.Hero.Boar.earthsplit_mane.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -5089,10 +5455,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 1.1
         },
         {
           "slotId": "Slot3",
@@ -5102,7 +5470,8 @@
           "abilityId": "dba.ability.boar_eight_boar_charge@1",
           "abilityKey": "boar_charge",
           "nameZh": "蛮鬃突冲",
-          "descriptionZh": "撞击首个敌人后停下",
+          "descriptionZh": "沿前方合法路径突冲并在首个敌人处停止。每次命中造成50点物理基础伤害；最大移动距离7米，落点受合法路径与阻挡限制。施法准备时间0.25秒，冷却16秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“亥猪·玄鬃·蛮鬃突冲”的单项技能效果概念图。技能定位：移动技能；作用对象：方向与合法落点。机制依据：沿前方合法路径突冲并在首个敌人处停止。每次命中造成50点物理基础伤害；最大移动距离7米，落点受合法路径与阻挡限制。施法准备时间0.25秒，冷却16秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：本体前方形成有限厚度的楔形鬃光，地面短尾迹指向一次碰撞终点；接触后冲击向侧面消退，不绘制贯穿多人或持续碾压。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "movement_direction",
           "level": 1,
           "damageType": "Physical",
@@ -5137,7 +5506,8 @@
               "Presentation.DBA.Hero.Boar.boar_charge.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -5145,10 +5515,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.25
         },
         {
           "slotId": "Slot5",
@@ -5158,7 +5530,8 @@
           "abilityId": "dba.ability.boar_eight_iron_mane@1",
           "abilityKey": "iron_mane",
           "nameZh": "铁鬃护体",
-          "descriptionZh": "24%最大生命护盾体现生存优势",
+          "descriptionZh": "以铁鬃护盾保护自身。提供相当于受护者最大生命24%的护盾，持续5秒。施法准备时间0.15秒，冷却22秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“亥猪·玄鬃·铁鬃护体”的单项技能效果概念图。技能定位：防御技能；作用对象：自身。机制依据：以铁鬃护盾保护自身。提供相当于受护者最大生命24%的护盾，持续5秒。施法准备时间0.15秒，冷却22秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：几片厚实却通透的鬃形护面贴合身体外侧，受击时局部硬质光面闪亮；保留角色轮廓，不将护盾画成永久金属变身或攻击刺甲。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
@@ -5187,7 +5560,8 @@
               "Presentation.DBA.Hero.Boar.iron_mane.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -5195,10 +5569,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.15
         },
         {
           "slotId": "Slot6",
@@ -5208,7 +5584,8 @@
           "abilityId": "dba.ability.boar_eight_roar_stun@1",
           "abilityKey": "roar_stun",
           "nameZh": "狂鬃震踏",
-          "descriptionZh": "近距震踏造成0.9秒眩晕",
+          "descriptionZh": "以近身震踏短时眩晕区域敌人。每次命中造成31点物理基础伤害；使命中的敌方眩晕0.9秒。施法准备时间0.4秒，冷却20秒，消耗0点气势，施放距离4.5米，作用半径2.65米。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“亥猪·玄鬃·狂鬃震踏”的单项技能效果概念图。技能定位：控制技能；作用对象：指定区域或目标。机制依据：以近身震踏短时眩晕区域敌人。每次命中造成31点物理基础伤害；使命中的敌方眩晕0.9秒。施法准备时间0.4秒，冷却20秒，消耗0点气势，施放距离4.5米，作用半径2.65米。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：地面一个紧凑震踏环向外推出，区域内命中点附短促震颤符纹；形状厚重而边缘清楚，不演成范围击飞或长时间禁锢。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
           "intentTarget": "area_or_target",
           "level": 1,
           "damageType": "Physical",
@@ -5244,7 +5621,8 @@
               "Presentation.DBA.Hero.Boar.roar_stun.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -5252,10 +5630,12 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.4
         },
         {
           "slotId": "Slot7",
@@ -5265,8 +5645,9 @@
           "abilityId": "dba.ability.boar_eight_rage_focus@1",
           "abilityKey": "rage_focus",
           "nameZh": "玄鬃怒吼",
-          "descriptionZh": "本人减伤14%并维持五秒",
-          "intentTarget": "enemy",
+          "descriptionZh": "以怒吼短时提高自身减伤能力。获得14%减伤，持续5秒。施法准备时间0.3秒，冷却23秒，消耗0点气势。",
+          "designPromptZh": "为SSLM东方神话幻想游戏绘制“亥猪·玄鬃·玄鬃怒吼”的单项技能效果概念图。技能定位：特色／支援技能；作用对象：自身。机制依据：以怒吼短时提高自身减伤能力。获得14%减伤，持续5秒。施法准备时间0.3秒，冷却23秒，消耗0点气势。视觉不得增加该说明以外的伤害段数、控制、位移、治疗或召唤。专属造型与阶段：本体鬃缘和肩背出现有节奏的厚实护纹，低矮声波随即消散，剩余护纹表示增益；不锁定敌人，不画作攻击音浪、群体治疗或嘲讽仇恨线。画面采用16:9构图，以真实游戏斜俯视角呈现生效关键帧，背景为明快而克制的中性地面，英雄造型以已审核参考为准，无参考时仅用中性比例剪影，不新造服装和武器身份。起手聚能、释放或传播、生效、结束与取消消散必须有一致的形状语言；近战和护盾不额外生成飞行弹体。遵循SSLM全局美术配色策略V3.0与现行十二生肖技能特效性能规范，沿用该英雄已审核的视觉配置，不另建竞争色板；低画质先删装饰，主体、命中点、敌我与危险边界仍可辨，不能只靠颜色区分。控制发光、泛光、透明层和粒子数量，避免大面积灰黑烟雾与过曝白闪；合家欢，无文字、水印、界面、血腥、恐怖和情色。这是待人工审核的概念设计，不代表已制作粒子特效、动画、技能图片或取得真实技能授权。",
+          "intentTarget": "self",
           "level": 1,
           "damageType": "Untyped",
           "baseDamage": 0,
@@ -5295,7 +5676,8 @@
               "Presentation.DBA.Hero.Boar.rage_focus.Cancel"
             ],
             "assetPath": null,
-            "assetStatus": "NOT_AUTHORED"
+            "assetStatus": "NOT_AUTHORED",
+            "placeholderId": "SSLM.Placeholder.VFX.Unbound"
           },
           "animation": {
             "montagePath": null,
@@ -5303,12 +5685,43 @@
           },
           "icon": {
             "assetPath": null,
-            "assetStatus": "NOT_BOUND"
+            "assetStatus": "NOT_BOUND",
+            "placeholderId": "SSLM.Placeholder.Icon.Unbound"
           },
           "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
-          "approvedForLiveGAS": false
+          "approvedForLiveGAS": false,
+          "castTimeSeconds": 0.3
         }
       ]
     }
-  ]
+  ],
+  "textDesignPolicy": {
+    "language": "zh-CN",
+    "reviewStatus": "PENDING_HUMAN_TEXT_AND_VISUAL_REVIEW",
+    "fieldsZh": {
+      "nameZh": "玩家可读的技能中文名称，不以英文对象名代替。",
+      "descriptionZh": "按现有行为与一级候选数值整理的中文技能说明，不代表技能已实现或数值获批。",
+      "designPromptZh": "逐技能的中文效果概念图提示词，供人工策划及美术审核；不是已生成图片、动画或特效。"
+    },
+    "colorAuthority": "Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md",
+    "vfxAuthority": "Docs/Architecture/SSLM十二生肖技能VFX性能与视觉质量规范.md",
+    "promptAssetStorageZh": "原生DataAsset的DraftDesignPromptZh字段仅在编辑器保留，不进入运行时玩家界面或烘焙包。"
+  },
+  "castingPolicy": {
+    "unit": "seconds",
+    "meaningZh": "服务器确认施法准入到首次释放的准备时间；零表示瞬发。不是弹道飞行、完整动画、引导或全段命中总时长。",
+    "rangeSeconds": [
+      0,
+      30
+    ],
+    "status": "LEVEL1_CANDIDATE_NOT_BALANCED",
+    "runtimeExecutionAuthored": false
+  },
+  "placeholderPolicy": {
+    "status": "UNBOUND_DESIGN_PLACEHOLDERS",
+    "iconPlaceholderId": "SSLM.Placeholder.Icon.Unbound",
+    "vfxPlaceholderId": "SSLM.Placeholder.VFX.Unbound",
+    "meaningZh": "仅预留未绑定图标/特效的稳定占位身份；资源路径仍为空，不声称已创建或加载贴图、Niagara及正式视觉授权。",
+    "serverIsolationZh": "项目玩法定义只保存语义身份；客户端贴图和Niagara的真实引用归后续表现配置，不向服务器定义加入纯表现资源引用。"
+  }
 }

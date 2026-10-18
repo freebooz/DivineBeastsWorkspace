@@ -19,7 +19,7 @@ bool FDivineBeastsAbilityBalanceRow::Validate(FString& OutError) const
 
     // 非有限值不得进入伤害、冷却或客户端提示计算；上限抑制错误表导致溢出。
     const float Values[] = {
-        BaseDamage, CooldownSeconds, MomentumCost, CastRangeCm, AreaRadiusCm
+        BaseDamage, CooldownSeconds, CastTimeSeconds, MomentumCost, CastRangeCm, AreaRadiusCm
     };
     for (const float Value : Values)
     {
@@ -29,10 +29,10 @@ bool FDivineBeastsAbilityBalanceRow::Validate(FString& OutError) const
             return false;
         }
     }
-    if (CooldownSeconds > 3600.0f || MomentumCost > 100000.0f ||
+    if (CastTimeSeconds > 30.0f || CooldownSeconds > 3600.0f || MomentumCost > 100000.0f ||
         CastRangeCm > 1000000.0f || AreaRadiusCm > 1000000.0f)
     {
-        OutError = TEXT("技能冷却、气势成本或范围超过当前项目约束。");
+        OutError = TEXT("技能施法准备时间、冷却、气势成本或范围超过当前项目约束。");
         return false;
     }
 
@@ -55,3 +55,4 @@ bool FDivineBeastsAbilityBalanceRow::Validate(FString& OutError) const
     OutError.Reset();
     return true;
 }
+

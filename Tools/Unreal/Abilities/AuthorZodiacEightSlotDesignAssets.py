@@ -1,21 +1,40 @@
 # -*- coding: utf-8 -*-
 """SSLM十二生肖八槽技能策划数据资产制作入口。
 
-此脚本只能通过已验证的UE5.8 Monolith MCP editor.run_python显式调用。
-使用96条JSON策划真源写入正式项目的独立DesignOnly DataAsset以及96行DataTable。
-禁止编译蓝图、修改Hero默认技能集合、创建假GameplayAbility、替换旧占位资产。
-新增C++反射字段须先在用户单独批准的构建批次真实加载，否则明确拒绝写入。
+只能由已核验的UE5.8 Monolith MCP显式调用author()。
+先将96项JSON设计与96行CSV数值建立严格契约，再写入DBAGameplay自有的隔离草案目录。
+不会编译、修改英雄DefaultAbilitySetId、创建GameplayAbility或伪造动画/VFX/UI资源。
 """
 from __future__ import annotations
+
 import json
-import math
+import sys
 from pathlib import Path
+
 import unreal
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR))
+from ZodiacEightSlotDraftContract import (  # noqa: E402
+    ASSET_OWNER_ID,
+    ASSET_ROOT,
+    CATALOG_ID,
+    TABLE_PACKAGE_PATH,
+    TABLE_OBJECT_PATH,
+    asset_object_path,
+    build_contract,
+    validate_exported_balance_rows,
+)
 
 WORKSPACE = Path(__file__).resolve().parents[3]
 GAME = WORKSPACE / "Game"
 SOURCE = WORKSPACE / "Docs/Design/ZodiacEightSlotSkills_V2.json"
-ASSET_ROOT = "/DBAGameplay/Abilities/EightSlotDrafts"
+BALANCE_SOURCE = WORKSPACE / (
+    "Game/Plugins/DivineBeasts/DBAGameplay/SourceArt/Abilities/"
+    "DT_DBA_ZodiacEightSlotDraftBalance_V2.csv"
+)
+ABILITY_CLASS_PATH = "/Script/DivineBeastsAbilitiesRuntime.DivineBeastsAbilityDefinition"
+BALANCE_STRUCT_PATH = "/Script/DivineBeastsAbilitiesRuntime.DivineBeastsAbilityBalanceRow"
 SLOT_ORDER = ("Primary", "Slot1", "Slot2", "Slot4", "Slot3", "Slot5", "Slot6", "Slot7")
 
 
@@ -34,16 +53,41 @@ def logical(value: str):
     return result
 
 
+def logical_text(value) -> str:
+    try:
+        namespace = str(value.get_editor_property("Namespace"))
+        name = str(value.get_editor_property("Name"))
+        version = int(value.get_editor_property("LogicalVersion"))
+    except Exception as error:
+        raise RuntimeError("平台逻辑ID反射不可读") from error
+    return namespace + "." + name + "@" + str(version)
+
+
+def asset_exists(path: str) -> bool:
+    ensure(path.startswith(ASSET_ROOT + "/"), "拒绝访问隔离草案根目录之外的资产：" + path)
+    return unreal.EditorAssetLibrary.does_asset_exist(path)
+
+
+def load_existing(path: str, asset_class):
+    if not asset_exists(path):
+        return None
+    found = unreal.EditorAssetLibrary.load_asset(path)
+    ensure(isinstance(found, asset_class), "目标对象已存在但资产类别不符，拒绝覆盖：" + path)
+    ensure(found.get_path_name() == asset_object_path(path), "引擎返回的对象路径不匹配：" + path)
+    return found
+
+
 def load_or_create(path: str, asset_class, factory):
-    if unreal.EditorAssetLibrary.does_asset_exist(path):
-        found = unreal.EditorAssetLibrary.load_asset(path)
-        ensure(isinstance(found, asset_class), "已有其他类型资产，不允许覆盖：" + path)
-        return found
+    existing = load_existing(path, asset_class)
+    if existing is not None:
+        return existing, False
     folder, name = path.rsplit("/", 1)
     created = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
-        name, folder, asset_class, factory)
+        name, folder, asset_class, factory
+    )
     ensure(isinstance(created, asset_class), "创建真实UE数据资产失败：" + path)
-    return created
+    ensure(created.get_path_name() == asset_object_path(path), "创建结果不在隔离草案路径：" + path)
+    return created, True
 
 
 def asset_factory(asset_class):
@@ -54,195 +98,279 @@ def asset_factory(asset_class):
 
 def ui_tag(tag_name: str):
     tag = unreal.GameplayTag()
-    ensure(tag.import_text(tag_name) and unreal.GameplayTagLibrary.is_gameplay_tag_valid(tag),
-           "Game/Config/DefaultGameplayTags.ini未登记技能输入：" + tag_name)
+    ensure(
+        tag.import_text(tag_name) and unreal.GameplayTagLibrary.is_gameplay_tag_valid(tag),
+        "Game/Config/DefaultGameplayTags.ini未登记技能输入：" + tag_name,
+    )
     return tag
 
 
 def require_editor():
-    cmd = unreal.SystemLibrary.get_command_line()
-    ensure("-SSLMEightSlotDraftAuthoring" in cmd, "缺少-SSLMEightSlotDraftAuthoring显式制作开关")
-    ensure(Path(unreal.Paths.get_project_file_path()).resolve() ==
-           (GAME / "DivineBeastsArena.uproject").resolve(), "非本SSLM正式工程")
+    command_line = unreal.SystemLibrary.get_command_line()
+    ensure("-SSLMEightSlotDraftAuthoring" in command_line,
+           "缺少-SSLMEightSlotDraftAuthoring显式制作开关")
+    project_file = Path(unreal.Paths.get_project_file_path()).resolve()
+    ensure(project_file == (GAME / "DivineBeastsArena.uproject").resolve(),
+           "当前不是SSLM正式工程")
     ensure("5.8" in unreal.SystemLibrary.get_engine_version(), "必须使用锁定UE5.8")
     ensure(hasattr(unreal, "DivineBeastsEightSlotDraftAction"),
-           "未加载新增结构FDivineBeastsEightSlotDraftAction；禁止在旧DLL上写丢字段的资产")
-    ensure(unreal.load_object(None,
-           "/Script/DivineBeastsAbilitiesRuntime.DivineBeastsAbilityBalanceRow") is not None,
-           "未加载双端安全数值表结构")
+           "未加载扩展行为结构；禁止在旧Editor/DLL上写入不完整资产")
+    ability_class = unreal.load_object(None, ABILITY_CLASS_PATH)
+    balance_struct = unreal.load_object(None, BALANCE_STRUCT_PATH)
+    ensure(ability_class is not None and balance_struct is not None,
+           "新增能力定义或安全数值行反射类尚未由当前Editor加载")
+    ensure(hasattr(unreal.DataTableFunctionLibrary, "export_data_table_to_json_string"),
+           "当前编辑器未提供原生DataTable逐行导出校验接口，禁止写入")
+
+    ability_cdo = unreal.get_default_object(ability_class)
+    ability_properties = (
+        "LogicalId", "HeroDefinitionId", "Kind", "BalanceTable", "LevelRowNames",
+        "bEightSlotDraftOnly", "DraftSlotId", "DraftInputTag", "DraftInputActionId",
+        "DraftDefaultKeyId", "DraftDisplayOrder", "DraftDisplayNameZh",
+        "DraftDescriptionZh", "DraftDesignPromptZh", "DraftRoleId", "DraftTargetModeId", "DraftActions",
+        "DraftAssetOwnerId", "DraftCatalogId", "DraftSourceSha256",
+        "DraftHeroVFXProfileId", "DraftVFXCatalogKey",
+        "DraftIconPlaceholderId", "DraftVFXPlaceholderId", "bDraftPresentationUnbound",
+        "DraftPresentationSemanticId", "DraftPresentationSemanticIds",
+    )
+    for property_name in ability_properties:
+        try:
+            ability_cdo.get_editor_property(property_name)
+        except Exception as error:
+            raise RuntimeError("当前Editor缺少DataAsset反射字段：" + property_name) from error
+
+    action_probe = unreal.DivineBeastsEightSlotDraftAction()
+    for property_name in (
+        "ActionKindId", "ModifierId", "MagnitudeSemanticId", "DamageTypeId",
+        "Magnitude", "DurationSeconds", "HitCount", "bServerNavValidation",
+        "bAllowRevive", "SourcePayloadJson",
+    ):
+        try:
+            action_probe.get_editor_property(property_name)
+        except Exception as error:
+            raise RuntimeError("当前Editor缺少设计行为反射字段：" + property_name) from error
+
+    # 行结构也必须来自新模块；只加载同名旧UScriptStruct会静默丢失新增施法时间。
+    ensure(hasattr(unreal, "DivineBeastsAbilityBalanceRow"), "缺少项目技能数值行Python反射类型")
+    balance_probe = unreal.DivineBeastsAbilityBalanceRow()
+    for property_name in ("AbilityId", "Level", "BaseDamage", "DamageType", "CooldownSeconds",
+                          "CastTimeSeconds", "MomentumCost", "CastRangeCm", "AreaRadiusCm"):
+        try:
+            balance_probe.get_editor_property(property_name)
+        except Exception as error:
+            raise RuntimeError("当前Editor缺少数值行反射字段：" + property_name) from error
 
 
 def safe_catalog():
-    raw = json.loads(SOURCE.read_text(encoding="utf-8"))
-    ensure(raw["schemaVersion"] == 2 and raw["skillCount"] == 96 and raw["heroCount"] == 12,
-           "策划Schema版本或英雄／技能数量非法")
-    ensure(raw["designerApprovalStatus"] == "PENDING_HUMAN_BALANCE_REVIEW",
-           "正式批准状态已变化，禁止继续用草案作者覆盖")
-    ensure(raw.get("balanceStatus") == "LEVEL1_CANDIDATE_NOT_BALANCED",
-           "一级数值未通过平衡审批，不允许使用错误状态的设计稿写入资产")
-    ensure(len(raw["heroes"]) == 12, "必须是12位生肖")
-    ids = set()
-    for hero in raw["heroes"]:
-        ensure(len(hero["slots"]) == 8, hero["heroNameZh"] + "不是八个有效技能")
-        ensure(tuple(item["slotId"] for item in hero["slots"]) == SLOT_ORDER,
-               hero["heroNameZh"] + "技能槽或输入顺序错误")
-        current_hero = unreal.EditorAssetLibrary.load_asset(
-            "/DBAGameplay/Definitions/DA_Hero_Zodiac_" + hero["heroId"].split(".")[-1])
+    catalog = json.loads(SOURCE.read_text(encoding="utf-8-sig"))
+    balance_csv = BALANCE_SOURCE.read_text(encoding="utf-8-sig")
+    contract = build_contract(catalog, balance_csv)
+
+    for hero in catalog["heroes"]:
+        hero_path = "/DBAGameplay/Definitions/DA_Hero_Zodiac_" + hero["heroId"].rsplit(".", 1)[-1]
+        current_hero = unreal.EditorAssetLibrary.load_asset(hero_path)
         ensure(isinstance(current_hero, unreal.DivineBeastsHeroDefinition),
-               "原英雄定义缺失：" + hero["heroId"])
-        # 只读取原DefaultAbilitySetId；绝不写回Hero或建立可立即授权的新AbilitySet。
-        for row in hero["slots"]:
-            identity = row["abilityId"]
-            ensure(identity not in ids and identity.startswith("dba.ability."),
-                   "重复技能身份：" + identity)
-            ids.add(identity)
-            ui_tag(next(x["tag"] for x in raw["slotPolicy"]["inputSemantics"]
-                        if x["slot"] == row["slotId"]))
-            ensure(row["implementationStatus"] == "DESIGN_ONLY_UNIMPLEMENTED" and
-                   not row["approvedForLiveGAS"], "草案混入可上线技能：" + identity)
-            ensure(len(row["actions"]) >= 1, "缺少正式技能设计行为：" + identity)
-            ensure(all(math.isfinite(float(x)) and float(x) >= 0 for x in (
-                row["baseDamage"], row["cooldownSeconds"], row["momentumCost"],
-                row["castRangeCm"], row["areaRadiusCm"])),
-                "伤害、冷却或范围存在无效数值：" + identity)
-            ensure(row["damageType"] != "Magic" or row["momentumCost"] == 0,
-                   "Magic法术不能扣气势：" + identity)
-            ensure(all(action["kind"] != "damage" or
-                       action.get("type") == row["damageType"]
-                       for action in row["actions"]),
-                   "伤害行为类型与数据表类型不一致：" + identity)
-            has_damage = any(action["kind"] == "damage" for action in row["actions"])
-            has_heal = any(action["kind"] == "healing" for action in row["actions"])
-            ensure(not (has_damage and has_heal) or row["intentTarget"] == "area_center_mixed",
-                   "伤害和治疗混合技能必须使用范围中心目标身份：" + identity)
-    ensure(len(ids) == 96, "本轮技能身份不是96个")
-    return raw
+               "原英雄定义缺失或类别不符：" + hero["heroId"])
+        expected_placeholder_id = f"dba.abilityset.{hero['heroCode']}_placeholder@1"
+        default_set_id = current_hero.get_editor_property("DefaultAbilitySetId")
+        ensure(logical_text(default_set_id) == expected_placeholder_id,
+               "英雄正式占位技能集已变化，停止自动写入：" + hero["heroId"])
+        for entry in hero["slots"]:
+            input_row = next(x for x in catalog["slotPolicy"]["inputSemantics"]
+                             if x["slot"] == entry["slotId"])
+            ui_tag(input_row["tag"])
+    return catalog, contract
 
 
+def preflight_existing_assets(contract: dict, ability_class, balance_struct):
+    """写入前扫描97个目标；任何越权、冲突或旧正式资产均失败关闭。"""
+    existing_table = load_existing(TABLE_PACKAGE_PATH, unreal.DataTable)
+    if existing_table is not None:
+        ensure(existing_table.get_row_struct() == balance_struct,
+               "数值表已有资产的行结构不是当前UE5.8能力行")
+        # 保留主分支新增保护：同名数据表已有不同的行身份时，不因结构相同而覆盖它。
+        old_names = {str(name) for name in
+                     unreal.DataTableFunctionLibrary.get_data_table_row_names(existing_table)}
+        expected_names = {row["Name"] for row in contract["balanceRows"]}
+        ensure(not old_names or old_names == expected_names,
+               "已有数值表的行身份与96项设计源不同，必须先单独审核迁移")
+    existing_definitions = {}
+    for skill in contract["skills"]:
+        path = skill["asset_path"]
+        existing = load_existing(path, ability_class)
+        if existing is not None:
+            ensure(bool(existing.get_editor_property("bEightSlotDraftOnly")),
+                   "目标路径已有非草案正式定义，拒绝接管：" + path)
+            ensure(str(existing.get_editor_property("DraftAssetOwnerId")) == ASSET_OWNER_ID,
+                   "已有技能资产不属于DBAGameplay：" + path)
+            ensure(str(existing.get_editor_property("DraftCatalogId")) == CATALOG_ID,
+                   "已有技能资产属于其他设计目录：" + path)
+            ensure(bool(existing.get_editor_property("bDraftPresentationUnbound")),
+                   "已有草案的表现绑定状态已经变化，停止覆盖并单独审核迁移：" + path)
+            ensure(logical_text(existing.get_editor_property("LogicalId")) ==
+                   skill["entry"]["abilityId"], "草案对象稳定身份冲突：" + path)
+            ensure(str(existing.get_editor_property("HeroDefinitionId")) ==
+                   skill["hero"]["heroId"], "草案对象英雄归属冲突：" + path)
+            ensure(str(existing.get_editor_property("DraftSlotId")) ==
+                   skill["entry"]["slotId"], "草案对象输入槽归属冲突：" + path)
+        existing_definitions[path] = existing
+    return existing_table, existing_definitions
 
-def preflight_existing_destinations(skill_inputs, row_names):
-    """任何写盘前一次性核查97个目标，杜绝中途发现同名正式资产而覆盖已有作者成果。"""
-    table_path = ASSET_ROOT + "/DT_DBA_ZodiacEightSlotDraftBalance"
-    if unreal.EditorAssetLibrary.does_asset_exist(table_path):
-        existing_table = unreal.EditorAssetLibrary.load_asset(table_path)
-        ensure(isinstance(existing_table, unreal.DataTable),
-               "草案数值表路径已有非DataTable资产：" + table_path)
-        try:
-            old_names = {str(name) for name in unreal.DataTableFunctionLibrary.get_data_table_row_names(existing_table)}
-        except Exception as error:
-            raise RuntimeError("无法核验已有草案数值表的行名，禁止覆盖") from error
-        ensure(not old_names or old_names == row_names,
-               "已有DataTable的行身份与96项设计源不一致；必须先单独审批迁移")
-    for hero, row, _ in skill_inputs:
-        hero_name = hero["heroId"].split(".")[-1]
-        key = "".join(segment.title() for segment in row["abilityKey"].split("_"))
-        path = ASSET_ROOT + "/DA_DBA_" + hero_name + "_Eight_" + key
-        if not unreal.EditorAssetLibrary.does_asset_exist(path):
-            continue
-        existing = unreal.EditorAssetLibrary.load_asset(path)
-        ensure(isinstance(existing, unreal.DivineBeastsAbilityDefinition),
-               "已有同名资产并非项目技能DataAsset：" + path)
-        ensure(bool(existing.get_editor_property("bEightSlotDraftOnly")),
-               "已有同名资产不是受控的八槽设计稿，禁止覆盖：" + path)
-        ensure(existing.get_editor_property("LogicalId").export_text() ==
-               logical(row["abilityId"]).export_text(),
-               "同名设计稿的稳定LogicalId不同，禁止接管：" + path)
+
+def make_action(mapped: dict):
+    action = unreal.DivineBeastsEightSlotDraftAction()
+    for property_name in (
+        "ActionKindId", "ModifierId", "MagnitudeSemanticId", "DamageTypeId",
+        "Magnitude", "DurationSeconds", "HitCount", "bServerNavValidation",
+        "bAllowRevive", "SourcePayloadJson",
+    ):
+        value = mapped[property_name]
+        if property_name in ("ActionKindId", "ModifierId", "MagnitudeSemanticId", "DamageTypeId"):
+            value = unreal.Name(value)
+        action.set_editor_property(property_name, value)
+    return action
 
 
 def author():
     require_editor()
-    source = safe_catalog()
-    kind_class = unreal.DivineBeastsAbilityDefinition
-    design_cdo = unreal.get_default_object(kind_class)
-    ensure(hasattr(design_cdo, "get_editor_property"), "DataAsset反射不能读取")
-    try:
-        design_cdo.get_editor_property("bEightSlotDraftOnly")
-    except Exception as error:
-        raise RuntimeError("新C++扩展DataAsset字段未由当前Editor加载，停止制作") from error
+    catalog, contract = safe_catalog()
+    ability_class = unreal.load_object(None, ABILITY_CLASS_PATH)
+    balance_struct = unreal.load_object(None, BALANCE_STRUCT_PATH)
+    existing_table, existing_definitions = preflight_existing_assets(
+        contract, ability_class, balance_struct
+    )
 
-    # 预先计算96行与所有目标路径，先发现冲突再创建任何真实UE资源。
-    rows, skill_inputs = [], []
-    for hero in source["heroes"]:
-        for entry in hero["slots"]:
-            name = entry["abilityId"].rsplit(".", 1)[-1].removesuffix("@1") + "_L1"
-            rows.append({
-                "Name": name, "AbilityId": entry["abilityId"], "Level": 1,
-                "BaseDamage": entry["baseDamage"],
-                "DamageType": entry["damageType"],
-                "CooldownSeconds": entry["cooldownSeconds"],
-                "MomentumCost": entry["momentumCost"],
-                "CastRangeCm": entry["castRangeCm"],
-                "AreaRadiusCm": entry["areaRadiusCm"]
-            })
-            skill_inputs.append((hero, entry, name))
-    ensure(len(rows) == 96, "DataTable须96行")
-    preflight_existing_destinations(skill_inputs, {row["Name"] for row in rows})
-    factory = unreal.DataTableFactory()
-    factory.set_editor_property("Struct", unreal.load_object(
-        None, "/Script/DivineBeastsAbilitiesRuntime.DivineBeastsAbilityBalanceRow"))
-    table = load_or_create(ASSET_ROOT + "/DT_DBA_ZodiacEightSlotDraftBalance",
-                           unreal.DataTable, factory)
+    table_factory = unreal.DataTableFactory()
+    table_factory.set_editor_property("Struct", balance_struct)
+    table, table_created = load_or_create(
+        TABLE_PACKAGE_PATH, unreal.DataTable, table_factory
+    )
+    ensure(table.get_row_struct() == balance_struct, "数值表真实行结构不匹配")
     ensure(unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(
-        table, json.dumps(rows, ensure_ascii=False)),
-        "96行数据表原生引擎导入失败，停止进一步制作")
+        table, json.dumps(contract["balanceRows"], ensure_ascii=False)
+    ), "96行数值数据表导入失败")
+    written_names = {str(name) for name in
+                     unreal.DataTableFunctionLibrary.get_data_table_row_names(table)}
+    ensure(written_names == {row["Name"] for row in contract["balanceRows"]},
+           "原生DataTable导入后不是96个预期稳定数值行")
+    validate_exported_balance_rows(
+        contract, unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table)
+    )
     ensure(unreal.EditorAssetLibrary.save_loaded_asset(table, only_if_is_dirty=False),
            "数值DataTable保存失败")
-    saved = [table.get_path_name()]
-    for hero, row, table_row_name in skill_inputs:
-        hero_name = hero["heroId"].split(".")[-1]
-        key = "".join(segment.title() for segment in row["abilityKey"].split("_"))
-        path = ASSET_ROOT + "/DA_DBA_" + hero_name + "_Eight_" + key
-        definition = load_or_create(path, kind_class, asset_factory(kind_class))
-        # 既有数据资产身份已在任何写盘之前统一预检，不能在中途静默占用正式技能。
-        definition.set_editor_property("LogicalId", logical(row["abilityId"]))
+
+    saved_paths = [table.get_path_name()]
+    created_count = 0
+    updated_count = 0
+    for skill in contract["skills"]:
+        hero = skill["hero"]
+        entry = skill["entry"]
+        path = skill["asset_path"]
+        definition = existing_definitions[path]
+        if definition is None:
+            definition, created = load_or_create(
+                path, ability_class, asset_factory(ability_class)
+            )
+            ensure(created, "资产在预检后意外出现；停止并重新检查并行写入：" + path)
+            created_count += 1
+        else:
+            updated_count += 1
+
+        definition.set_editor_property("LogicalId", logical(entry["abilityId"]))
         definition.set_editor_property("HeroDefinitionId", unreal.Name(hero["heroId"]))
-        kind = "PRIMARY" if row["role"] == "basic" else (
-            "ULTIMATE" if row["role"] == "ultimate" else "ACTIVE")
-        definition.set_editor_property("Kind", getattr(unreal.DivineBeastsAbilityKind, kind))
+        kind_name = "PRIMARY" if entry["role"] == "basic" else (
+            "ULTIMATE" if entry["role"] == "ultimate" else "ACTIVE"
+        )
+        definition.set_editor_property(
+            "Kind", getattr(unreal.DivineBeastsAbilityKind, kind_name)
+        )
         definition.set_editor_property("BalanceTable", table)
-        definition.set_editor_property("LevelRowNames", [table_row_name])
+        definition.set_editor_property("LevelRowNames", [unreal.Name(skill["row_name"])])
         definition.set_editor_property("bEightSlotDraftOnly", True)
-        definition.set_editor_property("DraftSlotId", unreal.Name(row["slotId"]))
-        input_tag = next(x["tag"] for x in source["slotPolicy"]["inputSemantics"]
-                         if x["slot"] == row["slotId"])
-        definition.set_editor_property("DraftInputTag", ui_tag(input_tag))
-        definition.set_editor_property("DraftDisplayNameZh", unreal.Text(row["nameZh"]))
-        definition.set_editor_property("DraftDescriptionZh", unreal.Text(row["descriptionZh"]))
-        definition.set_editor_property("DraftRoleId", unreal.Name(row["role"]))
-        definition.set_editor_property("DraftTargetModeId", unreal.Name(row["intentTarget"]))
-        definition.set_editor_property("DraftHeroVFXProfileId", unreal.Name(row["vfx"]["heroProfileId"]))
-        definition.set_editor_property("DraftPresentationSemanticId",
-                                       unreal.Name(row["vfx"]["phaseSemantics"][0]))
-        actions = []
-        for row_action in row["actions"]:
-            action = unreal.DivineBeastsEightSlotDraftAction()
-            action.set_editor_property("ActionKindId", unreal.Name(row_action["kind"]))
-            modifier = row_action.get("controlType") or row_action.get("buffType") or ""
-            action.set_editor_property("ModifierId", unreal.Name(modifier))
-            magnitude = (row_action.get("baseMagnitude")
-                         if "baseMagnitude" in row_action else
-                         row_action.get("distanceCm", row_action.get("maxHealthFraction",
-                         row_action.get("magnitudeFraction", row_action.get("slowFraction", 0.0)))))
-            action.set_editor_property("Magnitude", float(magnitude))
-            action.set_editor_property("DurationSeconds", float(row_action.get("durationSeconds", 0.0)))
-            action.set_editor_property("HitCount", int(row_action.get("hitCount", 1)))
-            actions.append(action)
-        definition.set_editor_property("DraftActions", actions)
-        # ValidateDefinition是项目C++非UFUNCTION方法，Python不能把未公开方法调用冒充原生验证。
-        # 保存前只回读作者字段；UE原生DataValidation与重新打开进程冷读另行留证。
-        ensure(bool(definition.get_editor_property("bEightSlotDraftOnly")) and
-               len(definition.get_editor_property("DraftActions")) == len(actions),
-               "作者DataAsset字段回读失败：" + row["abilityId"])
+        definition.set_editor_property("DraftSlotId", unreal.Name(entry["slotId"]))
+        definition.set_editor_property("DraftInputTag", ui_tag(skill["input"]["tag"]))
+        definition.set_editor_property("DraftInputActionId", unreal.Name(skill["input"]["action"]))
+        definition.set_editor_property("DraftDefaultKeyId", unreal.Name(skill["input"]["keyboard"]))
+        definition.set_editor_property("DraftDisplayOrder", int(entry["displayOrder"]))
+        # 名称与说明保留FText本地化通路；长提示词仅存编辑器FString，不进入运行时界面。
+        definition.set_editor_property("DraftDisplayNameZh", unreal.Text(skill["draft_text"]["DraftDisplayNameZh"]))
+        definition.set_editor_property("DraftDescriptionZh", unreal.Text(skill["draft_text"]["DraftDescriptionZh"]))
+        definition.set_editor_property("DraftDesignPromptZh", skill["draft_text"]["DraftDesignPromptZh"])
+        # 只序列化未绑定占位身份，不在双端安全定义上写入客户端贴图或Niagara软/硬引用。
+        definition.set_editor_property("DraftIconPlaceholderId", unreal.Name(skill["placeholders"]["DraftIconPlaceholderId"]))
+        definition.set_editor_property("DraftVFXPlaceholderId", unreal.Name(skill["placeholders"]["DraftVFXPlaceholderId"]))
+        definition.set_editor_property("bDraftPresentationUnbound", True)
+        definition.set_editor_property("DraftRoleId", unreal.Name(entry["role"]))
+        definition.set_editor_property("DraftTargetModeId", unreal.Name(entry["intentTarget"]))
+        definition.set_editor_property("DraftAssetOwnerId", unreal.Name(ASSET_OWNER_ID))
+        definition.set_editor_property("DraftCatalogId", unreal.Name(CATALOG_ID))
+        definition.set_editor_property("DraftSourceSha256", skill["source_sha256"])
+        definition.set_editor_property(
+            "DraftHeroVFXProfileId", unreal.Name(entry["vfx"]["heroProfileId"])
+        )
+        definition.set_editor_property(
+            "DraftVFXCatalogKey", unreal.Name(entry["vfx"]["catalogKey"])
+        )
+        phase_ids = [unreal.Name(value) for value in entry["vfx"]["phaseSemantics"]]
+        definition.set_editor_property("DraftPresentationSemanticId", phase_ids[0])
+        definition.set_editor_property("DraftPresentationSemanticIds", phase_ids)
+        definition.set_editor_property(
+            "DraftActions", [make_action(action) for action in skill["actions"]]
+        )
+
+        # C++ValidateDefinition不是UFUNCTION，Python不冒充原生校验；这里仅核对每个反射字段回读。
+        ensure(logical_text(definition.get_editor_property("LogicalId")) ==
+               entry["abilityId"], "逻辑技能身份回读失败：" + entry["abilityId"])
+        ensure(str(definition.get_editor_property("HeroDefinitionId")) == hero["heroId"] and
+               str(definition.get_editor_property("DraftSlotId")) == entry["slotId"],
+               "英雄或输入槽归属回读失败：" + entry["abilityId"])
+        ensure(str(definition.get_editor_property("DraftInputTag")) == skill["input"]["tag"],
+               "GAS输入标签回读失败：" + entry["abilityId"])
+        ensure(str(definition.get_editor_property("DraftSourceSha256")) == skill["source_sha256"],
+               "源设计摘要回读失败：" + entry["abilityId"])
+        for property_name, expected_text in skill["draft_text"].items():
+            ensure(str(definition.get_editor_property(property_name)) == expected_text,
+                   "中文名称、说明或提示词回读不一致：" + entry["abilityId"] + ":" + property_name)
+        for property_name in ("DraftIconPlaceholderId", "DraftVFXPlaceholderId"):
+            ensure(str(definition.get_editor_property(property_name)) == skill["placeholders"][property_name],
+                   "图标/VFX占位身份回读不一致：" + entry["abilityId"])
+        ensure(bool(definition.get_editor_property("bDraftPresentationUnbound")),
+               "未制作表现资源不能冒充已绑定：" + entry["abilityId"])
+        ensure(len(definition.get_editor_property("DraftActions")) == len(skill["actions"]),
+               "策划行为回读失败：" + entry["abilityId"])
+        ensure(bool(definition.get_editor_property("bEightSlotDraftOnly")),
+               "草案禁用位回读失败：" + entry["abilityId"])
         ensure(unreal.EditorAssetLibrary.save_loaded_asset(definition, only_if_is_dirty=False),
-               "写盘失败：" + row["abilityId"])
-        saved.append(definition.get_path_name())
-    # 仅返回真实成功包，96份作者稿不代表GA、VFX、8槽Widget已经完成。
-    unreal.log("SSLM八槽作者已保存真实DataAsset=" + str(len(saved)) +
-               "（96定义+1表），Hero DefaultAbilitySetId保持未改。")
-    return {"Status": "AuthoringSavedNeedsNativeReadback", "SavedPaths": saved,
-            "AbilityDefinitions": 96, "BalanceRows": 96, "HeroDefaultsChanged": 0,
-            "NativeGASRuntimeVerified": False, "VFXAssetsVerified": False,
-            "BlueprintEightSlotsVerified": False}
+               "DataAsset保存失败：" + entry["abilityId"])
+        saved_paths.append(definition.get_path_name())
+
+    expected_asset_paths = {skill["asset_path"] for skill in contract["skills"]}
+    ensure(len(saved_paths) == 97 and len(expected_asset_paths) == 96,
+           "保存清单数量不正确")
+    unreal.log(
+        "SSLM八槽隔离作者已保存：DataTable 96行，DataAsset 96份；"
+        "新建=" + str(created_count) + "，按目录更新=" + str(updated_count) +
+        "；正式英雄默认技能集未写入。"
+    )
+    return {
+        "Status": "AuthoringSavedNeedsIndependentColdReload",
+        "SavedPaths": saved_paths,
+        "HeroAssetMap": contract["heroes"],
+        "BalanceTableObjectPath": TABLE_OBJECT_PATH,
+        "AbilityDefinitions": 96,
+        "BalanceRows": 96,
+        "CreatedDefinitions": created_count,
+        "UpdatedOwnedDraftDefinitions": updated_count,
+        "BalanceTableCreated": table_created,
+        "HeroDefaultAbilitySetIdsChanged": 0,
+        "NativeDataValidationVerified": False,
+        "IndependentColdReloadVerified": False,
+        "NativeGASRuntimeVerified": False,
+        "VFXAssetsVerified": False,
+        "AnimationAssetsVerified": False,
+        "BlueprintEightSlotsVerified": False,
+    }
 
 
-# Monolith MCP外部调用器只能显式执行author()；import模块或打开编辑器不会发生资产改写。
+# Monolith调用器只能显式执行author()；import脚本或仅打开编辑器均不会创建资产。
+
