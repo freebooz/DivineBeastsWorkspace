@@ -63,19 +63,20 @@ private:
     // 自动化夹具验证同一Widget反复构造/失活的真实事件投影，不为测试公开产品接口。
     friend class FDivineBeastsAbilityBarReconstructTest;
     friend class FDivineBeastsAbilityHotkeyTest;
+    friend class FDivineBeastsAbilityDetailsProjectionTest;
     UFUNCTION()
     void HandlePossessedPawnChanged(APawn* PreviousPawn, APawn* NewPawn);
 
     void HandleViewModelSlotsChanged(const TArray<FGamePlatformUISlotState>& NewSlots);
 
-    /** 绑定/解绑四个主动槽的中立点击事件；被动槽没有施法命令，不修改真实Widget树。 */
+    /** 绑定/解绑八个主动槽的中立点击事件；被动作为英雄特质，不占新版八槽。 */
     void BindAbilitySlotCommands(bool bBind);
     /** Widget只提交命令；失败记录中文诊断，真实可用状态继续由ViewModel事件刷新。 */
     void HandleAbilitySlotInvoked(FName SlotId);
 
-    /** 将服务器授权的技能槽投影到五个可选的真实子Widget；未授权槽展示为空且禁用。
-     * Passive（被动）按稳定ID前缀识别，其余槽位按现有项目GAS输入标签识别，
-     * 不为十二生肖逐个硬编码控件，也不创建客户端技能授权。 */
+    /** 将服务器授权槽按精确GAS输入标签投影到八个可选子Widget；不存在的控件安静跳过。
+     * 原五槽WBP仍可消费Primary、Slot1、Slot2、Slot4及被动，无需重建旧二进制资产。
+     * 新版八槽被动作为独立Hero Trait，不占可点击槽位。 */
     void RefreshVisualSlots();
 
     /** 将真实PC映射转换为只读按键文字；保留修饰键及多个绑定，忽略无效/手柄/触摸键。
@@ -86,7 +87,7 @@ private:
      * 暂无PlayerInput时只读引擎当前InputSettings。缺控件或无映射时安静留空，不制造固定键。 */
     void RefreshSlotHotkey(UGamePlatformSlotWidget* SlotWidget, FName ActionName, bool bPassive);
 
-    /** 五个子控件可选绑定：旧WBP及纯代码父类不需要全部具备，缺失不造成UHT失败。 */
+    /** 现有五控件继续兼容；新增四项BindWidgetOptional，蓝图尚未更新时不伪造Widget。 */
     UPROPERTY(Transient, meta=(BindWidgetOptional))
     TObjectPtr<UGamePlatformSlotWidget> PrimaryAbilitySlot;
 
@@ -101,6 +102,21 @@ private:
 
     UPROPERTY(Transient, meta=(BindWidgetOptional))
     TObjectPtr<UGamePlatformSlotWidget> UltimateAbilitySlot;
+    /** 数字5／Slot3：移动。 */
+    UPROPERTY(Transient, meta=(BindWidgetOptional))
+    TObjectPtr<UGamePlatformSlotWidget> MovementAbilitySlot;
+
+    /** 数字6／Slot5：防御。 */
+    UPROPERTY(Transient, meta=(BindWidgetOptional))
+    TObjectPtr<UGamePlatformSlotWidget> DefenseAbilitySlot;
+
+    /** 数字7／Slot6：控制。 */
+    UPROPERTY(Transient, meta=(BindWidgetOptional))
+    TObjectPtr<UGamePlatformSlotWidget> ControlAbilitySlot;
+
+    /** 数字8／Slot7：特色或治疗。 */
+    UPROPERTY(Transient, meta=(BindWidgetOptional))
+    TObjectPtr<UGamePlatformSlotWidget> SignatureAbilitySlot;
 
     /** 该控件唯一拥有的本地 UI ViewModel，与游戏实例和网络身份解耦。 */
     UPROPERTY(Transient)

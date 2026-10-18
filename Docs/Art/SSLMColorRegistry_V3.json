@@ -1,0 +1,527 @@
+{
+  "schemaVersion": "3.0",
+  "effectiveDate": "2026-10-18",
+  "documentZh": "SSLM全局美术配色策略与色彩设计规范_V3.0.md",
+  "authorityZh": "本JSON为主规范派生索引，不代替主规范或UE资产",
+  "sourceZh": "2026-10-18用户提供的V3.0初始色板",
+  "colorSpaceZh": "仅屏幕sRGB参考；不是王者荣耀官方取样或UE线性BaseColor输入",
+  "implementedInEngine": false,
+  "items": [
+    {
+      "semanticId": "Environment.Grass.Standard",
+      "nameZh": "标准草地",
+      "referenceSRGBHex": "#6B9956",
+      "categoryZh": "草地",
+      "scopeZh": "地形与植被",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Grass.Sunlit",
+      "nameZh": "阳光草地",
+      "referenceSRGBHex": "#86AD62",
+      "categoryZh": "草地",
+      "scopeZh": "地形与植被",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Grass.Tender",
+      "nameZh": "嫩绿草地",
+      "referenceSRGBHex": "#A6BC76",
+      "categoryZh": "草地",
+      "scopeZh": "地形与植被",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Grass.Woodland",
+      "nameZh": "林地草地",
+      "referenceSRGBHex": "#4F7B52",
+      "categoryZh": "草地",
+      "scopeZh": "地形与植被",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Grass.Shadow",
+      "nameZh": "草地阴影",
+      "referenceSRGBHex": "#426D51",
+      "categoryZh": "草地",
+      "scopeZh": "地形与植被",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Soil.LightEarth",
+      "nameZh": "浅黄土地",
+      "referenceSRGBHex": "#C5AD83",
+      "categoryZh": "泥土与自然道路",
+      "scopeZh": "地形道路",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Soil.Standard",
+      "nameZh": "标准泥土",
+      "referenceSRGBHex": "#A88F6D",
+      "categoryZh": "泥土与自然道路",
+      "scopeZh": "地形道路",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Soil.ForestRoad",
+      "nameZh": "林间小路",
+      "referenceSRGBHex": "#B7A181",
+      "categoryZh": "泥土与自然道路",
+      "scopeZh": "地形道路",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Soil.Wet",
+      "nameZh": "湿润泥土",
+      "referenceSRGBHex": "#79705C",
+      "categoryZh": "泥土与自然道路",
+      "scopeZh": "地形道路",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Paving.Warm",
+      "nameZh": "暖灰石板",
+      "referenceSRGBHex": "#C8C5AD",
+      "categoryZh": "石板路广场",
+      "scopeZh": "道路建筑",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Paving.Beige",
+      "nameZh": "米灰石材",
+      "referenceSRGBHex": "#B9B6A0",
+      "categoryZh": "石板路广场",
+      "scopeZh": "道路建筑",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Paving.Cool",
+      "nameZh": "冷灰石材",
+      "referenceSRGBHex": "#8F9D94",
+      "categoryZh": "石板路广场",
+      "scopeZh": "道路建筑",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Paving.MossJoint",
+      "nameZh": "石缝苔绿",
+      "referenceSRGBHex": "#64836A",
+      "categoryZh": "石板路广场",
+      "scopeZh": "道路建筑",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Rock.GrayCyan",
+      "nameZh": "灰青岩石",
+      "referenceSRGBHex": "#89988C",
+      "categoryZh": "岩石悬崖",
+      "scopeZh": "地形山崖",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Rock.WarmGray",
+      "nameZh": "暖灰岩石",
+      "referenceSRGBHex": "#A8A38C",
+      "categoryZh": "岩石悬崖",
+      "scopeZh": "地形山崖",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Rock.DarkGrayCyan",
+      "nameZh": "深灰青岩",
+      "referenceSRGBHex": "#63776F",
+      "categoryZh": "岩石悬崖",
+      "scopeZh": "地形山崖",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Rock.Mossy",
+      "nameZh": "苔藓岩石",
+      "referenceSRGBHex": "#718B68",
+      "categoryZh": "岩石悬崖",
+      "scopeZh": "地形山崖",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Peach.LightPink",
+      "nameZh": "浅桃粉",
+      "referenceSRGBHex": "#E8B6BD",
+      "categoryZh": "桃树",
+      "scopeZh": "桃林新手村",
+      "ownerZh": "DBAWorldPack_Village（新手村世界包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Peach.SoftPink",
+      "nameZh": "柔粉色",
+      "referenceSRGBHex": "#D99EA9",
+      "categoryZh": "桃树",
+      "scopeZh": "桃林新手村",
+      "ownerZh": "DBAWorldPack_Village（新手村世界包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Peach.WarmWhite",
+      "nameZh": "桃花暖白",
+      "referenceSRGBHex": "#F1D5CF",
+      "categoryZh": "桃树",
+      "scopeZh": "桃林新手村",
+      "ownerZh": "DBAWorldPack_Village（新手村世界包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Peach.LeafGreen",
+      "nameZh": "桃叶青绿",
+      "referenceSRGBHex": "#779D68",
+      "categoryZh": "桃树",
+      "scopeZh": "桃林新手村",
+      "ownerZh": "DBAWorldPack_Village（新手村世界包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Water.Shallow",
+      "nameZh": "浅水青绿",
+      "referenceSRGBHex": "#6DBCB0",
+      "categoryZh": "水",
+      "scopeZh": "湖泊河流瀑布",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Water.Standard",
+      "nameZh": "标准青碧水",
+      "referenceSRGBHex": "#4A9F9F",
+      "categoryZh": "水",
+      "scopeZh": "湖泊河流瀑布",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Water.Deep",
+      "nameZh": "深水青蓝",
+      "referenceSRGBHex": "#287984",
+      "categoryZh": "水",
+      "scopeZh": "湖泊河流瀑布",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Water.Foam",
+      "nameZh": "水花泡沫",
+      "referenceSRGBHex": "#DAEDE6",
+      "categoryZh": "水",
+      "scopeZh": "湖泊河流瀑布",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Building.WarmWood",
+      "nameZh": "暖木色",
+      "referenceSRGBHex": "#997C5E",
+      "categoryZh": "建筑物品",
+      "scopeZh": "木构屋瓦石材装饰",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Building.DarkWood",
+      "nameZh": "深木色",
+      "referenceSRGBHex": "#685541",
+      "categoryZh": "建筑物品",
+      "scopeZh": "木构屋瓦石材装饰",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Building.GrayRoof",
+      "nameZh": "青灰瓦色",
+      "referenceSRGBHex": "#627B79",
+      "categoryZh": "建筑物品",
+      "scopeZh": "木构屋瓦石材装饰",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Building.LightStone",
+      "nameZh": "浅灰石材",
+      "referenceSRGBHex": "#BDBBAB",
+      "categoryZh": "建筑物品",
+      "scopeZh": "木构屋瓦石材装饰",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "Environment.Building.GoldDecor",
+      "nameZh": "装饰鎏金",
+      "referenceSRGBHex": "#C6A569",
+      "categoryZh": "建筑物品",
+      "scopeZh": "木构屋瓦石材装饰",
+      "ownerZh": "DBAWorldPack_*（世界资源包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "VFX.ElementalVisual.Wood",
+      "nameZh": "木·翠青绿",
+      "referenceSRGBHex": "#47B986",
+      "categoryZh": "元素视觉",
+      "scopeZh": "非玩法数值的艺术视觉",
+      "ownerZh": "DBAPresentationPack_Core（公共表现包）/DBAHeroPack_*（英雄包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "VFX.ElementalVisual.Fire",
+      "nameZh": "火·朱焰橙",
+      "referenceSRGBHex": "#F16B46",
+      "categoryZh": "元素视觉",
+      "scopeZh": "非玩法数值的艺术视觉",
+      "ownerZh": "DBAPresentationPack_Core（公共表现包）/DBAHeroPack_*（英雄包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "VFX.ElementalVisual.Earth",
+      "nameZh": "土·赭金",
+      "referenceSRGBHex": "#D5AA65",
+      "categoryZh": "元素视觉",
+      "scopeZh": "非玩法数值的艺术视觉",
+      "ownerZh": "DBAPresentationPack_Core（公共表现包）/DBAHeroPack_*（英雄包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "VFX.ElementalVisual.Metal",
+      "nameZh": "金·银青",
+      "referenceSRGBHex": "#B5CADC",
+      "categoryZh": "元素视觉",
+      "scopeZh": "非玩法数值的艺术视觉",
+      "ownerZh": "DBAPresentationPack_Core（公共表现包）/DBAHeroPack_*（英雄包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "VFX.ElementalVisual.Water",
+      "nameZh": "水·寒渊蓝",
+      "referenceSRGBHex": "#409CE5",
+      "categoryZh": "元素视觉",
+      "scopeZh": "非玩法数值的艺术视觉",
+      "ownerZh": "DBAPresentationPack_Core（公共表现包）/DBAHeroPack_*（英雄包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "UI.Brand.InkCyan",
+      "nameZh": "玄墨青",
+      "referenceSRGBHex": "#10282D",
+      "categoryZh": "品牌界面",
+      "scopeZh": "项目UI",
+      "ownerZh": "DBAUIPack_Core（公共界面包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "UI.Brand.DeepJade",
+      "nameZh": "深碧玉",
+      "referenceSRGBHex": "#227E70",
+      "categoryZh": "品牌界面",
+      "scopeZh": "项目UI",
+      "ownerZh": "DBAUIPack_Core（公共界面包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "UI.Brand.Jade",
+      "nameZh": "灵玉青",
+      "referenceSRGBHex": "#68D7B4",
+      "categoryZh": "品牌界面",
+      "scopeZh": "项目UI",
+      "ownerZh": "DBAUIPack_Core（公共界面包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "UI.Brand.Gold",
+      "nameZh": "鎏金",
+      "referenceSRGBHex": "#D9B773",
+      "categoryZh": "品牌界面",
+      "scopeZh": "项目UI",
+      "ownerZh": "DBAUIPack_Core（公共界面包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "UI.Brand.JadeWhite",
+      "nameZh": "玉脂白",
+      "referenceSRGBHex": "#E8F0E7",
+      "categoryZh": "品牌界面",
+      "scopeZh": "项目UI",
+      "ownerZh": "DBAUIPack_Core（公共界面包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    },
+    {
+      "semanticId": "UI.Brand.Vermilion",
+      "nameZh": "警示朱红",
+      "referenceSRGBHex": "#E46A5C",
+      "categoryZh": "品牌界面",
+      "scopeZh": "项目UI",
+      "ownerZh": "DBAUIPack_Core（公共界面包）",
+      "allowedAdjustmentZh": "未批准数值范围；须按固定曝光/目标设备/实际镜头评审后登记",
+      "assetBinding": null,
+      "reviewStatusZh": "参考方案待UE校准与人工审核"
+    }
+  ],
+  "combatSemanticsPending": [
+    {
+      "semanticId": "Combat.Health",
+      "nameZh": "生命",
+      "colorZh": "绿色",
+      "referenceSRGBHex": null,
+      "reviewStatusZh": "功能颜色HEX未确定，必须结合UI/色觉辅助人工审核"
+    },
+    {
+      "semanticId": "Combat.Energy",
+      "nameZh": "能量",
+      "colorZh": "蓝色（生命条下方）",
+      "referenceSRGBHex": null,
+      "reviewStatusZh": "功能颜色HEX未确定，必须结合UI/色觉辅助人工审核"
+    },
+    {
+      "semanticId": "Combat.Momentum",
+      "nameZh": "气势",
+      "colorZh": "独立暖金色",
+      "referenceSRGBHex": null,
+      "reviewStatusZh": "功能颜色HEX未确定，必须结合UI/色觉辅助人工审核"
+    },
+    {
+      "semanticId": "Combat.Casting",
+      "nameZh": "施法",
+      "colorZh": "亮玉青色",
+      "referenceSRGBHex": null,
+      "reviewStatusZh": "功能颜色HEX未确定，必须结合UI/色觉辅助人工审核"
+    },
+    {
+      "semanticId": "Combat.Ally",
+      "nameZh": "友方",
+      "colorZh": "固定阵营标识及形状",
+      "referenceSRGBHex": null,
+      "reviewStatusZh": "功能颜色HEX未确定，必须结合UI/色觉辅助人工审核"
+    },
+    {
+      "semanticId": "Combat.Enemy",
+      "nameZh": "敌方",
+      "colorZh": "固定阵营警示色及形状",
+      "referenceSRGBHex": null,
+      "reviewStatusZh": "功能颜色HEX未确定，必须结合UI/色觉辅助人工审核"
+    },
+    {
+      "semanticId": "Combat.Disabled",
+      "nameZh": "禁用",
+      "colorZh": "低强调中性色",
+      "referenceSRGBHex": null,
+      "reviewStatusZh": "功能颜色HEX未确定，必须结合UI/色觉辅助人工审核"
+    },
+    {
+      "semanticId": "Combat.Cooldown",
+      "nameZh": "冷却",
+      "colorZh": "低强调和明确状态",
+      "referenceSRGBHex": null,
+      "reviewStatusZh": "功能颜色HEX未确定，必须结合UI/色觉辅助人工审核"
+    }
+  ],
+  "reviewChecklistZh": [
+    "sRGB/线性贴图及PBR审核",
+    "地形-植被-山石-水体统一",
+    "昼夜天气与实际镜头",
+    "低中高史诗四画质、敌我及色觉辅助",
+    "GPU/CPU与人工前后对照签字"
+  ]
+}

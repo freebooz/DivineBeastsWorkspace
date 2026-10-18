@@ -6,6 +6,7 @@
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Components/SceneComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Manager/GamePlatformUIManagerSubsystem.h"
 #include "Services/GamePlatformWorldUIService.h"
 #include "WorldUI/GamePlatformWorldWidgetBase.h"
@@ -13,6 +14,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/PlayerState.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
 #include "Components/DivineBeastsCharacterComponent.h"
@@ -67,7 +69,9 @@ void UDivineBeastsWorldHealthBarPresenter::Initialize(ULocalPlayer* InPlayer, UW
 
 void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSelectionOnly)
 {
-    if (!IsValid(Actor) || (!bSelectionOnly && !Actor->IsA<ADivineBeastsCharacter>()) || Actor->GetWorld() != ObservedWorld.Get() ||
+    UWorld* World = ObservedWorld.Get();
+    if (!World || World->bIsTearingDown || !IsValid(Actor) ||
+        (!bSelectionOnly && !Actor->IsA<ADivineBeastsCharacter>()) || Actor->GetWorld() != World ||
         Bindings.Contains(Actor) || Bindings.Num() >= 128) return;
     auto* Controller = LocalPlayer.IsValid() ? LocalPlayer->GetPlayerController(ObservedWorld.Get()) : nullptr;
     if (Controller && Controller->GetPawn() == Actor) return; // 自己已有主HUD血条。
@@ -80,6 +84,8 @@ void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSel
         Actor->IsA<ADivineBeastsVillageWolf>() ? TEXT("野狼") :
         Actor->IsA<ADivineBeastsCharacter>() ? TEXT("玩家") : TEXT("目标"));
     Binding.Request.SelectionText = NSLOCTEXT("DivineBeastsWorldUI", "SelectedTarget", "▶ 已选中 ◀");
+    // 怪物选中只保留脚下法环与单行箭头/颜色提示；血条本身不绘制边框。
+    Binding.Request.bCompactSelection = Actor->IsA<ADivineBeastsVillageWolf>();
     Actor->OnDestroyed.AddUniqueDynamic(this, &ThisClass::HandleActorDestroyed);
     Actor->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleActorEndPlay);
     const uint64 Generation = ObservationGeneration;
@@ -144,8 +150,11 @@ void UDivineBeastsWorldHealthBarPresenter::ApplyHealth(AActor* Actor, float Heal
 
 void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor)
 {
+    // Travel销毁Pawn时仍可能同步触发控制器关系通知；旧World开始退出后禁止再创建UMG实例。
+    UWorld* World = ObservedWorld.Get();
+    if (!World || World->bIsTearingDown || !IsValid(Actor) || Actor->GetWorld() != World) return;
     auto* Binding = Bindings.Find(Actor);
-    if (!Binding || !IsValid(Actor)) return;
+    if (!Binding) return;
     if (SelectedTarget.Get() == Actor)
     {
         const auto* Combat = Actor->FindComponentByClass<UGamePlatformCombatComponent>();
@@ -164,6 +173,15 @@ void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor)
     Binding->Request.SelectionTint = ResolveSelectionTint(Actor);
     FVector Origin, Extent; Actor->GetActorBounds(true, Origin, Extent);
     Binding->Request.WorldLocation = Origin + FVector(0, 0, Extent.Z + 24.f);
+    if (const auto* Character = Cast<ACharacter>(Actor))
+    {
+        // 导入外观的碰撞Bounds可能把名称板抬到远处目标血条上；胶囊是稳定锚点。
+        // 无血条NPC只显示选中提示，放低半个胶囊高度，避开其后方怪物的血条。
+        if (const auto* Capsule = Character->GetCapsuleComponent())
+            Binding->Request.WorldLocation = Capsule->GetComponentLocation() +
+                FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight() *
+                    (Binding->bSelectionOnly ? 0.5f : 1.0f) + 24.f);
+    }
     Binding->Request.bDisplayRequested = (bVisible && Binding->Request.Resource.MaximumValue > 0.f) || Binding->Request.bSelected;
     if (SelectedTarget.Get() == Actor) RefreshSelectionRing();
     auto* UI = Service.Get(); if (!UI) return;
@@ -232,7 +250,9 @@ void UDivineBeastsWorldHealthBarPresenter::SetSelectedTarget(AActor* Actor)
         if (bRemovePrevious) RemoveActor(Previous.Get()); else Publish(Previous.Get());
     }
     // UMG应用事件可同步拆除整个世界UI；旧选择栈不能在Clear之后重新持有目标。
-    if (Generation != ObservationGeneration || Revision != SelectionRevision || !IsValid(Actor) || Actor->GetWorld() != ObservedWorld.Get()) return;
+    UWorld* World = ObservedWorld.Get();
+    if (Generation != ObservationGeneration || Revision != SelectionRevision || !World || World->bIsTearingDown ||
+        !IsValid(Actor) || Actor->GetWorld() != World) return;
     if (!Bindings.Contains(Actor)) ObserveActor(Actor, true);
     auto* Binding = Bindings.Find(Actor);
     auto* Combat = Actor->FindComponentByClass<UGamePlatformCombatComponent>();
@@ -314,9 +334,17 @@ void UDivineBeastsWorldHealthBarPresenter::RefreshSelectionRing()
         SelectionRing->RegisterComponentWithWorld(World);
     }
     FVector Origin, Extent; Actor->GetActorBounds(true, Origin, Extent);
-    const float RadiusCm = FMath::Clamp(FMath::Max(Extent.X, Extent.Y) * 1.15f, 45.f, 180.f);
-    SelectionRing->DecalSize = FVector(24.f, RadiusCm, RadiusCm);
-    SelectionRing->SetWorldLocation(Origin - FVector(0, 0, Extent.Z - 4.f));
+    // 远处人型目标的原始Bounds过窄；最低一米半径让脚下状态在常用选择距离仍可辨认。
+    const float RadiusCm = FMath::Clamp(FMath::Max(Extent.X, Extent.Y) * 1.35f, 100.f, 220.f);
+    const FVector BoundsFoot = Origin - FVector(0.f, 0.f, Extent.Z);
+    FHitResult GroundHit;
+    FCollisionQueryParams GroundQuery(SCENE_QUERY_STAT(DivineBeastsTargetRingGround), false, Actor);
+    // 动画和导入模型可改变网格Bounds；用真实地面命中定位，不让法环埋入地形。
+    const bool bGroundHit = World->LineTraceSingleByChannel(GroundHit,
+        BoundsFoot + FVector(0.f, 0.f, 150.f), BoundsFoot - FVector(0.f, 0.f, 250.f),
+        ECC_Visibility, GroundQuery);
+    SelectionRing->DecalSize = FVector(64.f, RadiusCm, RadiusCm);
+    SelectionRing->SetWorldLocation((bGroundHit ? GroundHit.ImpactPoint : BoundsFoot) + FVector(0.f, 0.f, 12.f));
     SelectionRingInstance->SetVectorParameterValue(TEXT("SelectionColor"), Binding->Request.SelectionTint);
     SelectionRing->MarkRenderStateDirty();
 }

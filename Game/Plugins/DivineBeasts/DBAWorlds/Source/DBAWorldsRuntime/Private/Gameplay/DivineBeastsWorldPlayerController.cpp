@@ -446,11 +446,21 @@ AActor* ADivineBeastsWorldPlayerController::FindPointerTarget() const
     FVector Origin, Direction;
     if (!DeprojectMousePositionToWorld(Origin, Direction)) return nullptr;
     FCollisionQueryParams Params(SCENE_QUERY_STAT(DivineBeastsPointerTarget), false, GetPawn());
-    FHitResult Hit;
+    const FVector End = Origin + Direction * 10000.f;
+    FHitResult VisibilityHit;
     // 最大显示选择距离为100米；交互仍由平台按实际交互距离二次校验，不能使用该距离执行动作。
-    if (!GetWorld()->LineTraceSingleByChannel(Hit, Origin, Origin + Direction * 10000.f, ECC_Visibility, Params)) return nullptr;
-    AActor* Actor = Hit.GetActor();
-    return IsValid(Actor) && (Cast<APawn>(Actor) || Actor->FindComponentByClass<UGamePlatformInteractableComponent>()) ? Actor : nullptr;
+    const bool bBlocked = GetWorld()->LineTraceSingleByChannel(VisibilityHit, Origin, End, ECC_Visibility, Params);
+    AActor* VisibleActor = bBlocked ? VisibilityHit.GetActor() : nullptr;
+    if (IsValid(VisibleActor) && (Cast<APawn>(VisibleActor) ||
+        VisibleActor->FindComponentByClass<UGamePlatformInteractableComponent>())) return VisibleActor;
+
+    // 人物胶囊可能不阻挡Visibility。只补查Pawn对象通道，且不得越过Visibility已命中的遮挡物。
+    FHitResult PawnHit;
+    if (!GetWorld()->LineTraceSingleByObjectType(PawnHit, Origin, End,
+        FCollisionObjectQueryParams(ECC_Pawn), Params)) return nullptr;
+    AActor* PawnActor = PawnHit.GetActor();
+    return IsValid(PawnActor) && Cast<APawn>(PawnActor) &&
+        (!bBlocked || PawnHit.Distance <= VisibilityHit.Distance + 2.f) ? PawnActor : nullptr;
 }
 
 void ADivineBeastsWorldPlayerController::SetSelectedWorldTarget(AActor* Target)

@@ -16,7 +16,10 @@ struct FDivineBeastsUIViewState;
 class UGamePlatformStatusEffectTrayWidget;
 class UGamePlatformAbilityCastComponent;
 class UGamePlatformCastProgressWidget;
+class UGamePlatformCombatFeedbackWorldSubsystem;
+class UGamePlatformFeedbackWidget;
 class UDivineBeastsCharacterComponent;
+struct FGamePlatformCombatEvent;
 struct FGamePlatformAbilityCastFacts;
 struct FGameplayTag;
 struct FOnAttributeChangeData;
@@ -57,6 +60,9 @@ protected:
     /** 公共UI包作者制作的脚下选中贴花；SelectionColor参数由事件提供，不参与服务器或Gameplay。 */
     UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|UI|World")
     TObjectPtr<UMaterialInterface> SelectionRingMaterial;
+    /** 公共界面包的真实浮字控件；仅消费当前世界已确认的伤害事件。 */
+    UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|UI|Combat")
+    TSubclassOf<UGamePlatformFeedbackWidget> CombatFloatingTextClass;
 
 private:
     UPROPERTY(Transient) TObjectPtr<UDivineBeastsWorldHealthBarPresenter> WorldHealthBars;
@@ -65,6 +71,12 @@ private:
     void BindWorldHealthBars(APawn* DisplayPawn);
     void HandleFinalCameraViewChanged();
     void RefreshWorldHealthBarToggleText();
+    /** 新手村与开放世界共用的平台反馈通知；竞技场由竞技客户端装配，避免双份飘字。 */
+    void BindWorldCombatFeedback(APawn* DisplayPawn);
+    void UnbindWorldCombatFeedback();
+    void HandleConfirmedWorldCombatFeedback(const FGamePlatformCombatEvent& Event);
+    TWeakObjectPtr<UGamePlatformCombatFeedbackWorldSubsystem> BoundCombatFeedbackBus;
+    FDelegateHandle CombatFeedbackHandle;
     /** 公共世界四种HUD的实际选择与单一模型；根布局拥有页面代次，子HUD仅订阅显示。 */
     TWeakObjectPtr<UDivineBeastsUIClientSubsystem> WorldUIOwner;
     TWeakObjectPtr<UDivineBeastsWorldHUDBase> ActiveWorldContextHUD;

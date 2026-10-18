@@ -31,6 +31,8 @@ UDivineBeastsAbilityLoadoutComponent::UDivineBeastsAbilityLoadoutComponent()
 void UDivineBeastsAbilityLoadoutComponent::BeginPlay()
 {
     Super::BeginPlay();
+    // 仅引擎新的BeginPlay可重新开放技能装配；不能由过期租约回调复活已退出的世界作用域。
+    bEndingPlay = false;
     AActor* Owner = GetOwner();
     CharacterIdentity = Owner ? Owner->FindComponentByClass<UDivineBeastsCharacterComponent>() : nullptr;
     AbilitySystem = Owner ? Owner->FindComponentByClass<UAbilitySystemComponent>() : nullptr;
@@ -50,19 +52,23 @@ void UDivineBeastsAbilityLoadoutComponent::BeginPlay()
 
 void UDivineBeastsAbilityLoadoutComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
+    // 必须先失效可重入授权，再触发委托解绑/GAS取消/Data租约释放。
+    // 否则效果移除的同步回调可在EndPlay栈中重新Grant并残留到已经退出的ASC。
+    bEndingPlay = true;
+    ++RequestSerial;
     if (UDivineBeastsCharacterComponent* Character = CharacterIdentity.Get())
     {
         Character->OnReadinessChanged().Remove(ReadinessHandle);
     }
     ReadinessHandle.Reset();
-    ++RequestSerial;
+    // Widget/观察者在销毁期不得接收新的Ready快照；回调可能同步触发EndPlay。
+    Changed.Clear();
     if (GetOwner() && GetOwner()->HasAuthority())
     {
         RevokeOwnedGrants();
     }
     CharacterIdentity.Reset();
     AbilitySystem.Reset();
-    Changed.Clear();
     Super::EndPlay(Reason);
 }
 
@@ -76,6 +82,8 @@ void UDivineBeastsAbilityLoadoutComponent::GetLifetimeReplicatedProps(
 
 void UDivineBeastsAbilityLoadoutComponent::OnRep_LoadoutState()
 {
+    // 客户端可能在World退出期间收到最后一包复制，不允许已销毁的技能栏回弹。
+    if (bEndingPlay) return;
     // 此处只通知本地 UI；不解析资源、不改变 ASC 的权威状态。
     Changed.Broadcast(LoadoutState);
 }
@@ -89,7 +97,7 @@ IGamePlatformDataService* UDivineBeastsAbilityLoadoutComponent::FindDataService(
 
 void UDivineBeastsAbilityLoadoutComponent::HandleCharacterReadinessChanged(bool bReady)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority())
+    if (bEndingPlay || !IsValid(GetOwner()) || !GetOwner()->HasAuthority())
     {
         return;
     }
@@ -100,8 +108,15 @@ void UDivineBeastsAbilityLoadoutComponent::HandleCharacterReadinessChanged(bool 
     }
     else
     {
-        ++RequestSerial;
+        const int32 ExpectedSerial = ++RequestSerial;
         RevokeOwnedGrants();
+        // GAS撤销通知可能同步接管为新英雄/化身或发起新技能集请求。
+        // 旧的NotReady回调仅可撤销当时的授权，不能在返回后清空后继Ready快照。
+        if (ExpectedSerial != RequestSerial || !IsValid(GetOwner()) ||
+            !GetOwner()->HasAuthority())
+        {
+            return;
+        }
         PublishLoadout(NAME_None, 0, false, {});
     }
 }
@@ -112,8 +127,8 @@ bool UDivineBeastsAbilityLoadoutComponent::AuthorityRefreshFromCharacter(FString
     AActor* Owner = GetOwner();
     UDivineBeastsCharacterComponent* Character = CharacterIdentity.Get();
     UAbilitySystemComponent* ASC = AbilitySystem.Get();
-    if (!Owner || !Owner->HasAuthority() || !Character || !ASC ||
-        !Character->IsCharacterReady())
+    if (bEndingPlay || !IsValid(Owner) || !Owner->HasAuthority() ||
+        !IsValid(Character) || !IsValid(ASC) || !Character->IsCharacterReady())
     {
         OutError = TEXT("技能授权需要可信服务器角色身份、ASC及就绪状态。");
         return false;
@@ -137,9 +152,18 @@ bool UDivineBeastsAbilityLoadoutComponent::AuthorityRefreshFromCharacter(FString
         Hero->DefinitionId, Hero->DefaultAbilitySetId, bDevelopmentEnabled, DevelopmentSetId);
     if (RequestedSetId.IsNone())
     {
-        ++RequestSerial;
+        const FName ExpectedHero = Hero->DefinitionId;
+        const int32 ExpectedAvatar = Character->GetAvatarGeneration();
+        const int32 ExpectedSerial = ++RequestSerial;
         RevokeOwnedGrants();
-        PublishLoadout(Hero->DefinitionId, Character->GetAvatarGeneration(), false, {});
+        // GAS撤销可同步触发角色/权限变更：旧空技能集请求不得清空后继角色的授权快照。
+        if (ExpectedSerial == RequestSerial && CharacterIdentity.Get() == Character &&
+            IsValid(Character) && Character->IsCharacterReady() &&
+            Character->GetHeroDefinitionId() == ExpectedHero &&
+            Character->GetAvatarGeneration() == ExpectedAvatar)
+        {
+            PublishLoadout(ExpectedHero, ExpectedAvatar, false, {});
+        }
         OutError = TEXT("英雄尚未配置已批准的默认技能集合；禁止虚构技能。");
         return false;
     }
@@ -160,9 +184,30 @@ bool UDivineBeastsAbilityLoadoutComponent::AuthorityRefreshFromCharacter(FString
         return true;
     }
 
-    ++RequestSerial;
+    const int32 Serial = ++RequestSerial;
+    const FName ExpectedHero = Hero->DefinitionId;
+    const int32 ExpectedAvatar = Character->GetAvatarGeneration();
+    const auto IsRequestCurrent = [this, Serial, ExpectedHero, ExpectedAvatar, Character]()
+    {
+        const AActor* CurrentOwner = GetOwner();
+        return !bEndingPlay && Serial == RequestSerial &&
+            IsValid(CurrentOwner) && CurrentOwner->HasAuthority() &&
+            CharacterIdentity.Get() == Character && IsValid(Character) &&
+            Character->IsCharacterReady() && Character->GetHeroDefinitionId() == ExpectedHero &&
+            Character->GetAvatarGeneration() == ExpectedAvatar;
+    };
     RevokeOwnedGrants();
-    PublishLoadout(Hero->DefinitionId, Character->GetAvatarGeneration(), false, {});
+    if (!IsRequestCurrent())
+    {
+        OutError = TEXT("GAS旧授权撤销期间角色身份或请求代次已被接管。");
+        return false;
+    }
+    PublishLoadout(ExpectedHero, ExpectedAvatar, false, {});
+    if (!IsRequestCurrent())
+    {
+        OutError = TEXT("技能加载前的UI快照回调已经切换角色或技能请求。");
+        return false;
+    }
     IGamePlatformDataService* Data = FindDataService();
     if (!Data)
     {
@@ -171,14 +216,13 @@ bool UDivineBeastsAbilityLoadoutComponent::AuthorityRefreshFromCharacter(FString
     }
 
     PendingSetId = RequestedSetId;
-    const int32 Serial = RequestSerial;
-    const FName ExpectedHero = Hero->DefinitionId;
-    const int32 ExpectedAvatar = Character->GetAvatarGeneration();
     const FPrimaryAssetId SetId(
         UGamePlatformPrimaryDataAsset::DefinitionAssetType(), PendingSetId);
     const TWeakObjectPtr<UDivineBeastsAbilityLoadoutComponent> WeakSelf(this);
     FGamePlatformResult AcquireResult;
-    DefinitionLease = Data->AcquireDefinition(
+    // Data获取虽然合同要求延迟回调，仍以返回的局部句柄隔离可能同步触发的旧世界/换英雄通知。
+    // 只有当前请求仍存活才能安装到组件；失败或旧请求只释放自身签发的租约。
+    const FGamePlatformDataLease NewLease = Data->AcquireDefinition(
         SetId, UGamePlatformAbilitySetDefinition::StaticClass(),
         { TEXT("AbilitySet"), TEXT("Gameplay") }, EGamePlatformDataLifetime::World, this,
         [WeakSelf, Serial, ExpectedHero, ExpectedAvatar](
@@ -189,12 +233,20 @@ bool UDivineBeastsAbilityLoadoutComponent::AuthorityRefreshFromCharacter(FString
                 Self->HandleAbilitySetLoaded(Lease, Serial, ExpectedHero, ExpectedAvatar);
             }
         }, AcquireResult);
-    if (!AcquireResult.IsSuccess() || !DefinitionLease.IsValid())
+    if (!IsRequestCurrent() || PendingSetId != RequestedSetId)
+    {
+        if (NewLease.IsValid()) Data->ReleaseDefinition(NewLease);
+        OutError = TEXT("技能数据获取期间当前英雄或化身已被后继请求接管。");
+        return false;
+    }
+    if (!AcquireResult.IsSuccess() || !NewLease.IsValid())
     {
         PendingSetId = NAME_None;
+        if (NewLease.IsValid()) Data->ReleaseDefinition(NewLease);
         OutError = TEXT("默认技能集合资源申请被平台数据服务拒绝。");
         return false;
     }
+    DefinitionLease = NewLease;
     OutError.Reset();
     return true;
 }
@@ -206,22 +258,33 @@ void UDivineBeastsAbilityLoadoutComponent::HandleAbilitySetLoaded(
     check(IsInGameThread());
     UDivineBeastsCharacterComponent* Character = CharacterIdentity.Get();
     IGamePlatformDataService* Data = FindDataService();
-    if (!Data || !GetOwner() || !GetOwner()->HasAuthority() ||
+    const auto IsRequestCurrent = [this, Character, ExpectedRequestSerial, ExpectedHero, ExpectedAvatar]()
+    {
+        const AActor* CurrentOwner = GetOwner();
+        return !bEndingPlay && IsValid(CurrentOwner) && CurrentOwner->HasAuthority() &&
+            ExpectedRequestSerial == RequestSerial && CharacterIdentity.Get() == Character &&
+            IsValid(Character) && Character->IsCharacterReady() &&
+            Character->GetHeroDefinitionId() == ExpectedHero &&
+            Character->GetAvatarGeneration() == ExpectedAvatar;
+    };
+    if (!Data || !IsRequestCurrent() ||
         !DefinitionLease.IsValid() || !CompletedLease.IsValid() ||
-        ExpectedRequestSerial != RequestSerial ||
+        CompletedLease.ScopeId != DefinitionLease.ScopeId ||
         CompletedLease.LeaseId != DefinitionLease.LeaseId ||
         CompletedLease.Generation != DefinitionLease.Generation ||
-        !Character || !Character->IsCharacterReady() ||
-        Character->GetHeroDefinitionId() != ExpectedHero ||
-        Character->GetAvatarGeneration() != ExpectedAvatar)
+        CompletedLease.IssuerProof != DefinitionLease.IssuerProof ||
+        CompletedLease.DefinitionId != DefinitionLease.DefinitionId ||
+        CompletedLease.ResourcePaths != DefinitionLease.ResourcePaths ||
+        CompletedLease.Bundles != DefinitionLease.Bundles)
     {
-        // 迟到回调不得安装上一个角色的技能，租约由最新请求/EndPlay清理。
+        // 必须核对平台签发租约的完整身份；旧回调不得冒用新角色同名技能集。
         return;
     }
     if (Data->GetLeaseState(DefinitionLease) != EGamePlatformDataRequestState::Succeeded)
     {
+        if (!IsRequestCurrent()) return;
         RevokeOwnedGrants();
-        PublishLoadout(ExpectedHero, ExpectedAvatar, false, {});
+        if (IsRequestCurrent()) PublishLoadout(ExpectedHero, ExpectedAvatar, false, {});
         return;
     }
 
@@ -230,10 +293,13 @@ void UDivineBeastsAbilityLoadoutComponent::HandleAbilitySetLoaded(
     FString Error;
     if (!Set || !ApplyAbilitySet(*Set, Error))
     {
+        // 给Ability/GE授权的同步通知可触发后继请求；旧失败不应回滚后继成功。
+        if (!IsRequestCurrent()) return;
         RevokeOwnedGrants();
-        PublishLoadout(ExpectedHero, ExpectedAvatar, false, {});
+        if (IsRequestCurrent()) PublishLoadout(ExpectedHero, ExpectedAvatar, false, {});
         return;
     }
+    if (!IsRequestCurrent() || !DefinitionLease.IsValid()) return;
 
     TArray<FDivineBeastsGrantedAbilitySlot> Slots;
     Slots.Reserve(Set->Abilities.Num());
@@ -249,6 +315,7 @@ void UDivineBeastsAbilityLoadoutComponent::HandleAbilitySetLoaded(
             : FName(*(FString(TEXT("Ability.Passive.")) + Grant.AbilityId.ToString()));
         Slots.Add(MoveTemp(Slot));
     }
+    if (!IsRequestCurrent() || !DefinitionLease.IsValid()) return;
     PublishLoadout(ExpectedHero, ExpectedAvatar, true, Slots);
 }
 
@@ -298,12 +365,45 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
     const UGamePlatformAbilitySetDefinition& Set, FString& OutError)
 {
     UAbilitySystemComponent* ASC = AbilitySystem.Get();
-    if (!GetOwner() || !GetOwner()->HasAuthority() || !ASC ||
-        !Set.ValidateDefinition().IsSuccess())
+    if (bEndingPlay || !IsValid(GetOwner()) || !GetOwner()->HasAuthority() ||
+        !IsValid(ASC) || !Set.ValidateDefinition().IsSuccess())
     {
         OutError = TEXT("未通过可信服务器技能集合校验。");
         return false;
     }
+    // GAS ApplyEffect/GiveAbility 都可能同步广播，后继角色可在当前栈内撤销旧租约。
+    // 保留本次唯一请求身份，禁止外部回调使旧授权写进新角色的授权账本。
+    const int32 GrantSerial = RequestSerial;
+    const FName GrantSetId = PendingSetId;
+    UDivineBeastsCharacterComponent* GrantCharacter = CharacterIdentity.Get();
+    const FName GrantHero = IsValid(GrantCharacter) ? GrantCharacter->GetHeroDefinitionId() : NAME_None;
+    const int32 GrantAvatar = IsValid(GrantCharacter) ? GrantCharacter->GetAvatarGeneration() : 0;
+    const auto IsGrantCurrent = [this, ASC, GrantSerial, GrantSetId, GrantCharacter, GrantHero, GrantAvatar]()
+    {
+        const AActor* CurrentOwner = GetOwner();
+        return !bEndingPlay && GrantSerial == RequestSerial &&
+            !GrantSetId.IsNone() && PendingSetId == GrantSetId &&
+            DefinitionLease.IsValid() && IsValid(CurrentOwner) && CurrentOwner->HasAuthority() &&
+            AbilitySystem.Get() == ASC && IsValid(GrantCharacter) &&
+            CharacterIdentity.Get() == GrantCharacter && GrantCharacter->IsCharacterReady() &&
+            GrantCharacter->GetHeroDefinitionId() == GrantHero &&
+            GrantCharacter->GetAvatarGeneration() == GrantAvatar;
+    };
+    if (!IsGrantCurrent())
+    {
+        OutError = TEXT("GAS技能授权开始时当前租约或角色代次已失效。");
+        return false;
+    }
+    // DataService 的有效租约只证明签发身份，不能代替实际加载对象身份。
+    // 如果资产注册或配置发生同ID串用，绝不授予另一个集合的数据。
+    const FPrimaryAssetId ExpectedSetAssetId(
+        UGamePlatformPrimaryDataAsset::DefinitionAssetType(), GrantSetId);
+    if (Set.GetPrimaryAssetId() != ExpectedSetAssetId)
+    {
+        OutError = TEXT("实际加载的技能集合主资产身份与本次签发的集合ID不一致。");
+        return false;
+    }
+
     // Development客户端与Dedicated Server均可参加用户明确开启的验证；
     // 配置和启动参数缺一不可，Shipping/Test由编译期无条件关闭，即使开发目录被误Cook。
     if (Set.bDevelopmentOnly && !DivineBeasts::DevelopmentAbilities::IsEnabledForCurrentProcess())
@@ -327,15 +427,26 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
 
     // 预检完整资源与当前 ASC 标签冲突；防止部分 GiveAbility 后失败留下半授权。
     TSet<FGameplayTag> NewInputTags;
+    TSet<const UClass*> NewAbilityClasses;
     for (const FGamePlatformAbilityGrant& Grant : Set.Abilities)
     {
         UClass* AbilityClass = Grant.AbilityClass.Get();
-        if (!AbilityClass || !AbilityClass->IsChildOf(UGamePlatformGameplayAbility::StaticClass()))
+        if (!AbilityClass ||
+            !AbilityClass->IsChildOf(UGamePlatformGameplayAbility::StaticClass()) ||
+            AbilityClass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
         {
-            OutError = TEXT("技能类未按 AbilitySet Bundle 预加载或类型不合法。");
+            OutError = TEXT("技能类未预加载、反射类型非法或已经废弃，不允许进入GAS授权。");
             return false;
         }
-        // 平台约定一套ASC里同一个技能实现类不可重复授予；只检查既有真实授权，不按数组顺序覆盖。
+        // 通用Definition已排除重复软路径；这里补上重定向、别名等不同软路径解析到同一UClass的情况。
+        // 必须在授予第一个Spec前检查整个集合，禁止同类技能双重授权。
+        if (NewAbilityClasses.Contains(AbilityClass))
+        {
+            OutError = TEXT("当前技能集合包含重复解析的真实技能类，拒绝重复授权。");
+            return false;
+        }
+        NewAbilityClasses.Add(AbilityClass);
+        // 同时拒绝与ASC原来其它来源已经持有的同一技能类冲突。
         for (const FGameplayAbilitySpec& Existing : ASC->GetActivatableAbilities())
         {
             if (Existing.Ability && Existing.Ability->GetClass() == AbilityClass)
@@ -364,6 +475,14 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
         }
         else
         {
+            // 项目能力在实例内记录每次Commit资格；NonInstanced可能跨激活复用类默认对象。
+            // LocalOnly只执行客户端，不能成为专用服务器可信授权。
+            if (Configured->GetInstancingPolicy() == EGameplayAbilityInstancingPolicy::NonInstanced ||
+                Configured->GetNetExecutionPolicy() == EGameplayAbilityNetExecutionPolicy::LocalOnly)
+            {
+                OutError = TEXT("项目英雄技能禁止NonInstanced或LocalOnly网络执行策略。");
+                return false;
+            }
             const FPrimaryAssetId& DefinitionId = Configured->AbilityDefinitionId;
             if (!DefinitionId.IsValid() ||
                 DefinitionId.PrimaryAssetType !=
@@ -383,6 +502,13 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
                 OutError = TEXT("数据驱动技能依赖尚未预热，或归属英雄与可信身份不一致。");
                 return false;
             }
+            // 八槽正式数据的机制和VFX尚未执行原生测试前，仅作设计资产展示。
+            // 即使人为将草案GA加入某个AbilitySet，也绝不能给真实服务器授予空壳技能。
+            if (Definition->bEightSlotDraftOnly)
+            {
+                OutError = TEXT("八槽技能属于未批准的设计数据资产，禁止GAS服务器授权。");
+                return false;
+            }
             FDivineBeastsAbilityBalanceRow Balance;
             if (!Definition->TryGetLoadedBalance(Grant.AbilityLevel, Balance, OutError))
             {
@@ -396,9 +522,15 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
             int32 MomentumModifiers = 0;
             if (CostEffect)
             {
-                if (CostEffect->DurationPolicy != EGameplayEffectDurationType::Instant)
+                // 数值行只声明单一Momentum负向修改。瞬时GE仍可能通过Execution、周期或
+                // GameplayEffectComponent执行未声明的授权、伤害或状态修改，绝不可按Modifiers校验后放行。
+                const float CostPeriod = CostEffect->Period.GetValueAtLevel(Grant.AbilityLevel);
+                if (CostEffect->DurationPolicy != EGameplayEffectDurationType::Instant ||
+                    !FMath::IsFinite(CostPeriod) || !FMath::IsNearlyZero(CostPeriod) ||
+                    !CostEffect->Executions.IsEmpty() ||
+                    CostEffect->FindComponent(UGameplayEffectComponent::StaticClass()) != nullptr)
                 {
-                    OutError = TEXT("技能气势成本 GameplayEffect 必须是瞬时效果，不允许周期或无限堆叠扣除。");
+                    OutError = TEXT("气势成本GE含非瞬时、周期、执行计算或未经审核的组件副作用，拒绝授予。");
                     return false;
                 }
                 for (const FGameplayModifierInfo& Modifier : CostEffect->Modifiers)
@@ -447,6 +579,17 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
                     OutError = TEXT("技能冷却标签、持续类型或同等级GE持续秒数与数值表不一致。");
                     return false;
                 }
+                // 冷却效果负责授予持续标签，不允许借冷却GE额外执行伤害、治疗或资源改写。
+                // 保留UE5.8的TargetTagsGameplayEffectComponent用于正常授予CooldownTags，
+                // 不把冷却Tag组件误判为非法的启动GE组件。
+                const float CooldownPeriod = CooldownEffect->Period.GetValueAtLevel(Grant.AbilityLevel);
+                if (!CooldownEffect->Modifiers.IsEmpty() ||
+                    !CooldownEffect->Executions.IsEmpty() ||
+                    !FMath::IsFinite(CooldownPeriod) || !FMath::IsNearlyZero(CooldownPeriod))
+                {
+                    OutError = TEXT("冷却GE只能授予有限期标签，不得包含数值修改、周期或执行计算。");
+                    return false;
+                }
             }
         }
         if (Grant.InputTag.IsValid())
@@ -488,6 +631,11 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
     // 单项失败由本组件调用方RevokeOwnedGrants按来源句柄撤销，绝不清空其它插件授予。
     for (const FGamePlatformEffectGrant& Grant : Set.Effects)
     {
+        if (!IsGrantCurrent())
+        {
+            OutError = TEXT("GAS启动效果授权期间角色身份已被后继请求接管。");
+            return false;
+        }
         const UGameplayEffect* Effect =
             Grant.EffectClass.Get()->GetDefaultObject<UGameplayEffect>();
         const FActiveGameplayEffectHandle Handle = ASC->ApplyGameplayEffectToSelf(
@@ -497,11 +645,23 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
             OutError = TEXT("可回滚启动效果应用失败，本次技能集合授予将撤销。");
             return false;
         }
+        if (!IsGrantCurrent())
+        {
+            // 外部效果事件可能在返回真实Handle之前撤销旧账本，新效果尚未入账，必须就地撤销。
+            if (IsValid(ASC)) ASC->RemoveActiveGameplayEffect(Handle);
+            OutError = TEXT("GAS启动效果回调中技能请求已过期，撤销本次新建效果。");
+            return false;
+        }
         OwnedEffectHandles.Add(Handle);
     }
 
     for (const FGamePlatformAbilityGrant& Grant : Set.Abilities)
     {
+        if (!IsGrantCurrent())
+        {
+            OutError = TEXT("GAS技能Spec授权期间角色身份已被后继请求接管。");
+            return false;
+        }
         FGameplayAbilitySpec Spec(Grant.AbilityClass.Get(), Grant.AbilityLevel);
         if (Grant.InputTag.IsValid())
         {
@@ -513,6 +673,17 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
             OutError = TEXT("服务器 GAS 授予技能失败，本次启动效果及技能集合将撤销。");
             return false;
         }
+        if (!IsGrantCurrent())
+        {
+            // 新Spec在GiveAbility同步通知之后才返回，外部账本尚未记账，按真实句柄单项撤销。
+            if (IsValid(ASC))
+            {
+                ASC->CancelAbilityHandle(Handle);
+                ASC->ClearAbility(Handle);
+            }
+            OutError = TEXT("GAS技能授权回调期间请求失效，撤销本次新建Spec。");
+            return false;
+        }
         OwnedAbilityHandles.Add(Handle);
     }
     OutError.Reset();
@@ -521,40 +692,50 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
 
 void UDivineBeastsAbilityLoadoutComponent::RevokeOwnedGrants()
 {
-    IGamePlatformDataService* Data = FindDataService();
+    // 先摘除当前组件拥有的真实句柄和租约，再调用GAS/平台Data外部入口。
+    // CancelAbility/RemoveActiveGameplayEffect可能同步引发角色重绑和后继授权；
+    // 旧调用只能撤销快照里的旧句柄，不能在返回后清空新请求的Owned数组与新租约。
+    TArray<FGameplayAbilitySpecHandle> AbilitiesToRevoke = MoveTemp(OwnedAbilityHandles);
+    TArray<FActiveGameplayEffectHandle> EffectsToRevoke = MoveTemp(OwnedEffectHandles);
+    const FGamePlatformDataLease LeaseToRelease = DefinitionLease;
+    OwnedAbilityHandles.Reset();
+    OwnedEffectHandles.Reset();
+    DefinitionLease = {};
+    PendingSetId = NAME_None;
+
     UAbilitySystemComponent* ASC = AbilitySystem.Get();
-    if (ASC && GetOwner() && GetOwner()->HasAuthority())
+    if (IsValid(ASC) && IsValid(GetOwner()) && GetOwner()->HasAuthority())
     {
-        for (const FGameplayAbilitySpecHandle Handle : OwnedAbilityHandles)
+        for (const FGameplayAbilitySpecHandle Handle : AbilitiesToRevoke)
         {
-            if (Handle.IsValid())
+            if (Handle.IsValid() && IsValid(ASC))
             {
                 ASC->CancelAbilityHandle(Handle);
-                ASC->ClearAbility(Handle);
+                if (IsValid(ASC)) ASC->ClearAbility(Handle);
             }
         }
-        for (const FActiveGameplayEffectHandle& Handle : OwnedEffectHandles)
+        for (const FActiveGameplayEffectHandle& Handle : EffectsToRevoke)
         {
-            if (Handle.IsValid())
+            if (Handle.IsValid() && IsValid(ASC))
             {
                 ASC->RemoveActiveGameplayEffect(Handle);
             }
         }
     }
-    OwnedAbilityHandles.Reset();
-    OwnedEffectHandles.Reset();
-    if (Data && DefinitionLease.IsValid())
+    if (LeaseToRelease.IsValid())
     {
-        Data->ReleaseDefinition(DefinitionLease);
+        if (IGamePlatformDataService* Data = FindDataService())
+        {
+            Data->ReleaseDefinition(LeaseToRelease);
+        }
     }
-    DefinitionLease = {};
-    PendingSetId = NAME_None;
 }
 
 void UDivineBeastsAbilityLoadoutComponent::PublishLoadout(
     FName HeroDefinitionId, int32 AvatarGeneration, bool bReady,
     const TArray<FDivineBeastsGrantedAbilitySlot>& Slots)
 {
+    if (bEndingPlay) return; // 退出期绝不由旧委托发布新授权或空状态。
     LoadoutState.HeroDefinitionId = HeroDefinitionId;
     LoadoutState.AvatarGeneration = AvatarGeneration;
     if (LoadoutState.Revision < MAX_int64)
@@ -563,12 +744,12 @@ void UDivineBeastsAbilityLoadoutComponent::PublishLoadout(
     }
     LoadoutState.bReady = bReady;
     LoadoutState.Slots = Slots;
+    const int64 PublishedRevision = LoadoutState.Revision;
     Changed.Broadcast(LoadoutState);
-    if (AActor* Owner = GetOwner())
+    // 同步监听者可以换Pawn、启动下一次授权或结束世界；外层旧栈不能为后继状态再次发网络更新。
+    if (bEndingPlay || LoadoutState.Revision != PublishedRevision) return;
+    if (AActor* Owner = GetOwner(); IsValid(Owner) && Owner->HasAuthority())
     {
-        if (Owner->HasAuthority())
-        {
-            Owner->ForceNetUpdate();
-        }
+        Owner->ForceNetUpdate();
     }
 }

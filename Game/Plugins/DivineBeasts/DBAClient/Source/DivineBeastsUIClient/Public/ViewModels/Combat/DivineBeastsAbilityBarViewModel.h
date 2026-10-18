@@ -23,6 +23,7 @@ struct FGameplayEffectSpec;
 struct FGameplayAbilitySpec;
 struct FGamePlatformAbilityAvatarBindingSnapshot;
 struct FDivineBeastsAbilityLoadoutState;
+struct FDivineBeastsGrantedAbilitySlot;
 class UGameInstance;
 class IGamePlatformDataService;
 
@@ -102,6 +103,11 @@ public:
 private:
     // 仅自动化夹具可植入旧的只读显示快照，以验证真实资格事件刷新；不开放运行授权写接口。
     friend class FDivineBeastsAbilityActivationEventsTest;
+    friend class FDivineBeastsAbilityDetailsProjectionTest;
+    friend class FDivineBeastsAbilityGrantIdentityTest;
+    /** 显示与命令共享精确槽位的唯一性约束；重复授权一律拒绝，不按快照顺序挑选。 */
+    static const FDivineBeastsGrantedAbilitySlot* FindUniqueGrantedSlot(
+        const FDivineBeastsAbilityLoadoutState& Snapshot, FName SlotId);
     void HandleLoadoutChanged(const FDivineBeastsAbilityLoadoutState& Snapshot);
     /** Data只在游戏线程延后完成；代次、英雄、原Loadout与完整租约必须仍属当前请求。 */
     void HandleProfileLoaded(uint64 ExpectedLoadGeneration, FName ExpectedHero,

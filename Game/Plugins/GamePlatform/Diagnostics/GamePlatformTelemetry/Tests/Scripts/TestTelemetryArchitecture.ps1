@@ -44,6 +44,16 @@ $Sink = [System.IO.File]::ReadAllText($SinkPath, $Utf8)
 foreach($Required in @('ScheduleRetry(','CancelRetryTickers(','FinalizeShutdownAfterBudget(','RetryAfterSeconds')){
     if(-not $Sink.Contains($Required)){ throw "Reconnect/retry contract missing: $Required" }
 }
+# 长期连续流量期间Pending可能始终非零；已触发的Ticker必须立即移除，
+# 调度失败也必须收敛本Batch，不能仅依赖Pending归零时Reset历史句柄。
+foreach($Required in @('RetryTickerHandles.Remove(*HandleIdentity)',
+                       'if (!Handle.IsValid())',
+                       'FinishPending(false, TEXT("retry_schedule_failed")',
+                       'FinishPending(false, TEXT("sink_shutdown")')) {
+    if(-not $Sink.Contains($Required)){
+        throw "Telemetry retry lifecycle/bounded handle contract missing: $Required"
+    }
+}
 # 按实际提交调用的第二实参捕获列表判断，独立ScheduleRetry不能污染该调用的结果。
 Import-Module (Join-Path $PSScriptRoot 'TelemetrySubmitCaptureAudit.psm1') -Force
 $UnsafeSubmitCaptures = @(Get-TelemetryUnsafeSubmitCaptures -Source $Sink)

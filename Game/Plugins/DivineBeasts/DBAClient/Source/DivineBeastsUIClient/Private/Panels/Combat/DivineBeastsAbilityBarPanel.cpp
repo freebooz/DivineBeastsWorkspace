@@ -16,7 +16,7 @@ void UDivineBeastsAbilityBarPanel::NativeConstruct()
 {
     Super::NativeConstruct();
     RefreshAbilitySourceFromOwningPawn();
-    // 初始没有技能授权时，也应清空并禁用真实可见的五个子槽位。
+    // 初始无GAS授权时清空真实Widget；新版最多八个可装载主动槽，旧版被动兼容。
     RefreshVisualSlots();
     BindAbilitySlotCommands(true);
 }
@@ -42,8 +42,12 @@ void UDivineBeastsAbilityBarPanel::NativeDestruct()
 
 void UDivineBeastsAbilityBarPanel::BindAbilitySlotCommands(bool bBind)
 {
-    UGamePlatformSlotWidget* ActiveSlots[] = {PrimaryAbilitySlot.Get(), ActiveAbilitySlot1.Get(),
-        ActiveAbilitySlot2.Get(), UltimateAbilitySlot.Get()};
+    UGamePlatformSlotWidget* ActiveSlots[] =
+    {
+        PrimaryAbilitySlot.Get(), ActiveAbilitySlot1.Get(), ActiveAbilitySlot2.Get(),
+        UltimateAbilitySlot.Get(), MovementAbilitySlot.Get(), DefenseAbilitySlot.Get(),
+        ControlAbilitySlot.Get(), SignatureAbilitySlot.Get()
+    };
     for (UGamePlatformSlotWidget* AbilitySlot : ActiveSlots)
     {
         if (!IsValid(AbilitySlot)) continue;
@@ -165,8 +169,8 @@ void UDivineBeastsAbilityBarPanel::RefreshSlotHotkey(
 void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
 {
     const FGuid ProjectionToken=FGuid::NewGuid(); VisualProjectionToken=ProjectionToken;
-    // 当前项目只声明了普通攻击、被动、两个主动与终极技能槽，
-    // 不允许用数组顺序或英雄名称隐式决定技能输入映射。
+    // 向八个可点击槽位投影服务器OwnerOnly授权，顺序与实体按键1—8保持一致。
+    // Legacy被动仍供旧五槽资产显示，新版从单独Hero Trait区呈现。
     struct FVisualBinding
     {
         /** 作者资产中已经存在的槽控件；项目不创建或取得其资产所有权。 */
@@ -188,9 +192,35 @@ void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
         { ActiveAbilitySlot2.Get(),
             FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot2")), TEXT("DBA.AbilityTwo"), false },
         { UltimateAbilitySlot.Get(),
-            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot4")), TEXT("DBA.UltimateAbility"), false }
+            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot4")), TEXT("DBA.UltimateAbility"), false },
+        { MovementAbilitySlot.Get(),
+            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot3")), TEXT("DBA.AbilitySlot3"), false },
+        { DefenseAbilitySlot.Get(),
+            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot5")), TEXT("DBA.AbilitySlot5"), false },
+        { ControlAbilitySlot.Get(),
+            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot6")), TEXT("DBA.AbilitySlot6"), false },
+        { SignatureAbilitySlot.Get(),
+            FName(TEXT("Platform.Ability.Input.DivineBeasts.Slot7")), TEXT("DBA.AbilitySlot7"), false }
     };
 
+    // 仅实际拥有八个不同主动GAS槽位时隐藏旧被动控件，
+    // 新旧英雄切换后自动恢复兼容，不创建额外Widget，也不依赖客户端伪造数据。
+    if (IsValid(PassiveAbilitySlot))
+    {
+        TSet<FName> DistinctActiveInputSlots;
+        for (const FGamePlatformUISlotState& Slot : AbilitySlots)
+        {
+            const FString SlotTag = Slot.SlotId.ToString();
+            if (SlotTag == TEXT("Platform.Ability.Input.DivineBeasts.Primary") ||
+                SlotTag.StartsWith(TEXT("Platform.Ability.Input.DivineBeasts.Slot")))
+                DistinctActiveInputSlots.Add(Slot.SlotId);
+        }
+        PassiveAbilitySlot->SetVisibility(
+            DistinctActiveInputSlots.Num() == 8 ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    }
+
+    // 详情只在状态事件中读取一次；按槽位与技能双重身份匹配，避免同技能多槽时串用等级/冷却。
+    const TArray<FDivineBeastsAbilitySlotDetails> Details = GetAbilitySlotDetails();
     for (const FVisualBinding& Binding : Bindings)
     {
         if (!Binding.Widget)
@@ -248,16 +278,43 @@ void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
         }
         if (auto* Cooldown = Cast<UProgressBar>(Binding.Widget->GetWidgetFromName(TEXT("CooldownFill"))))
             Cooldown->SetPercent(VisualState.OverlayProgress);
-        float EndsAtAppSeconds = 0.f, DurationSeconds = 0.f;
-        for (const FDivineBeastsAbilitySlotDetails& Detail : GetAbilitySlotDetails())
-        {
-            if (Detail.AbilityId == VisualState.ContentId && !Detail.AbilityId.IsNone())
+        const FDivineBeastsAbilitySlotDetails* Detail = Details.FindByPredicate(
+            [&VisualState](const FDivineBeastsAbilitySlotDetails& Candidate)
             {
-                EndsAtAppSeconds = Detail.CooldownEndsAtAppSeconds;
-                DurationSeconds = Detail.CooldownTotalSeconds;
-                break;
-            }
+                return !VisualState.ContentId.IsNone() && Candidate.SlotId == VisualState.SlotId &&
+                    Candidate.AbilityId == VisualState.ContentId;
+            });
+        FText Tooltip;
+        if (Detail)
+        {
+            Tooltip = FText::Format(NSLOCTEXT("DBAAbilityBar", "SkillTitle", "{0} · 等级 {1}"),
+                Detail->DisplayName, FText::AsNumber(Detail->AbilityLevel));
+            if (!Detail->Description.IsEmpty())
+                Tooltip = FText::Format(NSLOCTEXT("DBAAbilityBar", "DetailLine", "{0}\n{1}"), Tooltip, Detail->Description);
+            // 被动无主动操作入口；不能把这一正常状态提示为“当前条件不允许使用”。
+            const FText StateText = VisualState.bPending
+                ? NSLOCTEXT("DBAAbilityBar", "Pending", "技能授权正在确认")
+                : Binding.bPassive ? NSLOCTEXT("DBAAbilityBar", "Passive", "被动技能") : Detail->DisabledReason;
+            if (!StateText.IsEmpty())
+                Tooltip = FText::Format(NSLOCTEXT("DBAAbilityBar", "DetailLine", "{0}\n{1}"), Tooltip, StateText);
         }
+        else if (!VisualState.ContentId.IsNone())
+            Tooltip = NSLOCTEXT("DBAAbilityBar", "DetailsPending", "技能资料尚未加载");
+        Binding.Widget->SetToolTipText(Tooltip);
+        if (auto* Level = Cast<UTextBlock>(Binding.Widget->GetWidgetFromName(TEXT("LevelText"))))
+        {
+            Level->SetText(Detail && Detail->AbilityLevel > 0 ? FText::AsNumber(Detail->AbilityLevel) : FText::GetEmpty());
+            Level->SetVisibility(Level->GetText().IsEmpty() ? ESlateVisibility::Hidden : ESlateVisibility::HitTestInvisible);
+        }
+        if (auto* CooldownText = Cast<UTextBlock>(Binding.Widget->GetWidgetFromName(TEXT("CooldownText"))))
+        {
+            // 连续进度交给材质时钟；文字只标记冷却状态，避免把事件时刻的剩余秒数永久冻结在UI上。
+            const bool bCooling = Detail && Detail->CooldownRemainingSeconds > 0.f && VisualState.OverlayProgress > 0.f;
+            CooldownText->SetText(bCooling ? NSLOCTEXT("DBAAbilityBar", "Cooling", "冷却") : FText::GetEmpty());
+            CooldownText->SetVisibility(bCooling ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
+        }
+        const float EndsAtAppSeconds = Detail ? Detail->CooldownEndsAtAppSeconds : 0.f;
+        const float DurationSeconds = Detail ? Detail->CooldownTotalSeconds : 0.f;
         // 快照截止时间不会因其他刷新而重启动画；只更新材质参数，结束事件清除覆盖。
         Binding.Widget->ApplyOverlayTiming(EndsAtAppSeconds, DurationSeconds);
         // 在槽位蓝图状态事件之后刷新，不能让初始占位文字替代玩家当前生效按键。

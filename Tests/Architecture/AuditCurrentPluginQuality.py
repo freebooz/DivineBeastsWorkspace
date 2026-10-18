@@ -39,6 +39,49 @@ PERFORMANCE = {
 }
 
 
+# 已经核对的真实UE开发诊断关卡快捷入口；仅供人工观察/操作起点，不是正式功能案例。
+# 每个稳定插件身份最多关联一张代表性地图；共享地图不得重复计入功能完成。
+DIAGNOSTIC_MAPS = {
+    "GamePlatformPCG": "/Game/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1",
+    "GamePlatformWater": "/Game/Development/Water/Maps/L_GP_WaterReview",
+    "GamePlatformWeather": "/Game/Development/Weather/Maps/L_DBA_WeatherReview",
+    "GamePlatformCamera": "/Game/Development/PluginDemos/Maps/L_DBA_CinematicCameraReview",
+    "GamePlatformCombat": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_CombatReview",
+    "GamePlatformSFX": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview",
+    "GamePlatformInteraction": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview",
+    "GamePlatformAI": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview",
+    "GamePlatformSurface": "/Game/Development/MossSnow/Maps/L_DBA_MossSnowReview",
+    "GamePlatformWorld": "/Game/Development/Terrain/Maps/L_DBA_TerrainFunctionReview",
+    "DBAWorlds": "/Game/Development/Terrain/Maps/L_DBA_TerrainFunctionReview",
+    "GamePlatformAnimation": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase",
+    "GamePlatformCharacter": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase",
+    "DBAGameplay": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase",
+    "GamePlatformArena": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_MainArenaReview",
+    "DBAArena": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_MainArenaReview",
+    "DBAClient": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockReview",
+    "GamePlatformVFX": "/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review/L_DBA_IceArrow_A_Review",
+    "DBAPresentationPack_Core": "/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review/L_DBA_IceArrow_A_Review",
+}
+
+
+def physical_diagnostic_map(root: Path, package: str) -> Path:
+    """仅两种受控挂载点映射，防止把任意/绝对路径伪装为已审核的原生资源。"""
+    if package.startswith("/Game/Development/"):
+        return root / "Game/Content" / (package.removeprefix("/Game/") + ".umap")
+    if package.startswith("/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review/"):
+        return (root / "Game/Plugins/DivineBeasts/ContentPacks/Presentation/"
+                "DBAPresentationPack_Core/Content" /
+                (package.removeprefix("/DBAPresentationPack_Core/") + ".umap"))
+    raise ValueError("未批准的诊断地图挂载点：" + package)
+
+
+def valid_ue_map_header(path: Path) -> bool:
+    if not path.is_file() or path.stat().st_size <= 64:
+        return False
+    with path.open("rb") as source:
+        return source.read(4) == bytes.fromhex("c1 83 2a 9e")
+
+
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
@@ -68,6 +111,14 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
     module_owners = {}
     edges = {}
     performance_count = Counter()
+    # 真实可操作案例与仅供观察的UE开发地图必须分列，不可将后者计入正式覆盖率。
+    for plugin_id, package in DIAGNOSTIC_MAPS.items():
+        if plugin_id not in actual:
+            issues.append("诊断地图快捷入口引用不存在的插件：" + plugin_id)
+        else:
+            file_path = physical_diagnostic_map(root, package)
+            if not valid_ue_map_header(file_path):
+                issues.append("诊断地图原生包缺失或签名异常：" + plugin_id + " → " + package)
     for path in descriptors:
         name = path.stem
         d = load_json(path)
@@ -95,10 +146,35 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
         widget_files = [p for p in assets if p.stem.startswith(("WBP_","WB_","BP_UI_"))]
         candidates = []
         for p in cpp:
-            if "Tests" in p.parts or any(part.lower().endswith("editor") for part in p.parts):
+            # 不把Editor-only模块或WITH_EDITOR编译路径误判为Client/Server运行时热点。
+            # 此处仅对常见显式预处理边界做保守扫描，复杂宏仍需独立UE构建/性能工具确认。
+            # 模块身份只能从本插件Source/<ModuleName>获得；
+            # 不能误匹配上级插件根目录名（例如PCGEditor源码路径也含PCG插件根名）。
+            parts = p.relative_to(owner).parts
+            module = parts[1] if len(parts) >= 3 and parts[0] == "Source" else ""
+            host = next((str(m.get("Type", "")) for m in modules
+                         if m.get("Name") == module), "")
+            if "Tests" in p.parts or host.startswith("Editor"):
                 continue
+            guards = []
             for line_no, line in enumerate(p.read_text(encoding="utf-8-sig",errors="replace").splitlines(),1):
-                if line.lstrip().startswith(("//","*","/*","#")):
+                stripped = line.lstrip()
+                if stripped.startswith(("#if ", "#ifdef ", "#ifndef ")):
+                    guards.append(stripped.startswith(("#if WITH_EDITOR", "#if UE_EDITOR", "#ifdef WITH_EDITOR")))
+                    continue
+                if stripped.startswith("#else"):
+                    if guards:
+                        guards[-1] = not guards[-1]
+                    continue
+                if stripped.startswith("#elif"):
+                    if guards:
+                        guards[-1] = False
+                    continue
+                if stripped.startswith("#endif"):
+                    if guards:
+                        guards.pop()
+                    continue
+                if any(guards) or stripped.startswith(("//","*","/*","#")):
                     continue
                 for category,pattern in PERFORMANCE.items():
                     if pattern.search(line):
@@ -112,6 +188,7 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
         fts = features[name]
         cases = [s for f in fts for s in scenarios[f["feature_id"]]]
         need_visual = kind == "content_pack" or name in VISUAL_CODE or bool(widget_files)
+        known_diagnostic = DIAGNOSTIC_MAPS.get(name)
         faults = [v for v in issues if v.startswith(name + "/") or v.startswith(name + " ")]
         if faults:
             priority = "P0"
@@ -129,6 +206,8 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
             "visualReviewRequired":need_visual,
             "registeredFeatures":len(fts), "wiredFeatures":sum(x.get("integration_status")=="wired" for x in fts),
             "registeredScenarios":len(cases),
+            "diagnosticMapPackage": known_diagnostic,
+            "diagnosticMapIsFormalScenario": False,
             "catalogStatus":manifest.get(name,{}).get("feature_audit_status","missing"),
             "humanApproved":False, "hasHumanOperationalScenario":bool(cases),
             "performanceReviewCandidates":candidates,
@@ -158,6 +237,9 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
         "visualWithoutOperationalScenario":sum(r["visualReviewRequired"] and not r["registeredScenarios"] for r in results),
         "demoFeatures":len(demo.get("features",[])), "demoScenarios":len(demo.get("scenarios",[])),
         "humanApproved":0,
+        "diagnosticShortcutPluginCount": sum(
+            bool(r["diagnosticMapPackage"]) for r in results),
+        "uniqueApprovedDiagnosticMapCount": len(set(DIAGNOSTIC_MAPS.values())),
         "priorityCounts":dict(Counter(r["priority"] for r in results)),
         "perfCandidates":dict(performance_count),
         "issues":issues, "plugins":results,
@@ -175,14 +257,16 @@ def markdown(report: dict) -> str:
         f"- 代码插件{report['code']}、内容包{report['content']}、声明模块{report['modules']}；已登记演示功能{report['demoFeatures']}、场景{report['demoScenarios']}，人工签收0。",
         f"- 要求可视化/交互人工验证的插件{report['visualRequired']}，尚无登记操作案例的{report['visualWithoutOperationalScenario']}。功能总分母未逐项评审，不能计算真实覆盖率。",
         f"- 有本模块原生测试源码的插件{report['withLocalNativeTests']}。没有本地文件不等于项目不存在跨模块自动化测试。",
+        f"- 已关联真实诊断图的插件{report['diagnosticShortcutPluginCount']}、不重复的诊断图{report['uniqueApprovedDiagnosticMapCount']}张；只是进入地图的观察入口，不计入正式演示案例和人工签收。",
         "",
-        "| 插件 | 层级/类别 | 模块 | 源码(.cpp) | 原生资产/地图 | 测试源 | 要求人工界面 | 演示案例 | 编目审查 | 优先级 |",
-        "|---|---|---:|---:|---:|---:|---|---:|---|---|",
+        "| 插件 | 层级/类别 | 模块 | 源码(.cpp) | 原生资产/地图 | 测试源 | 要求人工界面 | 诊断图快捷入口 | 正式演示案例 | 编目审查 | 优先级 |",
+        "|---|---|---:|---:|---:|---:|---|---|---:|---|---|",
     ]
     for p in report["plugins"]:
         fields = [p["pluginId"],p["layer"]+"/"+p["kind"],str(p["moduleCount"]),
                   str(p["cppFiles"]),str(p["nativeAssets"])+"/"+str(p["mapAssets"]),
                   str(p["nativeTestFiles"]),("是" if p["visualReviewRequired"] else "否"),
+                  ("有（待人工检查）" if p["diagnosticMapPackage"] else "无"),
                   str(p["registeredScenarios"]),p["catalogStatus"],p["priority"]]
         lines.append("| " + " | ".join(fields) + " |")
     lines.extend([

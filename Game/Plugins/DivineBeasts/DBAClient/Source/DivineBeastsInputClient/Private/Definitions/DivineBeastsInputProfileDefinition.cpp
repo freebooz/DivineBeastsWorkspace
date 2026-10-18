@@ -78,5 +78,23 @@ FGamePlatformResult UDivineBeastsInputProfileDefinition::ValidateDefinition() co
         }
     }
 
+    if (bRequireEightActiveSlots)
+    {
+        // 新八槽Profile必须提供真实Semantic定义；不能靠ini或画面显示的数字键伪装可使用。
+        const FGameplayTag Extended[] =
+        {
+            DivineBeastsInputSemantics::AbilitySlot5(),
+            DivineBeastsInputSemantics::AbilitySlot6(),
+            DivineBeastsInputSemantics::AbilitySlot7()
+        };
+        for (const FGameplayTag Tag : Extended)
+        {
+            if (!Tag.IsValid() || !ProjectSemantics.Contains(Tag))
+                return FGamePlatformResult::Failure(
+                    TEXT("DivineBeastsEightSlotInputMissing"),
+                    TEXT("正式八槽输入Profile缺少Slot5、Slot6或Slot7真实输入语义。"));
+        }
+    }
+
     return FGamePlatformResult::Success();
 }

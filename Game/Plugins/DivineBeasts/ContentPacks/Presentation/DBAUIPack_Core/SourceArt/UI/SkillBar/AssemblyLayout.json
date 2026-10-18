@@ -1,0 +1,394 @@
+{
+  "SchemaVersion": 1,
+  "Status": "HumanApproved_ImplementedInSavedWidgetBlueprints_RHIPending",
+  "HumanApproval": "2026-10-18：审核通过，继续执行",
+  "Units": "SlateUnit at application scale 1 / offline pixel",
+  "ArtworkCoordinateScale": 0.34,
+  "SourceCanvasOriginPx": [
+    14,
+    217
+  ],
+  "WholeCompositionTrimPx": {
+    "left": 1,
+    "top": 1,
+    "width": 727,
+    "height": 94,
+    "right": 727,
+    "bottom": 94
+  },
+  "UntrimmedAlphaBoundsPx": {
+    "left": 0,
+    "top": 0,
+    "width": 729,
+    "height": 96,
+    "right": 728,
+    "bottom": 95
+  },
+  "RasterFringeRemoved": {
+    "Threshold": 8,
+    "Pixels": 60,
+    "MaxAlpha": 3
+  },
+  "ContentSizePx": [
+    727,
+    94
+  ],
+  "AnchorMin": [
+    0.5,
+    1
+  ],
+  "AnchorMax": [
+    0.5,
+    1
+  ],
+  "Alignment": [
+    0.5,
+    1
+  ],
+  "PositionPx": [
+    0,
+    0
+  ],
+  "BottomGapPx": 0,
+  "TransparentPaddingExcluded": true,
+  "ActualShapeClipped": false,
+  "ViewportSafeArea": "PC无底部安全区时贴屏幕底边；有安全区时贴可用区域底边，不缩放字体",
+  "RootClip": "使用Alpha>8内容矩形；仅外侧重采样尾迹被裁去，原图主体造型保留。UE实际过滤仍须核对。",
+  "Placements": [
+    {
+      "Name": "SkillBar_Center",
+      "File": "T_DBA_UI_SkillBar_Center.png",
+      "RectPx": [
+        64,
+        4,
+        598,
+        90
+      ],
+      "Role": "中央底板",
+      "SourceCanvasRectPx": [
+        206,
+        233,
+        1760,
+        264
+      ]
+    },
+    {
+      "Name": "SkillSlot_BG",
+      "File": "T_DBA_UI_SkillSlot_BG.png",
+      "RectPx": [
+        67,
+        26,
+        48,
+        48
+      ],
+      "Role": "技能背景",
+      "Instance": "Skill_1",
+      "ExistingWidget": "PrimaryAbilitySlot",
+      "BindingState": "PreserveExistingEventBinding",
+      "SourceCenterPx": [
+        286,
+        366
+      ]
+    },
+    {
+      "Name": "SkillSlot_BG",
+      "File": "T_DBA_UI_SkillSlot_BG.png",
+      "RectPx": [
+        123,
+        26,
+        48,
+        48
+      ],
+      "Role": "技能背景",
+      "Instance": "Skill_2",
+      "ExistingWidget": "ActiveAbilitySlot1",
+      "BindingState": "PreserveExistingEventBinding",
+      "SourceCenterPx": [
+        448,
+        366
+      ]
+    },
+    {
+      "Name": "SkillSlot_BG",
+      "File": "T_DBA_UI_SkillSlot_BG.png",
+      "RectPx": [
+        178,
+        26,
+        48,
+        48
+      ],
+      "Role": "技能背景",
+      "Instance": "Skill_3",
+      "ExistingWidget": "UltimateAbilitySlot",
+      "BindingState": "PreserveExistingEventBinding",
+      "SourceCenterPx": [
+        610,
+        366
+      ]
+    },
+    {
+      "Name": "SkillSlot_BG",
+      "File": "T_DBA_UI_SkillSlot_BG.png",
+      "RectPx": [
+        233,
+        26,
+        48,
+        48
+      ],
+      "Role": "技能背景",
+      "Instance": "Skill_4",
+      "ExistingWidget": "ActiveAbilitySlot2",
+      "BindingState": "PreserveExistingEventBinding",
+      "SourceCenterPx": [
+        773,
+        366
+      ]
+    },
+    {
+      "Name": "SkillSlot_BG",
+      "File": "T_DBA_UI_SkillSlot_BG.png",
+      "RectPx": [
+        288,
+        26,
+        48,
+        48
+      ],
+      "Role": "技能背景",
+      "Instance": "Skill_5",
+      "ExistingWidget": "PassiveAbilitySlot",
+      "BindingState": "PreserveExistingEventBinding",
+      "SourceCenterPx": [
+        935,
+        366
+      ]
+    },
+    {
+      "Name": "SkillSlot_BG",
+      "File": "T_DBA_UI_SkillSlot_BG.png",
+      "RectPx": [
+        343,
+        26,
+        48,
+        48
+      ],
+      "Role": "技能背景",
+      "Instance": "Skill_6",
+      "ExistingWidget": null,
+      "BindingState": "UnboundPlaceholder",
+      "SourceCenterPx": [
+        1096,
+        366
+      ]
+    },
+    {
+      "Name": "SkillSlot_BG",
+      "File": "T_DBA_UI_SkillSlot_BG.png",
+      "RectPx": [
+        398,
+        26,
+        48,
+        48
+      ],
+      "Role": "技能背景",
+      "Instance": "Skill_7",
+      "ExistingWidget": null,
+      "BindingState": "UnboundPlaceholder",
+      "SourceCenterPx": [
+        1259,
+        366
+      ]
+    },
+    {
+      "Name": "SkillSlot_BG",
+      "File": "T_DBA_UI_SkillSlot_BG.png",
+      "RectPx": [
+        453,
+        26,
+        48,
+        48
+      ],
+      "Role": "技能背景",
+      "Instance": "Skill_8",
+      "ExistingWidget": null,
+      "BindingState": "UnboundPlaceholder",
+      "SourceCenterPx": [
+        1421,
+        366
+      ]
+    },
+    {
+      "Name": "FunctionSlot_BG",
+      "File": "T_DBA_UI_FunctionSlot_BG.png",
+      "RectPx": [
+        519,
+        26,
+        48,
+        48
+      ],
+      "Role": "功能按钮背景",
+      "Instance": "Function_1",
+      "SourceCenterPx": [
+        1614,
+        366
+      ]
+    },
+    {
+      "Name": "Icon_Inventory",
+      "File": "T_DBA_UI_Icon_Inventory.png",
+      "RectPx": [
+        531,
+        38,
+        24,
+        24
+      ],
+      "Role": "功能图标"
+    },
+    {
+      "Name": "FunctionSlot_BG",
+      "File": "T_DBA_UI_FunctionSlot_BG.png",
+      "RectPx": [
+        568,
+        26,
+        48,
+        48
+      ],
+      "Role": "功能按钮背景",
+      "Instance": "Function_2",
+      "SourceCenterPx": [
+        1758,
+        366
+      ]
+    },
+    {
+      "Name": "Icon_Party",
+      "File": "T_DBA_UI_Icon_Party.png",
+      "RectPx": [
+        580,
+        38,
+        24,
+        24
+      ],
+      "Role": "功能图标"
+    },
+    {
+      "Name": "FunctionSlot_BG",
+      "File": "T_DBA_UI_FunctionSlot_BG.png",
+      "RectPx": [
+        616,
+        26,
+        48,
+        48
+      ],
+      "Role": "功能按钮背景",
+      "Instance": "Function_3",
+      "SourceCenterPx": [
+        1898,
+        366
+      ]
+    },
+    {
+      "Name": "Icon_Settings",
+      "File": "T_DBA_UI_Icon_Settings.png",
+      "RectPx": [
+        628,
+        38,
+        24,
+        24
+      ],
+      "Role": "功能图标"
+    },
+    {
+      "Name": "CastBar_BG",
+      "File": "T_DBA_UI_CastBar_BG.png",
+      "RectPx": [
+        86,
+        14,
+        554,
+        3
+      ],
+      "Role": "施法底槽"
+    },
+    {
+      "Name": "CastBar_FG",
+      "File": "T_DBA_UI_CastBar_FG.png",
+      "RectPx": [
+        86,
+        14,
+        554,
+        3
+      ],
+      "Role": "施法填充",
+      "PreviewFill": 0.66,
+      "ClipOnly": true
+    },
+    {
+      "Name": "Momentum_Track",
+      "File": "T_DBA_UI_Momentum_Track.png",
+      "RectPx": [
+        101,
+        84,
+        527,
+        3
+      ],
+      "Role": "气势底槽"
+    },
+    {
+      "Name": "Momentum_Gradient",
+      "File": "T_DBA_UI_Momentum_Gradient.png",
+      "RectPx": [
+        101,
+        84,
+        527,
+        3
+      ],
+      "Role": "中心透明渐变"
+    },
+    {
+      "Name": "Momentum_Bubble",
+      "File": "T_DBA_UI_Momentum_Bubble.png",
+      "RectPx": [
+        356,
+        77,
+        18,
+        18
+      ],
+      "Role": "气势游标"
+    },
+    {
+      "Name": "SkillBar_EndLeft_V01",
+      "File": "T_DBA_UI_SkillBar_EndLeft_V01.png",
+      "RectPx": [
+        -1,
+        -1,
+        101,
+        96
+      ],
+      "Role": "左端装饰",
+      "SourceCanvasRectPx": [
+        14,
+        218,
+        297,
+        282
+      ]
+    },
+    {
+      "Name": "SkillBar_EndRight_V01",
+      "File": "T_DBA_UI_SkillBar_EndRight_V01.png",
+      "RectPx": [
+        627,
+        -1,
+        101,
+        96
+      ],
+      "Role": "右端装饰",
+      "SourceCanvasRectPx": [
+        1861,
+        217,
+        296,
+        283
+      ]
+    }
+  ],
+  "SkillMappingNote": "参考图八格；保留现有五个命名控件与只读事件绑定，另三格仅为空位候选，不创建业务技能。",
+  "ReadOnlyEditorEvidence": "Evidence/ExistingCombatHUD_WidgetTree.json"
+}

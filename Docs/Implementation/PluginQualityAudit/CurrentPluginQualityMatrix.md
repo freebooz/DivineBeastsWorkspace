@@ -7,76 +7,77 @@
 - 代码插件48、内容包19、声明模块89；已登记演示功能4、场景9，人工签收0。
 - 要求可视化/交互人工验证的插件53，尚无登记操作案例的51。功能总分母未逐项评审，不能计算真实覆盖率。
 - 有本模块原生测试源码的插件45。没有本地文件不等于项目不存在跨模块自动化测试。
+- 已关联真实诊断图的插件19、不重复的诊断图13张；只是进入地图的观察入口，不计入正式演示案例和人工签收。
 
-| 插件 | 层级/类别 | 模块 | 源码(.cpp) | 原生资产/地图 | 测试源 | 要求人工界面 | 演示案例 | 编目审查 | 优先级 |
-|---|---|---:|---:|---:|---:|---|---:|---|---|
-| DBAArena | Project/code | 3 | 24 | 6/0 | 8 | 是 | 0 | unreviewed | P1 |
-| DBAClient | Project/code | 6 | 198 | 1/0 | 62 | 是 | 2 | partial | P2 |
-| DBAContentPack_Common | Project/content_pack | 0 | 0 | 102/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAFrontEndPack | Project/content_pack | 0 | 0 | 53/2 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAGameplay | Project/code | 3 | 41 | 229/0 | 11 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Boar | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Dog | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Dragon | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Goat | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Horse | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Monkey | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Ox | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Rabbit | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Rat | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Rooster | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Snake | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAHeroPack_Tiger | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAPresentationPack_Core | Project/content_pack | 0 | 0 | 1664/1 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAServer | Project/code | 1 | 12 | 0/0 | 5 | 否 | 0 | unreviewed | P2 |
-| DBASFXPack_Core | Project/content_pack | 0 | 0 | 5/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAUIPack_Core | Project/content_pack | 0 | 0 | 166/0 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAWorldPack_MainArena | Project/content_pack | 0 | 0 | 4/1 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAWorldPack_Village | Project/content_pack | 0 | 0 | 190/1 | 0 | 是 | 0 | unreviewed | P1 |
-| DBAWorlds | Project/code | 1 | 7 | 0/0 | 2 | 是 | 0 | unreviewed | P1 |
-| GamePlatformAbilitySystem | Platform/code | 1 | 11 | 0/0 | 5 | 否 | 0 | unreviewed | P2 |
-| GamePlatformAI | Platform/code | 2 | 20 | 0/0 | 8 | 是 | 0 | unreviewed | P1 |
-| GamePlatformAnimation | Platform/code | 2 | 7 | 0/0 | 2 | 是 | 0 | unreviewed | P1 |
-| GamePlatformApplicationFlow | Platform/code | 1 | 10 | 0/0 | 5 | 否 | 0 | unreviewed | P2 |
-| GamePlatformArena | Moba/code | 5 | 29 | 0/0 | 7 | 是 | 0 | unreviewed | P1 |
-| GamePlatformCamera | Platform/code | 1 | 6 | 0/0 | 2 | 是 | 0 | unreviewed | P1 |
-| GamePlatformCharacter | Platform/code | 1 | 6 | 0/0 | 2 | 是 | 0 | unreviewed | P1 |
-| GamePlatformCombat | Platform/code | 1 | 18 | 0/0 | 6 | 是 | 0 | unreviewed | P1 |
-| GamePlatformCommerceUI | Platform/code | 1 | 8 | 0/0 | 4 | 是 | 0 | unreviewed | P1 |
-| GamePlatformCore | Platform/code | 1 | 8 | 0/0 | 2 | 否 | 3 | partial | P2 |
-| GamePlatformData | Platform/code | 2 | 19 | 0/0 | 10 | 否 | 2 | partial | P2 |
-| GamePlatformDebug | Platform/code | 2 | 7 | 0/0 | 1 | 是 | 0 | unreviewed | P1 |
-| GamePlatformDeveloperTools | Platform/code | 1 | 15 | 0/0 | 3 | 否 | 0 | unreviewed | P2 |
-| GamePlatformEntitlement | Platform/code | 2 | 7 | 0/0 | 2 | 否 | 0 | unreviewed | P2 |
-| GamePlatformEquipment | Platform/code | 3 | 10 | 0/0 | 3 | 是 | 0 | unreviewed | P1 |
-| GamePlatformGameplay | Platform/code | 1 | 14 | 0/0 | 5 | 是 | 0 | unreviewed | P1 |
-| GamePlatformInput | Platform/code | 1 | 11 | 0/0 | 4 | 是 | 0 | unreviewed | P1 |
-| GamePlatformInteraction | Platform/code | 1 | 10 | 0/0 | 5 | 是 | 0 | unreviewed | P1 |
-| GamePlatformInventory | Platform/code | 1 | 4 | 0/0 | 1 | 是 | 0 | unreviewed | P1 |
-| GamePlatformLiveOps | Platform/code | 1 | 9 | 0/0 | 5 | 否 | 0 | unreviewed | P2 |
-| GamePlatformLoading | Platform/code | 1 | 4 | 0/0 | 2 | 是 | 0 | unreviewed | P1 |
-| GamePlatformLobby | Platform/code | 3 | 3 | 0/0 | 0 | 是 | 0 | unreviewed | P1 |
-| GamePlatformLocalization | Platform/code | 1 | 1 | 0/0 | 0 | 否 | 0 | unreviewed | P2 |
-| GamePlatformNavigation | Platform/code | 2 | 13 | 0/0 | 4 | 是 | 0 | unreviewed | P1 |
-| GamePlatformOnline | Platform/code | 2 | 12 | 0/0 | 4 | 否 | 0 | unreviewed | P2 |
-| GamePlatformPCG | Platform/code | 2 | 32 | 0/0 | 5 | 是 | 0 | unreviewed | P1 |
-| GamePlatformPresentation | Platform/code | 2 | 8 | 0/0 | 2 | 是 | 0 | unreviewed | P1 |
-| GamePlatformProgression | Platform/code | 2 | 10 | 0/0 | 5 | 是 | 0 | unreviewed | P1 |
-| GamePlatformQuest | Platform/code | 3 | 14 | 0/0 | 5 | 是 | 0 | unreviewed | P1 |
-| GamePlatformSave | Platform/code | 1 | 7 | 0/0 | 2 | 否 | 0 | unreviewed | P2 |
-| GamePlatformServer | Platform/code | 1 | 15 | 0/0 | 8 | 否 | 0 | unreviewed | P2 |
-| GamePlatformSession | Platform/code | 1 | 7 | 0/0 | 3 | 否 | 0 | unreviewed | P2 |
-| GamePlatformSettings | Platform/code | 4 | 23 | 0/0 | 4 | 是 | 0 | unreviewed | P1 |
-| GamePlatformSFX | Platform/code | 1 | 11 | 0/0 | 4 | 是 | 0 | unreviewed | P1 |
-| GamePlatformSurface | Platform/code | 2 | 23 | 149/0 | 4 | 是 | 0 | unreviewed | P1 |
-| GamePlatformTelemetry | Platform/code | 1 | 14 | 0/0 | 4 | 否 | 0 | unreviewed | P2 |
-| GamePlatformUI | Platform/code | 1 | 56 | 14/0 | 13 | 是 | 2 | partial | P2 |
-| GamePlatformVFX | Platform/code | 2 | 64 | 52/0 | 21 | 是 | 0 | unreviewed | P1 |
-| GamePlatformVillage | Platform/code | 3 | 3 | 0/0 | 0 | 是 | 0 | unreviewed | P1 |
-| GamePlatformWater | Platform/code | 3 | 9 | 0/0 | 1 | 是 | 0 | unreviewed | P1 |
-| GamePlatformWeather | Platform/code | 2 | 9 | 0/0 | 1 | 是 | 0 | unreviewed | P1 |
-| GamePlatformWorld | Platform/code | 2 | 16 | 0/0 | 6 | 是 | 0 | unreviewed | P1 |
-| MobaPresentation | Moba/code | 2 | 13 | 0/0 | 4 | 是 | 0 | unreviewed | P1 |
+| 插件 | 层级/类别 | 模块 | 源码(.cpp) | 原生资产/地图 | 测试源 | 要求人工界面 | 诊断图快捷入口 | 正式演示案例 | 编目审查 | 优先级 |
+|---|---|---:|---:|---:|---:|---|---|---:|---|---|
+| DBAArena | Project/code | 3 | 24 | 6/0 | 8 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| DBAClient | Project/code | 6 | 198 | 1/0 | 62 | 是 | 有（待人工检查） | 2 | partial | P2 |
+| DBAContentPack_Common | Project/content_pack | 0 | 0 | 102/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAFrontEndPack | Project/content_pack | 0 | 0 | 53/2 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAGameplay | Project/code | 3 | 41 | 229/0 | 11 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| DBAHeroPack_Boar | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Dog | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Dragon | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Goat | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Horse | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Monkey | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Ox | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Rabbit | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Rat | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Rooster | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Snake | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Tiger | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAPresentationPack_Core | Project/content_pack | 0 | 0 | 1664/1 | 0 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| DBAServer | Project/code | 1 | 12 | 0/0 | 5 | 否 | 无 | 0 | unreviewed | P2 |
+| DBASFXPack_Core | Project/content_pack | 0 | 0 | 5/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAUIPack_Core | Project/content_pack | 0 | 0 | 167/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAWorldPack_MainArena | Project/content_pack | 0 | 0 | 4/1 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAWorldPack_Village | Project/content_pack | 0 | 0 | 190/1 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAWorlds | Project/code | 1 | 7 | 0/0 | 2 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformAbilitySystem | Platform/code | 1 | 11 | 0/0 | 5 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformAI | Platform/code | 2 | 20 | 0/0 | 8 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformAnimation | Platform/code | 2 | 7 | 0/0 | 2 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformApplicationFlow | Platform/code | 1 | 10 | 0/0 | 5 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformArena | Moba/code | 5 | 29 | 0/0 | 7 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformCamera | Platform/code | 1 | 6 | 0/0 | 2 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformCharacter | Platform/code | 1 | 6 | 0/0 | 2 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformCombat | Platform/code | 1 | 18 | 0/0 | 6 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformCommerceUI | Platform/code | 1 | 8 | 0/0 | 4 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformCore | Platform/code | 1 | 8 | 0/0 | 2 | 否 | 无 | 3 | partial | P2 |
+| GamePlatformData | Platform/code | 2 | 19 | 0/0 | 10 | 否 | 无 | 2 | partial | P2 |
+| GamePlatformDebug | Platform/code | 2 | 7 | 0/0 | 1 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformDeveloperTools | Platform/code | 1 | 15 | 0/0 | 3 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformEntitlement | Platform/code | 2 | 7 | 0/0 | 2 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformEquipment | Platform/code | 3 | 10 | 0/0 | 3 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformGameplay | Platform/code | 1 | 14 | 0/0 | 5 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformInput | Platform/code | 1 | 11 | 0/0 | 4 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformInteraction | Platform/code | 1 | 10 | 0/0 | 5 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformInventory | Platform/code | 1 | 4 | 0/0 | 1 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformLiveOps | Platform/code | 1 | 9 | 0/0 | 5 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformLoading | Platform/code | 1 | 4 | 0/0 | 2 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformLobby | Platform/code | 3 | 3 | 0/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformLocalization | Platform/code | 1 | 1 | 0/0 | 0 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformNavigation | Platform/code | 2 | 13 | 0/0 | 4 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformOnline | Platform/code | 2 | 12 | 0/0 | 4 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformPCG | Platform/code | 2 | 32 | 0/0 | 5 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformPresentation | Platform/code | 2 | 8 | 0/0 | 2 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformProgression | Platform/code | 2 | 10 | 0/0 | 5 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformQuest | Platform/code | 3 | 14 | 0/0 | 5 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformSave | Platform/code | 1 | 7 | 0/0 | 2 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformServer | Platform/code | 1 | 15 | 0/0 | 8 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformSession | Platform/code | 1 | 7 | 0/0 | 3 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformSettings | Platform/code | 4 | 23 | 0/0 | 4 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformSFX | Platform/code | 1 | 11 | 0/0 | 4 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformSurface | Platform/code | 2 | 23 | 149/0 | 4 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformTelemetry | Platform/code | 1 | 14 | 0/0 | 4 | 否 | 无 | 0 | unreviewed | P2 |
+| GamePlatformUI | Platform/code | 1 | 56 | 14/0 | 13 | 是 | 无 | 2 | partial | P2 |
+| GamePlatformVFX | Platform/code | 2 | 64 | 52/0 | 21 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformVillage | Platform/code | 3 | 3 | 0/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| GamePlatformWater | Platform/code | 3 | 9 | 0/0 | 1 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformWeather | Platform/code | 2 | 9 | 0/0 | 1 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformWorld | Platform/code | 2 | 16 | 0/0 | 6 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| MobaPresentation | Moba/code | 2 | 13 | 0/0 | 4 | 是 | 无 | 0 | unreviewed | P1 |
 
 ## 审查与优化规范
 

@@ -43,8 +43,11 @@ def required_assets():
         result.append(f'{ice}/Materials/MI_DBA_IceArrow_{name}.uasset')
     result.append(f'{ice}/Definitions/DA_DBA_VFX_DevFrostboltResidue.uasset')
     # 1号治疗必须发布真实迁移的花瓣绽放及稳定治疗定义，拒绝退回树叶原型。
-    library = 'DBAPresentationPack_Core/Content/VFX/Library'
-    result.extend([f'{library}/07_Status/NS_Nature_PetalBloom_Aura.uasset',
+    # 重导后治疗定义持有三档原生系统；必须核对新闭包，旧库NS存在不能证明新效果已发布。
+    healing = 'DBAPresentationPack_Core/Content/VFX/HealingBloom'
+    result.extend([f'{healing}/07_Status/NS_Nature_PetalBloom_Aura.uasset',
+                   f'{healing}/07_Status/NS_DBA_HealingBloom_Medium.uasset',
+                   f'{healing}/07_Status/NS_DBA_HealingBloom_Low.uasset',
                    'DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom.uasset'])
     # NM_DBA_IceArrowMotion是已编译系统的EditorOnly制作脚本，不要求其源脚本独立进入发布包。
     return result

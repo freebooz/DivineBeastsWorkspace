@@ -1,6 +1,6 @@
 # Plugin Review Harness（插件独立演示与人工审核宿主）设计
 
-> 状态：P0-8 设计；复用已有 GamePlatformDeveloperTools Review 类型，不新建 Review 插件。
+> 状态：总体宿主设计、部分平台 Review API（人工审查接口）和项目演示 UI 已落地；截至 2026-10-18，真实人工判定入口及全部插件案例未完成验收。继续复用已有 GamePlatformDeveloperTools Review 类型，不新建 Review 插件。
 
 ## 1. 已有能力
 
@@ -108,7 +108,7 @@ Game/Saved/GamePlatformValidation/<RunId>/Review/
 - `bExplicitHumanConfirmation=true`。
 - Report 对应当前 BuildVersion／ContentRevision。
 
-当前工程 `.uasset/.umap=0`，因此任何需要真实内容的插件不得标 G4 Passed。
+当前工程已有真实 `.uasset/.umap`（蓝图及关卡包）；2026-10-18 的静态清单确认 13 张不重复开发诊断地图可作为 19 个插件的人工观察入口，但仅验证包存在和签名。正式功能仍只有 9 项已登记演示案例，真人签收为 0。需要真实内容的插件必须经过 UE5.8 资源加载、画面与操作、人工作业结论以及构建/内容版本证据后才可标 G4 Passed。
 
 ## 7. 自动化不可越权
 

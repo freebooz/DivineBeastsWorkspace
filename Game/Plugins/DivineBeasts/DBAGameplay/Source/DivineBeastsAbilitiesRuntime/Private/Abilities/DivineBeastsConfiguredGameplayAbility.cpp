@@ -123,16 +123,22 @@ bool UDivineBeastsConfiguredGameplayAbility::AuthorityTraceForwardAndApplyDamage
         FName(TEXT("DivineBeastsAbilityForwardTrace")), false, Source);
     QueryParams.bReturnPhysicalMaterial = false;
 
-    FHitResult Hit;
-    if (!World->LineTraceSingleByChannel(
-            Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams) ||
-        !Hit.bBlockingHit || !IsValid(Hit.GetActor()) || Hit.GetActor() == Source)
+    FHitResult VisibilityHit;
+    FHitResult PawnHit;
+    const bool bVisibilityHit = World->LineTraceSingleByChannel(
+        VisibilityHit, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
+    // Pawn胶囊可能忽略Visibility；仅选择首个遮挡物之前的Pawn，不能穿墙补命中。
+    const bool bPawnHit = World->LineTraceSingleByObjectType(
+        PawnHit, TraceStart, TraceEnd, FCollisionObjectQueryParams(ECC_Pawn), QueryParams);
+    const FHitResult* Hit = bPawnHit && (!bVisibilityHit || PawnHit.Distance < VisibilityHit.Distance)
+        ? &PawnHit : (bVisibilityHit ? &VisibilityHit : nullptr);
+    if (!Hit || !Hit->bBlockingHit || !IsValid(Hit->GetActor()) || Hit->GetActor() == Source)
     {
         OutError = TEXT("服务器前向技能射线未命中可执行伤害的有效目标。");
         return false;
     }
 
-    const float Distance = FVector::Distance(TraceStart, Hit.ImpactPoint);
+    const float Distance = FVector::Distance(TraceStart, Hit->ImpactPoint);
     if (!FMath::IsFinite(Distance) || Distance > Balance.CastRangeCm + 1.0f)
     {
         OutError = TEXT("服务器命中距离不合法，拒绝处理伤害。");
@@ -143,12 +149,12 @@ bool UDivineBeastsConfiguredGameplayAbility::AuthorityTraceForwardAndApplyDamage
     HitContext.bHasValidatedHit = true;
     HitContext.TraceStart = TraceStart;
     HitContext.TraceEnd = TraceEnd;
-    HitContext.ImpactPoint = Hit.ImpactPoint;
-    HitContext.ImpactNormal = Hit.ImpactNormal.GetSafeNormal();
+    HitContext.ImpactPoint = Hit->ImpactPoint;
+    HitContext.ImpactNormal = Hit->ImpactNormal.GetSafeNormal();
     HitContext.ValidatedDistance = Distance;
 
     // 只交给唯一GamePlatformCombat（平台战斗）组件做防御、护盾、血量与重复事件处理。
-    return AuthorityApplyConfiguredDamage(Hit.GetActor(), HitContext, OutResult, OutError);
+    return AuthorityApplyConfiguredDamage(Hit->GetActor(), HitContext, OutResult, OutError);
 }
 
 bool UDivineBeastsConfiguredGameplayAbility::AuthorityApplyConfiguredDamage(

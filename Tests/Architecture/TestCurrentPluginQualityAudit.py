@@ -55,6 +55,34 @@ class PluginQualityAuditTests(unittest.TestCase):
         self.assertIn("文本匹配只属于候选",module.markdown(self.report))
         self.assertNotIn("已经通过所有插件人工验收",module.markdown(self.report))
 
+    def test_editor_only_asset_loading_not_called_runtime_hotpath(self):
+        # DeveloperTools为Editor模块；SpatialDirector.LoadSynchronous受WITH_EDITOR保护。
+        # 不把这两项当成已确认客户端/服务器同步加载。
+        self.assertEqual(0,self.report["perfCandidates"].get("同步资源加载",0))
+        for plugin in self.report["plugins"]:
+            self.assertFalse(any(
+                candidate["kind"] == "同步资源加载"
+                for candidate in plugin["performanceReviewCandidates"]))
+
+    def test_approved_diagnostic_shortcuts_are_real_and_not_formal_scenarios(self):
+        """有地图入口不能当作功能完成；仅允许经过明确许可的两个资源挂载点。"""
+        self.assertEqual(19, self.report["diagnosticShortcutPluginCount"])
+        self.assertEqual(13, self.report["uniqueApprovedDiagnosticMapCount"])
+        self.assertEqual(51, self.report["visualWithoutOperationalScenario"])
+        model_path = (ROOT / "Game/Plugins/DivineBeasts/DBAClient/Source/"
+                      "DivineBeastsDemoClient/Private/UI/DivineBeastsDemoHubViewModel.cpp")
+        model = model_path.read_text(encoding="utf-8-sig")
+        for plugin_id, package in module.DIAGNOSTIC_MAPS.items():
+            with self.subTest(plugin=plugin_id):
+                asset = module.physical_diagnostic_map(ROOT, package)
+                self.assertTrue(module.valid_ue_map_header(asset))
+                self.assertIn('PluginId == TEXT("' + plugin_id + '")', model)
+                self.assertIn('Package == TEXT("' + package + '")', model)
+                record = next(x for x in self.report["plugins"] if x["pluginId"] == plugin_id)
+                self.assertEqual(package, record["diagnosticMapPackage"])
+                self.assertFalse(record["diagnosticMapIsFormalScenario"])
+        self.assertEqual(0, self.report["humanApproved"])
+
     def test_missing_demo_identity_cannot_pass(self):
         bad=copy.deepcopy(self.demo)
         bad["plugins"]=[p for p in bad["plugins"] if p["plugin_id"]!="GamePlatformVFX"]

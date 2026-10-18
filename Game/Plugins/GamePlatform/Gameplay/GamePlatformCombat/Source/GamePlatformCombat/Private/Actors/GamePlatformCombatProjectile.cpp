@@ -131,11 +131,19 @@ void AGamePlatformCombatProjectile::Tick(float DeltaSeconds)
         if (Step <= UE_SMALL_NUMBER) { FinishFlight(nullptr); break; }
         const FVector Start = GetActorLocation();
         const FVector End = bHasHomingTarget ? AdvanceHomingPosition(Step) : PositionAt(FlightSeconds + Step);
-        FHitResult Hit;
-        if (GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_Visibility,
-            FCollisionShape::MakeSphere(FlightMotion.CollisionRadiusCm), Query))
+        FHitResult VisibilityHit;
+        FHitResult PawnHit;
+        const FCollisionShape Shape = FCollisionShape::MakeSphere(FlightMotion.CollisionRadiusCm);
+        const bool bVisibilityHit = GetWorld()->SweepSingleByChannel(
+            VisibilityHit, Start, End, FQuat::Identity, ECC_Visibility, Shape, Query);
+        // Pawn胶囊可合法忽略Visibility；另查Pawn对象，并只接受比世界遮挡更近的命中。
+        const bool bPawnHit = GetWorld()->SweepSingleByObjectType(
+            PawnHit, Start, End, FQuat::Identity, FCollisionObjectQueryParams(ECC_Pawn), Shape, Query);
+        const FHitResult* FirstHit = bPawnHit && (!bVisibilityHit || PawnHit.Distance < VisibilityHit.Distance)
+            ? &PawnHit : (bVisibilityHit ? &VisibilityHit : nullptr);
+        if (FirstHit)
         {
-            SetActorLocation(Hit.Location, false); FinishFlight(&Hit); break;
+            SetActorLocation(FirstHit->Location, false); FinishFlight(FirstHit); break;
         }
         FlightSeconds += Step; Remaining -= Step;
         if (bHasHomingTarget) SetActorLocationAndRotation(End,(End-Start).Rotation(),false);

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "projectCode": "SSLM",
+  "workspace": "DivineBeastsWorkspace",
+  "project": "Game/DivineBeastsArena.uproject",
+  "request": "继续整改GAS代码与相关技能蓝图；本次禁止所有编译、链接和Cook",
+  "executionState": "blocked_no_connected_editor",
+  "nativeBlueprintAssetsEdited": 0,
+  "nativeBlueprintAssetsSaved": 0,
+  "blockedReason": "当前HWebCodex没有注册Monolith MCP工具；另一个CWebCodex的Monolith服务可见但monolith_status报告Unreal Editor not running。HWebCodex虽有共享UE5.8 Editor和monolith_proxy进程，但无授权本地Monolith动作入口，且存在并发资产修改；禁止绕过MCP直接改二进制资源。",
+  "compilerPolicy": {
+    "allowUHT": false,
+    "allowUBT": false,
+    "allowLiveCoding": false,
+    "allowBlueprintCompilation": false,
+    "allowCookOrStage": false,
+    "allowAssetWriteWithoutMonolith": false
+  },
+  "targetAssets": [
+    {
+      "id": "gas_ui_ability_bar",
+      "path": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+      "file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Combat/WBP_DBA_UI_AbilityBar.uasset",
+      "mustInspectBindings": [
+        "PrimaryAbilitySlot",
+        "PassiveAbilitySlot",
+        "ActiveAbilitySlot1",
+        "ActiveAbilitySlot2",
+        "UltimateAbilitySlot"
+      ],
+      "reviewAndEdit": "确认五槽引用均连接统一DivineBeastsAbilityBarPanel；空技能槽不伪装授权。核对一级技能点击命令、Pawn切换事件和焦点导航。仅在有实际错误时通过Monolith做最小化修改。",
+      "status": "pending_monolith"
+    },
+    {
+      "id": "gas_ui_ability_slot",
+      "path": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Combat/WBP_DBA_UI_AbilitySlot.uasset",
+      "mustInspectBindings": [
+        "AbilityIcon",
+        "CooldownFill",
+        "HotkeyText"
+      ],
+      "reviewAndEdit": "核对来自真实GAS CooldownEndsAtAppSeconds的遮罩显示和OverlayTiming（UI只读倒计时）；空图标必须清除旧画刷，鼠标/键盘/触屏操作不可直接授予GA。确保失控、眩晕、沉默、死亡时只读更新。",
+      "status": "pending_monolith"
+    },
+    {
+      "id": "gas_ui_combat_hud",
+      "path": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD",
+      "file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Combat/WBP_DBA_UI_CombatHUD.uasset",
+      "mustInspectBindings": [],
+      "reviewAndEdit": "确认从拥有者当前Pawn读取唯一技能栏和三条状态，换Pawn/退出卸载旧监听，不从界面生成ASC、GameplayEffect或重复属性。",
+      "status": "pending_monolith"
+    },
+    {
+      "id": "gas_ui_player_status",
+      "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerStatus",
+      "file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerStatus.uasset",
+      "mustInspectBindings": [
+        "HealthBar",
+        "EnergyBar",
+        "MomentumBar"
+      ],
+      "reviewAndEdit": "确认生命、蓝色能量、独立气势三条互不遮挡，不复用值源；以平台Combat的Energy与项目Momentum两个不同GAS AttributeSet的真实复制值驱动。",
+      "status": "pending_monolith"
+    },
+    {
+      "id": "gas_ui_energy_bar",
+      "path": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_EnergyBar",
+      "file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_EnergyBar.uasset",
+      "mustInspectBindings": [],
+      "reviewAndEdit": "核对独立EnergyBar子类是否已在PlayerStatus中实际引用；若仍沿用MomentumBar旧视觉子类，使用Monolith最小化替换引用，保持原独立数据来源。",
+      "status": "pending_monolith"
+    }
+  ],
+  "requiredBeforeAnyBlueprintMutation": [
+    "Monolith MCP原生状态必须确认当前Editor加载正式Game/DivineBeastsArena.uproject，UE版本5.8",
+    "核对所有当前UE编辑器资产写入归属和并行Job，无资产锁冲突",
+    "读取资产实际父类与Widget树，而不是相信预期控件一定存在",
+    "记录修改前资产及绑定快照，若不可安全保存则不写入"
+  ],
+  "notExecuted": [
+    "Widget Blueprint原生资产修改或保存",
+    "任何蓝图编译和原生回载",
+    "三端构建、双客户端联机、Cook/Stage"
+  ]
+}

@@ -91,13 +91,13 @@ public:
     /** 仅处理已进入真实世界的ESC；前端返回false，保留原页面取消语义。游戏线程。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
     bool HandleEscapeAction();
-    /** 从游戏菜单打开真实设备设置；重复或资源加载中返回false。 */
+    /** 世界内从齿轮或游戏菜单打开真实设备设置；已有设置/在途同页幂等成功，不重复创建。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
     bool OpenSystemSettings();
     /** 返回游戏；取消本协调器在途请求并关闭所有系统子页，不暂停联网世界。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
     void CloseSystemMenu();
-    /** 关闭设置子页回到原游戏菜单；没有子页时返回false。 */
+    /** 关闭设置回到父菜单；齿轮直接进入时恢复世界输入，没有子页时返回false。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
     bool CloseSystemSettings();
     FDivineBeastsSystemMenuVisibilityChangedNative& OnSystemMenuVisibilityChanged() { return SystemMenuVisibilityChanged; }
@@ -154,6 +154,7 @@ private:
 #if WITH_DEV_AUTOMATION_TESTS
     /** 原生回归只注入同LocalPlayer的真实Router，验证交接/阻断/解绑，不伪造网络或平台输入。 */
     friend class FDivineBeastsWorldInputHandoffTest;
+    friend class FDivineBeastsSkillBarSettingsCloseTest;
 #endif
     /** 按本地玩家真实Router实例绑定，替换/退出精确撤销旧委托，不关闭其他UI来源。 */
     void ObserveWorldInputRouter(UCommonUIActionRouterBase* Router);

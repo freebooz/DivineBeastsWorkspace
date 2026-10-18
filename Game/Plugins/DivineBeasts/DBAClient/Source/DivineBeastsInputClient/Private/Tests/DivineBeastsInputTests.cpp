@@ -25,9 +25,14 @@ bool FDivineBeastsInputSemanticContractTest::RunTest(const FString&)
         DivineBeastsInputSemantics::AbilitySlot2(),
         DivineBeastsInputSemantics::AbilitySlot3(),
         DivineBeastsInputSemantics::AbilitySlot4(),
+        DivineBeastsInputSemantics::AbilitySlot5(),
+        DivineBeastsInputSemantics::AbilitySlot6(),
+        DivineBeastsInputSemantics::AbilitySlot7(),
         DivineBeastsInputSemantics::TargetLock()
     };
 
+    TestEqual(TEXT("八个可使用技能槽加锁定为九种项目输入语义"),
+        UE_ARRAY_COUNT(Tags), 9);
     TSet<FGameplayTag> Unique;
     for (const FGameplayTag Tag : Tags)
     {

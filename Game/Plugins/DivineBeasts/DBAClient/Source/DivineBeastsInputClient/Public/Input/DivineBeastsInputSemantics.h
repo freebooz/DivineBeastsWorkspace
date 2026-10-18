@@ -12,12 +12,16 @@
  */
 namespace DivineBeastsInputSemantics
 {
-    /** 返回主攻击输入标签；下面五个访问器分别返回四个技能槽和目标锁定标签，调用前提同命名空间说明。 */
+    /** 返回基础攻击输入；其余访问器含Slot1..Slot7七个可用技能位及目标锁定。 */
     DIVINEBEASTSINPUTCLIENT_API FGameplayTag AttackPrimary();
     DIVINEBEASTSINPUTCLIENT_API FGameplayTag AbilitySlot1();
     DIVINEBEASTSINPUTCLIENT_API FGameplayTag AbilitySlot2();
     DIVINEBEASTSINPUTCLIENT_API FGameplayTag AbilitySlot3();
     DIVINEBEASTSINPUTCLIENT_API FGameplayTag AbilitySlot4();
+    /** 八槽扩展；与现有Slot1..Slot4共享同一语义映射、ASC输入令牌和客户端生命周期。 */
+    DIVINEBEASTSINPUTCLIENT_API FGameplayTag AbilitySlot5();
+    DIVINEBEASTSINPUTCLIENT_API FGameplayTag AbilitySlot6();
+    DIVINEBEASTSINPUTCLIENT_API FGameplayTag AbilitySlot7();
     DIVINEBEASTSINPUTCLIENT_API FGameplayTag TargetLock();
 
     /** 映射到GamePlatformAbilitySystem约定的Platform.Ability.Input子标签；TargetLock没有技能输入映射。 */

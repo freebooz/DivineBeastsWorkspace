@@ -139,13 +139,29 @@ void UDivineBeastsDemoCatalogSubsystem::RefreshCatalog()
     auto& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
     TArray<FAssetData> Assets;
     Registry.GetAssetsByPath(FName(TEXT("/Game/Development")), Assets, true);
+#if WITH_EDITOR
+    // 项目已有《寒冰箭》专用VFX审核地图位于真实内容插件挂载点，不在/Game/Development。
+    // 只登记明确批准的单一审核目录；不扫描整个正式表现包，更不赋予它正式功能身份。
+    TArray<FAssetData> ApprovedReviewAssets;
+    Registry.GetAssetsByPath(FName(TEXT("/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review")),
+        ApprovedReviewAssets, false);
+    Assets.Append(ApprovedReviewAssets);
+#endif
     TSet<FName> Maps;
     for (const auto& Asset : Assets)
     {
         if (Asset.AssetClassPath != UWorld::StaticClass()->GetClassPathName() || Maps.Contains(Asset.PackageName)) continue;
-        // 门户不是可选择的业务示例；不把开发目录外或同名资产作为诊断场景。
+        // 门户不是可选择的业务示例；只承认Development或明确批准的一份VFX审核地图。
+        // 不通过资产名字猜插件所有权，不将内容包整个挂载点开放成开发地图入口。
         const FString Package = Asset.PackageName.ToString();
-        if (!Package.StartsWith(TEXT("/Game/Development/")) ||
+        const bool bDevelopmentMap = Package.StartsWith(TEXT("/Game/Development/"));
+#if WITH_EDITOR
+        const bool bApprovedVFXReview =
+            Package == TEXT("/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review/L_DBA_IceArrow_A_Review");
+#else
+        const bool bApprovedVFXReview = false;
+#endif
+        if ((!bDevelopmentMap && !bApprovedVFXReview) ||
             Package == FDivineBeastsPluginDemoMode::GetHubMapPackage()) continue;
         Maps.Add(Asset.PackageName);
         FDivineBeastsDemoScenario Item;

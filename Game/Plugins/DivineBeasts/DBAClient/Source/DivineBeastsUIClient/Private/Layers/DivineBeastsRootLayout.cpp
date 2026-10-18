@@ -4,6 +4,10 @@
 
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Subsystems/GamePlatformCombatFeedbackWorldSubsystem.h"
+#include "Types/GamePlatformCombatEvent.h"
+#include "Adapters/Combat/DivineBeastsCombatUIFeedbackLibrary.h"
+#include "Feedback/GamePlatformFeedbackWidget.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/GamePlatformCastProgressWidget.h"
 #include "Components/DivineBeastsCharacterComponent.h"
@@ -136,6 +140,7 @@ void UDivineBeastsRootLayout::RefreshForPlayerController(APlayerController* Cont
 void UDivineBeastsRootLayout::NativeDestruct()
 {
     bWorldHUDHostConstructed=false;bWorldHUDRefreshQueued=false;
+    UnbindWorldCombatFeedback();
     BindWorldHealthBars(nullptr);
     if (auto* Owner=WorldUIOwner.Get()) Owner->OnStateChanged().Remove(WorldUIStateHandle);
     WorldUIStateHandle.Reset(); WorldUIOwner.Reset(); ReleaseWorldContextHUD();
@@ -264,6 +269,7 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
     APawn* DisplayPawn = bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr;
     BindCastDisplay(DisplayPawn);
     BindWorldHealthBars(DisplayPawn);
+    BindWorldCombatFeedback(DisplayPawn);
     for (FName PortraitName : {FName(TEXT("PlayerPortrait")), FName(TEXT("ActionBarPortrait"))})
     {
         if (auto* Portrait = Cast<UDivineBeastsPlayerPortraitWidget>(CombatHUD->GetWidgetFromName(PortraitName)))
@@ -664,6 +670,79 @@ void UDivineBeastsRootLayout::BindWorldHealthBars(APawn* DisplayPawn)
         }
     }
     RefreshWorldHealthBarToggleText();
+}
+
+void UDivineBeastsRootLayout::UnbindWorldCombatFeedback()
+{
+    if (auto* Bus = BoundCombatFeedbackBus.Get())
+    {
+        if (CombatFeedbackHandle.IsValid()) Bus->OnConfirmedFeedback().Remove(CombatFeedbackHandle);
+    }
+    CombatFeedbackHandle.Reset();
+    BoundCombatFeedbackBus.Reset();
+}
+
+void UDivineBeastsRootLayout::BindWorldCombatFeedback(APawn* DisplayPawn)
+{
+    // 只有普通世界控制器拥有此订阅；竞技场使用自己的组合根，不能重复显示同一事实。
+    UWorld* World = IsValid(DisplayPawn) ? DisplayPawn->GetWorld() : nullptr;
+    const bool bWorldReady = World && !World->bIsTearingDown &&
+        World->GetNetMode() != NM_DedicatedServer &&
+        IsValid(Cast<ADivineBeastsWorldPlayerController>(GetOwningPlayer())) &&
+        IsValid(GetOwningLocalPlayer()) && CombatFloatingTextClass &&
+        !CombatFloatingTextClass->HasAnyClassFlags(CLASS_Abstract);
+    auto* Bus = bWorldReady ? World->GetSubsystem<UGamePlatformCombatFeedbackWorldSubsystem>() : nullptr;
+    if (BoundCombatFeedbackBus.Get() == Bus) return;
+    UnbindWorldCombatFeedback();
+    if (Bus)
+    {
+        BoundCombatFeedbackBus = Bus;
+        CombatFeedbackHandle = Bus->OnConfirmedFeedback().AddUObject(
+            this, &ThisClass::HandleConfirmedWorldCombatFeedback);
+    }
+}
+
+void UDivineBeastsRootLayout::HandleConfirmedWorldCombatFeedback(const FGamePlatformCombatEvent& Event)
+{
+    ULocalPlayer* Player = GetOwningLocalPlayer();
+    UWorld* World = GetWorld();
+    AActor* Target = Event.TargetActor;
+    if (!IsInGameThread() || !Player || !World || World->bIsTearingDown ||
+        Player->GetWorld() != World || !BoundCombatFeedbackBus.IsValid() ||
+        !CombatFloatingTextClass || !Event.EventId.IsValid() ||
+        !IsValid(Target) || Target->GetWorld() != World || Target->IsActorBeingDestroyed()) return;
+
+    FVector Origin, Extent;
+    Target->GetActorBounds(true, Origin, Extent);
+    FDivineBeastsCombatFeedbackInput Input;
+    Input.EventId = Event.EventId;
+    Input.TargetVisualKey = Target->GetFName();
+    // 近战没有可靠命中点时原事件坐标可为世界原点；飘字始终锚定目标头部。
+    Input.WorldLocation = Origin + FVector(0.0, 0.0, FMath::Max(Extent.Z * 0.75, 60.0));
+    auto Submit = [Player, this, &Input](EDivineBeastsCombatFeedbackKind Kind, double Magnitude, uint32 Salt)
+    {
+        if (!FMath::IsFinite(Magnitude) || Magnitude < 0.0) return;
+        Input.Kind = Kind;
+        Input.Magnitude = Magnitude;
+        Input.EventId.A ^= Salt;
+        UDivineBeastsCombatUIFeedbackLibrary::SubmitFloatingText(Player, Input, CombatFloatingTextClass);
+        Input.EventId.A ^= Salt;
+    };
+    switch (Event.EventType)
+    {
+    case EGamePlatformCombatEventType::Damage:
+        if (Event.AppliedToHealth > 0.0f) Submit(EDivineBeastsCombatFeedbackKind::Damage, Event.AppliedToHealth, 0u);
+        if (Event.AppliedToShield > 0.0f) Submit(EDivineBeastsCombatFeedbackKind::ShieldDamage, Event.AppliedToShield, 0x53484C44u);
+        break;
+    case EGamePlatformCombatEventType::Healing:
+        if (Event.AppliedMagnitude > 0.0f) Submit(EDivineBeastsCombatFeedbackKind::Healing, Event.AppliedMagnitude, 0x4845414Cu);
+        break;
+    case EGamePlatformCombatEventType::Death:
+        Submit(EDivineBeastsCombatFeedbackKind::Death, 0.0, 0x44454154u);
+        break;
+    default:
+        break;
+    }
 }
 
 void UDivineBeastsRootLayout::ToggleWorldHealthBars()

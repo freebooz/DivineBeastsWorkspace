@@ -1,0 +1,343 @@
+{
+  "SchemaVersion": 1,
+  "Status": "HumanApproved_ImportedSavedReloaded_RHIPending",
+  "HumanApproval": "2026-10-18：审核通过，继续执行",
+  "ProvenanceRoot": "Saved/ArtReview/AbilityBar_20261018_v02",
+  "Engine": "UE5.8",
+  "Files": [
+    {
+      "File": "T_DBA_UI_SkillBar_Center.png",
+      "Usage": "技能栏中央背景",
+      "SizePx": [
+        1760,
+        264
+      ],
+      "Color": "Color/T_DBA_UI_SkillBar_Center.png",
+      "AlphaMask": "Masks/T_DBA_UI_SkillBar_Center_Alpha.png",
+      "Source": {
+        "Imagegen": "Generation/AbilityBar_CenterPolishedCandidate.png",
+        "OriginalRegionPx": [
+          206,
+          233,
+          1760,
+          264
+        ],
+        "GeneratedPlateCropPx": {
+          "left": 92,
+          "top": 215,
+          "width": 1985,
+          "height": 276
+        },
+        "CanvasAnchorPx": [
+          206,
+          233
+        ],
+        "DividerAssembly": {
+          "Source": "Evidence/DividerSplit_Source.png",
+          "CanvasAnchorPx": [
+            1495,
+            275
+          ],
+          "RelativeToCenterPx": [
+            1289,
+            42
+          ],
+          "RGBSource": "已精修原稿分隔构件；无重新调色",
+          "Mask": "按金色/青玉材质分离，保留两像素软边"
+        }
+      },
+      "ColorSHA256": "2b3ec114e13db3ba8103a42175842c31b7d08a4bd0acaf81f74d85591bf6cac1",
+      "AlphaSHA256": "d306288f5b22377dfd80b40e35147d37bef829591882720b50b37faa077460f7",
+      "ReviewNote": "去槽中央底板保留原图功能分隔饰条；槽框、功能图标、进度填充和游标独立装配。"
+    },
+    {
+      "File": "T_DBA_UI_SkillBar_EndLeft_V01.png",
+      "Usage": "第一款左端装饰",
+      "SizePx": [
+        297,
+        282
+      ],
+      "Color": "Color/T_DBA_UI_SkillBar_EndLeft_V01.png",
+      "AlphaMask": "Masks/T_DBA_UI_SkillBar_EndLeft_V01_Alpha.png",
+      "Source": {
+        "Part": "Ornament_Left",
+        "OriginalBoundsPx": [
+          18,
+          222,
+          289,
+          274
+        ],
+        "CanvasAnchorPx": [
+          14,
+          218
+        ]
+      },
+      "ColorSHA256": "74afe63de6a8d876aa07c732f274658f4e08f9ff2abd342da4925b50548903ff",
+      "AlphaSHA256": "34e616c997e1118b55543d9dc4aae57260f01e09a3ab32181946d68ec7a8e4cf"
+    },
+    {
+      "File": "T_DBA_UI_SkillBar_EndRight_V01.png",
+      "Usage": "第一款右端装饰",
+      "SizePx": [
+        296,
+        283
+      ],
+      "Color": "Color/T_DBA_UI_SkillBar_EndRight_V01.png",
+      "AlphaMask": "Masks/T_DBA_UI_SkillBar_EndRight_V01_Alpha.png",
+      "Source": {
+        "Part": "Ornament_Right",
+        "OriginalBoundsPx": [
+          1865,
+          221,
+          288,
+          275
+        ],
+        "CanvasAnchorPx": [
+          1861,
+          217
+        ]
+      },
+      "ColorSHA256": "c9176dde8864bd9d6392d653a900c498b796a86b3cb1b004079d084b9ef2fa86",
+      "AlphaSHA256": "1f627670902296ce6b4b9b3063c141bc97fac3ee0274409832e726a544821f6b"
+    },
+    {
+      "File": "T_DBA_UI_SkillSlot_BG.png",
+      "Usage": "48×48技能槽背景",
+      "SizePx": [
+        48,
+        48
+      ],
+      "Color": "Color/T_DBA_UI_SkillSlot_BG.png",
+      "AlphaMask": "Masks/T_DBA_UI_SkillSlot_BG_Alpha.png",
+      "Source": {
+        "Parts": [
+          "Skill_Frame_01",
+          "Skill_Well_01",
+          "Skill_ConnectorStuds"
+        ],
+        "RegionPx": [
+          198,
+          280,
+          181,
+          167
+        ]
+      },
+      "ColorSHA256": "aaee5e1f88913cf57110bb7d3d41d8272fc495fb0e4340e3e352a1c5d367b416",
+      "AlphaSHA256": "7c8f260f99e3e99a5899afe667ed176845cf348a022437efb648e546cfee9a60",
+      "IncludesGoldFrame": true
+    },
+    {
+      "File": "T_DBA_UI_FunctionSlot_BG.png",
+      "Usage": "48×48功能按钮背景",
+      "SizePx": [
+        48,
+        48
+      ],
+      "Color": "Color/T_DBA_UI_FunctionSlot_BG.png",
+      "AlphaMask": "Masks/T_DBA_UI_FunctionSlot_BG_Alpha.png",
+      "Source": {
+        "Frame": "Utility_Frame_02",
+        "CleanWell": "Optional/T_UI_AbilityBar_UtilityWell_Clean_Color.png"
+      },
+      "ColorSHA256": "18fc42a10d6ad7ad1efc010f22b468af0736b8fac133c375a10046ba896d9824",
+      "AlphaSHA256": "420f7752d737967945f0fcb7402697b920f45f75814d60eea94658b2f6826b98",
+      "IncludesGoldFrame": true,
+      "BakedUtilityIcon": false
+    },
+    {
+      "File": "T_DBA_UI_Icon_Inventory.png",
+      "Usage": "背包图标",
+      "SizePx": [
+        32,
+        32
+      ],
+      "Color": "Color/T_DBA_UI_Icon_Inventory.png",
+      "AlphaMask": "Masks/T_DBA_UI_Icon_Inventory_Alpha.png",
+      "Source": {
+        "Part": "Icon_Pouch"
+      },
+      "ColorSHA256": "4f0d2466052489cf99c4cc486cd826761f1047702ca6ddd020a6ee0364106ef3",
+      "AlphaSHA256": "576d542f3cc3efea41eda5c2e931fcffd5d38ec64a2c66b365691aa14f09f298",
+      "SuggestedDisplayPx": 24,
+      "ReviewNote": "32×32为纹理画布；原比例图形居中，48像素按钮可独立配置图标显示大小。"
+    },
+    {
+      "File": "T_DBA_UI_Icon_Party.png",
+      "Usage": "组队图标",
+      "SizePx": [
+        32,
+        32
+      ],
+      "Color": "Color/T_DBA_UI_Icon_Party.png",
+      "AlphaMask": "Masks/T_DBA_UI_Icon_Party_Alpha.png",
+      "Source": {
+        "Part": "Icon_Party"
+      },
+      "ColorSHA256": "79dc8e5214c66c0a5c6b9258fa0d24d4e98759ebfbb20a071cc1bf354f32cbaa",
+      "AlphaSHA256": "2ba4849e161042afc9b0b94864f2ad24c466b2cd144d5e3ff52c515b2e3d34e6",
+      "SuggestedDisplayPx": 24,
+      "ReviewNote": "32×32为纹理画布；原比例图形居中，48像素按钮可独立配置图标显示大小。"
+    },
+    {
+      "File": "T_DBA_UI_Icon_Settings.png",
+      "Usage": "系统设置图标",
+      "SizePx": [
+        32,
+        32
+      ],
+      "Color": "Color/T_DBA_UI_Icon_Settings.png",
+      "AlphaMask": "Masks/T_DBA_UI_Icon_Settings_Alpha.png",
+      "Source": {
+        "Part": "Icon_Settings"
+      },
+      "ColorSHA256": "1db16a71d2742fc9fea4f9dfe17d8d2e6340a19125789fc1bcc910bd9b8f1c42",
+      "AlphaSHA256": "e1f293b899803bab4a272cdba799b0e50b9c2e0370b69517cd2a4fad06d093f8",
+      "SuggestedDisplayPx": 24,
+      "ReviewNote": "32×32为纹理画布；原比例图形居中，48像素按钮可独立配置图标显示大小。"
+    },
+    {
+      "File": "T_DBA_UI_CastBar_BG.png",
+      "Usage": "3像素高施法条背景",
+      "SizePx": [
+        256,
+        3
+      ],
+      "Color": "Color/T_DBA_UI_CastBar_BG.png",
+      "AlphaMask": "Masks/T_DBA_UI_CastBar_BG_Alpha.png",
+      "Source": {
+        "CropPx": [
+          300,
+          279,
+          1500,
+          3
+        ]
+      },
+      "ColorSHA256": "107e5c15eb1ec882370ef1501229f8935a4410c3bb2e9e7a814d412c4446701e",
+      "AlphaSHA256": "df4f6b8c1df9d2e804912f30d09ac9e21f4bd0c82f7b68095659500daf14468c",
+      "ProgressDirection": "LeftToRight",
+      "NativeHeightPx": 3
+    },
+    {
+      "File": "T_DBA_UI_CastBar_FG.png",
+      "Usage": "3像素高施法进度前景",
+      "SizePx": [
+        256,
+        3
+      ],
+      "Color": "Color/T_DBA_UI_CastBar_FG.png",
+      "AlphaMask": "Masks/T_DBA_UI_CastBar_FG_Alpha.png",
+      "Source": {
+        "CropPx": [
+          270,
+          262,
+          1630,
+          5
+        ]
+      },
+      "ColorSHA256": "ec0f4b34983980d9290236990b0a0c9ac0e0a46480b6bf3b36e853bb99ef4344",
+      "AlphaSHA256": "df4f6b8c1df9d2e804912f30d09ac9e21f4bd0c82f7b68095659500daf14468c",
+      "ProgressDirection": "LeftToRight",
+      "NativeHeightPx": 3
+    },
+    {
+      "File": "T_DBA_UI_Momentum_Track.png",
+      "Usage": "3像素高气势槽",
+      "SizePx": [
+        256,
+        3
+      ],
+      "Color": "Color/T_DBA_UI_Momentum_Track.png",
+      "AlphaMask": "Masks/T_DBA_UI_Momentum_Track_Alpha.png",
+      "Source": {
+        "CropPx": [
+          1260,
+          479,
+          550,
+          3
+        ]
+      },
+      "ColorSHA256": "ab5d38e2844197211361d57a5f932271ba9e3282ca659ddd487c4f834817f90e",
+      "AlphaSHA256": "df4f6b8c1df9d2e804912f30d09ac9e21f4bd0c82f7b68095659500daf14468c",
+      "NativeHeightPx": 3
+    },
+    {
+      "File": "T_DBA_UI_Momentum_Gradient.png",
+      "Usage": "气势槽中心向两端的透明渐变",
+      "SizePx": [
+        256,
+        3
+      ],
+      "Color": "Color/T_DBA_UI_Momentum_Gradient.png",
+      "AlphaMask": "Masks/T_DBA_UI_Momentum_Gradient_Alpha.png",
+      "Source": {
+        "ColorCropPx": [
+          900,
+          469,
+          148,
+          3
+        ],
+        "AlphaFormula": "smoothstep(1-abs((x-127.5)/127.5)); center=255, ends=0"
+      },
+      "ColorSHA256": "755b6a68414769aad1244bf972fce59e1567ce21f8ab74f741c9ac7afc782486",
+      "AlphaSHA256": "cab9404601dc954cf0be668121a26b7426af8814916e833b49b8dc38cf5da052",
+      "SymmetricAlpha": true,
+      "CenterOutwards": true,
+      "NativeHeightPx": 3
+    },
+    {
+      "File": "T_DBA_UI_Momentum_Bubble.png",
+      "Usage": "气势值滑动游标",
+      "SizePx": [
+        32,
+        32
+      ],
+      "Color": "Color/T_DBA_UI_Momentum_Bubble.png",
+      "AlphaMask": "Masks/T_DBA_UI_Momentum_Bubble_Alpha.png",
+      "Source": {
+        "Part": "Gem_Center"
+      },
+      "ColorSHA256": "3ed9ea0ff3cf2d60c8d4968992c3edb35628ae77662655744f3dd52642d74a25",
+      "AlphaSHA256": "e31f9ff7d581a784d121ac5f2db8874dea519b3bfe0e68f6baf7e46b15c4b3cb",
+      "SuggestedDisplayPx": 18,
+      "ReviewNote": "32×32为纹理画布；原比例图形居中，48像素按钮可独立配置图标显示大小。"
+    }
+  ],
+  "ImportSettings": {
+    "Color": {
+      "SRGB": true,
+      "Compression": "TC_EditorIcon",
+      "LODGroup": "TEXTUREGROUP_UI",
+      "MipGenSettings": "TMGS_NoMipmaps",
+      "Sampler": "Color"
+    },
+    "AlphaMask": {
+      "SRGB": false,
+      "Compression": "TC_EditorIcon",
+      "LODGroup": "TEXTUREGROUP_UI",
+      "MipGenSettings": "TMGS_NoMipmaps",
+      "Sampler": "LinearColor",
+      "Channel": "A"
+    },
+    "BrushTint": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "TextureAddress": "Clamp",
+    "AlphaContract": "straight / unassociated; Color.RGB+Mask.A，或直接Color.RGBA，二选一；禁止重复乘两份Alpha",
+    "ImportDestination": "/DBAUIPack_Core/UI/Textures/SkillBar",
+    "ImportExecuted": false
+  },
+  "Assumptions": [
+    "未指定长度的3像素条采用256像素宽的候选",
+    "图标与游标采用32×32透明画布，原比例居中；建议显示尺寸仅用于离线预览",
+    "中央板及端饰保留较高源分辨率；48像素背景不通过整页缩放取得",
+    "底部与平面平齐按可见下缘贴屏幕/安全区底边理解；保留叶片与卷纹原始轮廓，不将造型裁成直线"
+  ],
+  "SourceReferenceVerification": "Evidence/SourceReferenceValidation.json",
+  "VisualVerification": "离线审核图，不是UE渲染或RHI验收",
+  "Version": "20261018_v02",
+  "AssemblyLayout": "AssemblyLayout.json",
+  "BottomAlignment": "VisibleContentBottomFlush"
+}

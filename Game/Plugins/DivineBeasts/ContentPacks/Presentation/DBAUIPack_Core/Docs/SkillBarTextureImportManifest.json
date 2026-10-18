@@ -1,0 +1,169 @@
+{
+  "SchemaVersion": 1,
+  "Status": "HumanApproved_ImportedSavedReloaded_RHIPending",
+  "ImportExecuted": true,
+  "ImportedTextureCount": 26,
+  "ImportAuditPassed": true,
+  "ImportedSourceRGBAExactMatchCount": 26,
+  "VerificationDirectory": "Saved/Validation/SkillBar20261018",
+  "Files": [
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_SkillBar_Center.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_SkillBar_Center",
+      "Role": "Color",
+      "SHA256": "2b3ec114e13db3ba8103a42175842c31b7d08a4bd0acaf81f74d85591bf6cac1"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_SkillBar_Center_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_SkillBar_Center_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "d306288f5b22377dfd80b40e35147d37bef829591882720b50b37faa077460f7"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_SkillBar_EndLeft_V01.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_SkillBar_EndLeft_V01",
+      "Role": "Color",
+      "SHA256": "74afe63de6a8d876aa07c732f274658f4e08f9ff2abd342da4925b50548903ff"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_SkillBar_EndLeft_V01_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_SkillBar_EndLeft_V01_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "34e616c997e1118b55543d9dc4aae57260f01e09a3ab32181946d68ec7a8e4cf"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_SkillBar_EndRight_V01.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_SkillBar_EndRight_V01",
+      "Role": "Color",
+      "SHA256": "c9176dde8864bd9d6392d653a900c498b796a86b3cb1b004079d084b9ef2fa86"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_SkillBar_EndRight_V01_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_SkillBar_EndRight_V01_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "1f627670902296ce6b4b9b3063c141bc97fac3ee0274409832e726a544821f6b"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_SkillSlot_BG.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_SkillSlot_BG",
+      "Role": "Color",
+      "SHA256": "aaee5e1f88913cf57110bb7d3d41d8272fc495fb0e4340e3e352a1c5d367b416"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_SkillSlot_BG_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_SkillSlot_BG_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "7c8f260f99e3e99a5899afe667ed176845cf348a022437efb648e546cfee9a60"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_FunctionSlot_BG.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_FunctionSlot_BG",
+      "Role": "Color",
+      "SHA256": "18fc42a10d6ad7ad1efc010f22b468af0736b8fac133c375a10046ba896d9824"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_FunctionSlot_BG_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_FunctionSlot_BG_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "420f7752d737967945f0fcb7402697b920f45f75814d60eea94658b2f6826b98"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_Icon_Inventory.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Icon_Inventory",
+      "Role": "Color",
+      "SHA256": "4f0d2466052489cf99c4cc486cd826761f1047702ca6ddd020a6ee0364106ef3"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_Icon_Inventory_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Icon_Inventory_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "576d542f3cc3efea41eda5c2e931fcffd5d38ec64a2c66b365691aa14f09f298"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_Icon_Party.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Icon_Party",
+      "Role": "Color",
+      "SHA256": "79dc8e5214c66c0a5c6b9258fa0d24d4e98759ebfbb20a071cc1bf354f32cbaa"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_Icon_Party_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Icon_Party_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "2ba4849e161042afc9b0b94864f2ad24c466b2cd144d5e3ff52c515b2e3d34e6"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_Icon_Settings.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Icon_Settings",
+      "Role": "Color",
+      "SHA256": "1db16a71d2742fc9fea4f9dfe17d8d2e6340a19125789fc1bcc910bd9b8f1c42"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_Icon_Settings_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Icon_Settings_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "e1f293b899803bab4a272cdba799b0e50b9c2e0370b69517cd2a4fad06d093f8"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_CastBar_BG.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_CastBar_BG",
+      "Role": "Color",
+      "SHA256": "107e5c15eb1ec882370ef1501229f8935a4410c3bb2e9e7a814d412c4446701e"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_CastBar_BG_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_CastBar_BG_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "df4f6b8c1df9d2e804912f30d09ac9e21f4bd0c82f7b68095659500daf14468c"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_CastBar_FG.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_CastBar_FG",
+      "Role": "Color",
+      "SHA256": "ec0f4b34983980d9290236990b0a0c9ac0e0a46480b6bf3b36e853bb99ef4344"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_CastBar_FG_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_CastBar_FG_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "df4f6b8c1df9d2e804912f30d09ac9e21f4bd0c82f7b68095659500daf14468c"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_Momentum_Track.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Momentum_Track",
+      "Role": "Color",
+      "SHA256": "ab5d38e2844197211361d57a5f932271ba9e3282ca659ddd487c4f834817f90e"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_Momentum_Track_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Momentum_Track_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "df4f6b8c1df9d2e804912f30d09ac9e21f4bd0c82f7b68095659500daf14468c"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_Momentum_Gradient.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Momentum_Gradient",
+      "Role": "Color",
+      "SHA256": "755b6a68414769aad1244bf972fce59e1567ce21f8ab74f741c9ac7afc782486"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_Momentum_Gradient_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Momentum_Gradient_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "cab9404601dc954cf0be668121a26b7426af8814916e833b49b8dc38cf5da052"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Color/T_DBA_UI_Momentum_Bubble.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Momentum_Bubble",
+      "Role": "Color",
+      "SHA256": "3ed9ea0ff3cf2d60c8d4968992c3edb35628ae77662655744f3dd52642d74a25"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/Masks/T_DBA_UI_Momentum_Bubble_Alpha.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_Momentum_Bubble_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "e31f9ff7d581a784d121ac5f2db8874dea519b3bfe0e68f6baf7e46b15c4b3cb"
+    }
+  ],
+  "HumanApprovedOn": "2026-10-18",
+  "Approval": "审核通过，继续执行"
+}

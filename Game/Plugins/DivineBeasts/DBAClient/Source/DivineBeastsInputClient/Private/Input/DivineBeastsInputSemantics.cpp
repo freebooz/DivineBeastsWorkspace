@@ -15,6 +15,9 @@ namespace
         FGameplayTag AbilitySlot2 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot2"), true);
         FGameplayTag AbilitySlot3 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot3"), true);
         FGameplayTag AbilitySlot4 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot4"), true);
+        FGameplayTag AbilitySlot5 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot5"), true);
+        FGameplayTag AbilitySlot6 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot6"), true);
+        FGameplayTag AbilitySlot7 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Ability.Slot7"), true);
         FGameplayTag TargetLock = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("DivineBeasts.Input.Target.Lock"), true);
 
         // GAS技能输入必须位于平台规定根下；项目只持有DivineBeasts子命名空间。
@@ -23,6 +26,9 @@ namespace
         FGameplayTag AbilityInputSlot2 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot2"), true);
         FGameplayTag AbilityInputSlot3 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot3"), true);
         FGameplayTag AbilityInputSlot4 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot4"), true);
+        FGameplayTag AbilityInputSlot5 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot5"), true);
+        FGameplayTag AbilityInputSlot6 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot6"), true);
+        FGameplayTag AbilityInputSlot7 = UGameplayTagsManager::Get().RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot7"), true);
     };
 
     // UObject标签管理器只能在引擎已初始化的游戏线程使用；缓存不保存玩家或世界状态。
@@ -39,6 +45,9 @@ FGameplayTag DivineBeastsInputSemantics::AbilitySlot1() { return GetInputTags().
 FGameplayTag DivineBeastsInputSemantics::AbilitySlot2() { return GetInputTags().AbilitySlot2; }
 FGameplayTag DivineBeastsInputSemantics::AbilitySlot3() { return GetInputTags().AbilitySlot3; }
 FGameplayTag DivineBeastsInputSemantics::AbilitySlot4() { return GetInputTags().AbilitySlot4; }
+FGameplayTag DivineBeastsInputSemantics::AbilitySlot5() { return GetInputTags().AbilitySlot5; }
+FGameplayTag DivineBeastsInputSemantics::AbilitySlot6() { return GetInputTags().AbilitySlot6; }
+FGameplayTag DivineBeastsInputSemantics::AbilitySlot7() { return GetInputTags().AbilitySlot7; }
 FGameplayTag DivineBeastsInputSemantics::TargetLock() { return GetInputTags().TargetLock; }
 
 FGameplayTag DivineBeastsInputSemantics::ToAbilityInputTag(FGameplayTag SemanticTag)
@@ -49,6 +58,9 @@ FGameplayTag DivineBeastsInputSemantics::ToAbilityInputTag(FGameplayTag Semantic
     if (SemanticTag == Tags.AbilitySlot2) { return Tags.AbilityInputSlot2; }
     if (SemanticTag == Tags.AbilitySlot3) { return Tags.AbilityInputSlot3; }
     if (SemanticTag == Tags.AbilitySlot4) { return Tags.AbilityInputSlot4; }
+    if (SemanticTag == Tags.AbilitySlot5) { return Tags.AbilityInputSlot5; }
+    if (SemanticTag == Tags.AbilitySlot6) { return Tags.AbilityInputSlot6; }
+    if (SemanticTag == Tags.AbilitySlot7) { return Tags.AbilityInputSlot7; }
     // TargetLock属于目标/角色控制语义，不伪装成GAS技能输入。
     return FGameplayTag();
 }
@@ -73,5 +85,8 @@ bool DivineBeastsInputSemantics::IsCoreGameplaySemantic(FGameplayTag SemanticTag
         SemanticTag == Tags.AbilitySlot2 ||
         SemanticTag == Tags.AbilitySlot3 ||
         SemanticTag == Tags.AbilitySlot4 ||
+        SemanticTag == Tags.AbilitySlot5 ||
+        SemanticTag == Tags.AbilitySlot6 ||
+        SemanticTag == Tags.AbilitySlot7 ||
         SemanticTag == Tags.TargetLock;
 }

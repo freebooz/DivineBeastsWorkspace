@@ -21,6 +21,8 @@
 #include "ShaderCompiler.h"
 #include "CommonInputSettings.h"
 #include "ICommonInputModule.h" // CommonUI读取的是模块持有的运行设置实例，不是类默认对象。
+#include "Components/Image.h"
+#include "Panels/Combat/DivineBeastsPlayerStatusPanel.h"
 
 namespace DivineBeastsUIColorTests
 {
@@ -38,7 +40,7 @@ namespace DivineBeastsUIColorTests
     // 从真实保存页面生成颜色正确的布局证据：线性浮点目标无Slate输出Gamma，PNG编码仅一次。
     // 这不是编辑资产的替代工具；仅测试未激活页面，无账号数据、网络、设备设置写入和世界操作。
     bool SavePagePreview(const TCHAR* ClassPath, const TCHAR* FileName, const FIntPoint Size,
-        FAutomationTestBase& Test, const bool bVerifyCover)
+        FAutomationTestBase& Test, const bool bVerifyCover, const bool bVerifySkillBarBottom = false)
     {
         UClass* Class=LoadClass<UUserWidget>(nullptr,ClassPath);
         if(!Class)return false;
@@ -84,6 +86,21 @@ namespace DivineBeastsUIColorTests
                         FMath::Abs(Actual.R-Expected.R)<=.008f&&FMath::Abs(Actual.G-Expected.G)<=.008f&&FMath::Abs(Actual.B-Expected.B)<=.008f);
                 }
             }
+        }
+        if (bVerifySkillBarBottom)
+        {
+            // 检查真实HUD合成最后一行有连续底板主体，不能用少量半透明散点冒充贴底。
+            TArray<FFloat16Color> Pixels;
+            int32 SolidBottomPixels = 0;
+            const bool bRead = Target->GameThread_GetRenderTargetResource()->ReadFloat16Pixels(Pixels)
+                && Pixels.Num() == Size.X * Size.Y;
+            if (bRead)
+            {
+                for (int32 X = Size.X / 2 - 364; X < Size.X / 2 + 364; ++X)
+                    if (Pixels[(Size.Y - 1) * Size.X + X].GetFloats().A > .1f) ++SolidBottomPixels;
+            }
+            bColorsValid &= Test.TestTrue(*FString::Printf(TEXT("%s技能栏真实可见主体贴底，底行有效像素%d"),
+                FileName, SolidBottomPixels), bRead && SolidBottomPixels >= 400);
         }
         const FString Path=FPaths::ProjectSavedDir()/TEXT("Validation/UIColorRHI")/FileName;
         IFileManager::Get().MakeDirectory(*FPaths::GetPath(Path),true);
@@ -221,6 +238,57 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
                 Probe.Name,Column,Probe.Row,*Actual.ToString(),*Expected.ToString()),Actual.A>.1f&&bColorMatches);
         }
     }
+    // 经人工批准的技能栏13张彩色图及13张独立Alpha全部进入原生Slate门禁。
+    // 每张图选取左、中、右三个非透明且颜色非极值的真实源像素，避免只采到黑背景或白高光。
+    for (const TCHAR* Part : {TEXT("SkillBar_Center"), TEXT("SkillBar_EndLeft_V01"),
+        TEXT("SkillBar_EndRight_V01"), TEXT("SkillSlot_BG"), TEXT("FunctionSlot_BG"),
+        TEXT("Icon_Inventory"), TEXT("Icon_Party"), TEXT("Icon_Settings"),
+        TEXT("CastBar_BG"), TEXT("CastBar_FG"), TEXT("Momentum_Track"),
+        TEXT("Momentum_Gradient"), TEXT("Momentum_Bubble")})
+    {
+        for (const bool bMask : {false, true})
+        {
+            const FString SkillPath = FString::Printf(TEXT("/DBAUIPack_Core/UI/Textures/SkillBar/T_DBA_UI_%s%s"),
+                Part, bMask ? TEXT("_Alpha") : TEXT(""));
+            UTexture2D* SkillTexture = LoadObject<UTexture2D>(nullptr, *SkillPath);
+            if (!TestNotNull(*SkillPath, SkillTexture)) continue;
+            TestTrue(TEXT("技能栏Color与线性Alpha角色正确"), SkillTexture->SRGB == !bMask);
+            TestTrue(TEXT("技能栏无损UI、无Mip及Clamp寻址"), SkillTexture->CompressionSettings == TC_EditorIcon
+                && SkillTexture->MipGenSettings == TMGS_NoMipmaps && SkillTexture->LODGroup == TEXTUREGROUP_UI
+                && SkillTexture->AddressX == TA_Clamp && SkillTexture->AddressY == TA_Clamp);
+            FImage SkillSource;
+            if (!TestTrue(TEXT("技能栏导入源BGRA8可读取"), SkillTexture->Source.GetMipImage(SkillSource, 0)
+                && SkillSource.Format == ERawImageFormat::BGRA8)) continue;
+            for (int32 Third = 0; Third < 3; ++Third)
+            {
+                FIntPoint Probe(-1, -1);
+                float BestScore = -1.f;
+                for (int32 Y = 0; Y < SkillSource.SizeY; ++Y)
+                for (int32 X = Third * SkillSource.SizeX / 3; X < (Third + 1) * SkillSource.SizeX / 3; ++X)
+                {
+                    const FColor Raw = *static_cast<const FColor*>(SkillSource.GetPixelPointer(X, Y));
+                    if (Raw.A < 64) continue;
+                    const float Midtone = (Raw.R + Raw.G + Raw.B) / (3.f * 255.f);
+                    const float Score = (1.f - FMath::Abs(Midtone - .5f)) * (Raw.A / 255.f);
+                    if (Score > BestScore) { BestScore = Score; Probe = FIntPoint(X, Y); }
+                }
+                if (!TestTrue(TEXT("技能栏每个区域有真实可见样本"), Probe.X >= 0)) continue;
+                const FColor Raw = *static_cast<const FColor*>(SkillSource.GetPixelPointer(Probe.X, Probe.Y));
+                const FLinearColor Expected = bMask ? FLinearColor(Raw.R / 255.f, Raw.G / 255.f, Raw.B / 255.f, Raw.A / 255.f)
+                    : FLinearColor::FromSRGBColor(Raw);
+                FLinearColor Actual;
+                const FVector2f UV((Probe.X + .5f) / SkillSource.SizeX, (Probe.Y + .5f) / SkillSource.SizeY);
+                if (!TestTrue(TEXT("技能栏真实GPU/Slate回读成功"), DivineBeastsUIColorTests::RenderLinear(SkillTexture, UV, Actual))) continue;
+                const auto RGBError = [&Expected](const FLinearColor& Color)
+                { return FMath::Max3(FMath::Abs(Color.R - Expected.R), FMath::Abs(Color.G - Expected.G), FMath::Abs(Color.B - Expected.B)); };
+                // Slate目标允许直通或预乘储存；必须还原到相同原稿颜色，Alpha也须独立一致。
+                TestTrue(*FString::Printf(TEXT("技能栏%s%s区域%d颜色与Alpha一致 actual=%s expected=%s"), Part,
+                    bMask ? TEXT("_Alpha") : TEXT(""), Third, *Actual.ToString(), *Expected.ToString()),
+                    FMath::Abs(Actual.A - Expected.A) <= .012f && (RGBError(Actual) <= .012f
+                        || (Actual.A > .01f && RGBError(Actual / Actual.A) <= .012f)));
+            }
+        }
+    }
     // 原稿面板材质还经过自定义HLSL与九宫格UV裁切，单查纹理设置不能覆盖这一环节。
     auto* Texture=LoadObject<UTexture2D>(nullptr,TEXT("/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReference"));
     auto* Material=LoadObject<UMaterialInterface>(nullptr,TEXT("/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelNineSlice"));
@@ -303,5 +371,63 @@ bool FDivineBeastsLoadingPageRHIReportTest::RunTest(const FString&)
     return TestTrue(TEXT("真实加载页面线性浮点RHI导出"), DivineBeastsUIColorTests::SavePagePreview(
         TEXT("/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LoadingTravel.WBP_DBA_UI_LoadingTravel_C"),
         TEXT("LoadingTravel_1920x1080.png"), FIntPoint(1920,1080), *this, false));
+}
+/** 验证已保存蓝图消费状态通知、钳制游标和清空旧来源；只使用瞬态只读视图数据。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsSkillBarEventProjectionTest,
+    "DivineBeasts.UI.SkillBar.EventProjection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsSkillBarEventProjectionTest::RunTest(const FString&)
+{
+    UClass* Class = LoadClass<UDivineBeastsPlayerStatusPanel>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_SkillBarMomentum.WBP_DBA_UI_SkillBarMomentum_C"));
+    if (!TestNotNull(TEXT("气势控件从已保存资产加载"), Class)) return false;
+    TStrongObjectPtr<UDivineBeastsPlayerStatusPanel> Panel(
+        NewObject<UDivineBeastsPlayerStatusPanel>(GetTransientPackage(), Class));
+    if (!TestTrue(TEXT("气势控件初始化"), Panel->Initialize())) return false;
+    UImage* Bubble = Cast<UImage>(Panel->GetWidgetFromName(TEXT("MomentumBubble")));
+    if (!TestNotNull(TEXT("真实气势游标绑定存在"), Bubble)) return false;
+    TestEqual(TEXT("未知初始状态隐藏游标"), Bubble->GetRenderOpacity(), 0.f);
+    FDivineBeastsPlayerStatusViewData State;
+    State.MaxMomentum = 100.;
+    for (const double Value : {0., 50., 100., 150., -20.})
+    {
+        State.Momentum = Value;
+        Panel->ApplyStatus(State);
+        const double Expected = FMath::Clamp(Value / State.MaxMomentum, 0., 1.) * 527.;
+        TestTrue(TEXT("真实蓝图事件将游标投影到轨道并钳制边界"),
+            FMath::IsNearlyEqual(Bubble->GetRenderTransform().Translation.X, Expected, .001));
+        TestEqual(TEXT("有效状态显示游标"), Bubble->GetRenderOpacity(), 1.f);
+    }
+    // 同一通知重复投递不漂移；无Pawn的来源刷新必须清空旧显示，恢复快照可以重新显现。
+    Panel->ApplyStatus(State);
+    TestEqual(TEXT("重复快照不累加位移"), Bubble->GetRenderTransform().Translation.X, 0.);
+    Panel->RefreshStatusSourceFromOwningPawn();
+    TestEqual(TEXT("旧来源清空后隐藏游标"), Bubble->GetRenderOpacity(), 0.f);
+    State.Momentum = 50.;
+    Panel->ApplyStatus(State);
+    TestTrue(TEXT("恢复快照立即投影到中点"),
+        FMath::IsNearlyEqual(Bubble->GetRenderTransform().Translation.X, 263.5, .001));
+    State.MaxMomentum = 0.;
+    Panel->ApplyStatus(State);
+    TestEqual(TEXT("非法容量不能留下可见游标"), Bubble->GetRenderOpacity(), 0.f);
+    return true;
+}
+
+/** 已批准技能栏资产在三种真实RHI画布上检查底边；无账号、Pawn或虚构技能授权。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsSkillBarRHIReportTest,
+    "DivineBeasts.UI.SkillBar.RHIBottomFlush",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsSkillBarRHIReportTest::RunTest(const FString&)
+{
+    if (GUsingNullRHI) { AddError(TEXT("技能栏验收必须使用真实RHI。")); return false; }
+    bool bPassed = true;
+    for (const FIntPoint Size : {FIntPoint(1280, 720), FIntPoint(1920, 1080), FIntPoint(2560, 1440)})
+    {
+        const FString Name = FString::Printf(TEXT("SkillBar/CombatHUD_%dx%d.png"), Size.X, Size.Y);
+        bPassed &= TestTrue(TEXT("技能栏底部贴齐且线性浮点RHI导出成功"), DivineBeastsUIColorTests::SavePagePreview(
+            TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD.WBP_DBA_UI_CombatHUD_C"),
+            *Name, Size, *this, false, true));
+    }
+    return bPassed;
 }
 #endif

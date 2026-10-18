@@ -516,4 +516,96 @@ bool FGamePlatformTelemetryShutdownCancelsRetryTest::RunTest(const FString&)
     return true;
 }
 
+
+/** 长期稳定流量中各批次不断重试时，只追踪仍未触发的句柄，防止历史Ticker无界累积。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformTelemetryRetryHandleLifecycleTest,
+    "GamePlatform.Telemetry.Network.RetryHandleLifecycle",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformTelemetryRetryHandleLifecycleTest::RunTest(const FString&)
+{
+    const TSharedRef<FGamePlatformTelemetryRetryTestTransport, ESPMode::ThreadSafe> Transport =
+        MakeShared<FGamePlatformTelemetryRetryTestTransport, ESPMode::ThreadSafe>(true);
+    FGamePlatformTelemetryRetrySettings Retry;
+    Retry.RetryMinSeconds = 0.1f;
+    Retry.RetryMaxSeconds = 0.1f;
+    Retry.MaxRetryAgeSeconds = 5.0f;
+    Retry.MaxRetries = 3;
+    Retry.MaxPendingBatches = 2;
+
+    const TSharedRef<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe> Sink =
+        MakeShared<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe>(Transport, Retry);
+    TestTrue(TEXT("遥测网络重试Sink启动"), Sink->Start());
+    int32 FailedCompletions = 0;
+    for (int32 Index = 0; Index < 2; ++Index)
+    {
+        FGamePlatformTelemetryBatch Batch;
+        Batch.BatchId = FGuid::NewGuid();
+        Sink->SubmitBatch(Batch, [&FailedCompletions](bool bAccepted, bool)
+        {
+            if (!bAccepted) ++FailedCompletions;
+        });
+    }
+
+    TestEqual(TEXT("两个待完成批次各有一个待触发Ticker"),
+        Sink->RetryTickerHandles.Num(), 2);
+    TestEqual(TEXT("两个批次初次尝试均进入限额"), Sink->GetHealth().PendingBatches, 2);
+
+    for (int32 Iteration = 0; Iteration < 3; ++Iteration)
+    {
+        FTSTicker::GetCoreTicker().Tick(0.2f);
+        TestTrue(TEXT("旧重试句柄触发即移除，不能超出待完成批次"),
+            Sink->RetryTickerHandles.Num() <= Sink->GetHealth().PendingBatches);
+        TestTrue(TEXT("重试句柄不随历史尝试次数累积"),
+            Sink->RetryTickerHandles.Num() <= Retry.MaxPendingBatches);
+    }
+
+    TestEqual(TEXT("有界次数重试后原始两个批次均完成"), FailedCompletions, 2);
+    TestEqual(TEXT("耗尽重试后无待发送批次"), Sink->GetHealth().PendingBatches, 0);
+    TestEqual(TEXT("耗尽重试后不保留已触发Ticker句柄"),
+        Sink->RetryTickerHandles.Num(), 0);
+    Sink->Shutdown(0.0f);
+    return true;
+}
+
+/** Shutdown可由Flush或上传回调同步重入，必须只调度一份关停预算。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformTelemetryShutdownIdempotentTest,
+    "GamePlatform.Telemetry.Network.ShutdownIdempotent",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformTelemetryShutdownIdempotentTest::RunTest(const FString&)
+{
+    const TSharedRef<FGamePlatformTelemetryRetryTestTransport, ESPMode::ThreadSafe> Transport =
+        MakeShared<FGamePlatformTelemetryRetryTestTransport, ESPMode::ThreadSafe>(true);
+    FGamePlatformTelemetryRetrySettings Retry;
+    Retry.RetryMinSeconds = 0.1f;
+    Retry.RetryMaxSeconds = 0.1f;
+    Retry.MaxRetryAgeSeconds = 5.0f;
+    Retry.MaxRetries = 3;
+    const TSharedRef<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe> Sink =
+        MakeShared<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe>(Transport, Retry);
+    TestTrue(TEXT("Sink启动成功"), Sink->Start());
+    FGamePlatformTelemetryBatch Batch;
+    Batch.BatchId = FGuid::NewGuid();
+    Sink->SubmitBatch(Batch, {});
+    TestEqual(TEXT("准备一个重试Batch"), Sink->GetHealth().PendingBatches, 1);
+
+    Sink->Shutdown(0.5f);
+    const FTSTicker::FDelegateHandle Original = Sink->ShutdownTickerHandle;
+    TestTrue(TEXT("初次Shutdown只建立一个预算Ticker"), Original.IsValid());
+    TestEqual(TEXT("关闭已撤销尚未触发的重试Ticker"), Sink->RetryTickerHandles.Num(), 0);
+
+    Sink->Shutdown(0.1f);
+    TestEqual(TEXT("重复Shutdown不得新增/替换预算Ticker"), Sink->ShutdownTickerHandle, Original);
+    FTSTicker::GetCoreTicker().Tick(0.6f);
+    TestEqual(TEXT("预算到期必须回收批次"), Sink->GetHealth().PendingBatches, 0);
+    TestEqual(TEXT("只计一次未交付批次"), Sink->GetHealth().DroppedBatches, static_cast<int64>(1));
+    TestEqual(TEXT("仅取消本传输器网络请求一次"), Transport->CancelCalls, 1);
+
+    Sink->Shutdown(0.0f);
+    TestEqual(TEXT("已完成Shutdown后再次调用不得重复CancelAll"), Transport->CancelCalls, 1);
+    return true;
+}
 #endif

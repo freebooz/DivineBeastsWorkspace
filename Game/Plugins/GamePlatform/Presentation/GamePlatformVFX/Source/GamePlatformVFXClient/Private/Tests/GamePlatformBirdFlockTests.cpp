@@ -136,6 +136,17 @@ bool FGamePlatformBirdFlockActorRuntimeTest::RunTest(const FString& Parameters)
     }
     TestTrue(TEXT("运行中替换物种预设"), Actor->SetBirdProfile(Profile));
     TestEqual(TEXT("默认预设构建的实际实例数"), Actor->GetEffectiveBirdCount(), 32);
+    TestTrue(TEXT("鸟群原生Tick间隔服从物种预设更新率"),
+        FMath::IsNearlyEqual(Actor->GetActorTickInterval(),
+            1.0f / Profile->UpdateRateHz, KINDA_SMALL_NUMBER));
+    Profile->UpdateRateHz = 10.0f;
+    TestTrue(TEXT("动态调整物种10Hz更新频率"), Actor->RefreshFlock());
+    TestTrue(TEXT("更新率改变后重新配置原生TickInterval"),
+        FMath::IsNearlyEqual(Actor->GetActorTickInterval(), 0.1f, KINDA_SMALL_NUMBER));
+    Profile->UpdateRateHz = 20.0f;
+    TestTrue(TEXT("恢复20Hz预设频率"), Actor->RefreshFlock());
+    TestTrue(TEXT("频率重设不影响默认32只实例"),
+        Actor->GetEffectiveBirdCount() == 32);
 
     TestTrue(TEXT("数量为0时更新成功"), Actor->SetBirdCount(0));
     TestEqual(TEXT("关闭鸟群立即释放实例"), Actor->GetEffectiveBirdCount(), 0);

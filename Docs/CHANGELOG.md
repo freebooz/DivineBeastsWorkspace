@@ -1,5 +1,11 @@
 # 变更记录
 
+## 2026-10-18｜SSLM全局环境与UI美术配色策略V3.0文档整合
+
+- 新增[全局色彩主规范](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)及[41色参考/8功能状态派生索引](Art/SSLMColorRegistry_V3.json)，建立生态地面/岩石/植被/水域/建筑/生肖/VFX/UI/光照的统一色彩语义和人工审核门禁；全部HEX是初始sRGB屏幕参考，非UE线性材质输入和第三方官方取色。
+- 对齐现行GamePlatform三层边界；五行候选仅作艺术视觉语言，不恢复已取消的五行战斗规则；新增生命绿/能量蓝/独立暖金气势/施法亮玉青规范，明确历史蓝气势蓝图/原稿尚待实际迁移和人工确认。
+- 同步AGENTS、正式文档入口、目录规划及材质/PCG/VFX/UI专项引用；不修改既有.uasset/.umap及正式地图，不开展UE编译、GPU压测或人工签收，文档落盘不代表资源已验收。
+
 ## 2026-10-10｜UE5.8战斗反馈20份真实MSVC单文件构建验证
 
 - 通过`Build.bat DivineBeastsArenaEditor Win64 Development -Module=GamePlatformAnimation`对平台动画共享模块完成25/25动作并正式链接模块DLL，退出码0；引擎Core依赖同步编译产物实际更新。

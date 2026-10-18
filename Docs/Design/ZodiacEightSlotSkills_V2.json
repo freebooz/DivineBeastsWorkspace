@@ -1,0 +1,5312 @@
+{
+  "schemaVersion": 2,
+  "catalogName": "SSLM Zodiac Eight Active Skill Design Catalog",
+  "catalogNameZh": "SSLM十二生肖八槽技能设计真源",
+  "draftVersion": "2.0.0",
+  "projectCode": "SSLM",
+  "designerApprovalStatus": "PENDING_HUMAN_BALANCE_REVIEW",
+  "nativeUEAssetStatus": "NOT_AUTHORED",
+  "requiresNativeUEEditor": true,
+  "statementZh": "96项属于真实可机读的设计源稿，不是已生成的UE .uasset/已授予的GAS技能。金额、秒数、距离等仅为一级初调候选，禁止在正式服务器通过DefaultAbilitySetId启用。",
+  "migration": "保留12份既有placeholder@1和5槽资产;新版技能另用eight_draft@1并行身份，只有技能执行/动画/VFX/UE Cook及人工验收通过才能逐英雄切换",
+  "slotPolicy": {
+    "maxActiveSlots": 8,
+    "minActiveSlots": 8,
+    "innatePassiveOccupiesSlot": false,
+    "inputSemantics": [
+      {
+        "slot": "Primary",
+        "displayOrder": 1,
+        "role": "basic",
+        "tag": "Platform.Ability.Input.DivineBeasts.Primary",
+        "action": "DBA.PrimaryAbility",
+        "keyboard": "1"
+      },
+      {
+        "slot": "Slot1",
+        "displayOrder": 2,
+        "role": "attack_a",
+        "tag": "Platform.Ability.Input.DivineBeasts.Slot1",
+        "action": "DBA.AbilityOne",
+        "keyboard": "2"
+      },
+      {
+        "slot": "Slot2",
+        "displayOrder": 3,
+        "role": "attack_b",
+        "tag": "Platform.Ability.Input.DivineBeasts.Slot2",
+        "action": "DBA.AbilityTwo",
+        "keyboard": "3"
+      },
+      {
+        "slot": "Slot4",
+        "displayOrder": 4,
+        "role": "ultimate",
+        "tag": "Platform.Ability.Input.DivineBeasts.Slot4",
+        "action": "DBA.UltimateAbility",
+        "keyboard": "4"
+      },
+      {
+        "slot": "Slot3",
+        "displayOrder": 5,
+        "role": "mobility",
+        "tag": "Platform.Ability.Input.DivineBeasts.Slot3",
+        "action": "DBA.AbilitySlot3",
+        "keyboard": "5"
+      },
+      {
+        "slot": "Slot5",
+        "displayOrder": 6,
+        "role": "defense",
+        "tag": "Platform.Ability.Input.DivineBeasts.Slot5",
+        "action": "DBA.AbilitySlot5",
+        "keyboard": "6"
+      },
+      {
+        "slot": "Slot6",
+        "displayOrder": 7,
+        "role": "control",
+        "tag": "Platform.Ability.Input.DivineBeasts.Slot6",
+        "action": "DBA.AbilitySlot6",
+        "keyboard": "7"
+      },
+      {
+        "slot": "Slot7",
+        "displayOrder": 8,
+        "role": "signature",
+        "tag": "Platform.Ability.Input.DivineBeasts.Slot7",
+        "action": "DBA.AbilitySlot7",
+        "keyboard": "8"
+      }
+    ],
+    "legacyUltimatePreservedAtSlot4": true
+  },
+  "constraints": {
+    "magicMomentumCostMustBeZero": true,
+    "energyCostDeferred": true,
+    "serverAuthoritative": true,
+    "noFiveElementOrElementalCounterMechanics": true,
+    "noGameplayEffectFromNiagara": true,
+    "sourceRole": "DESIGN_ONLY",
+    "allowUnimplementedAbilityGrant": false
+  },
+  "healCapableHeroes": [
+    "卯兔·玉灵",
+    "未羊·玉角",
+    "酉鸡·金鸣",
+    "戌狗·天犬"
+  ],
+  "heroCount": 12,
+  "skillCount": 96,
+  "heroes": [
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroCode": "rat",
+      "heroNameZh": "子鼠·影牙",
+      "battleRoleZh": "灵巧突袭",
+      "innateTrait": {
+        "nameZh": "夜行直觉",
+        "descriptionZh": "脱离交战后提升首次突袭伤害（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.rat_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.rat_eight_fang_cut@1",
+          "abilityKey": "fang_cut",
+          "nameZh": "影牙斩",
+          "descriptionZh": "单体近战短斩；合法命中恢复少量气势",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 32,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.8,
+          "castRangeCm": 220,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 32,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rat.fang_cut.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rat.fang_cut.Cast",
+              "Presentation.DBA.Hero.Rat.fang_cut.Release",
+              "Presentation.DBA.Hero.Rat.fang_cut.Flight",
+              "Presentation.DBA.Hero.Rat.fang_cut.Impact",
+              "Presentation.DBA.Hero.Rat.fang_cut.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.rat_eight_crescent_blade@1",
+          "abilityKey": "crescent_blade",
+          "nameZh": "弦月双刃",
+          "descriptionZh": "投出两道交错银月牙刃，沿服务器射线判定",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 68,
+          "hitCount": 2,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 4.5,
+          "castRangeCm": 850,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 68,
+              "hitCount": 2,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rat.crescent_blade.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rat.crescent_blade.Cast",
+              "Presentation.DBA.Hero.Rat.crescent_blade.Release",
+              "Presentation.DBA.Hero.Rat.crescent_blade.Flight",
+              "Presentation.DBA.Hero.Rat.crescent_blade.Impact",
+              "Presentation.DBA.Hero.Rat.crescent_blade.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.rat_eight_cross_fangs@1",
+          "abilityKey": "cross_fangs",
+          "nameZh": "交锋裂影",
+          "descriptionZh": "短距离交叉连续切割，中心目标受两段判定",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 92,
+          "hitCount": 2,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 8,
+          "castRangeCm": 350,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 92,
+              "hitCount": 2,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rat.cross_fangs.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rat.cross_fangs.Cast",
+              "Presentation.DBA.Hero.Rat.cross_fangs.Release",
+              "Presentation.DBA.Hero.Rat.cross_fangs.Flight",
+              "Presentation.DBA.Hero.Rat.cross_fangs.Impact",
+              "Presentation.DBA.Hero.Rat.cross_fangs.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.rat_eight_shadow_hunt@1",
+          "abilityKey": "shadow_hunt",
+          "nameZh": "影牙围猎",
+          "descriptionZh": "三道影牙从目标周边合围，区域命中带多段上限",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 190,
+          "hitCount": 3,
+          "momentumCost": 20,
+          "energyCost": 0,
+          "cooldownSeconds": 62,
+          "castRangeCm": 900,
+          "areaRadiusCm": 320,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 190,
+              "hitCount": 3,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rat.shadow_hunt.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rat.shadow_hunt.Cast",
+              "Presentation.DBA.Hero.Rat.shadow_hunt.Release",
+              "Presentation.DBA.Hero.Rat.shadow_hunt.Flight",
+              "Presentation.DBA.Hero.Rat.shadow_hunt.Impact",
+              "Presentation.DBA.Hero.Rat.shadow_hunt.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.rat_eight_shadow_step@1",
+          "abilityKey": "shadow_step",
+          "nameZh": "踏影突闪",
+          "descriptionZh": "按服务器校验方向短突进，不能穿越阻挡",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 13,
+          "castRangeCm": 700,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "movement",
+              "distanceCm": 660,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rat.shadow_step.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rat.shadow_step.Cast",
+              "Presentation.DBA.Hero.Rat.shadow_step.Release",
+              "Presentation.DBA.Hero.Rat.shadow_step.Flight",
+              "Presentation.DBA.Hero.Rat.shadow_step.Impact",
+              "Presentation.DBA.Hero.Rat.shadow_step.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.rat_eight_mist_guard@1",
+          "abilityKey": "mist_guard",
+          "nameZh": "影雾护体",
+          "descriptionZh": "短时间获得16%最大生命护盾，非隐身",
+          "intentTarget": "self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 20,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.16,
+              "durationSeconds": 4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rat.mist_guard.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rat.mist_guard.Cast",
+              "Presentation.DBA.Hero.Rat.mist_guard.Release",
+              "Presentation.DBA.Hero.Rat.mist_guard.Flight",
+              "Presentation.DBA.Hero.Rat.mist_guard.Impact",
+              "Presentation.DBA.Hero.Rat.mist_guard.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.rat_eight_shadow_snare@1",
+          "abilityKey": "shadow_snare",
+          "nameZh": "掠影缚足",
+          "descriptionZh": "短刃命中使目标减速30%，只取已确认命中",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 24,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 17,
+          "castRangeCm": 800,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 24,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "slow",
+              "durationSeconds": 2.2,
+              "slowFraction": 0.3
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rat.shadow_snare.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rat.shadow_snare.Cast",
+              "Presentation.DBA.Hero.Rat.shadow_snare.Release",
+              "Presentation.DBA.Hero.Rat.shadow_snare.Flight",
+              "Presentation.DBA.Hero.Rat.shadow_snare.Impact",
+              "Presentation.DBA.Hero.Rat.shadow_snare.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.rat_eight_fang_mark@1",
+          "abilityKey": "fang_mark",
+          "nameZh": "牙痕追猎",
+          "descriptionZh": "标记目标5秒，下次本人命中增伤15%",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 42,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 19,
+          "castRangeCm": 850,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 42,
+              "hitCount": 1,
+              "type": "Physical"
+            },
+            {
+              "kind": "buff",
+              "buffType": "next_hit_bonus",
+              "magnitudeFraction": 0.15,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rat.fang_mark.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rat.fang_mark.Cast",
+              "Presentation.DBA.Hero.Rat.fang_mark.Release",
+              "Presentation.DBA.Hero.Rat.fang_mark.Flight",
+              "Presentation.DBA.Hero.Rat.fang_mark.Impact",
+              "Presentation.DBA.Hero.Rat.fang_mark.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroCode": "ox",
+      "heroNameZh": "丑牛·玄角",
+      "battleRoleZh": "厚重前排",
+      "innateTrait": {
+        "nameZh": "岩骨之躯",
+        "descriptionZh": "连续承受攻击时获得有限减伤层数（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.ox_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.ox_eight_horn_strike@1",
+          "abilityKey": "horn_strike",
+          "nameZh": "玄角撞",
+          "descriptionZh": "牛角近身撞击；合法命中获得气势",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 38,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.95,
+          "castRangeCm": 225,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 38,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Ox.Default",
+            "catalogKey": "DBA.Presentation.Hero.Ox.horn_strike.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Ox.horn_strike.Cast",
+              "Presentation.DBA.Hero.Ox.horn_strike.Release",
+              "Presentation.DBA.Hero.Ox.horn_strike.Flight",
+              "Presentation.DBA.Hero.Ox.horn_strike.Impact",
+              "Presentation.DBA.Hero.Ox.horn_strike.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.ox_eight_horn_break@1",
+          "abilityKey": "horn_break",
+          "nameZh": "破岩角挑",
+          "descriptionZh": "上挑单体并附加重击反馈，不默认击飞",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 74,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 5,
+          "castRangeCm": 340,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 74,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Ox.Default",
+            "catalogKey": "DBA.Presentation.Hero.Ox.horn_break.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Ox.horn_break.Cast",
+              "Presentation.DBA.Hero.Ox.horn_break.Release",
+              "Presentation.DBA.Hero.Ox.horn_break.Flight",
+              "Presentation.DBA.Hero.Ox.horn_break.Impact",
+              "Presentation.DBA.Hero.Ox.horn_break.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.ox_eight_ground_pulse@1",
+          "abilityKey": "ground_pulse",
+          "nameZh": "裂土重踏",
+          "descriptionZh": "自身周围扩散地脉冲击，服务器圆形AOE",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 96,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 10,
+          "castRangeCm": 0,
+          "areaRadiusCm": 370,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 96,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Ox.Default",
+            "catalogKey": "DBA.Presentation.Hero.Ox.ground_pulse.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Ox.ground_pulse.Cast",
+              "Presentation.DBA.Hero.Ox.ground_pulse.Release",
+              "Presentation.DBA.Hero.Ox.ground_pulse.Flight",
+              "Presentation.DBA.Hero.Ox.ground_pulse.Impact",
+              "Presentation.DBA.Hero.Ox.ground_pulse.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.ox_eight_mountain_break@1",
+          "abilityKey": "mountain_break",
+          "nameZh": "崩岳裂阵",
+          "descriptionZh": "向前重击并产生区域震裂，中心短眩晕",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 222,
+          "hitCount": 1,
+          "momentumCost": 20,
+          "energyCost": 0,
+          "cooldownSeconds": 66,
+          "castRangeCm": 550,
+          "areaRadiusCm": 540,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 222,
+              "hitCount": 1,
+              "type": "Physical"
+            },
+            {
+              "kind": "control",
+              "controlType": "stun",
+              "durationSeconds": 0.8,
+              "slowFraction": 0
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Ox.Default",
+            "catalogKey": "DBA.Presentation.Hero.Ox.mountain_break.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Ox.mountain_break.Cast",
+              "Presentation.DBA.Hero.Ox.mountain_break.Release",
+              "Presentation.DBA.Hero.Ox.mountain_break.Flight",
+              "Presentation.DBA.Hero.Ox.mountain_break.Impact",
+              "Presentation.DBA.Hero.Ox.mountain_break.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.ox_eight_horn_charge@1",
+          "abilityKey": "horn_charge",
+          "nameZh": "玄角冲阵",
+          "descriptionZh": "冲锋至合法前方位置并撞击首个敌人",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 45,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 16,
+          "castRangeCm": 750,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 45,
+              "hitCount": 1,
+              "type": "Physical"
+            },
+            {
+              "kind": "movement",
+              "distanceCm": 760,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Ox.Default",
+            "catalogKey": "DBA.Presentation.Hero.Ox.horn_charge.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Ox.horn_charge.Cast",
+              "Presentation.DBA.Hero.Ox.horn_charge.Release",
+              "Presentation.DBA.Hero.Ox.horn_charge.Flight",
+              "Presentation.DBA.Hero.Ox.horn_charge.Impact",
+              "Presentation.DBA.Hero.Ox.horn_charge.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.ox_eight_stone_armor@1",
+          "abilityKey": "stone_armor",
+          "nameZh": "玄岩战甲",
+          "descriptionZh": "获得22%最大生命护盾，防御特色",
+          "intentTarget": "self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 23,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.22,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Ox.Default",
+            "catalogKey": "DBA.Presentation.Hero.Ox.stone_armor.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Ox.stone_armor.Cast",
+              "Presentation.DBA.Hero.Ox.stone_armor.Release",
+              "Presentation.DBA.Hero.Ox.stone_armor.Flight",
+              "Presentation.DBA.Hero.Ox.stone_armor.Impact",
+              "Presentation.DBA.Hero.Ox.stone_armor.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.ox_eight_seismic_stun@1",
+          "abilityKey": "seismic_stun",
+          "nameZh": "震蹄定身",
+          "descriptionZh": "有限近身震荡造成0.9秒眩晕",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 28,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 18,
+          "castRangeCm": 375,
+          "areaRadiusCm": 260,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 28,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "stun",
+              "durationSeconds": 0.9,
+              "slowFraction": 0
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Ox.Default",
+            "catalogKey": "DBA.Presentation.Hero.Ox.seismic_stun.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Ox.seismic_stun.Cast",
+              "Presentation.DBA.Hero.Ox.seismic_stun.Release",
+              "Presentation.DBA.Hero.Ox.seismic_stun.Flight",
+              "Presentation.DBA.Hero.Ox.seismic_stun.Impact",
+              "Presentation.DBA.Hero.Ox.seismic_stun.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.ox_eight_steadfast_roar@1",
+          "abilityKey": "steadfast_roar",
+          "nameZh": "厚土战吼",
+          "descriptionZh": "己方近身单位获得5秒12%伤害减免，不触发治疗",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 24,
+          "castRangeCm": 0,
+          "areaRadiusCm": 520,
+          "actions": [
+            {
+              "kind": "buff",
+              "buffType": "damage_reduction",
+              "magnitudeFraction": 0.12,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Ox.Default",
+            "catalogKey": "DBA.Presentation.Hero.Ox.steadfast_roar.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Ox.steadfast_roar.Cast",
+              "Presentation.DBA.Hero.Ox.steadfast_roar.Release",
+              "Presentation.DBA.Hero.Ox.steadfast_roar.Flight",
+              "Presentation.DBA.Hero.Ox.steadfast_roar.Impact",
+              "Presentation.DBA.Hero.Ox.steadfast_roar.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroCode": "tiger",
+      "heroNameZh": "寅虎·白君",
+      "battleRoleZh": "近战爆发",
+      "innateTrait": {
+        "nameZh": "王者虎威",
+        "descriptionZh": "持续攻击同一目标逐步提高攻击强度（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.tiger_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.tiger_eight_claw_strike@1",
+          "abilityKey": "claw_strike",
+          "nameZh": "白君裂爪",
+          "descriptionZh": "单体爪击，回复普攻气势",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 36,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.75,
+          "castRangeCm": 240,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 36,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Tiger.Default",
+            "catalogKey": "DBA.Presentation.Hero.Tiger.claw_strike.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Tiger.claw_strike.Cast",
+              "Presentation.DBA.Hero.Tiger.claw_strike.Release",
+              "Presentation.DBA.Hero.Tiger.claw_strike.Flight",
+              "Presentation.DBA.Hero.Tiger.claw_strike.Impact",
+              "Presentation.DBA.Hero.Tiger.claw_strike.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.tiger_eight_golden_rake@1",
+          "abilityKey": "golden_rake",
+          "nameZh": "白金爪刃",
+          "descriptionZh": "前方扇形两道爪痕",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 76,
+          "hitCount": 2,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 4.5,
+          "castRangeCm": 620,
+          "areaRadiusCm": 280,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 76,
+              "hitCount": 2,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Tiger.Default",
+            "catalogKey": "DBA.Presentation.Hero.Tiger.golden_rake.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Tiger.golden_rake.Cast",
+              "Presentation.DBA.Hero.Tiger.golden_rake.Release",
+              "Presentation.DBA.Hero.Tiger.golden_rake.Flight",
+              "Presentation.DBA.Hero.Tiger.golden_rake.Impact",
+              "Presentation.DBA.Hero.Tiger.golden_rake.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.tiger_eight_tiger_pounce@1",
+          "abilityKey": "tiger_pounce",
+          "nameZh": "猛虎连袭",
+          "descriptionZh": "快速两段近战，优先当前锁定敌方",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 100,
+          "hitCount": 2,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 8.5,
+          "castRangeCm": 550,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 100,
+              "hitCount": 2,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Tiger.Default",
+            "catalogKey": "DBA.Presentation.Hero.Tiger.tiger_pounce.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Tiger.tiger_pounce.Cast",
+              "Presentation.DBA.Hero.Tiger.tiger_pounce.Release",
+              "Presentation.DBA.Hero.Tiger.tiger_pounce.Flight",
+              "Presentation.DBA.Hero.Tiger.tiger_pounce.Impact",
+              "Presentation.DBA.Hero.Tiger.tiger_pounce.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.tiger_eight_tiger_roar_storm@1",
+          "abilityKey": "tiger_roar_storm",
+          "nameZh": "白君啸天",
+          "descriptionZh": "虎啸后多段金爪暴发，终结技",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 236,
+          "hitCount": 3,
+          "momentumCost": 23,
+          "energyCost": 0,
+          "cooldownSeconds": 59,
+          "castRangeCm": 700,
+          "areaRadiusCm": 480,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 236,
+              "hitCount": 3,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Tiger.Default",
+            "catalogKey": "DBA.Presentation.Hero.Tiger.tiger_roar_storm.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Tiger.tiger_roar_storm.Cast",
+              "Presentation.DBA.Hero.Tiger.tiger_roar_storm.Release",
+              "Presentation.DBA.Hero.Tiger.tiger_roar_storm.Flight",
+              "Presentation.DBA.Hero.Tiger.tiger_roar_storm.Impact",
+              "Presentation.DBA.Hero.Tiger.tiger_roar_storm.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.tiger_eight_leaping_claw@1",
+          "abilityKey": "leaping_claw",
+          "nameZh": "虎跃猎袭",
+          "descriptionZh": "跳扑目标附近合法落点，不能越过禁区",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 40,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 13.5,
+          "castRangeCm": 750,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 40,
+              "hitCount": 1,
+              "type": "Physical"
+            },
+            {
+              "kind": "movement",
+              "distanceCm": 710,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Tiger.Default",
+            "catalogKey": "DBA.Presentation.Hero.Tiger.leaping_claw.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Tiger.leaping_claw.Cast",
+              "Presentation.DBA.Hero.Tiger.leaping_claw.Release",
+              "Presentation.DBA.Hero.Tiger.leaping_claw.Flight",
+              "Presentation.DBA.Hero.Tiger.leaping_claw.Impact",
+              "Presentation.DBA.Hero.Tiger.leaping_claw.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.tiger_eight_regal_guard@1",
+          "abilityKey": "regal_guard",
+          "nameZh": "虎纹护甲",
+          "descriptionZh": "金纹短护盾，维持进攻者脆性",
+          "intentTarget": "self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 20,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.14,
+              "durationSeconds": 4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Tiger.Default",
+            "catalogKey": "DBA.Presentation.Hero.Tiger.regal_guard.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Tiger.regal_guard.Cast",
+              "Presentation.DBA.Hero.Tiger.regal_guard.Release",
+              "Presentation.DBA.Hero.Tiger.regal_guard.Flight",
+              "Presentation.DBA.Hero.Tiger.regal_guard.Impact",
+              "Presentation.DBA.Hero.Tiger.regal_guard.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.tiger_eight_roar_shock@1",
+          "abilityKey": "roar_shock",
+          "nameZh": "震山虎啸",
+          "descriptionZh": "扇形虎啸短眩晕，明确危险边缘",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 26,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 19,
+          "castRangeCm": 550,
+          "areaRadiusCm": 340,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 26,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "stun",
+              "durationSeconds": 0.7,
+              "slowFraction": 0
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Tiger.Default",
+            "catalogKey": "DBA.Presentation.Hero.Tiger.roar_shock.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Tiger.roar_shock.Cast",
+              "Presentation.DBA.Hero.Tiger.roar_shock.Release",
+              "Presentation.DBA.Hero.Tiger.roar_shock.Flight",
+              "Presentation.DBA.Hero.Tiger.roar_shock.Impact",
+              "Presentation.DBA.Hero.Tiger.roar_shock.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.tiger_eight_battle_fervor@1",
+          "abilityKey": "battle_fervor",
+          "nameZh": "威仪昂扬",
+          "descriptionZh": "本人5秒内普通攻击伤害加成12%",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 18,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "buff",
+              "buffType": "damage_bonus",
+              "magnitudeFraction": 0.12,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Tiger.Default",
+            "catalogKey": "DBA.Presentation.Hero.Tiger.battle_fervor.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Tiger.battle_fervor.Cast",
+              "Presentation.DBA.Hero.Tiger.battle_fervor.Release",
+              "Presentation.DBA.Hero.Tiger.battle_fervor.Flight",
+              "Presentation.DBA.Hero.Tiger.battle_fervor.Impact",
+              "Presentation.DBA.Hero.Tiger.battle_fervor.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroCode": "rabbit",
+      "heroNameZh": "卯兔·玉灵",
+      "battleRoleZh": "机动治疗",
+      "innateTrait": {
+        "nameZh": "月辉余韵",
+        "descriptionZh": "为友方施放技能积攒下一次治疗强化（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.rabbit_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.rabbit_eight_jade_moon_shot@1",
+          "abilityKey": "jade_moon_shot",
+          "nameZh": "月玉轻弹",
+          "descriptionZh": "远程单体月辉弹，命中恢复气势",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 29,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.85,
+          "castRangeCm": 950,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 29,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rabbit.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rabbit.jade_moon_shot.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shot.Cast",
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shot.Release",
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shot.Flight",
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shot.Impact",
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shot.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.rabbit_eight_crescent_arc@1",
+          "abilityKey": "crescent_arc",
+          "nameZh": "玉月回旋",
+          "descriptionZh": "月环往返两段服务器命中",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 62,
+          "hitCount": 2,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 5.5,
+          "castRangeCm": 960,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 62,
+              "hitCount": 2,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rabbit.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rabbit.crescent_arc.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rabbit.crescent_arc.Cast",
+              "Presentation.DBA.Hero.Rabbit.crescent_arc.Release",
+              "Presentation.DBA.Hero.Rabbit.crescent_arc.Flight",
+              "Presentation.DBA.Hero.Rabbit.crescent_arc.Impact",
+              "Presentation.DBA.Hero.Rabbit.crescent_arc.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.rabbit_eight_falling_petals@1",
+          "abilityKey": "falling_petals",
+          "nameZh": "落英星雨",
+          "descriptionZh": "指定区域内花瓣坠击，纯伤害不夹带虚假治疗",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 80,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 10.5,
+          "castRangeCm": 920,
+          "areaRadiusCm": 330,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 80,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rabbit.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rabbit.falling_petals.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rabbit.falling_petals.Cast",
+              "Presentation.DBA.Hero.Rabbit.falling_petals.Release",
+              "Presentation.DBA.Hero.Rabbit.falling_petals.Flight",
+              "Presentation.DBA.Hero.Rabbit.falling_petals.Impact",
+              "Presentation.DBA.Hero.Rabbit.falling_petals.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.rabbit_eight_moon_bloom@1",
+          "abilityKey": "moon_bloom",
+          "nameZh": "月华绽放",
+          "descriptionZh": "范围内敌人受月辉伤害、己方获得12%最大生命治疗",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 168,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 64,
+          "castRangeCm": 850,
+          "areaRadiusCm": 470,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 168,
+              "hitCount": 1,
+              "type": "Magic"
+            },
+            {
+              "kind": "healing",
+              "maxHealthFraction": 0.12,
+              "allowRevive": false
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rabbit.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rabbit.moon_bloom.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rabbit.moon_bloom.Cast",
+              "Presentation.DBA.Hero.Rabbit.moon_bloom.Release",
+              "Presentation.DBA.Hero.Rabbit.moon_bloom.Flight",
+              "Presentation.DBA.Hero.Rabbit.moon_bloom.Impact",
+              "Presentation.DBA.Hero.Rabbit.moon_bloom.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.rabbit_eight_moon_leap@1",
+          "abilityKey": "moon_leap",
+          "nameZh": "月影跃迁",
+          "descriptionZh": "轻跳至合法位置，障碍物裁剪",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 12,
+          "castRangeCm": 650,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "movement",
+              "distanceCm": 650,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rabbit.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rabbit.moon_leap.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rabbit.moon_leap.Cast",
+              "Presentation.DBA.Hero.Rabbit.moon_leap.Release",
+              "Presentation.DBA.Hero.Rabbit.moon_leap.Flight",
+              "Presentation.DBA.Hero.Rabbit.moon_leap.Impact",
+              "Presentation.DBA.Hero.Rabbit.moon_leap.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.rabbit_eight_jade_moon_shield@1",
+          "abilityKey": "jade_moon_shield",
+          "nameZh": "玉月屏护",
+          "descriptionZh": "对自己或友方赋予短时护盾",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 17,
+          "castRangeCm": 800,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.16,
+              "durationSeconds": 4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rabbit.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rabbit.jade_moon_shield.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shield.Cast",
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shield.Release",
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shield.Flight",
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shield.Impact",
+              "Presentation.DBA.Hero.Rabbit.jade_moon_shield.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.rabbit_eight_lunar_bind@1",
+          "abilityKey": "lunar_bind",
+          "nameZh": "月辉束缚",
+          "descriptionZh": "月光圈命中减速35%，不是隐藏长时间硬控",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 22,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 18,
+          "castRangeCm": 850,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 22,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "slow",
+              "durationSeconds": 2,
+              "slowFraction": 0.35
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rabbit.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rabbit.lunar_bind.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rabbit.lunar_bind.Cast",
+              "Presentation.DBA.Hero.Rabbit.lunar_bind.Release",
+              "Presentation.DBA.Hero.Rabbit.lunar_bind.Flight",
+              "Presentation.DBA.Hero.Rabbit.lunar_bind.Impact",
+              "Presentation.DBA.Hero.Rabbit.lunar_bind.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.rabbit_eight_jade_heal@1",
+          "abilityKey": "jade_heal",
+          "nameZh": "玉露回春",
+          "descriptionZh": "治疗一个合法友方22%最大生命，不复活",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 16,
+          "castRangeCm": 1000,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "healing",
+              "maxHealthFraction": 0.22,
+              "allowRevive": false
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rabbit.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rabbit.jade_heal.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rabbit.jade_heal.Cast",
+              "Presentation.DBA.Hero.Rabbit.jade_heal.Release",
+              "Presentation.DBA.Hero.Rabbit.jade_heal.Flight",
+              "Presentation.DBA.Hero.Rabbit.jade_heal.Impact",
+              "Presentation.DBA.Hero.Rabbit.jade_heal.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroCode": "dragon",
+      "heroNameZh": "辰龙·苍龙",
+      "battleRoleZh": "法术范围",
+      "innateTrait": {
+        "nameZh": "云鳞共振",
+        "descriptionZh": "连续命中增强下一次龙息范围（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.dragon_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.dragon_eight_dragon_claw@1",
+          "abilityKey": "dragon_claw",
+          "nameZh": "苍龙爪光",
+          "descriptionZh": "中近距离龙爪能量命中",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 34,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.85,
+          "castRangeCm": 450,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 34,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dragon.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dragon.dragon_claw.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dragon.dragon_claw.Cast",
+              "Presentation.DBA.Hero.Dragon.dragon_claw.Release",
+              "Presentation.DBA.Hero.Dragon.dragon_claw.Flight",
+              "Presentation.DBA.Hero.Dragon.dragon_claw.Impact",
+              "Presentation.DBA.Hero.Dragon.dragon_claw.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.dragon_eight_cloud_scale@1",
+          "abilityKey": "cloud_scale",
+          "nameZh": "云鳞飞刃",
+          "descriptionZh": "两枚青云龙鳞追击冻结目标",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 67,
+          "hitCount": 2,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 5.5,
+          "castRangeCm": 1030,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 67,
+              "hitCount": 2,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dragon.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dragon.cloud_scale.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dragon.cloud_scale.Cast",
+              "Presentation.DBA.Hero.Dragon.cloud_scale.Release",
+              "Presentation.DBA.Hero.Dragon.cloud_scale.Flight",
+              "Presentation.DBA.Hero.Dragon.cloud_scale.Impact",
+              "Presentation.DBA.Hero.Dragon.cloud_scale.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.dragon_eight_azure_breath@1",
+          "abilityKey": "azure_breath",
+          "nameZh": "苍云雷息",
+          "descriptionZh": "前方锥形雷云吐息，服务器扇区规则",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 100,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 10,
+          "castRangeCm": 900,
+          "areaRadiusCm": 340,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 100,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dragon.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dragon.azure_breath.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dragon.azure_breath.Cast",
+              "Presentation.DBA.Hero.Dragon.azure_breath.Release",
+              "Presentation.DBA.Hero.Dragon.azure_breath.Flight",
+              "Presentation.DBA.Hero.Dragon.azure_breath.Impact",
+              "Presentation.DBA.Hero.Dragon.azure_breath.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.dragon_eight_dragon_ascension@1",
+          "abilityKey": "dragon_ascension",
+          "nameZh": "苍龙临世",
+          "descriptionZh": "龙首云气降临产生大范围一次性法术打击",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 236,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 72,
+          "castRangeCm": 1000,
+          "areaRadiusCm": 590,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 236,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dragon.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dragon.dragon_ascension.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dragon.dragon_ascension.Cast",
+              "Presentation.DBA.Hero.Dragon.dragon_ascension.Release",
+              "Presentation.DBA.Hero.Dragon.dragon_ascension.Flight",
+              "Presentation.DBA.Hero.Dragon.dragon_ascension.Impact",
+              "Presentation.DBA.Hero.Dragon.dragon_ascension.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.dragon_eight_cloud_stride@1",
+          "abilityKey": "cloud_stride",
+          "nameZh": "御云腾跃",
+          "descriptionZh": "云气跃迁，服务端合法落点",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 16,
+          "castRangeCm": 720,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "movement",
+              "distanceCm": 720,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dragon.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dragon.cloud_stride.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dragon.cloud_stride.Cast",
+              "Presentation.DBA.Hero.Dragon.cloud_stride.Release",
+              "Presentation.DBA.Hero.Dragon.cloud_stride.Flight",
+              "Presentation.DBA.Hero.Dragon.cloud_stride.Impact",
+              "Presentation.DBA.Hero.Dragon.cloud_stride.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.dragon_eight_dragon_scale_guard@1",
+          "abilityKey": "dragon_scale_guard",
+          "nameZh": "苍鳞护身",
+          "descriptionZh": "龙鳞护盾保护自己",
+          "intentTarget": "self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 22,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.18,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dragon.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dragon.dragon_scale_guard.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dragon.dragon_scale_guard.Cast",
+              "Presentation.DBA.Hero.Dragon.dragon_scale_guard.Release",
+              "Presentation.DBA.Hero.Dragon.dragon_scale_guard.Flight",
+              "Presentation.DBA.Hero.Dragon.dragon_scale_guard.Impact",
+              "Presentation.DBA.Hero.Dragon.dragon_scale_guard.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
+          "abilityKey": "thunder_cloud_lock",
+          "nameZh": "雷云镇缚",
+          "descriptionZh": "小范围雷云压制0.9秒眩晕",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 32,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 20,
+          "castRangeCm": 870,
+          "areaRadiusCm": 200,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 32,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "stun",
+              "durationSeconds": 0.9,
+              "slowFraction": 0
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dragon.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dragon.thunder_cloud_lock.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dragon.thunder_cloud_lock.Cast",
+              "Presentation.DBA.Hero.Dragon.thunder_cloud_lock.Release",
+              "Presentation.DBA.Hero.Dragon.thunder_cloud_lock.Flight",
+              "Presentation.DBA.Hero.Dragon.thunder_cloud_lock.Impact",
+              "Presentation.DBA.Hero.Dragon.thunder_cloud_lock.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.dragon_eight_cloud_blessing@1",
+          "abilityKey": "cloud_blessing",
+          "nameZh": "苍云庇佑",
+          "descriptionZh": "区域内己方短时间获得12%最大生命护盾",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 25,
+          "castRangeCm": 780,
+          "areaRadiusCm": 360,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.12,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dragon.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dragon.cloud_blessing.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dragon.cloud_blessing.Cast",
+              "Presentation.DBA.Hero.Dragon.cloud_blessing.Release",
+              "Presentation.DBA.Hero.Dragon.cloud_blessing.Flight",
+              "Presentation.DBA.Hero.Dragon.cloud_blessing.Impact",
+              "Presentation.DBA.Hero.Dragon.cloud_blessing.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroCode": "snake",
+      "heroNameZh": "巳蛇·幽鳞",
+      "battleRoleZh": "远程消耗控制",
+      "innateTrait": {
+        "nameZh": "蜕鳞灵觉",
+        "descriptionZh": "保持移动后下一次灵蛇攻击附带轻度减速（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.snake_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.snake_eight_scale_bite@1",
+          "abilityKey": "scale_bite",
+          "nameZh": "幽鳞穿刺",
+          "descriptionZh": "中程鳞光单体伤害",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 30,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.8,
+          "castRangeCm": 780,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 30,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Snake.Default",
+            "catalogKey": "DBA.Presentation.Hero.Snake.scale_bite.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Snake.scale_bite.Cast",
+              "Presentation.DBA.Hero.Snake.scale_bite.Release",
+              "Presentation.DBA.Hero.Snake.scale_bite.Flight",
+              "Presentation.DBA.Hero.Snake.scale_bite.Impact",
+              "Presentation.DBA.Hero.Snake.scale_bite.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.snake_eight_venom_spear@1",
+          "abilityKey": "venom_spear",
+          "nameZh": "蛇影灵针",
+          "descriptionZh": "灵针命中后附加可驱散的三秒低额伤害",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 55,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 5,
+          "castRangeCm": 1000,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 55,
+              "hitCount": 1,
+              "type": "Magic"
+            },
+            {
+              "kind": "buff",
+              "buffType": "damage_over_time",
+              "magnitudeFraction": 0.05,
+              "durationSeconds": 3
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Snake.Default",
+            "catalogKey": "DBA.Presentation.Hero.Snake.venom_spear.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Snake.venom_spear.Cast",
+              "Presentation.DBA.Hero.Snake.venom_spear.Release",
+              "Presentation.DBA.Hero.Snake.venom_spear.Flight",
+              "Presentation.DBA.Hero.Snake.venom_spear.Impact",
+              "Presentation.DBA.Hero.Snake.venom_spear.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.snake_eight_serpent_arc@1",
+          "abilityKey": "serpent_arc",
+          "nameZh": "盘鳞双弹",
+          "descriptionZh": "左右蛇形两条光弹交叉命中",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 80,
+          "hitCount": 2,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 9,
+          "castRangeCm": 960,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 80,
+              "hitCount": 2,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Snake.Default",
+            "catalogKey": "DBA.Presentation.Hero.Snake.serpent_arc.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Snake.serpent_arc.Cast",
+              "Presentation.DBA.Hero.Snake.serpent_arc.Release",
+              "Presentation.DBA.Hero.Snake.serpent_arc.Flight",
+              "Presentation.DBA.Hero.Snake.serpent_arc.Impact",
+              "Presentation.DBA.Hero.Snake.serpent_arc.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.snake_eight_serpent_maelstrom@1",
+          "abilityKey": "serpent_maelstrom",
+          "nameZh": "幽鳞漩阵",
+          "descriptionZh": "曲线幽鳞三波扩散，区域总伤害需限制",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 198,
+          "hitCount": 3,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 67,
+          "castRangeCm": 940,
+          "areaRadiusCm": 475,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 198,
+              "hitCount": 3,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Snake.Default",
+            "catalogKey": "DBA.Presentation.Hero.Snake.serpent_maelstrom.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Snake.serpent_maelstrom.Cast",
+              "Presentation.DBA.Hero.Snake.serpent_maelstrom.Release",
+              "Presentation.DBA.Hero.Snake.serpent_maelstrom.Flight",
+              "Presentation.DBA.Hero.Snake.serpent_maelstrom.Impact",
+              "Presentation.DBA.Hero.Snake.serpent_maelstrom.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.snake_eight_sinuous_dash@1",
+          "abilityKey": "sinuous_dash",
+          "nameZh": "蜿影游身",
+          "descriptionZh": "侧身游走至合法路径终点",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 13,
+          "castRangeCm": 670,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "movement",
+              "distanceCm": 680,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Snake.Default",
+            "catalogKey": "DBA.Presentation.Hero.Snake.sinuous_dash.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Snake.sinuous_dash.Cast",
+              "Presentation.DBA.Hero.Snake.sinuous_dash.Release",
+              "Presentation.DBA.Hero.Snake.sinuous_dash.Flight",
+              "Presentation.DBA.Hero.Snake.sinuous_dash.Impact",
+              "Presentation.DBA.Hero.Snake.sinuous_dash.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.snake_eight_shed_skin@1",
+          "abilityKey": "shed_skin",
+          "nameZh": "蜕鳞护体",
+          "descriptionZh": "蜕下能量鳞甲作为短时盾",
+          "intentTarget": "self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 21,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.15,
+              "durationSeconds": 4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Snake.Default",
+            "catalogKey": "DBA.Presentation.Hero.Snake.shed_skin.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Snake.shed_skin.Cast",
+              "Presentation.DBA.Hero.Snake.shed_skin.Release",
+              "Presentation.DBA.Hero.Snake.shed_skin.Flight",
+              "Presentation.DBA.Hero.Snake.shed_skin.Impact",
+              "Presentation.DBA.Hero.Snake.shed_skin.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.snake_eight_coil_silence@1",
+          "abilityKey": "coil_silence",
+          "nameZh": "缠鳞禁言",
+          "descriptionZh": "蛇鳞印记使目标沉默1.4秒",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 24,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 19,
+          "castRangeCm": 840,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 24,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "silence",
+              "durationSeconds": 1.4,
+              "slowFraction": 0
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Snake.Default",
+            "catalogKey": "DBA.Presentation.Hero.Snake.coil_silence.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Snake.coil_silence.Cast",
+              "Presentation.DBA.Hero.Snake.coil_silence.Release",
+              "Presentation.DBA.Hero.Snake.coil_silence.Flight",
+              "Presentation.DBA.Hero.Snake.coil_silence.Impact",
+              "Presentation.DBA.Hero.Snake.coil_silence.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.snake_eight_venom_mark@1",
+          "abilityKey": "venom_mark",
+          "nameZh": "幽蛇蚀印",
+          "descriptionZh": "目标受到来自施法者的伤害增加8%，5秒",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 38,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 18,
+          "castRangeCm": 900,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 38,
+              "hitCount": 1,
+              "type": "Magic"
+            },
+            {
+              "kind": "buff",
+              "buffType": "target_vulnerability",
+              "magnitudeFraction": 0.08,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Snake.Default",
+            "catalogKey": "DBA.Presentation.Hero.Snake.venom_mark.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Snake.venom_mark.Cast",
+              "Presentation.DBA.Hero.Snake.venom_mark.Release",
+              "Presentation.DBA.Hero.Snake.venom_mark.Flight",
+              "Presentation.DBA.Hero.Snake.venom_mark.Impact",
+              "Presentation.DBA.Hero.Snake.venom_mark.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroCode": "horse",
+      "heroNameZh": "午马·雷蹄",
+      "battleRoleZh": "高速突进",
+      "innateTrait": {
+        "nameZh": "雷蹄疾势",
+        "descriptionZh": "移动距离累积下一次普攻的少量增伤（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.horse_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.horse_eight_thunder_hoof@1",
+          "abilityKey": "thunder_hoof",
+          "nameZh": "雷蹄踢",
+          "descriptionZh": "单体蹄击，命中获得气势",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 37,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.75,
+          "castRangeCm": 245,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 37,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Horse.Default",
+            "catalogKey": "DBA.Presentation.Hero.Horse.thunder_hoof.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Horse.thunder_hoof.Cast",
+              "Presentation.DBA.Hero.Horse.thunder_hoof.Release",
+              "Presentation.DBA.Hero.Horse.thunder_hoof.Flight",
+              "Presentation.DBA.Hero.Horse.thunder_hoof.Impact",
+              "Presentation.DBA.Hero.Horse.thunder_hoof.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.horse_eight_lightning_line@1",
+          "abilityKey": "lightning_line",
+          "nameZh": "奔雷直突",
+          "descriptionZh": "前方直线雷芒冲击",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 68,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 5,
+          "castRangeCm": 850,
+          "areaRadiusCm": 190,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 68,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Horse.Default",
+            "catalogKey": "DBA.Presentation.Hero.Horse.lightning_line.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Horse.lightning_line.Cast",
+              "Presentation.DBA.Hero.Horse.lightning_line.Release",
+              "Presentation.DBA.Hero.Horse.lightning_line.Flight",
+              "Presentation.DBA.Hero.Horse.lightning_line.Impact",
+              "Presentation.DBA.Hero.Horse.lightning_line.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.horse_eight_hooffall@1",
+          "abilityKey": "hooffall",
+          "nameZh": "惊雷践踏",
+          "descriptionZh": "蹄下环形打击，服务端几何范围",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 90,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 9,
+          "castRangeCm": 0,
+          "areaRadiusCm": 325,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 90,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Horse.Default",
+            "catalogKey": "DBA.Presentation.Hero.Horse.hooffall.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Horse.hooffall.Cast",
+              "Presentation.DBA.Hero.Horse.hooffall.Release",
+              "Presentation.DBA.Hero.Horse.hooffall.Flight",
+              "Presentation.DBA.Hero.Horse.hooffall.Impact",
+              "Presentation.DBA.Hero.Horse.hooffall.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.horse_eight_thunder_stampede@1",
+          "abilityKey": "thunder_stampede",
+          "nameZh": "雷蹄万奔",
+          "descriptionZh": "高速冲阵与雷蹄波三段确认",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 226,
+          "hitCount": 3,
+          "momentumCost": 20,
+          "energyCost": 0,
+          "cooldownSeconds": 62,
+          "castRangeCm": 940,
+          "areaRadiusCm": 470,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 226,
+              "hitCount": 3,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Horse.Default",
+            "catalogKey": "DBA.Presentation.Hero.Horse.thunder_stampede.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Horse.thunder_stampede.Cast",
+              "Presentation.DBA.Hero.Horse.thunder_stampede.Release",
+              "Presentation.DBA.Hero.Horse.thunder_stampede.Flight",
+              "Presentation.DBA.Hero.Horse.thunder_stampede.Impact",
+              "Presentation.DBA.Hero.Horse.thunder_stampede.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.horse_eight_wind_charger@1",
+          "abilityKey": "wind_charger",
+          "nameZh": "风驰雷跃",
+          "descriptionZh": "快速冲刺并对首个接触目标造成轻伤",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 38,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 10.5,
+          "castRangeCm": 800,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 38,
+              "hitCount": 1,
+              "type": "Physical"
+            },
+            {
+              "kind": "movement",
+              "distanceCm": 830,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Horse.Default",
+            "catalogKey": "DBA.Presentation.Hero.Horse.wind_charger.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Horse.wind_charger.Cast",
+              "Presentation.DBA.Hero.Horse.wind_charger.Release",
+              "Presentation.DBA.Hero.Horse.wind_charger.Flight",
+              "Presentation.DBA.Hero.Horse.wind_charger.Impact",
+              "Presentation.DBA.Hero.Horse.wind_charger.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.horse_eight_thunder_hide@1",
+          "abilityKey": "thunder_hide",
+          "nameZh": "雷甲护身",
+          "descriptionZh": "电弧护体，护盾强度偏低换取机动性",
+          "intentTarget": "self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 18,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.13,
+              "durationSeconds": 4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Horse.Default",
+            "catalogKey": "DBA.Presentation.Hero.Horse.thunder_hide.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Horse.thunder_hide.Cast",
+              "Presentation.DBA.Hero.Horse.thunder_hide.Release",
+              "Presentation.DBA.Hero.Horse.thunder_hide.Flight",
+              "Presentation.DBA.Hero.Horse.thunder_hide.Impact",
+              "Presentation.DBA.Hero.Horse.thunder_hide.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.horse_eight_hoof_stun@1",
+          "abilityKey": "hoof_stun",
+          "nameZh": "震蹄麻痹",
+          "descriptionZh": "近距冲击造成0.8秒眩晕",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 25,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 17,
+          "castRangeCm": 450,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 25,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "stun",
+              "durationSeconds": 0.8,
+              "slowFraction": 0
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Horse.Default",
+            "catalogKey": "DBA.Presentation.Hero.Horse.hoof_stun.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Horse.hoof_stun.Cast",
+              "Presentation.DBA.Hero.Horse.hoof_stun.Release",
+              "Presentation.DBA.Hero.Horse.hoof_stun.Flight",
+              "Presentation.DBA.Hero.Horse.hoof_stun.Impact",
+              "Presentation.DBA.Hero.Horse.hoof_stun.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.horse_eight_tailwind_aura@1",
+          "abilityKey": "tailwind_aura",
+          "nameZh": "追风援护",
+          "descriptionZh": "附近己方五秒移动速度提升16%",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 23,
+          "castRangeCm": 700,
+          "areaRadiusCm": 420,
+          "actions": [
+            {
+              "kind": "buff",
+              "buffType": "movement_speed",
+              "magnitudeFraction": 0.16,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Horse.Default",
+            "catalogKey": "DBA.Presentation.Hero.Horse.tailwind_aura.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Horse.tailwind_aura.Cast",
+              "Presentation.DBA.Hero.Horse.tailwind_aura.Release",
+              "Presentation.DBA.Hero.Horse.tailwind_aura.Flight",
+              "Presentation.DBA.Hero.Horse.tailwind_aura.Impact",
+              "Presentation.DBA.Hero.Horse.tailwind_aura.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroCode": "goat",
+      "heroNameZh": "未羊·玉角",
+      "battleRoleZh": "防御治疗",
+      "innateTrait": {
+        "nameZh": "玉角仁心",
+        "descriptionZh": "护盾结束后为受保护者提供少量持续回复（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.goat_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.goat_eight_jade_horn@1",
+          "abilityKey": "jade_horn",
+          "nameZh": "玉角光刺",
+          "descriptionZh": "短程玉角灵光伤害",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 28,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.9,
+          "castRangeCm": 560,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 28,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Goat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Goat.jade_horn.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Goat.jade_horn.Cast",
+              "Presentation.DBA.Hero.Goat.jade_horn.Release",
+              "Presentation.DBA.Hero.Goat.jade_horn.Flight",
+              "Presentation.DBA.Hero.Goat.jade_horn.Impact",
+              "Presentation.DBA.Hero.Goat.jade_horn.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.goat_eight_jade_beam@1",
+          "abilityKey": "jade_beam",
+          "nameZh": "灵玉直射",
+          "descriptionZh": "细长玉光束，对首个敌人施加伤害",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 62,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 5.2,
+          "castRangeCm": 930,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 62,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Goat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Goat.jade_beam.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Goat.jade_beam.Cast",
+              "Presentation.DBA.Hero.Goat.jade_beam.Release",
+              "Presentation.DBA.Hero.Goat.jade_beam.Flight",
+              "Presentation.DBA.Hero.Goat.jade_beam.Impact",
+              "Presentation.DBA.Hero.Goat.jade_beam.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.goat_eight_rune_ring@1",
+          "abilityKey": "rune_ring",
+          "nameZh": "玉符环阵",
+          "descriptionZh": "在指定点形成一次性玉符波纹",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 83,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 10,
+          "castRangeCm": 820,
+          "areaRadiusCm": 330,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 83,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Goat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Goat.rune_ring.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Goat.rune_ring.Cast",
+              "Presentation.DBA.Hero.Goat.rune_ring.Release",
+              "Presentation.DBA.Hero.Goat.rune_ring.Flight",
+              "Presentation.DBA.Hero.Goat.rune_ring.Impact",
+              "Presentation.DBA.Hero.Goat.rune_ring.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.goat_eight_sanctuary_dome@1",
+          "abilityKey": "sanctuary_dome",
+          "nameZh": "玉角圣域",
+          "descriptionZh": "圣域对敌低额打击、己方治疗并提供弱护盾",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 110,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 70,
+          "castRangeCm": 850,
+          "areaRadiusCm": 500,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 110,
+              "hitCount": 1,
+              "type": "Magic"
+            },
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.1,
+              "durationSeconds": 4
+            },
+            {
+              "kind": "healing",
+              "maxHealthFraction": 0.15,
+              "allowRevive": false
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Goat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Goat.sanctuary_dome.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Goat.sanctuary_dome.Cast",
+              "Presentation.DBA.Hero.Goat.sanctuary_dome.Release",
+              "Presentation.DBA.Hero.Goat.sanctuary_dome.Flight",
+              "Presentation.DBA.Hero.Goat.sanctuary_dome.Impact",
+              "Presentation.DBA.Hero.Goat.sanctuary_dome.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.goat_eight_light_hoof@1",
+          "abilityKey": "light_hoof",
+          "nameZh": "踏云轻行",
+          "descriptionZh": "轻盈滑步，禁止越界",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 14.5,
+          "castRangeCm": 600,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "movement",
+              "distanceCm": 600,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Goat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Goat.light_hoof.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Goat.light_hoof.Cast",
+              "Presentation.DBA.Hero.Goat.light_hoof.Release",
+              "Presentation.DBA.Hero.Goat.light_hoof.Flight",
+              "Presentation.DBA.Hero.Goat.light_hoof.Impact",
+              "Presentation.DBA.Hero.Goat.light_hoof.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.goat_eight_jade_barrier@1",
+          "abilityKey": "jade_barrier",
+          "nameZh": "玉障屏护",
+          "descriptionZh": "指定友方获得22%最大生命短时护盾",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 19,
+          "castRangeCm": 790,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.22,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Goat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Goat.jade_barrier.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Goat.jade_barrier.Cast",
+              "Presentation.DBA.Hero.Goat.jade_barrier.Release",
+              "Presentation.DBA.Hero.Goat.jade_barrier.Flight",
+              "Presentation.DBA.Hero.Goat.jade_barrier.Impact",
+              "Presentation.DBA.Hero.Goat.jade_barrier.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.goat_eight_jade_bind@1",
+          "abilityKey": "jade_bind",
+          "nameZh": "玉纹禁锢",
+          "descriptionZh": "地面符阵减速目标40%",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 18,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 20,
+          "castRangeCm": 820,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 18,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "slow",
+              "durationSeconds": 2.2,
+              "slowFraction": 0.4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Goat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Goat.jade_bind.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Goat.jade_bind.Cast",
+              "Presentation.DBA.Hero.Goat.jade_bind.Release",
+              "Presentation.DBA.Hero.Goat.jade_bind.Flight",
+              "Presentation.DBA.Hero.Goat.jade_bind.Impact",
+              "Presentation.DBA.Hero.Goat.jade_bind.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.goat_eight_healing_dew@1",
+          "abilityKey": "healing_dew",
+          "nameZh": "玉露愈合",
+          "descriptionZh": "治疗合法友方25%最大生命，不复活",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 15,
+          "castRangeCm": 950,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "healing",
+              "maxHealthFraction": 0.25,
+              "allowRevive": false
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Goat.Default",
+            "catalogKey": "DBA.Presentation.Hero.Goat.healing_dew.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Goat.healing_dew.Cast",
+              "Presentation.DBA.Hero.Goat.healing_dew.Release",
+              "Presentation.DBA.Hero.Goat.healing_dew.Flight",
+              "Presentation.DBA.Hero.Goat.healing_dew.Impact",
+              "Presentation.DBA.Hero.Goat.healing_dew.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroCode": "monkey",
+      "heroNameZh": "申猴·灵猴",
+      "battleRoleZh": "诡术机动",
+      "innateTrait": {
+        "nameZh": "灵动棍势",
+        "descriptionZh": "交替施法会提升短时间闪避能力（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.monkey_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.monkey_eight_staff_tap@1",
+          "abilityKey": "staff_tap",
+          "nameZh": "灵棍点打",
+          "descriptionZh": "快速近身短棍攻击",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 34,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.72,
+          "castRangeCm": 260,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 34,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Monkey.Default",
+            "catalogKey": "DBA.Presentation.Hero.Monkey.staff_tap.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Monkey.staff_tap.Cast",
+              "Presentation.DBA.Hero.Monkey.staff_tap.Release",
+              "Presentation.DBA.Hero.Monkey.staff_tap.Flight",
+              "Presentation.DBA.Hero.Monkey.staff_tap.Impact",
+              "Presentation.DBA.Hero.Monkey.staff_tap.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.monkey_eight_staff_triple@1",
+          "abilityKey": "staff_triple",
+          "nameZh": "棍影三连",
+          "descriptionZh": "连续三次小额近身攻击",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 74,
+          "hitCount": 3,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 5,
+          "castRangeCm": 300,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 74,
+              "hitCount": 3,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Monkey.Default",
+            "catalogKey": "DBA.Presentation.Hero.Monkey.staff_triple.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Monkey.staff_triple.Cast",
+              "Presentation.DBA.Hero.Monkey.staff_triple.Release",
+              "Presentation.DBA.Hero.Monkey.staff_triple.Flight",
+              "Presentation.DBA.Hero.Monkey.staff_triple.Impact",
+              "Presentation.DBA.Hero.Monkey.staff_triple.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.monkey_eight_cloud_sweep@1",
+          "abilityKey": "cloud_sweep",
+          "nameZh": "云棍横扫",
+          "descriptionZh": "近身扇形横扫",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 89,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 8.5,
+          "castRangeCm": 380,
+          "areaRadiusCm": 300,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 89,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Monkey.Default",
+            "catalogKey": "DBA.Presentation.Hero.Monkey.cloud_sweep.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Monkey.cloud_sweep.Cast",
+              "Presentation.DBA.Hero.Monkey.cloud_sweep.Release",
+              "Presentation.DBA.Hero.Monkey.cloud_sweep.Flight",
+              "Presentation.DBA.Hero.Monkey.cloud_sweep.Impact",
+              "Presentation.DBA.Hero.Monkey.cloud_sweep.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.monkey_eight_golden_afterimages@1",
+          "abilityKey": "golden_afterimages",
+          "nameZh": "万象棍影",
+          "descriptionZh": "四道残影依次扫过明确判定区域",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 208,
+          "hitCount": 4,
+          "momentumCost": 20,
+          "energyCost": 0,
+          "cooldownSeconds": 58,
+          "castRangeCm": 650,
+          "areaRadiusCm": 450,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 208,
+              "hitCount": 4,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Monkey.Default",
+            "catalogKey": "DBA.Presentation.Hero.Monkey.golden_afterimages.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Monkey.golden_afterimages.Cast",
+              "Presentation.DBA.Hero.Monkey.golden_afterimages.Release",
+              "Presentation.DBA.Hero.Monkey.golden_afterimages.Flight",
+              "Presentation.DBA.Hero.Monkey.golden_afterimages.Impact",
+              "Presentation.DBA.Hero.Monkey.golden_afterimages.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.monkey_eight_cloud_flip@1",
+          "abilityKey": "cloud_flip",
+          "nameZh": "翻云纵跃",
+          "descriptionZh": "翻越非阻挡地形后的合法跳跃落点",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 11.5,
+          "castRangeCm": 850,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "movement",
+              "distanceCm": 820,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Monkey.Default",
+            "catalogKey": "DBA.Presentation.Hero.Monkey.cloud_flip.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Monkey.cloud_flip.Cast",
+              "Presentation.DBA.Hero.Monkey.cloud_flip.Release",
+              "Presentation.DBA.Hero.Monkey.cloud_flip.Flight",
+              "Presentation.DBA.Hero.Monkey.cloud_flip.Impact",
+              "Presentation.DBA.Hero.Monkey.cloud_flip.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.monkey_eight_illusion_guard@1",
+          "abilityKey": "illusion_guard",
+          "nameZh": "幻身护主",
+          "descriptionZh": "短时幻身盾，客户端幻影不吸收真实碰撞",
+          "intentTarget": "self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 17,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.15,
+              "durationSeconds": 4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Monkey.Default",
+            "catalogKey": "DBA.Presentation.Hero.Monkey.illusion_guard.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Monkey.illusion_guard.Cast",
+              "Presentation.DBA.Hero.Monkey.illusion_guard.Release",
+              "Presentation.DBA.Hero.Monkey.illusion_guard.Flight",
+              "Presentation.DBA.Hero.Monkey.illusion_guard.Impact",
+              "Presentation.DBA.Hero.Monkey.illusion_guard.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.monkey_eight_staff_stun@1",
+          "abilityKey": "staff_stun",
+          "nameZh": "定身棍环",
+          "descriptionZh": "短促定身打击，有限眩晕",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 30,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 17,
+          "castRangeCm": 420,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 30,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "stun",
+              "durationSeconds": 0.75,
+              "slowFraction": 0
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Monkey.Default",
+            "catalogKey": "DBA.Presentation.Hero.Monkey.staff_stun.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Monkey.staff_stun.Cast",
+              "Presentation.DBA.Hero.Monkey.staff_stun.Release",
+              "Presentation.DBA.Hero.Monkey.staff_stun.Flight",
+              "Presentation.DBA.Hero.Monkey.staff_stun.Impact",
+              "Presentation.DBA.Hero.Monkey.staff_stun.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.monkey_eight_trickster_stride@1",
+          "abilityKey": "trickster_stride",
+          "nameZh": "灵猴戏法",
+          "descriptionZh": "提高闪避12%四秒，需服务器命中规则支持",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 20,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "buff",
+              "buffType": "evasion",
+              "magnitudeFraction": 0.12,
+              "durationSeconds": 4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Monkey.Default",
+            "catalogKey": "DBA.Presentation.Hero.Monkey.trickster_stride.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Monkey.trickster_stride.Cast",
+              "Presentation.DBA.Hero.Monkey.trickster_stride.Release",
+              "Presentation.DBA.Hero.Monkey.trickster_stride.Flight",
+              "Presentation.DBA.Hero.Monkey.trickster_stride.Impact",
+              "Presentation.DBA.Hero.Monkey.trickster_stride.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroCode": "rooster",
+      "heroNameZh": "酉鸡·金鸣",
+      "battleRoleZh": "远程辅助",
+      "innateTrait": {
+        "nameZh": "破晓之羽",
+        "descriptionZh": "对已受控制目标的攻击有额外奖励（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.rooster_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.rooster_eight_golden_peck@1",
+          "abilityKey": "golden_peck",
+          "nameZh": "金羽啄光",
+          "descriptionZh": "远程晨光金羽攻击",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 30,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.88,
+          "castRangeCm": 760,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 30,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rooster.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rooster.golden_peck.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rooster.golden_peck.Cast",
+              "Presentation.DBA.Hero.Rooster.golden_peck.Release",
+              "Presentation.DBA.Hero.Rooster.golden_peck.Flight",
+              "Presentation.DBA.Hero.Rooster.golden_peck.Impact",
+              "Presentation.DBA.Hero.Rooster.golden_peck.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.rooster_eight_feather_fan@1",
+          "abilityKey": "feather_fan",
+          "nameZh": "金翎飞扇",
+          "descriptionZh": "展开扇形金羽风刃",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 67,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 5.5,
+          "castRangeCm": 1000,
+          "areaRadiusCm": 270,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 67,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rooster.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rooster.feather_fan.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rooster.feather_fan.Cast",
+              "Presentation.DBA.Hero.Rooster.feather_fan.Release",
+              "Presentation.DBA.Hero.Rooster.feather_fan.Flight",
+              "Presentation.DBA.Hero.Rooster.feather_fan.Impact",
+              "Presentation.DBA.Hero.Rooster.feather_fan.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.rooster_eight_sunrise_wave@1",
+          "abilityKey": "sunrise_wave",
+          "nameZh": "晨鸣音浪",
+          "descriptionZh": "波纹向前传播并造成区域伤害",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 86,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 9.5,
+          "castRangeCm": 850,
+          "areaRadiusCm": 325,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 86,
+              "hitCount": 1,
+              "type": "Magic"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rooster.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rooster.sunrise_wave.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rooster.sunrise_wave.Cast",
+              "Presentation.DBA.Hero.Rooster.sunrise_wave.Release",
+              "Presentation.DBA.Hero.Rooster.sunrise_wave.Flight",
+              "Presentation.DBA.Hero.Rooster.sunrise_wave.Impact",
+              "Presentation.DBA.Hero.Rooster.sunrise_wave.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.rooster_eight_dawn_resonance@1",
+          "abilityKey": "dawn_resonance",
+          "nameZh": "金鸣破晓",
+          "descriptionZh": "曙光音波打击敌方并治疗己方10%生命",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 190,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 68,
+          "castRangeCm": 880,
+          "areaRadiusCm": 520,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 190,
+              "hitCount": 1,
+              "type": "Magic"
+            },
+            {
+              "kind": "healing",
+              "maxHealthFraction": 0.1,
+              "allowRevive": false
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rooster.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rooster.dawn_resonance.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rooster.dawn_resonance.Cast",
+              "Presentation.DBA.Hero.Rooster.dawn_resonance.Release",
+              "Presentation.DBA.Hero.Rooster.dawn_resonance.Flight",
+              "Presentation.DBA.Hero.Rooster.dawn_resonance.Impact",
+              "Presentation.DBA.Hero.Rooster.dawn_resonance.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.rooster_eight_feather_glide@1",
+          "abilityKey": "feather_glide",
+          "nameZh": "晨羽滑翔",
+          "descriptionZh": "短时滑翔位移至合法位置",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 14,
+          "castRangeCm": 690,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "movement",
+              "distanceCm": 660,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rooster.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rooster.feather_glide.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rooster.feather_glide.Cast",
+              "Presentation.DBA.Hero.Rooster.feather_glide.Release",
+              "Presentation.DBA.Hero.Rooster.feather_glide.Flight",
+              "Presentation.DBA.Hero.Rooster.feather_glide.Impact",
+              "Presentation.DBA.Hero.Rooster.feather_glide.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.rooster_eight_wing_guard@1",
+          "abilityKey": "wing_guard",
+          "nameZh": "金羽翼盾",
+          "descriptionZh": "双翼护盾保护自己或指定友方",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 19,
+          "castRangeCm": 750,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.16,
+              "durationSeconds": 4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rooster.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rooster.wing_guard.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rooster.wing_guard.Cast",
+              "Presentation.DBA.Hero.Rooster.wing_guard.Release",
+              "Presentation.DBA.Hero.Rooster.wing_guard.Flight",
+              "Presentation.DBA.Hero.Rooster.wing_guard.Impact",
+              "Presentation.DBA.Hero.Rooster.wing_guard.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.rooster_eight_sonic_silence@1",
+          "abilityKey": "sonic_silence",
+          "nameZh": "破晓鸣音",
+          "descriptionZh": "远距离声波使敌人沉默1.2秒",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Magic",
+          "baseDamage": 20,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 18,
+          "castRangeCm": 850,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 20,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "silence",
+              "durationSeconds": 1.2,
+              "slowFraction": 0
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rooster.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rooster.sonic_silence.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rooster.sonic_silence.Cast",
+              "Presentation.DBA.Hero.Rooster.sonic_silence.Release",
+              "Presentation.DBA.Hero.Rooster.sonic_silence.Flight",
+              "Presentation.DBA.Hero.Rooster.sonic_silence.Impact",
+              "Presentation.DBA.Hero.Rooster.sonic_silence.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.rooster_eight_first_light_heal@1",
+          "abilityKey": "first_light_heal",
+          "nameZh": "初曦回春",
+          "descriptionZh": "单体治疗己方20%最大生命",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 17,
+          "castRangeCm": 920,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "healing",
+              "maxHealthFraction": 0.2,
+              "allowRevive": false
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Rooster.Default",
+            "catalogKey": "DBA.Presentation.Hero.Rooster.first_light_heal.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Rooster.first_light_heal.Cast",
+              "Presentation.DBA.Hero.Rooster.first_light_heal.Release",
+              "Presentation.DBA.Hero.Rooster.first_light_heal.Flight",
+              "Presentation.DBA.Hero.Rooster.first_light_heal.Impact",
+              "Presentation.DBA.Hero.Rooster.first_light_heal.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroCode": "dog",
+      "heroNameZh": "戌狗·天犬",
+      "battleRoleZh": "护卫追猎",
+      "innateTrait": {
+        "nameZh": "守誓之心",
+        "descriptionZh": "靠近队友时获得小额保护能力（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.dog_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.dog_eight_guardian_bite@1",
+          "abilityKey": "guardian_bite",
+          "nameZh": "天犬咬击",
+          "descriptionZh": "近战单体犬牙攻击",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 35,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 0.85,
+          "castRangeCm": 250,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 35,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dog.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dog.guardian_bite.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dog.guardian_bite.Cast",
+              "Presentation.DBA.Hero.Dog.guardian_bite.Release",
+              "Presentation.DBA.Hero.Dog.guardian_bite.Flight",
+              "Presentation.DBA.Hero.Dog.guardian_bite.Impact",
+              "Presentation.DBA.Hero.Dog.guardian_bite.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
+          "abilityKey": "hunter_pounce",
+          "nameZh": "追猎猛扑",
+          "descriptionZh": "短扑后对单体造成伤害",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 70,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 5.5,
+          "castRangeCm": 620,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 70,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dog.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dog.hunter_pounce.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dog.hunter_pounce.Cast",
+              "Presentation.DBA.Hero.Dog.hunter_pounce.Release",
+              "Presentation.DBA.Hero.Dog.hunter_pounce.Flight",
+              "Presentation.DBA.Hero.Dog.hunter_pounce.Impact",
+              "Presentation.DBA.Hero.Dog.hunter_pounce.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.dog_eight_spirit_rake@1",
+          "abilityKey": "spirit_rake",
+          "nameZh": "灵爪连击",
+          "descriptionZh": "双爪连击当前敌方",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 90,
+          "hitCount": 2,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 9,
+          "castRangeCm": 400,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 90,
+              "hitCount": 2,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dog.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dog.spirit_rake.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dog.spirit_rake.Cast",
+              "Presentation.DBA.Hero.Dog.spirit_rake.Release",
+              "Presentation.DBA.Hero.Dog.spirit_rake.Flight",
+              "Presentation.DBA.Hero.Dog.spirit_rake.Impact",
+              "Presentation.DBA.Hero.Dog.spirit_rake.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.dog_eight_oath_guardian@1",
+          "abilityKey": "oath_guardian",
+          "nameZh": "天犬守誓",
+          "descriptionZh": "对敌有限伤害，同时给范围己方小额治疗与护盾",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 170,
+          "hitCount": 1,
+          "momentumCost": 18,
+          "energyCost": 0,
+          "cooldownSeconds": 72,
+          "castRangeCm": 600,
+          "areaRadiusCm": 440,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 170,
+              "hitCount": 1,
+              "type": "Physical"
+            },
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.1,
+              "durationSeconds": 4
+            },
+            {
+              "kind": "healing",
+              "maxHealthFraction": 0.08,
+              "allowRevive": false
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dog.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dog.oath_guardian.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dog.oath_guardian.Cast",
+              "Presentation.DBA.Hero.Dog.oath_guardian.Release",
+              "Presentation.DBA.Hero.Dog.oath_guardian.Flight",
+              "Presentation.DBA.Hero.Dog.oath_guardian.Impact",
+              "Presentation.DBA.Hero.Dog.oath_guardian.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.dog_eight_hound_leap@1",
+          "abilityKey": "hound_leap",
+          "nameZh": "天犬奔跃",
+          "descriptionZh": "向合法盟友或目标附近跳跃",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 13.5,
+          "castRangeCm": 760,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "movement",
+              "distanceCm": 700,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dog.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dog.hound_leap.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dog.hound_leap.Cast",
+              "Presentation.DBA.Hero.Dog.hound_leap.Release",
+              "Presentation.DBA.Hero.Dog.hound_leap.Flight",
+              "Presentation.DBA.Hero.Dog.hound_leap.Impact",
+              "Presentation.DBA.Hero.Dog.hound_leap.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.dog_eight_guardian_ring@1",
+          "abilityKey": "guardian_ring",
+          "nameZh": "护主灵环",
+          "descriptionZh": "指定友方获得20%最大生命护盾",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 19,
+          "castRangeCm": 780,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.2,
+              "durationSeconds": 4
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dog.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dog.guardian_ring.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dog.guardian_ring.Cast",
+              "Presentation.DBA.Hero.Dog.guardian_ring.Release",
+              "Presentation.DBA.Hero.Dog.guardian_ring.Flight",
+              "Presentation.DBA.Hero.Dog.guardian_ring.Impact",
+              "Presentation.DBA.Hero.Dog.guardian_ring.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.dog_eight_tracking_slow@1",
+          "abilityKey": "tracking_slow",
+          "nameZh": "追迹束缚",
+          "descriptionZh": "追踪标记命中减速32%",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 24,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 17,
+          "castRangeCm": 830,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 24,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "slow",
+              "durationSeconds": 2.4,
+              "slowFraction": 0.32
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dog.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dog.tracking_slow.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dog.tracking_slow.Cast",
+              "Presentation.DBA.Hero.Dog.tracking_slow.Release",
+              "Presentation.DBA.Hero.Dog.tracking_slow.Flight",
+              "Presentation.DBA.Hero.Dog.tracking_slow.Impact",
+              "Presentation.DBA.Hero.Dog.tracking_slow.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.dog_eight_loyal_heal@1",
+          "abilityKey": "loyal_heal",
+          "nameZh": "忠魂疗护",
+          "descriptionZh": "单体治疗友方18%最大生命",
+          "intentTarget": "friendly_or_self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 20,
+          "castRangeCm": 900,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "healing",
+              "maxHealthFraction": 0.18,
+              "allowRevive": false
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Dog.Default",
+            "catalogKey": "DBA.Presentation.Hero.Dog.loyal_heal.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Dog.loyal_heal.Cast",
+              "Presentation.DBA.Hero.Dog.loyal_heal.Release",
+              "Presentation.DBA.Hero.Dog.loyal_heal.Flight",
+              "Presentation.DBA.Hero.Dog.loyal_heal.Impact",
+              "Presentation.DBA.Hero.Dog.loyal_heal.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroCode": "boar",
+      "heroNameZh": "亥猪·玄鬃",
+      "battleRoleZh": "近战坦克",
+      "innateTrait": {
+        "nameZh": "厚鬃蓄势",
+        "descriptionZh": "承伤后短暂增强下一次冲撞（策划草案）",
+        "slotOccupancy": 0,
+        "implementationStatus": "design_only",
+        "notGrantedByDefault": true
+      },
+      "proposedAbilitySetId": "dba.abilityset.boar_eight_draft@1",
+      "slots": [
+        {
+          "slotId": "Primary",
+          "displayOrder": 1,
+          "role": "basic",
+          "roleZh": "基础攻击",
+          "abilityId": "dba.ability.boar_eight_tusk_ram@1",
+          "abilityKey": "tusk_ram",
+          "nameZh": "玄鬃冲撞",
+          "descriptionZh": "近身重击获得普通攻击气势",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 40,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 1,
+          "castRangeCm": 260,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 40,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Boar.Default",
+            "catalogKey": "DBA.Presentation.Hero.Boar.tusk_ram.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Boar.tusk_ram.Cast",
+              "Presentation.DBA.Hero.Boar.tusk_ram.Release",
+              "Presentation.DBA.Hero.Boar.tusk_ram.Flight",
+              "Presentation.DBA.Hero.Boar.tusk_ram.Impact",
+              "Presentation.DBA.Hero.Boar.tusk_ram.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot1",
+          "displayOrder": 2,
+          "role": "attack_a",
+          "roleZh": "攻击技能一",
+          "abilityId": "dba.ability.boar_eight_break_armor@1",
+          "abilityKey": "break_armor",
+          "nameZh": "裂甲撞锤",
+          "descriptionZh": "单体猛烈撞击，削减护甲机制不单独启用",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 78,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 6,
+          "castRangeCm": 410,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 78,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Boar.Default",
+            "catalogKey": "DBA.Presentation.Hero.Boar.break_armor.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Boar.break_armor.Cast",
+              "Presentation.DBA.Hero.Boar.break_armor.Release",
+              "Presentation.DBA.Hero.Boar.break_armor.Flight",
+              "Presentation.DBA.Hero.Boar.break_armor.Impact",
+              "Presentation.DBA.Hero.Boar.break_armor.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot2",
+          "displayOrder": 3,
+          "role": "attack_b",
+          "roleZh": "攻击技能二",
+          "abilityId": "dba.ability.boar_eight_pressure_wave@1",
+          "abilityKey": "pressure_wave",
+          "nameZh": "重压冲波",
+          "descriptionZh": "自身周围重压冲击",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 105,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 10.5,
+          "castRangeCm": 0,
+          "areaRadiusCm": 375,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 105,
+              "hitCount": 1,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Boar.Default",
+            "catalogKey": "DBA.Presentation.Hero.Boar.pressure_wave.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Boar.pressure_wave.Cast",
+              "Presentation.DBA.Hero.Boar.pressure_wave.Release",
+              "Presentation.DBA.Hero.Boar.pressure_wave.Flight",
+              "Presentation.DBA.Hero.Boar.pressure_wave.Impact",
+              "Presentation.DBA.Hero.Boar.pressure_wave.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot4",
+          "displayOrder": 4,
+          "role": "ultimate",
+          "roleZh": "终极技能",
+          "abilityId": "dba.ability.boar_eight_earthsplit_mane@1",
+          "abilityKey": "earthsplit_mane",
+          "nameZh": "玄鬃地裂",
+          "descriptionZh": "两波地面裂冲击，中心区域可清楚预警",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 245,
+          "hitCount": 2,
+          "momentumCost": 25,
+          "energyCost": 0,
+          "cooldownSeconds": 74,
+          "castRangeCm": 630,
+          "areaRadiusCm": 600,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 245,
+              "hitCount": 2,
+              "type": "Physical"
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Boar.Default",
+            "catalogKey": "DBA.Presentation.Hero.Boar.earthsplit_mane.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Boar.earthsplit_mane.Cast",
+              "Presentation.DBA.Hero.Boar.earthsplit_mane.Release",
+              "Presentation.DBA.Hero.Boar.earthsplit_mane.Flight",
+              "Presentation.DBA.Hero.Boar.earthsplit_mane.Impact",
+              "Presentation.DBA.Hero.Boar.earthsplit_mane.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot3",
+          "displayOrder": 5,
+          "role": "mobility",
+          "roleZh": "移动技能",
+          "abilityId": "dba.ability.boar_eight_boar_charge@1",
+          "abilityKey": "boar_charge",
+          "nameZh": "蛮鬃突冲",
+          "descriptionZh": "撞击首个敌人后停下",
+          "intentTarget": "movement_direction",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 50,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 16,
+          "castRangeCm": 760,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 50,
+              "hitCount": 1,
+              "type": "Physical"
+            },
+            {
+              "kind": "movement",
+              "distanceCm": 700,
+              "serverNavValidation": true
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Boar.Default",
+            "catalogKey": "DBA.Presentation.Hero.Boar.boar_charge.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Boar.boar_charge.Cast",
+              "Presentation.DBA.Hero.Boar.boar_charge.Release",
+              "Presentation.DBA.Hero.Boar.boar_charge.Flight",
+              "Presentation.DBA.Hero.Boar.boar_charge.Impact",
+              "Presentation.DBA.Hero.Boar.boar_charge.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot5",
+          "displayOrder": 6,
+          "role": "defense",
+          "roleZh": "防御技能",
+          "abilityId": "dba.ability.boar_eight_iron_mane@1",
+          "abilityKey": "iron_mane",
+          "nameZh": "铁鬃护体",
+          "descriptionZh": "24%最大生命护盾体现生存优势",
+          "intentTarget": "self",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 22,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "shield",
+              "maxHealthFraction": 0.24,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Boar.Default",
+            "catalogKey": "DBA.Presentation.Hero.Boar.iron_mane.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Boar.iron_mane.Cast",
+              "Presentation.DBA.Hero.Boar.iron_mane.Release",
+              "Presentation.DBA.Hero.Boar.iron_mane.Flight",
+              "Presentation.DBA.Hero.Boar.iron_mane.Impact",
+              "Presentation.DBA.Hero.Boar.iron_mane.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot6",
+          "displayOrder": 7,
+          "role": "control",
+          "roleZh": "控制技能",
+          "abilityId": "dba.ability.boar_eight_roar_stun@1",
+          "abilityKey": "roar_stun",
+          "nameZh": "狂鬃震踏",
+          "descriptionZh": "近距震踏造成0.9秒眩晕",
+          "intentTarget": "area_or_target",
+          "level": 1,
+          "damageType": "Physical",
+          "baseDamage": 31,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 20,
+          "castRangeCm": 450,
+          "areaRadiusCm": 265,
+          "actions": [
+            {
+              "kind": "damage",
+              "baseMagnitude": 31,
+              "hitCount": 1,
+              "type": "Untyped"
+            },
+            {
+              "kind": "control",
+              "controlType": "stun",
+              "durationSeconds": 0.9,
+              "slowFraction": 0
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Boar.Default",
+            "catalogKey": "DBA.Presentation.Hero.Boar.roar_stun.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Boar.roar_stun.Cast",
+              "Presentation.DBA.Hero.Boar.roar_stun.Release",
+              "Presentation.DBA.Hero.Boar.roar_stun.Flight",
+              "Presentation.DBA.Hero.Boar.roar_stun.Impact",
+              "Presentation.DBA.Hero.Boar.roar_stun.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        },
+        {
+          "slotId": "Slot7",
+          "displayOrder": 8,
+          "role": "signature",
+          "roleZh": "特色／支援技能",
+          "abilityId": "dba.ability.boar_eight_rage_focus@1",
+          "abilityKey": "rage_focus",
+          "nameZh": "玄鬃怒吼",
+          "descriptionZh": "本人减伤14%并维持五秒",
+          "intentTarget": "enemy",
+          "level": 1,
+          "damageType": "Untyped",
+          "baseDamage": 0,
+          "hitCount": 1,
+          "momentumCost": 0,
+          "energyCost": 0,
+          "cooldownSeconds": 23,
+          "castRangeCm": 0,
+          "areaRadiusCm": 0,
+          "actions": [
+            {
+              "kind": "buff",
+              "buffType": "damage_reduction",
+              "magnitudeFraction": 0.14,
+              "durationSeconds": 5
+            }
+          ],
+          "vfx": {
+            "heroProfileId": "Presentation.VFX.Hero.Zodiac.Boar.Default",
+            "catalogKey": "DBA.Presentation.Hero.Boar.rage_focus.Default",
+            "phaseSemantics": [
+              "Presentation.DBA.Hero.Boar.rage_focus.Cast",
+              "Presentation.DBA.Hero.Boar.rage_focus.Release",
+              "Presentation.DBA.Hero.Boar.rage_focus.Flight",
+              "Presentation.DBA.Hero.Boar.rage_focus.Impact",
+              "Presentation.DBA.Hero.Boar.rage_focus.Cancel"
+            ],
+            "assetPath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "animation": {
+            "montagePath": null,
+            "assetStatus": "NOT_AUTHORED"
+          },
+          "icon": {
+            "assetPath": null,
+            "assetStatus": "NOT_BOUND"
+          },
+          "implementationStatus": "DESIGN_ONLY_UNIMPLEMENTED",
+          "approvedForLiveGAS": false
+        }
+      ]
+    }
+  ]
+}

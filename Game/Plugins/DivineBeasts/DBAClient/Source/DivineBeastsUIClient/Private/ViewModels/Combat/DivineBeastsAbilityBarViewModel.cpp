@@ -74,6 +74,20 @@ void UDivineBeastsAbilityBarViewModel::UnbindFromLoadout()
     }
 }
 
+const FDivineBeastsGrantedAbilitySlot* UDivineBeastsAbilityBarViewModel::FindUniqueGrantedSlot(
+    const FDivineBeastsAbilityLoadoutState& Snapshot, FName SlotId)
+{
+    if (SlotId.IsNone()) return nullptr;
+    const FDivineBeastsGrantedAbilitySlot* Found = nullptr;
+    for (const FDivineBeastsGrantedAbilitySlot& Candidate : Snapshot.Slots)
+    {
+        if (Candidate.SlotId != SlotId) continue;
+        if (Found) return nullptr;
+        Found = &Candidate;
+    }
+    return Found;
+}
+
 FGamePlatformResult UDivineBeastsAbilityBarViewModel::RequestActivateSlot(FName SlotId)
 {
     check(IsInGameThread());
@@ -93,13 +107,8 @@ FGamePlatformResult UDivineBeastsAbilityBarViewModel::RequestActivateSlot(FName 
         [SlotId](const FGamePlatformUISlotState& Slot) { return Slot.SlotId == SlotId; });
     if (!Display || !Display->bEnabled || Display->bPending)
         return FGamePlatformResult::Failure(TEXT("AbilitySlotUnavailable"), TEXT("该技能尚未就绪、资源不足或正在冷却。"));
-    const FDivineBeastsGrantedAbilitySlot* Grant = nullptr;
-    for (const FDivineBeastsGrantedAbilitySlot& Candidate : Snapshot.Slots)
-    {
-        if (Candidate.SlotId != SlotId) continue;
-        if (Grant) return FGamePlatformResult::Failure(TEXT("AbilitySlotAmbiguous"), TEXT("技能槽授权重复，拒绝任选一个技能。"));
-        Grant = &Candidate;
-    }
+    const FDivineBeastsGrantedAbilitySlot* Grant = FindUniqueGrantedSlot(Snapshot, SlotId);
+    if (!Grant) return FGamePlatformResult::Failure(TEXT("AbilitySlotAmbiguous"), TEXT("技能槽没有唯一授权，拒绝任选一个技能。"));
     const FGameplayAbilitySpec* Spec = nullptr;
     if (!Grant || !Grant->InputTag.IsValid() || Display->ContentId != Grant->AbilityId ||
         !TryResolveGrantedSpec(*ASC, Grant->InputTag, Spec) || !Spec || Spec->Level != Grant->AbilityLevel)
@@ -482,7 +491,6 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
     NewSlots.Reserve(Snapshot.Slots.Num());
     TArray<FDivineBeastsAbilitySlotDetails> NewDetails;
     NewDetails.Reserve(Snapshot.Slots.Num());
-    TSet<FName> SeenSlots;
     const UDivineBeastsCharacterComponent* Identity = CharacterIdentity.Get();
     const bool bIdentityCurrent = Identity && Identity->IsCharacterReady() &&
         Identity->GetHeroDefinitionId() == Snapshot.HeroDefinitionId &&
@@ -503,12 +511,11 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
     for (const FDivineBeastsGrantedAbilitySlot& Grant : Snapshot.Slots)
     {
         if (Grant.AbilityId.IsNone() || Grant.SlotId.IsNone() ||
-            Grant.AbilityLevel < 1 || SeenSlots.Contains(Grant.SlotId))
+            Grant.AbilityLevel < 1 || FindUniqueGrantedSlot(Snapshot, Grant.SlotId) != &Grant)
         {
-            // 异常网络投影 fail-closed；不能以重复或未知槽位覆盖真实授权。
+            // 先核对完整快照；重复槽的每个候选均拒绝，不能留下数组中的第一项。
             continue;
         }
-        SeenSlots.Add(Grant.SlotId);
         FGamePlatformUISlotState Slot;
         FDivineBeastsAbilitySlotDetails Detail;
         Detail.SlotId = Grant.SlotId;
@@ -682,7 +689,10 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                 !A.Description.EqualTo(B.Description) ||
                 !A.DisabledReason.EqualTo(B.DisabledReason) ||
                 !FMath::IsNearlyEqual(A.CooldownRemainingSeconds, B.CooldownRemainingSeconds, 0.01f) ||
-                !FMath::IsNearlyEqual(A.CooldownTotalSeconds, B.CooldownTotalSeconds, 0.01f))
+                !FMath::IsNearlyEqual(A.CooldownTotalSeconds, B.CooldownTotalSeconds, 0.01f) ||
+                // 同时长冷却被刷新时，剩余秒数与遮罩比例可能看起来相同，
+                // 但新真实GE对应的材质截止时间已变；不发布会让遮罩沿旧时间继续走。
+                !FMath::IsNearlyEqual(A.CooldownEndsAtAppSeconds, B.CooldownEndsAtAppSeconds, 0.01f))
             {
                 bDetailsChanged = true;
                 break;

@@ -163,26 +163,91 @@ void UDivineBeastsDemoHubScreen::ApplySnapshot()
         // 子页移除样板可能同步关闭/替换宿主；不能继续使用被撤销的DemoModel或发送旧快照事件。
         if (!IsCurrent()) return;
     }
-    const auto Snapshot = SelectedModel->GetMenuSnapshot(); MenuItems.Reset();
-    const auto Populate = [this, &IsCurrent](UListView* List, const auto& Values, auto Read, FName Selected)
+    const auto Snapshot = SelectedModel->GetMenuSnapshot();
+    // 搜索框每次改变都会触发菜单快照。复用上一快照中稳定ID相同的虚拟化列表项，
+    // 避免67个插件逐键重复NewObject/GC；失活时DetachViewModel清空本页对象。
+    TArray<TObjectPtr<UDivineBeastsDemoMenuItem>> ReusableItems = MoveTemp(MenuItems);
+    // 稳定ID散列表避免每个按键执行“所有可见行 × 上一批行”的两重线性遍历。
+    // 取走后从表内移除，保证插件/功能/案例即使出现同名身份也不会共用同一值对象。
+    TMap<FName, UDivineBeastsDemoMenuItem*> ReusableById;
+    ReusableById.Reserve(ReusableItems.Num());
+    for (const auto& Existing : ReusableItems)
     {
-        if (!List) return;
-        TArray<UObject*> Items; UObject* Selection = nullptr;
+        if (IsValid(Existing.Get()) && !Existing->Identity.IsNone())
+            ReusableById.Add(Existing->Identity, Existing.Get());
+    }
+    const auto Populate = [this, &IsCurrent, &ReusableById](
+        UListView* List, const auto& Values, auto Read, auto GetIdentity, FName Selected)
+    {
+        if (!List || !IsCurrent()) return;
+        TArray<UObject*> Items;
+        Items.Reserve(Values.Num());
+        UObject* Selection = nullptr;
+        bool bReusedAny = false;
         for (const auto& Value : Values)
         {
-            auto* Item = NewObject<UDivineBeastsDemoMenuItem>(this); Read(Value, *Item);
-            MenuItems.Add(Item); Items.Add(Item); if (Item->Identity == Selected) Selection = Item;
+            const FName Identity = GetIdentity(Value);
+            UDivineBeastsDemoMenuItem* Item = nullptr;
+            if (!Identity.IsNone())
+            {
+                if (auto** Old = ReusableById.Find(Identity))
+                {
+                    Item = *Old;
+                    ReusableById.Remove(Identity);
+                    bReusedAny = true;
+                }
+            }
+            if (!Item) Item = NewObject<UDivineBeastsDemoMenuItem>(this);
+            Read(Value, *Item);
+            MenuItems.Add(Item);
+            Items.Add(Item);
+            if (Item->Identity == Selected) Selection = Item;
         }
-        List->SetListItems(Items); if (IsCurrent() && Selection) List->SetSelectedItem(Selection);
+        List->SetListItems(Items);
+        if (!IsCurrent()) return;
+        // 复用行的中文审核状态可能变化；新增行由SetListItems自行构建，避免无意义的二次刷新。
+        if (bReusedAny) List->RequestRefresh();
+        if (IsCurrent() && Selection) List->SetSelectedItem(Selection);
     };
     Populate(PluginList, Snapshot.Plugins, [](const auto& P, auto& Item)
-    { Item.Identity = P.PluginId; Item.Label = P.DisplayName; Item.Status = FText::FromString(P.bEnabled ? TEXT("已启用；功能范围见详情") : TEXT("已禁用；保留功能信息")); }, Snapshot.SelectedPluginId);
+    {
+        Item.Identity = P.PluginId;
+        Item.Label = P.DisplayName;
+        const TCHAR* Status = !P.bEnabled ? TEXT("当前目标禁用；无执行资格") :
+            P.FeatureAuditStatus == TEXT("complete") ? TEXT("已完成编目审查；运行和人工验收待核实") :
+            P.FeatureAuditStatus == TEXT("partial") ? TEXT("仅部分功能编目；其余能力和人工验收待补齐") :
+            TEXT("功能范围尚未审查；未建立人工验收结论");
+        Item.Status = FText::FromString(FString(Status));
+    }, [](const auto& P) { return P.PluginId; }, Snapshot.SelectedPluginId);
     if (!IsCurrent()) return;
     Populate(FeatureList, Snapshot.Features, [](const auto& F, auto& Item)
-    { Item.Identity = F.Feature.FeatureId; Item.Label = F.Feature.Title; Item.Status = FText::FromString(TEXT("实现：") + F.Feature.ImplementationStatus.ToString() + TEXT("；接入：") + F.Feature.IntegrationStatus.ToString() + TEXT("；人工未核验")); }, Snapshot.SelectedFeatureId);
+    {
+        Item.Identity = F.Feature.FeatureId;
+        Item.Label = F.Feature.Title;
+        const FString Implementation =
+            F.Feature.ImplementationStatus == TEXT("implemented") ? TEXT("已有实现") :
+            F.Feature.ImplementationStatus == TEXT("partial") ? TEXT("部分实现") :
+            F.Feature.ImplementationStatus == TEXT("unimplemented") ? TEXT("未实现") :
+            TEXT("尚未核验");
+        const FString Integration =
+            F.Feature.IntegrationStatus == TEXT("wired") ? TEXT("已接线") :
+            F.Feature.IntegrationStatus == TEXT("launchable") ? TEXT("有启动入口") :
+            F.Feature.IntegrationStatus == TEXT("blocked") ? TEXT("阻断") :
+            TEXT("未验证接入");
+        Item.Status = FText::FromString(TEXT("实现：") + Implementation +
+            TEXT("；接入：") + Integration + TEXT("；人工未核验"));
+    }, [](const auto& F) { return F.Feature.FeatureId; }, Snapshot.SelectedFeatureId);
     if (!IsCurrent()) return;
     Populate(ScenarioList, Snapshot.Scenarios, [](const auto& S, auto& Item)
-    { Item.Identity = S.Scenario.ScenarioId; Item.Label = S.Scenario.Title; Item.Status = FText::FromString(S.Preflight.bCanStart ? TEXT("预检通过，待运行") : S.Preflight.Result.Message); }, Snapshot.SelectedScenarioId);
+    {
+        Item.Identity = S.Scenario.ScenarioId;
+        Item.Label = S.Scenario.Title;
+        const bool bDiagnostic = S.Scenario.TemplateId == TEXT("DiagnosticMap");
+        Item.Status = FText::FromString(!S.Preflight.bCanStart
+            ? S.Preflight.Result.Message
+            : bDiagnostic ? TEXT("真实开发地图可进入；仅供人工诊断，不计功能验收")
+            : TEXT("预检通过，待运行"));
+    }, [](const auto& S) { return S.Scenario.ScenarioId; }, Snapshot.SelectedScenarioId);
     if (!IsCurrent()) return;
     const auto* Selected = Snapshot.Scenarios.FindByPredicate([&Snapshot](const auto& S) { return S.Scenario.ScenarioId == Snapshot.SelectedScenarioId; });
     if (ParametersForScenario != Snapshot.SelectedScenarioId)

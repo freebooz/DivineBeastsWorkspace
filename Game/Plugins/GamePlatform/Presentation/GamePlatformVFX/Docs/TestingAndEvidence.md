@@ -114,3 +114,8 @@ Server 隔离当前只有源码和描述文件门禁，不得替代真实 Server
 新增/扩展自动化源码覆盖分层预算、Critical池化资格、Component反向索引。真实 UE Automation 执行结果仍需单独取得。
 
 本次整改解决的是框架CPU/内存热路径，不等于真实Niagara内容GPU达标。仓库仍缺少真实 Niagara System / EffectType / Definition 和 Review Map，因此 1v1 / 5v5 / OpenWorld / Village / Android 性能验收继续保持“未执行”。
+## 2026-10-18 鸟群限频及当前资产验证更新
+
+- `GamePlatformBirdFlockActor.cpp` 原生TickInterval随物种UpdateRateHz（5～60Hz）调整，不再逐帧执行无效频率判断；回归源码校验实例释放和10/20Hz参数切换。改动两个C++文件经锁定UE5.8/MSVC /Zs语法检查通过；真实GPU、画面、帧率仍待测试。
+- 旧鸟群集成检查改为读取统一EnvironmentFlock（环境群落）事务及Owner注册令牌、异步Data资源、取消终态；源码检查通过。鸟群发布策略43项、隔离合成Cook门禁3项通过，不代表真实Cook。
+- 上方2026-09-30的“缺少所有Niagara资产/Review地图”是**历史时点记录**，当前工程已有经包头审查的独立《寒冰箭》VFX审核地图与鸟群资源候选，不能根据历史段落推断当前资产为0；资产加载与运行表现仍需编辑器审查。

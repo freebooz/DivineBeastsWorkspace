@@ -1178,7 +1178,18 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed(
             ActiveInventoryScreen.Reset();
         }
     }
-    if (ScreenId == TEXT("UI.Screen.Settings")) ActiveSystemSettings.Reset();
+    if (ScreenId == TEXT("UI.Screen.Settings"))
+    {
+        // 同名旧页关闭可能晚于新页入栈；仍属于系统栈的新实例不能被旧通知清除。
+        auto* Current = ActiveSystemSettings.Get();
+        auto* Root = PlatformUI ? PlatformUI->GetRootLayout() : nullptr;
+        const bool bStillOwned = IsValid(Current) && Root &&
+            PlatformUI->IsScreenOwnedByStack(Current, Root->GetActivatableStack(EGamePlatformUILayer::System));
+        if (!bStillOwned) ActiveSystemSettings.Reset();
+        // 齿轮直达设置没有父菜单；最后系统页退出时必须释放控制器的系统输入占用。
+        if (!ActiveSystemSettings.IsValid() && !ActiveSystemMenu.IsValid() &&
+            !ActiveWorldJournal.IsValid() && OpeningSystemScreenId.IsNone()) SetSystemMenuVisible(false);
+    }
     if (ScreenId == TEXT("UI.Screen.WorldJournal")) { ActiveWorldJournal.Reset(); if (!ActiveSystemMenu.IsValid()) SetSystemMenuVisible(false); }
     if (ScreenId == TEXT("UI.Screen.SystemMenu") && bSystemMenuVisible)
     { ActiveSystemMenu.Reset(); CloseSystemMenu(); }
@@ -1302,13 +1313,29 @@ bool UDivineBeastsUIClientSubsystem::OpenSystemSurface(FName ScreenId)
     if (auto* Controller = BoundMenuController.Get()) Controller->SetWorldGameplayInputSuspended(true);
     const auto Request = PlatformUI->OpenScreenAsync(ScreenId, CreateViewModel(ScreenId));
     // 同步失败/同步完成会在调用返回前清掉身份，不能把已终结请求重新写回。
-    if (SystemMenuGeneration == Generation && OpeningSystemScreenId == ScreenId) OpeningSystemRequestId = Request.RequestId;
+    if (SystemMenuGeneration == Generation && OpeningSystemScreenId == ScreenId)
+    {
+        OpeningSystemRequestId = Request.RequestId;
+        if (!Request.IsValid())
+        {
+            // 平台在派发前拒绝请求时可能没有失败广播，也必须撤销本协调器的等待与输入占用。
+            OpeningSystemRequestId.Invalidate();
+            OpeningSystemScreenId = NAME_None;
+            if (!ActiveSystemMenu.IsValid() && !ActiveSystemSettings.IsValid() && !ActiveWorldJournal.IsValid())
+                SetSystemMenuVisible(false);
+        }
+    }
     return Request.IsValid();
 }
 
 bool UDivineBeastsUIClientSubsystem::OpenSystemSettings()
 {
-    return ActiveSystemMenu.IsValid() && !ActiveSystemSettings.IsValid() && OpenSystemSurface(TEXT("UI.Screen.Settings"));
+    if (bUIShuttingDown || !PlatformUI || !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) return false;
+    if (ActiveSystemSettings.IsValid() || OpeningSystemScreenId == TEXT("UI.Screen.Settings")) return true;
+    // 技能栏齿轮直接进入设置；关闭本协调器的背包/日志，已有父菜单则保留作为返回目标。
+    if (ActiveWorldJournal.IsValid() || !OpeningSystemScreenId.IsNone()) CloseSystemMenu();
+    CloseInventoryScreen();
+    return OpenSystemSurface(TEXT("UI.Screen.Settings"));
 }
 
 bool UDivineBeastsUIClientSubsystem::CloseSystemSettings()

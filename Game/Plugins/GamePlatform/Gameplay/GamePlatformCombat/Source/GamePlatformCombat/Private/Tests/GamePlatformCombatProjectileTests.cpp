@@ -23,7 +23,7 @@ struct FProjectileTestWorld
     UGamePlatformCombatComponent* SourceCombat = nullptr;
     UGamePlatformCombatComponent* TargetCombat = nullptr;
     /** 默认Actor来源保持原七项运动测试；控制权回归才使用真实Pawn，以走引擎Possess通知。 */
-    bool Initialize(bool bUsePawnSource = false)
+    bool Initialize(bool bUsePawnSource = false, bool bUsePawnTarget = false)
     {
         const auto Values = UWorld::InitializationValues().AllowAudioPlayback(false)
             .CreatePhysicsScene(true).CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
@@ -50,7 +50,7 @@ struct FProjectileTestWorld
             return Actor;
         };
         Source = SpawnCombatant(FVector(-100, 0, 0), SourceCombat, bUsePawnSource);
-        Target = SpawnCombatant(FVector(200, 0, 0), TargetCombat, false);
+        Target = SpawnCombatant(FVector(200, 0, 0), TargetCombat, bUsePawnTarget);
         return SourceCombat && TargetCombat;
     }
     FGamePlatformCombatSpec CastSpec() const
@@ -85,6 +85,48 @@ bool FGamePlatformProjectileHelixTest::RunTest(const FString&)
     TestEqual(TEXT("实际Sweep命中通过平台结算一次12伤害"), Fixture.TargetCombat->GetCombatHealth(), 88.0f);
     Projectile->Tick(0.1f);
     TestEqual(TEXT("重复Tick不能重复结算"), Fixture.TargetCombat->GetCombatHealth(), 88.0f);
+    return true;
+}
+
+// 生产角色的Pawn胶囊允许忽略Visibility；投射物仍须命中，且不得越过真正遮挡物。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectilePawnCollisionTest,
+    "GamePlatform.Combat.Projectile.PawnCollisionIgnoresVisibility",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectilePawnCollisionTest::RunTest(const FString&)
+{
+    FProjectileTestWorld Fixture;
+    if (!TestTrue(TEXT("真实Pawn目标世界"), Fixture.Initialize(false, true))) return false;
+    auto* TargetCollision = Cast<USphereComponent>(Fixture.Target->GetRootComponent());
+    if (!TestNotNull(TEXT("Pawn目标碰撞体"), TargetCollision)) return false;
+    TargetCollision->SetCollisionObjectType(ECC_Pawn);
+    TargetCollision->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+    FGamePlatformCombatProjectileMotion Motion;
+    Motion.SpeedCmPerSecond = 1000.0f; Motion.RangeCm = 500.0f;
+    auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+    if (!TestTrue(TEXT("Pawn目标前方初始化弹体"),
+        Projectile->AuthorityInitialize(Fixture.CastSpec(), Motion, FVector::ForwardVector))) return false;
+    Projectile->Tick(0.3f);
+    TestEqual(TEXT("忽略Visibility的Pawn仍由权威碰撞结算"), Fixture.TargetCombat->GetCombatHealth(), 88.0f);
+
+    FProjectileTestWorld Blocked;
+    if (!TestTrue(TEXT("遮挡验证世界"), Blocked.Initialize(false, true))) return false;
+    auto* BlockedCollision = Cast<USphereComponent>(Blocked.Target->GetRootComponent());
+    if (!TestNotNull(TEXT("遮挡验证Pawn碰撞体"), BlockedCollision)) return false;
+    BlockedCollision->SetCollisionObjectType(ECC_Pawn);
+    BlockedCollision->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+    AActor* Wall = Blocked.World->SpawnActor<AActor>();
+    auto* WallCollision = NewObject<USphereComponent>(Wall);
+    WallCollision->InitSphereRadius(25.0f);
+    Wall->SetRootComponent(WallCollision); Wall->AddInstanceComponent(WallCollision);
+    WallCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    WallCollision->SetCollisionResponseToAllChannels(ECR_Block);
+    WallCollision->RegisterComponent(); Wall->SetActorLocation(FVector(100, 0, 0));
+    Wall->DispatchBeginPlay();
+    auto* BlockedProjectile = Blocked.World->SpawnActor<AGamePlatformCombatProjectile>();
+    if (!TestTrue(TEXT("墙前初始化弹体"),
+        BlockedProjectile->AuthorityInitialize(Blocked.CastSpec(), Motion, FVector::ForwardVector))) return false;
+    BlockedProjectile->Tick(0.3f);
+    TestEqual(TEXT("Visibility墙仍先于Pawn阻挡弹体"), Blocked.TargetCombat->GetCombatHealth(), 100.0f);
     return true;
 }
 

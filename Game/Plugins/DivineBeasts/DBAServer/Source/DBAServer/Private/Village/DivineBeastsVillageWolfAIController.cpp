@@ -53,9 +53,17 @@ bool ADivineBeastsVillageWolfAIController::TryExecuteNativeAttack(AActor& Valida
     const FVector End = TargetLocation + FVector(0.0f, 0.0f, 40.0f);
     FCollisionQueryParams Params(TEXT("VillageWolfMeleeAuthority"), false);
     Params.AddIgnoredActor(Wolf);
-    FHitResult Hit;
-    if (!World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params) ||
-        Hit.GetActor() != TargetPawn) return false;
+    FHitResult VisibilityHit;
+    FHitResult PawnHit;
+    const bool bVisibilityHit = World->LineTraceSingleByChannel(
+        VisibilityHit, Start, End, ECC_Visibility, Params);
+    // 角色胶囊可忽略Visibility；Pawn命中仍须位于首个世界遮挡物之前。
+    const bool bPawnHit = World->LineTraceSingleByObjectType(
+        PawnHit, Start, End, FCollisionObjectQueryParams(ECC_Pawn), Params);
+    const FHitResult* Hit = bPawnHit && PawnHit.GetActor() == TargetPawn &&
+        (!bVisibilityHit || PawnHit.Distance <= VisibilityHit.Distance + 2.0f)
+        ? &PawnHit : (bVisibilityHit && VisibilityHit.GetActor() == TargetPawn ? &VisibilityHit : nullptr);
+    if (!Hit) return false;
 
     FGamePlatformCombatSpec Spec;
     Spec.EventId = FGuid::NewGuid();
@@ -72,8 +80,8 @@ bool ADivineBeastsVillageWolfAIController::TryExecuteNativeAttack(AActor& Valida
     Spec.HitContext.bHasValidatedHit = true;
     Spec.HitContext.TraceStart = Start;
     Spec.HitContext.TraceEnd = End;
-    Spec.HitContext.ImpactPoint = Hit.ImpactPoint;
-    Spec.HitContext.ImpactNormal = Hit.ImpactNormal.GetSafeNormal();
+    Spec.HitContext.ImpactPoint = Hit->ImpactPoint;
+    Spec.HitContext.ImpactNormal = Hit->ImpactNormal.GetSafeNormal();
     Spec.HitContext.ValidatedDistance = FVector::Distance(Start, End);
     // 最终由平台统一核验角色身份、命中、护盾、伤害和死亡。失败不能声称成功。
     const bool bApplied = SourceCombat->ApplyDamage(Spec).IsSuccess();

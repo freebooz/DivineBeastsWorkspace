@@ -2313,5 +2313,90 @@
     "CompileWarnings": 0,
     "Evidence": "Saved/Validation/UIColorRHI/LoadingTravel_1920x1080.png",
     "NotesCN": "已从Monolith回读保存后的控件树：BrandLogo槽位320×160 UMG、2:1；StageText可见，LoadingTitle与ProgressPercentText折叠。原生RHI/Slate截图用于核对实际显示；不是真实跨世界加载或客户端人工验收证据。"
+  },
+  "TargetSelectionRingVisibility20261018": {
+    "Status": "MonolithCompiledSavedReloadVerified_ClientNearTargetVerified",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/World/Materials/M_DBA_TargetSelectionRing",
+    "Actions": ["connect_material_parameter_to_emissive", "compile_material", "save_asset", "reload_packages", "readback_material_graph", "set_ring_width_0_04", "set_opacity_1_0", "recompile_material", "save_material", "readback_expression_properties"],
+    "CompileErrors": 0,
+    "NotesCN": "目标法环颜色参数同时驱动底色和自发光；此前重新装载后回读连接。本轮通过Monolith将环宽常量设为0.04、透明度乘数设为1.0，编译保存后回读两项参数；双客户端重新登录新手村后，近处友方目标脚下法环已能看清。"
+  },
+  "CombatFloatingText20261018": {
+    "Status": "MonolithCompiledSavedReloadVerified_ClientVisualPending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/Feedback/WBP_DBA_CombatFloatingText",
+    "ParentClass": "GamePlatformFloatingTextWidget",
+    "RootLayout": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+    "RootLayoutProperty": "CombatFloatingTextClass",
+    "NamedWidget": "FeedbackText",
+    "Actions": ["create_widget_blueprint", "add_widget", "set_widget_property", "set_cdo_property", "compile_blueprint", "save_asset", "reload_packages", "readback_widget_tree_and_parent"],
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "AccessibilityErrors": 0,
+    "NotesCN": "世界与竞技场复用公共浮字控件；只消费确认的战斗事件。已由Monolith回读父类、命名控件、根布局类引用及保存状态。真实客户端战斗视觉仍待实机验证。"
+  },
+  "SkillBarTransparentSplit20261018": {
+    "Status": "HumanApproved_MonolithSavedReloadVerified_RHIPending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "Engine": "5.8.0-0+UE5",
+    "MonolithVersion": "0.23.0",
+    "HumanApproval": "2026-10-18：审核通过，继续执行",
+    "SourceReview": "Saved/ArtReview/AbilityBar_20261018_v02",
+    "TextureImportManifest": "Docs/SkillBarTextureImportManifest.json",
+    "Textures": 26,
+    "Widgets": [
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_SkillBarMomentum",
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+      "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_CastBar",
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD"
+    ],
+    "Actions": [
+      "import_texture",
+      "set_texture_UI_sRGB_linearAlpha_NoMips_Clamp",
+      "get_owning_player_subsystem",
+      "set_slot_property",
+      "set_brush",
+      "bind_state_event",
+      "set_widget_navigation_bulk",
+      "compile_widget",
+      "save_packages",
+      "reload_packages",
+      "get_widget_tree",
+      "native_texture_export_pixel_compare"
+    ],
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "NativeReloadCount": 31,
+    "ImportedRGBAExactMatchCount": 26,
+    "Accessibility": {
+      "NewFunctionButtonsErrors": 0,
+      "NewFunctionButtonsWarnings": 0,
+      "FocusDanglingTargets": 0,
+      "Note": "左右及前后成对导航的静态循环是可逆导航；两端使用Escape，非焦点陷阱。"
+    },
+    "Evidence": "Saved/Validation/SkillBar20261018",
+    "RHIVerified": false,
+    "ClientCookVerified": false,
+    "ManualRuntimeAcceptance": false,
+    "Interactions20261018": {
+      "WidgetSavedReloaded": true,
+      "Five48PixelSlotsHitTestable": true,
+      "WidgetVerification": "Saved/Validation/SkillBar20261018/InteractionWidgetVerification.json",
+      "BlueprintCompileErrors": 0,
+      "BlueprintCompileWarnings": 0,
+      "Inventory": "CloseInventoryScreen返回false时OpenInventoryScreen，再次点击关闭或取消在途请求",
+      "Party": "OpenPartyPage(UI.Party.Panel)，已有主面板复用",
+      "Settings": "OpenSystemSettings直达设置，原生关闭逻辑支持无父菜单恢复世界输入",
+      "HeroMappingAudit": "12 heroes / 60 grants; HeroAbilityMappingAudit.json",
+      "StaticAssertionsPassed": 52,
+      "NewNativeTests": ["DivineBeasts.UI.Combat.AbilityDetailsProjection", "DivineBeasts.UI.Combat.AbilityGrantIdentity", "DivineBeasts.UI.SystemMenu.SkillBarSettingsClose"],
+      "NativeChangesCompiled": false,
+      "NativeRegressionExecuted": false
+    },
+    "NotesCN": "727×94底部居中装配；五个既有技能绑定与三格空背景；气势沿用玩家状态事件，施法沿用原生通知及动画，三按钮使用拥有者LocalPlayer入口；齿轮蓝图现直接调用设置入口。配套C++修复待动画和治疗特效任务空闲后按既有授权重启、增量编译并运行新增原生/RHI测试。"
   }
 }

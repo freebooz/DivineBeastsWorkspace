@@ -42,7 +42,8 @@ bool ConfirmationMatches(
 }
 
 class FGamePlatformUESessionTransport final
-    : public IGamePlatformSessionTransport
+    : public IGamePlatformSessionTransport,
+      public TSharedFromThis<FGamePlatformUESessionTransport>
 {
 public:
     explicit FGamePlatformUESessionTransport(UGameInstance& InGameInstance)
@@ -117,15 +118,38 @@ public:
 
         BindEngineFailures();
 
+        // 绑定回调可能同步发起CancelTransfer、切换账号或更换Transport。
+        // 每个不可回滚边界前核验原操作仍有效，禁止取消后依然ClientTravel。
+        const FGuid BegunOperationId = Request.TransferOperationId;
         if (Callbacks.OnBindingPrepared)
         {
-            Callbacks.OnBindingPrepared(ExpectedBinding);
+            // 回调可同步取消操作并清空Callbacks；把正在执行的TFunction临时移出，
+            // 使取消时不会析构其调用栈中的可调用对象，且不恢复已失效的旧回调。
+            auto Prepared = MoveTemp(Callbacks.OnBindingPrepared);
+            Prepared(ExpectedBinding);
+            if (ActiveOperationId == BegunOperationId && !Callbacks.OnBindingPrepared)
+            {
+                Callbacks.OnBindingPrepared = MoveTemp(Prepared);
+            }
+        }
+        if (ActiveOperationId != BegunOperationId)
+        {
+            return;
         }
 
-        // Commit回调必须发生在ClientTravel之前，确保Session状态先跨过不可回滚边界。
+        // Commit回调必须发生在ClientTravel之前，确保Session先跨过旅行边界。
         if (Callbacks.OnTravelCommitted)
         {
-            Callbacks.OnTravelCommitted(ExpectedBinding);
+            auto Committed = MoveTemp(Callbacks.OnTravelCommitted);
+            Committed(ExpectedBinding);
+            if (ActiveOperationId == BegunOperationId && !Callbacks.OnTravelCommitted)
+            {
+                Callbacks.OnTravelCommitted = MoveTemp(Committed);
+            }
+        }
+        if (ActiveOperationId != BegunOperationId)
+        {
+            return;
         }
         bTravelCommitted = true;
 
@@ -135,6 +159,11 @@ public:
             Request.Endpoint,
             TRAVEL_Absolute,
             false);
+        // ClientTravel有可能同步广播旅行/网络故障并清空原操作，不能再创建幽灵握手Ticker。
+        if (ActiveOperationId != BegunOperationId)
+        {
+            return;
+        }
 
         HandshakeTicker = FTSTicker::GetCoreTicker().AddTicker(
             FTickerDelegate::CreateRaw(
@@ -217,7 +246,11 @@ public:
 private:
     bool TickHandshake(float)
     {
-        if (!ActiveOperationId.IsValid())
+        // 原生Ticker调用中OnFact可能同步替换Transport；自持引用防止原对象析构。
+        const TSharedRef<FGamePlatformUESessionTransport> CallbackLifetime = AsShared();
+        (void)CallbackLifetime;
+        const FGuid ProbeOperationId = ActiveOperationId;
+        if (!ProbeOperationId.IsValid())
         {
             HandshakeTicker.Reset();
             return false;
@@ -245,10 +278,20 @@ private:
             bNetworkFactSent = true;
             if (Callbacks.OnFact)
             {
-                Callbacks.OnFact(
-                    EGamePlatformSessionTransferFact::NetworkConnected,
-                    ExpectedBinding);
+                // OnFact可能同步完成/撤销传输并清空Callbacks，不能在被移除的
+                // TFunction实例内继续运行。局部可调用对象延迟到回调返回后才销毁。
+                auto FactCallback = MoveTemp(Callbacks.OnFact);
+                FactCallback(EGamePlatformSessionTransferFact::NetworkConnected, ExpectedBinding);
+                if (ActiveOperationId == ProbeOperationId && !Callbacks.OnFact)
+                {
+                    Callbacks.OnFact = MoveTemp(FactCallback);
+                }
             }
+        }
+        // 网络事实回调可能同步取消本次连接，禁止仍提交一次性准入凭据。
+        if (ActiveOperationId != ProbeOperationId)
+        {
+            return false;
         }
 
         if (bProofSubmitted)
@@ -289,6 +332,11 @@ private:
             return false;
         }
 
+        // RPC有可能同步触发拒绝回调和清理，不恢复已取消操作的提交状态。
+        if (ActiveOperationId != ProbeOperationId)
+        {
+            return false;
+        }
         bProofSubmitted = true;
         return true;
     }
@@ -317,9 +365,17 @@ private:
 
         if (Callbacks.OnFact)
         {
-            Callbacks.OnFact(
-                EGamePlatformSessionTransferFact::AdmissionConfirmed,
-                ExpectedBinding);
+            // AdmissionConfirmed可能是第4个可信事实，Session随即CompleteTransfer
+            // 清空回调容器。必须保证当前OnFact函数对象在同步完成期间不被销毁。
+            const TSharedRef<FGamePlatformUESessionTransport> CallbackLifetime = AsShared();
+            (void)CallbackLifetime;
+            const FGuid ConfirmedOperationId = ActiveOperationId;
+            auto FactCallback = MoveTemp(Callbacks.OnFact);
+            FactCallback(EGamePlatformSessionTransferFact::AdmissionConfirmed, ExpectedBinding);
+            if (ActiveOperationId == ConfirmedOperationId && !Callbacks.OnFact)
+            {
+                Callbacks.OnFact = MoveTemp(FactCallback);
+            }
         }
     }
 

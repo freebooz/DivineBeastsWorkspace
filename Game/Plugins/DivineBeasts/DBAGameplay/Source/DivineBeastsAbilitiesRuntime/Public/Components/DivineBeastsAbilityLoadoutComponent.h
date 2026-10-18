@@ -108,6 +108,13 @@ private:
     UFUNCTION()
     void OnRep_LoadoutState();
 
+#if WITH_DEV_AUTOMATION_TESTS
+    // 仅UE原生隔离世界回归可读取真实授权句柄，Shipping无任何测试后门。
+    friend class FDivineBeastsGASOwnedGrantReentryTest;
+    friend class FDivineBeastsGASReadinessReentryTest;
+    friend class FDivineBeastsGASEndPlayReentryTest;
+#endif
+
     void HandleCharacterReadinessChanged(bool bReady);
     void HandleAbilitySetLoaded(const FGamePlatformDataLease& CompletedLease,
         int32 ExpectedRequestSerial, FName ExpectedHero, int32 ExpectedAvatar);
@@ -121,6 +128,8 @@ private:
     TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;
     TWeakObjectPtr<UDivineBeastsCharacterComponent> CharacterIdentity;
     FDelegateHandle ReadinessHandle;
+    /** 开始EndPlay立即关闭新授予/异步回调/OnRep；仅新的BeginPlay允许重新开启。 */
+    bool bEndingPlay = false;
     int32 RequestSerial = 0;
     FName PendingSetId = NAME_None;
     FGamePlatformDataLease DefinitionLease;
