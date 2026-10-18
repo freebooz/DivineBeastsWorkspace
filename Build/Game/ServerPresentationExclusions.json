@@ -288,6 +288,20 @@
       "Reason": "神兽联盟环境雪苔项目材质实例为客户端纯表现，不属于服务器必要资源。"
     },
     {
+      "PackagePath": "/DBAPresentationPack_Core/Materials/Terrain",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "十层V3地形基础色、函数化高精母材质与客户端MI只负责视觉表现；专服地图仍持有DBAWorldPack_Village中性桥接母材质，不允许硬依赖此目录。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/Textures/Terrain/Grass",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Textures/Terrain/Grass",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "2026-10-13历史客户端Grass扫描纹理目录；目前正式Village改为V3软租约，旧Grass依然只应由客户端Cook而非服务器Cook。"
+    },
+    {
       "PackagePath": "/Game/Development/Snow",
       "SourceDirectory": "Game/Content/Development/Snow",
       "Profiles": "AllServers",

@@ -207,6 +207,13 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
             if (bImpact) Current->bImpactSubmitted=false;
             else if (Current->FlightRequestId==Request.RequestId) Current->FlightRequestId.Invalidate();
         }
+        else if (IsValid(Actor) && !Actor->IsActorBeingDestroyed())
+        {
+            // 首批寒冰/火球音效复用真实弹道复制事实；声效是可选表现，不改变服务器技能裁决。
+            // SFX使用独立RequestId，不会与本次VFX的请求身份互相吞没。
+            PlayStarterSpellSound(Name, bImpact,
+                bImpact ? Snapshot.ImpactLocation : Actor->GetActorLocation());
+        }
     };
     if (!Snapshot.bFinished) Submit(false);
     else if (Snapshot.bImpacted)

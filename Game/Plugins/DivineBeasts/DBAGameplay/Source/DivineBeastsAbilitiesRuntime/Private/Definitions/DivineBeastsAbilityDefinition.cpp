@@ -60,6 +60,9 @@ FGamePlatformResult UDivineBeastsAbilityDefinition::ValidateDefinition() const
             DraftCatalogId != FName(TEXT("SSLM.ZodiacEightSlotSkills.V2")) ||
             DraftSourceSha256.Len() != 64 ||
             DraftHeroVFXProfileId.IsNone() || DraftVFXCatalogKey.IsNone() ||
+            DraftIconPlaceholderId != FName(TEXT("SSLM.Placeholder.Icon.Unbound")) ||
+            DraftVFXPlaceholderId != FName(TEXT("SSLM.Placeholder.VFX.Unbound")) ||
+            !bDraftPresentationUnbound ||
             DraftPresentationSemanticId.IsNone() || DraftPresentationSemanticIds.IsEmpty() ||
             DraftPresentationSemanticIds[0] != DraftPresentationSemanticId ||
             DraftActions.IsEmpty() || DraftActions.Num() > 8)

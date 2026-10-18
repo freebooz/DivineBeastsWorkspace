@@ -163,6 +163,18 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft")
     FName DraftVFXCatalogKey = NAME_None;
 
+    /** 图标仅保存未绑定占位语义；真实客户端贴图归后续表现配置，不进入服务器定义。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft")
+    FName DraftIconPlaceholderId = NAME_None;
+
+    /** VFX仅保存未绑定占位语义，不以占位身份冒充已存在的Niagara资源。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft")
+    FName DraftVFXPlaceholderId = NAME_None;
+
+    /** 当前草案没有真实图标或特效绑定；只有另行完成资源验收后才能迁移该状态。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft")
+    bool bDraftPresentationUnbound = true;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft")
     FName DraftPresentationSemanticId = NAME_None;
 

@@ -36,6 +36,10 @@ struct DIVINEBEASTSABILITIESRUNTIME_API FDivineBeastsAbilityBalanceRow : public 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Ability|Cost", meta=(ClampMin="0"))
     float CooldownSeconds = 0.0f;
 
+    /** 首次释放前的施法准备秒数，0为瞬发；不是整段动画/飞行时间，也不自动驱动GAS施法。旧行默认0保持兼容。 */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Ability|Casting", meta=(ClampMin="0", ClampMax="30"))
+    float CastTimeSeconds = 0.0f;
+
     /** 非法术技能可声明气势费用；Magic法术必须为零，不替法术引入其他资源。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DivineBeasts|Ability|Cost", meta=(ClampMin="0"))
     float MomentumCost = 0.0f;
@@ -50,3 +54,4 @@ struct DIVINEBEASTSABILITIESRUNTIME_API FDivineBeastsAbilityBalanceRow : public 
     /** 纯值检查，不访问世界或同步加载；失败给出可定位中文原因。 */
     bool Validate(FString& OutError) const;
 };
+

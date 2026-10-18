@@ -70,3 +70,36 @@ python3 Tools/Unreal/Abilities/ZodiacEightSlotDraftContract.py --catalog Docs/De
 ### 人工审核与正式启用前门槛
 
 逐技能审核中文名称、说明与概念提示词的准确性；持续伤害系数的计量基数/跳频、增益叠加、目标边界与全部一级数值尚须策划批准。随后在允许的统一编译批次加载UE5.8新增反射，经Monolith真实制作、保存及独立冷读97项资源，再完成对应GA/GE、动画/特效、角色创建界面展示、联机/性能与正式技能集合切换审批。确认实施方案不等于批准这96项内容投产。
+
+## 最新续作：完整96项资产字段与本地制作条件（V2.2）
+
+本轮核对主分支`4dde0b951ab3e5459f0f25f7f8ff483ae3a53ca0`，保留其V3历史名称审稿与其他并行成果；本作者仍明确以V2稳定技能编号和V2.2源数据制作隔离草案，不自动应用尚未确认的V3展示名称。
+
+### 完整资产制作数据
+
+- 每项均有唯一技能编号、中文名称/说明/设计提示词、一级基础伤害/类型/最多命中段数、施法准备时间、施法距离、冷却、区域半径、气势费用、输入槽位、数值行和占位信息。规划清单直接保存完整balanceRow（数值行）及placeholders（占位字段），可逐项审阅。
+- 96个castTimeSeconds（施法准备秒数）候选为0—1.1秒；0为瞬发，最大允许30秒，定义为施法准入至第一次释放的准备时间。不是全段动画、飞行或引导时长。仍属LEVEL1_CANDIDATE_NOT_BALANCED（未平衡一级候选），不自动实现GAS时序。
+- CastTimeSeconds进入原生数值行，默认0兼容旧行。只修改本轮草案CSV；既有正式占位技能数值资产未写入。
+- 图标/VFX的占位身份分别为SSLM.Placeholder.Icon.Unbound（未绑定图标）及SSLM.Placeholder.VFX.Unbound（未绑定视觉特效），bDraftPresentationUnbound保持true。所有真实图标/Niagara引用仍为空；这些身份不是已生成视觉资源。
+- 作者预检新增占位字段与数值行CastTimeSeconds反射；填表后导出JSON，逐行检查全部字段与96个行身份，拒绝字段丢失、时间变零、错行/重复。数值浮点回读允许float32误差。数据表导出API依据[UE官方DataTableFunctionLibrary文档](https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/class/DataTableFunctionLibrary?application_version=5.4)，作者仍要求实际UE5.8且检查该接口存在，未声称本轮已执行导出。
+
+### 实际本地连接证据与阻塞
+
+本轮已通过Cwebcodex（本地执行连接器）连接固定DivineBeastsWorkspace项目。Monolith注册可解析，网关状态healthy仅说明保留的子进程还在；对monolith_status的真实调用返回`Monolith MCP is not available (Unreal Editor not running)`（编辑器未运行），因此没有取得引擎版本/当前工程/反射加载证明。此状态更新替代前节仅按工具暴露得出的“接口不可用”判断。
+
+本地主工作区在main有3个合并冲突、14个活跃或排队任务，且读取到的技能定义头仍为旧53行版本。本轮没有修改该工作树或停止其他任务；本轮唯一的git log诊断作业在尚未开始执行时已停止。新增字段尚未合入、未统一编译，不能用旧模块生成不完整资产。所有代码/数据改动在现有GitHub隔离分支中完成。
+
+### 验证与实际制作结果
+
+在锁定主分支/草稿分支提取的受影响源快照中运行：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 Tests/Architecture/TestZodiacEightSlotDesign.py -q
+PYTHONDONTWRITEBYTECODE=1 python3 Tests/Architecture/TestZodiacSkillV3Heritage.py -q
+```
+
+- 实际退出码均0：31项八槽数据/作者门禁、10项V3历史继承兼容门禁通过。
+- 施法时间缺失、负数、非有限数、布尔、超过30秒均拒绝；JSON/CSV/完整资产清单一致；占位身份丢失或虚构资源引用拒绝。原生导出校验逻辑的输入丢列、错值、缺行/重复行负向用例通过；输入为测试数据，不冒充真实UE导出。
+- 三个受影响Python文件通过AST语法检查。本轮未执行C++/UHT/UBT、蓝图编译、Cook或完整工程回归；V3审稿文件与原数值均保留。
+- 实际原生DataAsset创建0/96、DataTable创建0/1；保存0、独立冷重载0。当前交付是可核验的完整制作源、作者脚本与静态门禁，不能将JSON/CSV清单记为已生成.uasset。
+- 尚须在最后统一编译并合入新增反射，启动锁定UE5.8主工程，经Monolith验证工程/版本/显式开关后运行作者、保存、独立冷重载；再经文本/数值/图标与特效/真实GAS/联机审核批准正式启用。现有正式占位集合继续保留。

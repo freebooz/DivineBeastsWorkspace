@@ -23,6 +23,7 @@ from ZodiacEightSlotDraftContract import (  # noqa: E402
     TABLE_OBJECT_PATH,
     asset_object_path,
     build_contract,
+    validate_exported_balance_rows,
 )
 
 WORKSPACE = Path(__file__).resolve().parents[3]
@@ -118,6 +119,8 @@ def require_editor():
     balance_struct = unreal.load_object(None, BALANCE_STRUCT_PATH)
     ensure(ability_class is not None and balance_struct is not None,
            "新增能力定义或安全数值行反射类尚未由当前Editor加载")
+    ensure(hasattr(unreal.DataTableFunctionLibrary, "export_data_table_to_json_string"),
+           "当前编辑器未提供原生DataTable逐行导出校验接口，禁止写入")
 
     ability_cdo = unreal.get_default_object(ability_class)
     ability_properties = (
@@ -127,6 +130,7 @@ def require_editor():
         "DraftDescriptionZh", "DraftDesignPromptZh", "DraftRoleId", "DraftTargetModeId", "DraftActions",
         "DraftAssetOwnerId", "DraftCatalogId", "DraftSourceSha256",
         "DraftHeroVFXProfileId", "DraftVFXCatalogKey",
+        "DraftIconPlaceholderId", "DraftVFXPlaceholderId", "bDraftPresentationUnbound",
         "DraftPresentationSemanticId", "DraftPresentationSemanticIds",
     )
     for property_name in ability_properties:
@@ -145,6 +149,16 @@ def require_editor():
             action_probe.get_editor_property(property_name)
         except Exception as error:
             raise RuntimeError("当前Editor缺少设计行为反射字段：" + property_name) from error
+
+    # 行结构也必须来自新模块；只加载同名旧UScriptStruct会静默丢失新增施法时间。
+    ensure(hasattr(unreal, "DivineBeastsAbilityBalanceRow"), "缺少项目技能数值行Python反射类型")
+    balance_probe = unreal.DivineBeastsAbilityBalanceRow()
+    for property_name in ("AbilityId", "Level", "BaseDamage", "DamageType", "CooldownSeconds",
+                          "CastTimeSeconds", "MomentumCost", "CastRangeCm", "AreaRadiusCm"):
+        try:
+            balance_probe.get_editor_property(property_name)
+        except Exception as error:
+            raise RuntimeError("当前Editor缺少数值行反射字段：" + property_name) from error
 
 
 def safe_catalog():
@@ -191,6 +205,8 @@ def preflight_existing_assets(contract: dict, ability_class, balance_struct):
                    "已有技能资产不属于DBAGameplay：" + path)
             ensure(str(existing.get_editor_property("DraftCatalogId")) == CATALOG_ID,
                    "已有技能资产属于其他设计目录：" + path)
+            ensure(bool(existing.get_editor_property("bDraftPresentationUnbound")),
+                   "已有草案的表现绑定状态已经变化，停止覆盖并单独审核迁移：" + path)
             ensure(logical_text(existing.get_editor_property("LogicalId")) ==
                    skill["entry"]["abilityId"], "草案对象稳定身份冲突：" + path)
             ensure(str(existing.get_editor_property("HeroDefinitionId")) ==
@@ -233,6 +249,13 @@ def author():
     ensure(unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(
         table, json.dumps(contract["balanceRows"], ensure_ascii=False)
     ), "96行数值数据表导入失败")
+    written_names = {str(name) for name in
+                     unreal.DataTableFunctionLibrary.get_data_table_row_names(table)}
+    ensure(written_names == {row["Name"] for row in contract["balanceRows"]},
+           "原生DataTable导入后不是96个预期稳定数值行")
+    validate_exported_balance_rows(
+        contract, unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table)
+    )
     ensure(unreal.EditorAssetLibrary.save_loaded_asset(table, only_if_is_dirty=False),
            "数值DataTable保存失败")
 
@@ -273,6 +296,10 @@ def author():
         definition.set_editor_property("DraftDisplayNameZh", unreal.Text(skill["draft_text"]["DraftDisplayNameZh"]))
         definition.set_editor_property("DraftDescriptionZh", unreal.Text(skill["draft_text"]["DraftDescriptionZh"]))
         definition.set_editor_property("DraftDesignPromptZh", skill["draft_text"]["DraftDesignPromptZh"])
+        # 只序列化未绑定占位身份，不在双端安全定义上写入客户端贴图或Niagara软/硬引用。
+        definition.set_editor_property("DraftIconPlaceholderId", unreal.Name(skill["placeholders"]["DraftIconPlaceholderId"]))
+        definition.set_editor_property("DraftVFXPlaceholderId", unreal.Name(skill["placeholders"]["DraftVFXPlaceholderId"]))
+        definition.set_editor_property("bDraftPresentationUnbound", True)
         definition.set_editor_property("DraftRoleId", unreal.Name(entry["role"]))
         definition.set_editor_property("DraftTargetModeId", unreal.Name(entry["intentTarget"]))
         definition.set_editor_property("DraftAssetOwnerId", unreal.Name(ASSET_OWNER_ID))
@@ -304,6 +331,11 @@ def author():
         for property_name, expected_text in skill["draft_text"].items():
             ensure(str(definition.get_editor_property(property_name)) == expected_text,
                    "中文名称、说明或提示词回读不一致：" + entry["abilityId"] + ":" + property_name)
+        for property_name in ("DraftIconPlaceholderId", "DraftVFXPlaceholderId"):
+            ensure(str(definition.get_editor_property(property_name)) == skill["placeholders"][property_name],
+                   "图标/VFX占位身份回读不一致：" + entry["abilityId"])
+        ensure(bool(definition.get_editor_property("bDraftPresentationUnbound")),
+               "未制作表现资源不能冒充已绑定：" + entry["abilityId"])
         ensure(len(definition.get_editor_property("DraftActions")) == len(skill["actions"]),
                "策划行为回读失败：" + entry["abilityId"])
         ensure(bool(definition.get_editor_property("bEightSlotDraftOnly")),

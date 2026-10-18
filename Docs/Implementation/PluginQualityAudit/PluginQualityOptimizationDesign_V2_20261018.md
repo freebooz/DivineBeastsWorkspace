@@ -169,6 +169,6 @@ flowchart LR
 
 ## 七、实施与兼容策略
 
-所有实施按`PluginQualityOptimizationExecutionPlan_V2_20261018.md`（配套执行计划）推进；每个改动限定插件、文件、责任端和退出条件。优先安全问题、核心链和现有演示基础，再批次补正式操作案例。UI原生资产制作必须在Monolith可用、工程正确、同一编辑器资源锁定后进行，并保留完整资产写入清单与冷重开证据。当前共享工作区有其他会话未提交资产，禁止清空缓存、全树重置、抢占任务、越权修改引擎或提交主分支。
+所有实施按`PluginQualityOptimizationExecutionPlan_V2_20261018.md`（配套执行计划）推进，逐插件任务采用`PluginOptimizationWorkOrders_V2.json`（可机读任务表）与`PluginOptimizationWorkOrders_V2.md`（67份中文工作单），并用`GeneratePluginOptimizationWorkOrders.py --check`（只读一致性检查）确保台账更新时不遗漏任务。每个改动限定插件、文件、责任端和退出条件。优先安全问题、核心链和现有演示基础，再批次补正式操作案例。UI原生资产制作必须在Monolith可用、工程正确、同一编辑器资源锁定后进行，并保留完整资产写入清单与冷重开证据。当前共享工作区有其他会话未提交资产，禁止清空缓存、全树重置、抢占任务、越权修改引擎或提交主分支。
 
 本规范是设计评审稿：**未在当前回合构建/测试/生成新UE资产，故不能因为写入本文而提高任何插件的已验收数量。**

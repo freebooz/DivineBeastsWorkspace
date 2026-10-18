@@ -488,6 +488,81 @@ class ZodiacEightSlotDraftTests(unittest.TestCase):
                                  package + "." + package.rsplit("/", 1)[-1])
 
 
+    def test_22_all_96_asset_specs_include_cast_time_balance_and_placeholders(self):
+        """制作清单必须可逐项读出用户要求的数值和占位，不只列96个资源名字。"""
+        for row in all_skills(self.catalog):
+            self.assertTrue("castTimeSeconds" in row, row["abilityId"] + ":缺少施法时间")
+        contract = build_contract(self.catalog, BALANCE_PATH.read_text(encoding="utf-8-sig"))
+        manifest = build_manifest(self.catalog, BALANCE_PATH.read_text(encoding="utf-8-sig"))
+        planned = {s["abilityId"]: s for h in manifest["heroes"] for s in h["skills"]}
+        for skill in contract["skills"]:
+            row = skill["entry"]
+            self.assertEqual(skill["balance_row"]["CastTimeSeconds"], row["castTimeSeconds"])
+            self.assertEqual(planned[row["abilityId"]]["balanceRow"], skill["balance_row"])
+            self.assertEqual(planned[row["abilityId"]]["hitCount"], row["hitCount"])
+            self.assertEqual(planned[row["abilityId"]]["placeholders"], skill["placeholders"])
+            self.assertTrue(skill["placeholders"]["bDraftPresentationUnbound"])
+            self.assertIsNone(row["icon"]["assetPath"])
+            self.assertIsNone(row["vfx"]["assetPath"])
+
+    def test_23_cast_time_rejects_missing_negative_nonfinite_or_bool(self):
+        """施法准备时间为有限秒数，不能把缺失字段当零或把布尔当合法数字。"""
+        balance_csv = BALANCE_PATH.read_text(encoding="utf-8-sig")
+        for value in (-1, 31, float("nan"), float("inf"), True, None, "0.5"):
+            with self.subTest(value=repr(value)):
+                changed = copy.deepcopy(self.catalog)
+                changed["heroes"][0]["slots"][0]["castTimeSeconds"] = value
+                with self.assertRaises(ContractError):
+                    build_contract(changed, balance_csv)
+        changed = copy.deepcopy(self.catalog)
+        changed["heroes"][0]["slots"][0].pop("castTimeSeconds", None)
+        with self.assertRaises(ContractError):
+            build_contract(changed, balance_csv)
+
+    def test_24_placeholder_identity_is_required_without_fake_asset_paths(self):
+        """未绑定图标和VFX占位必须有明确身份；本轮不允许以虚构资源路径冒充已制作。"""
+        balance_csv = BALANCE_PATH.read_text(encoding="utf-8-sig")
+        for field in ("icon", "vfx"):
+            with self.subTest(field=field):
+                changed = copy.deepcopy(self.catalog)
+                changed["heroes"][0]["slots"][0][field].pop("placeholderId", None)
+                with self.assertRaises(ContractError):
+                    build_contract(changed, balance_csv)
+
+    def test_25_native_author_requires_cast_and_placeholder_reflection(self):
+        """旧编辑器缺少新行字段或占位字段时必须预检拒绝；静态门禁不冒充原生编译。"""
+        row_h = source("Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/"
+                       "Public/Types/DivineBeastsAbilityBalanceRow.h")
+        row_cpp = source("Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/"
+                         "Private/Types/DivineBeastsAbilityBalanceRow.cpp")
+        author = source("Tools/Unreal/Abilities/AuthorZodiacEightSlotDesignAssets.py")
+        definition = source("Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/"
+                            "Public/Definitions/DivineBeastsAbilityDefinition.h")
+        self.assertIn("float CastTimeSeconds = 0.0f;", row_h)
+        self.assertIn("CastTimeSeconds", row_cpp)
+        self.assertIn("unreal.DivineBeastsAbilityBalanceRow()", author)
+        for name in ("DraftIconPlaceholderId", "DraftVFXPlaceholderId", "bDraftPresentationUnbound"):
+            self.assertIn(name, definition)
+            self.assertIn(name, author)
+
+
+    def test_26_native_table_export_detects_cast_time_loss_or_row_drift(self):
+        """原生导入后的JSON必须保留全部候选数值；施法时间变零、重复/缺行均拒绝保存。"""
+        self.assertTrue(hasattr(contract_module, "validate_exported_balance_rows"),
+                        "缺少原生数据表逐行回读校验")
+        contract = build_contract(self.catalog, BALANCE_PATH.read_text(encoding="utf-8-sig"))
+        rows = copy.deepcopy(contract["balanceRows"])
+        self.assertEqual(contract_module.validate_exported_balance_rows(
+            contract, json.dumps(rows)), 96)
+        bad = copy.deepcopy(rows)
+        bad[0]["CastTimeSeconds"] = 0
+        with self.assertRaises(ContractError):
+            contract_module.validate_exported_balance_rows(contract, json.dumps(bad))
+        for bad in (rows[:-1], rows[:-1] + [rows[0]]):
+            with self.assertRaises(ContractError):
+                contract_module.validate_exported_balance_rows(contract, json.dumps(bad))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 

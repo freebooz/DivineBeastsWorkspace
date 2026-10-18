@@ -14,6 +14,8 @@
 #include "Development/DivineBeastsPluginDemoLauncher.h"
 #include "Development/DivineBeastsDevelopmentLoginAccounts.h"
 #include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
+#include "DivineBeastsPresentationClientSubsystem.h" // 登录页点击音只走项目中立表现服务，不硬引用音源。
 
 // 默认主题语义只保存在项目层CDO：当项目主题ID为空时平台兼容绑定保持旧Widget样式。
 // 不修改已有Widget树、命名控件、焦点、登录输入/命令或加载任何项目纹理。
@@ -362,6 +364,10 @@ void UDivineBeastsLoginScreen::HandleLoginClicked()
     const FString LoginName =
         AccountInput->GetText().ToString().TrimStartAndEnd();
     const FString Password = PasswordInput->GetText().ToString();
+    // 操作音效只在客户端提交，不读取/保留密码；失败不阻止原登录命令。
+    if (ULocalPlayer* Player = GetOwningLocalPlayer())
+        if (auto* Audio = Player->GetSubsystem<UDivineBeastsPresentationClientSubsystem>())
+            Audio->PlayStarterUISound(TEXT("Click"));
     SubmitCredentials(LoginName, Password);
 }
 

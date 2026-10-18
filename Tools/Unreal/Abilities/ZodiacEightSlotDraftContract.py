@@ -18,9 +18,11 @@ CATALOG_ID = "SSLM.ZodiacEightSlotSkills.V2"
 ASSET_OWNER_ID = "DBAGameplay"
 ASSET_ROOT = "/DBAGameplay/Abilities/EightSlotDrafts"
 TABLE_PACKAGE_PATH = ASSET_ROOT + "/DT_DBA_ZodiacEightSlotDraftBalance"
+ICON_PLACEHOLDER_ID = "SSLM.Placeholder.Icon.Unbound"
+VFX_PLACEHOLDER_ID = "SSLM.Placeholder.VFX.Unbound"
 CSV_COLUMNS = (
     "Name", "AbilityId", "Level", "BaseDamage", "DamageType",
-    "CooldownSeconds", "MomentumCost", "CastRangeCm", "AreaRadiusCm",
+    "CooldownSeconds", "MomentumCost", "CastRangeCm", "AreaRadiusCm", "CastTimeSeconds",
 )
 EXPECTED_HEROES = {
     "Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
@@ -186,14 +188,16 @@ def _parse_balance_rows(balance_csv: str) -> dict[str, dict[str, Any]]:
                 "MomentumCost": float(source_row["MomentumCost"]),
                 "CastRangeCm": float(source_row["CastRangeCm"]),
                 "AreaRadiusCm": float(source_row["AreaRadiusCm"]),
+                "CastTimeSeconds": float(source_row["CastTimeSeconds"]),
             }
         except (TypeError, ValueError) as error:
             raise ContractError(f"{ability_id}:数值CSV字段格式非法") from error
-        for field in ("BaseDamage", "CooldownSeconds", "MomentumCost", "CastRangeCm", "AreaRadiusCm"):
+        for field in ("BaseDamage", "CooldownSeconds", "MomentumCost", "CastRangeCm", "AreaRadiusCm", "CastTimeSeconds"):
             _require(math.isfinite(row[field]) and row[field] >= 0.0, f"{ability_id}:{field}非法")
         _require(row["Level"] == 1, f"{ability_id}:设计稿只允许生成1级候选数值行")
         _require(row["DamageType"] in DAMAGE_TYPES, f"{ability_id}:CSV伤害类型未知")
         _require(row["CooldownSeconds"] <= 120.0 and row["MomentumCost"] <= 100.0 and
+                 row["CastTimeSeconds"] <= 30.0 and
                  row["CastRangeCm"] <= 1000000.0 and row["AreaRadiusCm"] <= 1000000.0,
                  f"{ability_id}:CSV数值超过当前项目边界")
         rows[ability_id] = row
@@ -215,6 +219,16 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
     _require(text_policy.get("language") == "zh-CN" and
              text_policy.get("reviewStatus") == "PENDING_HUMAN_TEXT_AND_VISUAL_REVIEW",
              "中文文本与效果概念设计必须保留待人工审核状态")
+    casting = catalog.get("castingPolicy", {})
+    _require(casting.get("unit") == "seconds" and
+             casting.get("status") == "LEVEL1_CANDIDATE_NOT_BALANCED" and
+             casting.get("runtimeExecutionAuthored") is False,
+             "施法时间必须保持以秒计的候选准备时间，不能冒充运行时施法已经实现")
+    placeholders_policy = catalog.get("placeholderPolicy", {})
+    _require(placeholders_policy.get("status") == "UNBOUND_DESIGN_PLACEHOLDERS" and
+             placeholders_policy.get("iconPlaceholderId") == ICON_PLACEHOLDER_ID and
+             placeholders_policy.get("vfxPlaceholderId") == VFX_PLACEHOLDER_ID,
+             "图标/VFX只能使用本轮明确的未绑定占位身份")
     constraints = catalog.get("constraints", {})
     _require(constraints.get("sourceRole") == "DESIGN_ONLY" and
              constraints.get("allowUnimplementedAbilityGrant") is False,
@@ -278,6 +292,8 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
             _require(identity not in seen_ids, f"{identity}:重复技能逻辑身份")
             seen_ids.add(identity)
             _require(entry.get("level") == 1, f"{identity}:仅允许Level 1")
+            cast_seconds = _finite_number(entry.get("castTimeSeconds"), "castTimeSeconds", identity)
+            _require(0.0 <= cast_seconds <= 30.0, f"{identity}:施法准备时间必须为0～30秒")
             _require(entry.get("implementationStatus") == "DESIGN_ONLY_UNIMPLEMENTED" and
                      entry.get("approvedForLiveGAS") is False, f"{identity}:草案不能获得正式GAS授权")
             _require(entry.get("energyCost") == 0 and 0 <= entry.get("momentumCost", -1) <= 100,
@@ -289,10 +305,12 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
                      f"Presentation.VFX.Hero.Zodiac.{hero_key}.Default",
                      f"{identity}:生肖视觉配置身份错配")
             _require(entry.get("vfx", {}).get("assetPath") is None and
+                     entry.get("vfx", {}).get("placeholderId") == VFX_PLACEHOLDER_ID and
                      entry.get("vfx", {}).get("assetStatus") == "NOT_AUTHORED" and
                      entry.get("animation", {}).get("montagePath") is None and
                      entry.get("animation", {}).get("assetStatus") == "NOT_AUTHORED" and
                      entry.get("icon", {}).get("assetPath") is None and
+                     entry.get("icon", {}).get("placeholderId") == ICON_PLACEHOLDER_ID and
                      entry.get("icon", {}).get("assetStatus") == "NOT_BOUND",
                      f"{identity}:未制作表现资源不能伪造硬引用或资产状态")
             _require(bool(entry.get("nameZh")) and bool(entry.get("descriptionZh")) and
@@ -340,6 +358,7 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
                 "MomentumCost": entry["momentumCost"],
                 "CastRangeCm": entry["castRangeCm"],
                 "AreaRadiusCm": entry["areaRadiusCm"],
+                "CastTimeSeconds": cast_seconds,
             }
             for field, expected in mirror.items():
                 if field == "DamageType":
@@ -370,6 +389,12 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
             source_hash = hashlib.sha256(json.dumps(
                 digest_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
             ).encode("utf-8")).hexdigest()
+            # 占位是安全的语义字段；原生玩法定义不引用客户端贴图或Niagara。
+            placeholders = {
+                "DraftIconPlaceholderId": ICON_PLACEHOLDER_ID,
+                "DraftVFXPlaceholderId": VFX_PLACEHOLDER_ID,
+                "bDraftPresentationUnbound": True,
+            }
             planned = {
                 "slotId": entry["slotId"],
                 "displayOrder": entry["displayOrder"],
@@ -382,6 +407,9 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
                 "assetPackagePath": asset_path,
                 "assetObjectPath": asset_object_path(asset_path),
                 "balanceRowName": row_name,
+                "balanceRow": csv_row,
+                "hitCount": entry["hitCount"],
+                "placeholders": placeholders,
                 "inputTag": input_semantics["tag"],
                 "inputActionId": input_semantics["action"],
                 "defaultKeyboardBinding": input_semantics["keyboard"],
@@ -398,6 +426,7 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
                 "balance_row": csv_row,
                 "actions": mapped_actions,
                 "draft_text": draft_text,
+                "placeholders": placeholders,
                 "source_sha256": source_hash,
             })
             hero_manifest["skills"].append(planned)
@@ -432,6 +461,8 @@ def build_manifest(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
         "sourceCatalogStatus": contract["sourceCatalogStatus"],
         "designerApprovalStatus": "PENDING_HUMAN_BALANCE_REVIEW",
         "textReviewStatus": "PENDING_HUMAN_TEXT_AND_VISUAL_REVIEW",
+        "castingPolicy": catalog["castingPolicy"],
+        "placeholderPolicy": catalog["placeholderPolicy"],
         "nativeAssetStatus": "NOT_AUTHORED",
         "formalAbilitySetAssignmentPerformed": False,
         "liveGASAuthorizationPerformed": False,
@@ -451,6 +482,35 @@ def build_manifest(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
     }
 
 
+def validate_exported_balance_rows(contract: dict[str, Any], exported_json: str) -> int:
+    """核验UE真实导出JSON与制作源逐行一致；只证明当前读回，不代替独立编辑器冷重载。"""
+    try:
+        rows = json.loads(exported_json)
+    except (TypeError, ValueError) as error:
+        raise ContractError("原生DataTable未能导出可读的JSON") from error
+    _require(isinstance(rows, list) and len(rows) == 96, "原生DataTable回读不是96行")
+    expected = {row["Name"]: row for row in contract["balanceRows"]}
+    seen = set()
+    for row in rows:
+        _require(isinstance(row, dict), "原生DataTable回读含非对象行")
+        name = row.get("Name")
+        _require(isinstance(name, str) and name in expected and name not in seen,
+                 "原生DataTable回读存在未知、重复或缺失的行身份")
+        seen.add(name)
+        for field, value in expected[name].items():
+            actual = row.get(field)
+            if field == "DamageType" and isinstance(actual, str):
+                # UE枚举可能带C++限定前缀，仍要求唯一的相同枚举项。
+                actual = actual.rsplit("::", 1)[-1]
+            if isinstance(value, (int, float)):
+                actual_number = _finite_number(actual, field, name)
+                _require(math.isclose(actual_number, value, rel_tol=1e-6, abs_tol=1e-5),
+                         f"{name}:{field}原生回读与源数值不符")
+            else:
+                _require(actual == value, f"{name}:{field}原生回读身份不符")
+    return len(seen)
+
+
 def render_text_review(catalog: dict[str, Any], balance_csv: str) -> str:
     """从同一份通过校验的真源生成96项中文审核索引；不创建概念图片或引擎资产。"""
     contract = build_contract(catalog, balance_csv)
@@ -464,6 +524,7 @@ def render_text_review(catalog: dict[str, Any], balance_csv: str) -> str:
         "中文名称用于技能标题，中文说明用于角色创建/技能详情等展示；中文设计提示词仅供策划与美术制作审核，不作为玩家说明。",
         "伤害值为一级候选的单次命中基础伤害，多段次数为单目标上限；未审批成长曲线、持续伤害计量基数/跳频和实际执行规则。",
         "全局配色与特效性能分别引用现行V3.0配色规范及十二生肖特效专项规范，不创建新的色彩或性能标准。",
+        "施法时间表示首次释放前的准备秒数，零为瞬发，不是完整动画或飞行时间；图标/VFX占位仅保存未绑定身份。",
         "",
     ]
     for hero in contract["heroes"]:
@@ -476,6 +537,9 @@ def render_text_review(catalog: dict[str, Any], balance_csv: str) -> str:
                 f"- 输入槽位：{tick}{skill['slotId']}{tick}（{skill['roleZh']}，默认键位{skill['defaultKeyboardBinding']}；角色标识{tick}{skill['roleId']}{tick}）",
                 f"- 规划资产：{tick}{skill['assetObjectPath']}{tick}（未制作的草案目标路径）",
                 f"- 一级数值行：{tick}{skill['balanceRowName']}{tick}（候选数值，待平衡）", "",
+                f"- 施法准备：{skill['balanceRow']['CastTimeSeconds']:g}秒；施法距离：{skill['balanceRow']['CastRangeCm']:g}厘米；冷却：{skill['balanceRow']['CooldownSeconds']:g}秒。",
+                f"- 基础伤害：{skill['balanceRow']['BaseDamage']:g}点/命中；单目标最多{skill['hitCount']}段。",
+                f"- 图标占位：{tick}{skill['placeholders']['DraftIconPlaceholderId']}{tick}（未绑定）；VFX占位：{tick}{skill['placeholders']['DraftVFXPlaceholderId']}{tick}（未绑定视觉特效）。", "",
                 "**中文技能说明**", "", skill["descriptionZh"], "",
                 "**中文技能效果概念图设计提示词**", "", skill["designPromptZh"], "",
             ])
