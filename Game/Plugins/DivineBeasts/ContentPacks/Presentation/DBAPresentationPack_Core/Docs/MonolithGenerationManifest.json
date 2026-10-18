@@ -358,5 +358,26 @@
     "ColdProcessPID": 41064,
     "AirWaveChangedPixels": 3399,
     "MaterialCompiled": true
+  },
+  "DirectedMissileSlotBinding20261018": {
+    "Status": "SavedPendingNativeInputAndColdVerification",
+    "NativeTool": "Monolith MCP + UE5.8",
+    "RuntimeRoot": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Runtime/DirectedMissile",
+    "Definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_DirectedMissileFlight",
+    "HeroCount": 12,
+    "Slot1": "DirectedMissile",
+    "Slot5": "Primary (Healing)",
+    "PreservedSlots": [
+      2,
+      3,
+      4
+    ],
+    "NativeCompileErrors": 0,
+    "NativeCompileWarnings": 0,
+    "ReviewAssetsChanged": false,
+    "ManualVisualAccepted": false,
+    "GPUVerified": false,
+    "CookVerified": false,
+    "EvidenceRoot": "Saved/Validation/CommonSkillVFX/DirectedMissileSlotBinding"
   }
 }

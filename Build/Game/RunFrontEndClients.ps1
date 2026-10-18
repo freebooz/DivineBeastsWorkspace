@@ -15,6 +15,8 @@ param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2
     [ValidateRange(540,2160)][int]$WindowHeight=1080,
     # 同机双窗口验证默认每端60帧，避免无限制渲染争用显卡；0保留游戏设置，不修改持久化玩家偏好。
     [ValidateRange(0,240)][int]$FrameRateLimit=60,
+    # 开发联调默认显示UE原生FPS；可用-ShowFPS:$false关闭，独立于限帧且不写玩家设置。
+    [switch]$ShowFPS=$true,
     # 只记录运动/复制的事件采样，供人工移动后按三端时间戳定位延迟，不包含登录信息。
     [switch]$MovementDiagnostics,
     # 仅显式开发验证加载已批准候选技能；三个参数共同选择文本INI、开发配置及运行开关。
@@ -125,7 +127,11 @@ foreach($i in 1..$Count) {
     foreach($argument in @('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','-windowed',"-ResX=$WindowWidth","-ResY=$WindowHeight","-WinX=$((($i-1)*40)+20)",'-WinY=40','-nosplash',"-abslog=$log")) {
         $info.ArgumentList.Add($argument)
     }
-    if ($FrameRateLimit -gt 0) { $info.ArgumentList.Add("-ExecCmds=t.MaxFPS $FrameRateLimit") }
+    # 所有启动命令合成同一个ExecCmds参数，避免后一个参数覆盖FPS或限帧设置。
+    $startupCommands=@()
+    if ($FrameRateLimit -gt 0) { $startupCommands+="t.MaxFPS $FrameRateLimit" }
+    if ($ShowFPS) { $startupCommands+='stat fps' }
+    if ($startupCommands.Count) { $info.ArgumentList.Add('-ExecCmds='+($startupCommands -join ',')) }
     if ($MovementDiagnostics) { $info.ArgumentList.Add('-DBAMovementDiagnostics') }
     if ($DevelopmentSkills) {
         foreach ($argument in @('-CustomConfig=VillageDevelopmentClient','-DBADevelopmentSkills','-textconfig','-dumpiniloads')) {
@@ -138,7 +144,7 @@ foreach($i in 1..$Count) {
     foreach($argument in $developmentToolArguments) { $info.ArgumentList.Add($argument) }
     if ($DevelopmentTestAccounts) { $info.ArgumentList.Add('-DBADevelopmentTestAccounts') }
     $process=[Diagnostics.Process]::Start($info)
-    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills;DevelopmentMonsters=[bool]$DevelopmentMonsters;DevelopmentArena=[bool]$DevelopmentArena;UseWorkspaceInputConfig=[bool]$UseWorkspaceInputConfig;DevelopmentTools=[bool]$DevelopmentTools;DevelopmentTestAccounts=[bool]$DevelopmentTestAccounts;DevelopmentTestAccountNames=$accountConfiguration.AccountNames}
+    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;ShowFPS=[bool]$ShowFPS;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills;DevelopmentMonsters=[bool]$DevelopmentMonsters;DevelopmentArena=[bool]$DevelopmentArena;UseWorkspaceInputConfig=[bool]$UseWorkspaceInputConfig;DevelopmentTools=[bool]$DevelopmentTools;DevelopmentTestAccounts=[bool]$DevelopmentTestAccounts;DevelopmentTestAccountNames=$accountConfiguration.AccountNames}
 }
 $records|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $directory 'Clients.json') -Encoding utf8
 $records|Select-Object PID,InitialScreen,AutoLogin|ConvertTo-Json

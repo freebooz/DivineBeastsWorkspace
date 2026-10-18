@@ -7,7 +7,7 @@ import unreal
 
 HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
           "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar")
-MODES = ("Primary", "Passive", "Fireball", "Frostbolt", "ArcaneMissiles")
+MODES = ("Primary", "Passive", "Fireball", "Frostbolt", "ArcaneMissiles", "DirectedMissile")
 ROOT = "/DBAGameplay/Abilities/Placeholders"
 
 
@@ -26,11 +26,11 @@ def inspect():
     check(isinstance(table, unreal.DataTable), "占位数值表不存在")
     if isinstance(table, unreal.DataTable):
         rows = unreal.DataTableFunctionLibrary.get_data_table_row_names(table)
-        check(len(rows) == 60, "占位数值表不含实际60行")
+        check(len(rows) == 72, "占位数值表不含实际72行")
         # 真正导出每行数据；只检查行数会漏掉导致TryGetLoadedBalance拒绝施法的旧气势费用。
         balance_rows = json.loads(unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table))
         magic_rows = [row for row in balance_rows if row['DamageType'] == 'Magic']
-        check(len(magic_rows) == 36, '占位数值表必须保留36条法术行')
+        check(len(magic_rows) == 48, '占位数值表必须包含48条法术行')
         for row in magic_rows:
             check(row['MomentumCost'] == 0, row['Name'] + ':法术不能消耗气势')
         totals['zero_cost_magic_rows'] = sum(row['MomentumCost'] == 0 for row in magic_rows)
@@ -64,7 +64,7 @@ def inspect():
                   hero + ":仍被开发门禁限制")
             grants = list(ability_set.get_editor_property("Abilities"))
             required = list(ability_set.get_editor_property("RequiredDefinitions"))
-            check(len(grants) == 5 and len(required) == 5, hero + ":五槽不完整")
+            check(len(grants) == 6 and len(required) == 6, hero + ":五个主动技能加一个被动的授权不完整")
             expected_ids = {"dba.ability." + hero.lower() + "_placeholder_" + mode.lower() + "@1"
                             for mode in MODES}
             grant_ids = {logical(g.get_editor_property("AbilityId")) for g in grants}
@@ -76,11 +76,14 @@ def inspect():
                 class_ref = str(grant.get_editor_property("AbilityClass"))
                 check("GA_DBA_" + hero + "_Placeholder" + mode in class_ref,
                       hero + "/" + mode + ":授权的真实GA类与技能身份不匹配")
+                expected_input = {'Primary':'Slot3','Passive':'None','Fireball':'Slot1','Frostbolt':'Slot2','ArcaneMissiles':'Slot4','DirectedMissile':'Primary'}[mode]
+                check(str(grant.get_editor_property('InputTag').get_editor_property('TagName')) ==
+                      ('None' if expected_input=='None' else 'Platform.Ability.Input.DivineBeasts.'+expected_input),hero+'/'+mode+':真实按钮输入授权错误')
         check(isinstance(ui, unreal.DivineBeastsAbilityUIProfile), hero + ":UIProfile不存在")
         if ui:
             totals["ui_profiles"] += 1
             entries = list(ui.get_editor_property("Entries"))
-            check(len(entries) == 5, hero + ":客户端图标配置不完整")
+            check(len(entries) == 6, hero + ":客户端图标配置不完整")
             expected_ui_ids = {"dba.ability." + hero.lower() + "_placeholder_" + mode.lower() + "@1"
                                for mode in MODES}
             entry_ids = {str(entry.get_editor_property("AbilityId")) for entry in entries}
@@ -127,6 +130,8 @@ def inspect():
                 if mode == "Primary":
                     check(cdo.get_editor_property('PlaceholderMode') == unreal.DivineBeastsPlaceholderAbilityMode.HEALING,
                           ability_id + ':Primary仍未迁移治疗执行模式')
+                if mode == 'DirectedMissile':
+                    check(str(cdo.get_editor_property('PresentationStyleOverride'))=='DBA.Development.DirectedMissile',ability_id+':独立定向飞弹表现未接通')
                 if mode not in ("Primary", "Passive"):
                     legacy_path = ROOT + "/GE" + path.rsplit("/", 1)[-1] + "Cost"
                     legacy_cls = unreal.EditorAssetLibrary.load_blueprint_class(legacy_path)

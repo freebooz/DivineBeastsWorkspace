@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 SSLM十二生肖占位技能原生资产作者：通过UE5.8 Editor Python生成真实资产，不制作文本伪uasset。
-产出：12英雄 × (5份技能定义 + 5份独立GAS蓝图 + 1份授权集 + 1份客户端UIProfile)
-     +36兼容成本GE+48冷却GE + 1份60行数值表。
-默认技能使用数字1治疗、无效果被动、火焰弹、寒冰箭、奥术飞弹；Primary身份保留兼容。
+产出：12英雄 × (6份技能定义 + 6份独立GAS蓝图 + 1份授权集 + 1份客户端UIProfile)
+     +48兼容成本GE+60冷却GE + 1份72行数值表。
+默认数字1定向飞弹、2火焰弹、3寒冰箭、4奥术飞弹、5治疗，另保留被动；治疗Primary身份不改。
 资产先完整生成/校验，最后才配置Hero.DefaultAbilitySetId；不存在开发技能后门。
 仅在 -SSLMPlaceholderAuthoring 显式许可时执行。不得由普通游戏启动自动执行。
 所有代码、引擎类和资源只属于SSLM项目层；平台机制保持原状。
@@ -352,10 +352,10 @@ def author():
     report = {
         "Status": "UEAssetsWrittenPendingColdReadbackAndRuntimeNetworkVerification",
         "Date": datetime.now(timezone.utc).isoformat(),
-        "Project": "SSLM", "HeroCount": len(heroes), "AbilityDefinitionCount": 60,
-        "GameplayAbilityBlueprintCount": 60, "PlaceholderAbilitySetCount": 12,
-        "ClientUIProfileCount": 12, "CostEffectCount": 36,
-        "CooldownEffectCount": 48, "BalanceRowCount": 60,
+        "Project": "SSLM", "HeroCount": len(heroes), "AbilityDefinitionCount": 72,
+        "GameplayAbilityBlueprintCount": 72, "PlaceholderAbilitySetCount": 12,
+        "ClientUIProfileCount": 12, "CostEffectCount": 48,
+        "CooldownEffectCount": 60, "BalanceRowCount": 72,
         "FormalNamesAndMechanicsApproved": False,
         "DedicatedServerGrantVerified": False,
         "ClientCookVerified": False, "ServerCookVerified": False,

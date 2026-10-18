@@ -111,3 +111,13 @@
 - 尚需在不抢占其他任务编辑器资源的条件下，关闭正在使用该DLL的原有Editor（由对应持有者操作），按锁定UE5.8构建基线重新链接Editor模块并运行 `DivineBeasts.Audio.Library.CategoryCatalog`。
 - 本轮尚未完成带真实声音输出的PIE试听、正式动画脚步帧签字、正式新手村水体声源落图、客户端Cook/服务器隔离与5v5 Audio Insights压测。
 
+## 九、2026-10-18客户端漏包修复
+
+重新读取客户端发布容器 `a8bc4024-68f7-4845-a86a-8ffc9ab3cdf0`，确认其中仅包含天气雨声/风声，`/DBASFXPack_Core/Audio`没有任何条目。AssetManager扫描音频主资产不等于Cook收录；此前“资源导入/客户端代码接线完成”不能作为该包已发布声音的证据。
+
+- `FrontEndClient`与`VillageDevelopmentClient`分别显式收录首批4类及扩展库8类的Definitions目录，由Cook追踪实际声音和策略依赖；不纳入试听副本、SourceArt或音频审核地图，不修改服务器配置。
+- 既有 `Tests/Assets/TestFrontEndClientContainer.ps1`新增41条定义及41条声源的实际ExportBundleData检查。对旧容器实测返回1，82项音频缺失、其他既有必需资源缺失0；新包须通过同一门禁才能启动。
+- `Build/Game/RunFrontEndClients.ps1`默认启用UE原生 `stat fps`，与`t.MaxFPS`合并为单一ExecCmds；可用`-ShowFPS:$false`关闭显示，不改持久化玩家配置。
+
+本次修复不补写正式动画的脚步Notify，也不新增场景水流锚点；这些事件接线仍遵守前述独立制作与人工审核边界。包内容验证、进程启动和扬声器实际试听分别记录。
+

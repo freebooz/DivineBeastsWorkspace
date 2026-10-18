@@ -57,6 +57,7 @@ public class DivineBeastsUIClient : ModuleRules
             "InputCore",
             // 玩家状态 ViewModel 只在 Private 实现中订阅平台 ASC/项目 Momentum AttributeSet；公开 UI 契约不泄漏 Gameplay 类型。
             "GameplayAbilities",
+            "GameplayTags", // 按真实Ability.Spell语义判断沉默，显式链接标签查询。
             "GamePlatformAbilitySystem",
             // 技能栏仅订阅公开玩家生命周期与中立玩法资格事件，不拥有Active权威状态。
             "GamePlatformGameplay",

@@ -4,7 +4,7 @@
 只读检查锁定引擎导出的客户端IoStore清单中是否包含前端运行必需的软引用资产。
 .DESCRIPTION
 输入为UnrealPak -ListContainer -Csv生成的真实CSV；逐项要求WindowsClient的非空ExportBundleData。
-覆盖RootLayout、登录/角色页面、动态卡片、应用流程和十二生肖外观入口；不以源码文件存在代替包内存在。
+覆盖RootLayout、登录/角色页面、动态卡片、应用流程、十二生肖外观及41条音频定义/声源；不以源码存在代替包内存在。
 退出0表示包内容门禁通过，1表示缺失或清单无效；不代表登录、材质效果或新手村联机通过。
 #>
 [CmdletBinding()]
@@ -186,13 +186,43 @@ try {
         $required+='DBAArena/Content/UI/HUD/WBP_DBA_UI_ArenaHUD.uasset'
         $required+='DBAUIPack_Core/Content/UI/Materials/Social/M_DBA_PartyJade_V1.uasset'
     }
+    # 音频逻辑ID通过目录软加载，AssetManager扫描不能保证Cook。
+    # 逐项检查41条定义和声源，避免仅天气声音入包却把新增音效标记为发布完成。
+    $audioRequired = @()
+    $audioRoot = 'DBASFXPack_Core/Content/Audio'
+    $starterAudio = @(
+        @('UI','UI_Click','UI_Click_01'),
+        @('UI','UI_Confirm','UI_Confirm_01'),
+        @('UI','UI_Cancel','UI_Cancel_01'),
+        @('Spells','Spell_FrostCast','Spell_Frost_Cast_01'),
+        @('Spells','Spell_FrostImpact','Spell_Frost_Impact_01'),
+        @('Spells','Spell_FireImpact','Spell_Fire_Impact_01'),
+        @('Music','Music_Login','Music_Login_01'),
+        @('Music','Music_Village','Music_Village_01'),
+        @('Ambience','Ambience_Forest','Ambience_Forest_01')
+    )
+    foreach ($entry in $starterAudio) {
+        $audioRequired += "$audioRoot/$($entry[0])/Definitions/DA_DBA_SFX_$($entry[1]).uasset"
+        $audioRequired += "$audioRoot/$($entry[0])/Waves/S_DBA_$($entry[2]).uasset"
+    }
+    $workspaceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+    $audioManifestPath = Join-Path $workspaceRoot 'Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/Docs/SSLM_AudioLibraryExpansion_20261018.json'
+    $audioManifest = Get-Content -LiteralPath $audioManifestPath -Raw | ConvertFrom-Json
+    if (@($audioManifest.entries).Count -ne 32) { throw '音频库发布清单必须包含已登记的32条音效。' }
+    foreach ($entry in $audioManifest.entries) {
+        $waveName = [IO.Path]::GetFileNameWithoutExtension($entry.filename)
+        $audioRequired += "$audioRoot/Library/$($entry.category)/Definitions/DA_DBA_SFX_$($entry.category)_$($entry.id).uasset"
+        $audioRequired += "$audioRoot/Library/$($entry.category)/Waves/$waveName.uasset"
+    }
+    $required += $audioRequired
+
     # 软路径在C++目录中构造，地图引用扫描不能发现；要求实际导出数据而非配置或仅包名。
     $missing = @($required | Where-Object {
         $suffix = '/' + $_
         @($rows | Where-Object { $_.Filename.Replace('\','/').EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase) -and
             $_.ChunkType -eq 'ExportBundleData' -and $_.Platform -eq 'WindowsClient' -and [long]$_.Size -gt 0 }).Count -eq 0
     })
-    $report = [ordered]@{ Passed=($missing.Count -eq 0); RequiredCount=$required.Count; Missing=$missing; ContainerCsv=[IO.Path]::GetFullPath($ContainerCsv) }
+    $report = [ordered]@{ Passed=($missing.Count -eq 0); RequiredCount=$required.Count; AudioRequiredCount=$audioRequired.Count; Missing=$missing; ContainerCsv=[IO.Path]::GetFullPath($ContainerCsv) }
     $json = $report | ConvertTo-Json -Depth 5
     if ($ReportPath) { $json | Set-Content -LiteralPath $ReportPath -Encoding utf8 }
     $json
