@@ -6,6 +6,7 @@
 
 - [SSLM全局美术配色策略与色彩设计规范 V3.0](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)：2026-10-18色彩领域唯一权威文档，约束场景生态、PBR、水体、建筑、生肖/VFX、品牌UI、渲染与人工审核；已整合历史冲突，未宣称引擎素材已重新调色。
 - [SSLM参考颜色语义索引 V3.0](Art/SSLMColorRegistry_V3.json)：41项初始屏幕sRGB参考色与8项待审核的战斗功能色语义；派生候选数据，不是UE数据资产。
+- [SSLM十层地形纹理及材质V3.0真实审查与整改](Implementation/TerrainColorV3ComplianceReview_20261018.md)：针对十层扫描PBR源进行新色彩版本、十张Texture2D、一份母材质、四份MI、独立审核关卡制作及UE冷重载；真实D3D12六态截图为黑帧，最终视觉/性能/人工验收未通过。
 
 - [新手村组队与竞技场闭环设计规格](superpowers/specs/2026-10-14-village-party-arena-design.md)：普通竞技场／练习赛交互参考；用户随后要求直接执行不再问询，已进入部分源码与设计实施，非完整功能或资产验收。
 - [新手村组队与竞技场实施计划](superpowers/plans/2026-10-14-village-party-arena.md)及[实施记录](Implementation/VillagePartyArena/ExecutionProgress.md)：用户要求直接执行、不再问询；Native原位、不构建，逐项记录源码、资产与尚未执行的验证。

@@ -46,8 +46,28 @@ void ADivineBeastsGameplayCharacter::SetupPlayerInputComponent(UInputComponent* 
     Input->BindAction(TEXT("DBA.Jump"), IE_Pressed, this, &ACharacter::Jump);
     Input->BindAction(TEXT("DBA.Jump"), IE_Released, this, &ACharacter::StopJumping);
     // 槽位由已注册的稳定输入标签指定，不按授权数组顺序推算生肖技能。
-    const TCHAR* Actions[] = { TEXT("DBA.PrimaryAbility"), TEXT("DBA.AbilityOne"), TEXT("DBA.AbilityTwo"), TEXT("DBA.UltimateAbility") };
-    const TCHAR* AbilityInputTagNames[] = { TEXT("Platform.Ability.Input.DivineBeasts.Primary"), TEXT("Platform.Ability.Input.DivineBeasts.Slot1"), TEXT("Platform.Ability.Input.DivineBeasts.Slot2"), TEXT("Platform.Ability.Input.DivineBeasts.Slot4") };
+    // 继续复用原生Pawn键盘绑定作为DefaultInput.ini（旧式输入配置）的兼容通路。
+    // 8槽先保留用户熟悉的1~4键，新扩展5~8为移动/防御/控制/特色；绝不按技能列表顺序推断。
+    const TCHAR* Actions[] =
+    {
+        TEXT("DBA.PrimaryAbility"), TEXT("DBA.AbilityOne"),
+        TEXT("DBA.AbilityTwo"), TEXT("DBA.UltimateAbility"),
+        TEXT("DBA.AbilitySlot3"), TEXT("DBA.AbilitySlot5"),
+        TEXT("DBA.AbilitySlot6"), TEXT("DBA.AbilitySlot7")
+    };
+    const TCHAR* AbilityInputTagNames[] =
+    {
+        TEXT("Platform.Ability.Input.DivineBeasts.Primary"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot1"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot2"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot4"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot3"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot5"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot6"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot7")
+    };
+    static_assert(UE_ARRAY_COUNT(Actions) == UE_ARRAY_COUNT(AbilityInputTagNames),
+        "SSLM八槽键名与GAS标签映射必须一一对应");
     for (int32 Index = 0; Index < UE_ARRAY_COUNT(Actions); ++Index)
     {
         const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(AbilityInputTagNames[Index]));

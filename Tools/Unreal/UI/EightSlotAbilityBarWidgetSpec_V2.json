@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "project": "SSLM",
+  "titleZh": "SSLM八槽技能条蓝图增量装配规范",
+  "sourceCatalog": "Docs/Design/ZodiacEightSlotSkills_V2.json",
+  "assetPath": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+  "sourceAssetRelative": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/UI/Combat/WBP_DBA_UI_AbilityBar.uasset",
+  "parentClass": "/Script/DivineBeastsUIClient.DivineBeastsAbilityBarPanel",
+  "slotWidgetClass": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+  "state": "PENDING_UE58_MONOLITH_NATIVE_AUTHORING",
+  "statusZh": "当前已审核v02原生WBP有8个可见背景框，仅5个真实可交互子控件；本8槽扩展没有修改该二进制资产。前期65px限制与已审核94px画面不一致，不能擅自缩放或冒充满足65px。",
+  "layout": {
+    "maxTotalHeightPx": 65,
+    "displayBasePx": "设计逻辑像素，4K/移动端需项目DPI转换",
+    "baseIconBoxPx": 48,
+    "minTapTargetDeviceIndependentPx": 44,
+    "iconsInSingleRow": 8,
+    "iconGapPx": 4,
+    "estimatedIconsRowWidthPx": 412,
+    "castBarHeightPx": 3,
+    "castBarAboveIcons": true,
+    "castBarOverlayForbidden": true,
+    "momentumBarBelowIcons": true,
+    "momentumBarSeparateFromBlueEnergy": true,
+    "groundedInApprovedVisual": "保持既有技能条几何与底部平齐，不擅自重绘概念纹理",
+    "actualParentPanelName": "DISCOVER_FROM_REAL_WIDGET_TREE_BEFORE_EDIT",
+    "portraitOrPassiveHiddenFromEightSlots": true,
+    "naiveCopyWithoutBindingForbidden": true,
+    "approvedV02AssetWidthPx": 727,
+    "approvedV02AssetHeightPx": 94,
+    "heightContractConflict": true,
+    "conflictResolutionZh": "保留经用户审核的727×94 v02美术作为现有基线；65px作为历史目标待单独确认或重新设计。不得未经确认改写用户审核过的原始贴图。",
+    "existingIconFrameRectsPx": [
+      [
+        67,
+        26,
+        48,
+        48
+      ],
+      [
+        123,
+        26,
+        48,
+        48
+      ],
+      [
+        178,
+        26,
+        48,
+        48
+      ],
+      [
+        233,
+        26,
+        48,
+        48
+      ],
+      [
+        288,
+        26,
+        48,
+        48
+      ],
+      [
+        343,
+        26,
+        48,
+        48
+      ],
+      [
+        398,
+        26,
+        48,
+        48
+      ],
+      [
+        453,
+        26,
+        48,
+        48
+      ]
+    ],
+    "currentSavedWidgetSlots": [
+      "PrimaryAbilitySlot",
+      "ActiveAbilitySlot1",
+      "UltimateAbilitySlot",
+      "ActiveAbilitySlot2",
+      "PassiveAbilitySlot",
+      null,
+      null,
+      null
+    ],
+    "firstFourRepositionRequired": true,
+    "requiresLegacyPassiveRelocation": true,
+    "useEightExistingFramesNoNewNinthFrame": true,
+    "preserveCastAndMomentumGeometry": true
+  },
+  "slots": [
+    {
+      "displayOrder": 1,
+      "keyText": "1",
+      "gameplayTag": "Platform.Ability.Input.DivineBeasts.Primary",
+      "widgetName": "PrimaryAbilitySlot",
+      "widgetClass": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "keyAction": "DBA.PrimaryAbility",
+      "roleZh": "basic",
+      "legacyWidgetMustPreserve": true,
+      "createIfMissing": false,
+      "onClick": "RequestActivateSlot(Granted.SlotId)",
+      "cooldown": "ApplyOverlayTiming(Details.CooldownEndsAtAppSeconds,Details.CooldownTotalSeconds)",
+      "icon": "只读UIProfile和ASC授权身份，加载失败显示空槽",
+      "tooltip": "GAS技能等级、描述、成本和控制状态",
+      "denyWhen": "empty|pending|disabled|wrong_pawn|wrong_ability_spec|expired_avatar",
+      "existingFrameIndex": 1,
+      "approvedFrameRectPx": [
+        67,
+        26,
+        48,
+        48
+      ],
+      "currentlyInApprovedV02": "PrimaryAbilitySlot",
+      "requiresWidgetChange": false
+    },
+    {
+      "displayOrder": 2,
+      "keyText": "2",
+      "gameplayTag": "Platform.Ability.Input.DivineBeasts.Slot1",
+      "widgetName": "ActiveAbilitySlot1",
+      "widgetClass": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "keyAction": "DBA.AbilityOne",
+      "roleZh": "attack_a",
+      "legacyWidgetMustPreserve": true,
+      "createIfMissing": false,
+      "onClick": "RequestActivateSlot(Granted.SlotId)",
+      "cooldown": "ApplyOverlayTiming(Details.CooldownEndsAtAppSeconds,Details.CooldownTotalSeconds)",
+      "icon": "只读UIProfile和ASC授权身份，加载失败显示空槽",
+      "tooltip": "GAS技能等级、描述、成本和控制状态",
+      "denyWhen": "empty|pending|disabled|wrong_pawn|wrong_ability_spec|expired_avatar",
+      "existingFrameIndex": 2,
+      "approvedFrameRectPx": [
+        123,
+        26,
+        48,
+        48
+      ],
+      "currentlyInApprovedV02": "ActiveAbilitySlot1",
+      "requiresWidgetChange": false
+    },
+    {
+      "displayOrder": 3,
+      "keyText": "3",
+      "gameplayTag": "Platform.Ability.Input.DivineBeasts.Slot2",
+      "widgetName": "ActiveAbilitySlot2",
+      "widgetClass": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "keyAction": "DBA.AbilityTwo",
+      "roleZh": "attack_b",
+      "legacyWidgetMustPreserve": true,
+      "createIfMissing": false,
+      "onClick": "RequestActivateSlot(Granted.SlotId)",
+      "cooldown": "ApplyOverlayTiming(Details.CooldownEndsAtAppSeconds,Details.CooldownTotalSeconds)",
+      "icon": "只读UIProfile和ASC授权身份，加载失败显示空槽",
+      "tooltip": "GAS技能等级、描述、成本和控制状态",
+      "denyWhen": "empty|pending|disabled|wrong_pawn|wrong_ability_spec|expired_avatar",
+      "existingFrameIndex": 3,
+      "approvedFrameRectPx": [
+        178,
+        26,
+        48,
+        48
+      ],
+      "currentlyInApprovedV02": "UltimateAbilitySlot",
+      "requiresWidgetChange": true
+    },
+    {
+      "displayOrder": 4,
+      "keyText": "4",
+      "gameplayTag": "Platform.Ability.Input.DivineBeasts.Slot4",
+      "widgetName": "UltimateAbilitySlot",
+      "widgetClass": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "keyAction": "DBA.UltimateAbility",
+      "roleZh": "ultimate",
+      "legacyWidgetMustPreserve": true,
+      "createIfMissing": false,
+      "onClick": "RequestActivateSlot(Granted.SlotId)",
+      "cooldown": "ApplyOverlayTiming(Details.CooldownEndsAtAppSeconds,Details.CooldownTotalSeconds)",
+      "icon": "只读UIProfile和ASC授权身份，加载失败显示空槽",
+      "tooltip": "GAS技能等级、描述、成本和控制状态",
+      "denyWhen": "empty|pending|disabled|wrong_pawn|wrong_ability_spec|expired_avatar",
+      "existingFrameIndex": 4,
+      "approvedFrameRectPx": [
+        233,
+        26,
+        48,
+        48
+      ],
+      "currentlyInApprovedV02": "ActiveAbilitySlot2",
+      "requiresWidgetChange": true
+    },
+    {
+      "displayOrder": 5,
+      "keyText": "5",
+      "gameplayTag": "Platform.Ability.Input.DivineBeasts.Slot3",
+      "widgetName": "MovementAbilitySlot",
+      "widgetClass": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "keyAction": "DBA.AbilitySlot3",
+      "roleZh": "mobility",
+      "legacyWidgetMustPreserve": false,
+      "createIfMissing": true,
+      "onClick": "RequestActivateSlot(Granted.SlotId)",
+      "cooldown": "ApplyOverlayTiming(Details.CooldownEndsAtAppSeconds,Details.CooldownTotalSeconds)",
+      "icon": "只读UIProfile和ASC授权身份，加载失败显示空槽",
+      "tooltip": "GAS技能等级、描述、成本和控制状态",
+      "denyWhen": "empty|pending|disabled|wrong_pawn|wrong_ability_spec|expired_avatar",
+      "existingFrameIndex": 5,
+      "approvedFrameRectPx": [
+        288,
+        26,
+        48,
+        48
+      ],
+      "currentlyInApprovedV02": "PassiveAbilitySlot",
+      "requiresWidgetChange": true
+    },
+    {
+      "displayOrder": 6,
+      "keyText": "6",
+      "gameplayTag": "Platform.Ability.Input.DivineBeasts.Slot5",
+      "widgetName": "DefenseAbilitySlot",
+      "widgetClass": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "keyAction": "DBA.AbilitySlot5",
+      "roleZh": "defense",
+      "legacyWidgetMustPreserve": false,
+      "createIfMissing": true,
+      "onClick": "RequestActivateSlot(Granted.SlotId)",
+      "cooldown": "ApplyOverlayTiming(Details.CooldownEndsAtAppSeconds,Details.CooldownTotalSeconds)",
+      "icon": "只读UIProfile和ASC授权身份，加载失败显示空槽",
+      "tooltip": "GAS技能等级、描述、成本和控制状态",
+      "denyWhen": "empty|pending|disabled|wrong_pawn|wrong_ability_spec|expired_avatar",
+      "existingFrameIndex": 6,
+      "approvedFrameRectPx": [
+        343,
+        26,
+        48,
+        48
+      ],
+      "currentlyInApprovedV02": null,
+      "requiresWidgetChange": true
+    },
+    {
+      "displayOrder": 7,
+      "keyText": "7",
+      "gameplayTag": "Platform.Ability.Input.DivineBeasts.Slot6",
+      "widgetName": "ControlAbilitySlot",
+      "widgetClass": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "keyAction": "DBA.AbilitySlot6",
+      "roleZh": "control",
+      "legacyWidgetMustPreserve": false,
+      "createIfMissing": true,
+      "onClick": "RequestActivateSlot(Granted.SlotId)",
+      "cooldown": "ApplyOverlayTiming(Details.CooldownEndsAtAppSeconds,Details.CooldownTotalSeconds)",
+      "icon": "只读UIProfile和ASC授权身份，加载失败显示空槽",
+      "tooltip": "GAS技能等级、描述、成本和控制状态",
+      "denyWhen": "empty|pending|disabled|wrong_pawn|wrong_ability_spec|expired_avatar",
+      "existingFrameIndex": 7,
+      "approvedFrameRectPx": [
+        398,
+        26,
+        48,
+        48
+      ],
+      "currentlyInApprovedV02": null,
+      "requiresWidgetChange": true
+    },
+    {
+      "displayOrder": 8,
+      "keyText": "8",
+      "gameplayTag": "Platform.Ability.Input.DivineBeasts.Slot7",
+      "widgetName": "SignatureAbilitySlot",
+      "widgetClass": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "keyAction": "DBA.AbilitySlot7",
+      "roleZh": "signature",
+      "legacyWidgetMustPreserve": false,
+      "createIfMissing": true,
+      "onClick": "RequestActivateSlot(Granted.SlotId)",
+      "cooldown": "ApplyOverlayTiming(Details.CooldownEndsAtAppSeconds,Details.CooldownTotalSeconds)",
+      "icon": "只读UIProfile和ASC授权身份，加载失败显示空槽",
+      "tooltip": "GAS技能等级、描述、成本和控制状态",
+      "denyWhen": "empty|pending|disabled|wrong_pawn|wrong_ability_spec|expired_avatar",
+      "existingFrameIndex": 8,
+      "approvedFrameRectPx": [
+        453,
+        26,
+        48,
+        48
+      ],
+      "currentlyInApprovedV02": null,
+      "requiresWidgetChange": true
+    }
+  ],
+  "legacyPassive": "PassiveAbilitySlot旧控件保留：8个有效主动槽时隐藏，固有被动移至独立角色特质区，不占1-8。",
+  "beforeWrite": [
+    "已保存v02为727×94且8个48×48框；五个旧交互槽顺序为Primary、Active1、Ultimate、Active2、Passive；不能在未读真正WidgetTree时假装8槽已接线",
+    "Monolith确认当前E:/work/2026/DivineBeastsWorkspace/Game/DivineBeastsArena.uproject和UE5.8",
+    "读取实际WBP WidgetTree/父类、命名、布局容器",
+    "识别他人未提交资源/脏包和资产锁",
+    "严禁绕过虚幻编辑器直接二进制写.uasset"
+  ],
+  "afterWrite": [
+    "保存受控WBP原生资产；本批不允许Blueprint Compile",
+    "原生回读新增4子Widget、命令和旧4子Widget",
+    "双端HUD、真实键1-8、Cook和移动端适配留待验收",
+    "真实WBP最终应重排显示序列：Primary、Active1、Active2、Ultimate、Movement、Defense、Control、Signature，所有8个frame按已有已审核坐标"
+  ],
+  "sourceArtworkContract": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBar/AssemblyLayout.json",
+  "sourceDeliveryRecord": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Docs/SkillBarDelivery_20261018.md"
+}
+

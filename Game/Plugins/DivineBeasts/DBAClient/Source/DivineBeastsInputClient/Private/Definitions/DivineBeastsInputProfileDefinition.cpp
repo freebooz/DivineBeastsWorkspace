@@ -6,7 +6,10 @@
 FGamePlatformResult UDivineBeastsInputProfileDefinition::ValidateDefinition() const
 {
     const FGamePlatformResult Base = Super::ValidateDefinition();
-    if (!Base.IsSuccess() || !bRequireCoreGameplaySemantics)
+    // 只要要求八槽，即使旧核心检查开关为false也必须进行全部八槽完整性验证。
+    // 防止作者误配置两个布尔值后绕过Slot5..Slot7必需语义。
+    if (!Base.IsSuccess() ||
+        (!bRequireCoreGameplaySemantics && !bRequireEightActiveSlots))
     {
         return Base;
     }

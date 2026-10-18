@@ -3,6 +3,8 @@
   "catalogName": "SSLM Zodiac Eight Active Skill Design Catalog",
   "catalogNameZh": "SSLM十二生肖八槽技能设计真源",
   "draftVersion": "2.0.0",
+  "damageSemantics": "BaseDamage为单次服务器确认命中的一级基础伤害，HitCount为单目标最大段数；多段技能的单目标总伤害需在正式平衡时逐项审核，不等于已经达到竞技平衡。",
+  "balanceStatus": "LEVEL1_CANDIDATE_NOT_BALANCED",
   "projectCode": "SSLM",
   "designerApprovalStatus": "PENDING_HUMAN_BALANCE_REVIEW",
   "nativeUEAssetStatus": "NOT_AUTHORED",
@@ -441,7 +443,7 @@
               "kind": "damage",
               "baseMagnitude": 24,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Physical"
             },
             {
               "kind": "control",
@@ -887,7 +889,7 @@
               "kind": "damage",
               "baseMagnitude": 28,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Physical"
             },
             {
               "kind": "control",
@@ -1321,7 +1323,7 @@
               "kind": "damage",
               "baseMagnitude": 26,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Physical"
             },
             {
               "kind": "control",
@@ -1583,7 +1585,7 @@
           "abilityKey": "moon_bloom",
           "nameZh": "月华绽放",
           "descriptionZh": "范围内敌人受月辉伤害、己方获得12%最大生命治疗",
-          "intentTarget": "friendly_or_self",
+          "intentTarget": "area_center_mixed",
           "level": 1,
           "damageType": "Magic",
           "baseDamage": 168,
@@ -1754,7 +1756,7 @@
               "kind": "damage",
               "baseMagnitude": 22,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Magic"
             },
             {
               "kind": "control",
@@ -2181,7 +2183,7 @@
               "kind": "damage",
               "baseMagnitude": 32,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Magic"
             },
             {
               "kind": "control",
@@ -2614,7 +2616,7 @@
               "kind": "damage",
               "baseMagnitude": 24,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Magic"
             },
             {
               "kind": "control",
@@ -3054,7 +3056,7 @@
               "kind": "damage",
               "baseMagnitude": 25,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Physical"
             },
             {
               "kind": "control",
@@ -3316,7 +3318,7 @@
           "abilityKey": "sanctuary_dome",
           "nameZh": "玉角圣域",
           "descriptionZh": "圣域对敌低额打击、己方治疗并提供弱护盾",
-          "intentTarget": "friendly_or_self",
+          "intentTarget": "area_center_mixed",
           "level": 1,
           "damageType": "Magic",
           "baseDamage": 110,
@@ -3492,7 +3494,7 @@
               "kind": "damage",
               "baseMagnitude": 18,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Magic"
             },
             {
               "kind": "control",
@@ -3919,7 +3921,7 @@
               "kind": "damage",
               "baseMagnitude": 30,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Physical"
             },
             {
               "kind": "control",
@@ -4181,7 +4183,7 @@
           "abilityKey": "dawn_resonance",
           "nameZh": "金鸣破晓",
           "descriptionZh": "曙光音波打击敌方并治疗己方10%生命",
-          "intentTarget": "friendly_or_self",
+          "intentTarget": "area_center_mixed",
           "level": 1,
           "damageType": "Magic",
           "baseDamage": 190,
@@ -4352,7 +4354,7 @@
               "kind": "damage",
               "baseMagnitude": 20,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Magic"
             },
             {
               "kind": "control",
@@ -4613,7 +4615,7 @@
           "abilityKey": "oath_guardian",
           "nameZh": "天犬守誓",
           "descriptionZh": "对敌有限伤害，同时给范围己方小额治疗与护盾",
-          "intentTarget": "friendly_or_self",
+          "intentTarget": "area_center_mixed",
           "level": 1,
           "damageType": "Physical",
           "baseDamage": 170,
@@ -4789,7 +4791,7 @@
               "kind": "damage",
               "baseMagnitude": 24,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Physical"
             },
             {
               "kind": "control",
@@ -5222,7 +5224,7 @@
               "kind": "damage",
               "baseMagnitude": 31,
               "hitCount": 1,
-              "type": "Untyped"
+              "type": "Physical"
             },
             {
               "kind": "control",

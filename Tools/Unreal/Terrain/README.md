@@ -2,6 +2,14 @@
 
 所属：DivineBeastsWorkspace/Tools/Unreal/Terrain。唯一工程：Game/DivineBeastsArena.uproject（UE5.8），项目实际内容归DBAWorldPack_Village；平台底层机制使用GamePlatformSurfaceEditor与GamePlatformPCGEditor。
 
+## 2026-10-18 全局配色V3.0十层扫描地形非破坏性改造
+
+- 依据[唯一V3.0色彩主规范](../../../Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)和[地形实物审查报告](../../../Docs/Implementation/TerrainColorV3ComplianceReview_20261018.md)，十层初始CC0扫描PBR基础色经分析存在偏黄、偏暗和道路辨识度不足等问题。
+- `TerrainV3ColorMapping.json`（参考色语义及十层校色强度）、`GenerateTerrainV3ColorSource.ps1`（线性空间源图派生）、`AuthorTerrainV3ColorUE58.py`（独立UE原生Texture2D/Material/MI及审核地图制作回读）均不覆盖正式Village与原始40份扫描PBR图。
+- 新图位于`DBAPresentationPack_Core/SourceArt/Terrain/V3`（项目客户端V3校色源），真实10张Texture2D与1母材质及4 MI位于同内容包的`Content/Materials/Terrain/`，独立审图为`/Game/Development/Terrain/Maps/L_DBA_TerrainColorV3Review`。平台8函数调用、Normal/ORM/Height不改动。
+- `Tests/Assets/TestTerrainColorV3Policy.py`（10层源图及15项UE资产身份的静态门禁）通过；真实UE5.8编辑器冷重载、3阶段新地图回读通过。`CaptureTerrainColorV3GPUReview.py`（既有真实GPU采集器的V3参数适配）生成六幅截图，但`Tests/Assets/TestTerrainColorV3GPU.ps1`实际像素检测判定**六张均为黑帧、另有五种天气完全重复**，D3D12画面审核严格失败。截图需修复渲染路径并重跑，不能将存在的图片冒称美术签收。
+- 人工对照图为`Saved/ArtReview/TerrainColorV3/TerrainV3_BeforeAfterReview.png`；历史异常碎石校色版归档于`FirstPass`；真实客户端镜头、RVT/PCG融合、GPU毫秒、Cook剥离、人工签收尚未完成。主工程正式新手村共享地图仍使用原中性材质。
+
 ## 2026-10-17 十层地形与平台材质函数接入
 
 - `AuthorTerrainProductionMaterial.py`（扫描PBR母材质作者）保持默认原正式母材质不变，只有显式`TERRAIN_FUNCTION_INTEGRATION=1`时创建`M_DBA_Terrain_Production10_FunctionIntegrated`及`MI_DBA_Terrain_Production10_FunctionIntegrated_Review`（全新的客户端候选）。新增8处真实MaterialFunctionCall（函数调用节点），涉及平台宏观颜色、距离细节、坡度、海拔、生态遮罩与3次四通道PBR覆盖。

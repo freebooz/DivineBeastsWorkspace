@@ -214,5 +214,50 @@
     "CompileErrors": 0,
     "CompileWarnings": 0,
     "NotesZh": "只保留水平脚底法阵；生命周期由服务器复制事件结束。"
+  },
+  "HealingVFXReimport20261018": {
+    "SourceProject": "D:/GameVFX/ModularGameVFX.uproject",
+    "AssetRoot": "/DBAPresentationPack_Core/VFX/HealingBloom",
+    "NativeTool": "Monolith MCP 0.23.0 + UE5.8 AdvancedCopyPackages",
+    "SourceAssetCount": 26,
+    "NewAssetCount": 31,
+    "HealingDefinition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom",
+    "QualitySystems": {
+      "High": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_Nature_PetalBloom_Aura",
+      "Epic": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_Nature_PetalBloom_Aura",
+      "Medium": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Medium",
+      "Low": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Low"
+    },
+    "Quality": {
+      "High": {
+        "system": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_Nature_PetalBloom_Aura",
+        "particles": 204,
+        "nonemptyVisualLayers": 9,
+        "noteZh": "三档均保留9个Emitter槽；中低档将装饰Burst设为0，不把空层称为已删除Emitter。"
+      },
+      "Medium": {
+        "system": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Medium",
+        "particles": 54,
+        "nonemptyVisualLayers": 6,
+        "noteZh": "三档均保留9个Emitter槽；中低档将装饰Burst设为0，不把空层称为已删除Emitter。"
+      },
+      "Low": {
+        "system": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Low",
+        "particles": 41,
+        "nonemptyVisualLayers": 4,
+        "noteZh": "三档均保留9个Emitter槽；中低档将装饰Burst设为0，不把空层称为已删除Emitter。"
+      }
+    },
+    "ColdCompilePassed": true,
+    "ColdProcessExitCode": 0,
+    "ColdEditorRendered": true,
+    "TenInstanceCleanupPassed": true,
+    "HighPixelComparisonMaxError": 1,
+    "ClientCookVerified": false,
+    "ServerCookVerified": false,
+    "PackagedGPUVerified": false,
+    "ManualVisualAccepted": false,
+    "EvidenceRoot": "Saved/Validation/HealingReimport20261018",
+    "NoteZh": "保留原RGB/材质/三维运动；烘焙与真实竞技GPU仍未验收，不沿用旧Cook作本次发布证明。"
   }
 }

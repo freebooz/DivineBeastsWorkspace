@@ -7,8 +7,8 @@
 """
 from __future__ import annotations
 import copy
+import ast
 import csv
-import io
 import json
 import re
 import unittest
@@ -43,7 +43,9 @@ def all_skills(catalog: dict) -> list[dict]:
 
 
 def balanced_csv() -> dict[str, dict]:
-    rows = list(csv.DictReader(BALANCE_PATH.open(encoding="utf-8-sig", newline="")))
+    # 文件句柄使用上下文管理器关闭，避免本地自动回归累计资源泄漏。
+    with BALANCE_PATH.open(encoding="utf-8-sig", newline="") as stream:
+        rows = list(csv.DictReader(stream))
     return {row["AbilityId"]: row for row in rows}
 
 
@@ -56,6 +58,8 @@ def audit(catalog: dict) -> list[str]:
     fail(catalog.get("schemaVersion") == 2, "结构版本非法")
     fail(catalog.get("nativeUEAssetStatus") == "NOT_AUTHORED", "不能在未制作前标记真实.uasset完成")
     fail(catalog.get("designerApprovalStatus") == "PENDING_HUMAN_BALANCE_REVIEW", "禁止冒充数值正式获批")
+    fail(catalog.get("balanceStatus") == "LEVEL1_CANDIDATE_NOT_BALANCED",
+         "正式数值尚未平衡，不得误设为已批准")
     fail(catalog["slotPolicy"]["maxActiveSlots"] == 8, "不是八个可装载主动技能")
     fail(not catalog["slotPolicy"]["innatePassiveOccupiesSlot"], "固有被动不能挤占八技能槽")
     heroes = catalog["heroes"]
@@ -97,6 +101,15 @@ def audit(catalog: dict) -> list[str]:
             actions = row["actions"]
             fail(bool(actions), f"{identity}:没有真实设计行为")
             fail(all(a["kind"] in KINDS for a in actions), f"{identity}:包含未知行为")
+            damage_actions = [a for a in actions if a["kind"] == "damage"]
+            heal_actions = [a for a in actions if a["kind"] == "healing"]
+            fail(all(a.get("type") == row["damageType"] for a in damage_actions),
+                 f"{identity}:行为明细伤害类型与数值行不一致")
+            fail(not (damage_actions and heal_actions) or
+                 row["intentTarget"] == "area_center_mixed",
+                 f"{identity}:混合伤害治疗必须声明明确范围中心目标")
+            fail(all(a.get("baseMagnitude") == row["baseDamage"] for a in damage_actions),
+                 f"{identity}:每段基础伤害与一级行不一致")
             fail(row["role"] != "mobility" or any(a["kind"] == "movement" for a in actions),
                  f"{identity}:移动槽没有合法位移")
             fail(row["role"] != "defense" or any(a["kind"] == "shield" for a in actions),
@@ -121,7 +134,8 @@ class ZodiacEightSlotDraftTests(unittest.TestCase):
         self.assertEqual(audit(self.catalog), [])
 
     def test_02_96_rows_match_csv(self):
-        rows = list(csv.DictReader(BALANCE_PATH.open(encoding="utf-8-sig", newline="")))
+        with BALANCE_PATH.open(encoding="utf-8-sig", newline="") as stream:
+            rows = list(csv.DictReader(stream))
         self.assertEqual(len(rows), 96)
         self.assertEqual(len({r["AbilityId"] for r in rows}), 96)
         for row in all_skills(self.catalog):
@@ -157,6 +171,24 @@ class ZodiacEightSlotDraftTests(unittest.TestCase):
             self.assertIn(name + ".Get()", panel)
         self.assertIn("DistinctActiveInputSlots.Num() == 8", panel)
 
+    def test_03b_eight_legacy_native_action_bindings_match_catalog(self):
+        # 工程默认EnhancedInput Profile仍未正式制作为原生资产，数字5—8必须保留
+        # Pawn现有按键兼容通路，不能只在Ini中增加没有消费端的动作。
+        character = source("Game/Plugins/DivineBeasts/DBAGameplay/Source/"
+                           "DivineBeastsAbilitiesRuntime/Private/Characters/DivineBeastsGameplayCharacter.cpp")
+        action_match = re.search(r'const TCHAR\* Actions\[\]\s*=\s*\{(.*?)\};', character, re.S)
+        tag_match = re.search(r'const TCHAR\* AbilityInputTagNames\[\]\s*=\s*\{(.*?)\};', character, re.S)
+        self.assertIsNotNone(action_match)
+        self.assertIsNotNone(tag_match)
+        actions = re.findall(r'TEXT\("([^"]+)"\)', action_match.group(1))
+        tags = re.findall(r'TEXT\("([^"]+)"\)', tag_match.group(1))
+        self.assertEqual(actions, [row["action"] for row in self.catalog["slotPolicy"]["inputSemantics"]])
+        self.assertEqual(tags, [row["tag"] for row in self.catalog["slotPolicy"]["inputSemantics"]])
+        self.assertIn("IE_Pressed", character)
+        self.assertIn("IE_Released", character)
+        self.assertIn("GetInputToken()", character)
+        self.assertIn("ProcessAbilityInput()", character)
+
     def test_04_draft_assets_fail_closed(self):
         definition = source("Game/Plugins/DivineBeasts/DBAGameplay/Source/"
                             "DivineBeastsAbilitiesRuntime/Public/Definitions/DivineBeastsAbilityDefinition.h")
@@ -170,6 +202,25 @@ class ZodiacEightSlotDraftTests(unittest.TestCase):
         self.assertIn("not row[\"approvedForLiveGAS\"]", author)
         self.assertNotIn("compile_blueprint(", author)
         self.assertNotIn("set_editor_property(\"DefaultAbilitySetId\"", author)
+        # 作者在创建／写盘前先检查所有可能存在的同名正式资源。
+        self.assertIn("preflight_existing_destinations(skill_inputs", author)
+        self.assertIn("not row[\"approvedForLiveGAS\"]", author)
+        self.assertIn("bEightSlotDraftOnly", author)
+        # 无UE运行环境时只检查Python作者语法，不编译字节码或导入unreal。
+        ast.parse(author, filename="Tools/Unreal/Abilities/AuthorZodiacEightSlotDesignAssets.py")
+
+    def test_04b_reject_wrong_damage_action_type(self):
+        altered = copy.deepcopy(self.catalog)
+        control = altered["heroes"][0]["slots"][6]
+        damage = next(a for a in control["actions"] if a["kind"] == "damage")
+        damage["type"] = "Untyped"
+        self.assertTrue(any("伤害类型" in err for err in audit(altered)))
+
+    def test_04c_reject_mixed_heal_target_as_friendly_only(self):
+        altered = copy.deepcopy(self.catalog)
+        ultimate = altered["heroes"][3]["slots"][3]
+        ultimate["intentTarget"] = "friendly_or_self"
+        self.assertTrue(any("范围中心" in err for err in audit(altered)))
 
     def test_05_reject_missing_skill(self):
         altered = copy.deepcopy(self.catalog)
@@ -202,6 +253,61 @@ class ZodiacEightSlotDraftTests(unittest.TestCase):
         self.assertEqual(semantics[0]["tag"], "Platform.Ability.Input.DivineBeasts.Primary")
         self.assertEqual(semantics[3]["tag"], "Platform.Ability.Input.DivineBeasts.Slot4")
         self.assertEqual([x["keyboard"] for x in semantics], list("12345678"))
+
+    def test_11_ability_set_manifest_matches_96_skills_without_false_grants(self):
+        manifest = json.loads(source("Docs/Design/ZodiacEightSlotAbilitySetManifest_V2.json"))
+        self.assertEqual(manifest["state"], "DESIGN_MANIFEST_ONLY")
+        self.assertEqual(manifest["abilitySetsAuthored"], 0)
+        self.assertEqual(manifest["gaBlueprintsAuthored"], 0)
+        self.assertEqual(len(manifest["grantsByHero"]), 12)
+        by_hero = {h["heroId"]: h for h in self.catalog["heroes"]}
+        seen = set()
+        for group in manifest["grantsByHero"]:
+            design = by_hero[group["heroDefinitionId"]]
+            self.assertEqual(group["abilityCount"], 8)
+            self.assertTrue(group["doNotOverrideHeroDefaultAbilitySetId"])
+            self.assertEqual(group["draftSetLogicalId"], design["proposedAbilitySetId"])
+            self.assertEqual(len(group["grants"]), 8)
+            for grant, skill in zip(group["grants"], design["slots"]):
+                self.assertEqual(grant["logicalAbilityId"], skill["abilityId"])
+                self.assertEqual(grant["slotId"], skill["slotId"])
+                self.assertFalse(grant["approvedForGrant"])
+                self.assertIsNone(grant["gameplayAbilityClassPath"])
+                self.assertIsNone(grant["vfxDefinitionPath"])
+                self.assertNotIn(skill["abilityId"], seen)
+                seen.add(skill["abilityId"])
+        self.assertEqual(len(seen), 96)
+
+    def test_12_native_widget_authoring_spec_is_eight_slots_not_faked_assets(self):
+        spec = json.loads(source("Tools/Unreal/UI/EightSlotAbilityBarWidgetSpec_V2.json"))
+        self.assertEqual(spec["state"], "PENDING_UE58_MONOLITH_NATIVE_AUTHORING")
+        self.assertEqual(len(spec["slots"]), 8)
+        self.assertEqual([x["gameplayTag"] for x in spec["slots"]],
+                         [s["tag"] for s in self.catalog["slotPolicy"]["inputSemantics"]])
+        self.assertEqual([x["keyText"] for x in spec["slots"]], list("12345678"))
+        self.assertEqual([x["widgetName"] for x in spec["slots"]],
+                         ["PrimaryAbilitySlot", "ActiveAbilitySlot1", "ActiveAbilitySlot2",
+                          "UltimateAbilitySlot", "MovementAbilitySlot", "DefenseAbilitySlot",
+                          "ControlAbilitySlot", "SignatureAbilitySlot"])
+        self.assertLessEqual(spec["layout"]["maxTotalHeightPx"], 65)
+        self.assertTrue(spec["layout"]["castBarOverlayForbidden"])
+        self.assertTrue(spec["layout"]["momentumBarSeparateFromBlueEnergy"])
+        self.assertEqual(spec["layout"]["actualParentPanelName"],
+                         "DISCOVER_FROM_REAL_WIDGET_TREE_BEFORE_EDIT")
+        # 现有v02审核稿与历史65px约束不能偷换：其8个可见框须复用，
+        # 当前只对其中5个做过NativeWidget绑定，重命名和重排待UE资产工具。
+        self.assertEqual(spec["layout"]["approvedV02AssetWidthPx"], 727)
+        self.assertEqual(spec["layout"]["approvedV02AssetHeightPx"], 94)
+        self.assertTrue(spec["layout"]["heightContractConflict"])
+        self.assertTrue(spec["layout"]["useEightExistingFramesNoNewNinthFrame"])
+        self.assertEqual(len(spec["layout"]["existingIconFrameRectsPx"]), 8)
+        self.assertEqual([r[0] for r in spec["layout"]["existingIconFrameRectsPx"]],
+                         [67, 123, 178, 233, 288, 343, 398, 453])
+        self.assertEqual(spec["layout"]["currentSavedWidgetSlots"],
+                         ["PrimaryAbilitySlot", "ActiveAbilitySlot1", "UltimateAbilitySlot",
+                          "ActiveAbilitySlot2", "PassiveAbilitySlot", None, None, None])
+
+
 
 
 if __name__ == "__main__":
