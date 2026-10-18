@@ -47,6 +47,60 @@ def author():
     cls = unreal.GamePlatformSFXDefinition
     factory = unreal.DataAssetFactory()
     factory.set_editor_property("data_asset_class", cls)
+    # SoundConcurrency是真实音频Voice并发门禁，SoundAttenuation让三维魔法具备空间位置与距离衰减。
+    policy_dir = "/DBASFXPack_Core/Audio/Shared/Policies"
+    if not assets.does_directory_exist(policy_dir):
+        assets.make_directory(policy_dir)
+
+    def create_policy(name, cls_type, factory_type, legacy_name=None):
+        path = policy_dir + "/" + name
+        # 工程的GamePlatformNamingValidator对这两种Sound派生资产也统一要求S_前缀。
+        if legacy_name:
+            legacy_path = policy_dir + "/" + legacy_name
+            if assets.does_asset_exist(legacy_path) and not assets.does_asset_exist(path):
+                if not assets.rename_asset(legacy_path, path):
+                    raise RuntimeError("UE策略资产重命名失败：" + legacy_path)
+                print("SSLM_AUDIO_POLICY_RENAMED", legacy_path, path)
+        if assets.does_asset_exist(path):
+            asset = assets.load_asset(path)
+            if not isinstance(asset, cls_type):
+                raise TypeError("已存在异类型音频策略资产：" + path)
+            return asset
+        asset = tools.create_asset(name, policy_dir, cls_type, factory_type())
+        if not isinstance(asset, cls_type):
+            raise RuntimeError("创建真实音频策略资产失败：" + path)
+        return asset
+
+    # 脚步与魔法音效的首版有效听觉范围约3~27米；最终按Audio Insights实测调整。
+    spell_atten = create_policy("S_DBA_SpellShort_Attenuation", unreal.SoundAttenuation,
+                                unreal.SoundAttenuationFactory, "SA_DBA_SpellShort")
+    attenuation_settings = spell_atten.get_editor_property("attenuation")
+    attenuation_settings.set_editor_property("attenuate", True)
+    attenuation_settings.set_editor_property("spatialize", True)
+    attenuation_settings.set_editor_property("attenuation_shape_extents", unreal.Vector(300, 0, 0))
+    attenuation_settings.set_editor_property("falloff_distance", 2400.0)
+    spell_atten.set_editor_property("attenuation", attenuation_settings)
+    if not assets.save_loaded_asset(spell_atten, only_if_is_dirty=False):
+        raise RuntimeError("三维声音衰减资产保存失败")
+    print("SSLM_AUDIO_POLICY_OK", spell_atten.get_path_name())
+
+    policies = {}
+    for key, asset_name, budget, legacy_name in [
+        ("UI", "S_DBA_UI_Click_Concurrency", 4, "SCN_DBA_UI_Click"),
+        ("Spells", "S_DBA_Spell_Short_Concurrency", 12, "SCN_DBA_Spell_Short"),
+        ("Music", "S_DBA_Music_Concurrency", 2, "SCN_DBA_Music"),
+        ("Ambience", "S_DBA_Ambience_Concurrency", 2, "SCN_DBA_Ambience")
+    ]:
+        concurrency = create_policy(asset_name, unreal.SoundConcurrency,
+                                    unreal.SoundConcurrencyFactory, legacy_name)
+        cfg = concurrency.get_editor_property("concurrency")
+        cfg.set_editor_property("max_count", budget)
+        concurrency.set_editor_property("concurrency", cfg)
+        if not assets.save_loaded_asset(concurrency, only_if_is_dirty=False):
+            raise RuntimeError("声音并发策略保存失败：" + asset_name)
+        policies[key] = concurrency
+        print("SSLM_AUDIO_POLICY_OK", concurrency.get_path_name(), budget)
+
 
     for folder, filename, definition_name, logical_id, space, loop, volume, fade_in, fade_out in AUDIO:
         stem = Path(filename).stem
@@ -60,10 +114,12 @@ def author():
         # 对本次导入的旧命名资产通过UE编辑器原生命名重定向，避免直接修改二进制文件。
         if old_sound_path != sound_path and assets.does_asset_exist(old_sound_path):
             if assets.does_asset_exist(sound_path):
-                raise RuntimeError("原资产与规范资产同时存在，拒绝自动覆盖: " + stem)
-            if not assets.rename_asset(old_sound_path, sound_path):
-                raise RuntimeError("UE SoundWave重命名失败: " + old_sound_path)
-            print("SSLM_AUDIO_RENAMED", old_sound_path, sound_path)
+                # Unreal重命名后会留下Redirector，重跑时允许已有规范目标并继续回读。
+                print("SSLM_AUDIO_REDIRECTOR_PRESENT", old_sound_path)
+            else:
+                if not assets.rename_asset(old_sound_path, sound_path):
+                    raise RuntimeError("UE SoundWave重命名失败: " + old_sound_path)
+                print("SSLM_AUDIO_RENAMED", old_sound_path, sound_path)
         for directory in (audio_dir, definition_dir):
             if not assets.does_directory_exist(directory):
                 assets.make_directory(directory)
@@ -83,9 +139,13 @@ def author():
             sound = assets.load_asset(sound_path)
             if not isinstance(sound, unreal.SoundWave):
                 raise RuntimeError("SoundWave导入失败: " + filename)
-        sound.set_editor_property("looping", bool(loop))
-        if not assets.save_loaded_asset(sound, only_if_is_dirty=False):
-            raise RuntimeError("SoundWave保存失败: " + sound_path)
+        # 重跑时不能仅为相同Loop值反复重写已有SoundWave；并发编辑器可能占有资源文件句柄。
+        if bool(sound.get_editor_property("looping")) != bool(loop):
+            sound.set_editor_property("looping", bool(loop))
+            if not assets.save_loaded_asset(sound, only_if_is_dirty=False):
+                raise RuntimeError("SoundWave保存失败(请检查是否被其他编辑器占用): " + sound_path)
+        else:
+            print("SSLM_AUDIO_WAVE_REUSED_UNCHANGED", sound_path)
 
         if assets.does_asset_exist(definition_path):
             definition = assets.load_asset(definition_path)
@@ -103,6 +163,10 @@ def author():
         ident.set_editor_property("logical_version", int(version))
         definition.set_editor_property("logical_id", ident)
         definition.set_editor_property("sound", sound)
+        # 全部通过UE原生Policy资产配置，避免3D声音因缺Attenuation被听作普通2D。
+        definition.set_editor_property("concurrency", policies[folder])
+        if space == "World":
+            definition.set_editor_property("attenuation", spell_atten)
         definition.set_editor_property("playback_space",
             unreal.GamePlatformSFXPlaybackSpace.TWO_D if space == "2D"
             else unreal.GamePlatformSFXPlaybackSpace.WORLD)

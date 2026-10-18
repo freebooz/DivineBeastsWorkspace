@@ -123,6 +123,16 @@ UI全部在原DivineBeastsDemoClient（SSLM演示客户端）的DemoHub及GamePl
 
 `“有测试源码”`只代表可运行的设计基础，不等于该工作单测试已在真实UE执行；工作单必须记录运行命令、退出码、原生日志或明确未运行原因。
 
+### 3.1 全量67插件工作单与当前设计快照
+
+本方案已由真实`CurrentPluginQualityMatrix.json`（静态质量台账）派生并保存`PluginOptimizationWorkOrders_V2.json`（机器可审工作单）和`PluginOptimizationWorkOrders_V2.md`（中文工作单表），可直接按插件执行和验收。它们仅用于**规划任务**，不改`PluginDemoManifest.json`（正式演示作者源），不生成UE二进制资产或人工通过记录。
+
+- **当前分批分配**：M1 11插件、M2 9插件、M3 8插件、M4 7插件、M5 13插件、M6 19内容包；M0与M7对所有67插件横向生效。
+- **优先推进的首批真实工作单**：`SSLM-PLG-GamePlatformSession`（会话同步取消、双端旅行）、`SSLM-PLG-GamePlatformTelemetry`（遥测重试内存/Shutdown）、`SSLM-PLG-GamePlatformPCG`（Gold真实生成与三世界烘焙）、`SSLM-PLG-DBAClient`（唯一人工演示入口及证据链）、`SSLM-PLG-GamePlatformVFX`（Niagara与鸟群的画面/性能）。按各工作单主批次、依赖和现有编辑器资源安全条件执行，不要求它们并发运行。
+- **正式视觉样板的能力判定**：UI层栈/焦点、冰箭VFX、Gold PCG等案例只有在真实消费者、操作参数、启动/停止/重置/返回及原生证据准备完毕后，才允许登记为`可启动`；旧13张诊断地图仍只是观察入口。
+- **复现与防漂移命令**：`python Tests/Architecture/GeneratePluginOptimizationWorkOrders.py --check --summary`（只读核对）；当源台账真实发生经过审查的变化时才显式使用`--write`再生成两份派生工作单，并运行`python Tests/Architecture/TestPluginOptimizationWorkOrders.py`（对应回归）。
+- **当前证据状态**：67份工作单均为未实施、人工审核未完成；不覆盖先前已实际修复的代码记录，另在工作单`alreadyChangedNotes`（已知先前整改）注明需要最新UE验证的事实。
+
 ## 四、推荐的首轮并行策略与停机条件
 
 - 可以并行：不同插件的静态审查、定义/文档、纯值单元回归、无资源写操作的测试。

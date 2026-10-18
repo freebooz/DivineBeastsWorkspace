@@ -77,6 +77,9 @@ public:
     /** 与VFX独立预载天气SFX内容包；缺音频不阻断视觉及权威天气。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Weather")
     FDivineBeastsPresentationContentPackHandle ActivateWeatherAudio(FString& OutError);
+    /** 已经注册且加载完成时播放已审核UI音效；客户端失败只影响表现。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Audio")
+    bool PlayStarterUISound(FName ActionId);
 
     /** 角色选择/创建共用的一份场景持续落叶；真资产异步激活成功后才播放。返回true表示受理。 */
     bool StartFrontEndFoliage(FName StyleId, const FVector& WorldOrigin,
@@ -242,6 +245,12 @@ private:
 
     void RegisterProjectState();
     void BeginDefaultCatalogPreload();
+    /** 在客户端场景启动本世界的音乐/环境以及UI/法术音效定义预载，失败安全静音。 */
+    void EnsureStarterAudioForWorld(UWorld* World);
+    void StopStarterAudioForWorld();
+    void SubmitStarterAudioForWorld();
+    void PlayStarterSpellSound(FName SpellName, bool bImpact, const FVector& Location);
+    bool SubmitStarterOneShot(const TCHAR* Semantic, FName ContextId, const FVector& Location);
     void UnregisterProjectState();
     void HandleWorldCleanup(
         UWorld* World,
@@ -340,6 +349,12 @@ private:
     FDivineBeastsPresentationContentPackHandle WeatherAudioHandle;
     bool bWeatherVisualAttempted = false;
     bool bWeatherAudioAttempted = false;
+    /** 首批音频的世界级内容租约与两个循环请求，实际播放实例仍只归平台SFX。 */
+    FDivineBeastsPresentationContentPackHandle StarterAudioPack;
+    TWeakObjectPtr<UWorld> StarterAudioWorld;
+    FGuid StarterMusicRequestId;
+    FGameplayTag StarterMusicTag;
+    FGuid StarterAmbienceRequestId;
 
     FDivineBeastsPresentationLogicalPreloadRequested LogicalPreloadRequested;
     FDivineBeastsPresentationLogicalPreloadCancelled LogicalPreloadCancelled;

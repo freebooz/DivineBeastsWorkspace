@@ -1,0 +1,5063 @@
+{
+  "schemaVersion": 2,
+  "status": "DESIGN_WORK_ORDERS_ONLY_NOT_IMPLEMENTATION",
+  "sourceFile": "Docs/Implementation/PluginQualityAudit/CurrentPluginQualityMatrix.json",
+  "sourceSha256": "ced68a5c7e7028510a7d3147661408c4a66c2a5f9840749a5d6bc13de412805c",
+  "sourceLimitations": "来自静态审查；功能分母未知。所有工作单均未由本脚本签署完成，所有人工签收保持未验证。",
+  "globalPrerequisites": [
+    "M0 核对全部当前身份与功能分母",
+    "AGENTS.md 及真实工程/源码版本",
+    "保护并行任务工作树与活动UE资产编辑器"
+  ],
+  "finalAcceptance": "M7 当前版本的正式UE编译/测试/Cook/性能/人工签收全维度通过才可考虑ProductionReady",
+  "totalPluginWorkOrders": 67,
+  "codePluginWorkOrders": 48,
+  "contentPackWorkOrders": 19,
+  "formalScenarioGaps": 51,
+  "visualReviewRequired": 53,
+  "diagnosticShortcutPlugins": 19,
+  "existingFormalScenarioRegistrations": 9,
+  "humanApproved": 0,
+  "phaseCounts": {
+    "M1": 11,
+    "M2": 9,
+    "M3": 8,
+    "M4": 7,
+    "M5": 13,
+    "M6": 19
+  },
+  "workOrders": [
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformApplicationFlow",
+      "pluginId": "GamePlatformApplicationFlow",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "流程执行",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/GamePlatformApplicationFlow.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/GamePlatformApplicationFlow.Build.cs"
+      ],
+      "sourceFileCount": 19,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 5,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "复核登录到三世界的状态切换、失败回退和重复触发",
+      "alreadyChangedNotes": "",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Execution/ApplicationFlowExecutor.cpp",
+          "line": 257
+        },
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Subsystems/GamePlatformApplicationFlowSubsystem.cpp",
+          "line": 175
+        },
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Application/GamePlatformApplicationFlow/Source/GamePlatformApplicationFlow/Private/Subsystems/GamePlatformApplicationFlowSubsystem.cpp",
+          "line": 381
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformApplicationFlow-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformApplicationFlow-02",
+          "kind": "最小代码/资源整改",
+          "task": "复核登录到三世界的状态切换、失败回退和重复触发；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformApplicationFlow-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformApplicationFlow-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformApplicationFlow-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformCore",
+      "pluginId": "GamePlatformCore",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "基础契约",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Foundation/GamePlatformCore/GamePlatformCore.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Source/GamePlatformCore/GamePlatformCore.Build.cs"
+      ],
+      "sourceFileCount": 16,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 2,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 3,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证稳定身份、错误码、依赖不变量与失败结果",
+      "alreadyChangedNotes": "",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformCore-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformCore-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证稳定身份、错误码、依赖不变量与失败结果；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformCore-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformCore-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformCore-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformData",
+      "pluginId": "GamePlatformData",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "数据与租约",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/GamePlatformData.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Foundation/GamePlatformData/Source/GamePlatformData/GamePlatformData.Build.cs",
+        "Game/Plugins/GamePlatform/Foundation/GamePlatformData/Source/GamePlatformDataEditor/GamePlatformDataEditor.Build.cs"
+      ],
+      "sourceFileCount": 34,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 10,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 2,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "复核单一资产身份、并发加载合并、Owner租约和异步取消",
+      "alreadyChangedNotes": "",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/Foundation/GamePlatformData/Source/GamePlatformData/Private/Subsystems/GamePlatformDataSubsystem.cpp",
+          "line": 425
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformData-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformData-02",
+          "kind": "最小代码/资源整改",
+          "task": "复核单一资产身份、并发加载合并、Owner租约和异步取消；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformData-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformData-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformData-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformEntitlement",
+      "pluginId": "GamePlatformEntitlement",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "权益",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/GamePlatformEntitlement.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlement/GamePlatformEntitlement.Build.cs",
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEntitlement/Source/GamePlatformEntitlementClient/GamePlatformEntitlementClient.Build.cs"
+      ],
+      "sourceFileCount": 14,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 2,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证权益来源、撤销、缓存隔离与权限失败收口",
+      "alreadyChangedNotes": "",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformEntitlement-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformEntitlement-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证权益来源、撤销、缓存隔离与权限失败收口；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformEntitlement-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformEntitlement-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformEntitlement-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformLiveOps",
+      "pluginId": "GamePlatformLiveOps",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "运营活动",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/GamePlatformLiveOps.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/GamePlatformLiveOpsClient.Build.cs"
+      ],
+      "sourceFileCount": 15,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 5,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证运营配置版本、时间区间、过期行为和资格隔离",
+      "alreadyChangedNotes": "",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformLiveOps/Source/GamePlatformLiveOpsClient/Private/Services/GamePlatformLiveOpsClientSubsystem.cpp",
+          "line": 507
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformLiveOps-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformLiveOps-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证运营配置版本、时间区间、过期行为和资格隔离；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformLiveOps-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformLiveOps-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformLiveOps-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformLoading",
+      "pluginId": "GamePlatformLoading",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "加载与就绪",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Application/GamePlatformLoading/GamePlatformLoading.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Application/GamePlatformLoading/Source/GamePlatformLoading/GamePlatformLoading.Build.cs"
+      ],
+      "sourceFileCount": 10,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 2,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证资源就绪事件、超时/取消及UI加载态结束通知",
+      "alreadyChangedNotes": "",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/Application/GamePlatformLoading/Source/GamePlatformLoading/Private/Subsystems/GamePlatformLoadingSubsystem.cpp",
+          "line": 109
+        },
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Application/GamePlatformLoading/Source/GamePlatformLoading/Private/Subsystems/GamePlatformLoadingSubsystem.cpp",
+          "line": 305
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformLoading-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformLoading-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证资源就绪事件、超时/取消及UI加载态结束通知；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformLoading-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformLoading-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformLoading-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformOnline",
+      "pluginId": "GamePlatformOnline",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "在线基础",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/GamePlatformOnline.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/Source/GamePlatformOnline/GamePlatformOnline.Build.cs",
+        "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/Source/GamePlatformOnlineClient/GamePlatformOnlineClient.Build.cs"
+      ],
+      "sourceFileCount": 25,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 4,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证鉴权、连接时序、失败重试、过期响应与解绑",
+      "alreadyChangedNotes": "",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/Source/GamePlatformOnline/Private/Requests/OnlineSession.cpp",
+          "line": 347
+        },
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/Source/GamePlatformOnlineClient/Private/GamePlatformOnlineClientSubsystem.cpp",
+          "line": 2471
+        },
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformOnline/Source/GamePlatformOnlineClient/Private/Party/GamePlatformPartyClientSubsystem.cpp",
+          "line": 78
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformOnline-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformOnline-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证鉴权、连接时序、失败重试、过期响应与解绑；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformOnline-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformOnline-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformOnline-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformSave",
+      "pluginId": "GamePlatformSave",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "保存",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Application/GamePlatformSave/GamePlatformSave.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Application/GamePlatformSave/Source/GamePlatformSaveClient/GamePlatformSaveClient.Build.cs"
+      ],
+      "sourceFileCount": 13,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 2,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证权限、原子性、版本恢复与并发写入失败处理",
+      "alreadyChangedNotes": "",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformSave-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformSave-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证权限、原子性、版本恢复与并发写入失败处理；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformSave-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformSave-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformSave-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformServer",
+      "pluginId": "GamePlatformServer",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "服务器生命周期",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/GamePlatformServer.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/Source/GamePlatformServer/GamePlatformServer.Build.cs"
+      ],
+      "sourceFileCount": 22,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 8,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证就绪、准入、排空、关服回调和Agones连接边界",
+      "alreadyChangedNotes": "",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/Source/GamePlatformServer/Private/Agones/GamePlatformAgonesBridgeSubsystem.cpp",
+          "line": 84
+        },
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformServer/Source/GamePlatformServer/Private/Server/GamePlatformServerLifecycleSubsystem.cpp",
+          "line": 132
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformServer-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformServer-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证就绪、准入、排空、关服回调和Agones连接边界；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformServer-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformServer-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformServer-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformSession",
+      "pluginId": "GamePlatformSession",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "跨服会话",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/GamePlatformSession.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/Source/GamePlatformSession/GamePlatformSession.Build.cs"
+      ],
+      "sourceFileCount": 11,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 3,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "复验同步失败、取消、四事实Ready和ClientTravel旧代次阻断",
+      "alreadyChangedNotes": "已有同步失败/取消与事实回调保护源码；需要最新UE自动化与双客户端网络验收",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/Source/GamePlatformSession/Private/GamePlatformSessionClientSubsystem.cpp",
+          "line": 617
+        },
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/OnlineServices/GamePlatformSession/Source/GamePlatformSession/Private/Transport/GamePlatformUESessionTransport.cpp",
+          "line": 139
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformSession-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformSession-02",
+          "kind": "最小代码/资源整改",
+          "task": "复验同步失败、取消、四事实Ready和ClientTravel旧代次阻断；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformSession-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformSession-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformSession-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformTelemetry",
+      "pluginId": "GamePlatformTelemetry",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M1",
+      "batchDescription": "运行期生命周期与安全",
+      "domain": "遥测",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/GamePlatformTelemetry.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/GamePlatformTelemetry.Build.cs"
+      ],
+      "sourceFileCount": 28,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 4,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "复验Ticker有限重试、关闭幂等、脱敏及长时待处理",
+      "alreadyChangedNotes": "已有重试句柄触发即移除与Shutdown幂等源码；需要UE原生回归和长时指标",
+      "targetReview": "双端/服务端/编辑器按实际模块职责",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Sinks/GamePlatformTelemetryNetworkSink.cpp",
+          "line": 239
+        },
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformTelemetry/Source/GamePlatformTelemetry/Private/Sinks/GamePlatformTelemetryNetworkSink.cpp",
+          "line": 388
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformTelemetry-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformTelemetry-02",
+          "kind": "最小代码/资源整改",
+          "task": "复验Ticker有限重试、关闭幂等、脱敏及长时待处理；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformTelemetry-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformTelemetry-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformTelemetry-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAArena",
+      "pluginId": "DBAArena",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M2",
+      "batchDescription": "客户端/专服构建与三世界",
+      "domain": "项目竞技",
+      "layer": "Project",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/DivineBeasts/DBAArena/DBAArena.uplugin",
+      "declaredModuleCount": 3,
+      "moduleBuildRules": [
+        "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaRuntime/DivineBeastsArenaRuntime.Build.cs",
+        "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/DivineBeastsArenaClient.Build.cs",
+        "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaServer/DivineBeastsArenaServer.Build.cs"
+      ],
+      "sourceFileCount": 43,
+      "nativeAssetCount": 6,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 8,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_MainArenaReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证竞技项目数据、出生/结算和真实服务器权威结果",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor/Client/Dedicated Server分别核验",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/DivineBeasts/DBAArena/Source/DivineBeastsArenaClient/Private/Client/DivineBeastsArenaOnlineMatchmakingAdapter.cpp",
+          "line": 97
+        }
+      ],
+      "tasks": [
+        {
+          "id": "DBAArena-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAArena-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证竞技项目数据、出生/结算和真实服务器权威结果；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAArena-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAArena-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAArena-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAServer",
+      "pluginId": "DBAServer",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M2",
+      "batchDescription": "客户端/专服构建与三世界",
+      "domain": "项目服务器",
+      "layer": "Project",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/DivineBeasts/DBAServer/DBAServer.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/DBAServer.Build.cs"
+      ],
+      "sourceFileCount": 19,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 5,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证项目准入、权威玩法配置和三角色服务器组合",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor/Client/Dedicated Server分别核验",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/DivineBeasts/DBAServer/Source/DBAServer/Private/Inventory/DivineBeastsTrustedInventoryEventSubsystem.cpp",
+          "line": 86
+        }
+      ],
+      "tasks": [
+        {
+          "id": "DBAServer-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAServer-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证项目准入、权威玩法配置和三角色服务器组合；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAServer-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "DBAServer-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAServer-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAWorlds",
+      "pluginId": "DBAWorlds",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M2",
+      "batchDescription": "客户端/专服构建与三世界",
+      "domain": "项目世界",
+      "layer": "Project",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/DivineBeasts/DBAWorlds/DBAWorlds.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/DivineBeasts/DBAWorlds/Source/DBAWorldsRuntime/DBAWorldsRuntime.Build.cs"
+      ],
+      "sourceFileCount": 12,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 2,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Terrain/Maps/L_DBA_TerrainFunctionReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证Village与OpenWorld实际World定义、PCG及跨世界接入",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor/Client/Dedicated Server分别核验",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAWorlds-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAWorlds-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证Village与OpenWorld实际World定义、PCG及跨世界接入；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAWorlds-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAWorlds-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAWorlds-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformArena",
+      "pluginId": "GamePlatformArena",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M2",
+      "batchDescription": "客户端/专服构建与三世界",
+      "domain": "通用竞技",
+      "layer": "Moba",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/MobaCommon/GamePlatformArena/GamePlatformArena.uplugin",
+      "declaredModuleCount": 5,
+      "moduleBuildRules": [
+        "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformMobaCore/GamePlatformMobaCore.Build.cs",
+        "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformMobaData/GamePlatformMobaData.Build.cs",
+        "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArena/GamePlatformArena.Build.cs",
+        "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArenaClient/GamePlatformArenaClient.Build.cs",
+        "Game/Plugins/MobaCommon/GamePlatformArena/Source/GamePlatformArenaServer/GamePlatformArenaServer.Build.cs"
+      ],
+      "sourceFileCount": 51,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 7,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_MainArenaReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证1v1—5v5模式数据、竞技实例和Client/Server职责",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor/Client/Dedicated Server分别核验",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformArena-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformArena-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证1v1—5v5模式数据、竞技实例和Client/Server职责；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformArena-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformArena-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformArena-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformNavigation",
+      "pluginId": "GamePlatformNavigation",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M2",
+      "batchDescription": "客户端/专服构建与三世界",
+      "domain": "导航",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/World/GamePlatformNavigation/GamePlatformNavigation.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/World/GamePlatformNavigation/Source/GamePlatformNavigation/GamePlatformNavigation.Build.cs",
+        "Game/Plugins/GamePlatform/World/GamePlatformNavigation/Source/GamePlatformNavigationServer/GamePlatformNavigationServer.Build.cs"
+      ],
+      "sourceFileCount": 23,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 4,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证服务器导航、动态障碍、路径失败和世界退出",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor/Client/Dedicated Server分别核验",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformNavigation-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformNavigation-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证服务器导航、动态障碍、路径失败和世界退出；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformNavigation-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformNavigation-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformNavigation-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformPCG",
+      "pluginId": "GamePlatformPCG",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M2",
+      "batchDescription": "客户端/专服构建与三世界",
+      "domain": "程序化内容生成",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/World/GamePlatformPCG/GamePlatformPCG.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/GamePlatformPCG.Build.cs",
+        "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCGEditor/GamePlatformPCGEditor.Build.cs"
+      ],
+      "sourceFileCount": 63,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 5,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证Gold图、实际Spawner输出、编排、烘焙与权威边界",
+      "alreadyChangedNotes": "已有金标准资产和部分原生验证；正式Village/OpenWorld接线、烘焙与Cook仍待证据",
+      "targetReview": "Editor/Client/Dedicated Server分别核验",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Private/Subsystems/GamePlatformPCGWorldSubsystem.cpp",
+          "line": 124
+        },
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/World/GamePlatformPCG/Source/GamePlatformPCG/Private/Subsystems/GamePlatformPCGWorldSubsystem.cpp",
+          "line": 326
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformPCG-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformPCG-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证Gold图、实际Spawner输出、编排、烘焙与权威边界；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformPCG-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformPCG-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformPCG-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformWater",
+      "pluginId": "GamePlatformWater",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M2",
+      "batchDescription": "客户端/专服构建与三世界",
+      "domain": "水体",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/World/GamePlatformWater/GamePlatformWater.uplugin",
+      "declaredModuleCount": 3,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/World/GamePlatformWater/Source/GamePlatformWaterRuntime/GamePlatformWaterRuntime.Build.cs",
+        "Game/Plugins/GamePlatform/World/GamePlatformWater/Source/GamePlatformWaterClient/GamePlatformWaterClient.Build.cs",
+        "Game/Plugins/GamePlatform/World/GamePlatformWater/Source/GamePlatformWaterEditor/GamePlatformWaterEditor.Build.cs"
+      ],
+      "sourceFileCount": 15,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 1,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Water/Maps/L_GP_WaterReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证服务器水域权威信息与客户端材质/模拟资源隔离",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor/Client/Dedicated Server分别核验",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformWater-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformWater-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证服务器水域权威信息与客户端材质/模拟资源隔离；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformWater-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformWater-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformWater-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformWeather",
+      "pluginId": "GamePlatformWeather",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M2",
+      "batchDescription": "客户端/专服构建与三世界",
+      "domain": "天气",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/World/GamePlatformWeather/GamePlatformWeather.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherRuntime/GamePlatformWeatherRuntime.Build.cs",
+        "Game/Plugins/GamePlatform/World/GamePlatformWeather/Source/GamePlatformWeatherClient/GamePlatformWeatherClient.Build.cs"
+      ],
+      "sourceFileCount": 15,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 1,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Weather/Maps/L_DBA_WeatherReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证权威天气调度、客户端天气切换和失效快照",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor/Client/Dedicated Server分别核验",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformWeather-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformWeather-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证权威天气调度、客户端天气切换和失效快照；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformWeather-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformWeather-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformWeather-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformWorld",
+      "pluginId": "GamePlatformWorld",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M2",
+      "batchDescription": "客户端/专服构建与三世界",
+      "domain": "世界上下文",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/World/GamePlatformWorld/GamePlatformWorld.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/World/GamePlatformWorld/Source/GamePlatformWorld/GamePlatformWorld.Build.cs",
+        "Game/Plugins/GamePlatform/World/GamePlatformWorld/Source/GamePlatformWorldEditor/GamePlatformWorldEditor.Build.cs"
+      ],
+      "sourceFileCount": 30,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 6,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Terrain/Maps/L_DBA_TerrainFunctionReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证三种服务器角色、世界代次和区域流送的订阅生命周期",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor/Client/Dedicated Server分别核验",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/World/GamePlatformWorld/Source/GamePlatformWorld/Private/Regions/WorldRegions.cpp",
+          "line": 104
+        },
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/World/GamePlatformWorld/Source/GamePlatformWorld/Private/Streaming/GamePlatformWorldStreaming.cpp",
+          "line": 341
+        },
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/World/GamePlatformWorld/Source/GamePlatformWorld/Private/Subsystems/GamePlatformWorldSubsystem.cpp",
+          "line": 28
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformWorld-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformWorld-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证三种服务器角色、世界代次和区域流送的订阅生命周期；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformWorld-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformWorld-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformWorld-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAClient",
+      "pluginId": "DBAClient",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M3",
+      "batchDescription": "唯一演示中心与人工审核",
+      "domain": "项目客户端",
+      "layer": "Project",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/DivineBeasts/DBAClient/DBAClient.uplugin",
+      "declaredModuleCount": 6,
+      "moduleBuildRules": [
+        "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/DivineBeastsApplicationFlowClient.Build.cs",
+        "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsInputClient/DivineBeastsInputClient.Build.cs",
+        "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationRuntime/DivineBeastsPresentationRuntime.Build.cs",
+        "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient/DivineBeastsPresentationClient.Build.cs",
+        "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/DivineBeastsUIClient.Build.cs",
+        "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsDemoClient/DivineBeastsDemoClient.Build.cs"
+      ],
+      "sourceFileCount": 347,
+      "nativeAssetCount": 1,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 62,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 2,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "完善唯一DemoHub、项目UI接线、异常反馈与真实操作入口",
+      "alreadyChangedNotes": "已有DemoHub及诊断地图快捷入口；仅正式案例和人工审核闭环满足后才可提升",
+      "targetReview": "Editor与Client；审核仅Editor，UI不得引用编辑器模块",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsUIClient/Private/ViewModels/System/DivineBeastsSystemSettingsViewModel.cpp",
+          "line": 103
+        }
+      ],
+      "tasks": [
+        {
+          "id": "DBAClient-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAClient-02",
+          "kind": "最小代码/资源整改",
+          "task": "完善唯一DemoHub、项目UI接线、异常反馈与真实操作入口；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAClient-03",
+          "kind": "人工界面与场景接入",
+          "task": "核对已登记正式案例与实际功能及异常流程的对应关系，执行真实UE操作和人工审核"
+        },
+        {
+          "id": "DBAClient-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAClient-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformCommerceUI",
+      "pluginId": "GamePlatformCommerceUI",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M3",
+      "batchDescription": "唯一演示中心与人工审核",
+      "domain": "交易界面",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/GamePlatformCommerceUI.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformCommerceUI/Source/GamePlatformCommerceUIClient/GamePlatformCommerceUIClient.Build.cs"
+      ],
+      "sourceFileCount": 15,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 4,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证展示端与钱包/订单权威隔离、敏感信息清理",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor与Client；审核仅Editor，UI不得引用编辑器模块",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformCommerceUI-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformCommerceUI-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证展示端与钱包/订单权威隔离、敏感信息清理；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformCommerceUI-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformCommerceUI-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformCommerceUI-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformDebug",
+      "pluginId": "GamePlatformDebug",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M3",
+      "batchDescription": "唯一演示中心与人工审核",
+      "domain": "开发诊断",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/GamePlatformDebug.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/Source/GamePlatformDebug/GamePlatformDebug.Build.cs",
+        "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/Source/GamePlatformDebugClient/GamePlatformDebugClient.Build.cs"
+      ],
+      "sourceFileCount": 11,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 1,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证开发模式开关、命令资格与Shipping隔离",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor与Client；审核仅Editor，UI不得引用编辑器模块",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDebug/Source/GamePlatformDebugClient/Private/GamePlatformDebugClient.cpp",
+          "line": 585
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformDebug-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformDebug-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证开发模式开关、命令资格与Shipping隔离；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformDebug-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformDebug-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformDebug-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformDeveloperTools",
+      "pluginId": "GamePlatformDeveloperTools",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M3",
+      "batchDescription": "唯一演示中心与人工审核",
+      "domain": "编辑器审核",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/GamePlatformDeveloperTools.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/Source/GamePlatformDeveloperTools/GamePlatformDeveloperTools.Build.cs"
+      ],
+      "sourceFileCount": 27,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 3,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "基于既有ReviewCase/Report建真实证据与实名人工签收入口",
+      "alreadyChangedNotes": "已有ReviewCase/ReviewReport/ReviewSubsystem；不可创建平行审核框架",
+      "targetReview": "Editor与Client；审核仅Editor，UI不得引用编辑器模块",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformDeveloperTools-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformDeveloperTools-02",
+          "kind": "最小代码/资源整改",
+          "task": "基于既有ReviewCase/Report建真实证据与实名人工签收入口；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformDeveloperTools-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformDeveloperTools-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformDeveloperTools-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformInput",
+      "pluginId": "GamePlatformInput",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M3",
+      "batchDescription": "唯一演示中心与人工审核",
+      "domain": "输入",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Application/GamePlatformInput/GamePlatformInput.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/GamePlatformInputClient.Build.cs"
+      ],
+      "sourceFileCount": 21,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 4,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证键鼠/手柄/触屏输入映射、焦点冲突与失活回收",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor与Client；审核仅Editor，UI不得引用编辑器模块",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp",
+          "line": 416
+        },
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Application/GamePlatformInput/Source/GamePlatformInputClient/Private/Subsystems/GamePlatformInputLocalPlayerSubsystem.cpp",
+          "line": 421
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformInput-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformInput-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证键鼠/手柄/触屏输入映射、焦点冲突与失活回收；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformInput-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformInput-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformInput-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformLocalization",
+      "pluginId": "GamePlatformLocalization",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M3",
+      "batchDescription": "唯一演示中心与人工审核",
+      "domain": "本地化",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Application/GamePlatformLocalization/GamePlatformLocalization.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Application/GamePlatformLocalization/Source/GamePlatformLocalizationClient/GamePlatformLocalizationClient.Build.cs"
+      ],
+      "sourceFileCount": 1,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "核实真实文本与运行时切语言能力；模块壳不得冒充功能",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor与Client；审核仅Editor，UI不得引用编辑器模块",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformLocalization-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformLocalization-02",
+          "kind": "最小代码/资源整改",
+          "task": "核实真实文本与运行时切语言能力；模块壳不得冒充功能；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformLocalization-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformLocalization-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformLocalization-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformSettings",
+      "pluginId": "GamePlatformSettings",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M3",
+      "batchDescription": "唯一演示中心与人工审核",
+      "domain": "统一设置",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Application/GamePlatformSettings/GamePlatformSettings.uplugin",
+      "declaredModuleCount": 4,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsRuntime/GamePlatformSettingsRuntime.Build.cs",
+        "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsClient/GamePlatformSettingsClient.Build.cs",
+        "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsServer/GamePlatformSettingsServer.Build.cs",
+        "Game/Plugins/GamePlatform/Application/GamePlatformSettings/Source/GamePlatformSettingsEditor/GamePlatformSettingsEditor.Build.cs"
+      ],
+      "sourceFileCount": 42,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 4,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证Provider参数应用、设备配置回退与权限隔离",
+      "alreadyChangedNotes": "",
+      "targetReview": "Editor与Client；审核仅Editor，UI不得引用编辑器模块",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformSettings-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformSettings-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证Provider参数应用、设备配置回退与权限隔离；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformSettings-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformSettings-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformSettings-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformUI",
+      "pluginId": "GamePlatformUI",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M3",
+      "batchDescription": "唯一演示中心与人工审核",
+      "domain": "平台界面",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/GamePlatformUI.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/GamePlatformUIClient.Build.cs"
+      ],
+      "sourceFileCount": 119,
+      "nativeAssetCount": 14,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 13,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 2,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证事件驱动层栈、焦点/输入、资源租约与页面重载",
+      "alreadyChangedNotes": "已有正式界面案例编目；仍需真实Monolith资产、输入与人工视图验收",
+      "targetReview": "Editor与Client；审核仅Editor，UI不得引用编辑器模块",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Feedback/GamePlatformFloatingTextWidget.cpp",
+          "line": 44
+        },
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Source/GamePlatformUIClient/Private/Feedback/GamePlatformFloatingTextWidget.cpp",
+          "line": 46
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformUI-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformUI-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证事件驱动层栈、焦点/输入、资源租约与页面重载；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformUI-03",
+          "kind": "人工界面与场景接入",
+          "task": "核对已登记正式案例与实际功能及异常流程的对应关系，执行真实UE操作和人工审核"
+        },
+        {
+          "id": "GamePlatformUI-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformUI-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformAnimation",
+      "pluginId": "GamePlatformAnimation",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M4",
+      "batchDescription": "视觉表现与环境",
+      "domain": "动画",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/GamePlatformAnimation.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimation/GamePlatformAnimation.Build.cs",
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimationClient/GamePlatformAnimationClient.Build.cs"
+      ],
+      "sourceFileCount": 10,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 2,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证动作蒙太奇/BlendSpace、根运动权威与动画事件取消",
+      "alreadyChangedNotes": "",
+      "targetReview": "客户端表现与编辑器资源；服务端仅校验权威最小依赖",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimationClient/Private/Feedback/GamePlatformHitFlashWorldSubsystem.cpp",
+          "line": 66
+        },
+        {
+          "kind": "Ticker轮询",
+          "file": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAnimation/Source/GamePlatformAnimationClient/Private/Feedback/GamePlatformLocalHitstopSubsystem.cpp",
+          "line": 162
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformAnimation-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformAnimation-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证动作蒙太奇/BlendSpace、根运动权威与动画事件取消；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformAnimation-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformAnimation-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformAnimation-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformCamera",
+      "pluginId": "GamePlatformCamera",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M4",
+      "batchDescription": "视觉表现与环境",
+      "domain": "摄像机",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/GamePlatformCamera.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Presentation/GamePlatformCamera/Source/GamePlatformCameraClient/GamePlatformCameraClient.Build.cs"
+      ],
+      "sourceFileCount": 9,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 2,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/PluginDemos/Maps/L_DBA_CinematicCameraReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证游戏/角色/战斗镜头、混合、阻挡与复位",
+      "alreadyChangedNotes": "",
+      "targetReview": "客户端表现与编辑器资源；服务端仅校验权威最小依赖",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformCamera-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformCamera-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证游戏/角色/战斗镜头、混合、阻挡与复位；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformCamera-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformCamera-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformCamera-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformPresentation",
+      "pluginId": "GamePlatformPresentation",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M4",
+      "batchDescription": "视觉表现与环境",
+      "domain": "中立表现语义",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/GamePlatformPresentation.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationCore/GamePlatformPresentationCore.Build.cs",
+        "Game/Plugins/GamePlatform/Presentation/GamePlatformPresentation/Source/GamePlatformPresentationClient/GamePlatformPresentationClient.Build.cs"
+      ],
+      "sourceFileCount": 15,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 2,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证中立请求、提供者注册、取消和目录回退",
+      "alreadyChangedNotes": "",
+      "targetReview": "客户端表现与编辑器资源；服务端仅校验权威最小依赖",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformPresentation-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformPresentation-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证中立请求、提供者注册、取消和目录回退；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformPresentation-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformPresentation-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformPresentation-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformSFX",
+      "pluginId": "GamePlatformSFX",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M4",
+      "batchDescription": "视觉表现与环境",
+      "domain": "音频",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Presentation/GamePlatformSFX/GamePlatformSFX.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Presentation/GamePlatformSFX/Source/GamePlatformSFXClient/GamePlatformSFXClient.Build.cs"
+      ],
+      "sourceFileCount": 19,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 4,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证播放/停止、空间化、资源缺失与音频实例回收",
+      "alreadyChangedNotes": "",
+      "targetReview": "客户端表现与编辑器资源；服务端仅校验权威最小依赖",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformSFX-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformSFX-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证播放/停止、空间化、资源缺失与音频实例回收；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformSFX-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformSFX-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformSFX-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformSurface",
+      "pluginId": "GamePlatformSurface",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M4",
+      "batchDescription": "视觉表现与环境",
+      "domain": "环境表面",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/GamePlatformSurface.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Source/GamePlatformSurfaceClient/GamePlatformSurfaceClient.Build.cs",
+        "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Source/GamePlatformSurfaceEditor/GamePlatformSurfaceEditor.Build.cs"
+      ],
+      "sourceFileCount": 40,
+      "nativeAssetCount": 149,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 4,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/MossSnow/Maps/L_DBA_MossSnowReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证雪、苔藓、湿润的共享材质函数与端侧隔离",
+      "alreadyChangedNotes": "",
+      "targetReview": "客户端表现与编辑器资源；服务端仅校验权威最小依赖",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformSurface-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformSurface-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证雪、苔藓、湿润的共享材质函数与端侧隔离；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformSurface-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformSurface-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformSurface-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformVFX",
+      "pluginId": "GamePlatformVFX",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M4",
+      "batchDescription": "视觉表现与环境",
+      "domain": "视觉特效",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/GamePlatformVFX.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/GamePlatformVFXClient.Build.cs",
+        "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXEditor/GamePlatformVFXEditor.Build.cs"
+      ],
+      "sourceFileCount": 117,
+      "nativeAssetCount": 52,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 21,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review/L_DBA_IceArrow_A_Review",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证唯一Niagara服务、7类Effect Type、NDC降级与实例池",
+      "alreadyChangedNotes": "已有鸟群按物种频率刷新优化；需UE Niagara实例性能与人工画面对照",
+      "targetReview": "客户端表现与编辑器资源；服务端仅校验权威最小依赖",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Environment/GamePlatformBirdFlockActor.cpp",
+          "line": 193
+        },
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Source/GamePlatformVFXClient/Private/Environment/GamePlatformBirdFlockActor.cpp",
+          "line": 195
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformVFX-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformVFX-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证唯一Niagara服务、7类Effect Type、NDC降级与实例池；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformVFX-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformVFX-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformVFX-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-MobaPresentation",
+      "pluginId": "MobaPresentation",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M4",
+      "batchDescription": "视觉表现与环境",
+      "domain": "MOBA表现语义",
+      "layer": "Moba",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationRuntime/MobaPresentationRuntime.Build.cs",
+        "Game/Plugins/MobaCommon/Presentation/MobaPresentation/Source/MobaPresentationClient/MobaPresentationClient.Build.cs"
+      ],
+      "sourceFileCount": 21,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 4,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证竞技事件映射、不播放Niagara及卸载竞技后独立世界",
+      "alreadyChangedNotes": "",
+      "targetReview": "客户端表现与编辑器资源；服务端仅校验权威最小依赖",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "MobaPresentation-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "MobaPresentation-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证竞技事件映射、不播放Niagara及卸载竞技后独立世界；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "MobaPresentation-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "MobaPresentation-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "MobaPresentation-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAGameplay",
+      "pluginId": "DBAGameplay",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "项目玩法",
+      "layer": "Project",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/DivineBeasts/DBAGameplay/DBAGameplay.uplugin",
+      "declaredModuleCount": 3,
+      "moduleBuildRules": [
+        "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsRuntime/DivineBeastsRuntime.Build.cs",
+        "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/DivineBeastsCharactersRuntime.Build.cs",
+        "Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/DivineBeastsAbilitiesRuntime.Build.cs"
+      ],
+      "sourceFileCount": 72,
+      "nativeAssetCount": 229,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 11,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证生肖英雄数据/真实技能、GAS权限与Village出生流程",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAGameplay-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAGameplay-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证生肖英雄数据/真实技能、GAS权限与Village出生流程；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAGameplay-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAGameplay-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAGameplay-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformAbilitySystem",
+      "pluginId": "GamePlatformAbilitySystem",
+      "priorityFromAudit": "P2",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "能力系统",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/GamePlatformAbilitySystem.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformAbilitySystem/Source/GamePlatformAbilitySystem/GamePlatformAbilitySystem.Build.cs"
+      ],
+      "sourceFileCount": 27,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 5,
+      "visualReviewRequired": false,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": false,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "复核GAS授权、冷却、费用、取消与服务器权威",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformAbilitySystem-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformAbilitySystem-02",
+          "kind": "最小代码/资源整改",
+          "task": "复核GAS授权、冷却、费用、取消与服务器权威；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformAbilitySystem-03",
+          "kind": "人工界面与场景接入",
+          "task": "非视觉机制以原生测试和必要的可操作服务诊断台验收，不为形式制作空3D地图"
+        },
+        {
+          "id": "GamePlatformAbilitySystem-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformAbilitySystem-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformAI",
+      "pluginId": "GamePlatformAI",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "人工智能",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/GamePlatformAI.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAI/GamePlatformAI.Build.cs",
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformAI/Source/GamePlatformAIServer/GamePlatformAIServer.Build.cs"
+      ],
+      "sourceFileCount": 35,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 8,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证感知、目标选择、导航和任务取消",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformAI-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformAI-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证感知、目标选择、导航和任务取消；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformAI-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformAI-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformAI-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformCharacter",
+      "pluginId": "GamePlatformCharacter",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "角色",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCharacter/GamePlatformCharacter.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformCharacter/Source/GamePlatformCharacter/GamePlatformCharacter.Build.cs"
+      ],
+      "sourceFileCount": 12,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 2,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证身份与运动组件、切角色、生命周期与复制",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformCharacter-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformCharacter-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证身份与运动组件、切角色、生命周期与复制；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformCharacter-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformCharacter-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformCharacter-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformCombat",
+      "pluginId": "GamePlatformCombat",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "战斗",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/GamePlatformCombat.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/GamePlatformCombat.Build.cs"
+      ],
+      "sourceFileCount": 39,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 6,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_CombatReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证权威伤害/治疗、命中重复、碰撞与表现解耦",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Private/Actors/GamePlatformCombatProjectile.cpp",
+          "line": 113
+        },
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Private/Actors/GamePlatformCombatProjectile.cpp",
+          "line": 115
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformCombat-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformCombat-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证权威伤害/治疗、命中重复、碰撞与表现解耦；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformCombat-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformCombat-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformCombat-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformEquipment",
+      "pluginId": "GamePlatformEquipment",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "装备",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/GamePlatformEquipment.uplugin",
+      "declaredModuleCount": 3,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipment/GamePlatformEquipment.Build.cs",
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentClient/GamePlatformEquipmentClient.Build.cs",
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformEquipment/Source/GamePlatformEquipmentServer/GamePlatformEquipmentServer.Build.cs"
+      ],
+      "sourceFileCount": 18,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 3,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证装备与背包事务、权限、撤销与角色同步",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformEquipment-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformEquipment-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证装备与背包事务、权限、撤销与角色同步；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformEquipment-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformEquipment-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformEquipment-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformGameplay",
+      "pluginId": "GamePlatformGameplay",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "玩法装配",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/GamePlatformGameplay.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/GamePlatformGameplay.Build.cs"
+      ],
+      "sourceFileCount": 38,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 5,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证通用玩法启动、停止和跨世界回收",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Components/GamePlatformExperienceComponent.cpp",
+          "line": 319
+        },
+        {
+          "kind": "逐帧执行",
+          "file": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Components/GamePlatformExperienceComponent.cpp",
+          "line": 321
+        }
+      ],
+      "tasks": [
+        {
+          "id": "GamePlatformGameplay-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformGameplay-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证通用玩法启动、停止和跨世界回收；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformGameplay-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformGameplay-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformGameplay-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformInteraction",
+      "pluginId": "GamePlatformInteraction",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "交互",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/GamePlatformInteraction.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/GamePlatformInteraction.Build.cs"
+      ],
+      "sourceFileCount": 24,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 5,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证交互资格、距离、状态机和多人同时操作",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformInteraction-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformInteraction-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证交互资格、距离、状态机和多人同时操作；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformInteraction-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformInteraction-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformInteraction-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformInventory",
+      "pluginId": "GamePlatformInventory",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "背包",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/GamePlatformInventory.uplugin",
+      "declaredModuleCount": 1,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformInventory/Source/GamePlatformInventoryClient/GamePlatformInventoryClient.Build.cs"
+      ],
+      "sourceFileCount": 9,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 1,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证事务一致性、版本、幂等、撤销和资源隔离",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformInventory-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformInventory-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证事务一致性、版本、幂等、撤销和资源隔离；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformInventory-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformInventory-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformInventory-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformLobby",
+      "pluginId": "GamePlatformLobby",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "通用大厅",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/GamePlatformLobby.uplugin",
+      "declaredModuleCount": 3,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/Source/GamePlatformLobby/GamePlatformLobby.Build.cs",
+        "Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/Source/GamePlatformLobbyClient/GamePlatformLobbyClient.Build.cs",
+        "Game/Plugins/GamePlatform/GameModes/GamePlatformLobby/Source/GamePlatformLobbyServer/GamePlatformLobbyServer.Build.cs"
+      ],
+      "sourceFileCount": 3,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "核实OpenWorld大厅真实消费者及模块壳缺口，不创建独立大厅服务器",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformLobby-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformLobby-02",
+          "kind": "最小代码/资源整改",
+          "task": "核实OpenWorld大厅真实消费者及模块壳缺口，不创建独立大厅服务器；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformLobby-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformLobby-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformLobby-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformProgression",
+      "pluginId": "GamePlatformProgression",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "成长",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/GamePlatformProgression.uplugin",
+      "declaredModuleCount": 2,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgression/GamePlatformProgression.Build.cs",
+        "Game/Plugins/GamePlatform/PlayerServices/GamePlatformProgression/Source/GamePlatformProgressionClient/GamePlatformProgressionClient.Build.cs"
+      ],
+      "sourceFileCount": 18,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 5,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证服务器进度事实、加点/升级与多次事件去重",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformProgression-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformProgression-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证服务器进度事实、加点/升级与多次事件去重；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformProgression-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformProgression-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformProgression-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformQuest",
+      "pluginId": "GamePlatformQuest",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "任务",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/GamePlatformQuest.uplugin",
+      "declaredModuleCount": 3,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/Source/GamePlatformQuest/GamePlatformQuest.Build.cs",
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/Source/GamePlatformQuestClient/GamePlatformQuestClient.Build.cs",
+        "Game/Plugins/GamePlatform/Gameplay/GamePlatformQuest/Source/GamePlatformQuestServer/GamePlatformQuestServer.Build.cs"
+      ],
+      "sourceFileCount": 24,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 5,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "验证目标进度、奖励幂等和失败补偿",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformQuest-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformQuest-02",
+          "kind": "最小代码/资源整改",
+          "task": "验证目标进度、奖励幂等和失败补偿；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformQuest-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformQuest-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformQuest-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-GamePlatformVillage",
+      "pluginId": "GamePlatformVillage",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M5",
+      "batchDescription": "权威玩法与场景",
+      "domain": "通用新手村",
+      "layer": "Platform",
+      "pluginKind": "code",
+      "descriptorPath": "Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/GamePlatformVillage.uplugin",
+      "declaredModuleCount": 3,
+      "moduleBuildRules": [
+        "Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/Source/GamePlatformVillage/GamePlatformVillage.Build.cs",
+        "Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/Source/GamePlatformVillageClient/GamePlatformVillageClient.Build.cs",
+        "Game/Plugins/GamePlatform/GameModes/GamePlatformVillage/Source/GamePlatformVillageServer/GamePlatformVillageServer.Build.cs"
+      ],
+      "sourceFileCount": 3,
+      "nativeAssetCount": 0,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "核实Village教学/训练实际消费者及模块壳缺口",
+      "alreadyChangedNotes": "",
+      "targetReview": "Client/Server/Editor；权威测试必须专服或网络",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "GamePlatformVillage-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "GamePlatformVillage-02",
+          "kind": "最小代码/资源整改",
+          "task": "核实Village教学/训练实际消费者及模块壳缺口；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "GamePlatformVillage-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "GamePlatformVillage-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "GamePlatformVillage-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAContentPack_Common",
+      "pluginId": "DBAContentPack_Common",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Common/DBAContentPack_Common/DBAContentPack_Common.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 102,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "公共角色、模型/材质、共享资源与服务器权威依赖审核",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAContentPack_Common-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAContentPack_Common-02",
+          "kind": "最小代码/资源整改",
+          "task": "公共角色、模型/材质、共享资源与服务器权威依赖审核；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAContentPack_Common-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAContentPack_Common-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAContentPack_Common-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAFrontEndPack",
+      "pluginId": "DBAFrontEndPack",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/DBAFrontEndPack.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 53,
+      "nativeMapCount": 2,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "登录、英雄选择与创建的真实Widget/场景及客户端权限",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAFrontEndPack-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAFrontEndPack-02",
+          "kind": "最小代码/资源整改",
+          "task": "登录、英雄选择与创建的真实Widget/场景及客户端权限；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAFrontEndPack-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAFrontEndPack-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAFrontEndPack-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Boar",
+      "pluginId": "DBAHeroPack_Boar",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Boar/DBAHeroPack_Boar.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核亥猪真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Boar-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Boar-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核亥猪真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Boar-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Boar-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Boar-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Dog",
+      "pluginId": "DBAHeroPack_Dog",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/DBAHeroPack_Dog.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核戌狗真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Dog-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Dog-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核戌狗真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Dog-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Dog-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Dog-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Dragon",
+      "pluginId": "DBAHeroPack_Dragon",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/DBAHeroPack_Dragon.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核辰龙真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Dragon-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Dragon-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核辰龙真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Dragon-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Dragon-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Dragon-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Goat",
+      "pluginId": "DBAHeroPack_Goat",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/DBAHeroPack_Goat.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核未羊真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Goat-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Goat-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核未羊真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Goat-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Goat-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Goat-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Horse",
+      "pluginId": "DBAHeroPack_Horse",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Horse/DBAHeroPack_Horse.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核午马真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Horse-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Horse-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核午马真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Horse-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Horse-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Horse-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Monkey",
+      "pluginId": "DBAHeroPack_Monkey",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Monkey/DBAHeroPack_Monkey.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核申猴真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Monkey-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Monkey-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核申猴真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Monkey-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Monkey-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Monkey-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Ox",
+      "pluginId": "DBAHeroPack_Ox",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Ox/DBAHeroPack_Ox.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核丑牛真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Ox-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Ox-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核丑牛真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Ox-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Ox-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Ox-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Rabbit",
+      "pluginId": "DBAHeroPack_Rabbit",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/DBAHeroPack_Rabbit.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核卯兔真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Rabbit-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Rabbit-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核卯兔真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Rabbit-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Rabbit-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Rabbit-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Rat",
+      "pluginId": "DBAHeroPack_Rat",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rat/DBAHeroPack_Rat.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核子鼠真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Rat-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Rat-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核子鼠真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Rat-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Rat-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Rat-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Rooster",
+      "pluginId": "DBAHeroPack_Rooster",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/DBAHeroPack_Rooster.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核酉鸡真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Rooster-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Rooster-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核酉鸡真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Rooster-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Rooster-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Rooster-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Snake",
+      "pluginId": "DBAHeroPack_Snake",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Snake/DBAHeroPack_Snake.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核巳蛇真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Snake-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Snake-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核巳蛇真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Snake-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Snake-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Snake-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAHeroPack_Tiger",
+      "pluginId": "DBAHeroPack_Tiger",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/DBAHeroPack_Tiger.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 9,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "审核寅虎真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAHeroPack_Tiger-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAHeroPack_Tiger-02",
+          "kind": "最小代码/资源整改",
+          "task": "审核寅虎真实角色网格、动画、材质、技能资源、软引用/许可和端侧Cook；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAHeroPack_Tiger-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAHeroPack_Tiger-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAHeroPack_Tiger-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAPresentationPack_Core",
+      "pluginId": "DBAPresentationPack_Core",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/DBAPresentationPack_Core.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 1664,
+      "nativeMapCount": 1,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": "/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review/L_DBA_IceArrow_A_Review",
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "项目VFX目录/定义与真实Niagara/材质消费者、性能和资源许可",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAPresentationPack_Core-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAPresentationPack_Core-02",
+          "kind": "最小代码/资源整改",
+          "task": "项目VFX目录/定义与真实Niagara/材质消费者、性能和资源许可；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAPresentationPack_Core-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAPresentationPack_Core-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAPresentationPack_Core-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBASFXPack_Core",
+      "pluginId": "DBASFXPack_Core",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/DBASFXPack_Core.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 5,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "项目音效资产、试听/停止、混音与服务器资源排除",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBASFXPack_Core-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBASFXPack_Core-02",
+          "kind": "最小代码/资源整改",
+          "task": "项目音效资产、试听/停止、混音与服务器资源排除；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBASFXPack_Core-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBASFXPack_Core-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBASFXPack_Core-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAUIPack_Core",
+      "pluginId": "DBAUIPack_Core",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/DBAUIPack_Core.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 167,
+      "nativeMapCount": 0,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "项目页面、HUD、主题、事件交互、焦点与真实原生UI质量审核",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAUIPack_Core-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAUIPack_Core-02",
+          "kind": "最小代码/资源整改",
+          "task": "项目页面、HUD、主题、事件交互、焦点与真实原生UI质量审核；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAUIPack_Core-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAUIPack_Core-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAUIPack_Core-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAWorldPack_MainArena",
+      "pluginId": "DBAWorldPack_MainArena",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_MainArena/DBAWorldPack_MainArena.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 4,
+      "nativeMapCount": 1,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "主竞技场地图/掩体视野、五种竞技人数与静态环境性能",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAWorldPack_MainArena-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAWorldPack_MainArena-02",
+          "kind": "最小代码/资源整改",
+          "task": "主竞技场地图/掩体视野、五种竞技人数与静态环境性能；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAWorldPack_MainArena-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAWorldPack_MainArena-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAWorldPack_MainArena-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    },
+    {
+      "workOrderId": "SSLM-PLG-DBAWorldPack_Village",
+      "pluginId": "DBAWorldPack_Village",
+      "priorityFromAudit": "P1",
+      "primaryBatch": "M6",
+      "batchDescription": "19个内容包逐项交付",
+      "domain": "内容包",
+      "layer": "Project",
+      "pluginKind": "content_pack",
+      "descriptorPath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/DBAWorldPack_Village.uplugin",
+      "declaredModuleCount": 0,
+      "moduleBuildRules": [],
+      "sourceFileCount": 0,
+      "nativeAssetCount": 190,
+      "nativeMapCount": 1,
+      "moduleNativeTestFileCount": 0,
+      "visualReviewRequired": true,
+      "existingDiagnosticMap": null,
+      "diagnosticIsFormalScenario": false,
+      "formalScenarioCount": 0,
+      "formalScenarioGap": true,
+      "humanApproval": "not_verified",
+      "completionStatus": "not_implemented_by_this_plan",
+      "runtimePerformanceStatus": "not_measured_by_this_plan",
+      "firstStepFocus": "新手村地图、森林农田/道路PCG、碰撞导航/出生与人工观察",
+      "alreadyChangedNotes": "",
+      "targetReview": "内容消费者端侧与真Client/Server Cook产物",
+      "sourcePerformanceCandidates": [],
+      "tasks": [
+        {
+          "id": "DBAWorldPack_Village-01",
+          "kind": "功能与边界审查",
+          "task": "读取实际公开API、消费者、运行端侧、现有测试和资源引用；确定真实功能分母及所有权范围"
+        },
+        {
+          "id": "DBAWorldPack_Village-02",
+          "kind": "最小代码/资源整改",
+          "task": "新手村地图、森林农田/道路PCG、碰撞导航/出生与人工观察；只修改已复现的缺陷或真实缺失，不建立平行模块"
+        },
+        {
+          "id": "DBAWorldPack_Village-03",
+          "kind": "人工界面与场景接入",
+          "task": "基于真实UE资源与现有DemoHub制作可启动、参数调整、执行、停止、重置、返回的正式操作案例；仅由Monolith制作项目Widget资产。诊断地图可复用，但不能算正式功能完成"
+        },
+        {
+          "id": "DBAWorldPack_Village-04",
+          "kind": "原生与发布证据",
+          "task": "按职责执行定向UE5.8模块/蓝图加载、正常失败取消回归、双端依赖/Cook和条件性能采样，保留原生日志/版本指纹"
+        },
+        {
+          "id": "DBAWorldPack_Village-05",
+          "kind": "人工审核与交付收口",
+          "task": "由既有GamePlatformDeveloperTools ReviewSubsystem登记当前版本Pending待审证据；真实Reviewer显式判断并追加修订后才可能进入人工通过"
+        }
+      ],
+      "acceptanceEvidence": [
+        "真实接口/消费者与中文职责说明",
+        "当前Build.cs/端侧依赖及源码改动差异",
+        "当期UE5.8实际编译链接/必要自动化结果",
+        "如适用的真实蓝图、地图冷重载和资源消费者",
+        "如适用的Client/Server真Cook容器资源差异",
+        "实际CPU/GPU采样或明确不适用及审核理由",
+        "如需视觉/交互的DemoHub正式操作及Editor人工待审报告"
+      ],
+      "blockingConditions": [
+        "未确认的功能分母不能计算覆盖率",
+        "诊断地图不是正式可操作案例",
+        "没有当期UE/性能/人工证据不得宣称ProductionReady"
+      ]
+    }
+  ]
+}
