@@ -34,11 +34,16 @@ public:
     UFUNCTION(BlueprintCallable, Category="GamePlatform|Camera|Cinematic")
     bool EndCinematicView();
 
+    /** 仅结束指定机位的租约；调用方可避免释放由其他界面建立的电影机位。 */
+    UFUNCTION(BlueprintCallable, Category="GamePlatform|Camera|Cinematic")
+    bool EndCinematicViewFor(AActor* ExpectedCameraActor);
+
     /** 查询本地子系统当前是否仍拥有电影机位。 */
     UFUNCTION(BlueprintPure, Category="GamePlatform|Camera|Cinematic")
     bool IsCinematicViewActive() const;
 
 private:
+    bool EndCinematicViewInternal(AActor* ExpectedCameraActor, bool bRequireExpectedCameraActor);
     void ClearOwnedView();
     void HandleWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
     TWeakObjectPtr<AActor> PreviousViewTarget;
@@ -47,4 +52,8 @@ private:
     TWeakObjectPtr<UWorld> OwnedWorld;
     float RestoreBlendTime = 0.0f;
     FDelegateHandle WorldCleanupHandle;
+
+#if WITH_DEV_AUTOMATION_TESTS
+    friend class FGamePlatformCinematicEndOwnershipTest;
+#endif
 };

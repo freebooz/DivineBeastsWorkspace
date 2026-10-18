@@ -4,8 +4,13 @@
 #include "Camera/CameraComponent.h"
 #include "Cinematic/GamePlatformCinematicCameraProfile.h"
 #include "Cinematic/GamePlatformCinematicCameraSubsystem.h"
+#include "Engine/Engine.h"
+#include "Engine/LocalPlayer.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 #include "UObject/UObjectGlobals.h"
 #include "UObject/Package.h" // 完整UPackage定义用于测试中明确的瞬态Outer，不依赖其他Unity单元偶然包含。
+#include "UObject/StrongObjectPtr.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FGamePlatformCinematicProfileValidationTest,
@@ -89,6 +94,38 @@ bool FGamePlatformCinematicGenericCameraOpticsTest::RunTest(const FString&)
     TestTrue(TEXT("竞技模式配置可安全识别"),
         UGamePlatformCinematicCameraSubsystem::ApplyProfileToCameraComponent(Camera, Profile));
     TestTrue(TEXT("竞技模式不继承角色展示焦段"), FMath::IsNearlyEqual(Camera->FieldOfView, 88.0f));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGamePlatformCinematicEndOwnershipTest,
+    "GamePlatform.Camera.Cinematic.LeaseOwnership",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGamePlatformCinematicEndOwnershipTest::RunTest(const FString&)
+{
+    const TStrongObjectPtr<ULocalPlayer> LocalPlayer(NewObject<ULocalPlayer>(GEngine));
+    if (!TestNotNull(TEXT("本地玩家测试外层"), LocalPlayer.Get()))
+    {
+        return false;
+    }
+
+    UGamePlatformCinematicCameraSubsystem* CameraSubsystem =
+        NewObject<UGamePlatformCinematicCameraSubsystem>(LocalPlayer.Get());
+    AActor* ExistingCameraOwner = GetMutableDefault<APawn>();
+    AActor* PreviewStageCamera = GetMutableDefault<AActor>();
+    if (!TestNotNull(TEXT("电影机位子系统"), CameraSubsystem) ||
+        !TestNotNull(TEXT("已有机位目标"), ExistingCameraOwner) ||
+        !TestNotNull(TEXT("预览舞台机位"), PreviewStageCamera))
+    {
+        return false;
+    }
+
+    CameraSubsystem->OwnedViewTarget = ExistingCameraOwner;
+    TestFalse(TEXT("预览不得释放由其他目标持有的租约"),
+        CameraSubsystem->EndCinematicViewFor(PreviewStageCamera));
+    TestTrue(TEXT("目标不匹配时已有机位租约保持不变"),
+        CameraSubsystem->OwnedViewTarget.Get() == ExistingCameraOwner);
     return true;
 }
 #endif

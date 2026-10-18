@@ -152,7 +152,20 @@ bool UGamePlatformCinematicCameraSubsystem::BeginCinematicView(
 }
 bool UGamePlatformCinematicCameraSubsystem::EndCinematicView()
 {
-    if (!IsInGameThread())
+    return EndCinematicViewInternal(nullptr, false);
+}
+
+bool UGamePlatformCinematicCameraSubsystem::EndCinematicViewFor(AActor* ExpectedCameraActor)
+{
+    return EndCinematicViewInternal(ExpectedCameraActor, true);
+}
+
+bool UGamePlatformCinematicCameraSubsystem::EndCinematicViewInternal(
+    AActor* ExpectedCameraActor, bool bRequireExpectedCameraActor)
+{
+    if (!IsInGameThread() ||
+        (bRequireExpectedCameraActor &&
+            (!IsValid(ExpectedCameraActor) || OwnedViewTarget.Get() != ExpectedCameraActor)))
     {
         return false;
     }

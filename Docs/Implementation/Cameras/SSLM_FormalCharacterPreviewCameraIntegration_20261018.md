@@ -19,14 +19,14 @@
 - 角色预览使用临时、仅本地的 `CharacterPreview` 配置：默认35毫米，焦段限制24–85毫米，混合时间沿用舞台的 `CameraBlendSeconds`（镜头混合秒数），关闭浅景深追焦，保持角色和创建页面文字清楚。配置不会作为内容资产保存或进入服务器。
 - 普通鼠标拖动继续通过现有ViewModel（视图模型）命令旋转角色。鼠标指针位于现有预览区域时，滚轮每格将视距调整30厘米；按住Shift滚轮每格调整焦距5毫米。其他表单、列表及输入焦点保持原路径。
 - 选择十二生肖只替换角色外观软资源；镜头位置和焦段保持稳定，不重建相机或打断异步加载。
-- 正常退出由平台镜头服务按所有权恢复原ViewTarget（视角目标）。仅当恢复混合确实启动时，保留舞台、角色外观及流送关卡至混合时间结束后50毫秒，再还原原始视场角并卸载；退出混合期间再次进入会取消旧卸载任务。
+- 正常退出通过平台镜头服务的 `EndCinematicViewFor(PreviewStage)`（按预览舞台目标释放机位租约）恢复原ViewTarget（视角目标），避免误结束登录页或其他界面的机位。仅当恢复混合确实启动时，保留舞台、角色外观及流送关卡至混合时间结束后50毫秒，再还原原始视场角并卸载；退出混合期间再次进入会取消旧卸载任务。
 - 竞技模式配置明确跳过焦段、光圈和手动对焦设置；角色预览功能只位于客户端表现模块。Dedicated Server（专用服务器）不新增相机模块依赖或展示资源。
 
 ## 本次修改文件
 
 - `GamePlatformCinematicCameraProfile.h/.cpp`（平台镜头配置类）：增加焦距到水平视场角换算。
-- `GamePlatformCinematicCameraSubsystem.h/.cpp`（平台镜头子系统）：普通相机焦段应用、竞技光学隔离及世界清理时释放失效租约。
-- `GamePlatformCinematicCameraProfileTests.cpp`（平台镜头自动化测试）：覆盖24/35/50/85毫米视场角、普通相机应用及竞技隔离。
+- `GamePlatformCinematicCameraSubsystem.h/.cpp`（平台镜头子系统）：普通相机焦段应用、竞技光学隔离、世界清理，以及按目标释放租约。
+- `GamePlatformCinematicCameraProfileTests.cpp`（平台镜头自动化测试）：覆盖24/35/50/85毫米视场角、普通相机应用、竞技隔离及错误目标不得释放其他机位租约。
 - `GamePlatformCharacterPreviewStage.h`（平台预览舞台）：公开当前安全视距供滚轮命令读取。
 - `DivineBeastsCharacterPreviewSubsystem.h/.cpp`（项目角色预览子系统）：接入平台相机租约、焦段配置、视距调整、原视场恢复及延迟卸载。
 - `DivineBeastsPresentationClient.Build.cs`（项目客户端表现模块依赖）：只为ClientOnly（仅客户端）模块添加 `GamePlatformCameraClient`（游戏平台相机客户端模块）。
@@ -56,5 +56,8 @@
 
 - UE5.8.0 Editor 项目目标构建通过，UBT 259/259 actions 成功，进程退出码0；构建证据标记 `Status=Passed`、`EditorBuildEvidenceStatus=Eligible`。使用 `Build/Game/BuildFoundation.ps1 -EngineRoot D:\UnrealEngine-5.8.0-release -Editor -UsePrecompiled -AdditionalPlugins DBAServer -NoUBA -MaxParallelActions 8`。证据：`Saved/Validation/FoundationM0/f16df79c-d485-41f7-bc79-fbe4cab3c043/Build/result.json` 及 `Editor/UBT.log`。该配置复用现有UE引擎二进制，不代表引擎源码重建。
 - UE5.8 `UnrealEditor-Cmd` 前端地图自动化结果为 `Passed=true`、`Count=7`、`Failed=0`。七项均为 `Success`：`GamePlatform.Camera.Cinematic.Profile.Validation`、`GamePlatform.Camera.Cinematic.FocalLengthMapping`、`GamePlatform.Camera.Cinematic.GenericCameraOpticsAndArenaIsolation`、`DivineBeasts.UI.Characters.PreviewCameraWheel`、`DivineBeasts.UI.Characters.PreviewDragDirection`、`DivineBeasts.UI.Characters.PreviewDragFiniteClamp`、`DivineBeasts.UI.Characters.PreviewDragLifetime`。原生报告：`Saved/Validation/CastingMonster20261013/Native-971f7403-3552-4db2-badf-34d6f8140936/Report/index.json`；汇总：同目录 `Result.json`。
+- 后续租约所有权修正通过UE5.8.0完整Editor目标构建，退出码0，`EditorBuildEvidenceStatus=Eligible`；本次增量构建执行6个UBT动作。采用 `Build/Game/BuildFoundation.ps1 -Editor -UsePrecompiled -AdditionalPlugins DBAServer -MaxParallelActions 2`。证据：`Saved/Validation/FoundationM0/236f9818-b165-4bb6-ad60-35791a1dcdac/Build/result.json` 与 `Build/Editor/UBT.log`。复用现有引擎二进制，不代表引擎源码重建。
+- 同一工作树重新运行8项UE5.8自动化测试，`Passed=true`、`Count=8`、`Failed=0`。除原七项外新增 `GamePlatform.Camera.Cinematic.LeaseOwnership`，验证预览传入不同舞台目标时不会清除其他电影机位租约。报告：`Saved/Validation/CastingMonster20261013/Native-6f28bad1-691e-4f9a-87fd-337fbc38f53a/Report/index.json`；汇总：同目录 `Result.json`。
+- 本次报告仍明确为 `NetworkAcceptance=false`、`ManualVisualAccepted=false`。测试载入前端地图但没有交互操作正式角色选择/创建页面；正式场景截图、输入交接、生肖实机切换、镜头抢占/恢复录像、Cook、专用服务器隔离运行和目标设备性能验收仍未完成。
 - 自动化覆盖焦段映射、普通相机光学应用、竞技参数隔离，以及预览滚轮和拖拽状态；结果明确保留 `NetworkAcceptance=false`、`ManualVisualAccepted=false`。测试进程载入前端地图，但没有通过交互式编辑器操作正式角色选择/创建页面。
 - 因当前没有UE编辑器UI自动化通道，本次没有改动蓝图或正式关卡资源，也没有新的正式场景截图、真人输入、生肖切换、镜头抢占/恢复录像、Cook、专用服务器隔离运行或目标设备性能记录。上述项目仍需按“人工审核入口”完成视觉与运行验收。

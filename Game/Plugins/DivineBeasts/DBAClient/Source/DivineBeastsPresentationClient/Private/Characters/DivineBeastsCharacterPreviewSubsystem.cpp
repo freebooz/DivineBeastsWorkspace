@@ -286,8 +286,8 @@ void UDivineBeastsCharacterPreviewSubsystem::DeactivatePreviewSceneInternal(
         if (UGamePlatformCinematicCameraSubsystem* CameraSubsystem =
                 LocalPlayer->GetSubsystem<UGamePlatformCinematicCameraSubsystem>())
         {
-            // 插件仅在本地预览仍拥有ViewTarget时恢复；若其他系统已抢占则返回false。
-            bRestoreBlendStarted = CameraSubsystem->EndCinematicView();
+            // 按舞台精确释放租约，不能误结束登录页或其他界面建立的电影机位。
+            bRestoreBlendStarted = CameraSubsystem->EndCinematicViewFor(PreviewStage.Get());
         }
     }
 
