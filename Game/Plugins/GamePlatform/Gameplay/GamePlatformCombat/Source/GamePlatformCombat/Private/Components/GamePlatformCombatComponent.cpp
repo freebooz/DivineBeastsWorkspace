@@ -90,6 +90,7 @@ void UGamePlatformCombatComponent::EndPlay(const EEndPlayReason::Type EndPlayRea
         ClearShieldEffects();
     }
     ActiveShieldEffects.Reset();
+    InFlightSlowEventIds.Reset();
     Super::EndPlay(EndPlayReason);
 }
 
@@ -578,7 +579,8 @@ FGamePlatformCombatResult UGamePlatformCombatComponent::ApplySlow(
     FGamePlatformCombatResult Result;
     Result.EventId = Spec.EventId;
     Result.RequestedMagnitude = SlowFraction;
-    if (!IsInGameThread() || bCombatClosing || HasCompletedEvent(Spec.EventId))
+    if (!IsInGameThread() || bCombatClosing || HasCompletedEvent(Spec.EventId) ||
+        InFlightSlowEventIds.Contains(Spec.EventId))
     {
         Result.Error = EGamePlatformCombatError::Cancelled;
         return Result;
@@ -637,8 +639,10 @@ FGamePlatformCombatResult UGamePlatformCombatComponent::ApplySlow(
     EffectSpec.Data->SetDuration(DurationSeconds, true);
     EffectSpec.Data->SetSetByCallerMagnitude(
         GamePlatformCombatTags::Data_Control_SlowFraction, -SlowFraction);
+    InFlightSlowEventIds.Add(Spec.EventId);
     const FActiveGameplayEffectHandle Applied =
         SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpec.Data.Get(), TargetASC);
+    InFlightSlowEventIds.Remove(Spec.EventId);
     if (!Applied.WasSuccessfullyApplied())
     {
         Result.Error = EGamePlatformCombatError::EffectApplicationFailed;
@@ -806,6 +810,7 @@ bool UGamePlatformCombatComponent::ResetForNewAvatar(
     ResolvedResults.Reset();
     CompletedEventIds.Reset();
     CompletedEventOrder.Reset();
+    InFlightSlowEventIds.Reset();
 
     FGamePlatformCombatSpec ResetSpec;
     ResetSpec.EventId = FGuid::NewGuid();

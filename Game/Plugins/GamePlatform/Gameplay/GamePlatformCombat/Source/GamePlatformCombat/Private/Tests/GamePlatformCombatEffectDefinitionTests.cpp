@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Effects/GamePlatformCombatGameplayEffects.h"
 #include "Tags/GamePlatformAbilitySystemTags.h"
 #include "Tags/GamePlatformCombatTags.h"
@@ -69,7 +70,7 @@ bool FGamePlatformCombatSlowEffectDefinitionTest::RunTest(const FString&)
         EGameplayEffectMagnitudeCalculation::SetByCaller);
     TestEqual(TEXT("动态参数身份不得为空"),
         Modifier.ModifierMagnitude.GetSetByCallerFloat().DataTag,
-        GamePlatformCombatTags::Data_Control_SlowFraction);
+        GamePlatformCombatTags::Data_Control_SlowFraction.GetTag());
     return true;
 }
 

@@ -187,6 +187,8 @@ private:
 
     TArray<FGamePlatformCombatSpec> PendingResolutionStack;
     TMap<FGuid, FGamePlatformCombatResult> ResolvedResults;
+    /** Slow的GAS GE应用会同步广播监听者：相同事件ID尚在应用中时，拒绝递归重复执行。 */
+    TSet<FGuid> InFlightSlowEventIds;
     TSet<FGuid> CompletedEventIds;
     TArray<FGuid> CompletedEventOrder;
 

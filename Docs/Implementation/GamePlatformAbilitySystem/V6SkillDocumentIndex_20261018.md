@@ -29,9 +29,14 @@
 | 22 | `Tools/Unreal/Abilities/AuthorV6SkillDraftAssetsUE58.py` | V6原生审核DataAsset制作脚本，含蛇行待审候选数值差异 | **仅源文件已更新，未调用编辑器写盘** | 用户解除不编译后取得正式Monolith编辑器连接再制作 |
 | 23 | `Docs/Implementation/GamePlatformAbilitySystem/V6SkillImplementationRegistry_20261018.json` 中 `v6DraftBalanceCorrections` | 旧V2蛇行射程670cm／移动680cm差异的V6候选纠错 | **680cm仅待审，未获生产批准** | 审批后形成正式Level1数据表并验证SafeDash与历史动作差异 |
 
-| 24 | `Docs/Implementation/GamePlatformAbilitySystem/V6ControlSkillImplementationMatrix_20261018.json` | 12生肖控制槽基础原语适配与历史机制差距矩阵 | **8项两段执行候选、4项Slow未支持，正式批准0项** | 逐项人工审批和UE原生验证 |
+| 24 | `Docs/Implementation/GamePlatformAbilitySystem/V6ControlSkillImplementationMatrix_20261018.json` | 12生肖控制槽基础原语适配与历史机制差距矩阵 | **12项两段执行原语候选（含4项Slow），正式批准0项；待UE原生验收** | 逐项人工审批和UE原生验证 |
 | 25 | `Tests/Architecture/TestV6DamageControlComposite.py` | 单体／范围伤害加短眩晕和沉默的源码回归、负向注入、历史矩阵门禁 | **非编译合同复验13/13通过** | UE5.8原生两段GAS/Combat实测 |
 | 26 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Private/Tests/DivineBeastsV6AbilityContractTests.cpp` | 追加纯C++Stun/Silence控制行为合同正负例 | **仅C++原生测试源码，未编译** | UE自动化`DivineBeasts.Abilities.V6.DamageControlPairContract` |
+
+| 27 | `Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Public/Attributes/GamePlatformCombatAttributeSet.h` 等 | MoveSpeedMultiplier（通用GAS移动倍率属性）及属性网络复制/限幅 | **本批源码新增，未编译** | UE5.8原生GE和客户端移动预测 |
+| 28 | `Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/Source/GamePlatformCombat/Private/Effects/GamePlatformCombatGameplayEffects.cpp` 等 | UGamePlatformSlowGameplayEffect（平台限时GE）与权威ApplySlow | **源码新增，未编译** | 多来源叠加、到期恢复、死亡清理、GAS网络GE |
+| 29 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsCharactersRuntime/Private/Components/DivineBeastsCharacterComponent.cpp` | 订阅GAS倍速变化并按Hero基础速度控制移动和蹲行 | **源码新增，未编译** | 单双客户端移动和AI/NPC速度验收 |
+| 30 | `Tests/Architecture/TestV6SlowIntegration.py` | 新减速GAS/属性/角色移动桥接及四生肖待审门禁 | **纯静态回归8/8通过，UE未编译** | 原生属性变化/GE到期/网络延迟和游走移动验证 |
 
 ## 需要原生创建而当前不存在的资产台账
 

@@ -696,6 +696,8 @@ void UDivineBeastsCharacterComponent::BroadcastReadinessIfChanged(
 {
     RefreshActivationGateBinding();
     const bool bCurrentReady = IsCharacterReady();
+    // Slow GE可在Reset期间先到期；角色重新Ready时强制按Hero基础速度及当前倍率收敛。
+    if (bCurrentReady) RefreshMoveSpeedMultiplier();
     if (bPreviousReady != bCurrentReady)
     {
         ReadinessChanged.Broadcast(bCurrentReady);

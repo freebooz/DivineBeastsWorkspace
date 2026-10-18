@@ -184,4 +184,37 @@ DBAClient/DivineBeastsUIClient与DivineBeastsPresentationClient（只读8槽显�
 - `DivineBeastsV6AbilityContractTests.cpp`（UE5.8原生测试源码）追加纯动作正负例；未编译前不能声明原生通过。
 - 下一阶段须实现服务器权威`Slow`属性、减速叠加和网络移动一致性，再落地历史条件控制、击退/牵引、假身/目标标记与12项独立被动，并补齐96项DataAsset/GA/GE、8槽Widget、角色创建图文/VFX与联机Cook证据。
 - 当前控制源码回归 **13/13通过**、V6战斗安全源码回归 **11/11通过**，均仅为非编译静态检测与故障注入；并非引擎内原生自动化的执行结果。
+## 十一、2026-10-18 平台原生GAS减速与V6四生肖控制扩展（源码阶段，未编译）
+
+本批按用户继续执行要求补齐真正的Slow减速。代码落地于GamePlatformCombat（通用平台战斗层）与项目DivineBeastsCharactersRuntime（SSLM角色运动适配层）、DivineBeastsAbilitiesRuntime（V6 GAS技能执行器），**没有**新增第二套战斗引擎、复制RPC或Niagara判定。用户本轮要求修改最终提交`main`，同时保留“不编译、不Cook、不切换旧占位技能集”的约束。
+
+### GAS服务器权威数值与状态
+
+- 平台`UGamePlatformCombatAttributeSet::MoveSpeedMultiplier`（统一移动速度倍率属性）默认1，限时GE按加法聚合负减速比例；倍率经`PreAttributeChange`限制在0.30～1.00，最多减速70%，当前不提供额外加速。
+- `UGamePlatformSlowGameplayEffect`（统一限时减速GE）使用`EGameplayEffectStackingType::None`（各来源独立有效句柄），`SetByCaller`（服务器动态设置比例）和`Combat.Control.Slow`（减速状态标签）。过期/驱散后由GAS属性重新计算，不维护第二份减速计时器、不使用Tick。
+- 平台`UGamePlatformCombatComponent::ApplySlow`（服务器减速操作）严格验证目标ACharacter、真实CharacterMovement组件、属性集、源和目标Avatar代次、施法合法性、比例上限、持续秒数，GE应用同步回调后重新确认组件/世界/化身身份。相同事件ID在应用中被`InFlightSlowEventIds`（施加中事件集合）拒绝重复写入。目标换代时只撤销旧句柄，不清理后继；结束及重生清理过期和在途状态。
+- `ResetForNewAvatar`（新化身重置）及`EnterDeadState`（死亡处理）均移除`Combat.Control.Slow`（减速状态），`RemoveControl(Slow)`（移除减速）通过已有GAS效果Tag撤销全部相关有限时状态，不直接修改属性Base。
+- 角色`UDivineBeastsCharacterComponent`（生肖角色身份配置）继续以`HeroDefinition.Movement.MaxWalkSpeed`（英雄定义基础移动速度）为唯一基础值；监听GAS属性变更并将倍率施加于`CharacterMovement.MaxWalkSpeed`及`MaxWalkSpeedCrouched`（行走和蹲行速度），向客户端复制倍率以保持移动预测依据一致。切换ASC与退出时取消订阅，Ready恢复后重新计算，不每帧轮询；平台并不反向引用项目角色类。
+- 当前通用减速属性按Actor相关性复制，**尚未**完成UE5.8客户端本地预测、网络平滑、迟到驱散及怪物AI行为实测，不能仅据静态检查宣称联机稳定。
+
+### V6新模式及12控制槽对应
+
+`UDivineBeastsV6GameplayAbility`（项目GAS技能执行基类）在既有`DamageAndStun`（伤害眩晕）、`DamageAndSilence`（伤害沉默）、`RadialDamageAndStun`（范围伤害眩晕）后追加`DamageAndSlow`（单体伤害后减速），避免改变旧枚举编号。第二动作必须为`control`且`ModifierId=slow`，倍率大于0小于等于0.70、持续大于0小于等于3秒、只有1个控制段。确认伤害生效后，再用另一服务器事件ID调用平台`ApplySlow`；伤害后的死亡、目标距离或身份变化都会取消减速阶段，但不回滚已成功伤害。
+
+| 控制技能原语来源 | 数量 | 项目实例 | 当前状态 |
+|---|---:|---|---|
+| 单体伤害＋Slow | 4 | 子鼠咬筋、卯兔月痕、未羊安魂、戌狗拦门 | GAS源码候选，未编译 |
+| 范围伤害＋Stun | 4 | 丑牛顶回、寅虎虎啸、辰龙龙压、亥猪震鬃 | GAS源码候选，未编译 |
+| 单体伤害＋Stun | 2 | 午马蹄震、申猴扰心 | GAS源码候选，未编译 |
+| 单体伤害＋Silence | 2 | 巳蛇缠纹、酉鸡鸣震 | GAS源码候选，未编译 |
+
+**所有12项仅具备V2候选效果的基础服务端组合代码，并非V6历史技能完成。** 子鼠位移抑制、卯兔层数定身、未羊减伤、戌狗门盾拦截、龙压风环推拉、虎啸条件性群控、巳蛇蛇纹束缚与酉鸡揭隐等仍需独立权威行为。12份GA/GE正式蓝图、Definition、SkillSet、动画/VFX与创建角色界面未制作，`approvedV6ControlSkills=0`和96项`canGrantToServer=false`不变。
+
+### 验证与交付边界
+
+- 新`Tests/Architecture/TestV6SlowIntegration.py`（Slow静态合同及故障验证），检查平台GAS速度属性、GE标签、限时加法聚合、死亡重生清理、同步事件去重、双端基础速度与V6状态。
+- 平台`GamePlatformCombatAttributeTests.cpp`（属性限幅原生测试）、`GamePlatformCombatEffectDefinitionTests.cpp`（减速GE结构原生测试）和项目`DivineBeastsV6AbilityContractTests.cpp`（V6减速动作测试）均已写入，**未编译或在UE内执行**。
+- 旧V5批准显示名、96技能稳定ID、现有占位授权集合和客户端资源均不修改。非编译回归：V6SlowIntegration（减速上下游静态门禁）8/8、V6DamageControlComposite（控制组合）13/13、V6GASCombatSafety（战斗安全）11/11、V6GASImplementation（技能台账）13/13、GAS事务20/20、八槽数据15/15、V5名称9/9、生肖架构静态断言52/52，均通过；不将这些源码门禁等同UE内运行。
+- 合并审核范围：中文注释覆盖GE持续效果、属性复制/限幅、ServerOnly应用与重入去重、角色移动及蹲行恢复、死亡换代清理；未审核或尚未实现的历史技能额外效果仍明确禁授，且没有新增客户端任意命令或第二套战斗结算系统。
+
 - 默认全部V6`canGrantToServer=false`、`nativeAssetCount=0`，任何模式、矩阵和静态测试变化均不得自动解除审批禁令。
