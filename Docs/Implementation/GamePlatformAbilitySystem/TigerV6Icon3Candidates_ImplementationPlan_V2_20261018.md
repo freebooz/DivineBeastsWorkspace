@@ -97,3 +97,9 @@ UE5.8客户端真实进入Village新手村并选择寅虎，检查8槽布局、4
 Monolith代理虽可能可见，缺少此HWebCodex会话可调用的MCP Provider；要真正建立UI Profile、导入Texture2D、修改Widget、场景运行仍必须连接对应UE5.8服务，并确认运行中的真实工程。这些是明确未完成门禁。
 
 工作区存在其他并行任务修改，提交时严格限定本轮Tiger V6文档与校验脚本，**不提交、重置或覆盖无关未提交资源**。冻结资产与候选提示词可先纳入主分支；24候选实际生成和人工优选之前，不触动唯一生产Tiger Profile、现有GAS或RootLayout。
+
+## 五、所选8个构图图标的后续真实交付进展（2026-10-18）
+
+**此节为新状态，覆盖第四节曾记录的出图受限情况，但不改写历史。** 本次在用户明确选择1A/2B/3C/4A/5A/6B/7B/8B后，成功使用独立单图模型重新生成8张正确V6技能原画并保存于 `DBAHeroPack_Tiger/SourceArt/UI/SkillIcons/V6/Candidates/`。8张高清母版、8张64及8张48 PNG均已制作，获得完整SHA登记并通过静态尺寸/身份/哈希验证；S03白色圆角旧稿独立留存，S05金色边框通过母版重构处理。详见 `TigerV6HeroPackSourceArtDelivery_20261018.md` 及新Monolith导入动作队列。
+
+**尚未完成**：原24张候选中的未选16张、8张生成图的最终人工艺术签收、Monolith真实Texture2D创建、唯一Tiger UI Profile映射、新手村和战斗HUD视觉测试、正式GAS技能授权及Client/Server Cook。工程无可调用Monolith provider、UE编辑器未运行，故没有创建新的V6原生.uasset。保持真实审查状态，不根据SourceArt中的PNG宣称引擎导入成功。

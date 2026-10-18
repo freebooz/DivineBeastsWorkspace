@@ -7,6 +7,7 @@
 [CmdletBinding()]
 param(
     [switch]$VerifyCandidateFiles,
+    [switch]$VerifySelectedStaging,
     [switch]$VerifySelections,
     [switch]$VerifyFinalImages
 )
@@ -35,8 +36,9 @@ function Read-IconPng([string]$Relative) {
         if($data[$k] -ne $sig[$k]) {throw "PNG签名错误：$Relative"}
     }
     if([Text.Encoding]::ASCII.GetString($data,12,4) -ne 'IHDR') {throw "PNG首块不是IHDR：$Relative"}
-    $w=[int](($data[16] -shl 24) -bor ($data[17] -shl 16) -bor ($data[18] -shl 8) -bor $data[19])
-    $h=[int](($data[20] -shl 24) -bor ($data[21] -shl 16) -bor ($data[22] -shl 8) -bor $data[23])
+    # PowerShell原生[byte]左移可能按8位截断；务必先转换为32位整数，否则1024会被错误识别为0。
+    $w=(([int]$data[16] -shl 24) -bor ([int]$data[17] -shl 16) -bor ([int]$data[18] -shl 8) -bor [int]$data[19])
+    $h=(([int]$data[20] -shl 24) -bor ([int]$data[21] -shl 16) -bor ([int]$data[22] -shl 8) -bor [int]$data[23])
     if($data[24] -ne 8 -or $data[25] -notin @(2,6)) {throw "PNG必须使用8位RGB或RGBA真彩：$Relative"}
     $sha=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
     return @{Width=$w;Height=$h;Sha256=$sha}
@@ -86,6 +88,37 @@ for($i=0;$i -lt 8;$i++) {
     Assert-Truth (($ballot.options -join ',') -eq ($expectedOptions -join ',')) "第$($i+1)项人审选票不是A/B/C三选"
 }
 Write-Output '门禁1通过：8技能V6美术冻结、稳定AbilityId与真实槽位一致；24份A/B/C候选提示词完全独立且无重名；生产技能仍未宣称被授予。'
+
+# 本轮用户已指定8个A/B/C构图，独立原画及64/48已入SourceArt；不等于24图齐全或人工终稿签审。
+# 仅对此八份已选图进行源图→高清母版→64/48哈希一致性校验，保留原24图与人工签收严格门禁。
+if($VerifySelectedStaging) {
+    $selectedIds=@('S01-A','S02-B','S03-C','S04-A','S05-A','S06-B','S07-B','S08-B')
+    $seenSource=@{}
+    $seen48=@{}
+    $seen64=@{}
+    for($i=0;$i -lt 8;$i++) {
+        $want=$selectedIds[$i]
+        $choice=$selections.entries[$i]
+        $m=$final.entries[$i]
+        Assert-Truth ($choice.selectedCandidateId -eq $want -and $m.selectedCandidateId -eq $want) "第$($i+1)项不是用户选择的构图方向"
+        $match=@($draft.candidates | Where-Object {$_.candidateId -eq $want -and $_.abilityId -eq $m.abilityId})
+        Assert-Truth ($match.Count -eq 1) "所选原画合同不唯一：$want"
+        $c=$match[0]
+        $src=Read-IconPng $c.pngFile
+        $master=Read-IconPng $m.masterFile
+        $small64=Read-IconPng $m.runtimePngFile.Replace('/48/','/64/')
+        $small48=Read-IconPng $m.runtimePngFile
+        Assert-Truth ($src.Width -eq 1024 -and $src.Height -eq 1024 -and $master.Width -eq 1024 -and $master.Height -eq 1024) "$want 高清原图/母版尺寸不正确"
+        Assert-Truth ($small64.Width -eq 64 -and $small64.Height -eq 64 -and $small48.Width -eq 48 -and $small48.Height -eq 48) "$want 小图尺寸不正确"
+        Assert-Truth ($c.sourceSha256 -eq $src.Sha256 -and $m.selectedSourceSha256 -eq $src.Sha256 -and $m.masterSha256 -eq $master.Sha256 -and $m.png64Sha256 -eq $small64.Sha256 -and $m.png48Sha256 -eq $small48.Sha256) "$want 存档SHA256与PNG原始字节不一致"
+        Assert-Truth (-not $seenSource.ContainsKey($src.Sha256) -and -not $seen48.ContainsKey($small48.Sha256) -and -not $seen64.ContainsKey($small64.Sha256)) "$want 与其他技能存在重复纹理"
+        Assert-Truth ($choice.selectionStatus -eq 'DIRECTION_SELECTED_ART_REVIEW_PENDING' -and $choice.artworkApproved -eq $false) "$want 不能冒充原画已人工签审"
+        $seenSource[$src.Sha256]=$true;$seen48[$small48.Sha256]=$true;$seen64[$small64.Sha256]=$true
+        Write-Output ("所选{0} 源图/母版/64/48/SHA验证通过，UE原生导入仍另验" -f $want)
+    }
+    Assert-Truth ($final.hasNewUETextures -eq $false -and $final.hasProductionApproval -eq $false) '源图交付不能假报UE纹理或投产已完成'
+    Write-Output '门禁【所选八张源艺术纹理】通过：8组真实独立1024/64/48/SHA；24候选整体、人工终稿和UE原生Texture2D仍未完成。'
+}
 
 # 素材路径与文件的真实性校验是独立阶段；没有图片则明确失败，不返回软通过。
 if($VerifyCandidateFiles -or $VerifySelections -or $VerifyFinalImages) {

@@ -28,8 +28,9 @@ function Read-PngHeader {
     if ([System.Text.Encoding]::ASCII.GetString($bytes, 12, 4) -ne 'IHDR') {
         throw "PNG首块不是IHDR：$FilePath"
     }
-    $width = [int](($bytes[16] -shl 24) -bor ($bytes[17] -shl 16) -bor ($bytes[18] -shl 8) -bor $bytes[19])
-    $height = [int](($bytes[20] -shl 24) -bor ($bytes[21] -shl 16) -bor ($bytes[22] -shl 8) -bor $bytes[23])
+    # 先转为32位整数再移位，避免PowerShell在8位字节类型上截断，误将1024识别为0。
+    $width = (([int]$bytes[16] -shl 24) -bor ([int]$bytes[17] -shl 16) -bor ([int]$bytes[18] -shl 8) -bor [int]$bytes[19])
+    $height = (([int]$bytes[20] -shl 24) -bor ([int]$bytes[21] -shl 16) -bor ([int]$bytes[22] -shl 8) -bor [int]$bytes[23])
     if ($bytes[24] -ne 8 -or $bytes[25] -notin @(2,6)) {
         throw "图标必须是8位RGB/RGBA真彩PNG：$FilePath"
     }

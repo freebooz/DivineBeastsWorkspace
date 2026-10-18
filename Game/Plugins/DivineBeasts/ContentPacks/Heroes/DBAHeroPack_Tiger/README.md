@@ -18,6 +18,11 @@
 正式技能定义与服务器授权归DBAGameplay及既有平台能力系统。能力栏通过GamePlatformData资源租约异步加载UIProfile及图标，换英雄/解绑时仅释放自身租约。开发UIProfile仍在独立开发目录；本包不得通过复制开发编号来填充未经批准的正式UIProfile。
 正式名称、AbilityId、数值与默认技能集的批准状态以 `Docs/Implementation/ZodiacAbilityAssetInventory.json` 和后续明确批准记录为准。2026-10-11资产迁移授权仅针对开发验证，不能扩大为生产批准。
 
+## V6八技能已选源图（2026-10-18）
+
+用户选取1A/2B/3C/4A/5A/6B/7B/8B构图，本包的 `SourceArt/UI/SkillIcons/V6/` 已保存8张独立1024×1024候选原稿、8张1024母版、8张64×64审核PNG及8张48×48正式尺寸PNG（均属源艺术文件）；`Review/` 内存小尺寸检查图和被拒原画留底。详见 `Docs/Implementation/GamePlatformAbilitySystem/TigerV6HeroPackSourceArtDelivery_20261018.md`。
+**当前V6尚无原生UE Texture2D.uasset，仍保留本包原有5张V1纹理及唯一正式Tiger UI Profile不动。** HWebCodex尚无可调用Monolith MCP Provider且UE5.8编辑器未运行，后续由Monolith创建的原生贴图需另做保存、冷重载、客户端显示、服务器Cook剥离与用户艺术验收。不得把源PNG放在SourceArt中的事实当作生产HUD已接入。
+
 ## Cook与验收
 
 当前内容为客户端表现，服务器排除须按统一服务器策略及真实容器检查；将来增加权威必需资源时必须先拆分精确目录并更新回归，不能靠历史整包规则误删。
