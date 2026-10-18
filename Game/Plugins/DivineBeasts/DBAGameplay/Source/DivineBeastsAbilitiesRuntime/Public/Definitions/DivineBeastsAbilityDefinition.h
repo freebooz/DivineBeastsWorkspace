@@ -121,11 +121,19 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft", meta=(ClampMin="1", ClampMax="8"))
     int32 DraftDisplayOrder = 0;
 
+    /** 玩家可读的技能中文名称；不能以英文资源对象名代替展示文案。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft")
     FText DraftDisplayNameZh;
 
+    /** 玩家可读的中文机制说明；一级候选值由设计真源与CSV共同校验。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft", meta=(MultiLine=true))
     FText DraftDescriptionZh;
+
+#if WITH_EDITORONLY_DATA
+    /** 供策划/美术审核的中文效果概念图提示词；编辑器保存，Cook剥离，不作为玩家文案或已制作特效。 */
+    UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|Ability|Draft", meta=(MultiLine=true))
+    FString DraftDesignPromptZh;
+#endif
 
     /** 角色定位与目标行为仅作策划语义，必须另经服务器运行规则落实。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft")
@@ -168,3 +176,4 @@ public:
     /** 仅使用已预加载的表解析等级；不进行任何同步资源加载。 */
     bool TryGetLoadedBalance(int32 Level, FDivineBeastsAbilityBalanceRow& OutRow, FString& OutError) const;
 };
+

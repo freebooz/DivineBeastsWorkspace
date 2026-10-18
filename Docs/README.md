@@ -6,6 +6,7 @@
 
 - [SSLM全局美术配色策略与色彩设计规范 V3.0](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)：2026-10-18色彩领域唯一权威文档，约束场景生态、PBR、水体、建筑、生肖/VFX、品牌UI、渲染与人工审核；已整合历史冲突，未宣称引擎素材已重新调色。
 - [SSLM参考颜色语义索引 V3.0](Art/SSLMColorRegistry_V3.json)：41项初始屏幕sRGB参考色与8项待审核的战斗功能色语义；派生候选数据，不是UE数据资产。
+- [SSLM十层地形纹理及材质V3.0真实审查与整改](Implementation/TerrainColorV3ComplianceReview_20261018.md)：针对十层扫描PBR源进行新色彩版本、十张Texture2D、一份母材质、四份MI、独立审核关卡制作及UE冷重载；真实D3D12六态截图为黑帧，最终视觉/性能/人工验收未通过。
 
 - [新手村组队与竞技场闭环设计规格](superpowers/specs/2026-10-14-village-party-arena-design.md)：普通竞技场／练习赛交互参考；用户随后要求直接执行不再问询，已进入部分源码与设计实施，非完整功能或资产验收。
 - [新手村组队与竞技场实施计划](superpowers/plans/2026-10-14-village-party-arena.md)及[实施记录](Implementation/VillagePartyArena/ExecutionProgress.md)：用户要求直接执行、不再问询；Native原位、不构建，逐项记录源码、资产与尚未执行的验证。
@@ -32,8 +33,9 @@
 - [十二生肖技能数据驱动实施计划](superpowers/plans/2026-10-09-zodiac-ability-data-driven-implementation.md)：按现行三层与五个 DBA 代码插件规范，分阶段建设真实技能授权、数值配置、图标与技能栏自动初始化；当前仅为计划，非功能完成证明。
 - [十二生肖技能数据驱动实施记录](Implementation/十二生肖技能数据驱动实施记录_20261009.md)：2026-10-09 新增技能数据定义、GAS 授权/所有者复制、客户端视图及竞技出生接口的真实代码变更，明确实际静态检查、UE/Monolith 阻断与未交付的正式技能/图标/蓝图。
 - [十二生肖技能主数据及资源缺口清单](Implementation/ZodiacAbilityAssetInventory.json)：12 个稳定英雄编号和现存英雄定义文件的机器可读清单，未批准技能名称、伤害数据、技能图标和真实授权均显式为空或待验证。
-- [十二生肖八槽草案资产路径计划](Implementation/ZodiacEightSlotDraftAssetPlan_V2.json)：12位英雄、96个待制作DataAsset路径、数值表行及输入语义映射；状态仍为未制作/未审批。
-- [十二生肖八槽资产制作链路实施记录](Implementation/ZodiacEightSlotAssetAuthoring_20261018.md)：契约转换、作者预检、静态测试证据与等待UE5.8/Monolith原生验证的事项。
+- [十二生肖96项中文技能说明与设计提示词审核索引](Design/ZodiacEightSlotSkillTextReview_V2.md)
+- [十二生肖八槽草案资产规划清单](Implementation/ZodiacEightSlotDraftAssetPlan_V2.json)
+- [十二生肖八槽资产制作链路实施记录](Implementation/ZodiacEightSlotAssetAuthoring_20261018.md)
 - [十二生肖开发技能主数据与资产证据](Implementation/ZodiacDevelopmentUEAssetEvidence_20261009.json)：76个实际UE开发资产文件及SHA-256、60份技能逻辑定义、12份技能UI配置和60个图标软引用的验证摘要；全部仅限开发，非正式发行技能。
 - [十二生肖开发技能数值草案](Implementation/ZodiacAbilityDevelopmentDraft_20261009.json)：12生肖×5个技能槽位的中文候选名称和一级数值，正式AbilityId仍全部为空，不得直接作为生产技能表。
 - [十二生肖技能候选策划审核表](Implementation/十二生肖技能候选策划审核表_20261009.md)：把60项开发候选名称、伤害、冷却和气势成本转为可人工逐项审核的中文清单；所有正式技能均维持“未批准”。

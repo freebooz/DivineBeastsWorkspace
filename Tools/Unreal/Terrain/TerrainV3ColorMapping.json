@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "statusZh": "设计候选：人工视觉验收前不得进入正式村庄/竞技场地图",
+  "version": "2026-10-18-v3.0",
+  "baselinePBRManifest": "Tools/Unreal/Terrain/TerrainProductionPBRManifest_v1.json",
+  "referencePalette": "Docs/Art/SSLMColorRegistry_V3.json",
+  "algorithm": "linear_logit_histogram_plus_hue_coherence_v2",
+  "outputSourceRoot": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/SourceArt/Terrain/V3",
+  "outputAssetRoot": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3",
+  "originalMaster": "/DBAPresentationPack_Core/Materials/Terrain/M_DBA_Terrain_Production10_FunctionIntegrated",
+  "candidateMaster": "/DBAPresentationPack_Core/Materials/Terrain/M_DBA_Terrain_Production10_V3",
+  "originalMiStem": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_FunctionIntegrated_",
+  "candidateMiStem": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_V3_",
+  "originalMap": "/Game/Development/Terrain/Maps/L_DBA_TerrainFunctionReview",
+  "candidateMap": "/Game/Development/Terrain/Maps/L_DBA_TerrainColorV3Review",
+  "licenseZh": "派生仅基于已有的Poly Haven CC0源扫描基础色；原扫描纹理保持原样与历史哈希",
+  "caveatZh": "颜色仅设计校准候选，待标准曝光真实RHI、游戏镜头及用户人工签收后允许推广",
+  "layers": [
+    {
+      "layer": "Grass",
+      "chromaControl": 0.1,
+      "detailContrast": 0.88,
+      "semanticId": "Environment.Grass.Standard",
+      "strength": 0.93,
+      "noteZh": "纠正黄褐草地，建立自然鲜绿主体"
+    },
+    {
+      "layer": "ForestSoil",
+      "chromaControl": 0.05,
+      "detailContrast": 0.96,
+      "semanticId": "Environment.Soil.Standard",
+      "strength": 0.51,
+      "noteZh": "林下土保留深浅差，避免整层发黑"
+    },
+    {
+      "layer": "Dirt",
+      "chromaControl": 0.1,
+      "detailContrast": 0.96,
+      "semanticId": "Environment.Soil.Standard",
+      "strength": 0.69,
+      "noteZh": "普通泥土亮化为自然暖褐"
+    },
+    {
+      "layer": "Rock",
+      "chromaControl": 0.28,
+      "detailContrast": 0.96,
+      "semanticId": "Environment.Rock.GrayCyan",
+      "strength": 0.61,
+      "noteZh": "岩石转灰青但保留扫描纹理细节"
+    },
+    {
+      "layer": "Scree",
+      "chromaControl": 0.65,
+      "detailContrast": 0.89,
+      "semanticId": "Environment.Rock.WarmGray",
+      "strength": 0.72,
+      "noteZh": "碎石坡从深棕偏移至柔和暖灰"
+    },
+    {
+      "layer": "Sand",
+      "chromaControl": 0.1,
+      "detailContrast": 0.97,
+      "semanticId": "Environment.Soil.LightEarth",
+      "strength": 0.73,
+      "noteZh": "湖岸沙地提高明度，保留沙纹"
+    },
+    {
+      "layer": "Gravel",
+      "chromaControl": 0.28,
+      "detailContrast": 0.94,
+      "semanticId": "Environment.Paving.Beige",
+      "strength": 0.64,
+      "noteZh": "砾石趋自然米灰，避免过亮"
+    },
+    {
+      "layer": "RoadDirt",
+      "chromaControl": 0.32,
+      "detailContrast": 0.82,
+      "semanticId": "Environment.Soil.ForestRoad",
+      "strength": 0.82,
+      "noteZh": "提高土路识别明度，避免黑褐路"
+    },
+    {
+      "layer": "FarmSoil",
+      "chromaControl": 0.1,
+      "detailContrast": 0.94,
+      "semanticId": "Environment.Soil.Standard",
+      "strength": 0.55,
+      "noteZh": "保留耕地深色但减轻灰脏"
+    },
+    {
+      "layer": "ShoreMud",
+      "chromaControl": 0.07,
+      "detailContrast": 0.98,
+      "semanticId": "Environment.Soil.Wet",
+      "strength": 0.55,
+      "noteZh": "保留湿泥低明度与实际含水特征"
+    }
+  ]
+}

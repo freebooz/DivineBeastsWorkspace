@@ -17,7 +17,7 @@ from typing import Any
 CATALOG_ID = "SSLM.ZodiacEightSlotSkills.V2"
 ASSET_OWNER_ID = "DBAGameplay"
 ASSET_ROOT = "/DBAGameplay/Abilities/EightSlotDrafts"
-TABLE_OBJECT_PATH = ASSET_ROOT + "/DT_DBA_ZodiacEightSlotDraftBalance"
+TABLE_PACKAGE_PATH = ASSET_ROOT + "/DT_DBA_ZodiacEightSlotDraftBalance"
 CSV_COLUMNS = (
     "Name", "AbilityId", "Level", "BaseDamage", "DamageType",
     "CooldownSeconds", "MomentumCost", "CastRangeCm", "AreaRadiusCm",
@@ -74,10 +74,32 @@ def _require(condition: bool, message: str) -> None:
         raise ContractError(message)
 
 
+def asset_object_path(package_path: str) -> str:
+    """隔离目录的包路径转换为UE返回的完整对象路径；不得将包名直接与GetPathName比较。"""
+    _require(package_path.startswith(ASSET_ROOT + "/") and
+             re.fullmatch(r"/[A-Za-z0-9_/]+", package_path) is not None,
+             "仅允许当前隔离目录中的ASCII资产包路径")
+    return package_path + "." + package_path.rsplit("/", 1)[-1]
+
+
+TABLE_OBJECT_PATH = asset_object_path(TABLE_PACKAGE_PATH)
+
+
 def _finite_number(value: Any, field: str, identity: str) -> float:
     _require(isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value),
              f"{identity}:{field}必须是有限数值")
     return float(value)
+
+
+def _validate_zh_text(value: Any, field: str, identity: str, minimum: int, maximum: int) -> str:
+    """保留原文而非静默修剪；拒绝空白、纯英文占位及不合理长度的策划字段。"""
+    _require(isinstance(value, str), f"{identity}:{field}必须为中文文本")
+    _require(value == value.strip() and minimum <= len(value) <= maximum and
+             re.search(r"[\u3400-\u9fff]", value) is not None and "\x00" not in value,
+             f"{identity}:{field}缺少中文内容、含空白填充或长度越界")
+    _require(re.search(r"\b(?:TODO|TBD)\b|待补充|待填写|占位文本", value, re.I) is None,
+             f"{identity}:{field}不能以待填占位内容冒充策划设计")
+    return value
 
 
 def _validate_action(action: dict[str, Any], identity: str) -> dict[str, Any]:
@@ -187,6 +209,12 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
              "策划审批状态已变化；拒绝使用草案作者")
     _require(catalog.get("nativeUEAssetStatus") == "NOT_AUTHORED",
              "原生资产状态已变化；拒绝覆盖来源状态不明的资源")
+    _require(catalog.get("balanceStatus") == "LEVEL1_CANDIDATE_NOT_BALANCED",
+             "一级数值状态必须保持未平衡候选，拒绝错误审批状态")
+    text_policy = catalog.get("textDesignPolicy", {})
+    _require(text_policy.get("language") == "zh-CN" and
+             text_policy.get("reviewStatus") == "PENDING_HUMAN_TEXT_AND_VISUAL_REVIEW",
+             "中文文本与效果概念设计必须保留待人工审核状态")
     constraints = catalog.get("constraints", {})
     _require(constraints.get("sourceRole") == "DESIGN_ONLY" and
              constraints.get("allowUnimplementedAbilityGrant") is False,
@@ -270,8 +298,28 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
             _require(bool(entry.get("nameZh")) and bool(entry.get("descriptionZh")) and
                      bool(entry.get("intentTarget")) and bool(entry.get("actions")),
                      f"{identity}:策划中文说明、目标或行为缺失")
+            # 名称/说明用于玩家界面，提示词用于编辑器审核；三者均完整进入契约与源摘要。
+            draft_text = {
+                "DraftDisplayNameZh": _validate_zh_text(entry.get("nameZh"), "nameZh", identity, 2, 48),
+                "DraftDescriptionZh": _validate_zh_text(entry.get("descriptionZh"), "descriptionZh", identity, 8, 1200),
+                "DraftDesignPromptZh": _validate_zh_text(entry.get("designPromptZh"), "designPromptZh", identity, 120, 3000),
+            }
+            _require(hero_name in draft_text["DraftDesignPromptZh"] and
+                     draft_text["DraftDisplayNameZh"] in draft_text["DraftDesignPromptZh"],
+                     f"{identity}:提示词未对应当前英雄及技能中文名称")
+            if entry.get("abilityKey") in {"battle_fervor", "trickster_stride", "rage_focus"}:
+                _require(entry["intentTarget"] == "self",
+                         f"{identity}:自身特色增益不得错误要求选择敌方目标")
             _require(len(entry["actions"]) <= 8, f"{identity}:行为数量超过原生设计容量")
             mapped_actions = [_validate_action(action, identity) for action in entry["actions"]]
+            damage_actions = [a for a in mapped_actions if a["ActionKindId"] == "damage"]
+            has_healing = any(a["ActionKindId"] == "healing" for a in mapped_actions)
+            _require(all(a["DamageTypeId"] == entry["damageType"] and
+                         a["Magnitude"] == entry["baseDamage"] and
+                         a["HitCount"] == entry["hitCount"] for a in damage_actions),
+                     f"{identity}:伤害行为的类型、每段数值或段数与一级源不一致")
+            _require(not (damage_actions and has_healing) or entry["intentTarget"] == "area_center_mixed",
+                     f"{identity}:混合伤害治疗必须声明同一范围中心，分别结算敌我")
             _require(entry.get("role") != "mobility" or any(a["ActionKindId"] == "movement" for a in mapped_actions),
                      f"{identity}:移动槽没有服务器校验位移")
             _require(entry.get("role") != "defense" or any(a["ActionKindId"] == "shield" for a in mapped_actions),
@@ -326,8 +374,13 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
                 "slotId": entry["slotId"],
                 "displayOrder": entry["displayOrder"],
                 "roleId": entry["role"],
+                "roleZh": entry["roleZh"],
                 "abilityId": identity,
-                "assetObjectPath": asset_path,
+                "nameZh": draft_text["DraftDisplayNameZh"],
+                "descriptionZh": draft_text["DraftDescriptionZh"],
+                "designPromptZh": draft_text["DraftDesignPromptZh"],
+                "assetPackagePath": asset_path,
+                "assetObjectPath": asset_object_path(asset_path),
                 "balanceRowName": row_name,
                 "inputTag": input_semantics["tag"],
                 "inputActionId": input_semantics["action"],
@@ -344,6 +397,7 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
                 "row_name": row_name,
                 "balance_row": csv_row,
                 "actions": mapped_actions,
+                "draft_text": draft_text,
                 "source_sha256": source_hash,
             })
             hero_manifest["skills"].append(planned)
@@ -358,6 +412,7 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
         "assetOwnerId": ASSET_OWNER_ID,
         "assetRoot": ASSET_ROOT,
         "tableObjectPath": TABLE_OBJECT_PATH,
+        "tablePackagePath": TABLE_PACKAGE_PATH,
         "balanceRows": [skill["balance_row"] for skill in skills],
         "skills": skills,
         "heroes": heroes_manifest,
@@ -369,13 +424,14 @@ def build_contract(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
 def build_manifest(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
     contract = build_contract(catalog, balance_csv)
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "catalogId": CATALOG_ID,
         "projectCode": "SSLM",
         "sourceCatalog": "Docs/Design/ZodiacEightSlotSkills_V2.json",
         "sourceBalanceCsv": "Game/Plugins/DivineBeasts/DBAGameplay/SourceArt/Abilities/DT_DBA_ZodiacEightSlotDraftBalance_V2.csv",
         "sourceCatalogStatus": contract["sourceCatalogStatus"],
         "designerApprovalStatus": "PENDING_HUMAN_BALANCE_REVIEW",
+        "textReviewStatus": "PENDING_HUMAN_TEXT_AND_VISUAL_REVIEW",
         "nativeAssetStatus": "NOT_AUTHORED",
         "formalAbilitySetAssignmentPerformed": False,
         "liveGASAuthorizationPerformed": False,
@@ -390,8 +446,40 @@ def build_manifest(catalog: dict[str, Any], balance_csv: str) -> dict[str, Any]:
         "assetOwnerId": ASSET_OWNER_ID,
         "assetRoot": ASSET_ROOT,
         "balanceTableObjectPath": TABLE_OBJECT_PATH,
+        "balanceTablePackagePath": TABLE_PACKAGE_PATH,
         "heroes": contract["heroes"],
     }
+
+
+def render_text_review(catalog: dict[str, Any], balance_csv: str) -> str:
+    """从同一份通过校验的真源生成96项中文审核索引；不创建概念图片或引擎资产。"""
+    contract = build_contract(catalog, balance_csv)
+    tick = chr(96)
+    lines = [
+        "# SSLM十二生肖96项技能中文文本与设计提示词审核索引",
+        "",
+        "> 自动派生：修改技能设计JSON真源后重新生成本文件，禁止维护第二套技能文案。",
+        "> 当前为待人工文本、美术与数值审核的设计；概念图片、原生数据资产、动画与特效均未由本文件制作。",
+        "",
+        "中文名称用于技能标题，中文说明用于角色创建/技能详情等展示；中文设计提示词仅供策划与美术制作审核，不作为玩家说明。",
+        "伤害值为一级候选的单次命中基础伤害，多段次数为单目标上限；未审批成长曲线、持续伤害计量基数/跳频和实际执行规则。",
+        "全局配色与特效性能分别引用现行V3.0配色规范及十二生肖特效专项规范，不创建新的色彩或性能标准。",
+        "",
+    ]
+    for hero in contract["heroes"]:
+        lines.extend([f"## {hero['heroNameZh']}", "",
+                      f"英雄身份：{tick}{hero['heroId']}{tick}（稳定英雄编号）；8项主动技能，固有被动不占八槽。", ""])
+        for skill in hero["skills"]:
+            lines.extend([
+                f"### {skill['displayOrder']}. {skill['nameZh']}", "",
+                f"- 技能身份：{tick}{skill['abilityId']}{tick}（稳定技能编号）",
+                f"- 输入槽位：{tick}{skill['slotId']}{tick}（{skill['roleZh']}，默认键位{skill['defaultKeyboardBinding']}；角色标识{tick}{skill['roleId']}{tick}）",
+                f"- 规划资产：{tick}{skill['assetObjectPath']}{tick}（未制作的草案目标路径）",
+                f"- 一级数值行：{tick}{skill['balanceRowName']}{tick}（候选数值，待平衡）", "",
+                "**中文技能说明**", "", skill["descriptionZh"], "",
+                "**中文技能效果概念图设计提示词**", "", skill["designPromptZh"], "",
+            ])
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
@@ -402,6 +490,7 @@ if __name__ == "__main__":
     parser.add_argument("--catalog", required=True, help="JSON设计源路径")
     parser.add_argument("--balance-csv", required=True, help="96行候选数值CSV路径")
     parser.add_argument("--output", required=True, help="输出明确标注未制作的资产路径计划")
+    parser.add_argument("--review-output", help="可选：同步生成96项中文说明及提示词审核Markdown索引")
     args = parser.parse_args()
     catalog_value = json.loads(Path(args.catalog).read_text(encoding="utf-8-sig"))
     csv_value = Path(args.balance_csv).read_text(encoding="utf-8-sig")
@@ -411,4 +500,9 @@ if __name__ == "__main__":
     output_path.write_text(
         json.dumps(manifest_value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    print("SSLM八槽契约通过：12位生肖、96项技能身份、96行候选数值、96条隔离资产路径；原生资产仍未制作。")
+    if args.review_output:
+        review_path = Path(args.review_output)
+        review_path.parent.mkdir(parents=True, exist_ok=True)
+        review_path.write_text(render_text_review(catalog_value, csv_value), encoding="utf-8")
+    print("SSLM八槽契约通过：12位生肖、96项技能身份/中文名称/说明/提示词、96行候选数值、96条隔离资产路径；原生资产仍未制作。")
+

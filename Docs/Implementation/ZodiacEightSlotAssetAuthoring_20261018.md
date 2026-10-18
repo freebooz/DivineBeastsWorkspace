@@ -36,3 +36,37 @@
 3. 在加载了新增C++反射字段的锁定UE5.8编辑器中，通过Monolith MCP显式运行作者脚本；检查真实表行、96个DataAsset字段和保存结果，再从独立编辑器进程冷重载并运行原生DataValidation（数据校验）。
 4. 仅在逐英雄审批、服务端授权、客户端输入/显示、Dedicated Server与Client构建、Cook资源隔离和联机验收完成后，另行审查是否更新对应英雄的正式 `DefaultAbilitySetId`。本记录没有批准该切换。
 
+
+## 续作：96项中文名称、详细说明和技能设计提示词
+
+### 基线与并行工作整合
+
+本轮已核对主分支`236bb26dd60b0a9f1ad48de1419442eb25fe44b5`（最新源快照），并保留该提交的技能集合清单、八槽界面规格、原生1—8输入转发、12项控制伤害类型修正、4项混合范围目标修正及全部新增测试。分支通过双亲提交整合该基线，不改写并行成果。
+
+### 中文文本合同与内容
+
+- 设计目录版本为2.1.0。96项稳定技能编号及中文名保留，`descriptionZh`（中文技能说明）按既有动作及一级候选值重整；新增`designPromptZh`（中文效果概念图提示词），逐项编写主形、阶段、目标、可读性与禁止扩张机制的要求。
+- 提示词包含当前英雄及技能中文名，引用唯一全局V3.0配色方向和现行技能特效规范；不引入五行战斗、破元、共鸣等已取消机制。文字与视觉内容状态仍为`PENDING_HUMAN_TEXT_AND_VISUAL_REVIEW`（待人工文本与视觉审核）。
+- 把寅虎“威仪昂扬”、申猴“灵猴戏法”、亥猪“玄鬃怒吼”的`intentTarget`（目标模式）从误标敌方修正为自身；不新增行为，不改变任何技能编号、名称、伤害、命中段数、气势、冷却、范围或动作数组。中文说明不再把无对应控制行为的“云鳞飞刃”写成冻结。
+- `DraftDisplayNameZh`/`DraftDescriptionZh`（草案中文名称/说明）保留FText本地化数据；新增`DraftDesignPromptZh`（草案中文设计提示词）是`WITH_EDITORONLY_DATA`内的FString字段，只供编辑器保存/审核，Cook时剥离。旧正式占位定义仍不受草案验证分支影响。
+- 作者启动前检查新增反射字段，旧DLL缺字段则在任何写入前停止；三项中文文本通过契约映射、制作后回读和源摘要一起校验。中文文案是否已在真实角色创建Widget显示，仍需另行通过Monolith与客户端验收，不能由此文本更新证明。
+- 清单Schema升级为2：`assetPackagePath`（资产包路径）保留原目录与对象名，`assetObjectPath`（完整对象路径）补足“.对象名”；共享表同样区分包/对象路径。UE的GetPathName返回完整路径，不能直接与包路径比较。依据[UE5.8官方GetPathName文档](https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/CoreUObject/UObjectBaseUtility/GetPathName)。不发生资源移动或重命名。
+- [中文技能审核索引](../Design/ZodiacEightSlotSkillTextReview_V2.md)与[资产规划清单](ZodiacEightSlotDraftAssetPlan_V2.json)均由同一校验器生成，覆盖12英雄、96项中文名称/说明/提示词及96行数值。
+
+### 实际验证证据与范围
+
+本地为从锁定GitHub提交提取的受影响文件快照，不是完整仓库检出。整合并行工作后的基线19项通过；新增文本/目标/路径回归先观察到预期失败，再完成实现。最终命令：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 Tests/Architecture/TestZodiacEightSlotDesign.py
+python3 Tools/Unreal/Abilities/ZodiacEightSlotDraftContract.py --catalog Docs/Design/ZodiacEightSlotSkills_V2.json --balance-csv Game/Plugins/DivineBeasts/DBAGameplay/SourceArt/Abilities/DT_DBA_ZodiacEightSlotDraftBalance_V2.csv --output Docs/Implementation/ZodiacEightSlotDraftAssetPlan_V2.json --review-output Docs/Design/ZodiacEightSlotSkillTextReview_V2.md
+```
+
+- 回归实际退出码0，`Ran 26 tests ... OK`；包括空白/缺失/纯英文占位拒绝、串技能提示词拒绝、文本哈希变更、三项自身增益、审核文档同源以及包/对象路径区分。
+- 三个Python文件通过AST（抽象语法树）语法检查；源数据逐字段比较确认数值、动作数组与中文名称未改变，只有说明/提示词及上述3项目标修正。
+- C++/UHT/UBT、蓝图、Cook、真实编辑器属性序列化与独立冷重载均未执行；当前无可调用的UE5.8/Monolith编辑器能力。新增编辑器字段的实际反射加载与Cook剥离仍需在最后统一验证。
+- 本批新增图片0，原生DataAsset 0/96，DataTable 0/1；未修改任何英雄DefaultAbilitySetId，未解除草案禁用，未授予真实GAS，未伪造动画/VFX/图标。
+
+### 人工审核与正式启用前门槛
+
+逐技能审核中文名称、说明与概念提示词的准确性；持续伤害系数的计量基数/跳频、增益叠加、目标边界与全部一级数值尚须策划批准。随后在允许的统一编译批次加载UE5.8新增反射，经Monolith真实制作、保存及独立冷读97项资源，再完成对应GA/GE、动画/特效、角色创建界面展示、联机/性能与正式技能集合切换审批。确认实施方案不等于批准这96项内容投产。

@@ -338,10 +338,17 @@
     }
   ],
   "healingDefinition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom",
-  "healingSystem": "/DBAPresentationPack_Core/VFX/Library/07_Status/NS_Nature_PetalBloom_Aura",
+  "healingSystem": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_Nature_PetalBloom_Aura",
   "ruleZh": "运行时由GamePlatformData持有资源租约、GamePlatformPresentation解析、GamePlatformVFX唯一执行；不加载源库Runtime。",
   "previewDefinitionsPurposeZh": "42份通用瞬时Definition仅供有界开发预览，未无条件注册为玩法目录；正式1号治疗另用Attached定义。",
   "nativeCompileEvidence": "Saved/Validation/PetalBloomIntegration20261015/CompileReloaded.json",
   "rendererInitializationEvidence": "Saved/Validation/VFXInitialization20261016/Verification.json",
-  "rendererInitializationRuleZh": "原compileWarnings保留工具原值；19项实际写入/显示或作者零生成率均已核验，未解决项0，不代表全库美术验收。"
+  "rendererInitializationRuleZh": "原compileWarnings保留工具原值；19项实际写入/显示或作者零生成率均已核验，未解决项0，不代表全库美术验收。",
+  "healingQualitySystems": {
+    "High": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_Nature_PetalBloom_Aura",
+    "Epic": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_Nature_PetalBloom_Aura",
+    "Medium": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Medium",
+    "Low": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Low"
+  },
+  "healingReimportEvidence": "Saved/Validation/HealingReimport20261018/Verification.json"
 }

@@ -33,6 +33,15 @@ FGamePlatformResult UDivineBeastsAbilityDefinition::ValidateDefinition() const
 
     if (bEightSlotDraftOnly)
     {
+#if WITH_EDITORONLY_DATA
+        // 提示词只在编辑器检查与保存；运行时不因Cook剥离该审核字段而误拒绝定义。
+        if (DraftDesignPromptZh.TrimStartAndEnd().IsEmpty())
+        {
+            return FGamePlatformResult::Failure(
+                TEXT("EightSlotDraftDesignPromptMissing"),
+                TEXT("八槽技能草案缺少供人工审核的中文设计提示词。"));
+        }
+#endif
         // 原占位资源默认仍为false；草案目录身份不能改变旧技能准入。
         static const TSet<FName> AllowedSlots =
         {
@@ -188,3 +197,4 @@ bool UDivineBeastsAbilityDefinition::TryGetLoadedBalance(
     OutError.Reset();
     return true;
 }
+

@@ -19,7 +19,9 @@ from ZodiacEightSlotDraftContract import (  # noqa: E402
     ASSET_OWNER_ID,
     ASSET_ROOT,
     CATALOG_ID,
+    TABLE_PACKAGE_PATH,
     TABLE_OBJECT_PATH,
+    asset_object_path,
     build_contract,
 )
 
@@ -70,7 +72,7 @@ def load_existing(path: str, asset_class):
         return None
     found = unreal.EditorAssetLibrary.load_asset(path)
     ensure(isinstance(found, asset_class), "目标对象已存在但资产类别不符，拒绝覆盖：" + path)
-    ensure(found.get_path_name() == path, "引擎返回的对象路径不匹配：" + path)
+    ensure(found.get_path_name() == asset_object_path(path), "引擎返回的对象路径不匹配：" + path)
     return found
 
 
@@ -83,7 +85,7 @@ def load_or_create(path: str, asset_class, factory):
         name, folder, asset_class, factory
     )
     ensure(isinstance(created, asset_class), "创建真实UE数据资产失败：" + path)
-    ensure(created.get_path_name() == path, "创建结果不在隔离草案路径：" + path)
+    ensure(created.get_path_name() == asset_object_path(path), "创建结果不在隔离草案路径：" + path)
     return created, True
 
 
@@ -122,7 +124,7 @@ def require_editor():
         "LogicalId", "HeroDefinitionId", "Kind", "BalanceTable", "LevelRowNames",
         "bEightSlotDraftOnly", "DraftSlotId", "DraftInputTag", "DraftInputActionId",
         "DraftDefaultKeyId", "DraftDisplayOrder", "DraftDisplayNameZh",
-        "DraftDescriptionZh", "DraftRoleId", "DraftTargetModeId", "DraftActions",
+        "DraftDescriptionZh", "DraftDesignPromptZh", "DraftRoleId", "DraftTargetModeId", "DraftActions",
         "DraftAssetOwnerId", "DraftCatalogId", "DraftSourceSha256",
         "DraftHeroVFXProfileId", "DraftVFXCatalogKey",
         "DraftPresentationSemanticId", "DraftPresentationSemanticIds",
@@ -168,10 +170,16 @@ def safe_catalog():
 
 def preflight_existing_assets(contract: dict, ability_class, balance_struct):
     """写入前扫描97个目标；任何越权、冲突或旧正式资产均失败关闭。"""
-    existing_table = load_existing(TABLE_OBJECT_PATH, unreal.DataTable)
+    existing_table = load_existing(TABLE_PACKAGE_PATH, unreal.DataTable)
     if existing_table is not None:
         ensure(existing_table.get_row_struct() == balance_struct,
                "数值表已有资产的行结构不是当前UE5.8能力行")
+        # 保留主分支新增保护：同名数据表已有不同的行身份时，不因结构相同而覆盖它。
+        old_names = {str(name) for name in
+                     unreal.DataTableFunctionLibrary.get_data_table_row_names(existing_table)}
+        expected_names = {row["Name"] for row in contract["balanceRows"]}
+        ensure(not old_names or old_names == expected_names,
+               "已有数值表的行身份与96项设计源不同，必须先单独审核迁移")
     existing_definitions = {}
     for skill in contract["skills"]:
         path = skill["asset_path"]
@@ -219,7 +227,7 @@ def author():
     table_factory = unreal.DataTableFactory()
     table_factory.set_editor_property("Struct", balance_struct)
     table, table_created = load_or_create(
-        TABLE_OBJECT_PATH, unreal.DataTable, table_factory
+        TABLE_PACKAGE_PATH, unreal.DataTable, table_factory
     )
     ensure(table.get_row_struct() == balance_struct, "数值表真实行结构不匹配")
     ensure(unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(
@@ -261,8 +269,10 @@ def author():
         definition.set_editor_property("DraftInputActionId", unreal.Name(skill["input"]["action"]))
         definition.set_editor_property("DraftDefaultKeyId", unreal.Name(skill["input"]["keyboard"]))
         definition.set_editor_property("DraftDisplayOrder", int(entry["displayOrder"]))
-        definition.set_editor_property("DraftDisplayNameZh", unreal.Text(entry["nameZh"]))
-        definition.set_editor_property("DraftDescriptionZh", unreal.Text(entry["descriptionZh"]))
+        # 名称与说明保留FText本地化通路；长提示词仅存编辑器FString，不进入运行时界面。
+        definition.set_editor_property("DraftDisplayNameZh", unreal.Text(skill["draft_text"]["DraftDisplayNameZh"]))
+        definition.set_editor_property("DraftDescriptionZh", unreal.Text(skill["draft_text"]["DraftDescriptionZh"]))
+        definition.set_editor_property("DraftDesignPromptZh", skill["draft_text"]["DraftDesignPromptZh"])
         definition.set_editor_property("DraftRoleId", unreal.Name(entry["role"]))
         definition.set_editor_property("DraftTargetModeId", unreal.Name(entry["intentTarget"]))
         definition.set_editor_property("DraftAssetOwnerId", unreal.Name(ASSET_OWNER_ID))
@@ -291,6 +301,9 @@ def author():
                "GAS输入标签回读失败：" + entry["abilityId"])
         ensure(str(definition.get_editor_property("DraftSourceSha256")) == skill["source_sha256"],
                "源设计摘要回读失败：" + entry["abilityId"])
+        for property_name, expected_text in skill["draft_text"].items():
+            ensure(str(definition.get_editor_property(property_name)) == expected_text,
+                   "中文名称、说明或提示词回读不一致：" + entry["abilityId"] + ":" + property_name)
         ensure(len(definition.get_editor_property("DraftActions")) == len(skill["actions"]),
                "策划行为回读失败：" + entry["abilityId"])
         ensure(bool(definition.get_editor_property("bEightSlotDraftOnly")),
@@ -328,3 +341,4 @@ def author():
 
 
 # Monolith调用器只能显式执行author()；import脚本或仅打开编辑器均不会创建资产。
+
