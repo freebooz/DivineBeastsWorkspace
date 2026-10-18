@@ -7,6 +7,7 @@
 #include "DivineBeastsV6GameplayAbility.generated.h"
 
 class UDivineBeastsAbilityDefinition;
+struct FDivineBeastsEightSlotDraftAction;
 class UGamePlatformCombatComponent;
 
 /**
@@ -25,7 +26,11 @@ enum class EDivineBeastsV6NativeMode : uint8
     SingleShield,
     SingleStun,
     SingleSilence,
-    SafeDash
+    SafeDash,
+    /** 新模式只追加在已发布的8种原语之后，不改变旧枚举序列化值。 */
+    DamageAndStun,
+    DamageAndSilence,
+    RadialDamageAndStun
 };
 
 /**
@@ -33,7 +38,8 @@ enum class EDivineBeastsV6NativeMode : uint8
  * 由每个英雄的独立GA蓝图子类绑定唯一AbilityDefinitionId，AbilitySet只授予真实已验收类；
  * 不创建第二个ASC、伤害执行器、客户端RPC或Niagara播放器。
  *
- * 当前支持：服务器单体前向伤害、有限目标半径伤害、友方治疗、限时护盾、眩晕、沉默。
+ * 当前支持：服务器单体、投射物、范围伤害、友方治疗、限时护盾、眩晕、沉默以及
+ * 单体伤害加眩晕／沉默、范围伤害加眩晕三种单段复合技能（原生动作需后续验收）。
  * 普攻命中才可发放气势。普通短位移由导航与胶囊扫掠验证；减速、破甲、毒路、
  * 假身、实体门盾、揭隐、免死、多段及特殊位移仍需单独权威执行审核。
  */
@@ -44,6 +50,9 @@ class DIVINEBEASTSABILITIESRUNTIME_API UDivineBeastsV6GameplayAbility
     GENERATED_BODY()
 public:
     UDivineBeastsV6GameplayAbility();
+    /** 纯数据合同，便于UE原生自动化正反例；不会授予技能或修改世界。 */
+    static bool IsValidDamageControlAction(
+        const FDivineBeastsEightSlotDraftAction& ControlAction, bool bSilence);
 
     /** 编辑器显式设置的V6执行模式；不依据技能名称或可选视觉效果猜测行为。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|V6")

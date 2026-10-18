@@ -9,11 +9,16 @@
   在Saved/Validation写入准确的诊断，不修改任何资产或图片。
 #>
 [CmdletBinding()]
-param([switch]$ReportOnly)
+param(
+    [switch]$ReportOnly,
+    # 默认保留旧黑帧审核证据；本次摄像机朝向修复必须写入全新目录，不能覆盖历史。
+    [ValidateSet('TerrainColorV3_GPU_20261018','TerrainColorV3_GPU_CameraFixed_20261018','TerrainColorV3_GPU_PreloadedFixed_20261018')]
+    [string]$EvidenceSet='TerrainColorV3_GPU_20261018'
+)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing.Common
 $root=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$dir=Join-Path $root 'Game/Saved/Validation/TerrainColorV3_GPU_20261018'
+$dir=Join-Path $root ('Game/Saved/Validation/'+$EvidenceSet)
 $meta=Join-Path $dir 'TerrainPBR_GPU_Evidence.json'
 if(!(Test-Path -LiteralPath $meta)){throw '缺失UE5.8真实RHI清单，不能验收'}
 $manifest=Get-Content -LiteralPath $meta -Raw -Encoding UTF8 | ConvertFrom-Json

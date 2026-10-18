@@ -113,3 +113,75 @@ DBAClient/DivineBeastsUIClient与DivineBeastsPresentationClient（只读8槽显�
 当前工程有并发执行作业，未关闭现有UE编辑器或替换共享DLL；V6未创建真实96份.uasset、不批准96项机制、不提交生产默认英雄资产。检查实绩以本轮真正执行的工具退出码为准，不能以“预期测试通过”报告。
 
 详细文档目录见`Docs/Implementation/GamePlatformAbilitySystem/V6SkillDocumentIndex_20261018.md`（V6 GAS 文档索引）。
+## 九、2026-10-18 V6继续执行：GAS P0 安全修复（未编译）
+
+本批明确沿用用户先前的“不编译”约束：只修改当前 `DivineBeastsWorkspace` 里的项目源码、审核数据、非编译回归和文档；**未运行 UHT/UBT、MSVC、蓝图编译、Live Coding、Cook 或双客户端专服**。工程已有其他会话打开编辑器进行 VFX 相关审核，本批没有抢占或修改它的资源。
+
+### 真实写入的修复
+
+1. **冷却标签与效果一致**：`DivineBeastsAbilityLoadoutComponent.cpp`（项目技能授权组件）新增 `CooldownEffect->GetGrantedTags().HasAllExact(*CooldownTags)`（冷却效果必须真实授予GA所检查的所有精确标签）；V6进一步拒绝不属于其声明冷却集合的多余GrantedTag。调用依据为锁定UE5.8原生`UGameplayEffect::GetGrantedTags`，避免只有冷却时长而实际无法阻止再次激活。
+2. **提交后目标位置再验证**：`DivineBeastsV6GameplayAbility.cpp`（V6原生执行器）新增 `IsV6WithinRange`（服务器实时施法距离），普通攻击在GAS Commit后重新射线命中同一个且相同化身代次的目标，不能使用提交前旧Hit直接结算。治疗/护盾/控制以服务器当前目标点生成CombatSpec，不重用已经迁移的旧冲击点。
+3. **AOE范围中心冻结**：`BuildV6AreaTargets`（范围目标枚举）输出 `FrozenAreaCenter`（技能提交前冻结的权威中心），提交后重新确认中心仍在施法距离内、各目标仍在冻结半径内，避免同步Effect通知改变Pawn/目标位置导致旧AOE错误击中。范围多目标效果不是原子事务；先前已造成的真实伤害不伪造回滚，后继目标失效即停止。
+4. **投射物冻结目标正确性**：显式记录 `bProjectileHadFrozenTarget`（提交前是否锁定），如锁定目标在提交后死亡或销毁，则拒绝悄悄降级为朝前直射；对仍合法的冻结目标重新核对距离、视线与化身代次并使用当前 `GetCombatTargetPoint`（战斗命中点）确定射向。没有锁定目标时才允许服务器前向直射，客户端视觉不能决定命中。
+5. **短冲移动结果真实回报**：地面 `SafeDash`（安全短移）沿用导航落点与胶囊扫掠预检，提交后再次确认；如果最终SetActorLocation遇到动态阻挡却已实际走完部分距离，按实际移动成功的结果复制，不再表现为“人物移动了但技能完全失败”。用户未批准的历史穿墙/假身换位、S形毒路加速等仍不能凭此模式实现。
+
+### 「蛇行」V6草案数值纠错
+
+旧V2候选参数：蛇行位移`680cm`，射程却为`670cm`；V6执行器要求`CastRangeCm >= distanceCm`，导致基础模式无法通过。仅在 `V6SkillImplementationRegistry_20261018.json`（V6实施台账）新增 `v6DraftBalanceCorrections`（V6待审一级候选纠错），建议将V6作者稿的该技能射程调整为`680cm`，状态仍 `PENDING_DESIGN_REVIEW`（等待策划审查），`approvedForRuntime=false`（未批准上线）。`AuthorV6SkillDraftAssetsUE58.py`（V6原生草案作者脚本）制作**未批准DataTable**时才可消费该明确纠错，且验证身份、动作、原始数值、距离和审批标志。旧V2 JSON、旧已保存DataAsset及正式角色DefaultAbilitySetId均不改变。
+
+注意：该修正仅解决原始距离不自洽，**不表示已实现历史「蛇行」的贴地S形毒径加速**，也不改变全部96技能和12被动未审核、未授予的事实。
+
+### 本批实测的非编译门禁
+
+- `Tests/Architecture/TestV6GASCombatSafety.py`（V6服务器战斗安全静态及故障注入）**11/11通过**（本轮追加AOE部分成功测试）。首次在未修复源码上出现基线失败，新增修复后全部通过；覆盖冷却GrantedTags、Commit后二次距离和射线、冻结AOE、真实弹道Aim和旧锁定目标失效、部分位移结果。
+- `Tests/Architecture/TestV6GASImplementation.py`（V6 96技能台账/原生接线/候选修正）**13/13通过**。
+- `Tests/Architecture/TestGASLoadoutTransactionSafety.py`（GAS授权事务回归）**20/20通过**。
+- `Tests/Architecture/ValidateZodiacAbilityIntegration.py`（原生肖技能集成门禁）**52/52通过**。
+- `git diff --check`（代码差异空白格式检查）退出码0。本批没有触碰其他会话VFX/地形的未提交资源。
+- 本轮仍**没有**UE5.8新增C++编译、原生测试实跑、8槽Blueprint及96新GA/GE/DataAsset的冷重载、多人联机、Niagara人工验收或Cook证据。以上源代码修改只能标记“源码已改、静态验证已过”，不可升级为可上线。
+
+### 仍需后续真正实施的能力与原生验收
+
+- 12个控制槽、11个复杂终极、12项独立固有被动和其他历史复杂机制需要权威执行，而不是绑定到简单伤害/护盾。
+- UE原生模拟 Commit 回调期间更换/删除目标、改变施法者位置、友军关系变化、同帧新障碍、动态AOE第17目标、投射物先后死亡与客户端去重。
+- V6每技能真正的Cooldown GE/GAS成本与授权类、12英雄八槽AbilitySet、客户端8槽Widget、角色创建8技能图文与独立被动、96份48×48图标及已审Niagara资源制作均仍待原生完成。
+## 十、继续实施批次：生肖控制技能复合结算源码（未编译）
+
+本轮读取最新V6历史设计、96技能实施台账及平台Combat控制系统，按现行三层项目→平台单向依赖扩展`UDivineBeastsV6GameplayAbility`（项目V6唯一GAS基础技能执行器），未新增第二个ASC、战斗伤害计算器、Slow状态替身或VFX结算规则。仍不编译、Cook、改.uasset和提交主分支。
+
+### 真实实现与边界
+
+- 平台`EGamePlatformControlType`（通用战斗控制类型）目前只有`Stun`（眩晕）和`Silence`（沉默），**没有`Slow`（减速）**。因此新C++仅新增三种可表达V2单段两行为的执行模式：`DamageAndStun`（单体伤害后独立眩晕）、`DamageAndSilence`（单体伤害后独立沉默）、`RadialDamageAndStun`（服务器冻结范围中心的单段范围伤害后逐目标眩晕）。原来8种V6模式的枚举序列化顺序不变，新模式只追加在`SafeDash`之后。
+- 数据合同严格要求动作数为2且顺序为`damage`（单段基础伤害）→`control`（单段控制），控制名称必须与技能原语精确一致，持续0～3秒、倍率0、命中段数1，必须与范围/目标模式、伤害表一致。不能用`stun`冒充四个`slow`控制槽。
+- 按UE GAS原有`CommitAbility`（正式提交成本/冷却）后，再核验服务器Avatar代次、友军关系、目标距离/冻结范围、阻挡、有效命中点。实际伤害调用`UGamePlatformCombatComponent::ApplyDamage`（唯一平台权威伤害），成功才用**新`FGuid`**向同一目标调用`ApplyControl`（平台原生时效控制）。
+- **两次真实GAS/Combat操作不是原子事务**。如伤害致死、技能在回调中被取消、目标更换化身或离开范围，跳过控制；若伤害已经成功，仍按真实伤害完成反馈，不能伪造全技能失败或倒扣生命。平台Combat独立发布伤害/控制事件。
+- 有界AOE多目标处理改为统计`bAnyApplied`（是否至少命中任意合法目标）。某目标在Commit回调中失效时跳过该目标，不能否定之前已成功结算的其他目标；若来源Avatar失效立即停止迭代。
+- 提供静态无世界合同`IsValidDamageControlAction`（原生控制行为字段校验），并新增`DivineBeasts.Abilities.V6.DamageControlPairContract`（引擎原生正负例测试源码）。UE5.8编译后须运行此测试，当前仅能确认源码存在。
+
+### 12生肖控制槽逐项判断
+
+| 历史生肖控制技能 | V2控制行为 | 新C++可能适配的基础原语 | 与V6历史效果的剩余差距 |
+|---|---|---|---|
+| 子鼠「咬筋」 | 伤害+减速 | 不支持 | 减速及位移抑制 |
+| 丑牛「顶回」 | 范围伤害+眩晕 | `RadialDamageAndStun` | 必须实现定向顶退及冲锋打断 |
+| 寅虎「虎啸」 | 范围伤害+眩晕 | `RadialDamageAndStun` | 历史为扇形减速、孤立条件短控，不应无条件群晕 |
+| 卯兔「月痕」 | 伤害+减速 | 不支持 | 层数减速和条件定身 |
+| 辰龙「龙压」 | 范围伤害+眩晕 | `RadialDamageAndStun` | 必须实现外推内牵的服务器位移规则 |
+| 巳蛇「缠纹」 | 伤害+沉默 | `DamageAndSilence` | 历史为蛇纹减速及条件缠足，不能以无条件沉默冒充 |
+| 午马「蹄震」 | 伤害+眩晕 | `DamageAndStun` | 冲势条件控制和额外击退未实现 |
+| 未羊「安魂」 | 伤害+减速 | 不支持 | 守护型软控和减伤 |
+| 申猴「扰心」 | 伤害+眩晕 | `DamageAndStun` | 需要烟弹扰乱锁定及假身条件效果 |
+| 酉鸡「鸣震」 | 伤害+沉默 | `DamageAndSilence` | 仅显形或隐藏目标沉默、假身破相 |
+| 戌狗「拦门」 | 伤害+减速 | 不支持 | 门盾阻挡与打断冲锋，不是普通减速 |
+| 亥猪「震鬃」 | 范围伤害+眩晕 | `RadialDamageAndStun` | 岩甲在场才可短击退、否则近距减速 |
+
+`Docs/Implementation/GamePlatformAbilitySystem/V6ControlSkillImplementationMatrix_20261018.json`（控制技能实施与人工审核矩阵）登记12个稳定ID、设计动作、候选模式、明确缺口及不授予门禁，分类为`4范围眩晕 + 2单体眩晕 + 2单体沉默 + 4未支持减速`。**8只是可复用基础原语候选，不表示8项正式V6历史控制技能完成，更不代表已生成8份GA蓝图。**
+
+### 非编译门禁与下阶段交付
+
+- `Tests/Architecture/TestV6DamageControlComposite.py`（复合结算源码与数据审核静态回归），包含控制种类、二段独立事件、同步回调重核、负例注入、历史技能不误批准以及现有枚举顺序检查。
+- `Tests/Architecture/TestV6GASCombatSafety.py`（V6战斗安全回归）已追加AOE部分成功不能伪造整体失败的验证。
+- `DivineBeastsV6AbilityContractTests.cpp`（UE5.8原生测试源码）追加纯动作正负例；未编译前不能声明原生通过。
+- 下一阶段须实现服务器权威`Slow`属性、减速叠加和网络移动一致性，再落地历史条件控制、击退/牵引、假身/目标标记与12项独立被动，并补齐96项DataAsset/GA/GE、8槽Widget、角色创建图文/VFX与联机Cook证据。
+- 当前控制源码回归 **13/13通过**、V6战斗安全源码回归 **11/11通过**，均仅为非编译静态检测与故障注入；并非引擎内原生自动化的执行结果。
+- 默认全部V6`canGrantToServer=false`、`nativeAssetCount=0`，任何模式、矩阵和静态测试变化均不得自动解除审批禁令。

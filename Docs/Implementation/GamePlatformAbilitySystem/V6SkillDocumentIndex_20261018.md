@@ -11,19 +11,27 @@
 | 05 | `Docs/Design/ZodiacEightSlotSkills_V2.json` | 旧八槽一级数据候选和基础动作字段 | 保留，非V6最终平衡 | 转换为V6正式平衡表 |
 | 06 | `Docs/Design/ZodiacEightSlotAbilitySetManifest_V2.json` | 12英雄×8数据授权参考清单 | 旧占位参考 | V6逐英雄重新审核 |
 | 07 | `Docs/Implementation/GamePlatformAbilitySystem/V6SkillImplementationRegistry_20261018.json` | 96个技能逐项实施状态、模式候选与未制作资产指针 | **新建，96项全部禁止授予** | 逐项填入原生GA/GE/VFX与验收信息 |
-| 08 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Abilities/DivineBeastsV6GameplayAbility.h` | V6共享原生GAS技能执行接口、8种安全模式 | **新建C++，未编译** | UHT/UBT和UE原生用例 |
+| 08 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Abilities/DivineBeastsV6GameplayAbility.h` | V6共享原生GAS技能执行接口、8基线模式和3项两段控制候选 | **新建C++，未编译** | UHT/UBT和UE原生用例 |
 | 09 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Private/Abilities/DivineBeastsV6GameplayAbility.cpp` | 服务器权威单体／范围／投射、治疗、护盾、控制、简短位移 | **新建C++，未编译** | 真实伤害/目标/取消/同步重入测试 |
 | 10 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Public/Definitions/DivineBeastsAbilityDefinition.h` | 项目DataAsset身份、V6原生审核位；保留旧草案禁用位 | **本轮已改，未编译** | UHT原生反射回读 |
 | 11 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Private/Definitions/DivineBeastsAbilityDefinition.cpp` | V6原生审核位与草案位互斥、定义数值校验 | **本轮已改，未编译** | DataValidation引擎运行 |
 | 12 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Private/Components/DivineBeastsAbilityLoadoutComponent.cpp` | 服务器装配前V6 GA类／Definition／GE核验与回滚 | **本轮已改，未编译** | 真实ASC同步通知及冷重载 |
 | 13 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/DivineBeastsAbilitiesRuntime.Build.cs` | 项目技能模块公开依赖及导航私有依赖 | **本轮已改，未编译** | UE5.8增量构建 |
-| 14 | `Tests/Architecture/TestV6GASImplementation.py` | 源码及96项台账静态正反向安全门禁 | **新建，须执行** | 真实退出0方可标记通过 |
+| 14 | `Tests/Architecture/TestV6GASImplementation.py` | 源码及96项台账静态正反向安全门禁 | **源代码回归已执行13/13** | 仍需独立UE5.8原生编译及验证 |
 | 15 | `Tools/Unreal/Abilities/AuthorZodiacEightSlotDesignAssets.py` | 已有V2数据资产编辑器作者脚本 | 保留，不等于V6已导入 | Monolith/原生编辑器独占作者窗口 |
 | 16 | `Docs/Design/ZodiacSkillV3Review/CharacterCreatePreviewContract.json` | 角色创建8技能图文、固有被动及效果图权限合同 | 已存在，正式页面未接入 | UI蓝图与GamePlatformData回读 |
 | 17 | `Tools/Unreal/UI/EightSlotAbilityBarWidgetSpec_V2.json` | 战斗8槽WBP命名和布局装配规格 | 已存在，部分Widget待绑定 | Monolith真实保存与视觉验收 |
 | 18 | `Docs/Implementation/GamePlatformAbilitySystem/GASReentrancyRemediation_20261018.md` | 旧GAS授权/撤销重入修复及测试证据 | 已有记录，不等于V6已编译 | 新旧方案联测 |
 | 19 | `Docs/Implementation/GamePlatformAbilitySystem/V6SkillImplementation_20261018.md` | 本次GAS服务器实现范围、能力矩阵、开发阻断及验收 | **新建实施说明** | 签收可执行范围 |
 | 20 | `Docs/Implementation/GamePlatformAbilitySystem/V6SkillDocumentIndex_20261018.md` | **本文件，统一文档清单索引** | 新建 | 后续每批改动同步维护 |
+
+| 21 | `Tests/Architecture/TestV6GASCombatSafety.py` | V6冷却／提交后命中／AOE／投射物／位移防回归与故障注入 | **纯静态回归已复验11/11通过** | 需UE原生 Commit 重入和Dedicated Server实测 |
+| 22 | `Tools/Unreal/Abilities/AuthorV6SkillDraftAssetsUE58.py` | V6原生审核DataAsset制作脚本，含蛇行待审候选数值差异 | **仅源文件已更新，未调用编辑器写盘** | 用户解除不编译后取得正式Monolith编辑器连接再制作 |
+| 23 | `Docs/Implementation/GamePlatformAbilitySystem/V6SkillImplementationRegistry_20261018.json` 中 `v6DraftBalanceCorrections` | 旧V2蛇行射程670cm／移动680cm差异的V6候选纠错 | **680cm仅待审，未获生产批准** | 审批后形成正式Level1数据表并验证SafeDash与历史动作差异 |
+
+| 24 | `Docs/Implementation/GamePlatformAbilitySystem/V6ControlSkillImplementationMatrix_20261018.json` | 12生肖控制槽基础原语适配与历史机制差距矩阵 | **8项两段执行候选、4项Slow未支持，正式批准0项** | 逐项人工审批和UE原生验证 |
+| 25 | `Tests/Architecture/TestV6DamageControlComposite.py` | 单体／范围伤害加短眩晕和沉默的源码回归、负向注入、历史矩阵门禁 | **非编译合同复验13/13通过** | UE5.8原生两段GAS/Combat实测 |
+| 26 | `Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/Private/Tests/DivineBeastsV6AbilityContractTests.cpp` | 追加纯C++Stun/Silence控制行为合同正负例 | **仅C++原生测试源码，未编译** | UE自动化`DivineBeasts.Abilities.V6.DamageControlPairContract` |
 
 ## 需要原生创建而当前不存在的资产台账
 

@@ -47,4 +47,52 @@ bool FDivineBeastsV6NativeContractGateTest::RunTest(const FString&)
     TestFalse(TEXT("仍无合法LogicalId、HeroId或已加载数据表时不得授予"), Ability->ValidateNativeContract(*Definition, Balance, Error));
     return true;
 }
+
+/** 独立原生数值测试：即使没有96份DataAsset，也能验证受支持的两个控制结果。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FDivineBeastsV6ControlPairValidationTest,
+    "DivineBeasts.Abilities.V6.DamageControlPairContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsV6ControlPairValidationTest::RunTest(const FString&)
+{
+    FDivineBeastsEightSlotDraftAction Control;
+    Control.ActionKindId = TEXT("control");
+    Control.ModifierId = TEXT("stun");
+    Control.HitCount = 1;
+    Control.Magnitude = 0.0f;
+    Control.DurationSeconds = 0.9f;
+
+    TestTrue(TEXT("一次短眩晕合法"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, false));
+    TestFalse(TEXT("Stun不能冒充Silence"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, true));
+
+    Control.ModifierId = TEXT("slow");
+    TestFalse(TEXT("平台当前不支持Slow，禁止按眩晕代替"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, false));
+
+    Control.ModifierId = TEXT("silence");
+    Control.DurationSeconds = 1.4f;
+    TestTrue(TEXT("一次短沉默合法"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, true));
+    TestFalse(TEXT("Silence不能冒充Stun"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, false));
+
+    Control.HitCount = 2;
+    TestFalse(TEXT("两段重复控制须专门授权"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, true));
+    Control.HitCount = 1;
+    Control.Magnitude = 0.25f;
+    TestFalse(TEXT("控制段不能暗带伤害或减速倍率"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, true));
+    Control.Magnitude = 0.0f;
+    Control.DurationSeconds = 0.0f;
+    TestFalse(TEXT("0秒控制不能消耗技能资源假装生效"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, true));
+    Control.DurationSeconds = 3.1f;
+    TestFalse(TEXT("超3秒控制拒绝"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, true));
+    return true;
+}
 #endif

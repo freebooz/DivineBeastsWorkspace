@@ -59,9 +59,18 @@ def execute():
     for path in (MAP,MPC,MI):
         if not lib.does_asset_exist(path):raise FileNotFoundError("真实审查资源不存在："+path)
     editor=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    if not editor or not editor.load_level(MAP):
-        raise RuntimeError("UE Editor无法真实加载十层Landscape审核关卡")
+    if not editor:
+        raise RuntimeError("UE LevelEditorSubsystem不可用")
     world=unreal.EditorLevelLibrary.get_editor_world()
+    if isinstance(world,unreal.World) and MAP in world.get_path_name():
+        # 修复V3六态历史黑帧的第二个原因：命令行UE已用MAP初始化世界，
+        # 不能再load_level(MAP)后于同一执行帧立即抓取尚未注册完的SceneProxy。
+        print("TERRAIN_PBR_GPU_PRELOADED_WORLD_REUSED",world.get_path_name(),flush=True)
+    else:
+        if not editor.load_level(MAP):
+            raise RuntimeError("UE Editor无法真实加载十层Landscape审核关卡")
+        world=unreal.EditorLevelLibrary.get_editor_world()
+        print("TERRAIN_PBR_GPU_WORLD_LOADED_IN_SAME_FRAME_NOTE_RHI_MAY_NOT_BE_READY",flush=True)
     collection=lib.load_asset(MPC)
     if not isinstance(world,unreal.World) or not isinstance(collection,unreal.MaterialParameterCollection):
         raise RuntimeError("RHI审查世界/MPC真实反射类错误")
@@ -73,10 +82,16 @@ def execute():
         raise RuntimeError("审核Landscape未绑定正式项目PBR MI")
     from_pt=unreal.Vector(15000,-28000,65000)
     to_pt=unreal.Vector(0,0,5000)
-    dx,dy,dz=to_pt.x-from_pt.x,to_pt.y-from_pt.y,to_pt.z-from_pt.z
-    rot=unreal.Rotator(
-        math.degrees(math.atan2(dz,math.hypot(dx,dy))),
-        math.degrees(math.atan2(dy,dx)),0)
+    # UE5.8 Rotator位置参数是Roll/Pitch/Yaw；历史按照Pitch/Yaw/Roll构造，
+    # 会导致SceneCapture背向真正Landscape。使用引擎FindLookAtRotation统一契约。
+    rot=unreal.MathLibrary.find_look_at_rotation(from_pt,to_pt)
+    forward=unreal.MathLibrary.get_forward_vector(rot)
+    delta=unreal.Vector(to_pt.x-from_pt.x,to_pt.y-from_pt.y,to_pt.z-from_pt.z)
+    mag=math.sqrt(delta.x**2+delta.y**2+delta.z**2)
+    dot=(forward.x*delta.x+forward.y*delta.y+forward.z*delta.z)/mag
+    print("TERRAIN_PBR_GPU_CAMERA_ALIGNMENT",round(dot,6),flush=True)
+    if dot<.999:
+        raise RuntimeError("SceneCapture实际朝向与地形目标不一致，禁止输出黑帧")
     actor=None
     output.mkdir(parents=True,exist_ok=True)
     try:

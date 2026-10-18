@@ -6,6 +6,7 @@
 它不是UE5.8编译、真正Actor运行、蓝图冷读或多人服务器验收。
 """
 import copy
+import ast
 import json
 import re
 import unittest
@@ -37,6 +38,37 @@ def valid_registry(registry: dict, v6: dict) -> list[str]:
         errors.append("实施清单与历史设计稿编号不同")
     if registry.get("serverApprovedAbilityCount") != 0 or registry.get("nativeUEAssetCount") != 0:
         errors.append("尚未制作的原生技能不能声称已上线")
+    # 候选数据的移动距离大于射程时必须在V6草案单独说明修正，不能悄悄覆盖V2。
+    skills_by_id = {entry["abilityId"]: entry for entry in skills}
+    conflicting_dash_ids = {
+        entry["abilityId"] for entry in skills
+        if entry["proposedPrimitiveCandidate"] == "SafeDash" and
+           len(entry.get("v2Actions", [])) == 1 and
+           entry["v2Actions"][0].get("kind") == "movement" and
+           float(entry["v2Actions"][0].get("distanceCm", 0.0)) >
+           float(entry["level1Candidate"]["castRangeCm"])
+    }
+    corrections = registry.get("v6DraftBalanceCorrections", [])
+    if len(corrections) != len(conflicting_dash_ids) or (
+            {entry.get("abilityId") for entry in corrections} != conflicting_dash_ids):
+        errors.append("V6位移草案纠错项与真实不一致的输入距离集合不匹配")
+    for correction in corrections:
+        entry = skills_by_id.get(correction.get("abilityId"))
+        if not entry:
+            errors.append("纠错引用了不存在的技能ID")
+            continue
+        actions = entry.get("v2Actions", [])
+        if (correction.get("status") != "PENDING_DESIGN_REVIEW" or
+            correction.get("approvedForRuntime") is not False or
+            not actions or
+            float(correction["sourceCandidateCastRangeCm"]) !=
+                float(entry["level1Candidate"]["castRangeCm"]) or
+            float(correction["actionTravelDistanceCm"]) !=
+                float(actions[0].get("distanceCm", 0)) or
+            float(correction["proposedCastRangeCm"]) <
+                float(correction["actionTravelDistanceCm"]) or
+            float(correction["proposedCastRangeCm"]) > 950.0):
+            errors.append("V6移动纠错与数值或人工待审门禁不一致")
     for entry in skills:
         identity = entry["abilityId"]
         if identity not in expected:
@@ -85,10 +117,12 @@ class V6GASImplementationTests(unittest.TestCase):
             self.assertIn("    " + mode, self.header)
             self.assertIn("EDivineBeastsV6NativeMode::" + mode, self.code)
         self.assertIn("ExecutionMode = EDivineBeastsV6NativeMode::Unsupported", self.header)
-        self.assertIn("Definition.DraftActions.Num() != 1", self.code)
+        self.assertIn("Definition.DraftActions.Num() != (bDamageControlMode ? 2 : 1)", self.code)
         self.assertIn("ExecutionMode == EDivineBeastsV6NativeMode::Unsupported", self.code)
         self.assertIn("Action.HitCount == 1", self.code)
         self.assertIn("bSingleHit = Action.HitCount == 1", self.code)
+        self.assertIn("ControlAction.ActionKindId == TEXT(\"control\")", self.code)
+        self.assertIn("ControlAction.HitCount == 1", self.code)
 
     def test_05_authority_commit_and_avatar_generation(self):
         for token in ("NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly",
@@ -120,7 +154,7 @@ class V6GASImplementationTests(unittest.TestCase):
         self.assertIn("bV6NativeApproved = false", self.definition)
 
     def test_08_multihit_and_mixed_behaviour_do_not_silently_activate(self):
-        self.assertIn("Definition.DraftActions.Num() != 1", self.code)
+        self.assertIn("Definition.DraftActions.Num() != (bDamageControlMode ? 2 : 1)", self.code)
         self.assertIn("bHasLegalRange", self.code)
         self.assertIn("MaxV6AffectedActors = 16", self.code)
         self.assertIn("Action.Magnitude <= MaxV6ShieldFraction", self.code)
@@ -133,6 +167,32 @@ class V6GASImplementationTests(unittest.TestCase):
         approved_ids = {a[0] for a in approved["entries"]}
         self.assertEqual(approved_ids, {x["abilityId"] for x in self.registry["skills"]})
         self.assertEqual(self.registry["reviewedV6Skills"], 0)
+
+    def test_10a_snake_draft_candidate_correction_is_not_production(self):
+        fixes = self.registry.get("v6DraftBalanceCorrections", [])
+        self.assertEqual(len(fixes), 1)
+        record = fixes[0]
+        self.assertEqual(record["abilityId"], "dba.ability.snake_eight_sinuous_dash@1")
+        self.assertEqual(record["sourceCandidateCastRangeCm"], 670)
+        self.assertEqual(record["actionTravelDistanceCm"], 680)
+        self.assertEqual(record["proposedCastRangeCm"], 680)
+        self.assertEqual(record["status"], "PENDING_DESIGN_REVIEW")
+        self.assertFalse(record["approvedForRuntime"])
+        writer = (ROOT / "Tools/Unreal/Abilities/AuthorV6SkillDraftAssetsUE58.py"
+                  ).read_text(encoding="utf-8-sig")
+        self.assertIn("pending_fixes.get(skill", writer)
+        self.assertIn('"CastRangeCm": draft_range_cm', writer)
+        ast.parse(writer, filename="AuthorV6SkillDraftAssetsUE58.py")
+
+    def test_10b_reject_unapproved_snake_range_smaller_than_move(self):
+        altered = copy.deepcopy(self.registry)
+        altered["v6DraftBalanceCorrections"][0]["proposedCastRangeCm"] = 650
+        self.assertNotEqual(valid_registry(altered, self.v6), [])
+
+    def test_10c_reject_claiming_snake_range_is_live_approved(self):
+        altered = copy.deepcopy(self.registry)
+        altered["v6DraftBalanceCorrections"][0]["approvedForRuntime"] = True
+        self.assertNotEqual(valid_registry(altered, self.v6), [])
 
     def test_10_docs_index_is_present(self):
         self.assertTrue(DOCUMENT.is_file())

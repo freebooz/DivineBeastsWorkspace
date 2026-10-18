@@ -115,6 +115,29 @@ bool GetV6SelectedTarget(AActor* Source, UGamePlatformCombatComponent* Combat,
     return !Out.ImpactLocation.ContainsNaN();
 }
 
+
+/** 在Commit后的最新服务器世界重新核对实际施法距离，不能沿用提交前被冻结的旧距离。 */
+bool IsV6WithinRange(const AActor* Source, const AActor* Target, float MaxRangeCm)
+{
+    if (!IsValid(Source) || !IsValid(Target) || !FMath::IsFinite(MaxRangeCm) ||
+        MaxRangeCm < 0.0f || Source->GetWorld() != Target->GetWorld() ||
+        Source->GetActorLocation().ContainsNaN() || Target->GetActorLocation().ContainsNaN())
+        return false;
+    return FVector::DistSquared(Source->GetActorLocation(), Target->GetActorLocation()) <=
+        FMath::Square(MaxRangeCm);
+}
+
+/** 区域结算永久绑定施法时的服务器范围中心；不能让Commit回调中的移动迁移整片AOE。 */
+bool IsV6AreaCenterValid(const AActor* Source, const FVector& Center, float MaxCastRangeCm)
+{
+    if (!IsValid(Source) || Source->GetActorLocation().ContainsNaN() ||
+        Center.ContainsNaN() || !FMath::IsFinite(MaxCastRangeCm) || MaxCastRangeCm < 0.0f)
+        return false;
+    // 自身周围零射程技能，角色在提交期间改变位置时拒绝按旧位置产生新的区域伤害。
+    const float Radius = MaxCastRangeCm > 0.0f ? MaxCastRangeCm : 1.0f;
+    return FVector::DistSquared(Source->GetActorLocation(), Center) <= FMath::Square(Radius);
+}
+
 /** 普攻前向射线同时检查Pawn和障挡物，友军在前方时不得击穿队友。 */
 bool TraceV6ForwardEnemy(AActor* Source, const ADivineBeastsCharacter* Hero,
     float RangeCm, FV6TargetSnapshot& Out)
@@ -151,9 +174,10 @@ bool TraceV6ForwardEnemy(AActor* Source, const ADivineBeastsCharacter* Hero,
 /** 以冻结的选中敌人为范围中心；不信任客户端地面坐标和视觉Niagara大小。 */
 bool BuildV6AreaTargets(AActor* Source, const ADivineBeastsCharacter* Hero,
     UGamePlatformCombatComponent* SourceCombat, const FDivineBeastsAbilityBalanceRow& Balance,
-    TArray<FV6TargetSnapshot>& Out)
+    TArray<FV6TargetSnapshot>& Out, FVector& OutFrozenAreaCenter)
 {
     Out.Reset();
+    OutFrozenAreaCenter = FVector::ZeroVector;
     UWorld* World = IsValid(Source) ? Source->GetWorld() : nullptr;
     if (!World || Balance.AreaRadiusCm <= 0.0f || Balance.AreaRadiusCm > MaxV6AreaRadiusCm)
         return false;
@@ -169,6 +193,8 @@ bool BuildV6AreaTargets(AActor* Source, const ADivineBeastsCharacter* Hero,
         Center = Actor->GetActorLocation();
     }
 
+    if (!IsV6AreaCenterValid(Source, Center, Balance.CastRangeCm)) return false;
+    OutFrozenAreaCenter = Center;
     TArray<FOverlapResult> Overlaps;
     FCollisionQueryParams Params(SCENE_QUERY_STAT(SSLMV6AreaOverlap), false, Source);
     World->OverlapMultiByObjectType(Overlaps, Center, FQuat::Identity,
@@ -235,15 +261,35 @@ const FGameplayTagContainer* UDivineBeastsV6GameplayAbility::GetCooldownTags() c
     return &ApprovedCooldownTags;
 }
 
+bool UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(
+    const FDivineBeastsEightSlotDraftAction& ControlAction, bool bSilence)
+{
+    const bool bExactControl = bSilence
+        ? ControlAction.ModifierId == TEXT("silence")
+        : ControlAction.ModifierId == TEXT("stun");
+    return ControlAction.ActionKindId == TEXT("control") &&
+        bExactControl &&
+        ControlAction.HitCount == 1 &&
+        FMath::IsNearlyZero(ControlAction.Magnitude) &&
+        FMath::IsFinite(ControlAction.DurationSeconds) &&
+        ControlAction.DurationSeconds > 0.0f &&
+        ControlAction.DurationSeconds <= MaxV6ControlSeconds;
+}
+
 bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
     const UDivineBeastsAbilityDefinition& Definition,
     const FDivineBeastsAbilityBalanceRow& Balance, FString& OutError) const
 {
     OutError.Reset();
+    const bool bDamageControlMode =
+        ExecutionMode == EDivineBeastsV6NativeMode::DamageAndStun ||
+        ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSilence ||
+        ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun;
     if (!Definition.bV6NativeApproved || Definition.bEightSlotDraftOnly ||
         !Definition.ValidateDefinition().IsSuccess() ||
         ExecutionMode == EDivineBeastsV6NativeMode::Unsupported ||
-        Definition.DraftActions.Num() != 1 || !Balance.Validate(OutError))
+        Definition.DraftActions.Num() != (bDamageControlMode ? 2 : 1) ||
+        !Balance.Validate(OutError))
     {
         OutError = TEXT("V6技能尚未批准，或需要多行为/分段等未实现的服务器机制。");
         return false;
@@ -252,6 +298,18 @@ bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
     const bool bHasLegalRange = Balance.CastRangeCm >= 0.0f &&
         Balance.CastRangeCm <= MaxV6RangeCm;
     const bool bSingleHit = Action.HitCount == 1;
+    if (bDamageControlMode)
+    {
+        // 一次确认伤害和随后单次控制，不自动兼容Slow、击退、束缚、显形或额外伤害。
+        const FDivineBeastsEightSlotDraftAction& ControlAction = Definition.DraftActions[1];
+        const bool bSilence = ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSilence;
+        if (!IsValidDamageControlAction(ControlAction, bSilence))
+        {
+            OutError = TEXT("V6伤害加控制动作不能表示当前平台未实现的Slow/多段/击退/束缚。");
+            return false;
+        }
+    }
+
     const auto MagnitudeMatchesDamage = [&]()
     {
         return Action.ActionKindId == TEXT("damage") && bSingleHit &&
@@ -278,6 +336,17 @@ bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
             Balance.AreaRadiusCm > 0 && Balance.AreaRadiusCm <= MaxV6AreaRadiusCm &&
             MagnitudeMatchesDamage() &&
             // 同时含伤害和治疗的范围技能必须执行两条权威结果；单一Damage不得冒充全技能。
+            Definition.DraftTargetModeId == TEXT("area_or_target");
+        break;
+    case EDivineBeastsV6NativeMode::DamageAndStun:
+    case EDivineBeastsV6NativeMode::DamageAndSilence:
+        bAllowed = bHasLegalRange && Balance.CastRangeCm > 0.0f &&
+            FMath::IsNearlyZero(Balance.AreaRadiusCm) && MagnitudeMatchesDamage() &&
+            Definition.DraftTargetModeId == TEXT("enemy");
+        break;
+    case EDivineBeastsV6NativeMode::RadialDamageAndStun:
+        bAllowed = bHasLegalRange && Balance.AreaRadiusCm > 0.0f &&
+            Balance.AreaRadiusCm <= MaxV6AreaRadiusCm && MagnitudeMatchesDamage() &&
             Definition.DraftTargetModeId == TEXT("area_or_target");
         break;
     case EDivineBeastsV6NativeMode::SingleHealing:
@@ -372,6 +441,8 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
     const FDivineBeastsEightSlotDraftAction& Action = Definition->DraftActions[0];
     FV6TargetSnapshot SingleTarget;
     TArray<FV6TargetSnapshot> AreaTargets;
+    FVector FrozenAreaCenter = FVector::ZeroVector;
+    bool bProjectileHadFrozenTarget = false;
     bool bValidTarget = false;
     if (ExecutionMode == EDivineBeastsV6NativeMode::ForwardDamage)
         bValidTarget = TraceV6ForwardEnemy(Source, Hero, Balance.CastRangeCm, SingleTarget);
@@ -382,6 +453,7 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
         int32 IntentSourceGeneration = 0, IntentTargetGeneration = 0;
         const bool bHasIntent = Combat->GetSelectedProjectileTargetIntent(
             IntentTarget, IntentSourceGeneration, IntentTargetGeneration);
+        bProjectileHadFrozenTarget = bHasIntent;
         bValidTarget = !bHasIntent ? !Source->GetActorForwardVector().GetSafeNormal().IsNearlyZero() :
             (IntentSourceGeneration == SourceGeneration &&
              GetV6SelectedTarget(Source, Combat, Balance.CastRangeCm, SingleTarget) &&
@@ -389,8 +461,9 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
              IsCurrentTarget(Source, Hero, SingleTarget.Actor.Get(),
                  SingleTarget.AvatarGeneration, false));
     }
-    else if (ExecutionMode == EDivineBeastsV6NativeMode::RadialDamage)
-        bValidTarget = BuildV6AreaTargets(Source, Hero, Combat, Balance, AreaTargets);
+    else if (ExecutionMode == EDivineBeastsV6NativeMode::RadialDamage ||
+             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun)
+        bValidTarget = BuildV6AreaTargets(Source, Hero, Combat, Balance, AreaTargets, FrozenAreaCenter);
     else if (ExecutionMode == EDivineBeastsV6NativeMode::SafeDash)
     {
         FVector Destination;
@@ -454,10 +527,42 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
         if (!IsCurrentActivation(Token, Source, Combat, SourceGeneration) ||
             !IsCurrentTarget(Source, Hero, Target, Snapshot.AvatarGeneration, bFriendly))
             return false;
+        // 实时重核：普通技能按当前角色/目标距离，范围技能按提交前冻结的中心和原始半径。
+        if (ExecutionMode == EDivineBeastsV6NativeMode::RadialDamage ||
+            ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun)
+        {
+            if (!IsV6AreaCenterValid(Source, FrozenAreaCenter, Balance.CastRangeCm) ||
+                Target->GetActorLocation().ContainsNaN() ||
+                FVector::DistSquared(Target->GetActorLocation(), FrozenAreaCenter) >
+                    FMath::Square(Balance.AreaRadiusCm))
+                return false;
+        }
+        else if (!IsV6WithinRange(Source, Target, Balance.CastRangeCm))
+            return false;
         if (Target != Source && !HasV6LineOfSight(Source->GetWorld(), Source, Target))
             return false;
         auto* TargetCombat = Target->FindComponentByClass<UGamePlatformCombatComponent>();
         if (!IsValid(TargetCombat)) return false;
+
+        FV6TargetSnapshot Actual = Snapshot;
+        if (ExecutionMode == EDivineBeastsV6NativeMode::ForwardDamage)
+        {
+            // 瞬时前向攻击必须再次击中同一Pawn；Commit回调里走开或被遮挡，不允许旧射线造成伤害。
+            FV6TargetSnapshot UpdatedHit;
+            if (!TraceV6ForwardEnemy(Source, Hero, Balance.CastRangeCm, UpdatedHit) ||
+                UpdatedHit.Actor.Get() != Target ||
+                UpdatedHit.AvatarGeneration != Snapshot.AvatarGeneration)
+                return false;
+            Actual = UpdatedHit;
+        }
+        else
+        {
+            // 非射线效果刷新真实结算点，不能用目标提交前的旧Impact伪造当前命中事实。
+            Actual.ImpactLocation = TargetCombat->GetCombatTargetPoint();
+            Actual.ImpactNormal = (Source->GetActorLocation() - Actual.ImpactLocation).GetSafeNormal();
+            if (Actual.ImpactLocation.ContainsNaN() || Actual.ImpactNormal.ContainsNaN())
+                return false;
+        }
         float Magnitude = Balance.BaseDamage;
         if (ExecutionMode == EDivineBeastsV6NativeMode::SingleHealing ||
             ExecutionMode == EDivineBeastsV6NativeMode::SingleShield)
@@ -467,13 +572,59 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
             Magnitude = Action.DurationSeconds;
         if (!FMath::IsFinite(Magnitude) || Magnitude <= 0) return false;
 
-        FGamePlatformCombatSpec Spec = MakeV6Spec(Source, Combat, Snapshot, Balance, Magnitude);
+        FGamePlatformCombatSpec Spec = MakeV6Spec(Source, Combat, Actual, Balance, Magnitude);
         FGamePlatformCombatResult Result;
         switch (ExecutionMode)
         {
         case EDivineBeastsV6NativeMode::ForwardDamage:
         case EDivineBeastsV6NativeMode::RadialDamage:
             Result = Combat->ApplyDamage(Spec); break;
+        case EDivineBeastsV6NativeMode::DamageAndStun:
+        case EDivineBeastsV6NativeMode::DamageAndSilence:
+        case EDivineBeastsV6NativeMode::RadialDamageAndStun:
+        {
+            // 跨两次GameplayEffect不是原子事务；必须先有真实伤害，再独立请求控制。
+            // 如伤害触发死亡、复活或换Pawn，不得使用已经失效的源/目标继续施控。
+            const FGamePlatformCombatResult DamageResult = Combat->ApplyDamage(Spec);
+            if (!DamageResult.IsSuccess()) return false;
+            if (!IsCurrentActivation(Token, Source, Combat, SourceGeneration) ||
+                !IsCurrentTarget(Source, Hero, Target, Snapshot.AvatarGeneration, false))
+                return true; // 伤害已经执行，后续控制失败不得伪造全技能未命中
+
+            const bool bAreaControl =
+                ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun;
+            const bool bStillInRange = bAreaControl
+                ? (IsV6AreaCenterValid(Source, FrozenAreaCenter, Balance.CastRangeCm) &&
+                   !Target->GetActorLocation().ContainsNaN() &&
+                   FVector::DistSquared(Target->GetActorLocation(), FrozenAreaCenter) <=
+                       FMath::Square(Balance.AreaRadiusCm))
+                : IsV6WithinRange(Source, Target, Balance.CastRangeCm);
+            if (!bStillInRange || !HasV6LineOfSight(Source->GetWorld(), Source, Target) ||
+                !IsValid(TargetCombat) ||
+                Target->FindComponentByClass<UGamePlatformCombatComponent>() != TargetCombat)
+                return true; // 目标或战斗组件被同步回调更换：保留已生效伤害，但不使用旧组件施控
+
+            const FDivineBeastsEightSlotDraftAction& ControlAction = Definition->DraftActions[1];
+            FV6TargetSnapshot CurrentHit = Actual;
+            CurrentHit.ImpactLocation = TargetCombat->GetCombatTargetPoint();
+            CurrentHit.ImpactNormal =
+                (Source->GetActorLocation() - CurrentHit.ImpactLocation).GetSafeNormal();
+            if (CurrentHit.ImpactLocation.ContainsNaN() || CurrentHit.ImpactNormal.ContainsNaN())
+                return true; // 结算点丢失：伤害保留、控制跳过
+            FGamePlatformCombatSpec ControlSpec = MakeV6Spec(
+                Source, Combat, CurrentHit, Balance, ControlAction.DurationSeconds);
+            ControlSpec.EventId = FGuid::NewGuid();
+            ControlSpec.SourceAbilityId = Balance.AbilityId;
+            ControlSpec.Magnitude = ControlAction.DurationSeconds;
+            const FGamePlatformCombatResult ControlResult = Combat->ApplyControl(
+                ControlSpec,
+                ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSilence
+                    ? EGamePlatformControlType::Silence : EGamePlatformControlType::Stun,
+                ControlAction.DurationSeconds);
+            // ControlResult经平台独立事件回报，控制失败或目标死亡不能撤销已提交的真实伤害。
+            (void)ControlResult;
+            return true; // 伤害已经执行，后续控制失败不得伪造全技能未命中
+        }
         case EDivineBeastsV6NativeMode::SingleHealing:
             Result = Combat->ApplyHealing(Spec); break;
         case EDivineBeastsV6NativeMode::SingleShield:
@@ -498,13 +649,23 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
     {
         AActor* FrozenTarget = SingleTarget.Actor.Get();
         const FVector Origin = Source->GetActorLocation() + FVector(0, 0, 50);
-        const FVector Direction = IsValid(FrozenTarget)
-            ? (SingleTarget.ImpactLocation - Origin).GetSafeNormal()
+        // 已选择目标在Commit中被删除时，禁止悄悄回退为朝正前方的无目标弹体。
+        const bool bCurrentFrozenTarget = bProjectileHadFrozenTarget &&
+            IsCurrentTarget(Source, Hero, FrozenTarget, SingleTarget.AvatarGeneration, false) &&
+            IsV6WithinRange(Source, FrozenTarget, Balance.CastRangeCm) &&
+            HasV6LineOfSight(Source->GetWorld(), Source, FrozenTarget);
+        const auto* TargetCombat = bCurrentFrozenTarget
+            ? FrozenTarget->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+        // 无目标时保持服务器当前朝向；有目标时只使用提交后复核的当前命中点。
+        const FVector FreshAim = IsValid(TargetCombat)
+            ? TargetCombat->GetCombatTargetPoint() : FVector::ZeroVector;
+        const FVector Direction = bProjectileHadFrozenTarget
+            ? (FreshAim - Origin).GetSafeNormal()
             : Source->GetActorForwardVector().GetSafeNormal();
         if (!Direction.IsNearlyZero() &&
             IsCurrentActivation(Token, Source, Combat, SourceGeneration) &&
-            (!IsValid(FrozenTarget) ||
-             IsCurrentTarget(Source, Hero, FrozenTarget, SingleTarget.AvatarGeneration, false)))
+            (!bProjectileHadFrozenTarget ||
+             (bCurrentFrozenTarget && IsValid(TargetCombat) && !FreshAim.ContainsNaN())))
         {
             FGamePlatformCombatSpec Shot;
             Shot.EventId = FGuid::NewGuid();
@@ -535,23 +696,35 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
         FVector Destination;
         FHitResult MoveHit;
         if (IsCurrentActivation(Token, Source, Combat, SourceGeneration) &&
-            PrepareV6SafeDash(Hero, Action.Magnitude, Destination) &&
-            Hero->SetActorLocation(Destination, true, &MoveHit, ETeleportType::TeleportPhysics) &&
-            !MoveHit.bBlockingHit)
+            PrepareV6SafeDash(Hero, Action.Magnitude, Destination))
         {
-            Hero->ForceNetUpdate();
-            bSuccess = true;
+            const FVector DashStart = Hero->GetActorLocation();
+            const bool bMoved = Hero->SetActorLocation(
+                Destination, true, &MoveHit, ETeleportType::TeleportPhysics);
+            // SetActorLocation扫掠受阻后仍可能走完部分距离：已经移动就按实际短移成功，
+            // 不能角色发生位移却向客户端报告“完全失败”。未动才属于失败。
+            if (bMoved && FVector::DistSquared(Hero->GetActorLocation(), DashStart) >
+                FMath::Square(1.0f))
+            {
+                Hero->ForceNetUpdate();
+                bSuccess = true;
+            }
         }
     }
-    else if (ExecutionMode == EDivineBeastsV6NativeMode::RadialDamage)
+    else if (ExecutionMode == EDivineBeastsV6NativeMode::RadialDamage ||
+             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun)
     {
-        // 激活时冻结参与判定的目标和代次；结果按服务器真实结算，不在客户端猜想命中。
-        bSuccess = true;
+        // 非原子AOE：每个目标有独立真实战斗结果。一个目标在Commit回调中死亡、
+        // 移出范围或抵抗控制时，跳过该目标但不抹掉已发生的其它目标伤害。
+        bool bAnyApplied = false;
         for (const FV6TargetSnapshot& Target : AreaTargets)
         {
-            if (!IsCurrentActivation(Token, Source, Combat, SourceGeneration)) { bSuccess = false; break; }
-            if (!ApplyToTarget(Target)) { bSuccess = false; break; }
+            if (!IsCurrentActivation(Token, Source, Combat, SourceGeneration))
+                break; // 来源Avatar已失效：立即停止后续目标
+            if (ApplyToTarget(Target))
+                bAnyApplied = true;
         }
+        bSuccess = bAnyApplied;
     }
     else
         bSuccess = ApplyToTarget(SingleTarget);

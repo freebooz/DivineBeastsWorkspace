@@ -1,0 +1,64 @@
+{
+  "resolution": [
+    1656,
+    1002
+  ],
+  "referenceResolution": [
+    1106,
+    669
+  ],
+  "camera": [
+    850.0,
+    -1150.0,
+    1250.0
+  ],
+  "lookAt": [
+    0.0,
+    0.0,
+    100.0
+  ],
+  "fov": 45,
+  "source": [
+    399.51287841796875,
+    54.5216064453125,
+    125.0
+  ],
+  "target": [
+    -781.2889404296875,
+    -84.9456787109375,
+    150.0
+  ],
+  "casterFoot": [
+    590.3207397460938,
+    38.4735107421875,
+    0.0
+  ],
+  "targetFoot": [
+    -715.992919921875,
+    -204.3680419921875,
+    0.0
+  ],
+  "direction": [
+    -0.9928774237632751,
+    -0.11727109551429749,
+    0.02102125622332096
+  ],
+  "distanceCm": 1189.2724133044014,
+  "headLengthCm": 475.7089653217606,
+  "flightDuration": 0.75,
+  "trailLifetime": 1.0,
+  "triangles": 11168,
+  "vertices": 6097,
+  "manualAccepted": false,
+  "styleRevision": "translucent_energy_layers_03",
+  "headCoreRadiusRatio": 0.056,
+  "headOuterRadiusRatio": 0.095,
+  "petalHalfThicknessRatio": 0.019,
+  "tipGlowUsesCoreSlot": true,
+  "materialSlots": 3,
+  "trailPhasesDegrees": [
+    0,
+    60,
+    120
+  ]
+}

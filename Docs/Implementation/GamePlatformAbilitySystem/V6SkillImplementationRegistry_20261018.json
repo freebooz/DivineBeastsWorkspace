@@ -30,6 +30,18 @@
     "SingleShield": 13,
     "Unsupported": 44
   },
+
+  "v6DraftBalanceCorrections": [
+    {
+      "abilityId": "dba.ability.snake_eight_sinuous_dash@1",
+      "sourceCandidateCastRangeCm": 670,
+      "actionTravelDistanceCm": 680,
+      "proposedCastRangeCm": 680,
+      "status": "PENDING_DESIGN_REVIEW",
+      "approvedForRuntime": false,
+      "reasonZh": "巳蛇·幽鳞玄蛇「蛇行」V2候选位移680厘米却只允许670厘米射程；V6待审数据表候选先统一为680厘米，不修改旧V2数值或已发布Hero技能集。S形路径及毒径加速仍未由SafeDash实现。"
+    }
+  ],
   "noticeZh": "候选原语仅表示V2数值可能用通用C++执行方式表达；不等同V6历史复杂机制已完成或已获批准。全部96项仍需审核、UE原生DataAsset+GA+GE+蓝图+VFX生成、编译与双客户端服务器测试。",
   "skills": [
     {

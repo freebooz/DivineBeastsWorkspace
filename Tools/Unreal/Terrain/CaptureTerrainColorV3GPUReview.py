@@ -38,7 +38,7 @@ def main() -> None:
         "MODE": MODE,
         "MAP": MAP,
         "MI": MI,
-        "OUTPUT_NAME": "TerrainColorV3_GPU_20261018",
+        "OUTPUT_NAME": "TerrainColorV3_GPU_PreloadedFixed_20261018",
     })
     execute()
     print("SSLM_TERRAIN_COLOR_V3_GPU_WRAPPER_DONE", MODE,

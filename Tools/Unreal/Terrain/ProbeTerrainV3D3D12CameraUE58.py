@@ -14,7 +14,7 @@ from pathlib import Path
 MAP="/Game/Development/Terrain/Maps/L_DBA_TerrainColorV3Review"
 EXPECTED_MAT="/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_V3_Review"
 ROOT=Path(__file__).resolve().parents[3]
-DEST=ROOT/"Game/Saved/Validation/TerrainV3D3D12ProbePreloaded_20261018"
+DEST=ROOT/"Game/Saved/Validation/TerrainV3D3D12CameraFixed_20261018"
 
 def main()->None:
     import unreal # type: ignore
@@ -58,9 +58,16 @@ def main()->None:
     camera_at=unreal.Vector(origin.x+0.34*distance,origin.y-0.50*distance,
                             origin.z+0.70*distance+max(6000.0,extent.z))
     look=unreal.Vector(origin.x,origin.y,origin.z)
-    dx,dy,dz=look.x-camera_at.x,look.y-camera_at.y,look.z-camera_at.z
-    rot=unreal.Rotator(math.degrees(math.atan2(dz,math.hypot(dx,dy))),
-                       math.degrees(math.atan2(dy,dx)),0)
+    # UE Python Rotator的三个位置参数实际为Roll/Pitch/Yaw，历史脚本将其误认为
+    # Pitch/Yaw/Roll，导致相机背向地形：旧ForwardDot=-0.518，正确应近似1。
+    rot=unreal.MathLibrary.find_look_at_rotation(camera_at,look)
+    direction=unreal.MathLibrary.get_forward_vector(rot)
+    delta=unreal.Vector(look.x-camera_at.x,look.y-camera_at.y,look.z-camera_at.z)
+    length=math.sqrt(delta.x**2+delta.y**2+delta.z**2)
+    alignment=(direction.x*delta.x+direction.y*delta.y+direction.z*delta.z)/length
+    print("SSLM_TERRAIN_V3_CAMERA_ALIGNMENT",round(alignment,6),flush=True)
+    if alignment < 0.999:
+        raise RuntimeError("实际UE朝向目标地形的Forward向量校验失败")
     # 两次覆盖审核都不允许覆写上一轮PNG或遗失相机/地图运行结果。
     for spec in ("FinalColorLDR","SceneColorHDR","BaseColor"):
         if (DEST/(spec+"_D3D12_1280x720.png")).exists():

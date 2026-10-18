@@ -35,7 +35,10 @@ def import_sources():
                 for prop,val in [('import_mesh',True),('import_as_skeletal',False),('import_materials',False),('import_textures',False),('import_animations',False),('automated_import_should_detect_type',False)]:opt.set_editor_property(prop,val)
                 opt.set_editor_property('mesh_type_to_import',unreal.FBXImportType.FBXIT_STATIC_MESH)
                 data=opt.get_editor_property('static_mesh_import_data');data.set_editor_property('auto_generate_collision',False);data.set_editor_property('generate_lightmap_u_vs',False)
-                data.set_editor_property('normal_import_method',unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS);task.set_editor_property('options',opt)
+                data.set_editor_property('normal_import_method',unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS)
+                # 默认保持旧作者行为；飞弹显式请求导入源顶点色，用于同槽分层而非新材质段。
+                if globals().get('IMPORT_VERTEX_COLORS',False):data.set_editor_property('vertex_color_import_option',unreal.VertexColorImportOption.REPLACE)
+                task.set_editor_property('options',opt)
             TOOLS.import_asset_tasks([task]);asset=unreal.load_asset(path)
         if texture:
             assert isinstance(asset,unreal.Texture2D)

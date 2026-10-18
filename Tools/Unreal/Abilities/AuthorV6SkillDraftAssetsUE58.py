@@ -83,7 +83,28 @@ def safe_catalog():
         require(values["damageType"] != "Magic" or values["momentumCost"] == 0,
                 "禁止法术消耗气势")
         require(len(skill["v2Actions"]) >= 1, "缺少V2动作预审参数")
-    return skills, expected
+
+    # 仅制作待审核DataTable时应用明确记录的V6候选修正；不得悄悄改V2源表或已运行技能。
+    fixes = {}
+    index = {skill["abilityId"]: skill for skill in skills}
+    for correction in registry.get("v6DraftBalanceCorrections", []):
+        identity = correction.get("abilityId", "")
+        require(identity in index and identity not in fixes,
+                "V6候选纠错引用不存在或重复的技能：" + identity)
+        skill = index[identity]
+        actions = skill.get("v2Actions", [])
+        require(skill["proposedPrimitiveCandidate"] == "SafeDash" and len(actions) == 1 and
+                actions[0].get("kind") == "movement" and
+                correction.get("status") == "PENDING_DESIGN_REVIEW" and
+                correction.get("approvedForRuntime") is False and
+                float(correction["sourceCandidateCastRangeCm"]) ==
+                    float(skill["level1Candidate"]["castRangeCm"]) and
+                float(correction["actionTravelDistanceCm"]) ==
+                    float(actions[0].get("distanceCm", -1)) and
+                float(actions[0]["distanceCm"]) <= float(correction["proposedCastRangeCm"]) <= 2000,
+                "V6位移候选修正未满足真实性、审批或射程边界：" + identity)
+        fixes[identity] = correction
+    return skills, expected, fixes
 
 
 def check_editor_and_preflight(skills):
@@ -116,7 +137,7 @@ def check_editor_and_preflight(skills):
 
 def make_assets():
     """仅供正式Monolith MCP人工选定调用。没有连接成功绝不自动执行。"""
-    skills, expected = safe_catalog()
+    skills, expected, pending_fixes = safe_catalog()
     native_type = check_editor_and_preflight(skills)
     struct = unreal.load_object(None,
         "/Script/DivineBeastsAbilitiesRuntime.DivineBeastsAbilityBalanceRow")
@@ -130,13 +151,17 @@ def make_assets():
     balance_rows = []
     for skill in skills:
         value = skill["level1Candidate"]
+        correction = pending_fixes.get(skill["abilityId"])
+        draft_range_cm = (float(correction["proposedCastRangeCm"])
+                          if correction else float(value["castRangeCm"]))
         balance_rows.append({
             "Name": skill["abilityId"].rsplit(".", 1)[-1].removesuffix("@1") + "_L1",
             "AbilityId": skill["abilityId"], "Level": 1,
             "BaseDamage": value["baseDamage"], "DamageType": value["damageType"],
             "CooldownSeconds": value["cooldownSeconds"],
             "MomentumCost": value["momentumCost"],
-            "CastRangeCm": value["castRangeCm"], "AreaRadiusCm": value["areaRadiusCm"],
+            # 草案纠错仍不能使V6技能获得GAS批准；必须在人工确认后另建正式多级数值表。
+            "CastRangeCm": draft_range_cm, "AreaRadiusCm": value["areaRadiusCm"],
         })
     require(unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(
         table, json.dumps(balance_rows, ensure_ascii=False)),

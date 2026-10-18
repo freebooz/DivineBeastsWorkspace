@@ -599,6 +599,15 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
                     OutError = TEXT("技能冷却标签、持续类型或同等级GE持续秒数与数值表不一致。");
                     return false;
                 }
+                // GAS的CanActivate检查Ability上的CooldownTags，实际标签必须由持续冷却GE授予。
+                // V6不容许冷却GE暗加其它状态Tag；旧占位能力只要求所声明标签全部真实授予。
+                if (!CooldownEffect->GetGrantedTags().HasAllExact(*CooldownTags) ||
+                    (V6Ability && !CooldownTags->HasAllExact(CooldownEffect->GetGrantedTags())))
+                {
+                    OutError = TEXT("冷却GE真实GrantedTags与GA要求的冷却标签不一致，拒绝授权。");
+                    return false;
+                }
+
                 // 冷却效果负责授予持续标签，不允许借冷却GE额外执行伤害、治疗或资源改写。
                 // 保留UE5.8的TargetTagsGameplayEffectComponent用于正常授予CooldownTags，
                 // 不把冷却Tag组件误判为非法的启动GE组件。
