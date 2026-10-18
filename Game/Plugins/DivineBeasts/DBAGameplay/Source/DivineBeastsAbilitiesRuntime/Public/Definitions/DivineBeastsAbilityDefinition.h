@@ -81,6 +81,11 @@ public:
      * 标记为true的数据资产不得被Server作为正式GameplayAbility授予。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft")
     bool bEightSlotDraftOnly = false;
+    /** V6原生技能行为已独立签审；默认false，必须与DraftOnly互斥。
+     * 人工审批、GA/GE和战斗流程实际验收后才能在原生DataAsset中开启。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|V6")
+    bool bV6NativeApproved = false;
+
 
     /** Primary/Slot1..Slot7；旧五槽及被动DataAsset默认不设置。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability|Draft")

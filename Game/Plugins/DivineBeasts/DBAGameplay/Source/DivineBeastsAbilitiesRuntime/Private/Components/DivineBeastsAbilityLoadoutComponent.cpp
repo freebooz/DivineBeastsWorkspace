@@ -3,6 +3,7 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/GamePlatformGameplayAbility.h"
 #include "Abilities/DivineBeastsConfiguredGameplayAbility.h"
+#include "Abilities/DivineBeastsV6GameplayAbility.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Attributes/DivineBeastsMomentumAttributeSet.h"
 
@@ -509,9 +510,28 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
                 OutError = TEXT("八槽技能属于未批准的设计数据资产，禁止GAS服务器授权。");
                 return false;
             }
+            // V6原生技能只接受被人工批准且通过完整服务器行为校验的定义。
+            // 仅改DataAsset的草案布尔值或在编辑器里选择一个GA父类不足以构成授权。
+            const UDivineBeastsV6GameplayAbility* V6Ability =
+                Cast<UDivineBeastsV6GameplayAbility>(Configured);
+            if (V6Ability && !Definition->bV6NativeApproved)
+            {
+                OutError = TEXT("V6技能没有原生执行资格，不授予当前角色。");
+                return false;
+            }
+            if (Definition->bV6NativeApproved && !V6Ability)
+            {
+                OutError = TEXT("V6批准资产必须绑定正式V6执行器，不能借旧GA跳过服务器行为审核。");
+                return false;
+            }
             FDivineBeastsAbilityBalanceRow Balance;
             if (!Definition->TryGetLoadedBalance(Grant.AbilityLevel, Balance, OutError))
             {
+                return false;
+            }
+            if (V6Ability && !V6Ability->ValidateNativeContract(*Definition, Balance, OutError))
+            {
+                // GAS成本及冷却稍后仍会依据真实GE进行二次交叉校验。
                 return false;
             }
             // 静态策划表并不能自动扣气势：GAS Cost 必须是同等级实际负向瞬时修改。

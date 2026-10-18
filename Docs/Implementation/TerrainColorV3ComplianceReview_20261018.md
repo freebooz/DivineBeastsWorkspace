@@ -1,5 +1,15 @@
 # SSLM 十层地形纹理与材质 V3.0 合规审查及实际整改记录
-## 2026-10-18 用户授权正式覆盖：最新执行进度（优先于下文候选阶段历史描述）
+## 2026-10-18 后续真实UE资产收口：十层V3正式基础色已完成10/10
+
+此节为当前最新事实，以下9/10段落仅保留历史阶段证据。此前Dirt（普通泥土）一项因其它UE编辑器文件锁阻塞；用户要求继续后，已在文件独占条件下修正旧校验，允许来自原生验证的81节点Texture Bombing（纹理轰炸）共享材质新SHA，不放宽正式地图SHA、旧回退备份及Texture2D来源校验。随后使用正式UE5.8 Editor第一次真实重导入Dirt，第二次独立进程完成十层V3正式纹理全量冷重载，工具输出 SSLM_V3_FORMAL_10_COLD_VERIFIED（十层冷重载通过）。不再存在待导入的Dirt层。
+
+完成证据：Saved/ArtReview/TerrainColorV3FormalCover/AppliedManifest.json（正式十层清单，rows=10、coldVerifyPassed=true），Game/Saved/Validation/TerrainColorV3FormalCover/FormalDirt_UEApply_AfterBombingBridge.log（泥土原位Texture2D重导入日志）、Formal10_UEColdVerify_AfterBombingBridge.log（另进程完整十层真实回读日志）。首次过期安全门禁的失败日志FormalDirt_UEApply_Final.log保留，以便审计为何修复SHA合同。原十张基础色和正式地图及旧母材质的12份执行前备份、原40张PBR扫描来源仍可追溯；不会重新生成法线、ORM及Height（高度）资源。
+
+特别说明：正式Village共享母材质已另经用户授权升级为81表达式三通道Texture Bombing，且本轮在保持正式L_Village_Start地图SHA不变的条件下，导入并绑定新的256×256 V3自然绿色共享默认Texture2D；这是有意的母材质原位更新，因此下方旧阶段“材质文件不变”只对当时执行范围成立。完整二次原生材质回读和共享世界引用隔离结果，见VillageTerrainTextureBombingV3_20261018.md（新手村纹理轰炸实施记录）。
+
+尚未通过GPU视觉/发布验收：原六态D3D12截图像素黑帧；新独立D3D12三源、启动地图预加载三源及常规GUI视口跨帧截图仍无有效地形RGB像素，不能宣称最终场景色彩通过。Server Cook因其它Foundation构建/烘焙持有同一引擎互斥锁，本轮状态NotExecuted（未执行），原生UE地图依赖审计与专服剥离策略静态检查通过，但不能替代Client/Server容器审计。人工视觉签收和FPS/GPU耗时验证仍须真实可见客户端画面才能进行。
+
+## 2026-10-18 历史阶段快照（当时9/10，已由上方真实收口记录取代）
 
 用户明确要求直接覆盖地形配色。**当前状态：十层目标9层已在UE5.8原位重新导入并通过另一个独立编辑器进程冷重载；Dirt（泥土）1层仍未更新，原因是其他进程占用文件（Windows错误码32）。不可将9/10视为全部完成。**
 

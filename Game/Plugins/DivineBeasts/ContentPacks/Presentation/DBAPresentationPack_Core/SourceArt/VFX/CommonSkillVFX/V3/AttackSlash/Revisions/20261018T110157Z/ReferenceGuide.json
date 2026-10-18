@@ -1,0 +1,119 @@
+{
+  "resolution": [
+    1536,
+    1024
+  ],
+  "camera": [
+    0.0,
+    -650.0,
+    270.0
+  ],
+  "lookAt": [
+    0.0,
+    0.0,
+    120.0
+  ],
+  "fov": 60,
+  "effectOrigin": [
+    195.0,
+    -179.0,
+    0.0
+  ],
+  "outerPixels": [
+    [
+      15,
+      777
+    ],
+    [
+      210,
+      817
+    ],
+    [
+      530,
+      745
+    ],
+    [
+      870,
+      583
+    ],
+    [
+      1128,
+      358
+    ],
+    [
+      1244,
+      183
+    ],
+    [
+      1142,
+      96
+    ],
+    [
+      912,
+      74
+    ],
+    [
+      700,
+      94
+    ]
+  ],
+  "innerPixels": [
+    [
+      15,
+      777
+    ],
+    [
+      235,
+      745
+    ],
+    [
+      545,
+      616
+    ],
+    [
+      814,
+      443
+    ],
+    [
+      1007,
+      267
+    ],
+    [
+      1065,
+      160
+    ],
+    [
+      999,
+      120
+    ],
+    [
+      857,
+      100
+    ],
+    [
+      700,
+      94
+    ]
+  ],
+  "depthCm": [
+    400,
+    440,
+    490,
+    530,
+    570,
+    610,
+    630,
+    650,
+    650
+  ],
+  "filamentHalfWidthMaxCm": 0.35,
+  "vertices": 9097,
+  "triangles": 16256,
+  "materialSlots": 4,
+  "styleRevision": "broad_flame_air_02",
+  "broadFlameFoldCount": 3,
+  "lowEmbeddedStrands": 2,
+  "contactStrands": 0,
+  "airWaveEnvelope": true,
+  "manualAccepted": false
+}

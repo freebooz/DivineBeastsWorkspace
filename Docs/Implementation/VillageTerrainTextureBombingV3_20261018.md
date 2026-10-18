@@ -2,7 +2,15 @@
 
 > 日期：2026-10-18。适用 Unreal Engine 5.8（虚幻引擎）与唯一工作空间 DivineBeastsWorkspace。统一设计依据为 Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md。所有英文资源名在本文均按所在段落给出中文用途。本文不替代真实UE资产验收日志。
 
-## 2026-10-18 实际执行及原生验收结果（优先于以下技术设计原文）
+## 2026-10-18 本次继续执行：正式默认草地与十层V3的UE收口证据
+
+实际资产已在UE5.8保存并经独立编辑器进程重新加载：十层正式BaseColor（基础色）已10/10重导入并冷重载，Dirt（普通泥土）阻断解除；正式共享地形81个表达式与三通道Texture Bombing（纹理轰炸）原有节点不变，并新建真实256×256 sRGB Texture2D（草地默认基础色贴图） /DBAWorldPack_Village/Materials/Landscape/Defaults/T_DBA_Village_GroundAlbedoV3Default（新手村地表绿色共享默认纹理）。原来的两处VillageGroundAlbedoTexture（地面基础色纹理参数）已统一指向该默认纹理，便于直接在Editor（虚幻编辑器）预览；客户端依旧通过GamePlatformData（平台异步加载）世界资源租约以同名参数加载V3高清2K草地源，与同源Normal（法线）和ORM（遮蔽/粗糙度/金属度）相容。
+
+证据：Game/Saved/Validation/VillageTerrainBombingV3/AssetProof.json（纹理轰炸UE报告，expressionCount=81、三通道、sharedV3FallbackTexture存在、coldVerifyPassed=true；gpuPassed/cookPassed/humanReviewPassed仍false）。Game/Saved/Validation/TerrainBombing_V3_20261018/VillageBombFallback_UEApply_Resume.log（绿色256纹理创建及共享母材质修改）与VillageBombFallback_UEColdVerify_Resume.log（另一UE进程冷重载）。新地图依赖复审日志Game/Saved/Validation/VillageTerrainBombingV3/VerifyNewGreenDefaultServerMap_UE.log返回VILLAGE_SNOW_BRIDGE_ASSET_AUDIT_PASS（新手村资产隔离通过）。回退备份含Saved/ArtReview/VillageTerrainBombingV3/BeforeFallback（绿色默认绑定前的母材质及地图SHA）及原Before纹理轰炸备份。正式Village地图文件未修改，不破坏地图、导航、碰撞、PCG或专服角色。
+
+渲染证据严格按实际像素评价：Game/Saved/Validation/TerrainV3D3D12Probe_20261018（真实D3D12同帧三源探测）、TerrainV3D3D12ProbePreloaded_20261018（预加载地图三源探测）、TerrainV3ViewportTicked_20261018（普通UnrealEditor真实视口跨帧截图）均得到黑帧，像素有效性未通过；不能将生成PNG或RTX4090硬件存在视为可见视觉验收。常规GUI视口诊断启动的本任务专属进程已按身份安全清理，其他会话的UE编辑器未被终止。项目级真实Client/Server Cook、GPU毫秒/FPS、多人游戏客户端画面、人工美术签收仍未完成；Server Cook曾因另一Foundation构建正在使用引擎而明确返回NotExecuted，不能写为通过或Shader失败。下方旧的9/10及“256纹理未绑定”描述仅为历史快照，以本节为准。
+
+## 2026-10-18 历史首次原生实施记录（新增绿色默认纹理前的状态）
 
 **正式Village母材质已真实修改，不是仅生成制作脚本。** 本次在UE5.8实际项目对共享 `/DBAWorldPack_Village/Materials/Landscape/M_DBA_Village_LandscapeBridge` 原位增量编辑并保存。正式原始55表达式升级至**81表达式**，真实接入3条UE引擎原生 `Texture_Bombing`（纹理轰炸）函数调用，分别服务Ground BaseColor（地表基础色）、Normal（法线）和ORM（遮蔽/粗糙度/金属度）；统一UV、Tiling（平铺）和Offset（错位）并给法线输入启用Is Normalmap（法线翻转修正）。保留旧Snow（积雪）、Wetness（湿润）和动态MID材质参数。DryColor（干燥乘色）调为白色，不再覆盖V3自然鲜绿的源草地色。
 

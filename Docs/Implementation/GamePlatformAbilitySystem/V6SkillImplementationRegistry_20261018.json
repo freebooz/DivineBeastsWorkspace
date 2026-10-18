@@ -1,0 +1,4162 @@
+{
+  "schemaVersion": 1,
+  "version": "V6.0",
+  "sourceDocument": "Docs/Design/ZodiacHistoryFirstEightSkillsV6_Review.json",
+  "v2BalanceSource": "Docs/Design/ZodiacEightSlotSkills_V2.json",
+  "gameplayRules": "AGENTS.md",
+  "status": "SOURCE_IMPLEMENTATION_UNCOMPILED_NOT_GRANTED",
+  "nativeUEAssetCount": 0,
+  "serverApprovedAbilityCount": 0,
+  "heroCount": 12,
+  "skillCount": 96,
+  "alreadyApprovedProductionV5NamesUnchanged": true,
+  "reviewedV6Skills": 0,
+  "primitiveModesImplementedAsSourceOnly": [
+    "ForwardDamage",
+    "SingleProjectile",
+    "RadialDamage",
+    "SingleHealing",
+    "SingleShield",
+    "SingleStun",
+    "SingleSilence",
+    "SafeDash"
+  ],
+  "candidateModeCounts": {
+    "ForwardDamage": 12,
+    "RadialDamage": 11,
+    "SafeDash": 8,
+    "SingleHealing": 4,
+    "SingleProjectile": 4,
+    "SingleShield": 13,
+    "Unsupported": 44
+  },
+  "noticeZh": "候选原语仅表示V2数值可能用通用C++执行方式表达；不等同V6历史复杂机制已完成或已获批准。全部96项仍需审核、UE原生DataAsset+GA+GE+蓝图+VFX生成、编译与双客户端服务器测试。",
+  "skills": [
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroNameZh": "子鼠·影牙灵君",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.rat_eight_fang_cut@1",
+      "displayNameV6": "影牙斩",
+      "approvedNameV5": "影牙斩",
+      "mechanismV6": "近身横切目标一次，作为获得常规气势的基础攻击。",
+      "level1Candidate": {
+        "baseDamage": 32,
+        "hitCount": 1,
+        "cooldownSeconds": 0.8,
+        "momentumCost": 0,
+        "castRangeCm": 220,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 32,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroNameZh": "子鼠·影牙灵君",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.rat_eight_crescent_blade@1",
+      "displayNameV6": "咬影",
+      "approvedNameV5": "伏牙刺",
+      "mechanismV6": "向前低伏牙突；侧背命中有额外伤害并附短流血，可被正面防御及转向反制。",
+      "level1Candidate": {
+        "baseDamage": 68,
+        "hitCount": 2,
+        "cooldownSeconds": 4.5,
+        "momentumCost": 0,
+        "castRangeCm": 850,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 68,
+          "hitCount": 2,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroNameZh": "子鼠·影牙灵君",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.rat_eight_cross_fangs@1",
+      "displayNameV6": "交牙斩",
+      "approvedNameV5": "交牙斩",
+      "mechanismV6": "两道影牙交错切割，正面中心目标最多承受两段伤害。",
+      "level1Candidate": {
+        "baseDamage": 92,
+        "hitCount": 2,
+        "cooldownSeconds": 8,
+        "momentumCost": 0,
+        "castRangeCm": 350,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 92,
+          "hitCount": 2,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroNameZh": "子鼠·影牙灵君",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.rat_eight_shadow_hunt@1",
+      "displayNameV6": "万鼠影袭",
+      "approvedNameV5": "三影袭",
+      "mechanismV6": "按合法落点连续最多三次影袭，尾段对低血目标增伤；换位仅依赖本次合法目标，不附带额外全局玩法结算。",
+      "level1Candidate": {
+        "baseDamage": 190,
+        "hitCount": 3,
+        "cooldownSeconds": 62,
+        "momentumCost": 20,
+        "castRangeCm": 900,
+        "areaRadiusCm": 320,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 190,
+          "hitCount": 3,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroNameZh": "子鼠·影牙灵君",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.rat_eight_shadow_step@1",
+      "displayNameV6": "钻缝",
+      "approvedNameV5": "穿隙",
+      "mechanismV6": "沿墙边或草隙短穿行，入口与出口均需服务器判定，不能穿封闭墙体。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 13,
+        "momentumCost": 0,
+        "castRangeCm": 700,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "movement",
+          "distanceCm": 660,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "SafeDash",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroNameZh": "子鼠·影牙灵君",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.rat_eight_mist_guard@1",
+      "displayNameV6": "藏尾",
+      "approvedNameV5": "敛影",
+      "mechanismV6": "极短收尾入影获得短促避选或加速并留下幻尾诱饵；避选时长与反隐效果待评审。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 20,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.16,
+          "durationSeconds": 4
+        }
+      ],
+      "v2TargetMode": "self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroNameZh": "子鼠·影牙灵君",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.rat_eight_shadow_snare@1",
+      "displayNameV6": "咬筋",
+      "approvedNameV5": "绊步牙",
+      "mechanismV6": "跃咬脚踝造成减速，特殊条件下有限抑制目标下一次位移；不是稳定定身。",
+      "level1Candidate": {
+        "baseDamage": 24,
+        "hitCount": 1,
+        "cooldownSeconds": 17,
+        "momentumCost": 0,
+        "castRangeCm": 800,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 24,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "control",
+          "controlType": "slow",
+          "durationSeconds": 2.2,
+          "slowFraction": 0.3
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rat",
+      "heroNameZh": "子鼠·影牙灵君",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.rat_eight_fang_mark@1",
+      "displayNameV6": "嗅踪",
+      "approvedNameV5": "嗅踪",
+      "mechanismV6": "限定范围内显示低血和落单目标的大致方向，不提供全图透视或精确位置。",
+      "level1Candidate": {
+        "baseDamage": 42,
+        "hitCount": 1,
+        "cooldownSeconds": 19,
+        "momentumCost": 0,
+        "castRangeCm": 850,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 42,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "buff",
+          "buffType": "next_hit_bonus",
+          "magnitudeFraction": 0.15,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroNameZh": "丑牛·镇山玄角",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.ox_eight_horn_strike@1",
+      "displayNameV6": "玄角撞",
+      "approvedNameV5": "玄角撞",
+      "mechanismV6": "低头用玄角撞击近处单体，命中产生碎岩冲击。",
+      "level1Candidate": {
+        "baseDamage": 38,
+        "hitCount": 1,
+        "cooldownSeconds": 0.95,
+        "momentumCost": 0,
+        "castRangeCm": 225,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 38,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroNameZh": "丑牛·镇山玄角",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.ox_eight_horn_break@1",
+      "displayNameV6": "裂角",
+      "approvedNameV5": "破甲角",
+      "mechanismV6": "正前方角顶附短时破甲，命中墙边目标产生额外震荡；护甲系统需服务器实现。",
+      "level1Candidate": {
+        "baseDamage": 74,
+        "hitCount": 1,
+        "cooldownSeconds": 5,
+        "momentumCost": 0,
+        "castRangeCm": 340,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 74,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroNameZh": "丑牛·镇山玄角",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.ox_eight_ground_pulse@1",
+      "displayNameV6": "裂地踏",
+      "approvedNameV5": "裂地踏",
+      "mechanismV6": "重踏地面释放一次圆形地脉冲击，范围边界与起手清晰。",
+      "level1Candidate": {
+        "baseDamage": 96,
+        "hitCount": 1,
+        "cooldownSeconds": 10,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 370,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 96,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroNameZh": "丑牛·镇山玄角",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.ox_eight_mountain_break@1",
+      "displayNameV6": "不动玄门",
+      "approvedNameV5": "立山门",
+      "mechanismV6": "前方升起可被攻击的定向巨石门，拦截部分位移与投射物，门前震退敌人；所有拦截只按石门自身持续时间及真实碰撞结算。",
+      "level1Candidate": {
+        "baseDamage": 222,
+        "hitCount": 1,
+        "cooldownSeconds": 66,
+        "momentumCost": 20,
+        "castRangeCm": 550,
+        "areaRadiusCm": 540,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 222,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "control",
+          "controlType": "stun",
+          "durationSeconds": 0.8,
+          "slowFraction": 0
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroNameZh": "丑牛·镇山玄角",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.ox_eight_horn_charge@1",
+      "displayNameV6": "沉步",
+      "approvedNameV5": "沉步",
+      "mechanismV6": "稳步顶盾推进并提高抗扰，转向慢，不能按高速冲锋结算。",
+      "level1Candidate": {
+        "baseDamage": 45,
+        "hitCount": 1,
+        "cooldownSeconds": 16,
+        "momentumCost": 0,
+        "castRangeCm": 750,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 45,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "movement",
+          "distanceCm": 760,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroNameZh": "丑牛·镇山玄角",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.ox_eight_stone_armor@1",
+      "displayNameV6": "镇山护壁",
+      "approvedNameV5": "镇山壁",
+      "mechanismV6": "进入正面守护姿态，部分承伤转护盾，结束轻反震；为避免被动重名采用镇山护壁。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 23,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.22,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroNameZh": "丑牛·镇山玄角",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.ox_eight_seismic_stun@1",
+      "displayNameV6": "顶回",
+      "approvedNameV5": "顶退",
+      "mechanismV6": "向前猛顶并击退正面冲锋者，可被侧绕；区别于V2单纯眩晕。",
+      "level1Candidate": {
+        "baseDamage": 28,
+        "hitCount": 1,
+        "cooldownSeconds": 18,
+        "momentumCost": 0,
+        "castRangeCm": 375,
+        "areaRadiusCm": 260,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 28,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "control",
+          "controlType": "stun",
+          "durationSeconds": 0.9,
+          "slowFraction": 0
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Ox",
+      "heroNameZh": "丑牛·镇山玄角",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.ox_eight_steadfast_roar@1",
+      "displayNameV6": "立阵",
+      "approvedNameV5": "盾阵",
+      "mechanismV6": "建立固定盾阵，阵后友军获得减伤和抗击退；离开范围即失效。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 24,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 520,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "buff",
+          "buffType": "damage_reduction",
+          "magnitudeFraction": 0.12,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroNameZh": "寅虎·啸岭白君",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.tiger_eight_claw_strike@1",
+      "displayNameV6": "白虎爪",
+      "approvedNameV5": "白虎爪",
+      "mechanismV6": "短距离白虎爪击，为近战普攻积累气势。",
+      "level1Candidate": {
+        "baseDamage": 36,
+        "hitCount": 1,
+        "cooldownSeconds": 0.75,
+        "momentumCost": 0,
+        "castRangeCm": 240,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 36,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroNameZh": "寅虎·啸岭白君",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.tiger_eight_golden_rake@1",
+      "displayNameV6": "裂爪",
+      "approvedNameV5": "裂甲爪",
+      "mechanismV6": "白金爪击叠加可限制的裂甲层数，集中攻击同一猎物收益较高。",
+      "level1Candidate": {
+        "baseDamage": 76,
+        "hitCount": 2,
+        "cooldownSeconds": 4.5,
+        "momentumCost": 0,
+        "castRangeCm": 620,
+        "areaRadiusCm": 280,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 76,
+          "hitCount": 2,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroNameZh": "寅虎·啸岭白君",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.tiger_eight_tiger_pounce@1",
+      "displayNameV6": "双爪袭",
+      "approvedNameV5": "双爪袭",
+      "mechanismV6": "交错两道虎爪迅速斩击，目标可格挡或位移避免第二段。",
+      "level1Candidate": {
+        "baseDamage": 100,
+        "hitCount": 2,
+        "cooldownSeconds": 8.5,
+        "momentumCost": 0,
+        "castRangeCm": 550,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 100,
+          "hitCount": 2,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroNameZh": "寅虎·啸岭白君",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.tiger_eight_tiger_roar_storm@1",
+      "displayNameV6": "啸岭扑杀",
+      "approvedNameV5": "虎啸扑",
+      "mechanismV6": "虎啸警示后扑杀锁定目标，最后以重爪结算；不依赖跨英雄身份或全局连锁收益。",
+      "level1Candidate": {
+        "baseDamage": 236,
+        "hitCount": 3,
+        "cooldownSeconds": 59,
+        "momentumCost": 23,
+        "castRangeCm": 700,
+        "areaRadiusCm": 480,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 236,
+          "hitCount": 3,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroNameZh": "寅虎·啸岭白君",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.tiger_eight_leaping_claw@1",
+      "displayNameV6": "扑杀",
+      "approvedNameV5": "虎扑",
+      "mechanismV6": "向合法猎物落点猛扑，命中产生有限伤害，可被门盾拦截。",
+      "level1Candidate": {
+        "baseDamage": 40,
+        "hitCount": 1,
+        "cooldownSeconds": 13.5,
+        "momentumCost": 0,
+        "castRangeCm": 750,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 40,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "movement",
+          "distanceCm": 710,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroNameZh": "寅虎·啸岭白君",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.tiger_eight_regal_guard@1",
+      "displayNameV6": "虎踞",
+      "approvedNameV5": "虎踞",
+      "mechanismV6": "低伏防御短时增加韧性和面向猎物减伤，不免疫集火。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 20,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.14,
+          "durationSeconds": 4
+        }
+      ],
+      "v2TargetMode": "self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroNameZh": "寅虎·啸岭白君",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.tiger_eight_roar_shock@1",
+      "displayNameV6": "虎啸",
+      "approvedNameV5": "虎啸",
+      "mechanismV6": "扇形虎啸减速敌人，符合孤立条件者短暂失衡，不无条件群眩。",
+      "level1Candidate": {
+        "baseDamage": 26,
+        "hitCount": 1,
+        "cooldownSeconds": 19,
+        "momentumCost": 0,
+        "castRangeCm": 550,
+        "areaRadiusCm": 340,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 26,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "control",
+          "controlType": "stun",
+          "durationSeconds": 0.7,
+          "slowFraction": 0
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Tiger",
+      "heroNameZh": "寅虎·啸岭白君",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.tiger_eight_battle_fervor@1",
+      "displayNameV6": "开猎",
+      "approvedNameV5": "开猎",
+      "mechanismV6": "标定一名猎物并给方向提示，专注输出加成；猎物靠队友保护时效果减弱。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 18,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "buff",
+          "buffType": "damage_bonus",
+          "magnitudeFraction": 0.12,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroNameZh": "卯兔·踏月玉灵",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.rabbit_eight_jade_moon_shot@1",
+      "displayNameV6": "月辉弹",
+      "approvedNameV5": "月辉弹",
+      "mechanismV6": "射出单枚月辉弹作远程基础攻击，命中积累普攻气势。",
+      "level1Candidate": {
+        "baseDamage": 29,
+        "hitCount": 1,
+        "cooldownSeconds": 0.85,
+        "momentumCost": 0,
+        "castRangeCm": 950,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 29,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "SingleProjectile",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroNameZh": "卯兔·踏月玉灵",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.rabbit_eight_crescent_arc@1",
+      "displayNameV6": "玉刃",
+      "approvedNameV5": "双月斩",
+      "mechanismV6": "双月刃轻斩，若刚完成成功闪避可追加一次有限反击。",
+      "level1Candidate": {
+        "baseDamage": 62,
+        "hitCount": 2,
+        "cooldownSeconds": 5.5,
+        "momentumCost": 0,
+        "castRangeCm": 960,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 62,
+          "hitCount": 2,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroNameZh": "卯兔·踏月玉灵",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.rabbit_eight_falling_petals@1",
+      "displayNameV6": "落英月雨",
+      "approvedNameV5": "落英雨",
+      "mechanismV6": "指定区域落下月玉花瓣形成圆形伤害区；非治疗技能。",
+      "level1Candidate": {
+        "baseDamage": 80,
+        "hitCount": 1,
+        "cooldownSeconds": 10.5,
+        "momentumCost": 0,
+        "castRangeCm": 920,
+        "areaRadiusCm": 330,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 80,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroNameZh": "卯兔·踏月玉灵",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.rabbit_eight_moon_bloom@1",
+      "displayNameV6": "千月回环",
+      "approvedNameV5": "返影斩",
+      "mechanismV6": "借有效月影和目标依次闪击，最后回到起点附近；历史回身机制为主，不将V2群疗自动并入。",
+      "level1Candidate": {
+        "baseDamage": 168,
+        "hitCount": 1,
+        "cooldownSeconds": 64,
+        "momentumCost": 0,
+        "castRangeCm": 850,
+        "areaRadiusCm": 470,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 168,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "healing",
+          "maxHealthFraction": 0.12,
+          "allowRevive": false
+        }
+      ],
+      "v2TargetMode": "area_center_mixed",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroNameZh": "卯兔·踏月玉灵",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.rabbit_eight_moon_leap@1",
+      "displayNameV6": "踏月",
+      "approvedNameV5": "踏月",
+      "mechanismV6": "短距离踏月位移，合法完美闪避窗成功时部分返还冷却。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 12,
+        "momentumCost": 0,
+        "castRangeCm": 650,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "movement",
+          "distanceCm": 650,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "SafeDash",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroNameZh": "卯兔·踏月玉灵",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.rabbit_eight_jade_moon_shield@1",
+      "displayNameV6": "回月",
+      "approvedNameV5": "回月",
+      "mechanismV6": "回到最近月影或退后，清除减速并小额自疗；不能无限重置位置。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 17,
+        "momentumCost": 0,
+        "castRangeCm": 800,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.16,
+          "durationSeconds": 4
+        }
+      ],
+      "v2TargetMode": "friendly_or_self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroNameZh": "卯兔·踏月玉灵",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.rabbit_eight_lunar_bind@1",
+      "displayNameV6": "月痕",
+      "approvedNameV5": "绊月刃",
+      "mechanismV6": "投出月刃造成减速，已积累限定层数者可短暂定身。",
+      "level1Candidate": {
+        "baseDamage": 22,
+        "hitCount": 1,
+        "cooldownSeconds": 18,
+        "momentumCost": 0,
+        "castRangeCm": 850,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 22,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "control",
+          "controlType": "slow",
+          "durationSeconds": 2,
+          "slowFraction": 0.35
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rabbit",
+      "heroNameZh": "卯兔·踏月玉灵",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.rabbit_eight_jade_heal@1",
+      "displayNameV6": "月影",
+      "approvedNameV5": "回春露",
+      "mechanismV6": "生成可受击的短暂月影残像；攻击残像的敌人暴露，非原V2的友军治疗。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 16,
+        "momentumCost": 0,
+        "castRangeCm": 1000,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "healing",
+          "maxHealthFraction": 0.22,
+          "allowRevive": false
+        }
+      ],
+      "v2TargetMode": "friendly_or_self",
+      "proposedPrimitiveCandidate": "SingleHealing",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroNameZh": "辰龙·御霄苍龙",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.dragon_eight_dragon_claw@1",
+      "displayNameV6": "苍龙爪",
+      "approvedNameV5": "苍龙爪",
+      "mechanismV6": "以凝练苍青龙爪光对近处目标造成一次魔法打击。",
+      "level1Candidate": {
+        "baseDamage": 34,
+        "hitCount": 1,
+        "cooldownSeconds": 0.85,
+        "momentumCost": 0,
+        "castRangeCm": 450,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 34,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroNameZh": "辰龙·御霄苍龙",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.dragon_eight_cloud_scale@1",
+      "displayNameV6": "雷裁",
+      "approvedNameV5": "雷裁",
+      "mechanismV6": "指定落点下落一道青白雷柱，有可辨识地面预警。",
+      "level1Candidate": {
+        "baseDamage": 67,
+        "hitCount": 2,
+        "cooldownSeconds": 5.5,
+        "momentumCost": 0,
+        "castRangeCm": 1030,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 67,
+          "hitCount": 2,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroNameZh": "辰龙·御霄苍龙",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.dragon_eight_azure_breath@1",
+      "displayNameV6": "雷息",
+      "approvedNameV5": "雷息",
+      "mechanismV6": "向前方锥形吐出云雷龙息，服务器按扇区结算有限伤害。",
+      "level1Candidate": {
+        "baseDamage": 100,
+        "hitCount": 1,
+        "cooldownSeconds": 10,
+        "momentumCost": 0,
+        "castRangeCm": 900,
+        "areaRadiusCm": 340,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 100,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroNameZh": "辰龙·御霄苍龙",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.dragon_eight_dragon_ascension@1",
+      "displayNameV6": "苍龙定天",
+      "approvedNameV5": "三象域",
+      "mechanismV6": "指定风云雷场域按风压、云幕、雷裁三阶段推进，每段可反制；旧天印收束已删除。",
+      "level1Candidate": {
+        "baseDamage": 236,
+        "hitCount": 1,
+        "cooldownSeconds": 72,
+        "momentumCost": 0,
+        "castRangeCm": 1000,
+        "areaRadiusCm": 590,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 236,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroNameZh": "辰龙·御霄苍龙",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.dragon_eight_cloud_stride@1",
+      "displayNameV6": "御风",
+      "approvedNameV5": "御风",
+      "mechanismV6": "踏风短距位移，路径附近友军可获得轻微短时助速。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 16,
+        "momentumCost": 0,
+        "castRangeCm": 720,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "movement",
+          "distanceCm": 720,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "SafeDash",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroNameZh": "辰龙·御霄苍龙",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.dragon_eight_dragon_scale_guard@1",
+      "displayNameV6": "云护",
+      "approvedNameV5": "云盾",
+      "mechanismV6": "为自己及附近友军覆上有上限的云盾，降低部分远程伤害。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 22,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.18,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroNameZh": "辰龙·御霄苍龙",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
+      "displayNameV6": "龙压",
+      "approvedNameV5": "风压环",
+      "mechanismV6": "释放双圈风压，外推内牵并可条件短麻痹；V2纯眩晕不足，需补权威推拉。",
+      "level1Candidate": {
+        "baseDamage": 32,
+        "hitCount": 1,
+        "cooldownSeconds": 20,
+        "momentumCost": 0,
+        "castRangeCm": 870,
+        "areaRadiusCm": 200,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 32,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "control",
+          "controlType": "stun",
+          "durationSeconds": 0.9,
+          "slowFraction": 0
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dragon",
+      "heroNameZh": "辰龙·御霄苍龙",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.dragon_eight_cloud_blessing@1",
+      "displayNameV6": "龙域",
+      "approvedNameV5": "风云域",
+      "mechanismV6": "展开局部风云雷领域：限制突进、削弱局部远程视线并有限持续打击；离开领域可反制。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 25,
+        "momentumCost": 0,
+        "castRangeCm": 780,
+        "areaRadiusCm": 360,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.12,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "friendly_or_self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroNameZh": "巳蛇·幽鳞玄蛇",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.snake_eight_scale_bite@1",
+      "displayNameV6": "幽鳞刺",
+      "approvedNameV5": "幽鳞刺",
+      "mechanismV6": "中距离单鳞针造成一次魔法普攻打击。",
+      "level1Candidate": {
+        "baseDamage": 30,
+        "hitCount": 1,
+        "cooldownSeconds": 0.8,
+        "momentumCost": 0,
+        "castRangeCm": 780,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 30,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "SingleProjectile",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroNameZh": "巳蛇·幽鳞玄蛇",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.snake_eight_venom_spear@1",
+      "displayNameV6": "毒牙",
+      "approvedNameV5": "毒牙",
+      "mechanismV6": "蛇牙毒针单体命中后附有限持续毒伤与条件抑疗；不能无限叠毒。",
+      "level1Candidate": {
+        "baseDamage": 55,
+        "hitCount": 1,
+        "cooldownSeconds": 5,
+        "momentumCost": 0,
+        "castRangeCm": 1000,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 55,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "buff",
+          "buffType": "damage_over_time",
+          "magnitudeFraction": 0.05,
+          "durationSeconds": 3
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroNameZh": "巳蛇·幽鳞玄蛇",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.snake_eight_serpent_arc@1",
+      "displayNameV6": "双鳞弹",
+      "approvedNameV5": "双鳞弹",
+      "mechanismV6": "左右两枚蛇鳞能量弹交错命中，单目标最多两段。",
+      "level1Candidate": {
+        "baseDamage": 80,
+        "hitCount": 2,
+        "cooldownSeconds": 9,
+        "momentumCost": 0,
+        "castRangeCm": 960,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 80,
+          "hitCount": 2,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroNameZh": "巳蛇·幽鳞玄蛇",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.snake_eight_serpent_maelstrom@1",
+      "displayNameV6": "万毒归鳞",
+      "approvedNameV5": "毒阵爆",
+      "mechanismV6": "将本人铺设的毒纹引为三波毒潮：减速、抑疗、末段毒爆；离场可减伤。",
+      "level1Candidate": {
+        "baseDamage": 198,
+        "hitCount": 3,
+        "cooldownSeconds": 67,
+        "momentumCost": 0,
+        "castRangeCm": 940,
+        "areaRadiusCm": 475,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 198,
+          "hitCount": 3,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroNameZh": "巳蛇·幽鳞玄蛇",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.snake_eight_sinuous_dash@1",
+      "displayNameV6": "蛇行",
+      "approvedNameV5": "蛇行",
+      "mechanismV6": "贴地S形合法滑行，经过自身毒带可有限加速。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 13,
+        "momentumCost": 0,
+        "castRangeCm": 670,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "movement",
+          "distanceCm": 680,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "SafeDash",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroNameZh": "巳蛇·幽鳞玄蛇",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.snake_eight_shed_skin@1",
+      "displayNameV6": "蜕鳞",
+      "approvedNameV5": "蜕鳞",
+      "mechanismV6": "蜕下一层鳞影，清除轻度减速并短时减伤，留弱毒雾。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 21,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.15,
+          "durationSeconds": 4
+        }
+      ],
+      "v2TargetMode": "self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroNameZh": "巳蛇·幽鳞玄蛇",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.snake_eight_coil_silence@1",
+      "displayNameV6": "缠纹",
+      "approvedNameV5": "蛇纹缚",
+      "mechanismV6": "布下蛇纹环，踩中减速，停留过久可短缠足；历史不是无条件沉默。",
+      "level1Candidate": {
+        "baseDamage": 24,
+        "hitCount": 1,
+        "cooldownSeconds": 19,
+        "momentumCost": 0,
+        "castRangeCm": 840,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 24,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "control",
+          "controlType": "silence",
+          "durationSeconds": 1.4,
+          "slowFraction": 0
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Snake",
+      "heroNameZh": "巳蛇·幽鳞玄蛇",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.snake_eight_venom_mark@1",
+      "displayNameV6": "封途",
+      "approvedNameV5": "毒径",
+      "mechanismV6": "沿合法地面铺有限蛇形毒径，成熟后可引爆，敌人可绕开。",
+      "level1Candidate": {
+        "baseDamage": 38,
+        "hitCount": 1,
+        "cooldownSeconds": 18,
+        "momentumCost": 0,
+        "castRangeCm": 900,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 38,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "buff",
+          "buffType": "target_vulnerability",
+          "magnitudeFraction": 0.08,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroNameZh": "午马·赤焰雷蹄",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.horse_eight_thunder_hoof@1",
+      "displayNameV6": "雷蹄踢",
+      "approvedNameV5": "雷蹄踢",
+      "mechanismV6": "向近身敌人雷蹄踢击，普通攻击获取气势。",
+      "level1Candidate": {
+        "baseDamage": 37,
+        "hitCount": 1,
+        "cooldownSeconds": 0.75,
+        "momentumCost": 0,
+        "castRangeCm": 245,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 37,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroNameZh": "午马·赤焰雷蹄",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.horse_eight_lightning_line@1",
+      "displayNameV6": "雷枪",
+      "approvedNameV5": "雷枪",
+      "mechanismV6": "雷枪前刺伤害随近期冲势有限变化，不能无限累加。",
+      "level1Candidate": {
+        "baseDamage": 68,
+        "hitCount": 1,
+        "cooldownSeconds": 5,
+        "momentumCost": 0,
+        "castRangeCm": 850,
+        "areaRadiusCm": 190,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 68,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroNameZh": "午马·赤焰雷蹄",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.horse_eight_hooffall@1",
+      "displayNameV6": "雷蹄波",
+      "approvedNameV5": "雷蹄波",
+      "mechanismV6": "重踏地面产生单次环形电纹冲击。",
+      "level1Candidate": {
+        "baseDamage": 90,
+        "hitCount": 1,
+        "cooldownSeconds": 9,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 325,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 90,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroNameZh": "午马·赤焰雷蹄",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.horse_eight_thunder_stampede@1",
+      "displayNameV6": "雷蹄破阵",
+      "approvedNameV5": "破阵冲",
+      "mechanismV6": "预告一条冲锋线后高速破阵，沿途合法碰撞并于终点释放蹄震；删除旧王阵关系。",
+      "level1Candidate": {
+        "baseDamage": 226,
+        "hitCount": 3,
+        "cooldownSeconds": 62,
+        "momentumCost": 20,
+        "castRangeCm": 940,
+        "areaRadiusCm": 470,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 226,
+          "hitCount": 3,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroNameZh": "午马·赤焰雷蹄",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.horse_eight_wind_charger@1",
+      "displayNameV6": "奔雷",
+      "approvedNameV5": "奔雷",
+      "mechanismV6": "进入高速奔跑，沿直线积累冲势，急转向或受控损失冲势。",
+      "level1Candidate": {
+        "baseDamage": 38,
+        "hitCount": 1,
+        "cooldownSeconds": 10.5,
+        "momentumCost": 0,
+        "castRangeCm": 800,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 38,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "movement",
+          "distanceCm": 830,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroNameZh": "午马·赤焰雷蹄",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.horse_eight_thunder_hide@1",
+      "displayNameV6": "踏阵",
+      "approvedNameV5": "护驰",
+      "mechanismV6": "冲锋期间获得有限韧性与减伤，被硬控中断时仍然结束冲势。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 18,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.13,
+          "durationSeconds": 4
+        }
+      ],
+      "v2TargetMode": "self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroNameZh": "午马·赤焰雷蹄",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.horse_eight_hoof_stun@1",
+      "displayNameV6": "蹄震",
+      "approvedNameV5": "震蹄",
+      "mechanismV6": "雷蹄震地打断邻近突进，冲势足够时额外击退；不是持续硬控。",
+      "level1Candidate": {
+        "baseDamage": 25,
+        "hitCount": 1,
+        "cooldownSeconds": 17,
+        "momentumCost": 0,
+        "castRangeCm": 450,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 25,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "control",
+          "controlType": "stun",
+          "durationSeconds": 0.8,
+          "slowFraction": 0
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Horse",
+      "heroNameZh": "午马·赤焰雷蹄",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.horse_eight_tailwind_aura@1",
+      "displayNameV6": "先至",
+      "approvedNameV5": "驰援",
+      "mechanismV6": "按有效战区或濒危友军方向迅速赶援，抵达提供短护盾；不作任意逃生。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 23,
+        "momentumCost": 0,
+        "castRangeCm": 700,
+        "areaRadiusCm": 420,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "buff",
+          "buffType": "movement_speed",
+          "magnitudeFraction": 0.16,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroNameZh": "未羊·玉角灵铃",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.goat_eight_jade_horn@1",
+      "displayNameV6": "玉角刺",
+      "approvedNameV5": "玉角刺",
+      "mechanismV6": "玉角灵光短刺命中近处敌人。",
+      "level1Candidate": {
+        "baseDamage": 28,
+        "hitCount": 1,
+        "cooldownSeconds": 0.9,
+        "momentumCost": 0,
+        "castRangeCm": 560,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 28,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroNameZh": "未羊·玉角灵铃",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.goat_eight_jade_beam@1",
+      "displayNameV6": "净光",
+      "approvedNameV5": "引锋光",
+      "mechanismV6": "净玉光命中敌人造成轻伤、命中有效友军则微量治疗；敌友双模式必须互斥判定。",
+      "level1Candidate": {
+        "baseDamage": 62,
+        "hitCount": 1,
+        "cooldownSeconds": 5.2,
+        "momentumCost": 0,
+        "castRangeCm": 930,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 62,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "SingleProjectile",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroNameZh": "未羊·玉角灵铃",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.goat_eight_rune_ring@1",
+      "displayNameV6": "玉符环",
+      "approvedNameV5": "玉符环",
+      "mechanismV6": "在指定点激活玉符环，产生一次区域伤害波纹。",
+      "level1Candidate": {
+        "baseDamage": 83,
+        "hitCount": 1,
+        "cooldownSeconds": 10,
+        "momentumCost": 0,
+        "castRangeCm": 820,
+        "areaRadiusCm": 330,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 83,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroNameZh": "未羊·玉角灵铃",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.goat_eight_sanctuary_dome@1",
+      "displayNameV6": "万愿归铃",
+      "approvedNameV5": "护愿铃",
+      "mechanismV6": "摇响群体灵铃，持续有限治疗、短护盾及轻控制净化；敌方仅受软压制。",
+      "level1Candidate": {
+        "baseDamage": 110,
+        "hitCount": 1,
+        "cooldownSeconds": 70,
+        "momentumCost": 0,
+        "castRangeCm": 850,
+        "areaRadiusCm": 500,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 110,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.1,
+          "durationSeconds": 4
+        },
+        {
+          "kind": "healing",
+          "maxHealthFraction": 0.15,
+          "allowRevive": false
+        }
+      ],
+      "v2TargetMode": "area_center_mixed",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroNameZh": "未羊·玉角灵铃",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.goat_eight_light_hoof@1",
+      "displayNameV6": "铃步",
+      "approvedNameV5": "铃步",
+      "mechanismV6": "向合法低血友军短距铃步并给少量落点治疗。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 14.5,
+        "momentumCost": 0,
+        "castRangeCm": 600,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "movement",
+          "distanceCm": 600,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "SafeDash",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroNameZh": "未羊·玉角灵铃",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.goat_eight_jade_barrier@1",
+      "displayNameV6": "守愿",
+      "approvedNameV5": "守愿",
+      "mechanismV6": "提前守愿：仅一次阻止受护者致命伤害并给弱盾，触发后进入长冷却；免死机制另审。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 19,
+        "momentumCost": 0,
+        "castRangeCm": 790,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.22,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "friendly_or_self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroNameZh": "未羊·玉角灵铃",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.goat_eight_jade_bind@1",
+      "displayNameV6": "安魂",
+      "approvedNameV5": "缓铃",
+      "mechanismV6": "安魂铃声减慢敌人并削弱其下一次爆发，偏守护型软控。",
+      "level1Candidate": {
+        "baseDamage": 18,
+        "hitCount": 1,
+        "cooldownSeconds": 20,
+        "momentumCost": 0,
+        "castRangeCm": 820,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 18,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "control",
+          "controlType": "slow",
+          "durationSeconds": 2.2,
+          "slowFraction": 0.4
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Goat",
+      "heroNameZh": "未羊·玉角灵铃",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.goat_eight_healing_dew@1",
+      "displayNameV6": "铃印",
+      "approvedNameV5": "回春铃",
+      "mechanismV6": "为友军施加短祈愿符提高下一次治疗并净化一次轻控；不是直接治疗回血技。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 15,
+        "momentumCost": 0,
+        "castRangeCm": 950,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "healing",
+          "maxHealthFraction": 0.25,
+          "allowRevive": false
+        }
+      ],
+      "v2TargetMode": "friendly_or_self",
+      "proposedPrimitiveCandidate": "SingleHealing",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroNameZh": "申猴·灵猴戏圣",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.monkey_eight_staff_tap@1",
+      "displayNameV6": "灵棍点",
+      "approvedNameV5": "灵棍点",
+      "mechanismV6": "近身快速金棍点打一次。",
+      "level1Candidate": {
+        "baseDamage": 34,
+        "hitCount": 1,
+        "cooldownSeconds": 0.72,
+        "momentumCost": 0,
+        "castRangeCm": 260,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 34,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroNameZh": "申猴·灵猴戏圣",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.monkey_eight_staff_triple@1",
+      "displayNameV6": "戏棍",
+      "approvedNameV5": "戏棍",
+      "mechanismV6": "棍击目标；若敌人刚误击假身则追加有限背击收益。",
+      "level1Candidate": {
+        "baseDamage": 74,
+        "hitCount": 3,
+        "cooldownSeconds": 5,
+        "momentumCost": 0,
+        "castRangeCm": 300,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 74,
+          "hitCount": 3,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroNameZh": "申猴·灵猴戏圣",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.monkey_eight_cloud_sweep@1",
+      "displayNameV6": "横扫棍",
+      "approvedNameV5": "横扫棍",
+      "mechanismV6": "金棍大范围扇形横扫，结算有边界的正面伤害。",
+      "level1Candidate": {
+        "baseDamage": 89,
+        "hitCount": 1,
+        "cooldownSeconds": 8.5,
+        "momentumCost": 0,
+        "castRangeCm": 380,
+        "areaRadiusCm": 300,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 89,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroNameZh": "申猴·灵猴戏圣",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.monkey_eight_golden_afterimages@1",
+      "displayNameV6": "万象戏台",
+      "approvedNameV5": "换影台",
+      "mechanismV6": "展开短时戏台与可见假身，可在假身间有限换位并在结束时轻扰乱；不是纯四段爆伤。",
+      "level1Candidate": {
+        "baseDamage": 208,
+        "hitCount": 4,
+        "cooldownSeconds": 58,
+        "momentumCost": 20,
+        "castRangeCm": 650,
+        "areaRadiusCm": 450,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 208,
+          "hitCount": 4,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroNameZh": "申猴·灵猴戏圣",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.monkey_eight_cloud_flip@1",
+      "displayNameV6": "筋斗",
+      "approvedNameV5": "筋斗",
+      "mechanismV6": "合法落点翻筋斗越过低矮障碍，不穿墙。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 11.5,
+        "momentumCost": 0,
+        "castRangeCm": 850,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "movement",
+          "distanceCm": 820,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "SafeDash",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroNameZh": "申猴·灵猴戏圣",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.monkey_eight_illusion_guard@1",
+      "displayNameV6": "替身",
+      "approvedNameV5": "替身",
+      "mechanismV6": "主动或受击前与真实已生成假身换位并短减伤；无假身时退化为短盾。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 17,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.15,
+          "durationSeconds": 4
+        }
+      ],
+      "v2TargetMode": "self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroNameZh": "申猴·灵猴戏圣",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.monkey_eight_staff_stun@1",
+      "displayNameV6": "扰心",
+      "approvedNameV5": "迷烟弹",
+      "mechanismV6": "戏法烟弹减速并短时扰乱锁定，命中假身附近敌人时短失衡。",
+      "level1Candidate": {
+        "baseDamage": 30,
+        "hitCount": 1,
+        "cooldownSeconds": 17,
+        "momentumCost": 0,
+        "castRangeCm": 420,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 30,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "control",
+          "controlType": "stun",
+          "durationSeconds": 0.75,
+          "slowFraction": 0
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Monkey",
+      "heroNameZh": "申猴·灵猴戏圣",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.monkey_eight_trickster_stride@1",
+      "displayNameV6": "百戏",
+      "approvedNameV5": "双影戏",
+      "mechanismV6": "生成最多两个假身模拟起手，二次释放可与其中一个合法换位；假身可被揭露。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 20,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "buff",
+          "buffType": "evasion",
+          "magnitudeFraction": 0.12,
+          "durationSeconds": 4
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroNameZh": "酉鸡·金翎晨鸣",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.rooster_eight_golden_peck@1",
+      "displayNameV6": "金羽击",
+      "approvedNameV5": "金羽击",
+      "mechanismV6": "发射单枚曦金羽光，造成远程普攻伤害。",
+      "level1Candidate": {
+        "baseDamage": 30,
+        "hitCount": 1,
+        "cooldownSeconds": 0.88,
+        "momentumCost": 0,
+        "castRangeCm": 760,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 30,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "SingleProjectile",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroNameZh": "酉鸡·金翎晨鸣",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.rooster_eight_feather_fan@1",
+      "displayNameV6": "破晓",
+      "approvedNameV5": "破隐羽",
+      "mechanismV6": "扇形金羽光刃击中已揭露目标或分身时收益提高，具备反伪装职责。",
+      "level1Candidate": {
+        "baseDamage": 67,
+        "hitCount": 1,
+        "cooldownSeconds": 5.5,
+        "momentumCost": 0,
+        "castRangeCm": 1000,
+        "areaRadiusCm": 270,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 67,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroNameZh": "酉鸡·金翎晨鸣",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.rooster_eight_sunrise_wave@1",
+      "displayNameV6": "晨鸣波",
+      "approvedNameV5": "晨鸣波",
+      "mechanismV6": "向前释放晨鸣声环，造成有范围的魔法伤害。",
+      "level1Candidate": {
+        "baseDamage": 86,
+        "hitCount": 1,
+        "cooldownSeconds": 9.5,
+        "momentumCost": 0,
+        "castRangeCm": 850,
+        "areaRadiusCm": 325,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 86,
+          "hitCount": 1,
+          "type": "Magic"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroNameZh": "酉鸡·金翎晨鸣",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.rooster_eight_dawn_resonance@1",
+      "displayNameV6": "破晓金鸣",
+      "approvedNameV5": "护晓域",
+      "mechanismV6": "召唤大范围破晓明域揭露潜行与假身、给队友短反偷袭护盾，不自动沿用V2群疗。",
+      "level1Candidate": {
+        "baseDamage": 190,
+        "hitCount": 1,
+        "cooldownSeconds": 68,
+        "momentumCost": 0,
+        "castRangeCm": 880,
+        "areaRadiusCm": 520,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 190,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "healing",
+          "maxHealthFraction": 0.1,
+          "allowRevive": false
+        }
+      ],
+      "v2TargetMode": "area_center_mixed",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroNameZh": "酉鸡·金翎晨鸣",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.rooster_eight_feather_glide@1",
+      "displayNameV6": "鸣步",
+      "approvedNameV5": "鸣步",
+      "mechanismV6": "向可疑暗迹方向短距位移并短暂增强局部侦测。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 14,
+        "momentumCost": 0,
+        "castRangeCm": 690,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "movement",
+          "distanceCm": 660,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "SafeDash",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroNameZh": "酉鸡·金翎晨鸣",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.rooster_eight_wing_guard@1",
+      "displayNameV6": "金羽",
+      "approvedNameV5": "金羽盾",
+      "mechanismV6": "给自己或友军附上金羽盾，敌方从隐匿发起攻击时有明确反揭示反馈。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 19,
+        "momentumCost": 0,
+        "castRangeCm": 750,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.16,
+          "durationSeconds": 4
+        }
+      ],
+      "v2TargetMode": "friendly_or_self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroNameZh": "酉鸡·金翎晨鸣",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.rooster_eight_sonic_silence@1",
+      "displayNameV6": "鸣震",
+      "approvedNameV5": "止咒鸣",
+      "mechanismV6": "扇形鸣震，对正在隐藏或刚显形者短沉默，并令假身破相；普通目标软控。",
+      "level1Candidate": {
+        "baseDamage": 20,
+        "hitCount": 1,
+        "cooldownSeconds": 18,
+        "momentumCost": 0,
+        "castRangeCm": 850,
+        "areaRadiusCm": 0,
+        "damageType": "Magic"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 20,
+          "hitCount": 1,
+          "type": "Magic"
+        },
+        {
+          "kind": "control",
+          "controlType": "silence",
+          "durationSeconds": 1.2,
+          "slowFraction": 0
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Rooster",
+      "heroNameZh": "酉鸡·金翎晨鸣",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.rooster_eight_first_light_heal@1",
+      "displayNameV6": "晨鸣",
+      "approvedNameV5": "回春鸣",
+      "mechanismV6": "短时照亮区域并给出隐身、陷阱、埋伏方向提示；不提供全图视野。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 17,
+        "momentumCost": 0,
+        "castRangeCm": 920,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "healing",
+          "maxHealthFraction": 0.2,
+          "allowRevive": false
+        }
+      ],
+      "v2TargetMode": "friendly_or_self",
+      "proposedPrimitiveCandidate": "SingleHealing",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroNameZh": "戌狗·守阙天犬",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.dog_eight_guardian_bite@1",
+      "displayNameV6": "天犬咬",
+      "approvedNameV5": "天犬咬",
+      "mechanismV6": "近身以天犬犬牙短咬目标。",
+      "level1Candidate": {
+        "baseDamage": 35,
+        "hitCount": 1,
+        "cooldownSeconds": 0.85,
+        "momentumCost": 0,
+        "castRangeCm": 250,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 35,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroNameZh": "戌狗·守阙天犬",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
+      "displayNameV6": "反咬",
+      "approvedNameV5": "护主咬",
+      "mechanismV6": "优先反咬最近攻击誓约友军的敌人，降低其下一次攻击效果。",
+      "level1Candidate": {
+        "baseDamage": 70,
+        "hitCount": 1,
+        "cooldownSeconds": 5.5,
+        "momentumCost": 0,
+        "castRangeCm": 620,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 70,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroNameZh": "戌狗·守阙天犬",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.dog_eight_spirit_rake@1",
+      "displayNameV6": "双灵爪",
+      "approvedNameV5": "双灵爪",
+      "mechanismV6": "双爪连续追击同一敌人，最多两次命中。",
+      "level1Candidate": {
+        "baseDamage": 90,
+        "hitCount": 2,
+        "cooldownSeconds": 9,
+        "momentumCost": 0,
+        "castRangeCm": 400,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 90,
+          "hitCount": 2,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroNameZh": "戌狗·守阙天犬",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.dog_eight_oath_guardian@1",
+      "displayNameV6": "天门守阙",
+      "approvedNameV5": "天门护",
+      "mechanismV6": "在被守护友军前立大型定向天门，拦截部分投射物和正面冲锋，可绕后或集火破坏。",
+      "level1Candidate": {
+        "baseDamage": 170,
+        "hitCount": 1,
+        "cooldownSeconds": 72,
+        "momentumCost": 18,
+        "castRangeCm": 600,
+        "areaRadiusCm": 440,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 170,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.1,
+          "durationSeconds": 4
+        },
+        {
+          "kind": "healing",
+          "maxHealthFraction": 0.08,
+          "allowRevive": false
+        }
+      ],
+      "v2TargetMode": "area_center_mixed",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroNameZh": "戌狗·守阙天犬",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.dog_eight_hound_leap@1",
+      "displayNameV6": "援步",
+      "approvedNameV5": "援步",
+      "mechanismV6": "朝受护友军合法位置快速援步并获得短时保护。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 13.5,
+        "momentumCost": 0,
+        "castRangeCm": 760,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "movement",
+          "distanceCm": 700,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "SafeDash",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroNameZh": "戌狗·守阙天犬",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.dog_eight_guardian_ring@1",
+      "displayNameV6": "护主",
+      "approvedNameV5": "护主",
+      "mechanismV6": "立即挡到誓约对象面前并承担关键伤害，附可打破的门盾；限单目标。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 19,
+        "momentumCost": 0,
+        "castRangeCm": 780,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.2,
+          "durationSeconds": 4
+        }
+      ],
+      "v2TargetMode": "friendly_or_self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroNameZh": "戌狗·守阙天犬",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.dog_eight_tracking_slow@1",
+      "displayNameV6": "拦门",
+      "approvedNameV5": "截冲盾",
+      "mechanismV6": "向前立门盾打断突进，成功碰撞者短晕，区别于V2仅减速。",
+      "level1Candidate": {
+        "baseDamage": 24,
+        "hitCount": 1,
+        "cooldownSeconds": 17,
+        "momentumCost": 0,
+        "castRangeCm": 830,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 24,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "control",
+          "controlType": "slow",
+          "durationSeconds": 2.4,
+          "slowFraction": 0.32
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Dog",
+      "heroNameZh": "戌狗·守阙天犬",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.dog_eight_loyal_heal@1",
+      "displayNameV6": "誓约",
+      "approvedNameV5": "誓愈",
+      "mechanismV6": "指定唯一誓约友军，敌人伤害此人将成为本人反击威胁目标；不自动转化为单体治疗。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 20,
+        "momentumCost": 0,
+        "castRangeCm": 900,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "healing",
+          "maxHealthFraction": 0.18,
+          "allowRevive": false
+        }
+      ],
+      "v2TargetMode": "friendly_or_self",
+      "proposedPrimitiveCandidate": "SingleHealing",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroNameZh": "亥猪·岩甲玄鬃",
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.boar_eight_tusk_ram@1",
+      "displayNameV6": "獠牙撞",
+      "approvedNameV5": "獠牙撞",
+      "mechanismV6": "近身獠牙短撞，获得普通攻击气势。",
+      "level1Candidate": {
+        "baseDamage": 40,
+        "hitCount": 1,
+        "cooldownSeconds": 1,
+        "momentumCost": 0,
+        "castRangeCm": 260,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 40,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroNameZh": "亥猪·岩甲玄鬃",
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.boar_eight_break_armor@1",
+      "displayNameV6": "怒锤",
+      "approvedNameV5": "怒锤",
+      "mechanismV6": "重锤对前方造成伤害，并按近期承伤和自身已损生命获得有限加成。",
+      "level1Candidate": {
+        "baseDamage": 78,
+        "hitCount": 1,
+        "cooldownSeconds": 6,
+        "momentumCost": 0,
+        "castRangeCm": 410,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 78,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "ForwardDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroNameZh": "亥猪·岩甲玄鬃",
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.boar_eight_pressure_wave@1",
+      "displayNameV6": "重压波",
+      "approvedNameV5": "重压波",
+      "mechanismV6": "原地重踏爆发一次环形震荡，边缘可预判。",
+      "level1Candidate": {
+        "baseDamage": 105,
+        "hitCount": 1,
+        "cooldownSeconds": 10.5,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 375,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 105,
+          "hitCount": 1,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "RadialDamage",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": []
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroNameZh": "亥猪·岩甲玄鬃",
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.boar_eight_earthsplit_mane@1",
+      "displayNameV6": "玄鬃裂地",
+      "approvedNameV5": "连踏",
+      "mechanismV6": "重甲姿态连续三段地裂推进：推开、震荡、低血重锤结算；不依赖旧王座。",
+      "level1Candidate": {
+        "baseDamage": 245,
+        "hitCount": 2,
+        "cooldownSeconds": 74,
+        "momentumCost": 25,
+        "castRangeCm": 630,
+        "areaRadiusCm": 600,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 245,
+          "hitCount": 2,
+          "type": "Physical"
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroNameZh": "亥猪·岩甲玄鬃",
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.boar_eight_boar_charge@1",
+      "displayNameV6": "獠撞",
+      "approvedNameV5": "獠冲",
+      "mechanismV6": "低头沿合法路径直线獠撞并顶开首个目标，侧移可反制。",
+      "level1Candidate": {
+        "baseDamage": 50,
+        "hitCount": 1,
+        "cooldownSeconds": 16,
+        "momentumCost": 0,
+        "castRangeCm": 760,
+        "areaRadiusCm": 0,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 50,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "movement",
+          "distanceCm": 700,
+          "serverNavValidation": true
+        }
+      ],
+      "v2TargetMode": "movement_direction",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "早期机制与V2数值独立，不能按单一模板声明完成",
+        "名称为V6候选，需重新取得显示名签审"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroNameZh": "亥猪·岩甲玄鬃",
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.boar_eight_iron_mane@1",
+      "displayNameV6": "岩甲",
+      "approvedNameV5": "岩甲",
+      "mechanismV6": "释放岩甲护盾并于破盾时产生有限反震，低血时减伤强化；不免疫全部伤害。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 22,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "shield",
+          "maxHealthFraction": 0.24,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "self",
+      "proposedPrimitiveCandidate": "SingleShield",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroNameZh": "亥猪·岩甲玄鬃",
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.boar_eight_roar_stun@1",
+      "displayNameV6": "震鬃",
+      "approvedNameV5": "震鬃",
+      "mechanismV6": "炸鬃震踏使近身敌人减速，岩甲仍在时才允许短击退。",
+      "level1Candidate": {
+        "baseDamage": 31,
+        "hitCount": 1,
+        "cooldownSeconds": 20,
+        "momentumCost": 0,
+        "castRangeCm": 450,
+        "areaRadiusCm": 265,
+        "damageType": "Physical"
+      },
+      "v2Actions": [
+        {
+          "kind": "damage",
+          "baseMagnitude": 31,
+          "hitCount": 1,
+          "type": "Physical"
+        },
+        {
+          "kind": "control",
+          "controlType": "stun",
+          "durationSeconds": 0.9,
+          "slowFraction": 0
+        }
+      ],
+      "v2TargetMode": "area_or_target",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    },
+    {
+      "heroId": "Hero.Zodiac.Boar",
+      "heroNameZh": "亥猪·岩甲玄鬃",
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.boar_eight_rage_focus@1",
+      "displayNameV6": "鬃吼",
+      "approvedNameV5": "鬃吼",
+      "mechanismV6": "吼声提高本人战意与身后队友的短减伤，不强制嘲讽。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "hitCount": 1,
+        "cooldownSeconds": 23,
+        "momentumCost": 0,
+        "castRangeCm": 0,
+        "areaRadiusCm": 0,
+        "damageType": "Untyped"
+      },
+      "v2Actions": [
+        {
+          "kind": "buff",
+          "buffType": "damage_reduction",
+          "magnitudeFraction": 0.14,
+          "durationSeconds": 5
+        }
+      ],
+      "v2TargetMode": "enemy",
+      "proposedPrimitiveCandidate": "Unsupported",
+      "canGrantToServer": false,
+      "stableGAClassPath": null,
+      "costEffectClass": null,
+      "cooldownEffectClass": null,
+      "nativeDefinitionAssetPath": null,
+      "nativeAssetState": "NOT_GENERATED",
+      "reviewState": "PENDING_USER_REVIEW",
+      "vfxState": "NOT_APPROVED",
+      "engineRunEvidence": "NOT_TESTED",
+      "knownBlockers": [
+        "基础数值涉及多段或复合行为，V6原生基类尚不覆盖",
+        "服务端增益/控制存在额外行为审核门禁",
+        "早期机制与V2数值独立，不能按单一模板声明完成"
+      ]
+    }
+  ]
+}

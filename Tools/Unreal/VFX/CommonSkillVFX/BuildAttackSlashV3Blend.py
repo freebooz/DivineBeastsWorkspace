@@ -80,7 +80,7 @@ for j,v in enumerate((.82,.25)):
     pts=[sheet(.02+k/14*.48,v+.04*math.sin(k/14*math.pi*2+j),2*math.sin(math.pi*k/14)) for k in range(15)]
     ribbon('Filament_'+str(j),pts,.35,2,.35)
 
-def flame_fold(name,edge_a,edge_b,depths,offset,thickness):
+def flame_fold(name,edge_a,edge_b,depths,offset,thickness,roll):
     """以两条独立轮廓形成宽幅卷瓣及闭合透镜截面，宽度/厚度直接写入真实网格。"""
     a=[unproject(p,d+offset) for p,d in zip(edge_a,depths)]
     b=[unproject(p,d+offset) for p,d in zip(edge_b,depths)]
@@ -89,23 +89,26 @@ def flame_fold(name,edge_a,edge_b,depths,offset,thickness):
         pa=sample(a,u);pb=sample(b,u);center=(pa+pb)*.5
         tangent=(sample(a,min(1,u+.0002))+sample(b,min(1,u+.0002))-sample(a,max(0,u-.0002))-sample(b,max(0,u-.0002))).normalized()
         normal=tangent.cross(pa-pb).normalized();angle=v*math.tau
+        turn=roll*math.sin(math.pi*u);half=(pa-pb)*.5
+        curled_half=half*math.cos(turn)+normal*half.length*math.sin(turn)
+        curled_normal=normal*math.cos(turn)-half.normalized()*math.sin(turn)
         # 卷瓣深度和局部厚度分开；中心抬起形成前后交错，不靠共面透明片叠加造厚。
         bulge=math.sin(math.pi*u)**.8
-        return center+(pa-pb)*.5*math.cos(angle)+normal*(thickness*bulge*math.sin(angle)+8*math.sin(math.pi*u)*math.sin(u*math.pi*1.5))
+        return center+curled_half*math.cos(angle)+curled_normal*(thickness*bulge*math.sin(angle)+8*math.sin(math.pi*u)*math.sin(u*math.pi*1.5))
     patch(fn,80,12,1,name)
 
 flame_fold('FlameFold_Front',
  [(630,605),(870,430),(1000,250),(1035,150),(970,105),(905,92)],
  [(630,605),(760,447),(880,280),(920,180),(934,126),(905,92)],
- [525,565,610,630,646,651],-24,3.8)
+ [525,565,610,630,646,651],-24,3.8,.65)
 flame_fold('FlameFold_Middle',
  [(795,522),(1020,360),(1150,216),(1115,133),(1010,93)],
  [(795,522),(898,354),(1025,219),(1032,153),(1010,93)],
- [543,582,615,640,653],8,5.0)
+ [543,582,615,640,653],8,5.0,-.90)
 flame_fold('FlameFold_Back',
  [(920,420),(1125,300),(1224,198),(1180,120),(1080,89)],
  [(920,420),(1020,293),(1119,187),(1129,134),(1080,89)],
- [563,598,621,643,654],30,6.0)
+ [563,598,621,643,654],30,6.0,1.1)
 
 # 同一Mesh/粒子中的有界空气包络，略宽于火焰主体；只承担局部折射，不生成新System。
 def air_shell(u,v):

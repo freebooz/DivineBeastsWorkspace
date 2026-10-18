@@ -31,9 +31,14 @@ FGamePlatformResult UDivineBeastsAbilityDefinition::ValidateDefinition() const
         Unique.Add(Row);
     }
 
-    if (bEightSlotDraftOnly)
+    if (bEightSlotDraftOnly && bV6NativeApproved)
     {
-        // 原12套占位资源bEightSlotDraftOnly=false，绝不因设计字段增加而改变旧技能准入。
+        return FGamePlatformResult::Failure(TEXT("V6DraftCannotBeApproved"),
+            TEXT("仍处于草案的八槽技能不能同时声明V6原生执行批准。"));
+    }
+    if (bEightSlotDraftOnly || bV6NativeApproved)
+    {
+        // 原12套占位资源均为false，V6执行审核不会改变其已发布准入。
         static const TSet<FName> AllowedSlots =
         {
             TEXT("Primary"), TEXT("Slot1"), TEXT("Slot2"), TEXT("Slot3"),

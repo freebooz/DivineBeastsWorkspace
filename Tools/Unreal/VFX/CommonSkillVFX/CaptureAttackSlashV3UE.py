@@ -43,6 +43,8 @@ class SlashV3Review:
         camera.set_editor_property('post_process_settings',self.pp)
         self.capactor=self.spawn(unreal.SceneCapture2D,'V3_Reference_Capture',position);self.capactor.set_actor_transform(self.camera.get_actor_transform(),False,False);self.capture=self.capactor.get_component_by_class(unreal.SceneCaptureComponent2D)
         for p,v in {'capture_every_frame':False,'capture_on_movement':False,'capture_source':unreal.SceneCaptureSource.SCS_FINAL_COLOR_LDR,'post_process_settings':self.pp,'fov_angle':float(self.guide['fov'])}.items():self.capture.set_editor_property(p,v)
+        # 原生游戏视图不包含编辑器未构建阴影的Preview文字；禁止将其烙入审核媒体。
+        self.capture.set_editor_property('show_flag_settings',[unreal.EngineShowFlagsSetting(show_flag_name='PreviewShadowsIndicator',enabled=False)])
         self.target=unreal.RenderingLibrary.create_render_target2d(self.world,1536,1024,unreal.TextureRenderTargetFormat.RTF_RGBA8);self.capture.set_editor_property('texture_target',self.target)
         self.actor=self.spawn(unreal.NiagaraActor,'V3_Review_Attack',self.guide['effectOrigin']);self.component=self.actor.get_component_by_class(unreal.NiagaraComponent);self.component.set_asset(unreal.load_asset(BASE+'/Niagara/NS_DBA_AttackSlash_V3'));self.component.set_editor_property('allow_scalability',False);self.component.set_force_solo(True)
         self.levels.pilot_level_actor(self.camera);self.levels.editor_set_viewport_realtime(True);self.levels.editor_set_game_view(True);unreal.AutomationLibrary.set_editor_active_viewport_view_mode(unreal.ViewModeIndex.VMI_LIT)
@@ -67,13 +69,15 @@ class SlashV3Review:
     def spawn(self,cls,label,position):
         a=self.actors.spawn_actor_from_class(cls,position if isinstance(position,unreal.Vector) else unreal.Vector(*position));a.set_actor_label(label);return a
 
-    def start(self,clip=False):
+    def start(self,clip=False,sample_steps=None):
         if self.handle:raise RuntimeError('已有有限采样回调，拒绝重入')
         assert unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()==self.world
         self.out=ROOT/'Saved/Validation/CommonSkillVFX/AttackSlashV3/RenderRuns'/datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ');self.out.mkdir(parents=True)
         self.report=dict(status='running',manualAccepted=False,renderer='UE5.8 native SceneCapture FinalColorLDR',resolution=[1536,1024],camera=self.guide['camera'],lookAt=self.guide['lookAt'],fov=self.guide['fov'],reference='Reference_凝锋.png',performanceMeasured=False,frames=[])
         self.component.reinitialize_system();self.component.set_force_solo(True);self.component.set_component_tick_enabled(False)
-        self.jobs=list(range(2,67,2)) if clip else [9,23,37,58];self.steps=0;self.index=0;self.warm=0;self.state='warm';self.started=time.monotonic();self.since=self.started
+        self.jobs=list(sample_steps) if sample_steps is not None else list(range(2,67,2)) if clip else [9,23,37,58]
+        assert self.jobs and self.jobs==sorted(set(self.jobs)) and all(0<step<=120 for step in self.jobs)
+        self.steps=0;self.index=0;self.warm=0;self.state='warm';self.started=time.monotonic();self.since=self.started
         self.capture.set_editor_property('texture_target',self.target)
         self.handle=unreal.register_slate_post_tick_callback(self.tick);self.persist();print('V3_NATIVE_REVIEW_STARTED',str(self.out))
 
@@ -105,4 +109,4 @@ if not globals().get('DEFINE_ONLY',False):
     existing=getattr(unreal,'_attack_slash_v3_review',None)
     if existing and unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()==existing.world:review=existing;review.__class__=SlashV3Review
     else:review=SlashV3Review();unreal._attack_slash_v3_review=review
-    review.start(globals().get('CAPTURE_CLIP',False))
+    review.start(globals().get('CAPTURE_CLIP',False),globals().get('SAMPLE_STEPS'))

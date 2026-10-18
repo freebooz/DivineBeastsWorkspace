@@ -162,10 +162,10 @@ def checks(source: str) -> dict[str, bool]:
             "!FMath::IsNearlyZero(CostPeriod)",
             "!CostEffect->Executions.IsEmpty()",
             "CostEffect->FindComponent(UGameplayEffectComponent::StaticClass()) != nullptr",
-            "Modifier.Attribute != ",
-            "UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()",
             "ActualMomentumChange, -Balance.MomentumCost",
-        )),
+        )) and re.search(
+            r"Modifier\.Attribute\s*!=\s*UDivineBeastsMomentumAttributeSet::GetMomentumAttribute\(\)",
+            grant) is not None,
         "cooldown_effect_rejects_hidden_modifier_and_executions": all(
             marker in grant for marker in (
                 "CooldownEffect->DurationPolicy != EGameplayEffectDurationType::HasDuration",

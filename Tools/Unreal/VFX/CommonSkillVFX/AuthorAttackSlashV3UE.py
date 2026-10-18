@@ -103,7 +103,7 @@ return float4(rgb*PC.rgb,alpha*envelope*.82);'''
     for i,slot in enumerate(mesh.get_editor_property('static_materials')):
         key=next((k for k in ('Body','FlowSheets','Filaments','AirWave') if k in str(slot.material_slot_name)),None);assert key
         mesh.set_material(i,unreal.load_asset(BASE+'/Materials/M_DBA_SlashV3_'+key))
-    save(mesh);print('V3_THREE_LAYER_MATERIALS_SAVED')
+    save(mesh);print('V3_FOUR_SLOT_FLAME_AIR_MATERIALS_SAVED')
 
 
 def air_material():

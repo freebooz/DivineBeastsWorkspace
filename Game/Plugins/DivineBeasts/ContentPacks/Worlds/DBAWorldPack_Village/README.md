@@ -1,5 +1,11 @@
 # DBAWorldPack_Village（神兽联盟新手村世界内容包）
-## 2026-10-18 V3地形正式原位覆盖（9/10，独立UE冷重载通过）
+## 2026-10-18 新手村地形V3资源最终原生收口（最新进度）
+
+当前正式十层地形BaseColor（基础色）原位覆盖与独立UE冷重载 **10/10已通过**；原Dirt（普通泥土）被锁情况已解决，并无待修改的第十层。中立共享Landscape母材质M_DBA_Village_LandscapeBridge由55节点增量升级为81节点Texture Bombing（纹理轰炸），已有三通道一致UV及高/低画质分支；新建256×256 V3绿色草地共享默认Texture2D并已实际绑定两处VillageGroundAlbedoTexture，独立UE5.8冷重载通过。正式L_Village_Start地图哈希未变，雪/湿润、法线、ORM、PCG、碰撞导航不重新生成，纯客户端高精贴图继续通过资源租约加载。正式服务器共享地图依赖审计通过。
+
+完整UE来源、实物与恢复文档：Docs/Implementation/TerrainColorV3ComplianceReview_20261018.md（十层原位重导入记录）与Docs/Implementation/VillageTerrainTextureBombingV3_20261018.md（绿色默认色与纹理轰炸）。低端与移动端保留普通采样；真实GPU、Client/Server Cook、性能与人工美术验收仍不能宣称通过：新的真实D3D12及GUI跨帧图片依旧黑帧，Server Cook因另一任务持有引擎互斥锁返回NotExecuted。以下9/10段落保留历史，不代表最新状态。
+
+## 2026-10-18 历史阶段（当时9/10，现已由上节10/10完成记录取代）
 
 用户批准直接覆盖后，十层地形稳定BaseColor Texture2D原路径已有9层真实重导入V3色板的派生PNG并在独立UE5.8进程验证；剩余Dirt（泥土）被其他进程文件锁阻断，保留原资产。正式Village地图及中立Landscape母材质SHA未变、原Normal/ORM/Height未变。项目客户端原有VillageSnowWorldSubsystem的草地基础色软路径已更新至V3候选，并配套同一扫描资源的Normal/ORM，保持天气事件和世界异步租约。VillageDevelopmentClient新增Cook与配置，专服三配置已用服务器排除策略生成，不能据此宣称Server Cook已验证。
 

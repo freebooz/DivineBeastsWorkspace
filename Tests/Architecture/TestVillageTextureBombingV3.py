@@ -67,8 +67,19 @@ def check(require_native:bool)->None:
     assert checksum(SOURCE)==current["materialSha256"], "母材质原生结果被外部覆盖"
     assert len(current["roles"])==3
     assert not current["humanReviewPassed"] and not current["gpuPassed"] and not current["cookPassed"]
-    if require_native:assert current["coldVerifyPassed"], "UE独立冷重载尚未通过"
-    print("SSLM_VILLAGE_BOMB_NATIVE_EVIDENCE_PASS channels=3 map_unchanged=true UE_cold_verified="+str(current["coldVerifyPassed"]).lower())
+    if require_native:
+        assert current["coldVerifyPassed"], "UE独立冷重载尚未通过"
+        # V3绿色草地默认纹理已成为正式共享WorldPack的原生Texture2D；不再接受仅有PNG的未完成状态。
+        expected="/DBAWorldPack_Village/Materials/Landscape/Defaults/T_DBA_Village_GroundAlbedoV3Default"
+        assert current.get("sharedV3FallbackTexture")==expected, "共享材质默认色仍未指向V3绿色纹理"
+        fallback=ROOT/("Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/"
+                       "Content/Materials/Landscape/Defaults/T_DBA_Village_GroundAlbedoV3Default.uasset")
+        assert fallback.is_file(), "V3默认绿色纹理只有源PNG、没有正式UE Texture2D"
+        fallback_source=ROOT/("Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/"
+                              "SourceArt/Terrain/BombingV3/T_DBA_Village_GroundAlbedoV3Default_Source.png")
+        assert fallback_source.is_file() and checksum(fallback_source)==current.get(
+            "sharedV3FallbackSourceSha256"), "UE默认绿色草地没有可信CC0 V3派生源"
+    print("SSLM_VILLAGE_BOMB_NATIVE_EVIDENCE_PASS channels=3 map_unchanged=true UE_cold_verified="+str(current["coldVerifyPassed"]).lower()+" shared_green_default="+str(bool(current.get("sharedV3FallbackTexture"))).lower())
 
 if __name__=="__main__":
     ap=argparse.ArgumentParser(description="SSLM地形纹理轰炸只读门禁")

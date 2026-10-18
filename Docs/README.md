@@ -4,12 +4,12 @@
 
 ## 现行规则与规划
 
-- [新手村地形纹理轰炸与王者峡谷式V3配色原生改造](Implementation/VillageTerrainTextureBombingV3_20261018.md)：2026-10-18真实UE5.8将Village共享Landscape母材质由55节点改为81节点，三路原生Texture Bombing、低中画质/移动端回退及独立UE冷重载与共享地图依赖门禁已通过；256px编辑器默认绿色纹理源已制，但原生绑定被另一编辑器文件锁阻断；真D3D12画面、GPU及人工验收待完成。
+- [新手村地形纹理轰炸与王者峡谷式V3配色原生改造](Implementation/VillageTerrainTextureBombingV3_20261018.md)：2026-10-18真实UE5.8将Village共享Landscape母材质由55节点改为81节点，三路原生Texture Bombing、低中画质/移动端回退及独立UE冷重载与共享地图依赖门禁已通过；256×256绿色默认Texture2D已真实导入并绑定两处地面参数，独立UE进程冷重载、Village地图资源隔离通过；D3D12及真实GUI截图仍黑帧，GPU、Cook与人工视觉待验。
 
 
 - [SSLM全局美术配色策略与色彩设计规范 V3.0](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)：2026-10-18色彩领域唯一权威文档，约束场景生态、PBR、水体、建筑、生肖/VFX、品牌UI、渲染与人工审核；已整合历史冲突，未宣称引擎素材已重新调色。
 - [SSLM参考颜色语义索引 V3.0](Art/SSLMColorRegistry_V3.json)：41项初始屏幕sRGB参考色与8项待审核的战斗功能色语义；派生候选数据，不是UE数据资产。
-- [SSLM十层地形纹理及材质V3.0真实审查与整改](Implementation/TerrainColorV3ComplianceReview_20261018.md)：已有V3色彩候选并获用户授权覆盖正式地形基础色；10层中的9层已UE5.8原位重导入和独立冷重载，泥土Dirt因文件占用阻断；Village地图与共享材质原件不变，六态GPU截图黑帧、Cook与人工验收尚未通过。
+- [SSLM十层地形纹理及材质V3.0真实审查与整改](Implementation/TerrainColorV3ComplianceReview_20261018.md)：已有V3色彩候选并获用户授权覆盖正式地形基础色；10层基础色已UE5.8原位重导入并独立冷重载10/10，泥土Dirt阻断解决；Village地图未修改，共享母材质已按新手村纹理轰炸和V3默认草地要求合法更新，截图GPU黑帧、Cook与人工验收待完成。
 
 - [新手村组队与竞技场闭环设计规格](superpowers/specs/2026-10-14-village-party-arena-design.md)：普通竞技场／练习赛交互参考；用户随后要求直接执行不再问询，已进入部分源码与设计实施，非完整功能或资产验收。
 - [新手村组队与竞技场实施计划](superpowers/plans/2026-10-14-village-party-arena.md)及[实施记录](Implementation/VillagePartyArena/ExecutionProgress.md)：用户要求直接执行、不再问询；Native原位、不构建，逐项记录源码、资产与尚未执行的验证。

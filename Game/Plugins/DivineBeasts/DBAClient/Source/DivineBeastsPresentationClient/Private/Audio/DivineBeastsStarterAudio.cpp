@@ -60,6 +60,9 @@ void UDivineBeastsPresentationClientSubsystem::EnsureStarterAudioForWorld(UWorld
         Pack.CatalogFragment.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
         Pack.CatalogFragment.OwnerScopeId = Pack.ContentPackId;
         Pack.CatalogFragment.LifecycleScope = Pack.LifecycleScope;
+        // 内容包层级与各条目Scope必须完全一致，否则正式PreflightCatalogFragment拒绝发布。
+        for (FGamePlatformPresentationCatalogEntry& Entry : Pack.CatalogFragment.Entries)
+            Entry.Scope = EGamePlatformPresentationCatalogScope::ContentPack;
         if (Pack.CatalogFragment.Entries.Num() != ExpectedCount)
         {
             UE_LOG(LogTemp, Warning, TEXT("SSLM音频分类 %s 不完整，拒绝半包激活。"), *Group.ToString());

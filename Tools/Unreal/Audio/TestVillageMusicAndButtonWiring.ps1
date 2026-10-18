@@ -26,6 +26,9 @@ foreach($item in @(
 )) {
  if(-not $audio.Contains($item)){throw "音频主链路缺少：$item"}
 }
+if(!$audio.Contains('Entry.Scope = EGamePlatformPresentationCatalogScope::ContentPack;')) {
+ throw '首批音效分类的Catalog Entry仍为Project作用域，平台门禁会拒绝预载完成后发布'
+}
 if(!$catalog.Contains('BuildStarterAudioFragment(FName Category)') -or
    !$catalog.Contains('if (!Category.IsNone())') -or
    !$catalog.Contains('EntryName.StartsWith(Prefix + TEXT("."))')) {

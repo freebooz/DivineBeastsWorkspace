@@ -53,6 +53,6 @@
 
 ## SSLM 凝锋攻击V3审核候选（2026-10-18）
 
-V2已因刃面平、粗亮边及内部/云纹细节不足被用户退回；按最新「第三版·攻击01·凝锋」图修订同一攻击。`VFX/CommonSkillVFX/Review/V3/AttackSlash`保存12份原生包；一个CPU Emitter/粒子、19856三角形、三材质段，含空间挑起刃腹、分离流膜、细锋与连续UV能量流。`SourceArt/VFX/CommonSkillVFX/V3/AttackSlash`保留可编辑Bezier、FBX、原始参考与RGBA能量源图。
+V2已因刃面平、粗亮边及内部/云纹细节不足被用户退回；按最新「第三版·攻击01·凝锋」图修订同一攻击。当前`broad_flame_air_02`在`VFX/CommonSkillVFX/Review/V3/AttackSlash`保存13份原生包；一个CPU Emitter/粒子、16256三角形、四材质段，顶部为三片真实宽幅翻卷火焰，减少长丝并保留连续UV能量流，同一网格附带局部空气包络。`SourceArt/VFX/CommonSkillVFX/V3/AttackSlash`保留可编辑Bezier、FBX、原始参考与RGBA能量源图。
 
-同镜头原生PNG、33帧原速/三倍慢放MP4及无损WebP归`Saved/Validation/CommonSkillVFX/AttackSlashV3`。冷加载编译、十实例有限结束及媒体核对通过；**V3人工视觉待审核**，顶部卷云密度及细锋锯齿仍有差距。Effect Type继续共享V2的`Scalability/NET_DBA_Review_CombatCast`，不能随旧修订删除。正式Catalog/生肖绑定及服务器未改，未完成打包GPU/四档质量/Cook；[逐项对照与边界](../../../../../../Docs/Implementation/VFX/SSLM凝锋攻击V3逐项对照与原生审核_20261018.md)是本轮说明。
+同镜头原生PNG、33帧原速/三倍慢放MP4及无损WebP归`Saved/Validation/CommonSkillVFX/AttackSlashV3`，最终原始帧为`RenderRuns/20261018T110552203427Z`。冷加载编译、十实例有限结束、空气开关原生对照及媒体核对通过；**V3人工视觉待审核**。Effect Type继续共享V2的`Scalability/NET_DBA_Review_CombatCast`，不能随旧修订删除。正式Catalog/生肖绑定及服务器未改；空气折射增加SceneColor和第4材质段成本，未完成打包GPU/四档质量/Cook。全部魔法空气波动规则已写入全局/项目AGENTS及VFX规范，不代表其他魔法已补齐；[逐项对照与边界](../../../../../../Docs/Implementation/VFX/SSLM凝锋攻击V3逐项对照与原生审核_20261018.md)是本轮说明。
