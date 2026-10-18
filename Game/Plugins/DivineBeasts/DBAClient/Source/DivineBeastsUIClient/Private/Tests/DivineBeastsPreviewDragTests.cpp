@@ -57,4 +57,25 @@ bool FDivineBeastsPreviewDragFiniteClampTest::RunTest(const FString&)
     TestEqual(TEXT("取消后大位移也不得产生旋转"), State.YawForMove(1,2,-10000.0f), 0.0f);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPreviewCameraWheelTest,
+    "DivineBeasts.UI.Characters.PreviewCameraWheel",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPreviewCameraWheelTest::RunTest(const FString&)
+{
+    TestTrue(TEXT("向上滚轮缩短相机距离"),
+        FMath::IsNearlyEqual(FDivineBeastsPreviewCameraWheelState::DistanceDelta(1.0f), -30.0f));
+    TestTrue(TEXT("向下滚轮拉远相机距离"),
+        FMath::IsNearlyEqual(FDivineBeastsPreviewCameraWheelState::DistanceDelta(-1.0f), 30.0f));
+    TestTrue(TEXT("Shift向上滚轮加长焦距"),
+        FMath::IsNearlyEqual(FDivineBeastsPreviewCameraWheelState::FocalLengthDelta(1.0f), 5.0f));
+    TestTrue(TEXT("Shift向下滚轮缩短焦距"),
+        FMath::IsNearlyEqual(FDivineBeastsPreviewCameraWheelState::FocalLengthDelta(-1.0f), -5.0f));
+    TestTrue(TEXT("异常输入不会改变机位"),
+        FMath::IsNearlyEqual(FDivineBeastsPreviewCameraWheelState::DistanceDelta(
+            std::numeric_limits<float>::quiet_NaN()), 0.0f));
+    TestTrue(TEXT("焦段单次变化限幅"),
+        FMath::IsNearlyEqual(FDivineBeastsPreviewCameraWheelState::FocalLengthDelta(100.0f), 20.0f));
+    return true;
+}
 #endif

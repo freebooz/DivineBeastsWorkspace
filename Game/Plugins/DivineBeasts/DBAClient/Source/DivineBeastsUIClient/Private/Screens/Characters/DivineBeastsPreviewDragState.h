@@ -27,3 +27,24 @@ struct FDivineBeastsPreviewDragState
         return Owns(User,Pointer) && FMath::IsFinite(DeltaX) ? FMath::Clamp(DeltaX * -0.35f, -90.0f, 90.0f) : 0.0f;
     }
 };
+
+
+/** 角色展示区滚轮映射；正向滚轮缩短视距，按住Shift时增加焦距。 */
+struct FDivineBeastsPreviewCameraWheelState
+{
+    /** 普通滚轮每格移动30厘米，单次事件限幅120厘米。 */
+    static float DistanceDelta(float WheelDelta)
+    {
+        return FMath::IsFinite(WheelDelta)
+            ? FMath::Clamp(-WheelDelta * 30.0f, -120.0f, 120.0f)
+            : 0.0f;
+    }
+
+    /** Shift加滚轮每格调整5毫米，单次事件限幅20毫米。 */
+    static float FocalLengthDelta(float WheelDelta)
+    {
+        return FMath::IsFinite(WheelDelta)
+            ? FMath::Clamp(WheelDelta * 5.0f, -20.0f, 20.0f)
+            : 0.0f;
+    }
+};

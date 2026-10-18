@@ -7,6 +7,9 @@
 
 #include "Animation/AnimInstance.h" // 本文件也调用动画软类Get，完整类型不能由另一个Unity源文件提供。
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
+#include "Cinematic/GamePlatformCinematicCameraProfile.h"
+#include "Cinematic/GamePlatformCinematicCameraSubsystem.h"
+#include "Camera/CameraComponent.h"
 #include "DivineBeastsPresentationClientSubsystem.h" // 项目表现层中立请求，不直接加载Niagara。
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
 #include "Animation/Skeleton.h"
@@ -16,6 +19,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/SkeletalMesh.h" // 本文件读取Profile软网格引用，资产类型也必须直接完整包含。
 #include "Engine/World.h"
+#include "TimerManager.h"
 #include "CollisionQueryParams.h" // 仅本地可见地形采样，绝不用于权威Gameplay碰撞与网络同步。
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
@@ -177,7 +181,8 @@ void UDivineBeastsCharacterPreviewSubsystem::Deinitialize()
         WorldCleanupHandle.Reset();
     }
 
-    DeactivatePreviewScene();
+    // 本地玩家销毁属于退出清理，不等待可能已经结束的游戏世界计时器。
+    DeactivatePreviewSceneInternal(false);
     Super::Deinitialize();
 }
 
@@ -188,6 +193,13 @@ bool UDivineBeastsCharacterPreviewSubsystem::ActivatePreviewScene()
     if (!World || World->GetNetMode() == NM_DedicatedServer)
     {
         return false;
+    }
+
+    // 用户在退出混合期间立即重进时保留当前舞台，并取消过期卸载任务。
+    if (bPreviewDeactivationPending)
+    {
+        World->GetTimerManager().ClearTimer(DeferredPreviewTeardownHandle);
+        bPreviewDeactivationPending = false;
     }
 
     ResolvePreviewStage();
@@ -226,6 +238,17 @@ bool UDivineBeastsCharacterPreviewSubsystem::ActivatePreviewScene()
 
 void UDivineBeastsCharacterPreviewSubsystem::DeactivatePreviewScene()
 {
+    DeactivatePreviewSceneInternal(true);
+}
+
+void UDivineBeastsCharacterPreviewSubsystem::DeactivatePreviewSceneInternal(
+    bool bAllowCameraBlend)
+{
+    if (bPreviewDeactivationPending && bAllowCameraBlend)
+    {
+        return;
+    }
+
     if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
     {
         if (auto* Presentation = LocalPlayer->GetSubsystem<UDivineBeastsPresentationClientSubsystem>())
@@ -239,8 +262,7 @@ void UDivineBeastsCharacterPreviewSubsystem::DeactivatePreviewScene()
     PendingProfile = nullptr;
     DevelopmentDynamicMaterials.Reset();
 
-    // 默认观测球体只是本地前端宿主，不是权威角色。只恢复本次借用的实例，
-    // 不隐藏其他玩家或正式ACharacter，不改变碰撞、控制及网络复制。
+    // 默认观测球体只恢复本次借用实例的原有可见性。
     if (ADefaultPawn* Observer = HiddenPreviewObserver.Get())
     {
         Observer->SetActorHiddenInGame(bObserverWasHidden);
@@ -248,20 +270,66 @@ void UDivineBeastsCharacterPreviewSubsystem::DeactivatePreviewScene()
     HiddenPreviewObserver.Reset();
 
     ULocalPlayer* LocalPlayer = GetLocalPlayer();
-    APlayerController* Controller =
-        LocalPlayer ? LocalPlayer->GetPlayerController(LocalPlayer->GetWorld()) : nullptr;
-    if (Controller && PreviewStage.IsValid() &&
-        Controller->GetViewTarget() == PreviewStage.Get() &&
-        PreviousViewTarget.IsValid())
+    UWorld* World = LocalPlayer ? LocalPlayer->GetWorld() : nullptr;
+    const float BlendTime = PreviewStage.IsValid()
+        ? FMath::Clamp(PreviewStage->CameraBlendSeconds, 0.0f, 2.0f)
+        : 0.0f;
+    bool bRestoreBlendStarted = false;
+
+    if (bAllowCameraBlend && LocalPlayer && PreviewStage.IsValid())
     {
-        // 退出角色工作室时锁住即将卸载关卡的最后一帧，平滑恢复既有前端机位。
-        // 不改变角色身份、输入、Session或服务器玩法，旧ViewTarget必须有效才恢复。
-        Controller->SetViewTargetWithBlend(
-            PreviousViewTarget.Get(),
-            FMath::Clamp(PreviewStage->CameraBlendSeconds, 0.0f, 2.0f),
-            VTBlend_Cubic, 2.0f, true);
+        EnsurePreviewCameraProfile();
+        if (PreviewCameraProfile)
+        {
+            PreviewCameraProfile->BlendTimeSeconds = BlendTime;
+        }
+        if (UGamePlatformCinematicCameraSubsystem* CameraSubsystem =
+                LocalPlayer->GetSubsystem<UGamePlatformCinematicCameraSubsystem>())
+        {
+            // 按舞台精确释放租约，不能误结束登录页或其他界面建立的电影机位。
+            bRestoreBlendStarted = CameraSubsystem->EndCinematicViewFor(PreviewStage.Get());
+        }
     }
-    PreviousViewTarget.Reset();
+
+    if (bRestoreBlendStarted && BlendTime > 0.0f && World && !World->bIsTearingDown)
+    {
+        // 保留镜头源及预览外观，直到PlayerCameraManager结束混合后再卸载流送关卡。
+        bPreviewDeactivationPending = true;
+        World->GetTimerManager().SetTimer(
+            DeferredPreviewTeardownHandle,
+            this,
+            &UDivineBeastsCharacterPreviewSubsystem::CompletePreviewSceneDeactivation,
+            BlendTime + 0.05f,
+            false);
+        return;
+    }
+
+    CompletePreviewSceneDeactivation();
+}
+
+void UDivineBeastsCharacterPreviewSubsystem::CompletePreviewSceneDeactivation()
+{
+    if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+    {
+        if (UWorld* World = LocalPlayer->GetWorld())
+        {
+            World->GetTimerManager().ClearTimer(DeferredPreviewTeardownHandle);
+        }
+    }
+    bPreviewDeactivationPending = false;
+
+    // 退出混合已经结束或相机所有权已被抢占，恢复舞台初始FOV，避免前端配置残留。
+    if (PreviewStage.IsValid() &&
+        CameraFovOwnerStage.Get() == PreviewStage.Get() &&
+        bHasCameraFieldOfViewSnapshot)
+    {
+        if (UCameraComponent* Camera = PreviewStage->GetPreviewCamera())
+        {
+            Camera->SetFieldOfView(CameraFieldOfViewBeforePreview);
+        }
+    }
+    CameraFovOwnerStage.Reset();
+    bHasCameraFieldOfViewSnapshot = false;
 
     if (PreviewStage.IsValid())
     {
@@ -343,10 +411,73 @@ void UDivineBeastsCharacterPreviewSubsystem::RotatePreview(
 void UDivineBeastsCharacterPreviewSubsystem::SetPreviewCameraDistance(
     float DistanceCentimeters)
 {
-    if (PreviewStage.IsValid())
+    if (!FMath::IsFinite(DistanceCentimeters) || !PreviewStage.IsValid())
     {
-        PreviewStage->SetCameraDistance(DistanceCentimeters);
+        return;
     }
+
+    PreviewStage->SetCameraDistance(DistanceCentimeters);
+    EnsurePreviewCameraProfile();
+    if (PreviewCameraProfile)
+    {
+        PreviewCameraProfile->FocusDistanceCm = PreviewStage->GetCameraDistanceCentimeters();
+    }
+}
+
+bool UDivineBeastsCharacterPreviewSubsystem::AdjustPreviewCameraDistance(
+    float DeltaCentimeters)
+{
+    if (!FMath::IsFinite(DeltaCentimeters) || !PreviewStage.IsValid())
+    {
+        return false;
+    }
+
+    SetPreviewCameraDistance(
+        PreviewStage->GetCameraDistanceCentimeters() + DeltaCentimeters);
+    return true;
+}
+
+bool UDivineBeastsCharacterPreviewSubsystem::SetPreviewCameraFocalLength(
+    float FocalLengthMm)
+{
+    if (!FMath::IsFinite(FocalLengthMm))
+    {
+        return false;
+    }
+
+    EnsurePreviewCameraProfile();
+    if (!PreviewCameraProfile)
+    {
+        return false;
+    }
+
+    PreviewCameraProfile->FocalLengthMm = FMath::Clamp(FocalLengthMm, 24.0f, 85.0f);
+    return !PreviewStage.IsValid() || ApplyPreviewCameraProfile();
+}
+
+bool UDivineBeastsCharacterPreviewSubsystem::AdjustPreviewCameraFocalLength(
+    float DeltaFocalLengthMm)
+{
+    if (!FMath::IsFinite(DeltaFocalLengthMm))
+    {
+        return false;
+    }
+    return SetPreviewCameraFocalLength(
+        GetPreviewCameraFocalLength() + DeltaFocalLengthMm);
+}
+
+float UDivineBeastsCharacterPreviewSubsystem::GetPreviewCameraDistance() const
+{
+    return PreviewStage.IsValid()
+        ? PreviewStage->GetCameraDistanceCentimeters()
+        : 320.0f;
+}
+
+float UDivineBeastsCharacterPreviewSubsystem::GetPreviewCameraFocalLength() const
+{
+    return PreviewCameraProfile
+        ? PreviewCameraProfile->FocalLengthMm
+        : 35.0f;
 }
 
 void UDivineBeastsCharacterPreviewSubsystem::HandlePreviewLevelShown()
@@ -366,10 +497,13 @@ void UDivineBeastsCharacterPreviewSubsystem::HandleWorldCleanup(
     ULocalPlayer* LocalPlayer = GetLocalPlayer();
     if (World && LocalPlayer && LocalPlayer->GetWorld() == World)
     {
+        World->GetTimerManager().ClearTimer(DeferredPreviewTeardownHandle);
+        bPreviewDeactivationPending = false;
         CancelPendingLoads();
         PreviewStreamingLevel = nullptr;
         PreviewStage.Reset();
-        PreviousViewTarget.Reset();
+        CameraFovOwnerStage.Reset();
+        bHasCameraFieldOfViewSnapshot = false;
         // 世界销毁时原观测Pawn随世界退出，不向新世界实例恢复旧可见性。
         HiddenPreviewObserver.Reset();
         PendingProfile = nullptr;
@@ -407,39 +541,100 @@ void UDivineBeastsCharacterPreviewSubsystem::ResolvePreviewStage()
     }
 }
 
-void UDivineBeastsCharacterPreviewSubsystem::BindPreviewCamera()
+void UDivineBeastsCharacterPreviewSubsystem::EnsurePreviewCameraProfile()
 {
-    ULocalPlayer* LocalPlayer = GetLocalPlayer();
-    UWorld* World = LocalPlayer ? LocalPlayer->GetWorld() : nullptr;
-    APlayerController* Controller =
-        LocalPlayer && World ? LocalPlayer->GetPlayerController(World) : nullptr;
-    if (!Controller || !PreviewStage.IsValid())
+    if (PreviewCameraProfile)
     {
         return;
     }
 
-    if (!PreviousViewTarget.IsValid())
+    PreviewCameraProfile = NewObject<UGamePlatformCinematicCameraProfile>(
+        this, TEXT("CharacterPreviewCameraProfile"), RF_Transient);
+    if (!PreviewCameraProfile)
     {
-        PreviousViewTarget = Controller->GetViewTarget();
+        return;
     }
+
+    PreviewCameraProfile->Mode = EGamePlatformCameraPresentationMode::CharacterPreview;
+    PreviewCameraProfile->SensorWidthMm = 36.0f;
+    PreviewCameraProfile->FocalLengthMm = 35.0f;
+    PreviewCameraProfile->Aperture = 5.6f;
+    PreviewCameraProfile->FocusDistanceCm = 320.0f;
+    PreviewCameraProfile->BlendTimeSeconds = 0.45f;
+    // 正式角色选择保持清晰、稳定；不对场景角色启用浅景深追焦。
+    PreviewCameraProfile->bEnableCinematicFocus = false;
+}
+
+bool UDivineBeastsCharacterPreviewSubsystem::ApplyPreviewCameraProfile()
+{
+    ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    if (!LocalPlayer || !PreviewStage.IsValid() || !PreviewCameraProfile)
+    {
+        return false;
+    }
+
+    UGamePlatformCinematicCameraSubsystem* CameraSubsystem =
+        LocalPlayer->GetSubsystem<UGamePlatformCinematicCameraSubsystem>();
+    UCameraComponent* PreviewCamera = PreviewStage->GetPreviewCamera();
+    if (!CameraSubsystem || !PreviewCamera)
+    {
+        return false;
+    }
+
+    if (CameraFovOwnerStage.Get() != PreviewStage.Get())
+    {
+        CameraFovOwnerStage = PreviewStage;
+        bHasCameraFieldOfViewSnapshot = false;
+    }
+    const float OriginalFieldOfView = PreviewCamera->FieldOfView;
+    PreviewCameraProfile->BlendTimeSeconds =
+        FMath::Clamp(PreviewStage->CameraBlendSeconds, 0.0f, 2.0f);
+    PreviewCameraProfile->FocusDistanceCm =
+        PreviewStage->GetCameraDistanceCentimeters();
+
+    if (!CameraSubsystem->BeginCinematicView(PreviewStage.Get(), PreviewCameraProfile))
+    {
+        return false;
+    }
+
+    if (!bHasCameraFieldOfViewSnapshot)
+    {
+        CameraFieldOfViewBeforePreview = OriginalFieldOfView;
+        bHasCameraFieldOfViewSnapshot = true;
+    }
+    return true;
+}
+
+void UDivineBeastsCharacterPreviewSubsystem::BindPreviewCamera()
+{
+    ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    if (!LocalPlayer || !PreviewStage.IsValid())
+    {
+        return;
+    }
+
+    EnsurePreviewCameraProfile();
+    if (!ApplyPreviewCameraProfile())
+    {
+        UE_LOG(LogDivineBeastsCharacterPreview, Warning,
+            TEXT("正式角色预览相机未能取得本地镜头所有权；保留当前游戏/登录视角。"));
+        return;
+    }
+
+    // 只有成功借用预览镜头后才隐藏默认观测Pawn；失败时保留登录/游戏原画面。
     if (!HiddenPreviewObserver.IsValid())
     {
-        if (ADefaultPawn* Observer = Cast<ADefaultPawn>(Controller->GetPawn());
-            Observer && Observer->IsLocallyControlled())
+        if (APlayerController* Controller =
+                LocalPlayer->GetPlayerController(LocalPlayer->GetWorld()))
         {
-            bObserverWasHidden = Observer->IsHidden();
-            HiddenPreviewObserver = Observer;
-            Observer->SetActorHiddenInGame(true);
+            if (ADefaultPawn* Observer = Cast<ADefaultPawn>(Controller->GetPawn());
+                Observer && Observer->IsLocallyControlled())
+            {
+                bObserverWasHidden = Observer->IsHidden();
+                HiddenPreviewObserver = Observer;
+                Observer->SetActorHiddenInGame(true);
+            }
         }
-    }
-    // 正式角色选择/创建流程沿用原有舞台与PlayerCameraManager，
-    // 仅在首次切入时平滑过渡。重复的LevelShown回调不重新启动镜头混合。
-    if (Controller->GetViewTarget() != PreviewStage.Get())
-    {
-        Controller->SetViewTargetWithBlend(
-            PreviewStage.Get(),
-            FMath::Clamp(PreviewStage->CameraBlendSeconds, 0.0f, 2.0f),
-            VTBlend_Cubic, 2.0f, true);
     }
 }
 

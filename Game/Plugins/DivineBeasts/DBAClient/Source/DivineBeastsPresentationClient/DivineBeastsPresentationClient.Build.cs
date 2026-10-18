@@ -54,6 +54,9 @@ public class DivineBeastsPresentationClient : ModuleRules
             "Projects"
         });
 
+        // 正式角色预览复用平台相机插件的本地ViewTarget租约和镜头配置；只由ClientOnly模块链接。
+        PrivateDependencyModuleNames.Add("GamePlatformCameraClient");
+
         // UE Landscape原生渲染材质MID桥接仅编入ClientOnly模块，Server目标完全不依赖。
         PrivateDependencyModuleNames.Add("Landscape");
 
