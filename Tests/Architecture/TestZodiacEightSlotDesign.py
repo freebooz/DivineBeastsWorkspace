@@ -11,13 +11,17 @@ import csv
 import io
 import json
 import re
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "Tools/Unreal/Abilities"))
+from ZodiacEightSlotDraftContract import ContractError, build_contract, build_manifest
 CATALOG_PATH = ROOT / "Docs/Design/ZodiacEightSlotSkills_V2.json"
 BALANCE_PATH = ROOT / ("Game/Plugins/DivineBeasts/DBAGameplay/SourceArt/Abilities/"
                         "DT_DBA_ZodiacEightSlotDraftBalance_V2.csv")
+PLAN_PATH = ROOT / "Docs/Implementation/ZodiacEightSlotDraftAssetPlan_V2.json"
 GAME = ROOT / "Game"
 EXPECTED_HEROES = {
     "Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
@@ -43,7 +47,7 @@ def all_skills(catalog: dict) -> list[dict]:
 
 
 def balanced_csv() -> dict[str, dict]:
-    rows = list(csv.DictReader(BALANCE_PATH.open(encoding="utf-8-sig", newline="")))
+    rows = list(csv.DictReader(io.StringIO(BALANCE_PATH.read_text(encoding="utf-8-sig"), newline="")))
     return {row["AbilityId"]: row for row in rows}
 
 
@@ -109,6 +113,10 @@ def audit(catalog: dict) -> list[str]:
     healers = {hero["heroCode"] for hero in heroes
                if any(a["kind"] == "healing" for row in hero["slots"] for a in row["actions"])}
     fail(healers == HEALER_CODES, "只有卯兔、未羊、酉鸡、戌狗具有明确治疗职责")
+    try:
+        build_contract(catalog, BALANCE_PATH.read_text(encoding="utf-8-sig"))
+    except ContractError as error:
+        errors.append("原生作者契约失败:" + str(error))
     return errors
 
 
@@ -121,7 +129,7 @@ class ZodiacEightSlotDraftTests(unittest.TestCase):
         self.assertEqual(audit(self.catalog), [])
 
     def test_02_96_rows_match_csv(self):
-        rows = list(csv.DictReader(BALANCE_PATH.open(encoding="utf-8-sig", newline="")))
+        rows = list(csv.DictReader(io.StringIO(BALANCE_PATH.read_text(encoding="utf-8-sig"), newline="")))
         self.assertEqual(len(rows), 96)
         self.assertEqual(len({r["AbilityId"] for r in rows}), 96)
         for row in all_skills(self.catalog):
@@ -160,6 +168,8 @@ class ZodiacEightSlotDraftTests(unittest.TestCase):
     def test_04_draft_assets_fail_closed(self):
         definition = source("Game/Plugins/DivineBeasts/DBAGameplay/Source/"
                             "DivineBeastsAbilitiesRuntime/Public/Definitions/DivineBeastsAbilityDefinition.h")
+        definition_cpp = source("Game/Plugins/DivineBeasts/DBAGameplay/Source/"
+                                "DivineBeastsAbilitiesRuntime/Private/Definitions/DivineBeastsAbilityDefinition.cpp")
         grant = source("Game/Plugins/DivineBeasts/DBAGameplay/Source/"
                        "DivineBeastsAbilitiesRuntime/Private/Components/DivineBeastsAbilityLoadoutComponent.cpp")
         author = source("Tools/Unreal/Abilities/AuthorZodiacEightSlotDesignAssets.py")
@@ -167,7 +177,15 @@ class ZodiacEightSlotDraftTests(unittest.TestCase):
         self.assertIn("if (Definition->bEightSlotDraftOnly)", grant)
         self.assertIn("unreal.DataTableFactory", author)
         self.assertIn("unreal.DataAssetFactory", author)
-        self.assertIn("not row[\"approvedForLiveGAS\"]", author)
+        self.assertIn("build_contract(catalog, balance_csv)", author)
+        self.assertIn("preflight_existing_assets(", author)
+        self.assertIn("DraftAssetOwnerId", author)
+        self.assertIn("DraftCatalogId", author)
+        self.assertIn("DraftSourceSha256", definition)
+        self.assertIn("SourcePayloadJson", definition)
+        self.assertIn("DraftPresentationSemanticIds", definition)
+        self.assertIn("EightSlotDraftMagnitudeSemanticInvalid", definition_cpp)
+        self.assertIn("EightSlotDraftReviveNotApproved", definition_cpp)
         self.assertNotIn("compile_blueprint(", author)
         self.assertNotIn("set_editor_property(\"DefaultAbilitySetId\"", author)
 
@@ -202,6 +220,68 @@ class ZodiacEightSlotDraftTests(unittest.TestCase):
         self.assertEqual(semantics[0]["tag"], "Platform.Ability.Input.DivineBeasts.Primary")
         self.assertEqual(semantics[3]["tag"], "Platform.Ability.Input.DivineBeasts.Slot4")
         self.assertEqual([x["keyboard"] for x in semantics], list("12345678"))
+
+    def test_11_contract_maps_every_action_and_owned_asset_path(self):
+        balance_csv = BALANCE_PATH.read_text(encoding="utf-8-sig")
+        contract = build_contract(self.catalog, balance_csv)
+        self.assertEqual(len(contract["skills"]), 96)
+        self.assertEqual(len(contract["balanceRows"]), 96)
+        self.assertEqual(len(contract["heroes"]), 12)
+        self.assertEqual(len({x["asset_path"] for x in contract["skills"]}), 96)
+        for mapped in contract["skills"]:
+            self.assertTrue(mapped["asset_path"].startswith(
+                "/DBAGameplay/Abilities/EightSlotDrafts/DA_DBA_"))
+            self.assertEqual(mapped["balance_row"]["AbilityId"],
+                             mapped["entry"]["abilityId"])
+            self.assertEqual(mapped["input"]["slot"], mapped["entry"]["slotId"])
+            self.assertEqual(len(mapped["source_sha256"]), 64)
+            self.assertEqual(len(mapped["actions"]), len(mapped["entry"]["actions"]))
+            for converted, original in zip(mapped["actions"], mapped["entry"]["actions"]):
+                self.assertEqual(json.loads(converted["SourcePayloadJson"]), original)
+        manifest = build_manifest(self.catalog, balance_csv)
+        self.assertEqual(manifest["nativeAssetStatus"], "NOT_AUTHORED")
+        self.assertFalse(manifest["formalAbilitySetAssignmentPerformed"])
+        self.assertFalse(manifest["liveGASAuthorizationPerformed"])
+
+    def test_12_rejects_drifted_balance_rows(self):
+        original = BALANCE_PATH.read_text(encoding="utf-8-sig")
+        changed = original.replace(
+            "rat_eight_fang_cut_L1,dba.ability.rat_eight_fang_cut@1,1,32,Physical",
+            "rat_eight_fang_cut_L1,dba.ability.rat_eight_fang_cut@1,1,33,Physical",
+            1,
+        )
+        self.assertNotEqual(changed, original)
+        with self.assertRaises(ContractError):
+            build_contract(self.catalog, changed)
+
+    def test_13_rejects_unknown_action_fields_and_input_slot_drift(self):
+        altered = copy.deepcopy(self.catalog)
+        altered["heroes"][0]["slots"][0]["actions"][0]["unmappedFutureField"] = "fail-closed"
+        with self.assertRaises(ContractError):
+            build_contract(altered, BALANCE_PATH.read_text(encoding="utf-8-sig"))
+
+        altered = copy.deepcopy(self.catalog)
+        altered["slotPolicy"]["inputSemantics"][0]["tag"] = "Platform.Ability.Input.DivineBeasts.Slot1"
+        with self.assertRaises(ContractError):
+            build_contract(altered, BALANCE_PATH.read_text(encoding="utf-8-sig"))
+
+    def test_14_checked_in_asset_plan_matches_generator(self):
+        balance_csv = BALANCE_PATH.read_text(encoding="utf-8-sig")
+        checked_in = json.loads(PLAN_PATH.read_text(encoding="utf-8-sig"))
+        self.assertEqual(checked_in, build_manifest(self.catalog, balance_csv))
+        for hero in checked_in["heroes"]:
+            self.assertEqual(len(hero["skills"]), 8)
+            self.assertTrue(hero["proposedAbilitySetIdNotApplied"].endswith("_eight_draft@1"))
+            for skill in hero["skills"]:
+                self.assertTrue(skill["draftOnly"])
+                self.assertFalse(skill["approvedForLiveGAS"])
+        self.assertEqual(checked_in["resourceStatus"], {
+            "nativeDataAssets": "NOT_AUTHORED",
+            "nativeBalanceDataTable": "NOT_AUTHORED",
+            "vfxAssetsAuthored": False,
+            "animationAssetsAuthored": False,
+            "iconAssetsBound": False,
+        })
 
 
 if __name__ == "__main__":
