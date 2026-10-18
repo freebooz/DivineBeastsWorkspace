@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "heroId": "Hero.Zodiac.Tiger",
+  "heroNameZh": "寅虎·啸岭白君",
+  "designLockId": "TigerV6_EightSkillArtLock_20261018",
+  "designState": "ART_DIRECTION_FROZEN_NOT_SERVER_APPROVED",
+  "frozenOn": "2026-10-18",
+  "passiveNameZh": "裂甲",
+  "passiveOccupiesSlot": false,
+  "immutableSource": "Docs/Design/ZodiacHistoryFirstEightSkillsV6_Review.json",
+  "actualV6RuntimeAuthority": "Docs/Implementation/GamePlatformAbilitySystem/V6SkillImplementationRegistry_20261018.json",
+  "noteZh": "冻结用于24张候选美术设计的身份、玩法语义、输入槽和图标方向；不代表V6名称正式审批、平衡数值批准、服务器技能授权、GA/GE或蓝图资源已生成。",
+  "skills": [
+    {
+      "order": 1,
+      "inputSlot": "Primary",
+      "abilityId": "dba.ability.tiger_eight_claw_strike@1",
+      "v6NameZh": "白虎爪",
+      "v5ApprovedDisplayNameZh": "白虎爪",
+      "v6EffectZh": "短距离白虎爪击，为近战普攻积累气势。",
+      "level1Candidate": {
+        "baseDamage": 36,
+        "maxHitCount": 1,
+        "cooldownSeconds": 0.75,
+        "rangeCentimeters": 240,
+        "areaRadiusCentimeters": 0,
+        "momentumCost": 0
+      },
+      "nameNeedsProductionApproval": false,
+      "artSubjectLockedZh": "虎掌实形和三道短促爪光；明确一次攻击"
+    },
+    {
+      "order": 2,
+      "inputSlot": "Slot1",
+      "abilityId": "dba.ability.tiger_eight_golden_rake@1",
+      "v6NameZh": "裂爪",
+      "v5ApprovedDisplayNameZh": "裂甲爪",
+      "v6EffectZh": "白金爪击叠加可限制的裂甲层数，集中攻击同一猎物收益较高。",
+      "level1Candidate": {
+        "baseDamage": 76,
+        "maxHitCount": 2,
+        "cooldownSeconds": 4.5,
+        "rangeCentimeters": 620,
+        "areaRadiusCentimeters": 280,
+        "momentumCost": 0
+      },
+      "nameNeedsProductionApproval": true,
+      "artSubjectLockedZh": "必须看见完整厚甲被打裂，和普通爪光清楚区别"
+    },
+    {
+      "order": 3,
+      "inputSlot": "Slot2",
+      "abilityId": "dba.ability.tiger_eight_tiger_pounce@1",
+      "v6NameZh": "双爪袭",
+      "v5ApprovedDisplayNameZh": "双爪袭",
+      "v6EffectZh": "交错两道虎爪迅速斩击，目标可格挡或位移避免第二段。",
+      "level1Candidate": {
+        "baseDamage": 100,
+        "maxHitCount": 2,
+        "cooldownSeconds": 8.5,
+        "rangeCentimeters": 550,
+        "areaRadiusCentimeters": 0,
+        "momentumCost": 0
+      },
+      "nameNeedsProductionApproval": false,
+      "artSubjectLockedZh": "两次挥击读得清楚；以X与前后段区分单爪"
+    },
+    {
+      "order": 4,
+      "inputSlot": "Slot4",
+      "abilityId": "dba.ability.tiger_eight_tiger_roar_storm@1",
+      "v6NameZh": "啸岭扑杀",
+      "v5ApprovedDisplayNameZh": "虎啸扑",
+      "v6EffectZh": "虎啸警示后扑杀锁定目标，最后以重爪结算；不依赖跨英雄身份或全局连锁收益。",
+      "level1Candidate": {
+        "baseDamage": 236,
+        "maxHitCount": 3,
+        "cooldownSeconds": 59,
+        "rangeCentimeters": 700,
+        "areaRadiusCentimeters": 480,
+        "momentumCost": 23
+      },
+      "nameNeedsProductionApproval": true,
+      "artSubjectLockedZh": "强于普通扑杀的大招，突出虎啸+凌空重爪与单个落点"
+    },
+    {
+      "order": 5,
+      "inputSlot": "Slot3",
+      "abilityId": "dba.ability.tiger_eight_leaping_claw@1",
+      "v6NameZh": "扑杀",
+      "v5ApprovedDisplayNameZh": "虎扑",
+      "v6EffectZh": "向合法猎物落点猛扑，命中产生有限伤害，可被门盾拦截。",
+      "level1Candidate": {
+        "baseDamage": 40,
+        "maxHitCount": 1,
+        "cooldownSeconds": 13.5,
+        "rangeCentimeters": 750,
+        "areaRadiusCentimeters": 0,
+        "momentumCost": 0
+      },
+      "nameNeedsProductionApproval": true,
+      "artSubjectLockedZh": "侧身位移轨迹与落点，不要画成大招爆炸"
+    },
+    {
+      "order": 6,
+      "inputSlot": "Slot5",
+      "abilityId": "dba.ability.tiger_eight_regal_guard@1",
+      "v6NameZh": "虎踞",
+      "v5ApprovedDisplayNameZh": "虎踞",
+      "v6EffectZh": "低伏防御短时增加韧性和面向猎物减伤，不免疫集火。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "maxHitCount": 1,
+        "cooldownSeconds": 20,
+        "rangeCentimeters": 0,
+        "areaRadiusCentimeters": 0,
+        "momentumCost": 0
+      },
+      "nameNeedsProductionApproval": false,
+      "artSubjectLockedZh": "护屏只在正面，非球形无敌罩"
+    },
+    {
+      "order": 7,
+      "inputSlot": "Slot6",
+      "abilityId": "dba.ability.tiger_eight_roar_shock@1",
+      "v6NameZh": "虎啸",
+      "v5ApprovedDisplayNameZh": "虎啸",
+      "v6EffectZh": "扇形虎啸减速敌人，符合孤立条件者短暂失衡，不无条件群眩。",
+      "level1Candidate": {
+        "baseDamage": 26,
+        "maxHitCount": 1,
+        "cooldownSeconds": 19,
+        "rangeCentimeters": 550,
+        "areaRadiusCentimeters": 340,
+        "momentumCost": 0
+      },
+      "nameNeedsProductionApproval": false,
+      "artSubjectLockedZh": "声压扇区是核心，不要等同终极技能俯扑"
+    },
+    {
+      "order": 8,
+      "inputSlot": "Slot7",
+      "abilityId": "dba.ability.tiger_eight_battle_fervor@1",
+      "v6NameZh": "开猎",
+      "v5ApprovedDisplayNameZh": "开猎",
+      "v6EffectZh": "标定一名猎物并给方向提示，专注输出加成；猎物靠队友保护时效果减弱。",
+      "level1Candidate": {
+        "baseDamage": 0,
+        "maxHitCount": 1,
+        "cooldownSeconds": 18,
+        "rangeCentimeters": 0,
+        "areaRadiusCentimeters": 0,
+        "momentumCost": 0
+      },
+      "nameNeedsProductionApproval": false,
+      "artSubjectLockedZh": "虎瞳、唯一目标及方向指示，不能变成群体增益光环"
+    }
+  ]
+}

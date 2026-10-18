@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "designLock": "TigerV6_EightSkillArtLock_20261018",
+  "candidateManifest": "Docs/Implementation/GamePlatformAbilitySystem/TigerV6IconCandidates_24_20261018.json",
+  "reviewPurposeZh": "八个V6技能逐项3选1。每个候选必须完成真实图片和48/64缩图预览；用户可要求整项重制。未经人工优选不得进行高清精修与正式UE导入。",
+  "status": "AWAITING_24_IMAGES",
+  "entries": [
+    {
+      "skillOrder": 1,
+      "v6NameZh": "白虎爪",
+      "options": [
+        "S01-A",
+        "S01-B",
+        "S01-C"
+      ],
+      "selectedCandidateId": null,
+      "selectionStatus": "NOT_REVIEWED",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": null
+    },
+    {
+      "skillOrder": 2,
+      "v6NameZh": "裂爪",
+      "options": [
+        "S02-A",
+        "S02-B",
+        "S02-C"
+      ],
+      "selectedCandidateId": null,
+      "selectionStatus": "NOT_REVIEWED",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": null
+    },
+    {
+      "skillOrder": 3,
+      "v6NameZh": "双爪袭",
+      "options": [
+        "S03-A",
+        "S03-B",
+        "S03-C"
+      ],
+      "selectedCandidateId": null,
+      "selectionStatus": "NOT_REVIEWED",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": null
+    },
+    {
+      "skillOrder": 4,
+      "v6NameZh": "啸岭扑杀",
+      "options": [
+        "S04-A",
+        "S04-B",
+        "S04-C"
+      ],
+      "selectedCandidateId": null,
+      "selectionStatus": "NOT_REVIEWED",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": null
+    },
+    {
+      "skillOrder": 5,
+      "v6NameZh": "扑杀",
+      "options": [
+        "S05-A",
+        "S05-B",
+        "S05-C"
+      ],
+      "selectedCandidateId": null,
+      "selectionStatus": "NOT_REVIEWED",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": null
+    },
+    {
+      "skillOrder": 6,
+      "v6NameZh": "虎踞",
+      "options": [
+        "S06-A",
+        "S06-B",
+        "S06-C"
+      ],
+      "selectedCandidateId": null,
+      "selectionStatus": "NOT_REVIEWED",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": null
+    },
+    {
+      "skillOrder": 7,
+      "v6NameZh": "虎啸",
+      "options": [
+        "S07-A",
+        "S07-B",
+        "S07-C"
+      ],
+      "selectedCandidateId": null,
+      "selectionStatus": "NOT_REVIEWED",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": null
+    },
+    {
+      "skillOrder": 8,
+      "v6NameZh": "开猎",
+      "options": [
+        "S08-A",
+        "S08-B",
+        "S08-C"
+      ],
+      "selectedCandidateId": null,
+      "selectionStatus": "NOT_REVIEWED",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": null
+    }
+  ]
+}
