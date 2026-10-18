@@ -235,7 +235,7 @@ bool UDivineBeastsPresentationClientSubsystem::PlayStarterSpellSound(
         SpellName == TEXT("Frostbolt") ? (bImpact ?
             TEXT("Presentation.SSLM.Audio.Spell.Frost.Impact") :
             TEXT("Presentation.SSLM.Audio.Spell.Frost.Cast")) :
-        SpellName == TEXT("Fireball") && bImpact ?
+        (SpellName == TEXT("Fireball") || SpellName == TEXT("DirectedMissile")) && bImpact ?
             TEXT("Presentation.SSLM.Audio.Spell.Fire.Impact") : nullptr;
     return Semantic && SubmitStarterOneShot(Semantic, SpellName, Location);
 }

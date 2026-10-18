@@ -21,6 +21,7 @@ namespace
 FName MagicName(FName Style)
 {
     if (Style == TEXT("DBA.Development.Fireball")) return TEXT("Fireball");
+    if (Style == TEXT("DBA.Development.DirectedMissile")) return TEXT("DirectedMissile");
     if (Style == TEXT("DBA.Development.Frostbolt")) return TEXT("Frostbolt");
     if (Style == TEXT("DBA.Development.ArcaneMissiles")) return TEXT("ArcaneMissiles");
     return NAME_None;
@@ -51,12 +52,12 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
     DevelopmentMagicSpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &ThisClass::HandleDevelopmentMagicSpawn));
     DevelopmentMagicPackHandle = ContentPackChanged.AddUObject(this, &ThisClass::HandleDevelopmentMagicPack);
     FDivineBeastsPresentationContentPackFragment Pack;
-    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 3; // 新增服务器确认治疗的原资源花瓣表现。
+    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 4; // 定向飞弹复用施法/命中，飞行有独立定义。
     Pack.LifecycleScope = EGamePlatformPresentationContextScope::World; Pack.bRequiredPreload = true;
     auto& Catalog = Pack.CatalogFragment;
     Catalog.FragmentId = Pack.ContentPackId; Catalog.OwnerScopeId = Pack.ContentPackId;
-    Catalog.Revision = 3; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
-    for (const TCHAR* Name : {TEXT("Fireball"), TEXT("Frostbolt"), TEXT("ArcaneMissiles"),TEXT("Healing")})
+    Catalog.Revision = 4; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
+    for (const TCHAR* Name : {TEXT("Fireball"), TEXT("Frostbolt"), TEXT("ArcaneMissiles"),TEXT("Healing"),TEXT("DirectedMissile")})
         for (const TCHAR* Stage : {TEXT("Flight"),TEXT("Impact"),TEXT("Cast"),TEXT("Residue")})
         {
             // 治疗只由已确认受疗事件播放一次，不为它创建弹体或借源施法事实播放目标效果。
@@ -68,7 +69,8 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
             Entry.ProviderChannel = TEXT("VFX");
             // 目录身份使用DBA短名；已注册语义保留DivineBeasts稳定身份，不能由EntryId拼出不存在的标签。
             Entry.SemanticTag = FGameplayTag::RequestGameplayTag(FName(*(FString(TEXT("Presentation.DivineBeasts.Development.Magic."))+Name+TEXT(".")+Stage)),false);
-            Entry.DefinitionId = FName(*(FString(TEXT("presentation.dba.development.magic.")) + FString(Name).ToLower() +
+            const TCHAR* ResourceName = FCString::Strcmp(Name,TEXT("DirectedMissile"))==0 && FCString::Strcmp(Stage,TEXT("Flight"))!=0 ? TEXT("Fireball") : Name;
+            Entry.DefinitionId = FName(*(FString(TEXT("presentation.dba.development.magic.")) + FString(ResourceName).ToLower() +
                 TEXT(".") + FString(Stage).ToLower() + TEXT("@1")));
             Entry.ContextQuery.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
             Entry.Scope = Catalog.Scope; Entry.Specificity = 1; Entry.ContentRevision = TEXT("1");
@@ -204,6 +206,7 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
         Request.RequestId = FGuid::NewGuid(); Request.SemanticTag = MagicSemantic(Name, bImpact);
         Request.ContextId = Snapshot.PresentationStyleId; Request.SourceId = Snapshot.AbilityId;
         Request.SourceLocation = bImpact ? Snapshot.ImpactLocation : Actor->GetActorLocation();
+        Request.SourceRotation = bImpact ? FRotator::ZeroRotator : Actor->GetActorRotation();
         Request.ImpactLocation = Snapshot.ImpactLocation; Request.ImpactNormal = Snapshot.ImpactNormal;
         Request.Context.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
         Request.Context.AvatarGeneration = Snapshot.SourceAvatarGeneration;

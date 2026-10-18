@@ -37,6 +37,14 @@ public:
     UPROPERTY(Config, EditAnywhere, Category="Control", meta=(ClampMin="0.0"))
     float MaxControlDuration = 60.0f;
 
+    /** 减速最大比例：最多70%，最终倍率下限0.30；服务端与GE/属性聚合共同限制。 */
+    UPROPERTY(Config, EditAnywhere, Category="Control", meta=(ClampMin="0.05", ClampMax="0.70"))
+    float MaxSlowFraction = 0.70f;
+
+    /** 持续减速不超过10秒；V6控制槽另限制最多3秒。 */
+    UPROPERTY(Config, EditAnywhere, Category="Control", meta=(ClampMin="0.1", ClampMax="10.0"))
+    float MaxSlowDuration = 10.0f;
+
     UPROPERTY(Config, EditAnywhere, Category="Targeting")
     bool bAllowSelfDamage = false;
 

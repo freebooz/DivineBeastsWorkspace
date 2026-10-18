@@ -88,6 +88,22 @@ class Engine:
             ),
             Vector=lambda x, y, z: SimpleNamespace(x=x, y=y, z=z),
             Rotator=lambda pitch, yaw, roll: (pitch, yaw, roll),
+            # 审查作者已纠正错误的Rotator位置参数，改用UE原生FindLookAtRotation。
+            # 模拟ForwardVector和真正的目标方向对齐，验证>=0.999门禁。
+            MathLibrary=SimpleNamespace(
+                find_look_at_rotation=lambda eye, target: (eye, target),
+                get_forward_vector=lambda rot: SimpleNamespace(
+                    x=(rot[1].x-rot[0].x)/math.dist(
+                        (rot[1].x,rot[1].y,rot[1].z),
+                        (rot[0].x,rot[0].y,rot[0].z)),
+                    y=(rot[1].y-rot[0].y)/math.dist(
+                        (rot[1].x,rot[1].y,rot[1].z),
+                        (rot[0].x,rot[0].y,rot[0].z)),
+                    z=(rot[1].z-rot[0].z)/math.dist(
+                        (rot[1].x,rot[1].y,rot[1].z),
+                        (rot[0].x,rot[0].y,rot[0].z)),
+                ),
+            ),
             SystemLibrary=SimpleNamespace(quit_editor=self.quit_editor),
             unregister_slate_post_tick_callback=self.unregister,
         )

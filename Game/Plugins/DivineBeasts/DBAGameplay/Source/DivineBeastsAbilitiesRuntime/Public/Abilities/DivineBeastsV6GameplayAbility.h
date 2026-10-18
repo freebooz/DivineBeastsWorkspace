@@ -30,7 +30,9 @@ enum class EDivineBeastsV6NativeMode : uint8
     /** 新模式只追加在已发布的8种原语之后，不改变旧枚举序列化值。 */
     DamageAndStun,
     DamageAndSilence,
-    RadialDamageAndStun
+    RadialDamageAndStun,
+    /** Append-only: single hit followed by an independent GAS slow with replicated speed multiplier. */
+    DamageAndSlow
 };
 
 /**
@@ -40,7 +42,7 @@ enum class EDivineBeastsV6NativeMode : uint8
  *
  * 当前支持：服务器单体、投射物、范围伤害、友方治疗、限时护盾、眩晕、沉默以及
  * 单体伤害加眩晕／沉默、范围伤害加眩晕三种单段复合技能（原生动作需后续验收）。
- * 普攻命中才可发放气势。普通短位移由导航与胶囊扫掠验证；减速、破甲、毒路、
+ * 普攻命中才可发放气势。普通短位移由导航与胶囊扫掠验证，单体减速有GAS时效倍率；破甲、毒路、
  * 假身、实体门盾、揭隐、免死、多段及特殊位移仍需单独权威执行审核。
  */
 UCLASS(Blueprintable)
@@ -53,6 +55,9 @@ public:
     /** 纯数据合同，便于UE原生自动化正反例；不会授予技能或修改世界。 */
     static bool IsValidDamageControlAction(
         const FDivineBeastsEightSlotDraftAction& ControlAction, bool bSilence);
+    /** Slow（减速）的真实数值定义，不兼容眩晕/沉默或未批准的控制位移。 */
+    static bool IsValidDamageSlowAction(
+        const FDivineBeastsEightSlotDraftAction& ControlAction);
 
     /** 编辑器显式设置的V6执行模式；不依据技能名称或可选视觉效果猜测行为。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|V6")

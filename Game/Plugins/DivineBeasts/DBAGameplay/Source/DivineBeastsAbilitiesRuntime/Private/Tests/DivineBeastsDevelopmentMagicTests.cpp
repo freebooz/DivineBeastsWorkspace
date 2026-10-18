@@ -25,6 +25,7 @@
 #include "Components/SphereComponent.h"
 #include "Definitions/DivineBeastsDevelopmentMagicDefinition.h"
 #include "Definitions/DivineBeastsAbilityDefinition.h"
+#include "Definitions/GamePlatformAbilitySetDefinition.h"
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Engine/AssetManager.h"
@@ -238,6 +239,9 @@ private:
             Paths.Add(FSoftObjectPath(Root + TEXT("GE_DBA_Rat_PlaceholderArcaneMissilesCooldown.GE_DBA_Rat_PlaceholderArcaneMissilesCooldown_C")));
             if (Scenario == EScenario::Healing)
             {
+                Paths.Add(FSoftObjectPath(Root + TEXT("DA_DBA_Rat_PlaceholderAbilitySet.DA_DBA_Rat_PlaceholderAbilitySet")));
+                Paths.Add(FSoftObjectPath(Root + TEXT("DA_DBA_Rat_PlaceholderDirectedMissile.DA_DBA_Rat_PlaceholderDirectedMissile")));
+                Paths.Add(FSoftObjectPath(Root + TEXT("GA_DBA_Rat_PlaceholderDirectedMissile.GA_DBA_Rat_PlaceholderDirectedMissile_C")));
                 Paths.Add(FSoftObjectPath(Root + TEXT("DA_DBA_Rat_PlaceholderPrimary.DA_DBA_Rat_PlaceholderPrimary")));
                 Paths.Add(FSoftObjectPath(Root + TEXT("GA_DBA_Rat_PlaceholderPrimary.GA_DBA_Rat_PlaceholderPrimary_C")));
                 Paths.Add(FSoftObjectPath(Root + TEXT("GE_DBA_Rat_PlaceholderPrimaryCooldown.GE_DBA_Rat_PlaceholderPrimaryCooldown_C")));
@@ -374,7 +378,7 @@ private:
     }
 
     /**
-     * 数字1治疗的真实GAS回归：使用已迁移的Primary资产，友方关系替身仅限此隔离测试。
+     * 数字1飞弹及数字5治疗真实GAS输入回归；友方关系替身仅限此隔离测试。
      * 验证20%目标最大生命、上限、0气势、10秒GAS冷却、敌方不获治疗，以及死亡/超距/旧代次拒绝且不自疗。
      * 关系替身不进入生产；竞技Roster桥另由真实装配负责。本测试不声称联机/UI/VFX已经验收。
      */
@@ -392,7 +396,30 @@ private:
         auto* Eligibility = Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>();
         Eligibility->SetServerPlayerActive(true);
         ASC->SetNumericAttributeBase(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute(), 0.f);
-        AbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(HealingClass, 1));
+        const auto* Set = Cast<UGamePlatformAbilitySetDefinition>(FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/DA_DBA_Rat_PlaceholderAbilitySet.DA_DBA_Rat_PlaceholderAbilitySet")).ResolveObject());
+        if (!Test->TestNotNull(TEXT("真实技能授权集"), Set)) return;
+        const FGameplayTag HealingInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot3"));
+        const FGameplayTag MissileInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Primary"));
+        const auto* HealGrant = Set->Abilities.FindByPredicate([&](const auto& G) { return G.InputTag == HealingInput; });
+        const auto* MissileGrant = Set->Abilities.FindByPredicate([&](const auto& G) { return G.InputTag == MissileInput; });
+        if (!Test->TestNotNull(TEXT("数字5真实治疗授权"), HealGrant) || !Test->TestNotNull(TEXT("数字1真实飞弹授权"), MissileGrant)) return;
+        if (!Test->TestTrue(TEXT("数字5保留原治疗类"), HealGrant->AbilityClass.Get() == HealingClass)) return;
+        const auto* MissileClass = MissileGrant->AbilityClass.Get();
+        const auto* MissileCDO = MissileClass ? Cast<UDivineBeastsPlaceholderGameplayAbility>(MissileClass->GetDefaultObject()) : nullptr;
+        if (!Test->TestNotNull(TEXT("定向飞弹真实类已预热"), MissileCDO)) return;
+        Test->TestEqual(TEXT("独立定向飞弹表现语义"), MissileCDO->PresentationStyleOverride, FName(TEXT("DBA.Development.DirectedMissile")));
+        LocalInputPlayer.Reset(NewObject<ULocalPlayer>(GEngine)); Controller->SetPlayer(LocalInputPlayer.Get());
+        FGameplayAbilitySpec HealSpec(HealingClass, 1); HealSpec.GetDynamicSpecSourceTags().AddTag(HealingInput);
+        AbilityHandle = ASC->GiveAbility(HealSpec);
+        FGameplayAbilitySpec MissileSpec(MissileGrant->AbilityClass.Get(), 1); MissileSpec.GetDynamicSpecSourceTags().AddTag(MissileInput);
+        const auto MissileHandle = ASC->GiveAbility(MissileSpec);
+        SpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateRaw(this, &FRealMagicCommand::ObserveProjectile));
+        Test->TestTrue(TEXT("按键1平台输入受理"), ASC->AbilityInputPressed(MissileInput, ASC->GetInputToken()).IsSuccess());
+        ASC->ProcessAbilityInput(); ASC->AbilityInputReleased(MissileInput, ASC->GetInputToken());
+        Test->TestEqual(TEXT("按键1只创建一枚权威弹体"), Projectiles.Num(), 1);
+        if (Projectiles.Num()==1)
+            Test->TestEqual(TEXT("弹体复制正确表现身份"), Projectiles[0].Facts.PresentationStyleId, FName(TEXT("DBA.Development.DirectedMissile")));
+        ASC->CancelAbilityHandle(MissileHandle); ASC->ClearAbility(MissileHandle);
         const auto ClearCooldown = [&]()
         { ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(CooldownTag)); };
         const auto SetHealth = [](UGamePlatformAbilitySystemComponent* System, float Health)
@@ -400,7 +427,8 @@ private:
 
         const float SourceMaximum = SourceCombat->GetCombatMaxHealth();
         SetHealth(ASC.Get(), SourceMaximum * .5f);
-        Test->TestTrue(TEXT("没有选中目标时受理自疗"), ASC->TryActivateAbility(AbilityHandle, false));
+        Test->TestTrue(TEXT("按键5平台输入受理"), ASC->AbilityInputPressed(HealingInput, ASC->GetInputToken()).IsSuccess());
+        ASC->ProcessAbilityInput(); ASC->AbilityInputReleased(HealingInput, ASC->GetInputToken());
         Test->TestEqual(TEXT("自疗为自己最大生命20%"), SourceCombat->GetCombatHealth(), SourceMaximum * .7f);
         Test->TestEqual(TEXT("零气势治疗后仍为零"), ASC->GetNumericAttribute(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute()), 0.f);
         Test->TestTrue(TEXT("治疗真实授予GAS冷却标签"), ASC->HasMatchingGameplayTag(CooldownTag));

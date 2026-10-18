@@ -15,7 +15,7 @@ enum class EDivineBeastsPlaceholderAbilityMode : uint8
     Fireball,      // 火焰弹：单枚可选目标追踪弹体
     Frostbolt,     // 寒冰箭：单枚可选目标追踪弹体
     ArcaneMissiles, // 奥术飞弹：三枚螺旋连射弹体
-    Healing        // 数字1治疗：追加枚举值5，保留Primary及历史资产枚举值不迁号。
+    Healing        // 治疗：枚举值5，保留Primary及历史资产枚举值不迁号；输入由授权集决定。
 };
 
 /**
@@ -41,6 +41,11 @@ public:
     /** 客户端仅用于展示，投射物实际运动在服务器生成。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder")
     FGamePlatformCombatProjectileMotion ProjectileMotion;
+
+    /** 项目纯内容表现语义覆盖；空值使用行为默认值，不改变弹道、伤害或服务器资格。
+     * 客户端仍须通过精确语义/能力身份允许列表，不允许据此加载任意资源路径。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder")
+    FName PresentationStyleOverride = NAME_None;
 
     /** 单次激活生成数量，火球/冰箭为1，奥术为3。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder",

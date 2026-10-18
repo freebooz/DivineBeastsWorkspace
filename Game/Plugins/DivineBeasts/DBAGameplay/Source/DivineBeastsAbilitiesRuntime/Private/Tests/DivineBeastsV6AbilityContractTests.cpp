@@ -95,4 +95,36 @@ bool FDivineBeastsV6ControlPairValidationTest::RunTest(const FString&)
         UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(Control, true));
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FDivineBeastsV6DamageSlowContractTest,
+    "DivineBeasts.Abilities.V6.DamageSlowContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsV6DamageSlowContractTest::RunTest(const FString&)
+{
+    FDivineBeastsEightSlotDraftAction Slow;
+    Slow.ActionKindId = TEXT("control");
+    Slow.ModifierId = TEXT("slow");
+    Slow.HitCount = 1;
+    Slow.Magnitude = 0.35f;
+    Slow.DurationSeconds = 2.4f;
+    TestTrue(TEXT("真实GAS减速参数35%和2.4秒合法"),
+        UDivineBeastsV6GameplayAbility::IsValidDamageSlowAction(Slow));
+    Slow.Magnitude = 0.0f;
+    TestFalse(TEXT("0比例减速不是有效玩法"), UDivineBeastsV6GameplayAbility::IsValidDamageSlowAction(Slow));
+    Slow.Magnitude = 0.71f;
+    TestFalse(TEXT("超过70%减速上限拒绝"), UDivineBeastsV6GameplayAbility::IsValidDamageSlowAction(Slow));
+    Slow.Magnitude = 0.35f;
+    Slow.DurationSeconds = 3.1f;
+    TestFalse(TEXT("超3秒V6控制槽拒绝"), UDivineBeastsV6GameplayAbility::IsValidDamageSlowAction(Slow));
+    Slow.DurationSeconds = 2.0f;
+    Slow.ModifierId = TEXT("stun");
+    TestFalse(TEXT("减速不能用眩晕同名替代"), UDivineBeastsV6GameplayAbility::IsValidDamageSlowAction(Slow));
+    Slow.ModifierId = TEXT("slow");
+    Slow.HitCount = 2;
+    TestFalse(TEXT("减速段数必须为1"), UDivineBeastsV6GameplayAbility::IsValidDamageSlowAction(Slow));
+    return true;
+}
+
 #endif

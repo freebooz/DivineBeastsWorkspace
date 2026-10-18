@@ -196,6 +196,7 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
     default:
         CastStyle = NAME_None; break;
     }
+    if (!PresentationStyleOverride.IsNone()) CastStyle = PresentationStyleOverride;
     if (auto* CastFacts = Avatar->FindComponentByClass<UGamePlatformAbilityCastComponent>())
     {
         CastFacts->PublishConfirmedCast(Token, Balance.AbilityId, CastStyle, AvatarGeneration,

@@ -570,8 +570,9 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                     GamePlatformCombatTags::Control_Stun);
                 const bool bSilenced = ASC->HasMatchingGameplayTag(
                     GamePlatformCombatTags::Control_Silence);
-                const bool bPrimaryAttack =
-                    Grant.InputTag.ToString().EndsWith(TEXT(".Primary"));
+                // 按能力语义判断沉默，数字1也可绑定法术，不能用输入槽冒充普通攻击。
+                const bool bPrimaryAttack = !Spec->Ability->GetAssetTags().HasTag(
+                    FGameplayTag::RequestGameplayTag(TEXT("Ability.Spell")));
                 if (bDead || bStunned || (bSilenced && !bPrimaryAttack))
                 {
                     Slot.bEnabled = false;

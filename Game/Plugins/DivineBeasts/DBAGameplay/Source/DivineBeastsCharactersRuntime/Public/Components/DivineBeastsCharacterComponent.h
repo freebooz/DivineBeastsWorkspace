@@ -12,6 +12,7 @@
 
 class UDivineBeastsHeroDefinition;
 struct FGamePlatformCombatResult;
+struct FOnAttributeChangeData;
 class UGamePlatformAbilitySystemComponent;
 struct FGamePlatformAbilityAvatarBindingSnapshot;
 
@@ -202,6 +203,9 @@ private:
     /** 当前ASC存在则绑定Avatar事件，ActorInfo就绪后注入项目只读Gate；不代替宿主绑定ActorInfo。 */
     void RefreshActivationGateBinding();
     void HandleAbilityAvatarBindingChanged(const FGamePlatformAbilityAvatarBindingSnapshot& Snapshot);
+    /** GAS速度倍率的唯一消费者：服务端以及复制客户端以相同Hero基础速度应用，禁止Tick刷新。 */
+    void HandleMoveSpeedMultiplierChanged(const FOnAttributeChangeData& Change);
+    void RefreshMoveSpeedMultiplier();
     /** 组件结束时撤销本组件Gate并移除原生委托；ASC可继续存活，不留下旧项目Owner。 */
     void DetachActivationGate();
 
@@ -238,6 +242,10 @@ private:
     FGamePlatformResult LastDefinitionLoadResult;
     TWeakObjectPtr<UGamePlatformAbilitySystemComponent> BoundAbilitySystem;
     FDelegateHandle AvatarBindingChangedHandle;
+    /** 订阅平台属性变更；换ASC、死亡/重生及EndPlay需要释放旧绑定。 */
+    FDelegateHandle MoveSpeedMultiplierChangedHandle;
+    /** 出生时抓取原始蹲行速度；GE到期回到该值，不按上次已减速值再次折减。 */
+    float BaseMaxWalkSpeedCrouched = 0.0f;
     bool bEndingPlay = false;
 
     FDivineBeastsCharacterReadinessChangedNative ReadinessChanged;

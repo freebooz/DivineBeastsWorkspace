@@ -50,6 +50,7 @@ bool FGamePlatformVFXPresentationProvider::Handle(
             FMath::Clamp(EffectsQuality->GetInt(), 0, 3));
     }
     VFXRequest.SpawnContext.Location = Request.SourceLocation;
+    VFXRequest.SpawnContext.Rotation = Request.SourceRotation;
     VFXRequest.SpawnContext.AttachComponent = Request.AttachComponent;
     VFXRequest.SpawnContext.TargetLocation = Request.TargetLocation;
     VFXRequest.SpawnContext.ImpactLocation = Request.ImpactLocation;

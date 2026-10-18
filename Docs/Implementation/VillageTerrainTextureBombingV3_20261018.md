@@ -2,6 +2,18 @@
 
 > 日期：2026-10-18。适用 Unreal Engine 5.8（虚幻引擎）与唯一工作空间 DivineBeastsWorkspace。统一设计依据为 Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md。所有英文资源名在本文均按所在段落给出中文用途。本文不替代真实UE资产验收日志。
 
+## 2026-10-18 最新执行：真实D3D12六态、正式Village三景别及Client/Server Cook验证
+
+**本节为当前最新的实测状态，历史黑帧/未Cook段落作为故障过程保留。** 真实UE5.8诊断发现此前的Python相机使用了错误的Rotator（旋转量）位置参数顺序：旧的Forward（前向向量）与地形中心方向点积=-0.518，而引擎MathLibrary.find_look_at_rotation（朝向目标计算）返回1.000。此前所有黑帧不能作为材质有问题的证据。已修正地形审查工具中的相机计算，并修正六态执行时重复load_level（再次加载关卡）导致立即捕获时渲染代理尚未准备的问题。
+
+**六种天气视觉实际像素检查：通过。** 在UE5.8/D3D12对独立V3十层真实Landscape采集Dry（晴天）、Moss（苔藓）、Wet（湿润）、LightSnow（小雪）、HeavySnow（大雪）、AfterSnow（融雪）六态，输出目录Game/Saved/Validation/TerrainColorV3_GPU_PreloadedFixed_20261018；Tests/Assets/TestTerrainColorV3GPU.ps1（图像有效性检测）生成TerrainColorV3_GPUFrameQA.json，pass=true、stateCount=6、issues=0。六态平均亮度分别159.016/157.189/149.082/172.958/198.529/163.496，黑像素比例全部为0；六张文件SHA均不同。针对相邻天气的真实像素平均RGB绝对差：晴天→苔藓2.54、晴天→湿润13.07、晴天→小雪18.35、小雪→大雪30.55、大雪→融雪41.60，均高于1.2最低区分值。这证明本轮天气画面有效且能区分，并不是证明美术已经由人签收。
+
+**正式Village真实场景：三景别可见地形通过。** 使用Tools/Unreal/Terrain/CaptureVillageTerrainV3ThreeDistancesUE58.py（正式新手村远中近真实D3D12审查作者）直接打开/DBAWorldPack_Village/Maps/L_Village_Start（正式地图），确认仍绑定81节点/三通道Texture Bombing共享母材质和256x256 V3绿色默认贴图。远/中/近景三个互异真实GPU图位于Game/Saved/Validation/VillageTerrainV3RealD3D12_20261018（远/中/近分别Wide/Medium/Close），亮度均值110.91/111.53/109.02，黑像素0%，不同SHA及纹理细节可见。**这些是编辑器静态世界默认贴图/材质的实景，不等于客户端正式加载2K高精贴图的完整游戏画面。** 正式地图二进制SHA无改动，角色、PCG、导航、碰撞及材质未被截图工具保存更改。
+
+**真实打包与资源隔离：均已通过。** 服务器Build/Game/CookFoundation.ps1 -Target Server -CustomConfig VillageServer的实际UE5.8 Cook/Stage/Pak审计通过，Saved/Validation/FoundationM0/353f1993-fe06-4b16-85e2-b3ba47af489b/Cook-Server/ServerPresentationAudit/ServerPresentationAudit.json中Status=Passed，检查Pak/IoStore容器。客户端Build/Game/CookFrontEndClient.ps1 -CustomConfig VillageDevelopmentClient的实际Cook/Stage/IoStore审计通过，Saved/Validation/FoundationM0/c477e0dd-ef8c-4b8e-84cc-ac994e92e0d7/Cook-FrontEndClient/ContainerInspection/ClientContainer.csv，要求547项软资源全部存在，缺失0。真实资源容器内，客户端有V3高清2K草地、256绿色默认、共享母材质、村庄地图；专服包括世界中立地图/材质及256默认草地，但不含DBAPresentationPack_Core客户端独有V3高清表现源。
+
+**仍须独立交付前检查**：Game客户端正式进入Village后世界级软资源租约是否切到2K高清地表；实际游戏PC/移动端ProfileGPU（GPU耗时）、高低画质FPS、远景纹理消重有无明显重影及PCG/湖水/桃林整体地貌的人工视觉签收。尤其Village正式地图现阶段仍以一张基础Landscape为主，不能将其视为湖心三岛桃花村全部美术完成。原始黑帧已保留，不用覆盖原证据或把Cook和截图通过等同于上述未完成项。
+
 ## 2026-10-18 本次继续执行：正式默认草地与十层V3的UE收口证据
 
 实际资产已在UE5.8保存并经独立编辑器进程重新加载：十层正式BaseColor（基础色）已10/10重导入并冷重载，Dirt（普通泥土）阻断解除；正式共享地形81个表达式与三通道Texture Bombing（纹理轰炸）原有节点不变，并新建真实256×256 sRGB Texture2D（草地默认基础色贴图） /DBAWorldPack_Village/Materials/Landscape/Defaults/T_DBA_Village_GroundAlbedoV3Default（新手村地表绿色共享默认纹理）。原来的两处VillageGroundAlbedoTexture（地面基础色纹理参数）已统一指向该默认纹理，便于直接在Editor（虚幻编辑器）预览；客户端依旧通过GamePlatformData（平台异步加载）世界资源租约以同名参数加载V3高清2K草地源，与同源Normal（法线）和ORM（遮蔽/粗糙度/金属度）相容。

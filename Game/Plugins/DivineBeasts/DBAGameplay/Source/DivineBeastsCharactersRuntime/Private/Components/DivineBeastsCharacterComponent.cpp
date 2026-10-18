@@ -3,6 +3,8 @@
 
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Attributes/DivineBeastsMomentumAttributeSet.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
+#include "AbilitySystemComponent.h"
 #include "Effects/DivineBeastsMomentumGainGameplayEffect.h"
 #include "GameplayEffect.h"
 #include "Types/GamePlatformCombatResult.h"
@@ -31,6 +33,11 @@ void UDivineBeastsCharacterComponent::BeginPlay()
     Super::BeginPlay();
     bEndingPlay = false;
     RefreshActivationGateBinding();
+    if (const auto* Character = Cast<ACharacter>(GetOwner()))
+    {
+        if (const auto* Movement = Character->GetCharacterMovement())
+            BaseMaxWalkSpeedCrouched = Movement->MaxWalkSpeedCrouched;
+    }
     RefreshInitialization();
 }
 
@@ -597,7 +604,14 @@ bool UDivineBeastsCharacterComponent::ApplyDefinition(
         SpawnEnvelope.CollisionProfileName);
     if (!AreOriginalComponentsCurrent()) { OutError = TEXT("碰撞配置通知撤销了原配置。"); return false; }
 
-    Movement->MaxWalkSpeed = MovementDefinition.MaxWalkSpeed;
+    // Hero定义仍持有完整基础速度；GAS属性只提供0.30～1的实时乘数，不持有另一份基础速度。
+    const auto* SlowAttributes = AbilitySystem->GetSet<UGamePlatformCombatAttributeSet>();
+    const float Multiplier = IsValid(SlowAttributes) &&
+        FMath::IsFinite(SlowAttributes->GetMoveSpeedMultiplier())
+        ? FMath::Clamp(SlowAttributes->GetMoveSpeedMultiplier(), 0.30f, 1.0f) : 1.0f;
+    Movement->MaxWalkSpeed = MovementDefinition.MaxWalkSpeed * Multiplier;
+    if (BaseMaxWalkSpeedCrouched > 0.0f)
+        Movement->MaxWalkSpeedCrouched = BaseMaxWalkSpeedCrouched * Multiplier;
     Movement->MaxAcceleration = MovementDefinition.MaxAcceleration;
     Movement->JumpZVelocity = MovementDefinition.JumpZVelocity;
     Movement->RotationRate.Yaw = MovementDefinition.RotationRateYaw;
@@ -716,6 +730,10 @@ void UDivineBeastsCharacterComponent::RefreshActivationGateBinding()
         {
             AvatarBindingChangedHandle = CurrentASC->OnAvatarBindingChanged().AddUObject(this,
                 &UDivineBeastsCharacterComponent::HandleAbilityAvatarBindingChanged);
+            // 属性变更由原生GAS应用、过期和网络OnRep触发，不需要在Tick里查询移动状态。
+            MoveSpeedMultiplierChangedHandle = CurrentASC->GetGameplayAttributeValueChangeDelegate(
+                UGamePlatformCombatAttributeSet::GetMoveSpeedMultiplierAttribute()).AddUObject(
+                    this, &UDivineBeastsCharacterComponent::HandleMoveSpeedMultiplierChanged);
         }
     }
     if (!CurrentASC) { return; }
@@ -732,11 +750,43 @@ void UDivineBeastsCharacterComponent::RefreshActivationGateBinding()
     }
 }
 
+
+void UDivineBeastsCharacterComponent::HandleMoveSpeedMultiplierChanged(
+    const FOnAttributeChangeData& Change)
+{
+    (void)Change;
+    RefreshMoveSpeedMultiplier();
+}
+
+void UDivineBeastsCharacterComponent::RefreshMoveSpeedMultiplier()
+{
+    if (bEndingPlay || !bConfigurationApplied || !IsCharacterReady() || !IsValid(LoadedDefinition))
+        return;
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    UGamePlatformAbilitySystemComponent* ASC = BoundAbilitySystem.Get();
+    if (!IsValid(Character) || !IsValid(ASC) || ASC->GetAvatarActor() != Character)
+        return;
+    UCharacterMovementComponent* Movement = Character->GetCharacterMovement();
+    const auto* Attributes = ASC->GetSet<UGamePlatformCombatAttributeSet>();
+    if (!IsValid(Movement) || !Movement->IsRegistered() || !IsValid(Attributes))
+        return;
+    const float Raw = Attributes->GetMoveSpeedMultiplier();
+    if (!FMath::IsFinite(Raw) ||
+        !FMath::IsFinite(LoadedDefinition->Movement.MaxWalkSpeed) ||
+        LoadedDefinition->Movement.MaxWalkSpeed <= 0.0f)
+        return; // 属性异常必须失败关闭，不能把无效倍率变成任意高速移动
+    const float Multiplier = FMath::Clamp(Raw, 0.30f, 1.0f);
+    Movement->MaxWalkSpeed = LoadedDefinition->Movement.MaxWalkSpeed * Multiplier;
+    if (BaseMaxWalkSpeedCrouched > 0.0f)
+        Movement->MaxWalkSpeedCrouched = BaseMaxWalkSpeedCrouched * Multiplier;
+}
+
 void UDivineBeastsCharacterComponent::HandleAbilityAvatarBindingChanged(const FGamePlatformAbilityAvatarBindingSnapshot& Snapshot)
 {
     (void)Snapshot;
     // ASC已经在新ActorInfo就绪后发布事件；旧Gate已由ASC撤销，再按当前项目身份重新注入。
     RefreshActivationGateBinding();
+    RefreshMoveSpeedMultiplier();
 }
 
 void UDivineBeastsCharacterComponent::DetachActivationGate()
@@ -745,7 +795,12 @@ void UDivineBeastsCharacterComponent::DetachActivationGate()
     {
         ASC->ClearActivationGate(this);
         ASC->OnAvatarBindingChanged().Remove(AvatarBindingChangedHandle);
+        if (MoveSpeedMultiplierChangedHandle.IsValid())
+            ASC->GetGameplayAttributeValueChangeDelegate(
+                UGamePlatformCombatAttributeSet::GetMoveSpeedMultiplierAttribute()).Remove(
+                    MoveSpeedMultiplierChangedHandle);
     }
     AvatarBindingChangedHandle.Reset();
+    MoveSpeedMultiplierChangedHandle.Reset();
     BoundAbilitySystem.Reset();
 }

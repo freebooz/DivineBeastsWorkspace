@@ -276,6 +276,21 @@ bool UDivineBeastsV6GameplayAbility::IsValidDamageControlAction(
         ControlAction.DurationSeconds <= MaxV6ControlSeconds;
 }
 
+
+bool UDivineBeastsV6GameplayAbility::IsValidDamageSlowAction(
+    const FDivineBeastsEightSlotDraftAction& ControlAction)
+{
+    return ControlAction.ActionKindId == TEXT("control") &&
+        ControlAction.ModifierId == TEXT("slow") &&
+        ControlAction.HitCount == 1 &&
+        FMath::IsFinite(ControlAction.Magnitude) &&
+        ControlAction.Magnitude > 0.0f &&
+        ControlAction.Magnitude <= 0.70f &&
+        FMath::IsFinite(ControlAction.DurationSeconds) &&
+        ControlAction.DurationSeconds > 0.0f &&
+        ControlAction.DurationSeconds <= MaxV6ControlSeconds;
+}
+
 bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
     const UDivineBeastsAbilityDefinition& Definition,
     const FDivineBeastsAbilityBalanceRow& Balance, FString& OutError) const
@@ -284,7 +299,8 @@ bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
     const bool bDamageControlMode =
         ExecutionMode == EDivineBeastsV6NativeMode::DamageAndStun ||
         ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSilence ||
-        ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun;
+        ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun ||
+        ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSlow;
     if (!Definition.bV6NativeApproved || Definition.bEightSlotDraftOnly ||
         !Definition.ValidateDefinition().IsSuccess() ||
         ExecutionMode == EDivineBeastsV6NativeMode::Unsupported ||
@@ -300,12 +316,15 @@ bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
     const bool bSingleHit = Action.HitCount == 1;
     if (bDamageControlMode)
     {
-        // 一次确认伤害和随后单次控制，不自动兼容Slow、击退、束缚、显形或额外伤害。
+        // 只允许一次确定性伤害和一种有限时控制；Slow单独走原生MovementSpeedMultiplier属性。
         const FDivineBeastsEightSlotDraftAction& ControlAction = Definition.DraftActions[1];
         const bool bSilence = ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSilence;
-        if (!IsValidDamageControlAction(ControlAction, bSilence))
+        const bool bControlValid = ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSlow
+            ? IsValidDamageSlowAction(ControlAction)
+            : IsValidDamageControlAction(ControlAction, bSilence);
+        if (!bControlValid)
         {
-            OutError = TEXT("V6伤害加控制动作不能表示当前平台未实现的Slow/多段/击退/束缚。");
+            OutError = TEXT("V6伤害与控制动作不匹配：减速、眩晕、沉默不能互相替代，其他历史机制需独立实现。");
             return false;
         }
     }
@@ -338,6 +357,7 @@ bool UDivineBeastsV6GameplayAbility::ValidateNativeContract(
             // 同时含伤害和治疗的范围技能必须执行两条权威结果；单一Damage不得冒充全技能。
             Definition.DraftTargetModeId == TEXT("area_or_target");
         break;
+    case EDivineBeastsV6NativeMode::DamageAndSlow:
     case EDivineBeastsV6NativeMode::DamageAndStun:
     case EDivineBeastsV6NativeMode::DamageAndSilence:
         bAllowed = bHasLegalRange && Balance.CastRangeCm > 0.0f &&
@@ -579,6 +599,7 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
         case EDivineBeastsV6NativeMode::ForwardDamage:
         case EDivineBeastsV6NativeMode::RadialDamage:
             Result = Combat->ApplyDamage(Spec); break;
+        case EDivineBeastsV6NativeMode::DamageAndSlow:
         case EDivineBeastsV6NativeMode::DamageAndStun:
         case EDivineBeastsV6NativeMode::DamageAndSilence:
         case EDivineBeastsV6NativeMode::RadialDamageAndStun:
@@ -616,11 +637,14 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
             ControlSpec.EventId = FGuid::NewGuid();
             ControlSpec.SourceAbilityId = Balance.AbilityId;
             ControlSpec.Magnitude = ControlAction.DurationSeconds;
-            const FGamePlatformCombatResult ControlResult = Combat->ApplyControl(
-                ControlSpec,
-                ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSilence
-                    ? EGamePlatformControlType::Silence : EGamePlatformControlType::Stun,
-                ControlAction.DurationSeconds);
+            const FGamePlatformCombatResult ControlResult =
+                ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSlow
+                    ? Combat->ApplySlow(ControlSpec, ControlAction.Magnitude, ControlAction.DurationSeconds)
+                    : Combat->ApplyControl(
+                        ControlSpec,
+                        ExecutionMode == EDivineBeastsV6NativeMode::DamageAndSilence
+                            ? EGamePlatformControlType::Silence : EGamePlatformControlType::Stun,
+                        ControlAction.DurationSeconds);
             // ControlResult经平台独立事件回报，控制失败或目标死亡不能撤销已提交的真实伤害。
             (void)ControlResult;
             return true; // 伤害已经执行，后续控制失败不得伪造全技能未命中

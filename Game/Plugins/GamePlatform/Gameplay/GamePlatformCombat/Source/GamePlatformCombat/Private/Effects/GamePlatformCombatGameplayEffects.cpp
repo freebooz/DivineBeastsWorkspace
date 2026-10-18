@@ -2,6 +2,7 @@
 
 #include "Execution/GamePlatformDamageExecutionCalculation.h"
 #include "Execution/GamePlatformHealingExecutionCalculation.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "GameplayEffectComponents/BlockAbilityTagsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Tags/GamePlatformAbilitySystemTags.h"
@@ -125,4 +126,30 @@ UGamePlatformSilenceGameplayEffect::UGamePlatformSilenceGameplayEffect(
     ConfigureBlockedAbilityTag(
         *BlockedAbilityTagsComponent,
         GamePlatformAbilitySystemTags::Ability_Spell);
+}
+UGamePlatformSlowGameplayEffect::UGamePlatformSlowGameplayEffect(
+    const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
+{
+    // GAS持续聚合属性：来源实例独立存在，最小最终倍率统一由AttributeSet钳制至0.30。
+    // 不允许用周期Tick或永久Base修改实现减速；GE自然到期重算为1.0。
+    DurationPolicy = EGameplayEffectDurationType::HasDuration;
+    DurationMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(1.0f));
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
+    StackingType = EGameplayEffectStackingType::None;
+PRAGMA_ENABLE_DEPRECATION_WARNINGS
+
+    UTargetTagsGameplayEffectComponent* Tags =
+        ObjectInitializer.CreateDefaultSubobject<UTargetTagsGameplayEffectComponent>(
+            this, TEXT("GrantedSlowTags"));
+    GEComponents.Add(Tags);
+    ConfigureGrantedTag(*Tags, GamePlatformCombatTags::Control_Slow);
+
+    FSetByCallerFloat DynamicSlow;
+    DynamicSlow.DataTag = GamePlatformCombatTags::Data_Control_SlowFraction;
+    FGameplayModifierInfo Modifier;
+    Modifier.Attribute = UGamePlatformCombatAttributeSet::GetMoveSpeedMultiplierAttribute();
+    Modifier.ModifierOp = EGameplayModOp::Additive;
+    Modifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(DynamicSlow);
+    Modifiers.Add(Modifier);
 }

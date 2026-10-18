@@ -96,12 +96,12 @@ Trail横截面由`exp2(-v*v*70)`连续宽带和`exp2(-v*v*1200)`细亮心叠合�
 
 本轮相对用户退回版，保持外包覆比例，补实内部、加厚曲面、改为弯曲羽瓣接缝，尖端局部聚能，三尾连续且起点渐隐。当前仍有与概念图不同的细节：原生瓣面偏规则，参考图的自由飘逸火焰层次尚需人工审核；训练场代理也不是原图完整场景。不能据本轮技术验收声称画面完全一致。
 
-本轮实际结果：17份原生保存包；一个Niagara System、四CPU Emitter；11168三角形、6097顶点、Mesh三材质段，三尾共用额外一个Trail材质。独立UE5.8冷加载根进程PID45092、退出码0，Niagara编译0错误/0警告，保存包SHA在冷验证前后及媒体发布时一致。十实例检查在35步时分别为弹头1粒子/三尾各54粒子，三尾各保留约662.50厘米历史跨度；五实例Deactivate后与其余自然结束实例在2.5秒时均不再活跃，临时Actor清理完成。这些是编辑器功能检查，不是GPU或联机性能测量。
+本轮实际结果：17份原生保存包；一个Niagara System、四CPU Emitter；11168三角形、6097顶点、Mesh三材质段，三尾共用额外一个Trail材质。独立UE5.8冷加载根进程PID41064、退出码0，Niagara编译0错误/0警告，保存包SHA在冷验证前后及媒体发布时一致。十实例检查在35步时分别为弹头1粒子/三尾各54粒子，三尾各保留约662.50厘米历史跨度；五实例Deactivate后与其余自然结束实例在2.5秒时均不再活跃，临时Actor清理完成。这些是编辑器功能检查，不是GPU或联机性能测量。
 
 真实材质编译通过；Monolith统计Core/Petals/Trail/AirWave像素着色指令分别210/231/161/146，报告保留在`MaterialCompileStats.json`，这些编译统计不是GPU耗时。相较退回版网格10528三角形增加640至11168，仍为三材质段，System/Emitter数量不变；当前存在半透明及空气折射成本，必须后续做多人Overdraw/GPU测量。
 
-最终原生序列为`RenderRuns/20261018T130610181319Z`，1656×1002、60帧，固定参考镜头。`DirectedMissileV1_Native.png`直接复制Frame_021（0.733秒），没有截图后期；同目录`DirectedMissileV1_Native.mp4`为30fps/2秒原速，`DirectedMissileV1_3xSlow.mp4`为10fps/6秒慢放。全部视频解码帧与原生序列在编码输入YUV420p空间核对，无损WebP另外逐帧核对RGB与时间线。视频帧率为采样/编码帧率，不代表实测游戏FPS。
+最终原生序列为`RenderRuns/20261018T131417986824Z`，1656×1002、60帧，固定参考镜头。`DirectedMissileV1_Native.png`直接复制Frame_021（0.733秒），没有截图后期；同目录`DirectedMissileV1_Native.mp4`为30fps/2秒原速，`DirectedMissileV1_3xSlow.mp4`为10fps/6秒慢放。全部视频解码帧与原生序列在编码输入YUV420p空间核对，无损WebP另外逐帧核对RGB与时间线。视频帧率为采样/编码帧率，不代表实测游戏FPS。
 
-空气开关对照保留关闭/关闭/开启三个原生采样，默认强度0.35；关闭对照逐像素相同，开启产生3227个不同像素，差异见`AirWaveVerification.json`。原材质已恢复并保存，当前17包通过冷加载。纹理源保持2172×724 RGBA，真实UE显示Mip为2048×512、sRGB/BC7；来源、提示词及模型/原生包SHA见`TextureManifest.json`与`Verification.json`。
+空气开关对照保留关闭/关闭/开启三个原生采样，默认强度0.35；关闭对照逐像素相同，开启产生3399个不同像素，差异见`AirWaveVerification.json`。原材质已恢复并保存，当前17包通过冷加载。纹理源保持2172×724 RGBA，真实UE显示Mip为2048×512、sRGB/BC7；来源、提示词及模型/原生包SHA见`TextureManifest.json`与`Verification.json`。
 
 仍待人工确认弹头/尾迹粗细、三条相位观感、细节与参考图的一致性。正式运动目标/技能接入、四档质量、Shader Complexity/Quad Overdraw、多人GPU与客户端/服务器Cook均未验收。本轮不据静态帧或编译结果宣称可投产。

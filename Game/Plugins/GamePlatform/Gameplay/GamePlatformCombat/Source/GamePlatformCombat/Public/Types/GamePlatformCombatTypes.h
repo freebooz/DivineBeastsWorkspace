@@ -55,5 +55,7 @@ UENUM(BlueprintType)
 enum class EGamePlatformControlType : uint8
 {
     Stun,
-    Silence
+    Silence,
+    /** 仅新增枚举尾值，不改变已序列化Stun/Silence序号；真实减速由独立ApplySlow入口实现。 */
+    Slow
 };

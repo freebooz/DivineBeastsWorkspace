@@ -28,12 +28,14 @@ namespace
 FName CastName(FName Style)
 {
     if(Style==TEXT("DBA.Development.Fireball")) return TEXT("Fireball");
+    if(Style==TEXT("DBA.Development.DirectedMissile")) return TEXT("DirectedMissile");
     if(Style==TEXT("DBA.Development.Frostbolt")) return TEXT("Frostbolt");
     if(Style==TEXT("DBA.Development.ArcaneMissiles")) return TEXT("ArcaneMissiles");
     return NAME_None;
 }
 FSoftObjectPath MontagePath(FName Name)
 {
+    if (Name==TEXT("DirectedMissile")) Name=TEXT("Fireball"); // 内容复用，同一预载租约，无新增动画播放器。
     const FString Asset=TEXT("AM_DBA_Dev")+Name.ToString()+TEXT("Cast");
     return FSoftObjectPath(TEXT("/DBAContentPack_Common/Mannequins/DBA/Animations/DevelopmentCasting/")+Asset+TEXT(".")+Asset);
 }

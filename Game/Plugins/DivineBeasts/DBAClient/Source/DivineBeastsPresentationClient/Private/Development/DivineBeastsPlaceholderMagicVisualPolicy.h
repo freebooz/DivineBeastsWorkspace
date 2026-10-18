@@ -32,7 +32,7 @@ inline bool IsVillageWorld(const UWorld* World)
 inline bool IsApprovedPlaceholderSpell(FName AbilityId, FName Magic)
 {
     if (AbilityId.IsNone() ||
-        (Magic != TEXT("Fireball") && Magic != TEXT("Frostbolt") && Magic != TEXT("ArcaneMissiles")))
+        (Magic != TEXT("Fireball") && Magic != TEXT("Frostbolt") && Magic != TEXT("ArcaneMissiles") && Magic != TEXT("DirectedMissile")))
         return false;
 
     static const TCHAR* const Heroes[] = {

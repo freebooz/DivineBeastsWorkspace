@@ -1,4 +1,8 @@
 # SSLM 十层地形纹理与材质 V3.0 合规审查及实际整改记录
+## 2026-10-18 新手村V3视觉与打包专项补验（最新）
+
+已使用原生UE5.8 MathLibrary.find_look_at_rotation（摄像机目标朝向）纠正审核相机，解决此前的黑帧根因；同时修改六态审核脚本，复用预加载UE世界，不再二次LoadLevel后同帧捕获。六态真实D3D12像素检查结果：Game/Saved/Validation/TerrainColorV3_GPU_PreloadedFixed_20261018/TerrainColorV3_GPUFrameQA.json，pass=true、6种天气、黑像素0%、六帧互异；五组天气状态像素差均超过1.2。正式Village远/中/近三景别非黑帧截图已产生，目录Game/Saved/Validation/VillageTerrainV3RealD3D12_20261018。VillageServer与VillageDevelopmentClient均通过真实Cook/Stage和最终包资源剥离/547必需资源检查。详见VillageTerrainTextureBombingV3_20261018.md（新手村Texture Bombing及配色实施记录）。Client 2K软纹理实际进入村庄验证、GPU性能/FPS、桃花村复杂场景和人工美术签收仍待单独执行；以下“黑帧/Cook尚未通过”仅为历史事实。
+
 ## 2026-10-18 后续真实UE资产收口：十层V3正式基础色已完成10/10
 
 此节为当前最新事实，以下9/10段落仅保留历史阶段证据。此前Dirt（普通泥土）一项因其它UE编辑器文件锁阻塞；用户要求继续后，已在文件独占条件下修正旧校验，允许来自原生验证的81节点Texture Bombing（纹理轰炸）共享材质新SHA，不放宽正式地图SHA、旧回退备份及Texture2D来源校验。随后使用正式UE5.8 Editor第一次真实重导入Dirt，第二次独立进程完成十层V3正式纹理全量冷重载，工具输出 SSLM_V3_FORMAL_10_COLD_VERIFIED（十层冷重载通过）。不再存在待导入的Dirt层。

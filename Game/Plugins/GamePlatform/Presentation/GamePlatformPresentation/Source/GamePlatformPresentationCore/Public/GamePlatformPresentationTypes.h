@@ -99,6 +99,10 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
     FVector SourceLocation = FVector::ZeroVector;
 
+    /** 可选表现的世界朝向；附着时保持与来源组件一致，不参与权威弹道或命中计算。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
+    FRotator SourceRotation = FRotator::ZeroRotator;
+
     /** 可选的本地表现附着组件；仅弱持有，切图/角色销毁不能延长组件生命周期。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
     TWeakObjectPtr<USceneComponent> AttachComponent;

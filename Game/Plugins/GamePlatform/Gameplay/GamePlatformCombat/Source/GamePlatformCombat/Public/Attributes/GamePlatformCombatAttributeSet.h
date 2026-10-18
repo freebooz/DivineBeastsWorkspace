@@ -9,7 +9,9 @@
 /**
  * UGamePlatformCombatAttributeSet（平台统一战斗属性集）。
  * 唯一具体平台战斗属性集：Health/MaxHealth（生命及上限）、Energy/MaxEnergy（独立能量及上限），
- * DamageBonus（伤害增减）与DamageReduction（伤害减免）；后两项支持GAS增减益效果的加法聚合。
+ * DamageBonus（伤害增减）与DamageReduction（伤害减免）支持GAS加法聚合；
+ * MoveSpeedMultiplier（移动速度倍率）是原生GAS的短时效果聚合属性，默认1，最低0.3；
+ * 角色运动消费者必须监听属性改变并按Hero原速应用到CharacterMovement，不以该数值作为独立速度身份。
  * Shield/MaxShield（旧护盾字段）已删除：护盾改由限时GameplayEffect（玩法效果）
  * 与战斗组件持有的临时吸收池结算，不再维护或复制护盾永久属性。
  * IncomingDamage/IncomingHealing（伤害/治疗元属性）不复制、消费后清零。
@@ -61,6 +63,13 @@ public:
     FGameplayAttributeData DamageReduction;
     GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, DamageReduction)
 
+    /** GE加法叠加的临时移动速度倍率，1=正常，0.7=减速30%；向所有相关客户端复制运动可见事实。
+     * 主基础速度始终由角色定义拥有，不在平台属性集保存第二份。
+     * GAS重算/过期后会触发OnRep与AttributeChange事件，消费者只在事件回调更新移动。 */
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MoveSpeedMultiplier, Category="Combat|Movement")
+    FGameplayAttributeData MoveSpeedMultiplier;
+    GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, MoveSpeedMultiplier)
+
     UPROPERTY(BlueprintReadOnly, Category="Combat|Meta")
     FGameplayAttributeData IncomingDamage;
     GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, IncomingDamage)
@@ -84,6 +93,9 @@ protected:
 
     UFUNCTION()
     void OnRep_DamageBonus(const FGameplayAttributeData& OldValue);
+
+    UFUNCTION()
+    void OnRep_MoveSpeedMultiplier(const FGameplayAttributeData& OldValue);
 
     UFUNCTION()
     void OnRep_DamageReduction(const FGameplayAttributeData& OldValue);

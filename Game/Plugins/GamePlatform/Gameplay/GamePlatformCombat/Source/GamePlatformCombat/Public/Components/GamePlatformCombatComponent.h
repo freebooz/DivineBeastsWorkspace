@@ -115,6 +115,15 @@ public:
         EGamePlatformControlType ControlType,
         float DurationSeconds);
 
+    /** GT服务器减速：数值比例0.05～0.70、持续1～10秒，真正降低GAS MoveSpeedMultiplier；
+     * 目标必须持有可注册的ACharacterMovement和CombatAttributeSet。
+     * 客户端只观察该属性复制；没有任意客户端施加减速RPC。 */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
+    FGamePlatformCombatResult ApplySlow(
+        const FGamePlatformCombatSpec& InSpec,
+        float SlowFraction,
+        float DurationSeconds);
+
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
     bool RemoveControl(EGamePlatformControlType ControlType);
 

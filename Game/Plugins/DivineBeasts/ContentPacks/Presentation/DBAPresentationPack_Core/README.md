@@ -62,4 +62,4 @@ V2已因刃面平、粗亮边及内部/云纹细节不足被用户退回；按�
 
 用户明确授权制作第二项定向飞弹，并要求修正弹头比例、三条加粗尾迹及相邻60°相位。本轮仅实现该审核候选，不把此授权解释为凝锋已通过人工审核。资源归`VFX/CommonSkillVFX/Review/V1/DirectedMissile`，源归`SourceArt/VFX/CommonSkillVFX/V1/DirectedMissile`；仍复用平台Projectile Definition与唯一VFX执行链，没有生产技能绑定或新播放器。
 
-17份原生包、一个System/四个CPU Emitter、11168三角形/三材质段；translucent_energy_layers_03修订保持外轮廓比例，补实加厚瓣面、弯曲金边、尖端聚能；三条世界历史Ribbon相位0°/60°/120°、宽度26厘米，共用一材质。有界空气包络随弹头生命周期启停。保存源与FBX倒面修正后复核通过；Monolith编译/保存、独立UE冷加载、十实例有限结束、空气开关对照及60帧原生媒体核对通过。证据归`Saved/Validation/CommonSkillVFX/DirectedMissileV1`，最终序列`RenderRuns/20261018T130610181319Z`。人工视觉、正式接入、四档质量、打包GPU与Cook仍待验证；完整纹理/材质拆解及Niagara提示词见工作空间`Docs/Implementation/VFX/SSLM定向飞弹V1拆解与完整Niagara制作提示词_20261018.md`。
+17份原生包、一个System/四个CPU Emitter、11168三角形/三材质段；translucent_energy_layers_03修订保持外轮廓比例，补实加厚瓣面、弯曲金边、尖端聚能；三条世界历史Ribbon相位0°/60°/120°、宽度26厘米，共用一材质。有界空气包络随弹头生命周期启停。保存源与FBX倒面修正后复核通过；Monolith编译/保存、独立UE冷加载、十实例有限结束、空气开关对照及60帧原生媒体核对通过。证据归`Saved/Validation/CommonSkillVFX/DirectedMissileV1`，最终序列`RenderRuns/20261018T131417986824Z`。人工视觉、正式接入、四档质量、打包GPU与Cook仍待验证；完整纹理/材质拆解及Niagara提示词见工作空间`Docs/Implementation/VFX/SSLM定向飞弹V1拆解与完整Niagara制作提示词_20261018.md`。

@@ -342,7 +342,7 @@
     "ColdProcessExitCode": 0,
     "TenInstanceLifecyclePassed": true,
     "NativeSequenceFrames": 60,
-    "NativeRenderRun": "20261018T130610181319Z",
+    "NativeRenderRun": "20261018T131417986824Z",
     "AirWaveNativeABValidated": true,
     "AirWaveStrength": 0.35,
     "ManualVisualAccepted": false,
@@ -353,10 +353,10 @@
     "AirWaveQualityVariantsVerified": false,
     "EvidenceRoot": "Saved/Validation/CommonSkillVFX/DirectedMissileV1",
     "NoteZh": "仅同一定向飞弹审核修订：填实加厚瓣面、弯曲金边、同槽聚能细芒、三尾连续渐隐及末段收束；0/60/120度原生输入已回读。17包独立冷加载及60帧媒体核对；人工视觉、正式接入、四档/GPU/Cook仍待验证，不宣称完全复刻参考图。",
-    "StyleRevision": "filled_faceted_flame_02",
+    "StyleRevision": "translucent_energy_layers_03",
     "MeshVertices": 6097,
-    "ColdProcessPID": 45092,
-    "AirWaveChangedPixels": 3227,
+    "ColdProcessPID": 41064,
+    "AirWaveChangedPixels": 3399,
     "MaterialCompiled": true
   }
 }

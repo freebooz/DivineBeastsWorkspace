@@ -18,6 +18,8 @@ namespace GamePlatformCombatTags
 
     UE_DEFINE_GAMEPLAY_TAG(Control_Stun, "Combat.Control.Stun");
     UE_DEFINE_GAMEPLAY_TAG(Control_Silence, "Combat.Control.Silence");
+    UE_DEFINE_GAMEPLAY_TAG(Control_Slow, "Combat.Control.Slow");
+    UE_DEFINE_GAMEPLAY_TAG(Data_Control_SlowFraction, "Combat.Data.Control.SlowFraction");
 
     UE_DEFINE_GAMEPLAY_TAG(Event_Damage, "Combat.Event.Damage");
     UE_DEFINE_GAMEPLAY_TAG(Event_Healing, "Combat.Event.Healing");

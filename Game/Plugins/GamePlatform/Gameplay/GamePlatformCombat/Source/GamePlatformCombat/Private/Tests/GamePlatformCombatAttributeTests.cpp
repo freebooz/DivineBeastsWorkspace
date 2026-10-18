@@ -85,6 +85,21 @@ bool FGamePlatformCombatAttributeDefaultsTest::RunTest(const FString& Parameters
     TestEqual(TEXT("默认Health"), Attributes->GetHealth(), 100.0f);
     TestEqual(TEXT("默认能量上限"), Attributes->GetMaxEnergy(), 100.0f);
     TestEqual(TEXT("默认能量已满"), Attributes->GetEnergy(), 100.0f);
+    TestEqual(TEXT("平台减速倍率默认恢复值为1"), Attributes->GetMoveSpeedMultiplier(), 1.0f);
+    float TooSlow = 0.1f;
+    Attributes->PreAttributeChange(
+        UGamePlatformCombatAttributeSet::GetMoveSpeedMultiplierAttribute(), TooSlow);
+    TestEqual(TEXT("减速最大70%，倍率不得低于0.30"), TooSlow, 0.30f);
+    float SpeedBeyondNormal = 1.5f;
+    Attributes->PreAttributeChange(
+        UGamePlatformCombatAttributeSet::GetMoveSpeedMultiplierAttribute(), SpeedBeyondNormal);
+    TestEqual(TEXT("减速系统不得隐式赋予加速"), SpeedBeyondNormal, 1.0f);
+    const uint32 SlowNaNBits = 0x7FC00000u;
+    float SlowNan = 0.0f;
+    FMemory::Memcpy(&SlowNan, &SlowNaNBits, sizeof(float));
+    Attributes->PreAttributeChange(
+        UGamePlatformCombatAttributeSet::GetMoveSpeedMultiplierAttribute(), SlowNan);
+    TestTrue(TEXT("非有限减速倍率必须被规范化"), FMath::IsFinite(SlowNan));
     float OverflowEnergy = 150.0f;
     Attributes->PreAttributeChange(UGamePlatformCombatAttributeSet::GetEnergyAttribute(), OverflowEnergy);
     TestEqual(TEXT("能量不得超过上限"), OverflowEnergy, 100.0f);

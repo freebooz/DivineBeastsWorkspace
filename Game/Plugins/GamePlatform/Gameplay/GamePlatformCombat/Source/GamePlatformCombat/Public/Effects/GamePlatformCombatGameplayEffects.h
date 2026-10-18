@@ -63,3 +63,14 @@ public:
      */
     explicit UGamePlatformSilenceGameplayEffect(const FObjectInitializer& ObjectInitializer);
 };
+
+/** 平台通用限时减速GE：每个来源独立有GAS有效句柄；服务端SetByCaller提供负比例。
+ * 只修改MoveSpeedMultiplier GAS属性，不在GE中直接写CharacterMovement或执行客户端命令。 */
+UCLASS()
+class GAMEPLATFORMCOMBAT_API UGamePlatformSlowGameplayEffect final
+    : public UGameplayEffect
+{
+    GENERATED_BODY()
+public:
+    explicit UGamePlatformSlowGameplayEffect(const FObjectInitializer& ObjectInitializer);
+};

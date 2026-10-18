@@ -9,6 +9,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "Subsystems/GamePlatformCombatFeedbackWorldSubsystem.h"
 #include "Settings/GamePlatformCombatSettings.h"
@@ -66,6 +68,9 @@ void UGamePlatformCombatComponent::BeginPlay()
         .AddUObject(
             this,
             &UGamePlatformCombatComponent::HandleControlTagChanged);
+    AbilitySystemComponent->RegisterGameplayTagEvent(
+        GamePlatformCombatTags::Control_Slow, EGameplayTagEventType::NewOrRemoved)
+        .AddUObject(this, &UGamePlatformCombatComponent::HandleControlTagChanged);
 }
 
 void UGamePlatformCombatComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -564,6 +569,116 @@ FGamePlatformCombatResult UGamePlatformCombatComponent::ApplyControl(
     return Result;
 }
 
+
+FGamePlatformCombatResult UGamePlatformCombatComponent::ApplySlow(
+    const FGamePlatformCombatSpec& InSpec, float SlowFraction, float DurationSeconds)
+{
+    FGamePlatformCombatSpec Spec = NormalizeSpec(InSpec);
+    Spec.Magnitude = SlowFraction; // 独立比例参数；实际运动倍率由SetByCaller的负值在GAS持续聚合。
+    FGamePlatformCombatResult Result;
+    Result.EventId = Spec.EventId;
+    Result.RequestedMagnitude = SlowFraction;
+    if (!IsInGameThread() || bCombatClosing || HasCompletedEvent(Spec.EventId))
+    {
+        Result.Error = EGamePlatformCombatError::Cancelled;
+        return Result;
+    }
+    const auto* Settings = GetDefault<UGamePlatformCombatSettings>();
+    if (!FMath::IsFinite(SlowFraction) || SlowFraction <= 0.0f ||
+        SlowFraction > FMath::Min(0.70f, Settings->MaxSlowFraction) ||
+        !FMath::IsFinite(DurationSeconds) || DurationSeconds <= 0.0f ||
+        DurationSeconds > FMath::Min(10.0f, Settings->MaxSlowDuration))
+    {
+        Result.Error = EGamePlatformCombatError::InvalidMagnitude;
+        return Result;
+    }
+
+    const EGamePlatformCombatError Validation = ValidateSpec(Spec, false, false);
+    if (Validation != EGamePlatformCombatError::None)
+    {
+        Result.Error = Validation;
+        return Result;
+    }
+    // 只有存在真实CharacterMovement的权威Pawn可以承受减速；没有绑定消费者不假报生效。
+    ACharacter* TargetCharacter = Cast<ACharacter>(Spec.Target);
+    const auto* Movement = IsValid(TargetCharacter) ? TargetCharacter->GetCharacterMovement() : nullptr;
+    UGamePlatformCombatComponent* TargetCombat =
+        IsValid(TargetCharacter) ? TargetCharacter->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+    UGamePlatformAbilitySystemComponent* SourceASC =
+        Spec.Source->FindComponentByClass<UGamePlatformAbilitySystemComponent>();
+    UGamePlatformAbilitySystemComponent* TargetASC =
+        Spec.Target->FindComponentByClass<UGamePlatformAbilitySystemComponent>();
+    if (!IsValid(Movement) || !Movement->IsRegistered() || !IsValid(TargetCombat) ||
+        !IsValid(SourceASC) || !IsValid(TargetASC) ||
+        !IsValid(TargetASC->GetSet<UGamePlatformCombatAttributeSet>()))
+    {
+        Result.Error = EGamePlatformCombatError::InvalidActorInfo;
+        return Result;
+    }
+
+    // 保存两个组件/Avatar身份；GE应用会同步触发Attributes/GAS监听者，监听者可能死亡、离开地图或换Pawn。
+    const uint64 SourceLifecycle = ComponentLifecycleGeneration;
+    const uint64 TargetLifecycle = TargetCombat->ComponentLifecycleGeneration;
+    const int32 SourceAvatar = AvatarGeneration;
+    const int32 TargetAvatar = TargetCombat->AvatarGeneration;
+    const TWeakObjectPtr<AActor> SourceActor(Spec.Source);
+    const TWeakObjectPtr<AActor> TargetActor(Spec.Target);
+    const TWeakObjectPtr<AActor> SourceASCActor(SourceASC->GetAvatarActor());
+    const TWeakObjectPtr<AActor> TargetASCActor(TargetASC->GetAvatarActor());
+
+    const FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
+    FGameplayEffectSpecHandle EffectSpec = SourceASC->MakeOutgoingSpec(
+        UGamePlatformSlowGameplayEffect::StaticClass(), 1.0f, Context);
+    if (!EffectSpec.IsValid())
+    {
+        Result.Error = EGamePlatformCombatError::EffectApplicationFailed;
+        return Result;
+    }
+    EffectSpec.Data->SetDuration(DurationSeconds, true);
+    EffectSpec.Data->SetSetByCallerMagnitude(
+        GamePlatformCombatTags::Data_Control_SlowFraction, -SlowFraction);
+    const FActiveGameplayEffectHandle Applied =
+        SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpec.Data.Get(), TargetASC);
+    if (!Applied.WasSuccessfullyApplied())
+    {
+        Result.Error = EGamePlatformCombatError::EffectApplicationFailed;
+        return Result;
+    }
+    const bool bCurrent =
+        !bCombatClosing && IsValid(this) && IsValid(TargetCombat) &&
+        IsValid(SourceActor.Get()) && IsValid(TargetActor.Get()) &&
+        IsValid(SourceASC) && IsValid(TargetASC) &&
+        ComponentLifecycleGeneration == SourceLifecycle &&
+        TargetCombat->ComponentLifecycleGeneration == TargetLifecycle &&
+        AvatarGeneration == SourceAvatar && TargetCombat->AvatarGeneration == TargetAvatar &&
+        !bDead && !TargetCombat->bDead &&
+        GetOwner() == SourceActor.Get() && TargetCombat->GetOwner() == TargetActor.Get() &&
+        SourceASC->GetAvatarActor() == SourceASCActor.Get() &&
+        TargetASC->GetAvatarActor() == TargetASCActor.Get() &&
+        SourceActor->GetWorld() == TargetActor->GetWorld() &&
+        IsValid(GetWorld()) && !GetWorld()->bIsTearingDown;
+    if (!bCurrent)
+    {
+        // 只撤销本次真实GE句柄，不清除其他来源的减速。若新Avatar已重置，绝不操作其新状态。
+        if (IsValid(TargetASC) && IsValid(TargetCombat) &&
+            TargetCombat->AvatarGeneration == TargetAvatar &&
+            TargetASC->GetAvatarActor() == TargetASCActor.Get())
+        {
+            TargetASC->RemoveActiveGameplayEffect(Applied);
+        }
+        Result.Error = EGamePlatformCombatError::Cancelled;
+        return Result;
+    }
+    Result.FinalMagnitude = SlowFraction;
+    Result.ResultTags.AddTag(GamePlatformCombatTags::Control_Slow);
+    MarkEventCompleted(Spec.EventId);
+    TargetCombat->PublishCombatEvent(EGamePlatformCombatEventType::ControlApplied, Spec, Result);
+    // 平台统一控制反馈，客户端实际速度由复制的MoveSpeedMultiplier而不是Cue控制。
+    if (IsValid(TargetCombat) && TargetCombat->AvatarGeneration == TargetAvatar)
+        TargetCombat->ExecuteGameplayCue(GamePlatformCombatTags::GameplayCue_Control, Spec, Result);
+    return Result;
+}
+
 bool UGamePlatformCombatComponent::RemoveControl(
     EGamePlatformControlType ControlType)
 {
@@ -580,6 +695,9 @@ bool UGamePlatformCombatComponent::RemoveControl(
         break;
     case EGamePlatformControlType::Silence:
         ControlTag = GamePlatformCombatTags::Control_Silence;
+        break;
+    case EGamePlatformControlType::Slow:
+        ControlTag = GamePlatformCombatTags::Control_Slow;
         break;
     default:
         return false;
@@ -646,6 +764,7 @@ bool UGamePlatformCombatComponent::ResetForNewAvatar(
     CombatStateTags.AddTag(GamePlatformCombatTags::State_Dead);
     CombatStateTags.AddTag(GamePlatformCombatTags::Control_Stun);
     CombatStateTags.AddTag(GamePlatformCombatTags::Control_Silence);
+    CombatStateTags.AddTag(GamePlatformCombatTags::Control_Slow);
     ASC->RemoveActiveEffectsWithGrantedTags(CombatStateTags);
     if (!IsCurrent()) return false;
 
@@ -841,7 +960,8 @@ void UGamePlatformCombatComponent::HandleControlTagChanged(
     }
 
     if (Tag != GamePlatformCombatTags::Control_Stun &&
-        Tag != GamePlatformCombatTags::Control_Silence)
+        Tag != GamePlatformCombatTags::Control_Silence &&
+        Tag != GamePlatformCombatTags::Control_Slow)
     {
         return;
     }
@@ -1179,6 +1299,7 @@ void UGamePlatformCombatComponent::EnterDeadState(
         FGameplayTagContainer ControlTags;
         ControlTags.AddTag(GamePlatformCombatTags::Control_Stun);
         ControlTags.AddTag(GamePlatformCombatTags::Control_Silence);
+        ControlTags.AddTag(GamePlatformCombatTags::Control_Slow);
         AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(ControlTags);
     }
 

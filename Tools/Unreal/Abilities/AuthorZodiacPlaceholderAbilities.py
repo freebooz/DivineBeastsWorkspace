@@ -24,18 +24,20 @@ HERO_ROOT = "/DBAGameplay/Definitions"
 HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
           "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar")
 SLOTS = (
-    ("Primary", "花瓣绽放", "PRIMARY", "PRIMARY", 0, 0, 10, 2000, 0, 0, 1, 0),
+    ("Primary", "花瓣绽放", "PRIMARY", "SLOT3", 0, 0, 10, 2000, 0, 0, 1, 0),
     ("Passive", "被动技能（占位）", "PASSIVE", "", 0, 0, 0, 0, 0, 0, 1, 0),
     ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 2000, 1200, 0, 1, 0),
     ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 2000, 1600, 0, 1, 0),
     ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 2000, 1400, 18, 3, .2),
+    ("DirectedMissile", "定向飞弹", "ACTIVE", "PRIMARY", 40, 0, 2, 2000, 1200, 0, 1, 0),
 )
-MAGIC_SLOTS = ("Fireball", "Frostbolt", "ArcaneMissiles")
+MAGIC_SLOTS = ("Fireball", "Frostbolt", "ArcaneMissiles", "DirectedMissile")
 COOLDOWNS = ("Primary",) + MAGIC_SLOTS
 MAGIC_ICONS = {
     name: "/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_Dev" + name
     for name in MAGIC_SLOTS
 }
+MAGIC_ICONS["DirectedMissile"] = MAGIC_ICONS["Fireball"]
 DRAFT = WORKSPACE / "Docs/Implementation/ZodiacAbilityDevelopmentDraft_20261009.json"
 SAVED = []
 ASSET_TOOLS = unreal.AssetToolsHelpers.get_asset_tools()
@@ -151,7 +153,7 @@ def preflight():
         check(isinstance(unreal.load_asset(path), unreal.Texture2D),
               "临时魔法图标缺失：" + name)
         tag("DivineBeasts.Placeholder.Cooldown." + name)
-    for input_name in ("Primary", "Slot1", "Slot2", "Slot4"):
+    for input_name in ("Primary", "Slot1", "Slot2", "Slot3", "Slot4"):
         tag("Platform.Ability.Input.DivineBeasts." + input_name)
     tag("Ability.Active")
     tag("Ability.Spell")
@@ -255,8 +257,9 @@ def author():
             ga_bp, _temp, cdo = blueprint(ga_path, unreal.DivineBeastsPlaceholderGameplayAbility)
             cdo.set_editor_property("AbilityDefinitionId", primary(identity))
             cdo.set_editor_property("PlaceholderMode",
-                getattr(unreal.DivineBeastsPlaceholderAbilityMode, "HEALING" if mode == "Primary" else mode.upper() if mode != "ArcaneMissiles"
+                getattr(unreal.DivineBeastsPlaceholderAbilityMode, "FIREBALL" if mode == "DirectedMissile" else "HEALING" if mode == "Primary" else mode.upper() if mode != "ArcaneMissiles"
                     else "ARCANE_MISSILES"))
+            cdo.set_editor_property("PresentationStyleOverride", "DBA.Development.DirectedMissile" if mode == "DirectedMissile" else "None")
             motion = unreal.GamePlatformCombatProjectileMotion()
             if speed > 0:
                 for key, val in {
