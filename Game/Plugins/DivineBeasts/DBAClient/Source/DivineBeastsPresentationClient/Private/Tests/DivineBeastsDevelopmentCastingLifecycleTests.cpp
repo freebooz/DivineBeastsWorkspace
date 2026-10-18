@@ -426,4 +426,35 @@ bool FDivineBeastsCastingMapGrowthReentryTest::RunTest(const FString&)
     TestEqual(TEXT("当前账本必须仍拥有可清理锚点"), F.RegisteredAnchorCount(), 0);
     return true;
 }
+/** 声音须在真实施法窗口开始，VFX不可用不静音；重复通知不重播，取消立即收敛。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsCastingAudioTimingTest,
+    "DivineBeasts.Presentation.DevelopmentCasting.AudioStartsWithCastAndStopsOnCancel",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsCastingAudioTimingTest::RunTest(const FString&)
+{
+    FDivineBeastsDevelopmentCastingTestFixture F(*this); if (!F.Initialize()) return false;
+    const auto SoundTag=FGameplayTag::RequestGameplayTag(TEXT("Presentation.SSLM.Audio.Spell.Frost.Cast"));
+    int32 Started=0, Cancelled=0; FGuid SoundRequest;
+    const auto Provider=F.Platform->RegisterProvider(TEXT("Test.CastAudio"),1,
+        FGamePlatformPresentationProviderHandler::CreateLambda([&](const FGamePlatformPresentationRequest& R)
+        { return R.SemanticTag==SoundTag; }));
+    const auto Observer=F.Platform->OnRequestObserved().AddLambda(
+        [&](const FGamePlatformPresentationRequest& R,EGamePlatformPresentationSubmitResult Result)
+        {
+            if(R.SemanticTag!=SoundTag) return;
+            if(R.PredictionState==EGamePlatformPresentationPredictionState::Cancelled)
+            { ++Cancelled; TestEqual(TEXT("取消属于原施法声音"),R.RequestId,SoundRequest); }
+            else if(Result==EGamePlatformPresentationSubmitResult::Submitted)
+            { ++Started; SoundRequest=R.RequestId; }
+        });
+    F.bProviderReady=false; const auto CastId=FGuid::NewGuid();
+    TestTrue(TEXT("真实开始两秒施法"),F.Publish(CastId,true,1,2.0f));
+    TestEqual(TEXT("弹体尚未生成时施法声已经开始，VFX缺失不影响"),Started,1);
+    F.NotifyContentActive(); TestEqual(TEXT("重复就绪不重播声音"),Started,1);
+    TestTrue(TEXT("真实取消施法"),F.Cast->CancelConfirmedCast(CastId));
+    TestEqual(TEXT("取消施法同时取消声音"),Cancelled,1);
+    F.NotifyContentActive(); TestEqual(TEXT("取消后不补播"),Started,1);
+    F.Platform->OnRequestObserved().Remove(Observer); F.Platform->UnregisterProvider(Provider);
+    return true;
+}
 #endif

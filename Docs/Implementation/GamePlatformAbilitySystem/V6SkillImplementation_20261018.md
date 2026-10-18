@@ -250,3 +250,33 @@ DBAClient/DivineBeastsUIClient与DivineBeastsPresentationClient（只读8槽显�
 - `GamePlatformCombatDisplacementTests.cpp`（平台纯向量正反向原生测试）及`DivineBeastsV6AbilityContractTests.cpp`（V6推拉动作测试）需后续编译并执行UE5.8原生测试，当前只有源码。
 - 强制位移网络同步需要实测对象：移动组件地面/空中模式变化、墙边突进和角落阻挡、多来源重复GUID、2人及5v5网络移动、物理更新顺序、濒死后取消、背向控制与低FPS。UE结果未取得前保持禁止授予。
 - 回退只需不签发新的V6 GA和AbilitySet；用户现有12个占位集合以及早期显示名均不变。
+## 十三、V6 十二生肖固有被动实施：裂甲与战意（仅服务端源码，待编译）
+
+本批以`Docs/Design/ZodiacHistoryFirstEightSkillsV6_Review.json`（V6历史设计真源）的12英雄及12项独立固有被动为基准，在`Docs/Implementation/GamePlatformAbilitySystem/V6PassiveImplementationMatrix_20261018.json`（12项被动实施矩阵）逐英雄登记原始名称、机制、代码能力和缺口。**只完成2类底层GAS事件结算源码，尚未完成2个历史被动的全部玩法，更不能认定12项被动均已实现。**
+
+### 架构与源码
+
+- `UDivineBeastsV6PassiveDefinition`（待审被动数据定义）具有`HeroDefinitionId`（服务器英雄身份）、`Mode`（两种可执行候选或不支持）、`FDivineBeastsV6PassiveRules`（有效期、叠层、每层加减伤、最低已确认伤害）和`bApprovedForRuntime`（正式审核批准位，默认false）。全部数值默认零，防止把临时示例数值当作正式平衡；草案尚无原生.uasset。
+- `UDivineBeastsV6PassiveComponent`（角色被动服务器组件）作为`ADivineBeastsGameplayCharacter`（现有可玩角色）的一个**默认关闭**子对象，复用其唯一ASC、Combat与CharacterIdentity。只在真实DataService资产被显式签审并由后续授权装配调用`AuthorityConfigureFromApprovedDefinition`（权威加载已批准被动）后才会激活；**目前没有任何调用方，也没有生成已批准资产，因此现有占位玩法不受影响。** 不在角色或子系统创建第二个GAS、战斗属性集、伤害服务或Ticker。
+- `UDivineBeastsV6TigerFractureGameplayEffect`（寅虎裂甲GE）按服务器真实V6技能命中使用已有`DamageReduction`（伤害减免）属性的负数加法修改器。同一个虎的目标可按同源GE有期叠层，服务器换猎物时撤销旧猎物上本人持有的效果句柄；真实扣血及伤害计算仍属于平台Combat。当前项目没有独立Armor（护甲）数值属性，因此这属于*减免削弱*，不是伪称已恢复完整甲胄/破甲曲线。
+- `UDivineBeastsV6BoarBattleWillGameplayEffect`（亥猪战意GE）只监听本Pawn权威`OnCombatEvent`（已结算战斗事件）的Damage事件，按`AppliedToHealth + AppliedToShield`（真实生命和护盾承伤）验证资格，再用GAS已有`DamageBonus`（基础伤害增量）属性给予有期叠层增益；没有客户端自报承伤或AI假战斗事件。**低血额外收益、脱战加速衰减尚未实现**。
+- 两类GE均将最大层数硬限制为5，具体获批规则还会在组件中检查`Rules.MaxStacks`（正式配置上限），有效期由GAS独立管理，不通过组件Tick轮询。重复EventId在服务端缓存最多128条，退出、角色身份变化、Ready取消和Avatar切换时失效并撤销本组件拥有的效果句柄，不清理其他来源/技能的GE。
+- 正式V6伤害执行器`UDivineBeastsV6GameplayAbility`（V6技能执行器）仅在平台`ApplyDamage`返回合法真实伤害后将事件交给被动组件；复合技能中的多段附加控制仍保持原有独立结算。旧占位GA不走该接口。客户端的GAS属性复制负责真实增减伤；特效图标不进入Dedicated Server战斗数值计算。
+
+### 12生肖被动实际交付层级
+
+| 被动 | 技术成果 | 与历史V6剩余差距 |
+|---|---|---|
+| 寅虎「裂甲」 | 已写真实命中→目标DamageReduction有期削弱和同猎物叠层逻辑 | 正式数值未签、多人承伤叠层实测未完成 |
+| 亥猪「战意」 | 已写真受伤事件→本人DamageBonus有期叠层逻辑 | 低血额外收益、脱战衰减、层数UI未完成 |
+| 子鼠「嗅弱」、丑牛「镇山」、卯兔「月闪」、辰龙「天象轮转」、巳蛇「毒记」、午马「奔雷之势」、未羊「灵愿」、申猴「百戏本能」、酉鸡「暗迹」、戌狗「守阙」 | V6矩阵中保留历史设计及服务器资格要求 | 都没有完整权威玩法事件/状态或GE资产，**继续失败关闭** |
+
+**实施状态：** 12项被动实际获得正式批准0；12份正式被动DataAsset 0；本批仅2类原生机制源码（Tiger、Boar），其他10类明确未实现。正式英雄默认`DefaultAbilitySetId`（默认技能集合）和96个主动技能稳定编号、V5名称均未改动。
+
+### 验收、重入及后续门禁
+
+- `Tests/Architecture/TestV6PassiveImplementation.py`（被动源码及12生肖对应性检查）：10个非编译正反例检查，覆盖历史名称、审批默认关闭、实际已确认伤害、叠层、身份代次和自己拥有GE的释放。
+- `DivineBeastsV6PassiveDefinitionTests.cpp`（虚幻原生被动合同测试）包含Definition审批正反例、Tiger和Boar真实GE类默认对象、Stack上限及目标平台属性测试源码；**只有UE5.8编译并原生运行成功后才可标记通过**。
+- 待单独实施：获批的项目被动DataAsset通过`GamePlatformData`（统一资产租约服务）实际加载、验收并授权；角色切换的GE撤销实测，叠层回收/到期、重复命中/断线/重生与多人网络复制；寅虎与亥猪的完整历史条件，其他10项专有被动，技能栏及创建角色被动详情。
+- 本次按长期授权**不执行UHT、UBT、UE原生编译、蓝图编译、Cook或Monolith写.uasset**。无运行证据前不得以“源码已写”宣称已完成正式技能。需要独立审核后才允许交付生产。
+

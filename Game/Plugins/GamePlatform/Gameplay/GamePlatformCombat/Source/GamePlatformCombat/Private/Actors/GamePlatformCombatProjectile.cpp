@@ -50,10 +50,26 @@ bool AGamePlatformCombatProjectile::AuthorityInitialize(const FGamePlatformComba
     bHasHomingTarget = Spec.Target != nullptr;
     HomingTarget = Spec.Target.Get(); HomingTargetAvatarGeneration = Spec.TargetAvatarGeneration;
     HomingCenter = Origin;
-    if (!HasCurrentHomingTarget() || (bHasHomingTarget &&
-        FVector::DistSquared(Origin,HomingTarget->FindComponentByClass<UGamePlatformCombatComponent>()->GetCombatTargetPoint()) > FMath::Square(Motion.RangeCm)))
+    FlightEndSeconds = Motion.RangeCm / Motion.SpeedCmPerSecond;
+    if (!HasCurrentHomingTarget())
     {
         CastSpec={}; HomingTarget.Reset(); bHasHomingTarget=false; return false;
+    }
+    if (bHasHomingTarget)
+    {
+        const FVector TargetCenter = HomingTarget->FindComponentByClass<UGamePlatformCombatComponent>()->GetCombatTargetPoint();
+        const FVector SourceCenter = Spec.Source->FindComponentByClass<UGamePlatformCombatComponent>()->GetCombatTargetPoint();
+        // 锁定距离从施法者中心校验，不能因向前的手部起射偏移而拒绝后方的合法射程边界目标。
+        if (FVector::DistSquared(SourceCenter, TargetCenter) > FMath::Square(Motion.RangeCm))
+        {
+            CastSpec={}; HomingTarget.Reset(); bHasHomingTarget=false; return false;
+        }
+        const FVector ToTarget = TargetCenter - Origin;
+        const float InitialAngle = FMath::Acos(FMath::Clamp(FVector::DotProduct(Axis, ToTarget.GetSafeNormal()), -1.0, 1.0));
+        const float TurnRate = GetHomingTurnRateRadians(ToTarget.Size());
+        const float MuzzleExcessSeconds = FMath::Max(0.f, static_cast<float>(ToTarget.Size()) - Motion.RangeCm) / Motion.SpeedCmPerSecond;
+        // 只补偿初次弯弧及起射偏移，最多0.5秒；不因后续目标移动反复延寿，不扩大选中/伤害资格。
+        FlightEndSeconds += FMath::Min(.5f, 2.f * InitialAngle / TurnRate + MuzzleExcessSeconds);
     }
     // 弹体不持有目标强引用；仅冻结其身份，真正命中仍取本次服务器Sweep结果。
     CastSpec.Target=nullptr;
@@ -65,6 +81,7 @@ bool AGamePlatformCombatProjectile::AuthorityInitialize(const FGamePlatformComba
     Facts.OccurrenceId = Spec.EventId; Facts.AbilityId = Spec.SourceAbilityId;
     Facts.SourceAvatarGeneration = Spec.SourceAvatarGeneration; Facts.PresentationStyleId = StyleId;
     Facts.bStarted = true;
+    SetActorRotation(Axis.Rotation()); // 出生复制与附着VFX在第一帧就遵循真实施法切线。
     SetOwner(Spec.Source.Get()); SetActorTickEnabled(true);
     ForceNetUpdate(); OnRep_Facts();
     return true;
@@ -81,11 +98,34 @@ bool AGamePlatformCombatProjectile::HasCurrentHomingTarget() const
         Combat->GetCombatAvatarGeneration()==HomingTargetAvatarGeneration;
 }
 
-FVector AGamePlatformCombatProjectile::AdvanceHomingPosition(float StepSeconds)
+float AGamePlatformCombatProjectile::GetHomingTurnRateRadians(float DistanceCm) const
 {
-    const FVector TargetCenter = HomingTarget->FindComponentByClass<UGamePlatformCombatComponent>()->GetCombatTargetPoint();
+    // 常规最大转弯半径由720度/秒决定；接近目标时收紧半径，避免大半径追逐小目标而绕圈。
+    const float Radius = FMath::Max(.25f * DistanceCm, 2.f * FlightMotion.CollisionRadiusCm);
+    return FMath::Max(4.f * UE_PI, FlightMotion.SpeedCmPerSecond / Radius);
+}
+
+FVector AGamePlatformCombatProjectile::AdvanceHomingPosition(float StepSeconds, const FVector& TargetCenter, float TurnRateRadians)
+{
     const FVector Desired=(TargetCenter-HomingCenter).GetSafeNormal();
-    if (!Desired.IsNearlyZero()) Axis=Desired;
+    if (!Desired.IsNearlyZero())
+    {
+        const float Angle = FMath::Acos(FMath::Clamp(FVector::DotProduct(Axis, Desired), -1.0, 1.0));
+        const float Turn = TurnRateRadians * StepSeconds;
+        if (Angle <= Turn) Axis = Desired;
+        else
+        {
+            FVector TurnNormal = FVector::CrossProduct(Axis, Desired).GetSafeNormal();
+            if (TurnNormal.IsNearlyZero())
+            {
+                // 正后方时叉积退化：优先水平绕弧；竖直起射投影退化再使用Right，避免NaN/瞬间反向。
+                TurnNormal = (FVector::UpVector - Axis * FVector::DotProduct(FVector::UpVector, Axis)).GetSafeNormal();
+                if (TurnNormal.IsNearlyZero())
+                    TurnNormal = (FVector::RightVector - Axis * FVector::DotProduct(FVector::RightVector, Axis)).GetSafeNormal();
+            }
+            Axis = FQuat(TurnNormal, Turn).RotateVector(Axis).GetSafeNormal();
+        }
+    }
     // 传递正交截面；换轴后先补偿当前相位偏移，保证本段从真实当前位置连续起步。
     RadialY=(RadialY-Axis*FVector::DotProduct(RadialY,Axis)).GetSafeNormal();
     if (RadialY.IsNearlyZero()) RadialY=FVector::CrossProduct(FVector::UpVector,Axis).GetSafeNormal(UE_SMALL_NUMBER,FVector::RightVector);
@@ -122,16 +162,23 @@ void AGamePlatformCombatProjectile::Tick(float DeltaSeconds)
     float Remaining = FMath::Min(DeltaSeconds, 0.25f);
     const float StepLimit = FMath::Min(1.0f / 120.0f, FMath::Min(15.0f / FlightMotion.SpeedCmPerSecond,
         FlightMotion.HelixTurnsPerSecond > 0 ? 1.0f / (32 * FlightMotion.HelixTurnsPerSecond) : 1.0f));
-    const float EndSeconds = FlightMotion.RangeCm / FlightMotion.SpeedCmPerSecond;
     FCollisionQueryParams Query(TEXT("GamePlatformCombatProjectile"), false, this);
     Query.AddIgnoredActor(CastSpec.Source.Get());
     for (int32 Segment = 0; Segment < 256 && Remaining > UE_SMALL_NUMBER && !Facts.bFinished; ++Segment)
     {
         if (!HasCurrentHomingTarget()) { FinishFlight(nullptr); break; }
-        const float Step = FMath::Min(Remaining, FMath::Min(StepLimit, EndSeconds - FlightSeconds));
+        FVector TargetCenter = FVector::ZeroVector;
+        float TurnRate = 0.f;
+        float Step = FMath::Min(Remaining, FMath::Min(StepLimit, FlightEndSeconds - FlightSeconds));
+        if (bHasHomingTarget)
+        {
+            TargetCenter = HomingTarget->FindComponentByClass<UGamePlatformCombatComponent>()->GetCombatTargetPoint();
+            TurnRate = GetHomingTurnRateRadians(FVector::Distance(HomingCenter, TargetCenter));
+            Step = FMath::Min(Step, (UE_PI / 16.f) / TurnRate); // 弯弧每段最多11.25度，同样经过真实Sweep。
+        }
         if (Step <= UE_SMALL_NUMBER) { FinishFlight(nullptr); break; }
         const FVector Start = GetActorLocation();
-        const FVector End = bHasHomingTarget ? AdvanceHomingPosition(Step) : PositionAt(FlightSeconds + Step);
+        const FVector End = bHasHomingTarget ? AdvanceHomingPosition(Step, TargetCenter, TurnRate) : PositionAt(FlightSeconds + Step);
         FHitResult VisibilityHit;
         FHitResult PawnHit;
         const FCollisionShape Shape = FCollisionShape::MakeSphere(FlightMotion.CollisionRadiusCm);
@@ -149,7 +196,7 @@ void AGamePlatformCombatProjectile::Tick(float DeltaSeconds)
         FlightSeconds += Step; Remaining -= Step;
         if (bHasHomingTarget) SetActorLocationAndRotation(End,(End-Start).Rotation(),false);
         else SetActorLocation(End, false);
-        if (FlightSeconds >= EndSeconds - UE_SMALL_NUMBER) FinishFlight(nullptr);
+        if (FlightSeconds >= FlightEndSeconds - UE_SMALL_NUMBER) FinishFlight(nullptr);
     }
 }
 

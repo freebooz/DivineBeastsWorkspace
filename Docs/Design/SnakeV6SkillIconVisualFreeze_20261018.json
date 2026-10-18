@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 1,
+  "documentNameZh": "SSLM巳蛇V6八技能图标视觉设计冻结单",
+  "date": "2026-10-18",
+  "scope": "ICON_VISUAL_DESIGN_ONLY_NOT_GAMEPLAY_APPROVAL",
+  "status": "ART_SPEC_FROZEN_AWAITING_HUMAN_CANDIDATE_SELECTION",
+  "heroId": "Hero.Zodiac.Snake",
+  "heroFullNameZh": "巳蛇·幽鳞玄蛇",
+  "battleRoleZh": "毒伤法师／路径封锁",
+  "passiveNotInEightSlotsZh": "毒记",
+  "versionAuthority": {
+    "v6ArtSpec": "Docs/Design/ZodiacHistoryFirstEightSkillsV6_Review.json",
+    "v61Mechanics": "Docs/Design/ZodiacSkillsV6_1_DetailedProposal_20261018.md",
+    "v5ApprovedDisplayNames": "Docs/Design/ApprovedSkillDisplayNames_V5.json",
+    "colourPolicy": "Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md"
+  },
+  "displayOrder": [
+    "Primary",
+    "Slot1",
+    "Slot2",
+    "Slot4",
+    "Slot3",
+    "Slot5",
+    "Slot6",
+    "Slot7"
+  ],
+  "artStyleZh": "东方神话电影级技能绘画：玄紫、孔雀青、冷银、玉青，克制暖金终极；大主体明确、材质温润、拒绝颗粒/过锐化/发白",
+  "sourceMinimumPixels": [
+    1024,
+    1024
+  ],
+  "finalReviewPixels": [
+    [
+      64,
+      64
+    ],
+    [
+      48,
+      48
+    ]
+  ],
+  "candidateArtwork": {
+    "candidateCount": 24,
+    "threePerSkill": true,
+    "individualPreviewCount": 24,
+    "aiConceptSourcePixels": [
+      1536,
+      1024
+    ],
+    "croppedCandidateSourcePixels": [
+      72,
+      72
+    ],
+    "nativeHighResolutionMastersGenerated": false,
+    "previewPackageName": "SSLM_SnakeV6_24_Candidates_Preview.zip",
+    "previewPackageSha256": "23797ea9280b0bfb7dcb7334e567a938fb929b364cdfdad0468de7f2cbc209c7",
+    "previewPackageLocationZh": "本次ChatGPT会话附件，尚未转入远端工作空间",
+    "candidateArchiveVerifiedInProject": false,
+    "qualityGateZh": "72像素单格裁图只可做方案审核，不可用放大图代替独立1024精修母稿"
+  },
+  "productionBinding": {
+    "heroContentPack": "DBAHeroPack_Snake",
+    "uniqueProfilePrimaryAssetId": "DivineBeastsAbilityUIProfile:Hero.Zodiac.Snake",
+    "expectedIconUEFolder": "/DBAHeroPack_Snake/UI/Abilities",
+    "bindModel": "UDivineBeastsAbilityBarViewModel",
+    "bindPanel": "UDivineBeastsAbilityBarPanel",
+    "monolithRequired": true,
+    "notBeforeHumanApproval": true
+  },
+  "phaseStatus": [
+    {
+      "number": 1,
+      "descriptionZh": "冻结8技能图标视觉定义与稳定编号",
+      "status": "COMPLETED_ART_SCOPE"
+    },
+    {
+      "number": 2,
+      "descriptionZh": "每技能3张概念候选预览",
+      "status": "COMPLETED_PREVIEW_ONLY"
+    },
+    {
+      "number": 3,
+      "descriptionZh": "人工优选八个候选，允许驳回重绘",
+      "status": "WAITING_FOR_USER"
+    },
+    {
+      "number": 4,
+      "descriptionZh": "独立精修八张正式1024源稿",
+      "status": "BLOCKED_BY_STAGE_3"
+    },
+    {
+      "number": 5,
+      "descriptionZh": "Monolith导入蛇英雄内容包",
+      "status": "BLOCKED_BY_STAGE_4"
+    },
+    {
+      "number": 6,
+      "descriptionZh": "更新已有唯一技能UI Profile",
+      "status": "BLOCKED_BY_STAGE_5_AND_GAS_APPROVAL"
+    },
+    {
+      "number": 7,
+      "descriptionZh": "既有ViewModel绑定",
+      "status": "BLOCKED_BY_STAGE_6"
+    },
+    {
+      "number": 8,
+      "descriptionZh": "原生64x64与48x48大小颜色验收",
+      "status": "BLOCKED_BY_STAGE_4_7"
+    },
+    {
+      "number": 9,
+      "descriptionZh": "新手村和战斗HUD真实运行验收",
+      "status": "BLOCKED_BY_STAGE_8"
+    }
+  ],
+  "definitions": [
+    {
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.snake_eight_scale_bite@1",
+      "approvedDisplayNameV5Zh": "幽鳞刺",
+      "designNameV6Zh": "幽鳞刺",
+      "v6RenamePendingApproval": false,
+      "mechanismFrozenForArtworkZh": "单枚蛇鳞针的中距离魔法普攻",
+      "iconSemanticRequiredZh": "一枚穿刺方向明确的银青晶鳞与短尾迹",
+      "candidateBriefs": [
+        {
+          "id": "A",
+          "directionZh": "斜向银紫鳞针"
+        },
+        {
+          "id": "B",
+          "directionZh": "绿色锋刃型鳞针"
+        },
+        {
+          "id": "C",
+          "directionZh": "分面晶鳞闪刺"
+        }
+      ],
+      "selectedCandidate": null,
+      "artHumanApproved": false,
+      "productionResourceAuthorized": false
+    },
+    {
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.snake_eight_venom_spear@1",
+      "approvedDisplayNameV5Zh": "毒牙",
+      "designNameV6Zh": "毒牙",
+      "v6RenamePendingApproval": false,
+      "mechanismFrozenForArtworkZh": "蛇牙毒针命中，有限毒伤与条件抑疗",
+      "iconSemanticRequiredZh": "毒牙形态和毒液命中，不出现血腥",
+      "candidateBriefs": [
+        {
+          "id": "A",
+          "directionZh": "暗紫双獠牙"
+        },
+        {
+          "id": "B",
+          "directionZh": "夸张双牙咬合"
+        },
+        {
+          "id": "C",
+          "directionZh": "完整蛇首及毒牙"
+        }
+      ],
+      "selectedCandidate": null,
+      "artHumanApproved": false,
+      "productionResourceAuthorized": false
+    },
+    {
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.snake_eight_serpent_arc@1",
+      "approvedDisplayNameV5Zh": "双鳞弹",
+      "designNameV6Zh": "双鳞弹",
+      "v6RenamePendingApproval": false,
+      "mechanismFrozenForArtworkZh": "两枚蛇鳞弹交错，目标最多两段伤害",
+      "iconSemanticRequiredZh": "必须看出两枚不同弹体",
+      "candidateBriefs": [
+        {
+          "id": "A",
+          "directionZh": "紫青交错弹"
+        },
+        {
+          "id": "B",
+          "directionZh": "银蓝双鳞弹"
+        },
+        {
+          "id": "C",
+          "directionZh": "翠青双鳞穿刺"
+        }
+      ],
+      "selectedCandidate": null,
+      "artHumanApproved": false,
+      "productionResourceAuthorized": false
+    },
+    {
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.snake_eight_serpent_maelstrom@1",
+      "approvedDisplayNameV5Zh": "毒阵爆",
+      "designNameV6Zh": "万毒归鳞",
+      "v6RenamePendingApproval": true,
+      "mechanismFrozenForArtworkZh": "引爆同源毒纹形成减速、抑疗、末段毒爆三波",
+      "iconSemanticRequiredZh": "大蛇和三波毒潮，终极应比一般攻击强",
+      "candidateBriefs": [
+        {
+          "id": "A",
+          "directionZh": "蛇首毒潮爆发"
+        },
+        {
+          "id": "B",
+          "directionZh": "盘蛇环形毒暴"
+        },
+        {
+          "id": "C",
+          "directionZh": "玄蛇聚毒核"
+        }
+      ],
+      "selectedCandidate": null,
+      "artHumanApproved": false,
+      "productionResourceAuthorized": false
+    },
+    {
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.snake_eight_sinuous_dash@1",
+      "approvedDisplayNameV5Zh": "蛇行",
+      "designNameV6Zh": "蛇行",
+      "v6RenamePendingApproval": false,
+      "mechanismFrozenForArtworkZh": "合法贴地S形快速位移，己方毒径有限加速",
+      "iconSemanticRequiredZh": "蛇首有前进方向，画面表达移动而非铺路",
+      "candidateBriefs": [
+        {
+          "id": "A",
+          "directionZh": "银紫S形疾行"
+        },
+        {
+          "id": "B",
+          "directionZh": "青碧蛇影冲刺"
+        },
+        {
+          "id": "C",
+          "directionZh": "紫鳞破风滑行"
+        }
+      ],
+      "selectedCandidate": null,
+      "artHumanApproved": false,
+      "productionResourceAuthorized": false
+    },
+    {
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.snake_eight_shed_skin@1",
+      "approvedDisplayNameV5Zh": "蜕鳞",
+      "designNameV6Zh": "蜕鳞",
+      "v6RenamePendingApproval": false,
+      "mechanismFrozenForArtworkZh": "蛇蜕解除轻度减速、有限减伤并留弱毒雾",
+      "iconSemanticRequiredZh": "空蛇蜕外壳和新蛇影应区别明显",
+      "candidateBriefs": [
+        {
+          "id": "A",
+          "directionZh": "剥落鳞甲防御"
+        },
+        {
+          "id": "B",
+          "directionZh": "鳞甲碎壳护盾"
+        },
+        {
+          "id": "C",
+          "directionZh": "完整蛇蜕护体"
+        }
+      ],
+      "selectedCandidate": null,
+      "artHumanApproved": false,
+      "productionResourceAuthorized": false
+    },
+    {
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.snake_eight_coil_silence@1",
+      "approvedDisplayNameV5Zh": "蛇纹缚",
+      "designNameV6Zh": "缠纹",
+      "v6RenamePendingApproval": true,
+      "mechanismFrozenForArtworkZh": "蛇纹环地面控制，踩入减速，久留才缠足",
+      "iconSemanticRequiredZh": "画面突出束缚陷阱，不要误画成沉默",
+      "candidateBriefs": [
+        {
+          "id": "A",
+          "directionZh": "双蛇盘绕陷阱"
+        },
+        {
+          "id": "B",
+          "directionZh": "环缠束足蛇纹"
+        },
+        {
+          "id": "C",
+          "directionZh": "蛇首环形困阵"
+        }
+      ],
+      "selectedCandidate": null,
+      "artHumanApproved": false,
+      "productionResourceAuthorized": false
+    },
+    {
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.snake_eight_venom_mark@1",
+      "approvedDisplayNameV5Zh": "毒径",
+      "designNameV6Zh": "封途",
+      "v6RenamePendingApproval": true,
+      "mechanismFrozenForArtworkZh": "沿地面铺设有限毒径并可成熟引爆",
+      "iconSemanticRequiredZh": "可绕行的毒路，不能与蛇行移动混淆",
+      "candidateBriefs": [
+        {
+          "id": "A",
+          "directionZh": "亮青S形毒迹"
+        },
+        {
+          "id": "B",
+          "directionZh": "蜿蜒连续毒径"
+        },
+        {
+          "id": "C",
+          "directionZh": "紫青双层毒路"
+        }
+      ],
+      "selectedCandidate": null,
+      "artHumanApproved": false,
+      "productionResourceAuthorized": false
+    }
+  ],
+  "notesZh": "冻结仅限八项技能构图、美术动作、编号及槽位对应，不授权未经审批的GAS复杂机制，不替换V5正式名称，不写入唯一生产Profile，待人工批准再继续。"
+}

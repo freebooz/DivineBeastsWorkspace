@@ -105,3 +105,11 @@ Trail横截面由`exp2(-v*v*70)`连续宽带和`exp2(-v*v*1200)`细亮心叠合�
 空气开关对照保留关闭/关闭/开启三个原生采样，默认强度0.35；关闭对照逐像素相同，开启产生3399个不同像素，差异见`AirWaveVerification.json`。原材质已恢复并保存，当前17包通过冷加载。纹理源保持2172×724 RGBA，真实UE显示Mip为2048×512、sRGB/BC7；来源、提示词及模型/原生包SHA见`TextureManifest.json`与`Verification.json`。
 
 仍待人工确认弹头/尾迹粗细、三条相位观感、细节与参考图的一致性。正式运动目标/技能接入、四档质量、Shader Complexity/Quad Overdraw、多人GPU与客户端/服务器Cook均未验收。本轮不据静态帧或编译结果宣称可投产。
+
+## 后续授权的运行绑定（2026-10-18）
+
+用户随后明确要求“此技能绑定到角色按钮1，原治疗绑定按键5并能加血”。已建立独立`VFX/CommonSkillVFX/Runtime/DirectedMissile`运行闭包，保持历史审核资产不变；沿用权威Fireball单发行为，以独立能力身份/冷却和DBA.Development.DirectedMissile语义接入唯一平台表现链。十二生肖按钮/数字1授予新飞弹，原Primary治疗身份移至按钮/数字5，2火焰弹/3寒冰箭/4奥术保留。
+
+运行版弹头生命周期2.2秒、三条世界历史Ribbon覆盖实际飞行，朝向来自Engine.Owner.SystemXAxis并由表现上下文接收权威弹体朝向；取消沿用既有实例清理。相邻相位60度、宽度26厘米，局部空气包络和半透明/局部发光材质继续使用当前设计。
+
+独立冷重载、完整Editor及Client/Server构建、真实平台输入与服务器回血测试通过；治疗50%→70%、最大生命限制、10秒冷却、沉默时不回血/不进入冷却均已验证。真实Client/Server容器核对通过，10项运行VFX包随Client发布，三项作者Module正常剥离，Server无项目VFX泄漏。原生运行资产飞行预览及明细归`Saved/Validation/CommonSkillVFX/DirectedMissileSlotBinding`和[执行记录](DirectedMissileSlotBindingPlan_20261018.md)。人工视觉、四档/多人GPU、真实Village/MainArena网络准入仍待验证；不将本次接线授权视为视觉签收。

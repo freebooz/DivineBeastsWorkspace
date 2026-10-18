@@ -11,7 +11,7 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatProjectileMotion
     /** 轴向速度，合法范围(0,20000]厘米/秒；不接受客户端请求直接写入。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Projectile")
     float SpeedCmPerSecond = 1000.0f;
-    /** 轴向最大射程，合法范围(0,100000]厘米；到期终止，不虚构命中。 */
+    /** 锁定射程/基础轴向预算，合法范围(0,100000]厘米；初次弯弧可补偿最多0.5秒，不扩大锁定距离。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Projectile")
     float RangeCm = 2000.0f;
     /** 球体碰撞半径，合法范围[1,100]厘米；与Niagara视觉大小无关。 */

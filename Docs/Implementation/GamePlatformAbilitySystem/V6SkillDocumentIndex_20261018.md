@@ -44,6 +44,14 @@
 | 33 | `Tests/Architecture/TestV6ForcedDisplacement.py` | 强制位移服务器输入与稳定SkillID、GA模式及禁授门禁 | **新增非编译静态回归** | 不能替代UE原生验证 |
 | 34 | `Docs/Implementation/GamePlatformAbilitySystem/V6ControlSkillImplementationMatrix_20261018.json` 中 `forcedDisplacementReview` | 丑牛、辰龙、午马、亥猪推拉适配候选，逐项保留历史机制缺口 | **新增4项候选、上线批准0项** | 下一阶段额外服务端条件／分环状态机验收 |
 
+
+| 35 | `Docs/Implementation/GamePlatformAbilitySystem/V6PassiveImplementationMatrix_20261018.json` | 12生肖独立被动名称、服务器源码候选及历史机制缺口审查表 | **12项待审核，2项有源码候选、正式批准0项** | 人工签审机制、数值和DataAsset |
+| 36 | `Public/Definitions/DivineBeastsV6PassiveDefinition.h`、对应`Private/Definitions/*.cpp`（路径根为`Game/Plugins/DivineBeasts/DBAGameplay/Source/DivineBeastsAbilitiesRuntime/`） | 被动数据定义，默认禁授与英雄ID、叠层和时效校验 | **C++源码新增、尚未编译** | 原生反射、资产ID与DataService租约验证 |
+| 37 | `Public/Effects/DivineBeastsV6PassiveGameplayEffects.h`、对应`Private/Effects/*.cpp`（同上根目录） | 寅虎裂甲／亥猪战意，复用现有GAS减伤／增伤属性的有期GE | **两类C++源码新增、尚未编译** | 原生Stack和网络复制实测 |
+| 38 | `Public/Components/DivineBeastsV6PassiveComponent.h`、对应`Private/Components/*.cpp`（同上根目录） | 默认关闭、服务器事件驱动、同Avatar身份和效果句柄撤销 | **C++源码新增，尚未批准任何被动** | UE死亡/换角色/重复事件测试 |
+| 39 | `Private/Tests/DivineBeastsV6PassiveDefinitionTests.cpp`（同上根目录） | V6被动DataAsset与真实GE默认对象的引擎原生测试 | **仅测试源码，未编译** | `DivineBeasts.Abilities.V6.Passive.DefinitionsFailClosed`（被动审批回归） |
+| 40 | `Tests/Architecture/TestV6PassiveImplementation.py` | 12被动审查台账、Tiger/Boar源码与禁授状态静态回归 | **非编译回归10/10通过** | 不能代替UE5.8运行证据 |
+
 ## 需要原生创建而当前不存在的资产台账
 
 | 资产类别 | 目标数量 | 是否已生成 | 禁止伪造的证据 |

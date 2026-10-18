@@ -39,7 +39,8 @@ def run():
     (OUT/(stamp+'_Before.json')).write_text(json.dumps(dict(rows=rows,heroes=snapshot),ensure_ascii=False,indent=2),encoding='utf8')
     # 先备份所有将修改的既有包；新资源不覆盖同名异构资产。
     backup=OUT/'Backups'/stamp
-    for package in [table]+[o for _,aset,profile,_,_ in work for o in (aset,profile)]:
+    healing_bps=[unreal.load_asset(a.ROOT+'/GA_DBA_'+h+'_PlaceholderPrimary') for h in a.HEROES]
+    for package in [table]+healing_bps+[o for _,aset,profile,_,_ in work for o in (aset,profile)]:
         path=package.get_path_name().split('.')[0]
         mount,tail=path[1:].split('/',1)
         paths=list((ROOT/'Game/Plugins').glob('**/'+mount+'/Content/'+tail+'.uasset'))
@@ -49,6 +50,11 @@ def run():
         identity='dba.ability.'+hero.lower()+'_placeholder_directedmissile@1'
         prefix=a.ROOT+'/_DBA_'+hero+'_Placeholder'
         def path(kind,mode,suffix=''):return a.ROOT+'/'+kind+'_DBA_'+hero+'_Placeholder'+mode+suffix
+        heal_bp=unreal.load_asset(path('GA','Primary'))
+        heal_cdo=unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(path('GA','Primary')))
+        assert heal_cdo.get_editor_property('PlaceholderMode')==unreal.DivineBeastsPlaceholderAbilityMode.HEALING
+        heal_cdo.set_editor_property('AbilityTags',a.tags(['Ability.Active','Ability.Spell']))
+        unreal.BlueprintEditorLibrary.compile_blueprint(heal_bp);a.save(heal_bp)
         definition=duplicate(path('DA','Fireball'),path('DA','DirectedMissile'))
         definition.set_editor_property('LogicalId',a.logical(identity))
         definition.set_editor_property('LevelRowNames',[hero+'_Placeholder_DirectedMissile_L1'])

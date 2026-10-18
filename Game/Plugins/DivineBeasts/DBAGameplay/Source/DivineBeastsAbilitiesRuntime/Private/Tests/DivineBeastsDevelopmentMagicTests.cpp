@@ -26,6 +26,7 @@
 #include "Definitions/DivineBeastsDevelopmentMagicDefinition.h"
 #include "Definitions/DivineBeastsAbilityDefinition.h"
 #include "Definitions/GamePlatformAbilitySetDefinition.h"
+#include "Effects/GamePlatformCombatGameplayEffects.h"
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Engine/AssetManager.h"
@@ -413,12 +414,30 @@ private:
         AbilityHandle = ASC->GiveAbility(HealSpec);
         FGameplayAbilitySpec MissileSpec(MissileGrant->AbilityClass.Get(), 1); MissileSpec.GetDynamicSpecSourceTags().AddTag(MissileInput);
         const auto MissileHandle = ASC->GiveAbility(MissileSpec);
+        if (!InitializeBurstTargets()) return;
+        Pawn->SetActorRotation(FRotator(0, 90, 0));
         SpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateRaw(this, &FRealMagicCommand::ObserveProjectile));
         Test->TestTrue(TEXT("按键1平台输入受理"), ASC->AbilityInputPressed(MissileInput, ASC->GetInputToken()).IsSuccess());
         ASC->ProcessAbilityInput(); ASC->AbilityInputReleased(MissileInput, ASC->GetInputToken());
         Test->TestEqual(TEXT("按键1只创建一枚权威弹体"), Projectiles.Num(), 1);
         if (Projectiles.Num()==1)
+        {
             Test->TestEqual(TEXT("弹体复制正确表现身份"), Projectiles[0].Facts.PresentationStyleId, FName(TEXT("DBA.Development.DirectedMissile")));
+            if (auto* Missile = Projectiles[0].Actor.Get())
+            {
+                Test->TestTrue(TEXT("真实按键1沿角色施法朝向起飞而非直接对准侧方目标"),
+                    FVector::DotProduct(Missile->GetActorForwardVector(), Pawn->GetActorForwardVector()) > .999);
+                const FVector Start = Missile->GetActorLocation();
+                Missile->Tick(1.f / 120.f);
+                Test->TestTrue(TEXT("真实技能入口首段保持初始切线并开始转弯"),
+                    FVector::DotProduct((Missile->GetActorLocation() - Start).GetSafeNormal(), Pawn->GetActorForwardVector()) > .98);
+                Missile->AuthorityCancel();
+            }
+        }
+        SourceCombat->AuthoritySelectProjectileTarget(nullptr, SourceCombat->GetCombatAvatarGeneration(), 0);
+        if (FrozenTarget.IsValid()) FrozenTarget->Destroy();
+        if (AlternateTarget.IsValid()) AlternateTarget->Destroy();
+        FrozenTarget.Reset(); AlternateTarget.Reset();
         ASC->CancelAbilityHandle(MissileHandle); ASC->ClearAbility(MissileHandle);
         const auto ClearCooldown = [&]()
         { ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(CooldownTag)); };
@@ -437,6 +456,18 @@ private:
             Test->TestEqual(TEXT("治疗实际冷却10秒"), ASC->GetActiveGameplayEffect(Cooldowns[0])->GetDuration(), 10.f);
         Test->TestFalse(TEXT("冷却中不能再次激活"), ASC->TryActivateAbility(AbilityHandle, false));
         ClearCooldown();
+
+        // 治疗移到数字5后仍为真实法术，按键位置不能绕过平台沉默GE。
+        auto Silence = ASC->MakeOutgoingSpec(UGamePlatformSilenceGameplayEffect::StaticClass(), 1.f, ASC->MakeEffectContext());
+        if (!Test->TestTrue(TEXT("可创建真实沉默GE"), Silence.IsValid())) return;
+        Silence.Data->SetDuration(1.f, true);
+        const auto SilenceHandle = ASC->ApplyGameplayEffectSpecToSelf(*Silence.Data.Get());
+        Test->TestTrue(TEXT("真实沉默GE已应用"), SilenceHandle.IsValid());
+        ASC->AbilityInputPressed(HealingInput, ASC->GetInputToken()); ASC->ProcessAbilityInput();
+        ASC->AbilityInputReleased(HealingInput, ASC->GetInputToken());
+        Test->TestEqual(TEXT("沉默时按5不增加生命"), SourceCombat->GetCombatHealth(), SourceMaximum * .7f);
+        Test->TestFalse(TEXT("沉默拒绝不产生治疗冷却"), ASC->HasMatchingGameplayTag(CooldownTag));
+        ASC->RemoveActiveGameplayEffect(SilenceHandle);
 
         FActorSpawnParameters Spawn; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         FrozenTarget = World->SpawnActor<ADivineBeastsCharacter>(FVector(300, 0, 1000), FRotator::ZeroRotator, Spawn);

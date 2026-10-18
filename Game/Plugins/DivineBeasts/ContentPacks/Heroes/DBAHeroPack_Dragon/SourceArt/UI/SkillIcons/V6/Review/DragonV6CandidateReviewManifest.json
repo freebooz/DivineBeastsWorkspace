@@ -1,0 +1,615 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "titleZh": "辰龙V6八技能每技能三版概念草案",
+  "currentProductionDisplayNameSource": "V5",
+  "candidateCount": 24,
+  "sourceQualityStatusZh": "程序化构图审核图，非人工精修3A终版或AI图像母版",
+  "approvedCount": 0,
+  "productionAbilitySetChanged": false,
+  "productionUIProfileChanged": false,
+  "nativeUETexture2DImportedCount": 0,
+  "contactSheetPath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/DragonV6_24CandidateContactSheet.png",
+  "candidates": [
+    {
+      "skillOrder": 1,
+      "nameV6": "苍龙爪",
+      "nameV5": "苍龙爪",
+      "abilityId": "dba.ability.dragon_eight_dragon_claw@1",
+      "slotId": "Primary",
+      "variant": "A",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S01_CangLongZhua_V6_A_Review.png",
+        "sha256": "a49f8c7dbcc2784f5a885eaa389fcd5bc4d04355a04f0e2c3a9262aff2996dcd",
+        "bytes": 387660
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S01_CangLongZhua_V6_A_Review_64.png",
+        "sha256": "d133a25e42be08ae2794eb1de75a83089ae2490f4b4e5f00bdaa8255b070d642",
+        "bytes": 10826
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S01_CangLongZhua_V6_A_Review_48.png",
+        "sha256": "924242b783f1064973b16faebec31f15e446d488c5b0d6851d98ea1d3f3a6966",
+        "bytes": 6656
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 1,
+      "nameV6": "苍龙爪",
+      "nameV5": "苍龙爪",
+      "abilityId": "dba.ability.dragon_eight_dragon_claw@1",
+      "slotId": "Primary",
+      "variant": "B",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S01_CangLongZhua_V6_B_Review.png",
+        "sha256": "2daf9095da3a441b98bd7a9a8a76910616939feb76a0271e267d608ad9cb23ff",
+        "bytes": 414103
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S01_CangLongZhua_V6_B_Review_64.png",
+        "sha256": "4ae833d66080a1520f0363d16271411e83ffb2e785b2fcb029623425a518c844",
+        "bytes": 10870
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S01_CangLongZhua_V6_B_Review_48.png",
+        "sha256": "ea0f3c274d3f8a381f6db0d8f6258b133a1ffa8ee45f29b9903143bbd36c9aff",
+        "bytes": 6770
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 1,
+      "nameV6": "苍龙爪",
+      "nameV5": "苍龙爪",
+      "abilityId": "dba.ability.dragon_eight_dragon_claw@1",
+      "slotId": "Primary",
+      "variant": "C",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S01_CangLongZhua_V6_C_Review.png",
+        "sha256": "f34dcb1136fdd9762d3369c430300382bf46613721f5c5431a60555001b9e632",
+        "bytes": 279533
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S01_CangLongZhua_V6_C_Review_64.png",
+        "sha256": "dd2d1e2f3b2efc36c2cae8939a2d20b54a2ac79f6b8a0c9c4ad95ac546a16e14",
+        "bytes": 10906
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S01_CangLongZhua_V6_C_Review_48.png",
+        "sha256": "4196260c0677e72c7fe2d9c203027cdad82820486fa731ea5054961583548a2e",
+        "bytes": 6719
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 2,
+      "nameV6": "雷裁",
+      "nameV5": "雷裁",
+      "abilityId": "dba.ability.dragon_eight_cloud_scale@1",
+      "slotId": "Slot1",
+      "variant": "A",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S02_LeiCai_V6_A_Review.png",
+        "sha256": "aa4482987335f7238d0e481e57951efdb531117fca351d37ae987f7782164a0e",
+        "bytes": 338905
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S02_LeiCai_V6_A_Review_64.png",
+        "sha256": "dcd635dea21f15da3906bd71302e946a5b896868f325eb1b3bd3abffbbfe8e93",
+        "bytes": 10734
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S02_LeiCai_V6_A_Review_48.png",
+        "sha256": "e50b93e10c3d26c70cb3fe20c6611eebd658e11af68162208982c42b78592ad4",
+        "bytes": 6680
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 2,
+      "nameV6": "雷裁",
+      "nameV5": "雷裁",
+      "abilityId": "dba.ability.dragon_eight_cloud_scale@1",
+      "slotId": "Slot1",
+      "variant": "B",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S02_LeiCai_V6_B_Review.png",
+        "sha256": "52209b32d70dbf710863cf3bd7822ff33b78ed7af09fc6031a57f50ce4afe95a",
+        "bytes": 346900
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S02_LeiCai_V6_B_Review_64.png",
+        "sha256": "fe7bf9e4fc46f9acbf3f6144d385476372b2412d5d2ec89a4df8fec0d8cdf692",
+        "bytes": 10921
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S02_LeiCai_V6_B_Review_48.png",
+        "sha256": "f31b22ff38bcdd724af445d0bb6f2ae1fa663713c289c80a264117a7da2e9025",
+        "bytes": 6769
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 2,
+      "nameV6": "雷裁",
+      "nameV5": "雷裁",
+      "abilityId": "dba.ability.dragon_eight_cloud_scale@1",
+      "slotId": "Slot1",
+      "variant": "C",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S02_LeiCai_V6_C_Review.png",
+        "sha256": "bda5f24280a3df768a8de5f4f316d4724156b6568f53e331421b1db88cb13bdc",
+        "bytes": 338674
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S02_LeiCai_V6_C_Review_64.png",
+        "sha256": "4193b95aef67ab5289489180e149cd02a113b2dd6c0353a5623242ae66820c07",
+        "bytes": 10642
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S02_LeiCai_V6_C_Review_48.png",
+        "sha256": "42bcd448af6ced0a684b4849fa2e12d32e60f503dd7b44f06e2f13bbed7c96e1",
+        "bytes": 6620
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 3,
+      "nameV6": "雷息",
+      "nameV5": "雷息",
+      "abilityId": "dba.ability.dragon_eight_azure_breath@1",
+      "slotId": "Slot2",
+      "variant": "A",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S03_LeiXi_V6_A_Review.png",
+        "sha256": "4cfd7e6b2b7ed3e44300048a01eade007d03c12fb683a66a421b00b5910b65ea",
+        "bytes": 393557
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S03_LeiXi_V6_A_Review_64.png",
+        "sha256": "e142092b60ee9266ab2326f8ae8e745c90e4fb8ab01d630d8ffb25caacad355c",
+        "bytes": 10800
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S03_LeiXi_V6_A_Review_48.png",
+        "sha256": "f9e22278c1effd925331647c99ae03a3078bc12dbca174fff1681187c06a771f",
+        "bytes": 6675
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 3,
+      "nameV6": "雷息",
+      "nameV5": "雷息",
+      "abilityId": "dba.ability.dragon_eight_azure_breath@1",
+      "slotId": "Slot2",
+      "variant": "B",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S03_LeiXi_V6_B_Review.png",
+        "sha256": "f779832220e5bb878c07a5646a0ffbf43dbc897071d1424425c4adfc207441f7",
+        "bytes": 385416
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S03_LeiXi_V6_B_Review_64.png",
+        "sha256": "0b9e73b23a0475eb4ae572e7cd6326b1185807cfbb21d54facd2cb614f270531",
+        "bytes": 10553
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S03_LeiXi_V6_B_Review_48.png",
+        "sha256": "2fc57cc1428e08dae92a45033829e270affbc0e446d5ecd59700f7e011968c49",
+        "bytes": 6596
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 3,
+      "nameV6": "雷息",
+      "nameV5": "雷息",
+      "abilityId": "dba.ability.dragon_eight_azure_breath@1",
+      "slotId": "Slot2",
+      "variant": "C",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S03_LeiXi_V6_C_Review.png",
+        "sha256": "b4f33739686991e9ab7a7fb24436a0f09e2057867d42b57253991f88847b3b95",
+        "bytes": 395454
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S03_LeiXi_V6_C_Review_64.png",
+        "sha256": "3f298446756f9095a144f225b8df619ea8bc2a2858cbce2859d596f5b6d7b5f5",
+        "bytes": 10739
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S03_LeiXi_V6_C_Review_48.png",
+        "sha256": "d07bd5b5cdc40c35e786036c9353790a87d39b9230c0b1ac074b10a95cfe2b12",
+        "bytes": 6700
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 4,
+      "nameV6": "苍龙定天",
+      "nameV5": "三象域",
+      "abilityId": "dba.ability.dragon_eight_dragon_ascension@1",
+      "slotId": "Slot4",
+      "variant": "A",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S04_CangLongDingTian_V6_A_Review.png",
+        "sha256": "0dce4f4ebeebbbee41b00ad2320d8d8ea1075d11c070c8ba633188043197f4f5",
+        "bytes": 440990
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S04_CangLongDingTian_V6_A_Review_64.png",
+        "sha256": "b2d26b08aefdc3d638e6d54f646bc5bacc087572407ae7bd9aa67b1b7ae55770",
+        "bytes": 11195
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S04_CangLongDingTian_V6_A_Review_48.png",
+        "sha256": "332a6d0ebff99216a0421905ee13954c69cb42404ddaedf8c516c4a09af1bfcc",
+        "bytes": 6804
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 4,
+      "nameV6": "苍龙定天",
+      "nameV5": "三象域",
+      "abilityId": "dba.ability.dragon_eight_dragon_ascension@1",
+      "slotId": "Slot4",
+      "variant": "B",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S04_CangLongDingTian_V6_B_Review.png",
+        "sha256": "17e4e8ab3518394508499da0afe248e7fe74b534f7fba4c38ea4c70bfa527819",
+        "bytes": 435102
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S04_CangLongDingTian_V6_B_Review_64.png",
+        "sha256": "4396e14b66daad728b52b02f76c2378455b508e1e8302b8ede1f6443555a891e",
+        "bytes": 10764
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S04_CangLongDingTian_V6_B_Review_48.png",
+        "sha256": "6eb725cd5304a99ac5956825c0c68f22411458c411baf0a272418219f7a47550",
+        "bytes": 6629
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 4,
+      "nameV6": "苍龙定天",
+      "nameV5": "三象域",
+      "abilityId": "dba.ability.dragon_eight_dragon_ascension@1",
+      "slotId": "Slot4",
+      "variant": "C",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S04_CangLongDingTian_V6_C_Review.png",
+        "sha256": "e2bc5c856fc8c76fd3866aade32df4bac93109942aeda09a78f7039f66464f32",
+        "bytes": 427575
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S04_CangLongDingTian_V6_C_Review_64.png",
+        "sha256": "4c9e5576a85ab4d13e171ad1ecf794773606a5efdb353e28b6bf26f4bbc4bcae",
+        "bytes": 10917
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S04_CangLongDingTian_V6_C_Review_48.png",
+        "sha256": "7884382b23636b84ba9a5de2b93ee4da148156d11bcfe82d19a68ded813b24eb",
+        "bytes": 6777
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 5,
+      "nameV6": "御风",
+      "nameV5": "御风",
+      "abilityId": "dba.ability.dragon_eight_cloud_stride@1",
+      "slotId": "Slot3",
+      "variant": "A",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S05_YuFeng_V6_A_Review.png",
+        "sha256": "4f3cf9b956ed1c3c43bf56378b6ce88a6834899f065ee581bdaf2dbfbc023cc2",
+        "bytes": 401217
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S05_YuFeng_V6_A_Review_64.png",
+        "sha256": "0151aca01c5b6387254b31b23cb7f06431689f924d2dcd86d2083dad69cdb505",
+        "bytes": 10434
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S05_YuFeng_V6_A_Review_48.png",
+        "sha256": "bc8d98aebe09c1e5c895984511b41dbccdb84f435888a56f7cbbb6eb55b036e4",
+        "bytes": 6524
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 5,
+      "nameV6": "御风",
+      "nameV5": "御风",
+      "abilityId": "dba.ability.dragon_eight_cloud_stride@1",
+      "slotId": "Slot3",
+      "variant": "B",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S05_YuFeng_V6_B_Review.png",
+        "sha256": "4e71ae47dd8304d0c539cea217731c40cfaa014fe4cc64998d80e6f10ac48a42",
+        "bytes": 366842
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S05_YuFeng_V6_B_Review_64.png",
+        "sha256": "512782ce374a3867c691620c7dc9baac19e388fee33e33d3cf4ad2ad885e6968",
+        "bytes": 10633
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S05_YuFeng_V6_B_Review_48.png",
+        "sha256": "08531d4ffd4f04ba64138404ee0f60bc253d158a14827f45dd9ced659a1ebddd",
+        "bytes": 6625
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 5,
+      "nameV6": "御风",
+      "nameV5": "御风",
+      "abilityId": "dba.ability.dragon_eight_cloud_stride@1",
+      "slotId": "Slot3",
+      "variant": "C",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S05_YuFeng_V6_C_Review.png",
+        "sha256": "5ed5009c1d5bcfa4269fea29db9e8e04a292b41470b239b9f46ba26d69d1bdc6",
+        "bytes": 348771
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S05_YuFeng_V6_C_Review_64.png",
+        "sha256": "e4bb57670f1c7be2bf606b11f87b0bb8d568f4a1685d69a0be1240c94dbdfad5",
+        "bytes": 10690
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S05_YuFeng_V6_C_Review_48.png",
+        "sha256": "e20d3579b570d66f1a318a9c0ddf55212a936305b8599e03600f3880a837f330",
+        "bytes": 6647
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 6,
+      "nameV6": "云护",
+      "nameV5": "云盾",
+      "abilityId": "dba.ability.dragon_eight_dragon_scale_guard@1",
+      "slotId": "Slot5",
+      "variant": "A",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S06_YunHu_V6_A_Review.png",
+        "sha256": "240192a011c15105bbd1acf3830cb8420fa1ab68dd2db19ff47310f3db7e0a8f",
+        "bytes": 361872
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S06_YunHu_V6_A_Review_64.png",
+        "sha256": "ce96093e55d226e0c8b8b67a2d9441809932e7b7cf51ab12c8f091af2652b1b4",
+        "bytes": 10442
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S06_YunHu_V6_A_Review_48.png",
+        "sha256": "d714efbdbc9eddea5bb2d11f1b3dd398d72581ddf723292e3ed0fee86977827f",
+        "bytes": 6491
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 6,
+      "nameV6": "云护",
+      "nameV5": "云盾",
+      "abilityId": "dba.ability.dragon_eight_dragon_scale_guard@1",
+      "slotId": "Slot5",
+      "variant": "B",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S06_YunHu_V6_B_Review.png",
+        "sha256": "3066c3bc1572874bb533da1371b9311c924731901467da7d6d4e8285f74d3fd9",
+        "bytes": 359344
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S06_YunHu_V6_B_Review_64.png",
+        "sha256": "941a47b8e98d7f960d21bc71711ee29fc78ba5be239e641a21a378fbebdfe008",
+        "bytes": 10365
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S06_YunHu_V6_B_Review_48.png",
+        "sha256": "7ef0d93de801edf9c45bd235671fd16e013834211b761d423e52b19b943d6f00",
+        "bytes": 6496
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 6,
+      "nameV6": "云护",
+      "nameV5": "云盾",
+      "abilityId": "dba.ability.dragon_eight_dragon_scale_guard@1",
+      "slotId": "Slot5",
+      "variant": "C",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S06_YunHu_V6_C_Review.png",
+        "sha256": "81275a0d7242b46c322f2d69feaa12373c17cc51d65e60d8946cce01352cf1e2",
+        "bytes": 362490
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S06_YunHu_V6_C_Review_64.png",
+        "sha256": "9553fafed54822c3d20f07476622a8ca8bc03934c3809fc2ac10d373aa58c36e",
+        "bytes": 10759
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S06_YunHu_V6_C_Review_48.png",
+        "sha256": "6754e9431088b8f4f06da0a8f2fc60e6f08712a5798df0d89fe93ea8d8581be0",
+        "bytes": 6707
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 7,
+      "nameV6": "龙压",
+      "nameV5": "风压环",
+      "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
+      "slotId": "Slot6",
+      "variant": "A",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S07_LongYa_V6_A_Review.png",
+        "sha256": "376c2a794a0a3a55e6b521886387a2ef52f8e6edf3fc26d1c24e54895d767d6b",
+        "bytes": 333530
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S07_LongYa_V6_A_Review_64.png",
+        "sha256": "bdecbcab3b0f7a82267069376756875f0d9355fb6097b0648975902a1aa66173",
+        "bytes": 10842
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S07_LongYa_V6_A_Review_48.png",
+        "sha256": "e8df30046553fb095bf1765453c44a640c93df324257be55d9938771f7835440",
+        "bytes": 6725
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 7,
+      "nameV6": "龙压",
+      "nameV5": "风压环",
+      "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
+      "slotId": "Slot6",
+      "variant": "B",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S07_LongYa_V6_B_Review.png",
+        "sha256": "7a2900ad399dc9c88af1b008f770e871e2ccb7972ead32660da1c7255f9b3057",
+        "bytes": 343144
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S07_LongYa_V6_B_Review_64.png",
+        "sha256": "15cdf55bbb8701d0be8ac9e473233ebd6dfeea3b87231d7579947d280c04aabd",
+        "bytes": 10772
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S07_LongYa_V6_B_Review_48.png",
+        "sha256": "1a2acda07cb1fbc12a8dd833e996f284f7794382ae3ae66fe0c3bc09fc00b413",
+        "bytes": 6694
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 7,
+      "nameV6": "龙压",
+      "nameV5": "风压环",
+      "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
+      "slotId": "Slot6",
+      "variant": "C",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S07_LongYa_V6_C_Review.png",
+        "sha256": "c4420bcee7ec4f56ddaf7b1d4a451b7c1286769e9069d144dcd5eeef5819e6ee",
+        "bytes": 339224
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S07_LongYa_V6_C_Review_64.png",
+        "sha256": "5f14f05ca8c1776de287cc7dd13102c3facd752aceb38aa159b5730415dc4185",
+        "bytes": 10461
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S07_LongYa_V6_C_Review_48.png",
+        "sha256": "6ebee125db060e48a31f34ce989f06ce3363b5dd2a90c1f82db4336c6692fd83",
+        "bytes": 6521
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 8,
+      "nameV6": "龙域",
+      "nameV5": "风云域",
+      "abilityId": "dba.ability.dragon_eight_cloud_blessing@1",
+      "slotId": "Slot7",
+      "variant": "A",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S08_LongYu_V6_A_Review.png",
+        "sha256": "528d256af016ca2a664b57d1405ecacfa55a36f77dcd85a0c810e71803d37d3c",
+        "bytes": 451807
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S08_LongYu_V6_A_Review_64.png",
+        "sha256": "3e53c16e33ad9d92f88eb25d2892be7261421db0f5691a465f7d8ee243f2aaca",
+        "bytes": 10898
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S08_LongYu_V6_A_Review_48.png",
+        "sha256": "af65e9bc681ea82f90f434e648cdfaade790c03e3fdc7778e915cfa906802979",
+        "bytes": 6746
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 8,
+      "nameV6": "龙域",
+      "nameV5": "风云域",
+      "abilityId": "dba.ability.dragon_eight_cloud_blessing@1",
+      "slotId": "Slot7",
+      "variant": "B",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S08_LongYu_V6_B_Review.png",
+        "sha256": "dbdcbcc21b3a61cf7e675bfff674eebec11987594f6caae1a30f8d1912095485",
+        "bytes": 457431
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S08_LongYu_V6_B_Review_64.png",
+        "sha256": "3cbe41432a25773423eeb46ebee0a61b3d51debd92b935b601d1c1c12a6e084b",
+        "bytes": 11163
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S08_LongYu_V6_B_Review_48.png",
+        "sha256": "469b4d3c9718b7bdf91a37cc8f2c20962bb05a5492dc789539409ae39c59fd5e",
+        "bytes": 6893
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    },
+    {
+      "skillOrder": 8,
+      "nameV6": "龙域",
+      "nameV5": "风云域",
+      "abilityId": "dba.ability.dragon_eight_cloud_blessing@1",
+      "slotId": "Slot7",
+      "variant": "C",
+      "master": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Candidates1024/T_DBA_Dragon_S08_LongYu_V6_C_Review.png",
+        "sha256": "04bc19c65c54ebf0d6ec0f24acc4513735293ae0c8545d89240b14de52104b90",
+        "bytes": 444133
+      },
+      "small64": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews64/T_DBA_Dragon_S08_LongYu_V6_C_Review_64.png",
+        "sha256": "c669ff69079a2c6522fe2bbe4d3272854d8e7f25588e5fa7ea6ec2c48f614baf",
+        "bytes": 11002
+      },
+      "small48": {
+        "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dragon/SourceArt/UI/SkillIcons/V6/Review/Previews48/T_DBA_Dragon_S08_LongYu_V6_C_Review_48.png",
+        "sha256": "e6824f6fb0763e0767f463aa3a7247f056b866b538906c4d1c77b52ac68bc7b0",
+        "bytes": 6760
+      },
+      "humanApproval": "PENDING",
+      "assetStatus": "PROCEDURAL_CONCEPT_NOT_FINAL_AI_ART"
+    }
+  ]
+}

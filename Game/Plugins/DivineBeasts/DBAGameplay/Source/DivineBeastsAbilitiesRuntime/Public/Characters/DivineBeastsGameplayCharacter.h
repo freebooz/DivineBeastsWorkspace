@@ -5,6 +5,7 @@
 #include "DivineBeastsGameplayCharacter.generated.h"
 
 class UDivineBeastsAbilityLoadoutComponent;
+class UDivineBeastsV6PassiveComponent;
 class UGamePlatformWaterInteractorComponent;
 class USpringArmComponent;
 class UCameraComponent;
@@ -51,6 +52,11 @@ private:
     /** Pawn拥有唯一技能装配组件；只在可信身份Ready后授予，换身份/退出由组件撤销自有租约与授权。 */
     UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Gameplay")
     TObjectPtr<UDivineBeastsAbilityLoadoutComponent> AbilityLoadout;
+    /** V6历史固有被动：默认审核不通过，只有正式技能集合签审后可显式启用；
+     * 当前只接入服务器真实伤害事件，旧占位技能完全不调用被动。 */
+    UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Gameplay")
+    TObjectPtr<UDivineBeastsV6PassiveComponent> V6Passive;
+
     /** 统一平台水域交互组件：服务器低频查询并复制离散涉水状态，
      * 不在角色类保存材质、Niagara、WaterBody或客户端纹理引用。 */
     UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Water")

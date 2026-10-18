@@ -8,6 +8,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "UObject/Class.h"
 
 /** 创建客户端World级音频目录并提交真实Data预载请求。
  * 独立为UI、法术、新手村音乐和环境声建立内容包事务。
@@ -171,6 +172,13 @@ void UDivineBeastsPresentationClientSubsystem::SubmitStarterAudioForWorld()
             // Submitted只代表平台SFX已经接受播放请求，不能代替音频设备实际发声的检查。
             UE_LOG(LogTemp, Log, TEXT("SSLM场景音频请求已受理：%s；地图：%s"),
                 TagName, *World->GetMapName());
+        }
+        else if (Result != EGamePlatformPresentationSubmitResult::Submitted)
+        {
+            // 仅记录中立提交结果与公开场景身份；未受理不能伪报音频设备已播放，也不轮询重试。
+            UE_LOG(LogTemp, Warning, TEXT("SSLM场景音频请求未受理：%s；结果：%s(%d)；地图：%s"),
+                TagName, *StaticEnum<EGamePlatformPresentationSubmitResult>()->GetNameStringByValue(
+                    static_cast<int64>(Result)), static_cast<int32>(Result), *World->GetMapName());
         }
     };
 

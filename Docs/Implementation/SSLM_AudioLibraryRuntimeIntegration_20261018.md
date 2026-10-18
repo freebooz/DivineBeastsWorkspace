@@ -117,7 +117,17 @@
 
 - `FrontEndClient`与`VillageDevelopmentClient`分别显式收录首批4类及扩展库8类的Definitions目录，由Cook追踪实际声音和策略依赖；不纳入试听副本、SourceArt或音频审核地图，不修改服务器配置。
 - 既有 `Tests/Assets/TestFrontEndClientContainer.ps1`新增41条定义及41条声源的实际ExportBundleData检查。对旧容器实测返回1，82项音频缺失、其他既有必需资源缺失0；新包须通过同一门禁才能启动。
-- `Build/Game/RunFrontEndClients.ps1`默认启用UE原生 `stat fps`，与`t.MaxFPS`合并为单一ExecCmds；可用`-ShowFPS:$false`关闭显示，不改持久化玩家配置。
+- `Build/Game/RunFrontEndClients.ps1`默认传入`-GamePlatformShowFPS`；既有平台根布局消费帧结束通知，将`FrameRateText`投影为FPS整数，每0.25秒发布一次变化。公共根布局经Monolith原位添加左上角(16,16)、16号白色文字，独立冷重载确认；`-ShowFPS:$false`关闭显示，不改持久化玩家配置，不使用右侧彩色原生统计。
 
 本次修复不补写正式动画的脚步Notify，也不新增场景水流锚点；这些事件接线仍遵守前述独立制作与人工审核边界。包内容验证、进程启动和扬声器实际试听分别记录。
+
+### 首次前端无声与服务器版本续修
+
+入包后首次前端仍无声：`GetWorldGeneration()`原先返回旧世界缓存，直到`Submit()`才刷新，导致新世界首个音乐请求被判为`StaleWorld`。现在获取快照时先同步当前世界，保持真正旧请求的拒绝逻辑，并记录未受理的场景音频结果；不使用轮询或无限重试。
+
+真实原生回归`GamePlatform.Presentation.WorldGeneration.FirstRequestAfterWorldChange`在旧实现下准确出现两条预期错误，修复后整个`GamePlatform.Presentation`前缀6项Success、失败0。证据在`Saved/Validation/FPSAndAudioDiagnostics_20261018/AudioWorldGenerationRed|Green/Report/index.json`。完整Editor构建`202be652-3a50-4565-8e68-d6ba908b5405`为Passed/Eligible，完整Client构建`3b45f7ce-2cdc-4bcf-96f3-84f8b36d9f55`退出0；真实RHI颜色回归`0f0638d2-b8f5-4b3d-bd4f-91699cd4dbe7`通过。
+
+本次首次启动遗漏`DevelopmentTestAccounts`和专用种子，导致十账号按钮禁用；已从既有本地身份服务的同一十账号配置在内存中恢复，未修改账号/口令/角色，未输出或持久化凭据。运行记录`751191b2-97e2-4567-a0f9-bc49e37338aa`确认十账号启用且用户已实际触发登录。
+
+该客户端连接仍运行旧包的Village时出现`GamePlatformCombatAttributeSet`网络校验不一致。已构建同源Server目标`8aa4ba4f-58d7-44e5-b532-e45a2e1c4170`，原生Cook/Stage及表现隔离门禁通过；先向控制面排空旧实例，再按原资料服务和端口受控替换。用户要求的启动前端前核对Village/MainArena战斗版本规则已写入全局与工作空间AGENTS.md。服务器启动、客户端启动及真实玩家准入仍分别记录，不以任一项替代其它验收。
 

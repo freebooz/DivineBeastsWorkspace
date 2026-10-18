@@ -236,14 +236,14 @@ void UDivineBeastsPlaceholderGameplayAbility::ReleaseNextProjectile()
         !TargetCombat || TargetCombat->IsCombatDead() || TargetCombat->GetCombatAvatarGeneration()!=CastSpec.TargetAvatarGeneration))
     { EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true); return; }
     const FVector AimOrigin=Source->GetActorLocation()+FVector(0,0,50);
-    const FVector Direction = bHadFrozenTarget ?
-        (TargetCombat->GetCombatTargetPoint()-AimOrigin).GetSafeNormal() : Source->GetActorForwardVector().GetSafeNormal();
+    // 初始切线遵循服务器施法朝向；平台弹体自行构建弧线并追踪冻结目标，不在此把方向瞬间改向目标。
+    const FVector Direction = Source->GetActorForwardVector().GetSafeNormal();
     if (Direction.IsNearlyZero())
     {
         EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
         return;
     }
-    const FVector Start = Source->GetActorLocation() + FVector(0, 0, 50) + Direction * 50;
+    const FVector Start = AimOrigin + Direction * 50;
     FActorSpawnParameters Spawn;
     Spawn.Owner = Source;
     Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

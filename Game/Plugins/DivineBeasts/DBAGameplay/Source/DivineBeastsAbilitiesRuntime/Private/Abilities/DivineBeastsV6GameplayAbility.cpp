@@ -4,6 +4,7 @@
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Characters/DivineBeastsCharacter.h"
 #include "Components/DivineBeastsCharacterComponent.h"
+#include "Components/DivineBeastsV6PassiveComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Actors/GamePlatformCombatProjectile.h"
@@ -646,6 +647,9 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
             // 如伤害触发死亡、复活或换Pawn，不得使用已经失效的源/目标继续施控。
             const FGamePlatformCombatResult DamageResult = Combat->ApplyDamage(Spec);
             if (!DamageResult.IsSuccess()) return false;
+            // 裂甲仅消费平台已确认的GAS真实伤害；旧占位技能和未批准被动不会被触发。
+            if (auto* Passive = Source->FindComponentByClass<UDivineBeastsV6PassiveComponent>())
+                Passive->AuthorityOnConfirmedDamageHit(Target, Snapshot.AvatarGeneration, DamageResult);
             if (!IsCurrentActivation(Token, Source, Combat, SourceGeneration) ||
                 !IsCurrentTarget(Source, Hero, Target, Snapshot.AvatarGeneration, false))
                 return true; // 伤害已经执行，后续控制失败不得伪造全技能未命中
@@ -716,6 +720,14 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
             return false;
         }
         if (!Result.IsSuccess()) return false;
+        // 普攻每次服务器成功结算才可获得一次气势
+        if ((ExecutionMode == EDivineBeastsV6NativeMode::ForwardDamage ||
+             ExecutionMode == EDivineBeastsV6NativeMode::RadialDamage) &&
+            !bFriendly)
+        {
+            if (auto* Passive = Source->FindComponentByClass<UDivineBeastsV6PassiveComponent>())
+                Passive->AuthorityOnConfirmedDamageHit(Target, Snapshot.AvatarGeneration, Result);
+        }
         // 普攻每次服务器成功结算才可获得一次气势，拒绝按触发次数或动画窗口重复发放。
         if (ExecutionMode == EDivineBeastsV6NativeMode::ForwardDamage &&
             Definition->Kind == EDivineBeastsAbilityKind::Primary)
@@ -735,12 +747,10 @@ void UDivineBeastsV6GameplayAbility::ActivateAbility(
             HasV6LineOfSight(Source->GetWorld(), Source, FrozenTarget);
         const auto* TargetCombat = bCurrentFrozenTarget
             ? FrozenTarget->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
-        // 无目标时保持服务器当前朝向；有目标时只使用提交后复核的当前命中点。
+        // 真实施法朝向决定起飞切线；当前目标点只校验资格，由平台权威弹体逐子步弧线追踪。
         const FVector FreshAim = IsValid(TargetCombat)
             ? TargetCombat->GetCombatTargetPoint() : FVector::ZeroVector;
-        const FVector Direction = bProjectileHadFrozenTarget
-            ? (FreshAim - Origin).GetSafeNormal()
-            : Source->GetActorForwardVector().GetSafeNormal();
+        const FVector Direction = Source->GetActorForwardVector().GetSafeNormal();
         if (!Direction.IsNearlyZero() &&
             IsCurrentActivation(Token, Source, Combat, SourceGeneration) &&
             (!bProjectileHadFrozenTarget ||

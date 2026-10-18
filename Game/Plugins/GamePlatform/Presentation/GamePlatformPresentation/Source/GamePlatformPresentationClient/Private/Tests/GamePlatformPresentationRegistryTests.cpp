@@ -4,8 +4,11 @@
 
 #include "Misc/AutomationTest.h"
 #include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 #include "UObject/StrongObjectPtr.h"
+#include "UObject/UnrealType.h"
 #include "GameplayTagsManager.h"
 #include "GamePlatformPresentationClientSubsystem.h"
 
@@ -439,6 +442,83 @@ bool FGamePlatformPresentationPreflightRegressionTest::RunTest(const FString&)
         [](const FGamePlatformPresentationRequest&) { return true; }), UObject::StaticClass());
     TestEqual(TEXT("中立Provider类型合同保留真实Class"), Service->GetProviderDefinitionClass(TEXT("TypedProvider")), UObject::StaticClass());
     TestNull(TEXT("缺Provider不能猜测定义类型"), Service->GetProviderDefinitionClass(TEXT("MissingProvider")));
+    return true;
+}
+
+/**
+ * 世界切换回归：请求创建者先取得当前世界代次，再提交该世界的第一条请求。
+ * 若Getter只返回上一个世界的缓存，Submit内部刷新后会误判这条新请求为StaleWorld。
+ * 同时保留真正旧世界请求的拒绝约束，不能通过忽略请求代次来让首请求通过。
+ * 夹具只创建未初始化的真实World/Viewport对象，通过反射设置Viewport的World属性；
+ * 不注册Engine世界上下文、不调用PlayerAdded/BeginPlay，也不加载账号、资产或音频设备。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformPresentationWorldGenerationSnapshotTest,
+    "GamePlatform.Presentation.WorldGeneration.FirstRequestAfterWorldChange",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformPresentationWorldGenerationSnapshotTest::RunTest(const FString&)
+{
+    // 依赖对象先声明，确保局部玩家/表现服务先析构，World与Viewport在其清理期间仍有效。
+    TStrongObjectPtr<UGameViewportClient> Viewport;
+    TStrongObjectPtr<UWorld> WorldA;
+    TStrongObjectPtr<UWorld> WorldB;
+    FPresentationLocalPlayerFixture ServiceFixture;
+    if (!ServiceFixture.Initialize(*this)) return false;
+    UGamePlatformPresentationClientSubsystem* Service = ServiceFixture.Subsystem.Get();
+
+    Viewport.Reset(NewObject<UGameViewportClient>(GEngine));
+    WorldA.Reset(NewObject<UWorld>(GetTransientPackage()));
+    WorldB.Reset(NewObject<UWorld>(GetTransientPackage()));
+    if (!TestNotNull(TEXT("世界代次夹具需要真实Viewport"), Viewport.Get()) ||
+        !TestNotNull(TEXT("世界代次夹具需要旧世界对象"), WorldA.Get()) ||
+        !TestNotNull(TEXT("世界代次夹具需要新世界对象"), WorldB.Get())) return false;
+
+    FObjectPropertyBase* WorldProperty = FindFProperty<FObjectPropertyBase>(
+        UGameViewportClient::StaticClass(), TEXT("World"));
+    if (!TestNotNull(TEXT("通过引擎已有World反射属性切换夹具世界"), WorldProperty)) return false;
+    ServiceFixture.Player->ViewportClient = Viewport.Get();
+    WorldProperty->SetObjectPropertyValue_InContainer(Viewport.Get(), WorldA.Get());
+    if (!TestEqual(TEXT("LocalPlayer真实GetWorld首先指向旧世界"),
+        ServiceFixture.Player->GetWorld(), WorldA.Get())) return false;
+
+    // 唯一替身仅接收中立请求，不加载或播放资源；被测对象仍执行真实代次校验和分发。
+    const FName ProviderChannel(TEXT("Test.WorldGeneration"));
+    const FName DefinitionId(TEXT("presentation.test.world.generation@1"));
+    const FGuid ProviderId = Service->RegisterProvider(ProviderChannel, 1,
+        FGamePlatformPresentationProviderHandler::CreateLambda(
+            [ProviderChannel, DefinitionId](const FGamePlatformPresentationRequest& Request)
+            {
+                return Request.ProviderChannel == ProviderChannel && Request.DefinitionId == DefinitionId;
+            }));
+    if (!TestTrue(TEXT("世界代次夹具的中立Provider已登记"), ProviderId.IsValid())) return false;
+
+    FGamePlatformPresentationRequest InitialRequest;
+    InitialRequest.RequestId = FGuid::NewGuid();
+    InitialRequest.SemanticTag = PresentationCatalogTestTag();
+    InitialRequest.ProviderChannel = ProviderChannel;
+    InitialRequest.DefinitionId = DefinitionId;
+    // 仅基线请求不指定代次，让现有Submit先绑定WorldA；之后的请求都带显式代次。
+    if (!TestEqual(TEXT("旧世界基线请求受理"), Service->Submit(InitialRequest),
+        EGamePlatformPresentationSubmitResult::Submitted)) return false;
+    const int32 OldGeneration = Service->GetWorldGeneration();
+
+    FGamePlatformPresentationRequest OldWorldRequest = InitialRequest;
+    OldWorldRequest.RequestId = FGuid::NewGuid();
+    OldWorldRequest.WorldGeneration = OldGeneration;
+    WorldProperty->SetObjectPropertyValue_InContainer(Viewport.Get(), WorldB.Get());
+    if (!TestEqual(TEXT("LocalPlayer真实GetWorld已经切换到新世界"),
+        ServiceFixture.Player->GetWorld(), WorldB.Get())) return false;
+
+    // 此处故意在新世界的任何Submit之前读取；旧实现会继续给出OldGeneration。
+    const int32 NewGeneration = Service->GetWorldGeneration();
+    TestTrue(TEXT("Getter在首请求之前已同步到新世界代次"), NewGeneration > OldGeneration);
+    TestEqual(TEXT("同世界重复读取不会再次递增代次"), Service->GetWorldGeneration(), NewGeneration);
+    FGamePlatformPresentationRequest FirstNewWorldRequest = InitialRequest;
+    FirstNewWorldRequest.RequestId = FGuid::NewGuid();
+    FirstNewWorldRequest.WorldGeneration = NewGeneration;
+    TestEqual(TEXT("使用Getter快照的新世界首请求不得被误判StaleWorld"),
+        Service->Submit(FirstNewWorldRequest), EGamePlatformPresentationSubmitResult::Submitted);
+    TestEqual(TEXT("真正来自旧世界的迟到请求仍被拒绝"),
+        Service->Submit(OldWorldRequest), EGamePlatformPresentationSubmitResult::StaleWorld);
     return true;
 }
 #endif

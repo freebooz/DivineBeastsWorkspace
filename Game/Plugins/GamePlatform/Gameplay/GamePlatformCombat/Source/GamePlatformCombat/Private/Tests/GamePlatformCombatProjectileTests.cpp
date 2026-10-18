@@ -385,4 +385,73 @@ bool FGamePlatformProjectileHomingHelixContinuityTest::RunTest(const FString&)
     TestFalse(TEXT("无阻挡急转仍在飞行"),Projectile->IsFlightFinished());
     return true;
 }
+// 施法朝向保留为起飞切线；锁定偏离该方向时应形成弧线并继续追踪同一移动目标。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileCurvedFacingTest,
+    "GamePlatform.Combat.Projectile.CurvedLaunchPreservesFacing",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileCurvedFacingTest::RunTest(const FString&)
+{
+    FProjectileTestWorld Fixture;
+    if (!Fixture.Initialize()) return false;
+    Fixture.Target->SetActorLocation(FVector(0, 1000, 0));
+    auto Spec = Fixture.CastSpec(); Spec.Target = Fixture.Target; Spec.TargetAvatarGeneration = 1;
+    FGamePlatformCombatProjectileMotion Motion; Motion.RangeCm = 2000; Motion.SpeedCmPerSecond = 1200;
+    auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+    if (!TestTrue(TEXT("侧向锁定目标初始化"), Projectile->AuthorityInitialize(Spec, Motion, FVector::ForwardVector))) return false;
+    Projectile->Tick(1.f / 120.f);
+    const FVector First = Projectile->GetActorLocation();
+    TestTrue(TEXT("第一段沿施法前方起飞，不能瞬间改为侧向直射"), First.X > 9.f && First.Y > 0.f && First.Y < 2.f);
+    Fixture.Target->SetActorLocation(FVector(-250, 900, 100));
+    for (int32 Step = 0; Step < 50 && !Projectile->IsFlightFinished(); ++Step) Projectile->Tick(.05f);
+    TestTrue(TEXT("弧线持续追踪移动目标并由Sweep确认命中"), Projectile->IsFlightFinished() && Projectile->GetFlightFacts().bImpacted);
+    TestEqual(TEXT("移动目标仍只受一次权威伤害"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
+    Projectile->Tick(.25f);
+    TestEqual(TEXT("弧线命中不重复结算"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileCurvedReverseTest,
+    "GamePlatform.Combat.Projectile.CurvedReverseTargetAtRangeBoundary",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileCurvedReverseTest::RunTest(const FString&)
+{
+    FProjectileTestWorld Fixture;
+    if (!Fixture.Initialize()) return false;
+    Fixture.Source->SetActorLocation(FVector::ZeroVector);
+    Fixture.Target->SetActorLocation(FVector(-2000, 0, 0));
+    auto Spec = Fixture.CastSpec(); Spec.Target = Fixture.Target; Spec.TargetAvatarGeneration = 1;
+    FGamePlatformCombatProjectileMotion Motion; Motion.RangeCm = 2000; Motion.SpeedCmPerSecond = 1200;
+    auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>(FVector(50, 0, 0), FRotator::ZeroRotator);
+    if (!TestTrue(TEXT("正后方射程边界目标不因起射偏移而被拒绝"), Projectile->AuthorityInitialize(Spec, Motion, FVector::ForwardVector))) return false;
+    Projectile->Tick(1.f / 120.f);
+    TestTrue(TEXT("正后方先沿前方起飞而非立即反向"), Projectile->GetActorLocation().X > 59.f);
+    TestTrue(TEXT("180度退化情况下仍生成有限弯曲"), FMath::Abs(Projectile->GetActorLocation().Y) > .1f);
+    for (int32 Step = 0; Step < 50 && !Projectile->IsFlightFinished(); ++Step) Projectile->Tick(.05f);
+    TestEqual(TEXT("有限弧线补偿让合法射程目标正常被命中"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
+    TestTrue(TEXT("后方追踪正常收敛，不无限绕圈"), Projectile->IsFlightFinished());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileCurvedBlockerTest,
+    "GamePlatform.Combat.Projectile.CurvedLaunchRespectsBlockers",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileCurvedBlockerTest::RunTest(const FString&)
+{
+    FProjectileTestWorld Fixture;
+    if (!Fixture.Initialize()) return false;
+    Fixture.Target->SetActorLocation(FVector(0, 1000, 0));
+    AActor* Wall = Fixture.World->SpawnActor<AActor>();
+    auto* Collision = NewObject<USphereComponent>(Wall); Collision->InitSphereRadius(20);
+    Wall->SetRootComponent(Collision); Wall->AddInstanceComponent(Collision);
+    Collision->SetCollisionEnabled(ECollisionEnabled::QueryOnly); Collision->SetCollisionResponseToAllChannels(ECR_Block);
+    Collision->RegisterComponent(); Wall->SetActorLocation(FVector(55, 0, 0)); Wall->DispatchBeginPlay();
+    auto Spec = Fixture.CastSpec(); Spec.Target = Fixture.Target; Spec.TargetAvatarGeneration = 1;
+    FGamePlatformCombatProjectileMotion Motion; Motion.RangeCm = 2000; Motion.SpeedCmPerSecond = 1200;
+    auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+    if (!Projectile->AuthorityInitialize(Spec, Motion, FVector::ForwardVector)) return false;
+    Projectile->Tick(.2f);
+    TestTrue(TEXT("前方起飞弧段中的真实障碍阻止飞行"), Projectile->IsFlightFinished() && Projectile->GetFlightFacts().bImpacted);
+    TestEqual(TEXT("受阻弧线不能绕过真实碰撞伪造目标伤害"), Fixture.TargetCombat->GetCombatHealth(), 100.f);
+    return true;
+}
 #endif

@@ -33,7 +33,7 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatProjectileFacts
 DECLARE_MULTICAST_DELEGATE_TwoParams(FGamePlatformProjectileFactsChanged,
     AGamePlatformCombatProjectile*, const FGamePlatformCombatProjectileFacts&);
 
-/** 直线/螺旋及显式目标追踪Actor；同世界服务器拥有运动与命中，不提供客户端伤害RPC。 */
+/** 直线/螺旋及显式目标弧线追踪Actor；同世界服务器拥有运动与命中，不提供客户端伤害RPC。 */
 UCLASS(Blueprintable)
 class GAMEPLATFORMCOMBAT_API AGamePlatformCombatProjectile : public AActor
 {
@@ -44,6 +44,7 @@ public:
      * 无效/过期来源、方向、参数、重复初始化返回false，不扣费、不加载资源、不生成伤害。
      * 调用方拥有生成失败后的销毁与技能取消；平台不决定项目开发配置或技能输入。
      * Spec.Target为空保持原轨迹；非空时冻结目标化身并追踪，死亡/销毁/换化身即终止，不重新寻敌。
+     * Direction为真实起飞切线；有目标时有限速率转向，初始绕弧最多补偿0.5秒飞行预算，不扩大锁定射程。
      */
     bool AuthorityInitialize(const FGamePlatformCombatSpec& Spec,
         const FGamePlatformCombatProjectileMotion& Motion, const FVector& Direction,
@@ -72,14 +73,18 @@ private:
     bool bHasHomingTarget = false;
     FVector HomingCenter = FVector::ZeroVector;
     float FlightSeconds = 0.0f;
+    /** 一次初始化冻结的有限飞行期限；移动目标不刷新期限，避免无限追赶。无目标保持原射程/速度。 */
+    float FlightEndSeconds = 0.0f;
     FGamePlatformProjectileFactsChanged FactsChanged;
     UFUNCTION() void OnRep_Facts();
     /** 确认原来源仍在同世界同代次且存活；每帧和每次结算前重新读取，不能沿用裸指针资格。 */
     bool HasCurrentSource() const;
     /** 每个真实运动子步及结算前检查冻结目标；无追踪请求返回true，不扫描世界。 */
     bool HasCurrentHomingTarget() const;
-    /** 以固定速度推进追踪中心并保留螺旋截面；只有服务器物理子步调用。 */
-    FVector AdvanceHomingPosition(float StepSeconds);
+    /** 转弯角速度（弧度/秒）；近目标缩小半径，防止贴近目标时绕圈，纯服务器几何计算。 */
+    float GetHomingTurnRateRadians(float DistanceCm) const;
+    /** 保留起飞切线、按有界弧段推进并传递螺旋截面；目标中心在本次物理子步只读取一次。 */
+    FVector AdvanceHomingPosition(float StepSeconds, const FVector& TargetCenter, float TurnRateRadians);
     FVector PositionAt(float Seconds) const;
     /** 先锁终态，再提交最多一次平台伤害；同步战斗回调重入不能复活/重复结算。 */
     void FinishFlight(const FHitResult* Hit);

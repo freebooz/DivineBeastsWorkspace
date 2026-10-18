@@ -277,8 +277,7 @@ def author():
             cdo.set_editor_property("PlaceholderCooldownTags", tags(cooldown_tags))
             cdo.set_editor_property("AbilityTags",
                                     tags([] if mode == "Passive" else
-                                    ["Ability.Active"] if mode == "Primary"
-                                    else ["Ability.Active", "Ability.Spell"]))
+                                    ["Ability.Active", "Ability.Spell"]))
             unreal.BlueprintEditorLibrary.compile_blueprint(ga_bp)
             save(ga_bp)
             cls = unreal.EditorAssetLibrary.load_blueprint_class(ga_path)
@@ -508,6 +507,7 @@ def migrate_primary_to_healing():
         cooldown_class = unreal.EditorAssetLibrary.load_blueprint_class(ROOT + "/GE" + suffix + "Cooldown")
         check(cooldown_class is not None, "治疗冷却生成类缺失：" + hero)
         cdo.set_editor_property("PlaceholderMode", unreal.DivineBeastsPlaceholderAbilityMode.HEALING)
+        cdo.set_editor_property("AbilityTags", tags(["Ability.Active", "Ability.Spell"]))
         cdo.set_editor_property("CostGameplayEffectClass", None)
         cdo.set_editor_property("CooldownGameplayEffectClass", cooldown_class)
         cdo.set_editor_property("PlaceholderCooldownTags", tags([cooldown_tag]))

@@ -38,6 +38,9 @@ public:
 
 private:
     friend class FGamePlatformSFXLifecycleRegressionTest;
+    /** 唯一组件起播边界；基础音量、音高与引擎淡入包络各自配置，不持有额外播放器。 */
+    static void StartComponentPlayback(UAudioComponent& Component, float TargetVolume,
+        float TargetPitch, float FadeInSeconds, float StartTimeSeconds);
     struct FPendingPlay
     {
         FGamePlatformSFXHandle Handle;

@@ -360,7 +360,7 @@
     "MaterialCompiled": true
   },
   "DirectedMissileSlotBinding20261018": {
-    "Status": "SavedPendingNativeInputAndColdVerification",
+    "Status": "NativeInputColdLoadAndCookVerifiedPendingManualAndGPU",
     "NativeTool": "Monolith MCP + UE5.8",
     "RuntimeRoot": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Runtime/DirectedMissile",
     "Definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_DirectedMissileFlight",
@@ -377,7 +377,15 @@
     "ReviewAssetsChanged": false,
     "ManualVisualAccepted": false,
     "GPUVerified": false,
-    "CookVerified": false,
+    "CookVerified": true,
+    "NativeInputTestRunId": "06d6cdb1-cc16-4f25-9b8f-e265887f1de7",
+    "ColdProcessPID": 45572,
+    "HealingMaxHealthFraction": 0.2,
+    "HealingCooldownSeconds": 10,
+    "HealingSpellTagAndSilenceVerified": true,
+    "CookedRuntimePackages": 10,
+    "EditorAuthorModulesStripped": 3,
+    "NetworkAcceptance": false,
     "EvidenceRoot": "Saved/Validation/CommonSkillVFX/DirectedMissileSlotBinding"
   }
 }

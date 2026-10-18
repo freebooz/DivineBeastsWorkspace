@@ -2484,5 +2484,29 @@
     ],
     "ClientCookRunId": "fc4ef6e5-714f-4f65-a5a7-2eeccebddc41",
     "FinalEvidence": "Saved/Validation/SkillBar20261018/LatestReleaseValidation.json"
+  },
+  "FPSOverlay20261018": {
+    "Status": "Saved_ColdReloadVerified_RuntimePending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+    "ParentClass": "DivineBeastsRootLayout",
+    "Widget": "FrameRateText",
+    "FontSize": 16,
+    "Color": "#FFFFFFFF",
+    "Position": [
+      16,
+      16
+    ],
+    "Anchor": "TopLeft",
+    "ZOrder": 100,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "AuthoringEditorPID": 55148,
+    "ColdReloadEditorPID": 52016,
+    "ColdReloadWidgetCount": 17,
+    "Lifecycle": "NativeConstruct/OnEndFrame/NativeDestruct",
+    "RuntimeSwitch": "-GamePlatformShowFPS",
+    "Evidence": "Saved/Validation/FPSAndAudioDiagnostics_20261018/FPSColdReload.json"
   }
 }

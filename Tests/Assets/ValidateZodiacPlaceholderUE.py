@@ -128,6 +128,7 @@ def inspect():
                       ability_id + ":法术成本必须为空，原有冷却GE必须保留")
                 totals["effects_verified"] += int(requires_effects and not cost and bool(cooldown))
                 if mode == "Primary":
+                    check('Ability.Spell' in cdo.get_editor_property('AbilityTags').export_text(),ability_id+':治疗缺少法术语义，可能绕过沉默')
                     check(cdo.get_editor_property('PlaceholderMode') == unreal.DivineBeastsPlaceholderAbilityMode.HEALING,
                           ability_id + ':Primary仍未迁移治疗执行模式')
                 if mode == 'DirectedMissile':

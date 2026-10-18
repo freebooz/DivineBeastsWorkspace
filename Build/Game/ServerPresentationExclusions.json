@@ -440,6 +440,13 @@
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "吸血鬼的骨骼、材质和动画仅由客户端租约装配；服务器只Cook项目怪物类与权威AI定义。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/CommonSkillVFX",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/CommonSkillVFX",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "通用技能的审核及运行Niagara、材质和网格均为纯客户端表现；服务器只使用DBAGameplay授权与Combat权威弹体，不Cook这些资源。"
     }
   ],
   "StageOnlyDirectories": [

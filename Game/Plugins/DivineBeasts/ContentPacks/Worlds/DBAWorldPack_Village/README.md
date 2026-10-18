@@ -64,3 +64,9 @@ Dirt安全恢复脚本为Tools/Unreal/Terrain/ResumeTerrainV3FormalCover.ps1，�
 ## 2026-10-16 狼怪物与导航修复
 
 本包持有Quaternius CC0狼的SourceArt、客户端Creatures/Wolf和服务器AI定义。通过Monolith真实导入Idle/Walking、建立平台动画基类派生AnimBP并烘焙出生点外围导航；两个PlayerStart保持原坐标。服务器排除Creatures/Wolf叶子，保留AI与地图。开发配置启用四只狼；发行默认关闭。资源来源与重载证据见Docs/MonolithGenerationManifest.json，实际构建、Cook、人工验收边界见工作空间Docs/Implementation/VillageWolvesAndPartyOperations20261016.md。
+
+## 2026-10-18 月光与薄雾
+
+用户明确要求增加雾、调暗并采用月光照明。已通过Monolith原位保存正式村庄地图：复用既有冷色主光/低强度天光、高度雾，加入三处外围近地LocalFogVolume及固定曝光。未新增Niagara System、材质或运行机制；两个出生点保持原变换。此地图月夜为配色V3的用户指定例外，不修改其他世界。
+
+独立冷重载和实际Client/Server Cook/Stage通过，原生截图归工作空间Saved/Validation/VillageMist_20261018；参数及边界见Docs/Implementation/GamePlatformWorld/VillageMistAndMoonlight_20261018.md。未重启现有联机客户端/服务器，人工可读性与不同画质/GPU仍待验证。

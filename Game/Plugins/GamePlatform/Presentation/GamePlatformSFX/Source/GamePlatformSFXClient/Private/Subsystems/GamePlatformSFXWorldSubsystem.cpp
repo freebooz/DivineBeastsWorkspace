@@ -444,7 +444,6 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
     const FGamePlatformSFXRequest Request = Pending->Request;
     const float TargetVolume = Definition->GetVolumeMultiplier() * Request.VolumeMultiplier;
     const float TargetPitch = Definition->GetPitchMultiplier() * Request.PitchMultiplier;
-    const float InitialVolume = Definition->GetFadeInSeconds() > 0.0f ? 0.0f : TargetVolume;
 
     USceneComponent* AttachTo = nullptr;
     if (Definition->GetPlaybackSpace() == EGamePlatformSFXPlaybackSpace::Attached)
@@ -474,8 +473,6 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
         return;
     }
 
-    Component->SetVolumeMultiplier(InitialVolume);
-    Component->SetPitchMultiplier(TargetPitch);
     Component->bAllowSpatialization = Definition->GetPlaybackSpace() != EGamePlatformSFXPlaybackSpace::TwoD && Params.ShouldUseAttenuation();
     if (AttachTo)
     {
@@ -514,10 +511,8 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
     // UE失败启动不发AudioFinished，但仍广播Stopped；先绑定再播放能覆盖异步Concurrency拒绝。
     Component->OnAudioPlayStateChangedNative.AddUObject(this,
         &UGamePlatformSFXWorldSubsystem::HandleAudioPlayStateChanged);
-    if (Definition->GetFadeInSeconds() > 0.0f)
-        Component->FadeIn(Definition->GetFadeInSeconds(), TargetVolume, Request.StartTimeSeconds);
-    else
-        Component->Play(Request.StartTimeSeconds);
+    StartComponentPlayback(*Component, TargetVolume, TargetPitch,
+        Definition->GetFadeInSeconds(), Request.StartTimeSeconds);
     if (!ActiveInstances.Contains(Handle.Id)) return;
     if (!Component->IsPlaying())
     {
@@ -532,6 +527,16 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
     Diagnostics.PeakActiveInstances = FMath::Max(
         Diagnostics.PeakActiveInstances,
         ActiveInstances.Num());
+}
+
+void UGamePlatformSFXWorldSubsystem::StartComponentPlayback(UAudioComponent& Component,
+    const float TargetVolume, const float TargetPitch, const float FadeInSeconds,
+    const float StartTimeSeconds)
+{
+    Component.SetVolumeMultiplier(FadeInSeconds > 0.0f ? 0.0f : TargetVolume);
+    Component.SetPitchMultiplier(TargetPitch);
+    if (FadeInSeconds > 0.0f) Component.FadeIn(FadeInSeconds, TargetVolume, StartTimeSeconds);
+    else Component.Play(StartTimeSeconds);
 }
 
 void UGamePlatformSFXWorldSubsystem::HandleAudioFinished(UAudioComponent* Component)

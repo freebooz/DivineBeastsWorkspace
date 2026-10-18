@@ -15,7 +15,7 @@ param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2
     [ValidateRange(540,2160)][int]$WindowHeight=1080,
     # 同机双窗口验证默认每端60帧，避免无限制渲染争用显卡；0保留游戏设置，不修改持久化玩家偏好。
     [ValidateRange(0,240)][int]$FrameRateLimit=60,
-    # 开发联调默认显示UE原生FPS；可用-ShowFPS:$false关闭，独立于限帧且不写玩家设置。
+    # 开发联调默认显示根布局左上角FPS；可用-ShowFPS:$false关闭，独立于限帧且不写玩家设置。
     [switch]$ShowFPS=$true,
     # 只记录运动/复制的事件采样，供人工移动后按三端时间戳定位延迟，不包含登录信息。
     [switch]$MovementDiagnostics,
@@ -127,10 +127,10 @@ foreach($i in 1..$Count) {
     foreach($argument in @('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','-windowed',"-ResX=$WindowWidth","-ResY=$WindowHeight","-WinX=$((($i-1)*40)+20)",'-WinY=40','-nosplash',"-abslog=$log")) {
         $info.ArgumentList.Add($argument)
     }
-    # 所有启动命令合成同一个ExecCmds参数，避免后一个参数覆盖FPS或限帧设置。
+    # FPS由平台根布局消费帧结束通知；原生stat fps固定右侧和彩色，不满足项目视觉合同。
     $startupCommands=@()
     if ($FrameRateLimit -gt 0) { $startupCommands+="t.MaxFPS $FrameRateLimit" }
-    if ($ShowFPS) { $startupCommands+='stat fps' }
+    if ($ShowFPS) { $info.ArgumentList.Add('-GamePlatformShowFPS') }
     if ($startupCommands.Count) { $info.ArgumentList.Add('-ExecCmds='+($startupCommands -join ',')) }
     if ($MovementDiagnostics) { $info.ArgumentList.Add('-DBAMovementDiagnostics') }
     if ($DevelopmentSkills) {
