@@ -8,7 +8,7 @@
 - 正式角色选择与创建仍共用 `UDivineBeastsCharacterPreviewSubsystem`（角色预览子系统）和 `AGamePlatformCharacterPreviewStage`（平台角色预览舞台），并流送 `/DBAFrontEndPack/Maps/L_DBA_CharacterStudio`（角色展示关卡）。
 - 正式流程已有0.45秒进场混合设置，但退出时开始视角恢复后立即隐藏并卸载流送关卡，过渡源可能提前消失。
 - 正式舞台使用普通 `UCameraComponent`（相机组件）；原 `UGamePlatformCinematicCameraSubsystem`（平台电影镜头子系统）只给电影相机组件应用焦段，现有角色舞台没有正式的焦段控制入口。
-- 当前会话没有本地项目检出、UE5.8编辑器或命令行构建工具，因此正式角色关卡没有新的运行截图或实机输入证据。
+- 本记录初稿时没有可用的UE5.8项目运行环境，因此正式角色关卡当时没有新的运行截图或实机输入证据；本次后续验证结果见文末。
 
 ## 实际接入
 
@@ -47,5 +47,14 @@
 
 - 已核对主分支最新源码、相机插件实现、正式预览舞台、选择/创建页面输入链及历史实施记录。
 - 本地公式校核结果：24/35/50/85毫米对应约73.7398°/54.4322°/39.5978°/23.9132°水平视场角。
-- 已增加UE自动化测试：`GamePlatform.Camera.Cinematic.FocalLengthMapping`、`GamePlatform.Camera.Cinematic.GenericCameraOpticsAndArenaIsolation` 和 `DivineBeasts.UI.Characters.PreviewCameraWheel`。当前会话无法启动UE编辑器，测试未执行，不能据此宣称C++编译通过。
+- 初稿新增了焦段映射、竞技隔离与预览滚轮自动化测试；其实际UE5.8构建及运行结果见“UE5.8后续验证”。
 - 尚无正式角色选择/创建的新版实机截图、鼠标轮操作日志、退出恢复录像、Cook结果或真实帧率数据。正式画面、交互、输入交接及性能仍需在UE5.8编辑器和目标设备完成最终验收。
+
+## UE5.8 后续验证（2026-10-18）
+
+本次在最新主分支 `4dde0b951ab3e5459f0f25f7f8ff483ae3a53ca0` 上建立隔离验证工作树，正式接入提交为 `e1e8a4352c1f4ae4bf3f899c3db74209975fe71f`。工作树相对最新主分支领先2个提交、无落后提交；`git diff --check origin/main...HEAD` 通过。原主工作区的未提交文件和运行任务未改动。
+
+- UE5.8.0 Editor 项目目标构建通过，UBT 259/259 actions 成功，进程退出码0；构建证据标记 `Status=Passed`、`EditorBuildEvidenceStatus=Eligible`。使用 `Build/Game/BuildFoundation.ps1 -EngineRoot D:\UnrealEngine-5.8.0-release -Editor -UsePrecompiled -AdditionalPlugins DBAServer -NoUBA -MaxParallelActions 8`。证据：`Saved/Validation/FoundationM0/f16df79c-d485-41f7-bc79-fbe4cab3c043/Build/result.json` 及 `Editor/UBT.log`。该配置复用现有UE引擎二进制，不代表引擎源码重建。
+- UE5.8 `UnrealEditor-Cmd` 前端地图自动化结果为 `Passed=true`、`Count=7`、`Failed=0`。七项均为 `Success`：`GamePlatform.Camera.Cinematic.Profile.Validation`、`GamePlatform.Camera.Cinematic.FocalLengthMapping`、`GamePlatform.Camera.Cinematic.GenericCameraOpticsAndArenaIsolation`、`DivineBeasts.UI.Characters.PreviewCameraWheel`、`DivineBeasts.UI.Characters.PreviewDragDirection`、`DivineBeasts.UI.Characters.PreviewDragFiniteClamp`、`DivineBeasts.UI.Characters.PreviewDragLifetime`。原生报告：`Saved/Validation/CastingMonster20261013/Native-971f7403-3552-4db2-badf-34d6f8140936/Report/index.json`；汇总：同目录 `Result.json`。
+- 自动化覆盖焦段映射、普通相机光学应用、竞技参数隔离，以及预览滚轮和拖拽状态；结果明确保留 `NetworkAcceptance=false`、`ManualVisualAccepted=false`。测试进程载入前端地图，但没有通过交互式编辑器操作正式角色选择/创建页面。
+- 因当前没有UE编辑器UI自动化通道，本次没有改动蓝图或正式关卡资源，也没有新的正式场景截图、真人输入、生肖切换、镜头抢占/恢复录像、Cook、专用服务器隔离运行或目标设备性能记录。上述项目仍需按“人工审核入口”完成视觉与运行验收。
