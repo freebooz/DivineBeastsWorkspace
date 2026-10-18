@@ -35,7 +35,9 @@ def control_contract(header: str, cpp: str) -> dict[str, bool]:
         "source_damage_first": all(item in cpp for item in (
             "const FGamePlatformCombatResult DamageResult = Combat->ApplyDamage(Spec)",
             "if (!DamageResult.IsSuccess()) return false",
-            "const FGamePlatformCombatResult ControlResult = Combat->ApplyControl(",
+            # "control" 的真正实现已经是 Slow/Control 两分支；不要要求旧的同行ApplyControl
+            "const FGamePlatformCombatResult ControlResult =",
+            "Combat->ApplyControl(",
         )) and cpp.find("const FGamePlatformCombatResult DamageResult") < cpp.find(
             "const FGamePlatformCombatResult ControlResult"),
         "second_event_distinct": all(item in cpp for item in (
@@ -54,8 +56,9 @@ def control_contract(header: str, cpp: str) -> dict[str, bool]:
         "partial_success_truthful": all(item in cpp for item in (
             "控制失败或目标死亡不能撤销已提交的真实伤害",
             "return true; // 伤害已经执行，后续控制失败不得伪造全技能未命中")),
-        "control_boundary": ("Slow" not in header and
-             "EGamePlatformControlType::Slow" not in cpp),
+        "control_boundary": all(item in header for item in (
+            "DamageAndSlow", "IsValidDamageSlowAction")) and
+            "Combat->ApplySlow(ControlSpec, ControlAction.Magnitude, ControlAction.DurationSeconds)" in cpp,
         "explicit_target_vs_area": all(item in cpp for item in (
             "ExecutionMode == EDivineBeastsV6NativeMode::RadialDamageAndStun",
             'Definition.DraftTargetModeId == TEXT("area_or_target")',
@@ -74,10 +77,10 @@ def control_matrix_errors(matrix: dict, registry: dict) -> list[str]:
         errors.append("12控制技能清单不完整或技能编号重复")
     if (matrix.get("approvedV6ControlSkills") != 0 or
         matrix.get("editorBlueprintsAuthored") != 0 or
-        not matrix.get("noSlowPrimitive")):
+        matrix.get("noSlowPrimitive")):
         errors.append("未验收的控制技能不能宣称已上线或Slow已实现")
     modes = Counter(item["mode"] for item in items)
-    if modes != Counter({"Unsupported": 4, "RadialDamageAndStun": 4,
+    if modes != Counter({"DamageAndSlow": 4, "RadialDamageAndStun": 4,
                          "DamageAndStun": 2, "DamageAndSilence": 2}):
         errors.append("V2控制原语归类数量错误")
     for item in items:
@@ -89,7 +92,7 @@ def control_matrix_errors(matrix: dict, registry: dict) -> list[str]:
             errors.append("一个控制槽不得伪造多个控制规则")
             continue
         typ = effects[0]["controlType"]
-        expected_mode = ("Unsupported" if typ == "slow" else
+        expected_mode = ("DamageAndSlow" if typ == "slow" else
                          "RadialDamageAndStun" if source["level1Candidate"]["areaRadiusCm"] > 0
                          else "DamageAndStun" if typ == "stun" else "DamageAndSilence")
         if (item["mode"] != expected_mode or
@@ -129,11 +132,13 @@ class V6DamageControlTests(unittest.TestCase):
         self.assertTrue(all(x["canGrantToServer"] is False for x in controls))
         self.assertTrue(all(x["nativeDefinitionAssetPath"] is None for x in controls))
 
-    def test_03_platform_only_has_stun_and_silence(self):
+    def test_03_platform_keeps_original_control_order_and_adds_slow(self):
+        # 历史枚举位置不变：新减速必须追加，不能把已有控制编号重新排序。
         self.assertRegex(self.platform, r"enum class EGamePlatformControlType")
-        self.assertIn("    Stun,", self.platform)
-        self.assertIn("    Silence", self.platform)
-        self.assertNotIn("    Slow", self.platform)
+        block = self.platform.split("enum class EGamePlatformControlType")[1].split("};")[0]
+        control_types = re.findall(r"^\s*(Stun|Silence|Slow)\s*,?\s*(?://[^\n]*)?$",
+                                   block, flags=re.MULTILINE)
+        self.assertEqual(control_types, ["Stun", "Silence", "Slow"])
 
     def test_04_never_mark_controls_as_fully_implemented(self):
         controls = [x for x in self.registry["skills"] if x["displayOrder"] == 7]
@@ -146,10 +151,12 @@ class V6DamageControlTests(unittest.TestCase):
                                    "ControlSpec.EventId = Spec.EventId", 1)
         self.assertFalse(control_contract(self.header, altered)["second_event_distinct"])
 
-    def test_06_applying_control_before_damage_fails(self):
+    def test_06_control_without_prior_damage_must_fail(self):
+        # 删除真实伤害前置，后续单独控制分支即使存在，也不能被判定为有效控制技能。
         altered = self.cpp.replace(
-            "const FGamePlatformCombatResult ControlResult = Combat->ApplyControl(",
-            "const FGamePlatformCombatResult ControlResult = Combat->ApplyDamage(", 1)
+            "const FGamePlatformCombatResult DamageResult = Combat->ApplyDamage(Spec);",
+            "const FGamePlatformCombatResult DamageResult = Combat->ApplyHealing(Spec);", 1)
+        self.assertNotEqual(altered, self.cpp)
         self.assertFalse(control_contract(self.header, altered)["source_damage_first"])
 
     def test_07_disabling_partial_success_contract_fails(self):
@@ -164,9 +171,11 @@ class V6DamageControlTests(unittest.TestCase):
             "false", 1)
         self.assertFalse(control_contract(self.header, altered)["post_damage_component_identity"])
 
-    def test_08_do_not_silently_add_slow_support(self):
-        altered = self.header.replace("DamageAndStun,", "DamageAndStun,\n    Slow,", 1)
-        self.assertFalse(control_contract(altered, self.cpp)["control_boundary"])
+    def test_08_slow_must_have_real_combat_sink(self):
+        altered = self.cpp.replace(
+            "Combat->ApplySlow(ControlSpec, ControlAction.Magnitude, ControlAction.DurationSeconds)",
+            "Combat->ApplyControl(ControlSpec, EGamePlatformControlType::Stun, ControlAction.DurationSeconds)", 1)
+        self.assertFalse(control_contract(self.header, altered)["control_boundary"])
     def test_09_native_positive_and_negative_control_action_tests_exist(self):
         native = (ROOT / "Game/Plugins/DivineBeasts/DBAGameplay/Source/"
                   "DivineBeastsAbilitiesRuntime/Private/Tests/"
@@ -181,12 +190,13 @@ class V6DamageControlTests(unittest.TestCase):
         block = self.header.split("enum class EDivineBeastsV6NativeMode")[1].split("};")[0]
         names = re.findall(r"^\s*(Unsupported|ForwardDamage|SingleProjectile|RadialDamage|"
                            r"SingleHealing|SingleShield|SingleStun|SingleSilence|SafeDash|"
-                           r"DamageAndStun|DamageAndSilence|RadialDamageAndStun)\s*,?\s*$",
+                           r"DamageAndStun|DamageAndSilence|RadialDamageAndStun|DamageAndSlow)\s*,?\s*$",
                            block, flags=re.MULTILINE)
         self.assertEqual(names, [
             "Unsupported", "ForwardDamage", "SingleProjectile", "RadialDamage",
             "SingleHealing", "SingleShield", "SingleStun", "SingleSilence",
-            "SafeDash", "DamageAndStun", "DamageAndSilence", "RadialDamageAndStun"])
+            "SafeDash", "DamageAndStun", "DamageAndSilence", "RadialDamageAndStun",
+            "DamageAndSlow"])
 
     def test_11_12_control_skill_approval_matrix_matches_true_v6(self):
         matrix_path = (ROOT / "Docs/Implementation/GamePlatformAbilitySystem/"

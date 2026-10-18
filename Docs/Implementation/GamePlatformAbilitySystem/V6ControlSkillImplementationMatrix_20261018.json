@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "projectCode": "SSLM",
-  "implementationBatch": "V6_ControlDamageComposite_20261018",
+  "implementationBatch": "V6_ControlDamageAndSlow_20261018",
   "state": "SOURCE_ONLY_NOT_COMPILED_NOT_APPROVED",
   "designSource": "Docs/Design/ZodiacHistoryFirstEightSkillsV6_Review.json",
   "candidateSource": "Docs/Implementation/GamePlatformAbilitySystem/V6SkillImplementationRegistry_20261018.json",
@@ -9,12 +9,13 @@
   "executableSourceModes": [
     "DamageAndStun",
     "DamageAndSilence",
-    "RadialDamageAndStun"
+    "RadialDamageAndStun",
+    "DamageAndSlow"
   ],
-  "noSlowPrimitive": true,
+  "noSlowPrimitive": false,
   "controlSlots": 12,
   "countsByMode": {
-    "Unsupported": 4,
+    "DamageAndSlow": 4,
     "RadialDamageAndStun": 4,
     "DamageAndSilence": 2,
     "DamageAndStun": 2
@@ -22,10 +23,10 @@
   "editorBlueprintsAuthored": 0,
   "nativeDefinitionsAuthored": 0,
   "approvedV6ControlSkills": 0,
-  "warningZh": "8项是V2伤害+眩晕/沉默的候选执行模板，不是8个历史V6效果已完成。V6历史效果中击退、风压、条件性沉默、假身与软控制均需独立实现；4项Slow未有平台真实执行能力。",
+  "warningZh": "12项控制都具备V2单段伤害+对应状态的源码候选（含4项GAS减速），但仍全部待UE编译/网络移动及历史特殊规则审核，不能声称12项V6历史控制已完工。",
   "items": [
     {
-      "mode": "Unsupported",
+      "mode": "DamageAndSlow",
       "mechanismV6": "跃咬脚踝造成减速，特殊条件下有限抑制目标下一次位移；不是稳定定身。",
       "displayNameV6": "咬筋",
       "abilityId": "dba.ability.rat_eight_shadow_snare@1",
@@ -36,8 +37,8 @@
       "castRangeCm": 800,
       "damageCandidate": 24,
       "controlType": "slow",
-      "actionCountRequired": null,
-      "nativeMechanismCandidateOnly": false,
+      "actionCountRequired": 2,
+      "nativeMechanismCandidateOnly": true,
       "historicalMechanismMatchesNativeMode": false,
       "missingHistoricalMechanicsZh": "跃咬脚踝造成减速，特殊条件下有限抑制目标下一次位移；不是稳定定身。",
       "approvalStatus": "PENDING_USER_REVIEW",
@@ -46,7 +47,7 @@
       "visualEffectAssetPath": null,
       "canGrantToServer": false,
       "editorAssetState": "NOT_AUTHORED",
-      "reasonZh": "平台Combat不提供Slow，禁止把减速改成Stun或只播放视觉"
+      "reasonZh": "已存在服务器GAS Slow和速度属性桥接源码，但未编译/联机，V6位移抑制、净化、特殊条件仍未实现，不能批准正式GA"
     },
     {
       "mode": "RadialDamageAndStun",
@@ -97,7 +98,7 @@
       "reasonZh": "仅能运行V2伤害+眩晕/沉默的单次组合，历史V6其他行为尚需独立规则与验收"
     },
     {
-      "mode": "Unsupported",
+      "mode": "DamageAndSlow",
       "mechanismV6": "投出月刃造成减速，已积累限定层数者可短暂定身。",
       "displayNameV6": "月痕",
       "abilityId": "dba.ability.rabbit_eight_lunar_bind@1",
@@ -108,8 +109,8 @@
       "castRangeCm": 850,
       "damageCandidate": 22,
       "controlType": "slow",
-      "actionCountRequired": null,
-      "nativeMechanismCandidateOnly": false,
+      "actionCountRequired": 2,
+      "nativeMechanismCandidateOnly": true,
       "historicalMechanismMatchesNativeMode": false,
       "missingHistoricalMechanicsZh": "投出月刃造成减速，已积累限定层数者可短暂定身。",
       "approvalStatus": "PENDING_USER_REVIEW",
@@ -118,7 +119,7 @@
       "visualEffectAssetPath": null,
       "canGrantToServer": false,
       "editorAssetState": "NOT_AUTHORED",
-      "reasonZh": "平台Combat不提供Slow，禁止把减速改成Stun或只播放视觉"
+      "reasonZh": "已存在服务器GAS Slow和速度属性桥接源码，但未编译/联机，V6位移抑制、净化、特殊条件仍未实现，不能批准正式GA"
     },
     {
       "mode": "RadialDamageAndStun",
@@ -193,7 +194,7 @@
       "reasonZh": "仅能运行V2伤害+眩晕/沉默的单次组合，历史V6其他行为尚需独立规则与验收"
     },
     {
-      "mode": "Unsupported",
+      "mode": "DamageAndSlow",
       "mechanismV6": "安魂铃声减慢敌人并削弱其下一次爆发，偏守护型软控。",
       "displayNameV6": "安魂",
       "abilityId": "dba.ability.goat_eight_jade_bind@1",
@@ -204,8 +205,8 @@
       "castRangeCm": 820,
       "damageCandidate": 18,
       "controlType": "slow",
-      "actionCountRequired": null,
-      "nativeMechanismCandidateOnly": false,
+      "actionCountRequired": 2,
+      "nativeMechanismCandidateOnly": true,
       "historicalMechanismMatchesNativeMode": false,
       "missingHistoricalMechanicsZh": "安魂铃声减慢敌人并削弱其下一次爆发，偏守护型软控。",
       "approvalStatus": "PENDING_USER_REVIEW",
@@ -214,7 +215,7 @@
       "visualEffectAssetPath": null,
       "canGrantToServer": false,
       "editorAssetState": "NOT_AUTHORED",
-      "reasonZh": "平台Combat不提供Slow，禁止把减速改成Stun或只播放视觉"
+      "reasonZh": "已存在服务器GAS Slow和速度属性桥接源码，但未编译/联机，V6位移抑制、净化、特殊条件仍未实现，不能批准正式GA"
     },
     {
       "mode": "DamageAndStun",
@@ -265,7 +266,7 @@
       "reasonZh": "仅能运行V2伤害+眩晕/沉默的单次组合，历史V6其他行为尚需独立规则与验收"
     },
     {
-      "mode": "Unsupported",
+      "mode": "DamageAndSlow",
       "mechanismV6": "向前立门盾打断突进，成功碰撞者短晕，区别于V2仅减速。",
       "displayNameV6": "拦门",
       "abilityId": "dba.ability.dog_eight_tracking_slow@1",
@@ -276,8 +277,8 @@
       "castRangeCm": 830,
       "damageCandidate": 24,
       "controlType": "slow",
-      "actionCountRequired": null,
-      "nativeMechanismCandidateOnly": false,
+      "actionCountRequired": 2,
+      "nativeMechanismCandidateOnly": true,
       "historicalMechanismMatchesNativeMode": false,
       "missingHistoricalMechanicsZh": "向前立门盾打断突进，成功碰撞者短晕，区别于V2仅减速。",
       "approvalStatus": "PENDING_USER_REVIEW",
@@ -286,7 +287,7 @@
       "visualEffectAssetPath": null,
       "canGrantToServer": false,
       "editorAssetState": "NOT_AUTHORED",
-      "reasonZh": "平台Combat不提供Slow，禁止把减速改成Stun或只播放视觉"
+      "reasonZh": "已存在服务器GAS Slow和速度属性桥接源码，但未编译/联机，V6位移抑制、净化、特殊条件仍未实现，不能批准正式GA"
     },
     {
       "mode": "RadialDamageAndStun",
