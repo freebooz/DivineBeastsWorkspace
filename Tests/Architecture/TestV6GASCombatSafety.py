@@ -17,6 +17,8 @@ V6 = GAMEPLAY / "Abilities/DivineBeastsV6GameplayAbility.cpp"
 
 
 def contracts(grants: str, ability: str) -> dict[str, bool]:
+    # 必须针对发射体的Commit之后分支判定，不能被同文件其它Actor朝向代码误满足。
+    projectile_body = ability.split("AActor* FrozenTarget = SingleTarget.Actor.Get();")[-1]
     result = {
         "cooldown_effect_actual_granted_tags": all(x in grants for x in (
             "CooldownEffect->GetGrantedTags().HasAllExact(*CooldownTags)",
@@ -60,10 +62,10 @@ def contracts(grants: str, ability: str) -> dict[str, bool]:
             "(!bProjectileHadFrozenTarget ||",
             "bCurrentFrozenTarget && IsValid(TargetCombat)",
         )),
-        "projectile_aim_refresh_after_commit": all(x in ability for x in (
+        "projectile_aim_refresh_after_commit": all(x in projectile_body for x in (
             "TargetCombat->GetCombatTargetPoint()",
             "const FVector FreshAim",
-            "(FreshAim - Origin).GetSafeNormal()",
+            "const FVector Direction = Source->GetActorForwardVector().GetSafeNormal()",
             "IsV6WithinRange(Source, FrozenTarget, Balance.CastRangeCm)",
             "HasV6LineOfSight(Source->GetWorld(), Source, FrozenTarget)",
         )),
@@ -133,12 +135,24 @@ class V6CombatSafetySourceRegression(unittest.TestCase):
         self.assertFalse(contracts(self.grants, altered)[
             "projectile_frozen_target_never_becomes_unowned_shot"])
 
-    def test_projectile_never_aims_using_precommit_target_point(self):
-        altered = self.ability.replace(
-            "(FreshAim - Origin).GetSafeNormal()",
-            "(SingleTarget.ImpactLocation - Origin).GetSafeNormal()", 1)
+    def test_projectile_never_uses_old_precommit_position_as_launch_direction(self):
+        before, sep, projectile = self.ability.partition(
+            "AActor* FrozenTarget = SingleTarget.Actor.Get();")
+        self.assertTrue(sep)
+        altered = before + sep + projectile.replace(
+            "const FVector Direction = Source->GetActorForwardVector().GetSafeNormal()",
+            "const FVector Direction = (SingleTarget.ImpactLocation - Origin).GetSafeNormal()", 1)
         self.assertFalse(contracts(self.grants, altered)[
             "projectile_aim_refresh_after_commit"])
+
+    def test_projectile_homing_uses_current_target_center_each_server_substep(self):
+        platform = (ROOT / "Game/Plugins/GamePlatform/Gameplay/GamePlatformCombat/"
+                    "Source/GamePlatformCombat/Private/Actors/GamePlatformCombatProjectile.cpp"
+                    ).read_text(encoding="utf-8-sig")
+        for token in ("HasCurrentHomingTarget()", "GetCombatTargetPoint()",
+                      "AdvanceHomingPosition(Step, TargetCenter, TurnRate)",
+                      "SweepSingleByChannel(", "SweepSingleByObjectType("):
+            self.assertIn(token, platform)
 
     def test_reintroducing_partial_dash_failure_fails(self):
         altered = self.ability.replace(
