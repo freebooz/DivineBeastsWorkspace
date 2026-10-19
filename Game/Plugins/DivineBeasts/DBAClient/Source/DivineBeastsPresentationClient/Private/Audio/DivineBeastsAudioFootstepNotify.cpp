@@ -36,12 +36,17 @@ void UDivineBeastsAudioFootstepNotify::Notify(
     const FVector From = Origin + FVector(0, 0, FMath::Clamp(TraceUpCm, 0.0f, 100.0f));
     const FVector To = Origin - FVector(0, 0, FMath::Clamp(TraceDownCm, 30.0f, 300.0f));
     FHitResult Hit;
-    if (!World->LineTraceSingleByChannel(Hit, From, To, ECC_Visibility, Params) ||
+    if (!World->LineTraceSingleByChannel(Hit, From, To, TraceChannel.GetValue(), Params) ||
         !Hit.bBlockingHit || Hit.ImpactPoint.ContainsNaN()) return;
     FName ClipId = DefaultClipId;
     if (const UPhysicalMaterial* Material = Hit.PhysMaterial.Get())
+    {
+        // 按真实资产名优先，资产未专门配置时才使用物理SurfaceType；无映射退回默认语义。
         if (const FName* Override = PhysicalMaterialToClip.Find(Material->GetFName()))
             ClipId = *Override;
-    // 每个动画触地通知只提交一次；客户端平台并发负责高密度脚步抢占。
-    Presentation->PlayAudioLibraryClip(ClipId, Hit.ImpactPoint);
+        else if (const FName* Surface = SurfaceTypeToClip.Find(Material->SurfaceType))
+            ClipId = *Surface;
+    }
+    // 多蒙太奇/动画层在同一脚掌短时间内可能重复通知；由LocalPlayer子系统去重，不能在共享Notify对象存状态。
+    Presentation->PlayAudioLibraryFootstepClip(ClipId, Hit.ImpactPoint, MeshComp, FootSocketName);
 }
