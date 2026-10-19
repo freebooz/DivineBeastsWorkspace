@@ -29,6 +29,8 @@ V6能力目前没有人工玩法审批，不允许本轮通过UI技能配置授�
 ## 五、当前执行与验收状态
 
 素材导入：八份Texture2D已由UE5.8独立冷回读验证。
-牛技能唯一UIProfile增补、UE冷回读和原生自动化：已部署脚本及测试源码，具体成功状态以执行日志为准；未有日志时不可声称完成。
+牛技能唯一UIProfile原位增补已完成，写入8条V6客户端表现元数据、原6条占位保留，合计14条，已保存原始uasset备份；独立UE5.8冷重载成功，日志位于 `Game/Saved/Validation/OxV6ArtProfileIntegration/UIProfileColdReload.log`，标记 `SSLM_OX_V6_PROFILE_COLD_VERIFY_OK 8 placeholders 6 profileEntries 14 unapprovedGrants 0`。
+
+客户端 `DivineBeastsUIClient`（项目UI客户端模块）增量构建通过，证据 `Saved/Validation/FoundationM0/550ebb58-99ec-433b-a433-8ad0c44ece14/Build`。新建C++编辑器测试 `DivineBeasts.UI.Combat.OxV6.ArtProfileAndViewModel` 首次实际运行失败：`-nullrhi` 下 `Texture2D::GetSizeX/Y`（平台尺寸）返回0；已调整为使用真实导入的 `TextureSource`（纹理源）尺寸并添加显式int32转换，编译对象已通过，但Editor最终DLL链接被外部正在使用的 `UnrealEditor-DivineBeastsUIClient.dll` 文件占用（LNK1104）。不可把编辑器原生自动化标记为通过；运行记录在 `Game/Saved/Validation/OxV6ArtProfileIntegration/NativeAutomation/Report/index.json`，链接问题见 `Saved/Validation/FoundationM0/aefa93ee-24e0-4c9d-8dea-ca03d2855bf4/Build/Editor`。
 正式新手村/5v5 HUD：尚未完成八个V6技能的实际授权和真实对局显示。所有其它生肖与服务器技能资产保持不变。
-由于运行器已有多项长时间构建/烘焙作业，相关UE写入和QA工具存在排队情况；不允许为本次操作停止其他会话任务或绕过构建锁。
+64/48技术检查脚本已在2026-10-19运行，通过8套PNG尺寸、源SHA、亮度与字节去重检查，输出 `SSLM_OX_V6_SMALL_SIZE_TECHNICAL_QA_PASSED 8 64 48 nearPairs=1`；对照图和量化JSON均已生成，唯一明显近似对为「不动玄门/立阵」，差分感知哈希距离1/64，必须重绘后人工优选。未经人工签收不得把技术通过写成美术质量已通过。Editor锁及其他并行作业保留，不强行终止。

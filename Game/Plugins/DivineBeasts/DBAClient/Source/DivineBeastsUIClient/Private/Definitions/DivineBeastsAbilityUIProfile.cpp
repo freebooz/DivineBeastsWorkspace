@@ -42,6 +42,24 @@ bool UDivineBeastsAbilityUIProfile::ValidateProfile(FString& OutError) const
             return false;
         }
     }
+    if (!ArtPreviewAbilityIds.IsEmpty())
+    {
+        TSet<FName> PreviewIds;
+        for (const FName Id : ArtPreviewAbilityIds)
+        {
+            if (!Unique.Contains(Id) || PreviewIds.Contains(Id))
+            {
+                OutError = TEXT("美术预览必须引用本Profile内唯一的技能条目。");
+                return false;
+            }
+            PreviewIds.Add(Id);
+        }
+        if (PreviewIds.Num() != 8)
+        {
+            OutError = TEXT("美术预览必须明确配置八个槽位，不能从条目顺序猜测。");
+            return false;
+        }
+    }
     OutError.Reset();
     return true;
 }

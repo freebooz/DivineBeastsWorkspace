@@ -23,6 +23,7 @@
 #include "Engine/AssetManager.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "DivineBeastsUIClientSubsystem.h"
 #include "Interfaces/IGamePlatformDataService.h"
 
 namespace
@@ -57,6 +58,13 @@ bool UDivineBeastsAbilityBarViewModel::BindToLoadout(
 
 void UDivineBeastsAbilityBarViewModel::UnbindFromLoadout()
 {
+    if (auto* Source = PreviewSource.Get()) Source->OnStateChanged().Remove(PreviewSelectionHandle);
+    PreviewSelectionHandle.Reset();
+    PreviewSource.Reset();
+    PreviewInstance.Reset();
+    PreviewCharacterId.Reset();
+    PreviewStateRunId.Invalidate();
+    bReadOnlyArtPreview = false;
     UnbindFromNativeAbilityEvents();
     if (UDivineBeastsAbilityLoadoutComponent* Current = Loadout.Get())
     {
@@ -91,6 +99,8 @@ const FDivineBeastsGrantedAbilitySlot* UDivineBeastsAbilityBarViewModel::FindUni
 FGamePlatformResult UDivineBeastsAbilityBarViewModel::RequestActivateSlot(FName SlotId)
 {
     check(IsInGameThread());
+    if (bReadOnlyArtPreview)
+        return FGamePlatformResult::Failure(TEXT("AbilityArtPreviewReadOnly"), TEXT("仅美术预览、不可施放。"));
     UDivineBeastsAbilityLoadoutComponent* CurrentLoadout = Loadout.Get();
     UGamePlatformAbilitySystemComponent* ASC = AbilitySystem.Get();
     APawn* Pawn = CurrentLoadout ? Cast<APawn>(CurrentLoadout->GetOwner()) : nullptr;
@@ -163,6 +173,124 @@ void UDivineBeastsAbilityBarViewModel::ResetProfileLease()
             if (OldProfile.IsValid()) Data->ReleaseResources(OldProfile);
         }
     }
+}
+
+UObject* UDivineBeastsAbilityBarViewModel::GetProfileResourceCaller() const
+{
+    return bReadOnlyArtPreview ? static_cast<UObject*>(PreviewInstance.Get()) : Loadout.Get();
+}
+
+bool UDivineBeastsAbilityBarViewModel::BindToSelectedHeroIcons(UDivineBeastsUIClientSubsystem* InSource)
+{
+    check(IsInGameThread());
+    if (PreviewSource.Get() == InSource && PreviewSelectionHandle.IsValid()) return true;
+    UnbindFromLoadout();
+    UWorld* World = IsValid(InSource) ? InSource->GetWorld() : nullptr;
+    UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
+    if (!IsValid(Instance) || World->IsNetMode(NM_DedicatedServer)) return false;
+    bReadOnlyArtPreview = true;
+    PreviewInstance = Instance;
+    PreviewSource = InSource;
+    PreviewSelectionHandle = InSource->OnStateChanged().AddUObject(this,
+        &ThisClass::HandleSelectedHeroIconsChanged);
+    HandleSelectedHeroIconsChanged(InSource->GetViewState());
+    return true;
+}
+
+void UDivineBeastsAbilityBarViewModel::HandleSelectedHeroIconsChanged(const FDivineBeastsUIViewState&)
+{
+    auto* Source = PreviewSource.Get();
+    if (!Source || !bReadOnlyArtPreview) return;
+    // 读取事件源的最新完整快照，避免同步重入时旧的通知参数恢复已注销角色。
+    const FDivineBeastsUIViewState State = Source->GetViewState();
+    const FName Hero = State.bAuthenticated && !State.SelectedCharacterId.IsEmpty()
+        ? State.SelectedHeroDefinitionId : NAME_None;
+    if (PreviewCharacterId != State.SelectedCharacterId || PreviewStateRunId != State.StateRunId)
+    {
+        ResetProfileLease(); // 同英雄换账号/换档案也撤销旧代次与在途工作。
+        PreviewCharacterId = State.SelectedCharacterId;
+        PreviewStateRunId = State.StateRunId;
+    }
+    PreviewHeroIcons(Hero, PreviewInstance.Get());
+}
+
+bool UDivineBeastsAbilityBarViewModel::PreviewHeroIcons(FName Hero, UGameInstance* Instance)
+{
+    check(IsInGameThread());
+    if (!IsValid(Instance)) { UnbindFromLoadout(); return false; }
+    if (!bReadOnlyArtPreview || PreviewInstance.Get() != Instance)
+    {
+        UnbindFromLoadout();
+        bReadOnlyArtPreview = true;
+        PreviewInstance = Instance;
+    }
+    if (Hero == LoadedHeroId && (!Hero.IsNone() || Slots.IsEmpty())) return true;
+    ResetProfileLease();
+    LoadedHeroId = Hero;
+    ProfileLeaseInstance = Instance;
+    const uint64 Serial = LoadGeneration;
+    // 选中角色事件先清空旧图；异步加载前后均不保留上个英雄的画刷。
+    Slots.Reset(); SlotDetails.Reset();
+    MarkStateChanged();
+    if (Serial != LoadGeneration) return true;
+    SlotsChanged.Broadcast(Slots);
+    if (Serial != LoadGeneration || Hero.IsNone()) return true;
+    if (auto* Assets = UAssetManager::GetIfInitialized())
+        ProfilePath = Assets->GetPrimaryAssetPath(FPrimaryAssetId(
+            FPrimaryAssetType(TEXT("DivineBeastsAbilityUIProfile")), Hero));
+#if WITH_DEV_AUTOMATION_TESTS
+    if (ProfilePathForTests) ProfilePath = ProfilePathForTests(Hero);
+#endif
+    auto* Data = ResolveProfileDataService(Instance);
+    if (!Data || !ProfilePath.IsValid()) return false;
+    const TWeakObjectPtr<UDivineBeastsAbilityBarViewModel> WeakThis(this);
+    const TWeakObjectPtr<UGameInstance> WeakInstance(Instance);
+    FGamePlatformResult Accepted;
+    const FGamePlatformDataLease Lease = Data->AcquireResources({ProfilePath},
+        EGamePlatformDataLifetime::Instance, Instance,
+        [WeakThis, WeakInstance, Serial, Hero](const auto& Completed, const auto& Result)
+        {
+            if (auto* Self = WeakThis.Get(); Self && WeakInstance.IsValid() &&
+                Self->bReadOnlyArtPreview && Self->PreviewInstance == WeakInstance)
+                Self->HandleProfileLoaded(Serial, Hero, Completed, Result);
+        }, Accepted);
+    if (Serial == LoadGeneration && bReadOnlyArtPreview && PreviewInstance.Get() == Instance &&
+        Accepted.IsSuccess() && Lease.IsValid()) ProfileLease = Lease;
+    else if (Lease.IsValid()) Data->ReleaseResources(Lease);
+    return Accepted.IsSuccess() && ProfileLease.IsValid();
+}
+
+void UDivineBeastsAbilityBarViewModel::RefreshPreviewSlots()
+{
+    if (!bReadOnlyArtPreview) return;
+    TArray<FGamePlatformUISlotState> NewSlots;
+    TArray<FDivineBeastsAbilitySlotDetails> NewDetails;
+    // 该顺序与作者Profile的显式八槽合同一致；不从文件名、中文名或条目扫描顺序推算。
+    const TCHAR* Inputs[] = {TEXT("Primary"),TEXT("Slot1"),TEXT("Slot2"),TEXT("Slot4"),
+        TEXT("Slot3"),TEXT("Slot5"),TEXT("Slot6"),TEXT("Slot7")};
+    if (LoadedProfile && bIconsReady && LoadedProfile->ArtPreviewAbilityIds.Num() == 8)
+    {
+        for (int32 Index = 0; Index < 8; ++Index)
+        {
+            const auto* Entry = LoadedProfile->FindEntry(LoadedProfile->ArtPreviewAbilityIds[Index]);
+            if (!Entry) { NewSlots.Reset(); NewDetails.Reset(); break; }
+            FGamePlatformUISlotState Slot;
+            Slot.SlotId = FName(*FString::Printf(TEXT("Platform.Ability.Input.DivineBeasts.%s"), Inputs[Index]));
+            Slot.ContentId = Entry->AbilityId;
+            Slot.Icon = Entry->Icon;
+            Slot.bEnabled = false;
+            Slot.bPending = false;
+            FDivineBeastsAbilitySlotDetails Detail;
+            Detail.SlotId = Slot.SlotId; Detail.AbilityId = Entry->AbilityId;
+            Detail.DisplayName = Entry->DisplayName; Detail.Description = Entry->Description;
+            Detail.DisabledReason = NSLOCTEXT("DBAAbilityBar", "ArtPreviewReadOnly", "仅美术预览、不可施放");
+            NewSlots.Add(Slot); NewDetails.Add(Detail);
+        }
+    }
+    Slots = MoveTemp(NewSlots); SlotDetails = MoveTemp(NewDetails);
+    const uint64 Serial = LoadGeneration;
+    MarkStateChanged();
+    if (Serial == LoadGeneration) SlotsChanged.Broadcast(Slots);
 }
 
 void UDivineBeastsAbilityBarViewModel::BindToNativeAbilityEvents()
@@ -257,6 +385,7 @@ void UDivineBeastsAbilityBarViewModel::UnbindFromNativeAbilityEvents()
 
 void UDivineBeastsAbilityBarViewModel::RefreshCurrentLoadout()
 {
+    if (bReadOnlyArtPreview) { RefreshPreviewSlots(); return; }
     RefreshGameplayEligibilityBindings();
     if (UDivineBeastsAbilityLoadoutComponent* Current = Loadout.Get())
     {
@@ -419,7 +548,7 @@ void UDivineBeastsAbilityBarViewModel::HandleProfileLoaded(
 {
     check(IsInGameThread());
     if (ExpectedLoadGeneration != LoadGeneration || ExpectedHero != LoadedHeroId ||
-        !Loadout.IsValid() || !IsSameUIResourceLease(ProfileLease, Lease))
+        !IsValid(GetProfileResourceCaller()) || !IsSameUIResourceLease(ProfileLease, Lease))
         return; // 旧请求已由换英雄/解绑路径释放；不能触碰后继的租约。
     IGamePlatformDataService* Data = ResolveProfileDataService(ProfileLeaseInstance.Get());
     UDivineBeastsAbilityUIProfile* Profile = Result.IsSuccess() && Data &&
@@ -443,16 +572,16 @@ void UDivineBeastsAbilityBarViewModel::HandleProfileLoaded(
     {
         FGamePlatformResult Accepted;
         const TWeakObjectPtr<UDivineBeastsAbilityBarViewModel> WeakThis(this);
-        const TWeakObjectPtr<UDivineBeastsAbilityLoadoutComponent> WeakSource(Loadout);
+        const TWeakObjectPtr<UObject> WeakSource(GetProfileResourceCaller());
         const FGamePlatformDataLease NewIcons = Data->AcquireResources(
-            IconPaths, EGamePlatformDataLifetime::World, Loadout.Get(),
+            IconPaths, bReadOnlyArtPreview ? EGamePlatformDataLifetime::Instance : EGamePlatformDataLifetime::World, WeakSource,
             [WeakThis, WeakSource, ExpectedLoadGeneration, ExpectedHero](
                 const FGamePlatformDataLease& Completed, const FGamePlatformResult& IconResult)
             {
-                if (auto* Self = WeakThis.Get(); Self && WeakSource.IsValid() && Self->Loadout == WeakSource)
+                if (auto* Self = WeakThis.Get(); Self && WeakSource.IsValid() && Self->GetProfileResourceCaller() == WeakSource.Get())
                     Self->HandleIconsLoaded(ExpectedLoadGeneration, ExpectedHero, Completed, IconResult);
             }, Accepted);
-        if (ExpectedLoadGeneration != LoadGeneration || !Loadout.IsValid())
+        if (ExpectedLoadGeneration != LoadGeneration || !IsValid(GetProfileResourceCaller()))
         {
             if (NewIcons.IsValid()) Data->ReleaseResources(NewIcons);
             return;
@@ -469,7 +598,7 @@ void UDivineBeastsAbilityBarViewModel::HandleIconsLoaded(
 {
     check(IsInGameThread());
     if (ExpectedLoadGeneration != LoadGeneration || ExpectedHero != LoadedHeroId ||
-        !Loadout.IsValid() || !IsSameUIResourceLease(IconLease, Lease))
+        !IsValid(GetProfileResourceCaller()) || !IsSameUIResourceLease(IconLease, Lease))
         return;
     IGamePlatformDataService* Data = ResolveProfileDataService(ProfileLeaseInstance.Get());
     bIconsReady = Result.IsSuccess() && Data &&

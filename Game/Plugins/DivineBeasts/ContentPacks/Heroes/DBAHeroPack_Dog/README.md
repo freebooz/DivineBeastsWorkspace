@@ -18,6 +18,14 @@
 正式技能定义与服务器授权归DBAGameplay及既有平台能力系统。能力栏通过GamePlatformData资源租约异步加载UIProfile及图标，换英雄/解绑时仅释放自身租约。开发UIProfile仍在独立开发目录；本包不得通过复制开发编号来填充未经批准的正式UIProfile。
 正式名称、AbilityId、数值与默认技能集的批准状态以 `Docs/Implementation/ZodiacAbilityAssetInventory.json` 和后续明确批准记录为准。2026-10-11资产迁移授权仅针对开发验证，不能扩大为生产批准。
 
+
+## 戌狗 V6 候选美术准备（未生成正式资源）
+
+- `Docs/DogV6_CandidateArtPlan_20261019.json`：G0身份核对后的24个A/B/C独立构图制作提示词、八项稳定技能编号与原定槽位、候选图和最终1024/64/48图源命名清单。
+- `Docs/DogV6_CandidateReview.html`：离线审核工具，只有对应真实1024×1024图片存在时才允许选择A/B/C；八项都选好方可下载人工选择JSON。
+- 目前图像生产接口未成功输出文件，G1（24图）、G2（真人选型）、G3（正式源图）及后续原生纹理、Profile、HUD仍未完成。V5正式名称、既有五张V1纹理、唯一占位UI Profile、GAS授权均保持不变。
+- 候选图计划归属 `SourceArt/UI/SkillIcons/V6/Candidates/`（尚未生成），正式文件计划归属 `Masters/`、`64/` 和 `48/`。后续必须逐张核查实际像素、散列值和48像素辨识度，再由真实Monolith接口导入与验收。
+
 ## Cook与验收
 
 当前内容为客户端表现，服务器排除须按统一服务器策略及真实容器检查；将来增加权威必需资源时必须先拆分精确目录并更新回归，不能靠历史整包规则误删。

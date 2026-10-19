@@ -14,6 +14,8 @@ public class DivineBeastsPresentationClient : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            // 公开脚步通知头依赖PhysicsCore的EPhysicalSurface枚举及反射类型。
+            "PhysicsCore",
             // 公共配置头直接继承UDeveloperSettings，须公开声明模块依赖。
             "DeveloperSettings",
             // 公开回执使用平台结果值；显式链接其实现，不能仅依赖Data头文件的传递可见性。

@@ -406,5 +406,21 @@
     "NativeGASStatus": "See Docs/Implementation/SSLMVillagePlaceholderSkills_20261013.md final execution evidence",
     "ManualVisualAccepted": false,
     "IndependentReadbackEvidence": "Game/Saved/Validation/VillageSkillPlaceholder20261013/ColdReadback_20261015T121234783736Z.json"
+  },
+  "RatV6FinalArtImport": {
+    "UpdatedAt": "2026-10-19",
+    "CreationTool": "Monolith MCP 0.23.0",
+    "ImportManifest": "Docs/Implementation/GamePlatformAbilitySystem/RatV6_FinalTextureImportManifest_20261018.json",
+    "NativeTextureCount": 8,
+    "SourceImageCount": 24,
+    "TextureSize": "48x48",
+    "SavedAndPackageReloadVerified": true,
+    "SourceRGBExportMatchCount": 8,
+    "NativeRHIPixelCount": 18432,
+    "UIProfileBound": false,
+    "V5NamesAndGameplayUnchanged": true,
+    "CookVerified": false,
+    "ManualHUDAcceptance": false,
+    "Evidence": "Saved/Validation/RatV6Import20261019/FinalVerification.json"
   }
 }

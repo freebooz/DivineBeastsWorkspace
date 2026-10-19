@@ -76,8 +76,17 @@ bool FDivineBeastsOxV6ArtProfileNativeTest::RunTest(const FString&)
         UTexture2D* Texture = LoadObject<UTexture2D>(nullptr, *ExpectedObject);
         if (!TestNotNull(TEXT("实际UE纹理原生资产类型"), Texture))
             continue;
+        // 无RHI的UE5.8编辑器自动化下GetSizeX/Y取的是平台尺寸，可能为0；
+        // 这里要求真实导入的TextureSource尺寸。非编辑器编译则只验证运行纹理。
+#if WITH_EDITORONLY_DATA
+        TestEqual(TEXT("导入纹理源宽度确为48像素"),
+            static_cast<int32>(Texture->Source.GetSizeX()), 48);
+        TestEqual(TEXT("导入纹理源高度确为48像素"),
+            static_cast<int32>(Texture->Source.GetSizeY()), 48);
+#else
         TestEqual(TEXT("运行纹理确为48像素宽"), Texture->GetSizeX(), 48);
         TestEqual(TEXT("运行纹理确为48像素高"), Texture->GetSizeY(), 48);
+#endif
         TestEqual(TEXT("运行纹理归UI资源分组"), Texture->LODGroup, TEXTUREGROUP_UI);
     }
 

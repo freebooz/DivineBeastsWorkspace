@@ -20,12 +20,14 @@
 - `SourceArt/UI/SkillIcons/V6/OxV6_64_48_SourceManifest.json`（美术来源清单）：记录八个技能的稳定标识、真实槽位、64/48 文件路径和 SHA-256（文件指纹）。
 - `/DBAHeroPack_Ox/UI/Abilities/V6/Textures/`（客户端纹理挂载路径）：八张原生 `Texture2D`，独立冷回读全部通过，日志位于 `Game/Saved/Logs/SSLM_OxV6HeroPack_8Texture_ColdVerify_20261018.log`（UE5.8 验证日志）。
 
-**审核限制**：这 16 张小图是从丑牛原有五张 1254 像素高清美术衍生的临时审核版本，不是聊天中另行生成的八张原画。部分 V6 复杂技能构图仍需重绘；用户人工美术审核和技能玩法批准前，不修改唯一的 `DA_DBA_Ox_PlaceholderUIProfile`（牛技能 UI 配置）或服务器技能授予，避免把未批准的能力显示成可释放的正式技能。
+**审核限制**：这 16 张小图是从丑牛原有五张 1254 像素高清美术衍生的临时审核版本，不是聊天中另行生成的八张原画。部分 V6 复杂技能构图仍需重绘；本轮在既有唯一 `DA_DBA_Ox_PlaceholderUIProfile`（牛技能界面配置）中**只增补八条客户端表现元数据**，保留原六条占位技能，合计十四条，**没有修改GAS技能授予**。真实已授权技能才能进入战斗HUD，未批准的八项V6不会凭借图标自动可施放。
 
 ## 数据身份与资源生命周期
 
 正式技能定义与服务器授权归DBAGameplay及既有平台能力系统。能力栏通过GamePlatformData资源租约异步加载UIProfile及图标，换英雄/解绑时仅释放自身租约。开发UIProfile仍在独立开发目录；本包不得通过复制开发编号来填充未经批准的正式UIProfile。
 正式名称、AbilityId、数值与默认技能集的批准状态以 `Docs/Implementation/ZodiacAbilityAssetInventory.json` 和后续明确批准记录为准。2026-10-11资产迁移授权仅针对开发验证，不能扩大为生产批准。
+
+2026-10-19唯一牛UIProfile的八条V6软图标映射已经用UE5.8原生DataAsset真实写入并独立冷重载通过；结果 `SSLM_OX_V6_PROFILE_COLD_VERIFY_OK 8 placeholders 6 profileEntries 14 unapprovedGrants 0`。现有 `DivineBeastsAbilityBarViewModel`（技能栏视图模型）读取权威Loadout的AbilityId，经GamePlatformData加载此Profile/图标；只有服务器实际授予V6技能后才会显示对应正式槽，禁止伪造八个可施放的战斗技能。
 
 ## Cook与验收
 

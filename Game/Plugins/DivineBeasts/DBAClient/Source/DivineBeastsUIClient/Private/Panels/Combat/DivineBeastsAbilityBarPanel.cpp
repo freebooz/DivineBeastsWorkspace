@@ -11,6 +11,8 @@
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
+#include "DivineBeastsUIClientSubsystem.h"
+#include "Engine/LocalPlayer.h"
 
 void UDivineBeastsAbilityBarPanel::NativeConstruct()
 {
@@ -95,9 +97,19 @@ bool UDivineBeastsAbilityBarPanel::RefreshAbilitySourceFromOwningPawn()
     UDivineBeastsAbilityLoadoutComponent* Loadout = Pawn
         ? Pawn->FindComponentByClass<UDivineBeastsAbilityLoadoutComponent>()
         : nullptr;
-    const bool bBound = AbilityBarViewModel->BindToLoadout(Loadout);
+    ULocalPlayer* Player = GetOwningLocalPlayer();
+    const bool bBound = bPreviewSelectedHeroIcons
+        ? AbilityBarViewModel->BindToSelectedHeroIcons(Player ? Player->GetSubsystem<UDivineBeastsUIClientSubsystem>() : nullptr)
+        : AbilityBarViewModel->BindToLoadout(Loadout);
     ApplyAbilitySlots(AbilityBarViewModel->GetSlotsRef());
     return bBound;
+}
+
+bool UDivineBeastsAbilityBarPanel::PreviewHeroIcons(FName HeroDefinitionId)
+{
+    bPreviewSelectedHeroIcons = true;
+    if (!AbilityBarViewModel) RefreshAbilitySourceFromOwningPawn();
+    return AbilityBarViewModel && AbilityBarViewModel->PreviewHeroIcons(HeroDefinitionId, GetGameInstance());
 }
 
 TArray<FDivineBeastsAbilitySlotDetails> UDivineBeastsAbilityBarPanel::GetAbilitySlotDetails() const
@@ -169,6 +181,9 @@ void UDivineBeastsAbilityBarPanel::RefreshSlotHotkey(
 void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
 {
     const FGuid ProjectionToken=FGuid::NewGuid(); VisualProjectionToken=ProjectionToken;
+    const bool bArtPreview = AbilityBarViewModel && AbilityBarViewModel->IsReadOnlyArtPreview();
+    if (ArtPreviewLabel) ArtPreviewLabel->SetVisibility(
+        bArtPreview ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
     // 向八个可点击槽位投影服务器OwnerOnly授权，顺序与实体按键1—8保持一致。
     // Legacy被动仍供旧五槽资产显示，新版从单独Hero Trait区呈现。
     struct FVisualBinding
@@ -318,7 +333,7 @@ void UDivineBeastsAbilityBarPanel::RefreshVisualSlots()
         // 快照截止时间不会因其他刷新而重启动画；只更新材质参数，结束事件清除覆盖。
         Binding.Widget->ApplyOverlayTiming(EndsAtAppSeconds, DurationSeconds);
         // 在槽位蓝图状态事件之后刷新，不能让初始占位文字替代玩家当前生效按键。
-        RefreshSlotHotkey(Binding.Widget, Binding.ActionName, Binding.bPassive);
+        RefreshSlotHotkey(Binding.Widget, Binding.ActionName, Binding.bPassive || bArtPreview);
     }
 }
 

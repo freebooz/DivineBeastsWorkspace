@@ -7,6 +7,7 @@
 
 class UDivineBeastsAbilityBarViewModel;
 class APawn;
+class UTextBlock;
 struct FInputActionKeyMapping;
 
 /**
@@ -30,6 +31,15 @@ public:
      * Pawn 更换/重新附身时通过 Controller 的 OnPossessedPawnChanged 自动调用。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Ability")
     bool RefreshAbilitySourceFromOwningPawn();
+
+    /** 用户批准的美术阶段开关；由Monolith设置实际技能栏资产默认值。
+     * 开启后按已选择角色投影八张图标，禁止快捷键/点击施放；关闭恢复原真实授权路径。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|UI|Ability|ArtPreview")
+    bool bPreviewSelectedHeroIcons = false;
+
+    /** 美术审查显式选择英雄，复用本技能栏唯一VM，不写账号/正式选择或GAS授权。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Ability|ArtPreview")
+    bool PreviewHeroIcons(FName HeroDefinitionId);
 
     /** 直接向 Widget Blueprint（界面蓝图）提供单格中文名称、等级、冷却与禁用原因。
      * 仅返回客户端只读 ViewModel 数据，不访问服务端或更改 GAS 属性。 */
@@ -121,6 +131,9 @@ private:
     /** 该控件唯一拥有的本地 UI ViewModel，与游戏实例和网络身份解耦。 */
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsAbilityBarViewModel> AbilityBarViewModel;
+    /** 审查模式必须有可见标识，字号与位置由Monolith资产拥有。 */
+    UPROPERTY(Transient, meta=(BindWidgetOptional))
+    TObjectPtr<UTextBlock> ArtPreviewLabel;
     FDelegateHandle ViewModelSlotsHandle;
     /** 实际委托来源；控制器跨地图换代后从旧来源解绑，不能从新GetOwningPlayer移除旧订阅。 */
     TWeakObjectPtr<APlayerController> BoundPawnController;

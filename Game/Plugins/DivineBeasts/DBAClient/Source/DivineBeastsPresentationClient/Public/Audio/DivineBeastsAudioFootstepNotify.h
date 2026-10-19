@@ -3,6 +3,8 @@
 
 #include "Animation/AnimNotifies/AnimNotify.h"
 #include "Engine/EngineTypes.h" // 物理表面/可配置追踪通道枚举。
+// EPhysicalSurface（物理地表枚举）定义于PhysicsCore；前向声明避免引入昂贵的Chaos完整头。
+enum EPhysicalSurface : int;
 #include "DivineBeastsAudioFootstepNotify.generated.h"
 
 /**

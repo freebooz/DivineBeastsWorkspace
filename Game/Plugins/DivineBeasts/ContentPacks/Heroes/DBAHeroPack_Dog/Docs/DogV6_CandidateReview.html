@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SSLM 戌狗 V6 技能图标候选审核</title>
+<style>
+body{font:14px "Microsoft YaHei",sans-serif;color:#e7f2ec;background:#0f1e21;margin:0 auto;max-width:1450px;padding:24px}
+h1,h2{color:#f1d994}h1{font-size:27px}h2{font-size:18px}p{line-height:1.7;color:#b1c7c1}
+.notice{border:1px solid #987d45;border-radius:8px;padding:10px;color:#f2d99d}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:16px;margin:20px 0}
+.skill{background:#173034;border:1px solid #56736c;border-radius:12px;padding:16px}
+.variants{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.option{background:#0b181b;border:1px solid #4a6662;padding:5px;border-radius:8px;text-align:center}
+.option.chosen{outline:2px solid #e4c27a}.visual{aspect-ratio:1/1;display:grid;place-items:center;background:linear-gradient(135deg,#204a4b,#071115);color:#d4d9cf;font-size:12px}
+.visual img{display:none;width:100%;height:100%;object-fit:contain}
+button{cursor:pointer;color:#f3f8f2;background:#31615a;border:1px solid #89a68e;border-radius:6px;padding:8px}
+button:disabled{cursor:not-allowed;opacity:.35}#export{font-size:15px;padding:12px}small{font-size:12px;color:#b9c6c1}
+</style></head><body>
+<h1>戌狗·守阙天犬 V6 候选人工审核</h1>
+<p>八项主动技能各有 A（物体特写）/ B（完整动作）/ C（电影级光效）三种候选。本页是离线审核辅助，不是游戏内 UI 或 V6 玩法批准工具。</p>
+<div class="notice">只有真实图片存在并且准确为 1024×1024 PNG，才能开启对应选择。当前文件不包含候选图片；从制作清单生成并放到计划目录后重新打开本页。</div>
+<p><button id="export" disabled>导出 8 项候选选择记录</button>　<small id="stats"></small></p><main class="gallery" id="gallery"></main>
+<p><small>选择记录仅供人工美术审核，不能替代 V6 技能名批准、Monolith 原生资产导入或客户端联机验收。</small></p>
+<script>
+"use strict";
+const skills=[{"order":1,"name":"天犬咬","v5":"天犬咬","slot":"Primary","id":"dba.ability.dog_eight_guardian_bite@1","options":[{"variant":"A","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S01_GuardianBite_V6_Candidate_A_1024.png"},{"variant":"B","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S01_GuardianBite_V6_Candidate_B_1024.png"},{"variant":"C","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S01_GuardianBite_V6_Candidate_C_1024.png"}]},{"order":2,"name":"反咬","v5":"护主咬","slot":"Slot1","id":"dba.ability.dog_eight_hunter_pounce@1","options":[{"variant":"A","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S02_CounterBite_V6_Candidate_A_1024.png"},{"variant":"B","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S02_CounterBite_V6_Candidate_B_1024.png"},{"variant":"C","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S02_CounterBite_V6_Candidate_C_1024.png"}]},{"order":3,"name":"双灵爪","v5":"双灵爪","slot":"Slot2","id":"dba.ability.dog_eight_spirit_rake@1","options":[{"variant":"A","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S03_TwinSpiritClaws_V6_Candidate_A_1024.png"},{"variant":"B","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S03_TwinSpiritClaws_V6_Candidate_B_1024.png"},{"variant":"C","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S03_TwinSpiritClaws_V6_Candidate_C_1024.png"}]},{"order":4,"name":"天门守阙","v5":"天门护","slot":"Slot4","id":"dba.ability.dog_eight_oath_guardian@1","options":[{"variant":"A","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S04_CelestialGateWard_V6_Candidate_A_1024.png"},{"variant":"B","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S04_CelestialGateWard_V6_Candidate_B_1024.png"},{"variant":"C","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S04_CelestialGateWard_V6_Candidate_C_1024.png"}]},{"order":5,"name":"援步","v5":"援步","slot":"Slot3","id":"dba.ability.dog_eight_hound_leap@1","options":[{"variant":"A","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S05_RescueStep_V6_Candidate_A_1024.png"},{"variant":"B","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S05_RescueStep_V6_Candidate_B_1024.png"},{"variant":"C","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S05_RescueStep_V6_Candidate_C_1024.png"}]},{"order":6,"name":"护主","v5":"护主","slot":"Slot5","id":"dba.ability.dog_eight_guardian_ring@1","options":[{"variant":"A","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S06_ProtectAlly_V6_Candidate_A_1024.png"},{"variant":"B","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S06_ProtectAlly_V6_Candidate_B_1024.png"},{"variant":"C","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S06_ProtectAlly_V6_Candidate_C_1024.png"}]},{"order":7,"name":"拦门","v5":"截冲盾","slot":"Slot6","id":"dba.ability.dog_eight_tracking_slow@1","options":[{"variant":"A","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S07_ChargeGateBlock_V6_Candidate_A_1024.png"},{"variant":"B","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S07_ChargeGateBlock_V6_Candidate_B_1024.png"},{"variant":"C","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S07_ChargeGateBlock_V6_Candidate_C_1024.png"}]},{"order":8,"name":"誓约","v5":"誓愈","slot":"Slot7","id":"dba.ability.dog_eight_loyal_heal@1","options":[{"variant":"A","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S08_GuardianOath_V6_Candidate_A_1024.png"},{"variant":"B","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S08_GuardianOath_V6_Candidate_B_1024.png"},{"variant":"C","path":"../SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S08_GuardianOath_V6_Candidate_C_1024.png"}]}];
+const gallery=document.getElementById("gallery"),button=document.getElementById("export");
+const state={},loaded={};
+function refresh(){button.disabled=!skills.every(s=>state[s.order]);document.getElementById("stats").textContent="可用候选："+Object.values(loaded).filter(Boolean).length+"/24，已选："+Object.keys(state).length+"/8";}
+for(const s of skills){
+ const section=document.createElement("section");section.className="skill";
+ const head=document.createElement("h2");head.textContent=s.order+" · "+s.name+"（"+s.slot+"）";section.append(head);
+ const desc=document.createElement("p");desc.textContent="V5批准名称："+s.v5+"｜"+s.id;section.append(desc);
+ const group=document.createElement("div");group.className="variants";
+ for(const option of s.options){
+  const box=document.createElement("div");box.className="option";
+  const visual=document.createElement("div");visual.className="visual";visual.textContent="真实图源待生成";
+  const image=document.createElement("img");image.alt=s.name+" "+option.variant;
+  const pick=document.createElement("button");pick.textContent="选择 "+option.variant;pick.disabled=true;
+  image.onload=()=>{if(image.naturalWidth===1024&&image.naturalHeight===1024){loaded[s.order+option.variant]=true;visual.textContent="";image.style.display="block";pick.disabled=false;}else{visual.textContent="尺寸错误："+image.naturalWidth+"×"+image.naturalHeight;}refresh();};
+  image.onerror=()=>{loaded[s.order+option.variant]=false;refresh();};
+  image.src=option.path;visual.append(image);
+  pick.onclick=()=>{state[s.order]={displayOrder:s.order,slotId:s.slot,abilityId:s.id,selectedCandidate:option.variant,sourceImage:option.path};for(const x of group.children)x.classList.remove("chosen");box.classList.add("chosen");refresh();};
+  const title=document.createElement("p");title.textContent="方案 "+option.variant;box.append(visual,title,pick);group.append(box);
+ }
+ section.append(group);gallery.append(section);
+}
+button.onclick=()=>{
+ if(!skills.every(s=>state[s.order]))return;
+ const output={schemaVersion:1,heroId:"Hero.Zodiac.Dog",status:"HUMAN_SELECTION_ONLY_NOT_PRODUCTION_APPROVAL",items:skills.map(s=>state[s.order])};
+ const u=URL.createObjectURL(new Blob([JSON.stringify(output,null,2)],{type:"application/json"}));
+ const a=document.createElement("a");a.href=u;a.download="DogV6_HumanCandidateSelection.json";a.click();URL.revokeObjectURL(u);
+};refresh();
+</script></body></html>

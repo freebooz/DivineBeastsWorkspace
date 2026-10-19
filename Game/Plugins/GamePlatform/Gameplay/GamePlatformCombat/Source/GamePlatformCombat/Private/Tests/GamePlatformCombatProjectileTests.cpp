@@ -485,4 +485,43 @@ bool FGamePlatformProjectileCurvedHelixConvergenceTest::RunTest(const FString&)
     TestTrue(TEXT("螺旋收束仍由真实Sweep命中"), Projectile->GetFlightFacts().bImpacted);
     return true;
 }
+// 微小偏角也必须保留起飞切线；不能在首个运动子步直接吸附到目标方向。
+// 覆盖近/中/远距离与最大合法射程，距离不应决定锁定弹体是否退化为直射。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileSmallAngleArcTest,
+    "GamePlatform.Combat.Projectile.SmallAngleArcAtEveryDistance",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileSmallAngleArcTest::RunTest(const FString&)
+{
+    for (const float Distance : {100.f, 1000.f, 10000.f, 100000.f})
+    {
+        FProjectileTestWorld Fixture;
+        if (!Fixture.Initialize()) return false;
+        Fixture.Source->SetActorLocation(FVector::ZeroVector);
+        const FVector TargetDirection = FRotator(0, 5, 0).Vector();
+        Fixture.Target->SetActorLocation(TargetDirection * Distance);
+        auto Spec = Fixture.CastSpec(); Spec.Target = Fixture.Target; Spec.TargetAvatarGeneration = 1;
+        FGamePlatformCombatProjectileMotion Motion; Motion.RangeCm = Distance;
+        auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+        if (!TestTrue(FString::Printf(TEXT("%.0f厘米目标初始化"), Distance),
+            Projectile->AuthorityInitialize(Spec, Motion, FVector::ForwardVector))) return false;
+        double MaxDeviation = 0;
+        while (!Projectile->IsFlightFinished() && Projectile->GetActorLocation().X < Distance * .25f)
+        {
+            Projectile->Tick(1.f / 120.f);
+            MaxDeviation = FMath::Max(MaxDeviation,
+                FVector::CrossProduct(Projectile->GetActorLocation(), TargetDirection).Size());
+        }
+        TestTrue(FString::Printf(TEXT("%.0f厘米的5度偏角仍先起飞再弧形转向，实测偏离%.4f厘米"), Distance, MaxDeviation),
+            MaxDeviation > Distance * .002f);
+        // 同一距离真正朝向目标时维持直线；不能靠对全部目标强加抛物线使上面的断言通过。
+        Projectile->AuthorityCancel();
+        auto* Facing = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+        Spec.EventId = FGuid::NewGuid();
+        if (!Facing->AuthorityInitialize(Spec, Motion, TargetDirection)) return false;
+        Facing->Tick(FMath::Min(.1f, Distance / Motion.SpeedCmPerSecond * .25f));
+        TestTrue(TEXT("朝向静止目标时仍为直线"),
+            FVector::CrossProduct(Facing->GetActorLocation(), TargetDirection).Size() < .01);
+    }
+    return true;
+}
 #endif

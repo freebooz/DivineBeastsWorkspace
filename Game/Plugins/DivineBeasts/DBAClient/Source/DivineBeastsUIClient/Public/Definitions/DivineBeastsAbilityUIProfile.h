@@ -45,6 +45,11 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|AbilityUI")
     TArray<FDivineBeastsAbilityUIEntry> Entries;
 
+    /** 用户授权的只读美术预览顺序：普通、攻击一、攻击二、终极、移动、防御、控制、特色。
+     * 空数组表示未制作；非空必须恰好八个唯一的既有条目ID。不是AbilitySet或技能授予。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|AbilityUI|ArtPreview")
+    TArray<FName> ArtPreviewAbilityIds;
+
     virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
     /** 验证英雄身份、技能ID、条目唯一性及非空白名称/说明；只读不加载软图标。
