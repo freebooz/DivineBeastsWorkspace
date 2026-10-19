@@ -7,6 +7,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "Components/SkeletalMeshComponent.h"
 
 namespace
 {
@@ -145,6 +146,38 @@ bool UDivineBeastsPresentationClientSubsystem::PlayAudioLibraryClip(FName ClipId
     return PlayAudioLibraryFactClip(ClipId, Location, FGuid::NewGuid());
 }
 
+bool UDivineBeastsPresentationClientSubsystem::PlayAudioLibraryFootstepClip(
+    FName ClipId, FVector Location, USkeletalMeshComponent* MeshComp, FName FootSocketName)
+{
+    check(IsInGameThread());
+    UWorld* World = AudioLibraryWorld.Get();
+    if (bClosing || !World || World->bIsTearingDown || !IsValid(MeshComp) ||
+        MeshComp->GetWorld() != World || Location.ContainsNaN() ||
+        !ClipId.ToString().StartsWith(TEXT("Footstep."), ESearchCase::CaseSensitive))
+        return false;
+
+    // UAnimNotify实例可被多角色共享，因此去重必须归LocalPlayerSubsystem维护。
+    // 每只脚独立限频，不影响左右脚交替；只记录已提交成功的播放请求。
+    constexpr double MinSameFootIntervalSeconds = 0.085;
+    const double Now = static_cast<double>(World->GetTimeSeconds());
+    const TWeakObjectPtr<USkeletalMeshComponent> MeshKey(MeshComp);
+    if (const TMap<FName, double>* Times = RecentFootsteps.Find(MeshKey))
+        if (const double* Last = Times->Find(FootSocketName))
+            if (Now >= *Last && Now - *Last < MinSameFootIntervalSeconds)
+                return false;
+
+    if (!PlayAudioLibraryClip(ClipId, Location)) return false;
+    RecentFootsteps.FindOrAdd(MeshKey).Add(FootSocketName, Now);
+    // 异常大量瞬态Mesh时仍有硬上限；正常10人竞技场不会触发整表淘汰。
+    if (RecentFootsteps.Num() > 256)
+    {
+        for (auto It = RecentFootsteps.CreateIterator(); It; ++It)
+            if (!It.Key().IsValid()) It.RemoveCurrent();
+        if (RecentFootsteps.Num() > 256) RecentFootsteps.Reset();
+    }
+    return true;
+}
+
 bool UDivineBeastsPresentationClientSubsystem::PlayAudioLibraryFactClip(
     FName ClipId, FVector Location, const FGuid& OccurrenceId)
 {
@@ -240,6 +273,7 @@ void UDivineBeastsPresentationClientSubsystem::StopAudioLibraryForWorld()
     AudioLibraryLoops.GetKeys(LoopKeys);
     for (FName Key : LoopKeys) StopAudioLibraryLoop(Key);
     AudioLibraryLoops.Reset();
+    RecentFootsteps.Reset(); // 切图、角色退出和账号切换不保留旧世界脚步门闩。
     auto Old = MoveTemp(AudioLibraryCategories);
     AudioLibraryCategories.Reset();
     AudioLibraryWorld.Reset();

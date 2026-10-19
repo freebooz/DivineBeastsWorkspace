@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Animation/AnimNotifies/AnimNotify.h"
+#include "Engine/EngineTypes.h" // 物理表面/可配置追踪通道枚举。
 #include "DivineBeastsAudioFootstepNotify.generated.h"
 
 /**
@@ -22,6 +23,12 @@ public:
     /** PhysicalMaterial（物理材质）资产FName到Footstep.*语义的覆盖表。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SSLM|Audio|Footstep")
     TMap<FName, FName> PhysicalMaterialToClip;
+    /** UE物理表面类型的语义覆盖；仅在资产名未命中时使用，不预设未经核实的村庄材质。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SSLM|Audio|Footstep")
+    TMap<TEnumAsByte<EPhysicalSurface>, FName> SurfaceTypeToClip;
+    /** 可依据真实地面碰撞设置调整，默认使用可见性通道。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SSLM|Audio|Footstep")
+    TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
     /** 仅客户端脚步检测，单位厘米，限制允许编辑值。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SSLM|Audio|Footstep", meta=(ClampMin="0", ClampMax="100"))
     float TraceUpCm = 25.f;

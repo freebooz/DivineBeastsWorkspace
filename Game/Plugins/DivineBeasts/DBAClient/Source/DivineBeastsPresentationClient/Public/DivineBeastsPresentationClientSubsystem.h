@@ -18,6 +18,7 @@
 
 class UGamePlatformPresentationClientSubsystem;
 class UGamePlatformCombatComponent;
+class USkeletalMeshComponent;
 class UWorld;struct FGamePlatformWeatherSnapshot;
 class AGamePlatformCombatProjectile;
 struct FGamePlatformCombatProjectileFacts;
@@ -93,6 +94,8 @@ public:
     bool PlayAudioLibraryClip(FName ClipId, FVector Location);
     /** 同一服务器确认事实的SFX使用稳定OccurrenceId，复制重放时不得叠加第二段声音。 */
     bool PlayAudioLibraryFactClip(FName ClipId, FVector Location, const FGuid& OccurrenceId);
+    /** 客户端脚步同一Mesh/足底在85毫秒内只提交一次；状态归本地玩家、随世界/账号释放。 */
+    bool PlayAudioLibraryFootstepClip(FName ClipId, FVector Location, USkeletalMeshComponent* MeshComp, FName FootSocketName);
 
     /** 真实世界声源锚点循环（仅允许水流A/B），调用方负责在Anchor退出时停止。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|AudioLibrary")
@@ -398,6 +401,8 @@ private:
     };
     /** 仅由明确场景锚点身份管理的可取消声音；Owner退出必须Stop，不扫描世界或逐帧轮询。 */
     TMap<FName, FAudioLibraryLoop> AudioLibraryLoops;
+    /** 短期脚步通知去重：Weak Mesh避免保持角色存活，限制最大条目数，离开世界完整清空。 */
+    TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<FName, double>> RecentFootsteps;
 
     FDivineBeastsPresentationLogicalPreloadRequested LogicalPreloadRequested;
     FDivineBeastsPresentationLogicalPreloadCancelled LogicalPreloadCancelled;
