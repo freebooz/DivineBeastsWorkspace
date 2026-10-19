@@ -39,6 +39,9 @@ public:
     static UDivineBeastsWaterAudioAnchorComponent* EnsureRuntimeAnchor(
         AActor* VerifiedWaterActor, USceneComponent* RealSoundPoint, FName ClipId);
 
+    /** 仅在世界载入/玩家就绪时查找经编辑器标记的真实水体与普通SceneComponent，零Tick。 */
+    static int32 BindTaggedRealWaterSources(UWorld* World);
+
     /** 首次本地玩家/内容包激活后可由关卡蓝图主动重试，成功表示平台已接受播放请求而非扬声器验收。 */
     UFUNCTION(BlueprintCallable, Category="SSLM|Audio|Water")
     bool RefreshWaterAudio();
