@@ -236,7 +236,9 @@ bool UDivineBeastsPresentationClientSubsystem::PlayStarterUISound(FName ActionId
 bool UDivineBeastsPresentationClientSubsystem::PlayStarterSpellSound(
     const FName SpellName, const bool bImpact, const FVector& Location)
 {
-    // 奥术飞弹复用已入库的奥术脉冲，飞行与命中分别提交，阶段去重归弹体事实适配。
+    // 起手已经由复制施法窗口驱动；发射不能再次补播迟到的起手声。
+    if (!bImpact) return false;
+    // 奥术命中保留已入库脉冲，阶段去重归弹体确认事实适配。
     if (SpellName == TEXT("ArcaneMissiles"))
         return PlayAudioLibraryClip(TEXT("Spell.ArcaneCast"), Location);
     const TCHAR* Semantic =

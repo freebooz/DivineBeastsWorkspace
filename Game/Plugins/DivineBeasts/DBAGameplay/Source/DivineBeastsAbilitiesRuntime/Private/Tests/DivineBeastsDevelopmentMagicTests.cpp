@@ -795,7 +795,9 @@ private:
             Test->TestTrue(TEXT("已观察的弹体均通过真实初始化"), Observed.Facts.bStarted);
             if (bSwitchedSelection)
             {
-                Test->TestTrue(TEXT("每枚出生方向仍朝向原先左侧目标"), Observed.Origin.Y > 15.f);
+                Test->TestTrue(TEXT("每枚均从角色前方起飞，不能将原目标方向当作出生切线"),
+                    Observed.Origin.X > Pawn->GetActorLocation().X + 40.f &&
+                    FMath::Abs(Observed.Origin.Y - Pawn->GetActorLocation().Y) < 1.f);
                 if (!Test->TestTrue(TEXT("观测窗口内原目标弹体仍存活"), Observed.Actor.IsValid())) continue;
                 Test->TestTrue(TEXT("后续真实飞行仍向原目标，不追踪后来右侧选择"),
                     Observed.Actor->GetActorLocation().Y > Observed.Origin.Y + 5.f);

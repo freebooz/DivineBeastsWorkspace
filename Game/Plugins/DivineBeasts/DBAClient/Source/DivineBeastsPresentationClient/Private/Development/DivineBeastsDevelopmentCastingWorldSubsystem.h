@@ -5,6 +5,7 @@
 #include "Types/GamePlatformDataLease.h"
 #include "ContentPacks/DivineBeastsPresentationContentPack.h"
 #include "TimerManager.h"
+#include "GameplayTagContainer.h"
 #include "DivineBeastsDevelopmentCastingWorldSubsystem.generated.h"
 class ACharacter;
 class UAnimInstance;
@@ -51,6 +52,13 @@ private:
         /** 同步启动/提交期间防止重复受理；启动中取消先撤非动画资源，动画清理延后到本Play返回栈。 */
         bool bStartingMontage=false, bSubmittingVFX=false;
         FTimerHandle StopTimer;
+        /** 声音独立于动画/VFX资源就绪；同一施法只起播一次，取消和剩余窗口结束均收敛。 */
+        FGuid AudioActivationId, AudioRequestId;
+        FGameplayTag AudioSemantic;
+        TWeakObjectPtr<UGamePlatformPresentationClientSubsystem> AudioAdapter;
+        int32 AudioWorldGeneration=0;
+        bool bSubmittingAudio=false, bAudioAccepted=false;
+        FTimerHandle AudioStopTimer;
     };
     TMap<TWeakObjectPtr<UGamePlatformAbilityCastComponent>,FBinding> Bindings;
     FGamePlatformDataLease VisualLease;
@@ -73,6 +81,11 @@ private:
     void StopCast(UGamePlatformAbilityCastComponent* Component,FGuid ExpectedOperationId=FGuid());
     /** 只释放已摘除的值快照；不在外部回调返回后访问原容器元素。 */
     void ReleaseCastResources(const FBinding& Binding);
+    /** 消费同一服务器施法事实，不从弹体发射推断起手时机，不依赖可选动画或VFX。 */
+    void UpdateCastAudio(UGamePlatformAbilityCastComponent* Component,
+        const FGamePlatformAbilityCastFacts& Facts, double RemainingSeconds);
+    void StopCastAudio(UGamePlatformAbilityCastComponent* Component, FGuid ExpectedActivation=FGuid());
+    void ReleaseCastAudio(const FBinding& Binding);
     /** EndPlay/Deinitialize在任何停止/取消外调前，先解绑自己拥有的所有订阅。 */
     void DetachObservers(UGamePlatformAbilityCastComponent* Component,const FBinding& Binding);
     void RefreshFacts();

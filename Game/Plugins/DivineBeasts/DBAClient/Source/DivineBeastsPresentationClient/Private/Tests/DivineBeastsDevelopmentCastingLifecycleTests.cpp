@@ -13,6 +13,7 @@
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SceneComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -130,6 +131,8 @@ struct FDivineBeastsDevelopmentCastingTestFixture
         RequestObserver = Platform->OnRequestObserved().AddLambda(
             [this](const FGamePlatformPresentationRequest& Request, EGamePlatformPresentationSubmitResult Result)
             {
+                // 本夹具原有计数只针对动画/VFX；音效由独立观察者检验。
+                if(!Request.SemanticTag.ToString().StartsWith(TEXT("Presentation.DivineBeasts.Development.Magic."))) return;
                 if (Request.PredictionState == EGamePlatformPresentationPredictionState::Cancelled)
                 {
                     ++CancelNotifications;
@@ -183,8 +186,14 @@ struct FDivineBeastsDevelopmentCastingTestFixture
         TArray<USceneComponent*> Components; Character->GetComponents(Components);
         int32 Count = 0;
         for (const auto* Component : Components)
-            if (Component && Component->IsRegistered() && Component->GetAttachParent() == Character->GetMesh() &&
-                Component->GetAttachSocketName() == TEXT("hand_r")) ++Count;
+        {
+            if (!Component || !Component->IsRegistered() || Component->GetClass() != USceneComponent::StaticClass()) continue;
+            const bool bHand = Component->GetAttachParent() == Character->GetMesh() &&
+                Component->GetAttachSocketName() == TEXT("hand_r");
+            const bool bGround = Component->GetAttachParent() == Character->GetCapsuleComponent() &&
+                Component->GetRelativeLocation().Equals(FVector(0, 0, -Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
+            if (bHand || bGround) ++Count;
+        }
         return Count;
     }
     bool HasOwnedStopTimer() const
@@ -259,7 +268,7 @@ DBA_CASTING_TEST(FDivineBeastsCastingStartedSuccessorTest, "StartedSuccessorReta
     TestTrue(TEXT("前继确认发布"), F.Publish(First)); TestTrue(TEXT("启动通知内真实发布后继"), bNextAccepted);
     TestEqual(TEXT("只后继提交一次有效VFX"), F.Accepted, 1);
     TestEqual(TEXT("账本属于后继"), F.OwnedActivation(), Next);
-    TestEqual(TEXT("后继只持有一个手部锚点"), F.RegisteredAnchorCount(), 1);
+    TestEqual(TEXT("后继只持有一个技能挂点，冰箭遵循脚底法阵合同"), F.RegisteredAnchorCount(), 1);
     TestTrue(TEXT("真实撤销后继"), F.Cast->CancelConfirmedCast(Next));
     TestEqual(TEXT("撤销必须命中后继真实RequestId"), F.LiveRequests.Num(), 0);
     TestEqual(TEXT("后继撤销后锚点全部释放"), F.RegisteredAnchorCount(), 0);
@@ -454,6 +463,11 @@ bool FDivineBeastsCastingAudioTimingTest::RunTest(const FString&)
     TestTrue(TEXT("真实取消施法"),F.Cast->CancelConfirmedCast(CastId));
     TestEqual(TEXT("取消施法同时取消声音"),Cancelled,1);
     F.NotifyContentActive(); TestEqual(TEXT("取消后不补播"),Started,1);
+    TestTrue(TEXT("开始下一次独立施法"),F.Publish(FGuid::NewGuid(),true,1,2.0f));
+    TestEqual(TEXT("新施法可以独立起播"),Started,2);
+    F.Deinitialize();
+    TestEqual(TEXT("世界作用域失活取消仍在施法的声音"),Cancelled,2);
+    F.NotifyContentActive(); TestEqual(TEXT("失活后内容通知不能复活声音"),Started,2);
     F.Platform->OnRequestObserved().Remove(Observer); F.Platform->UnregisterProvider(Provider);
     return true;
 }

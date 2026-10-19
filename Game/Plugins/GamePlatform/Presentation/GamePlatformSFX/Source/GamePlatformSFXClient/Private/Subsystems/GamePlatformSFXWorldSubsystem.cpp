@@ -533,9 +533,10 @@ void UGamePlatformSFXWorldSubsystem::StartComponentPlayback(UAudioComponent& Com
     const float TargetVolume, const float TargetPitch, const float FadeInSeconds,
     const float StartTimeSeconds)
 {
-    Component.SetVolumeMultiplier(FadeInSeconds > 0.0f ? 0.0f : TargetVolume);
+    // 基础音量与引擎淡入包络相乘；基础音量不能清零，也不能把目标响度乘两次。
+    Component.SetVolumeMultiplier(TargetVolume);
     Component.SetPitchMultiplier(TargetPitch);
-    if (FadeInSeconds > 0.0f) Component.FadeIn(FadeInSeconds, TargetVolume, StartTimeSeconds);
+    if (FadeInSeconds > 0.0f) Component.FadeIn(FadeInSeconds, 1.0f, StartTimeSeconds);
     else Component.Play(StartTimeSeconds);
 }
 

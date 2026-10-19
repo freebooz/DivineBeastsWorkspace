@@ -3,7 +3,7 @@
   "documentNameZh": "SSLM巳蛇V6八技能图标视觉设计冻结单",
   "date": "2026-10-18",
   "scope": "ICON_VISUAL_DESIGN_ONLY_NOT_GAMEPLAY_APPROVAL",
-  "status": "ART_SPEC_FROZEN_AWAITING_HUMAN_CANDIDATE_SELECTION",
+  "status": "CANDIDATES_SELECTED_QUALITY_REWORK_IN_PROGRESS_NO_UE_IMPORT",
   "heroId": "Hero.Zodiac.Snake",
   "heroFullNameZh": "巳蛇·幽鳞玄蛇",
   "battleRoleZh": "毒伤法师／路径封锁",
@@ -81,12 +81,12 @@
     {
       "number": 3,
       "descriptionZh": "人工优选八个候选，允许驳回重绘",
-      "status": "WAITING_FOR_USER"
+      "status": "USER_SELECTED_A_C_B_A_A_B_B_A"
     },
     {
       "number": 4,
       "descriptionZh": "独立精修八张正式1024源稿",
-      "status": "BLOCKED_BY_STAGE_3"
+      "status": "REWORK_IN_PROGRESS_NOT_APPROVED_FOR_PRODUCTION"
     },
     {
       "number": 5,
@@ -138,7 +138,7 @@
           "directionZh": "分面晶鳞闪刺"
         }
       ],
-      "selectedCandidate": null,
+      "selectedCandidate": "A",
       "artHumanApproved": false,
       "productionResourceAuthorized": false
     },
@@ -165,7 +165,7 @@
           "directionZh": "完整蛇首及毒牙"
         }
       ],
-      "selectedCandidate": null,
+      "selectedCandidate": "C",
       "artHumanApproved": false,
       "productionResourceAuthorized": false
     },
@@ -192,7 +192,7 @@
           "directionZh": "翠青双鳞穿刺"
         }
       ],
-      "selectedCandidate": null,
+      "selectedCandidate": "B",
       "artHumanApproved": false,
       "productionResourceAuthorized": false
     },
@@ -219,7 +219,7 @@
           "directionZh": "玄蛇聚毒核"
         }
       ],
-      "selectedCandidate": null,
+      "selectedCandidate": "A",
       "artHumanApproved": false,
       "productionResourceAuthorized": false
     },
@@ -246,7 +246,7 @@
           "directionZh": "紫鳞破风滑行"
         }
       ],
-      "selectedCandidate": null,
+      "selectedCandidate": "A",
       "artHumanApproved": false,
       "productionResourceAuthorized": false
     },
@@ -273,7 +273,7 @@
           "directionZh": "完整蛇蜕护体"
         }
       ],
-      "selectedCandidate": null,
+      "selectedCandidate": "B",
       "artHumanApproved": false,
       "productionResourceAuthorized": false
     },
@@ -300,7 +300,7 @@
           "directionZh": "蛇首环形困阵"
         }
       ],
-      "selectedCandidate": null,
+      "selectedCandidate": "B",
       "artHumanApproved": false,
       "productionResourceAuthorized": false
     },
@@ -327,10 +327,10 @@
           "directionZh": "紫青双层毒路"
         }
       ],
-      "selectedCandidate": null,
+      "selectedCandidate": "A",
       "artHumanApproved": false,
       "productionResourceAuthorized": false
     }
   ],
-  "notesZh": "冻结仅限八项技能构图、美术动作、编号及槽位对应，不授权未经审批的GAS复杂机制，不替换V5正式名称，不写入唯一生产Profile，待人工批准再继续。"
+  "notesZh": "用户已为8个技能逐项选定A/C/B/A/A/B/B/A设计方向；后续提出提高电影光照和辨识度，需要独立图像精修、真实资源导入与实际验收。本冻结不授权未经审批的GAS复杂机制、不替换V5正式名称、不写入唯一生产Profile。"
 }

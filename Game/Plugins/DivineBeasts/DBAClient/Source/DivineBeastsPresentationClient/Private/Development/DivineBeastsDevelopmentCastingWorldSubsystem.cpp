@@ -181,8 +181,12 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
     // 外层A取消广播返回前，其他监听者可以同步发布B；旧A快照不能操作此刻已属于B的账本。
     if(!SameCastFacts(Facts,Component->GetCastFacts())) return;
     double Elapsed=0, Remaining=0;
-    if(!GetCastWindow(Component,Facts,Elapsed,Remaining)) { StopCast(Component); return; }
+    if(!GetCastWindow(Component,Facts,Elapsed,Remaining)) { StopCastAudio(Component); StopCast(Component); return; }
     TWeakObjectPtr<UGamePlatformAbilityCastComponent> WeakComponent(Component);
+    // 起手声音属于真实施法窗口；缺少动画、Niagara或外观重建均不能推迟到弹体发射才响。
+    UpdateCastAudio(Component,Facts,Remaining);
+    Component=WeakComponent.Get();
+    if(!GetCastWindow(Component,Facts,Elapsed,Remaining)) return; // 声音提交可能同步取消或换代。
     TWeakObjectPtr<ACharacter> WeakCharacter(Cast<ACharacter>(Component->GetOwner()));
     auto* Character=WeakCharacter.Get();
     auto* Mesh=Character->GetMesh();
@@ -308,6 +312,101 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
     { Binding->VFXRequestId.Invalidate(); Binding->VFXAdapter.Reset(); Binding->VFXWorldGeneration=0; }
 }
 
+void UDivineBeastsDevelopmentCastingWorldSubsystem::UpdateCastAudio(
+    UGamePlatformAbilityCastComponent* Component,const FGamePlatformAbilityCastFacts& Facts,double RemainingSeconds)
+{
+    auto* Binding=Bindings.Find(Component); auto* Adapter=PlatformPresentation.Get();
+    if(!Binding || !Adapter) return;
+    const FGuid Token=LifetimeToken;
+    const TWeakObjectPtr<UGamePlatformAbilityCastComponent> WeakComponent(Component);
+    const TWeakObjectPtr<UGamePlatformPresentationClientSubsystem> WeakAdapter(Adapter);
+    if(Binding->AudioActivationId!=Facts.ActivationId)
+    {
+        StopCastAudio(Component);
+        double Elapsed=0, Remaining=0;
+        Component=WeakComponent.Get();
+        if(LifetimeToken!=Token || !GetCastWindow(Component,Facts,Elapsed,Remaining)) return;
+        RemainingSeconds=Remaining; Binding=Bindings.Find(Component);
+        Binding->AudioActivationId=Facts.ActivationId; Binding->bAudioAccepted=false;
+    }
+    if(Binding->AudioRequestId.IsValid() || Binding->bSubmittingAudio || Binding->bAudioAccepted) return;
+    const FName Name=CastName(Facts.PresentationStyleId);
+    const auto Semantic=FGameplayTag::RequestGameplayTag(Name==TEXT("Frostbolt")
+        ? FName(TEXT("Presentation.SSLM.Audio.Spell.Frost.Cast"))
+        : FName(TEXT("Presentation.SSLM.AudioLibrary.Spell.ArcaneCast")),false);
+    if(Name.IsNone() || !Semantic.IsValid()) return;
+    FGamePlatformPresentationRequest Request;
+    Request.RequestId=FGuid::NewGuid(); Request.SemanticTag=Semantic;
+    Request.ContextId=Facts.PresentationStyleId; Request.SourceId=Facts.AbilityId;
+    Request.SourceLocation=Component->GetOwner()->GetActorLocation();
+    Request.Context.ProjectId=FDivineBeastsProjectCatalog::GetProjectId();
+    Request.Context.AvatarGeneration=Facts.AvatarGeneration; Request.RequestGeneration=Facts.AvatarGeneration;
+    Adapter=WeakAdapter.Get(); if(!Adapter) return;
+    Request.WorldGeneration=Adapter->GetWorldGeneration();
+    double CheckedElapsed=0, CheckedRemaining=0;
+    if(LifetimeToken!=Token || !GetCastWindow(WeakComponent.Get(),Facts,CheckedElapsed,CheckedRemaining)) return;
+    Binding=Bindings.Find(WeakComponent); Adapter=WeakAdapter.Get();
+    if(!Adapter || !Binding || Binding->AudioRequestId.IsValid() || Binding->bAudioAccepted) return;
+    RemainingSeconds=CheckedRemaining;
+    Request.Lifetime=EGamePlatformPresentationLifetime::Persistent;
+    const FGuid Activation=Facts.ActivationId;
+    Binding->AudioRequestId=Request.RequestId; Binding->AudioSemantic=Semantic;
+    Binding->AudioAdapter=Adapter; Binding->AudioWorldGeneration=Request.WorldGeneration; Binding->bSubmittingAudio=true;
+    // 只安排此表现的结束，不轮询业务，也不提前结束服务器施法。迟到快照只保留真实剩余窗口。
+    GetWorld()->GetTimerManager().SetTimer(Binding->AudioStopTimer,
+        FTimerDelegate::CreateWeakLambda(this,[this,WeakComponent,Activation,Token]()
+        { if(!bClosing && LifetimeToken==Token) StopCastAudio(WeakComponent.Get(),Activation); }),
+        static_cast<float>(RemainingSeconds),false);
+    const auto Result=Adapter->Submit(Request);
+    double Elapsed=0, Remaining=0;
+    Binding=Bindings.Find(WeakComponent);
+    if(LifetimeToken!=Token || !Binding || Binding->AudioRequestId!=Request.RequestId ||
+        !GetCastWindow(WeakComponent.Get(),Facts,Elapsed,Remaining))
+    {
+        StopCastAudio(WeakComponent.Get(),Activation);
+        if(Result==EGamePlatformPresentationSubmitResult::Submitted)
+            if(auto* Current=WeakAdapter.Get())
+            { Request.PredictionState=EGamePlatformPresentationPredictionState::Cancelled; Current->Submit(Request); }
+        return;
+    }
+    Binding->bSubmittingAudio=false;
+    if(Result!=EGamePlatformPresentationSubmitResult::Submitted) StopCastAudio(WeakComponent.Get(),Activation);
+    else
+    {
+        Binding->bAudioAccepted=true;
+        UE_LOG(LogTemp,Log,TEXT("SSLM_CAST_AUDIO Stage=Cast Style=%s Activation=%s Remaining=%.3f"),
+            *Facts.PresentationStyleId.ToString(),*Activation.ToString(),Remaining);
+    }
+}
+
+void UDivineBeastsDevelopmentCastingWorldSubsystem::StopCastAudio(
+    UGamePlatformAbilityCastComponent* Component,const FGuid ExpectedActivation)
+{
+    auto* Binding=Bindings.Find(Component);
+    if(!Binding || (ExpectedActivation.IsValid() && Binding->AudioActivationId!=ExpectedActivation)) return;
+    const FBinding Old=*Binding;
+    // 保留Activation防止已结束窗口被资源通知重播；下一次真实施法使用新的Activation。
+    Binding->AudioRequestId.Invalidate(); Binding->AudioAdapter.Reset(); Binding->AudioSemantic={};
+    Binding->AudioWorldGeneration=0; Binding->bSubmittingAudio=false; Binding->AudioStopTimer.Invalidate();
+    ReleaseCastAudio(Old);
+}
+
+void UDivineBeastsDevelopmentCastingWorldSubsystem::ReleaseCastAudio(const FBinding& Old)
+{
+    FTimerHandle Timer=Old.AudioStopTimer;
+    if(auto* World=GetWorld()) World->GetTimerManager().ClearTimer(Timer);
+    if(Old.AudioRequestId.IsValid() && !Old.bSubmittingAudio)
+        if(auto* Adapter=Old.AudioAdapter.Get())
+        {
+            FGamePlatformPresentationRequest Cancel; Cancel.RequestId=Old.AudioRequestId;
+            Cancel.SemanticTag=Old.AudioSemantic; Cancel.WorldGeneration=Old.AudioWorldGeneration;
+            Cancel.Context.ProjectId=FDivineBeastsProjectCatalog::GetProjectId();
+            Cancel.PredictionState=EGamePlatformPresentationPredictionState::Cancelled;
+            Adapter->Submit(Cancel);
+            UE_LOG(LogTemp,Log,TEXT("SSLM_CAST_AUDIO Stage=End Activation=%s"),*Old.AudioActivationId.ToString());
+        }
+}
+
 void UDivineBeastsDevelopmentCastingWorldSubsystem::StopCast(UGamePlatformAbilityCastComponent* Component,FGuid ExpectedOperationId)
 {
     if(!Component) return;
@@ -369,7 +468,7 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleActorEndPlay(AActor* A
     auto* Component=Actor->FindComponentByClass<UGamePlatformAbilityCastComponent>();
     const auto* Binding=Bindings.Find(Component); if(!Binding) return;
     const FBinding Old=*Binding; Bindings.Remove(Component);
-    DetachObservers(Component,Old); ReleaseCastResources(Old);
+    DetachObservers(Component,Old); ReleaseCastAudio(Old); ReleaseCastResources(Old);
 }
 void UDivineBeastsDevelopmentCastingWorldSubsystem::Deinitialize()
 {
@@ -380,7 +479,7 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::Deinitialize()
     // 整表先退休、全量解绑，再清资源；取消通知内销毁角色也不会使下一条清理依赖FindChecked。
     auto RetiredBindings=MoveTemp(Bindings); Bindings.Reset();
     for(const auto& Entry:RetiredBindings) DetachObservers(Entry.Key.Get(),Entry.Value);
-    for(const auto& Entry:RetiredBindings) ReleaseCastResources(Entry.Value);
+    for(const auto& Entry:RetiredBindings) { ReleaseCastAudio(Entry.Value); ReleaseCastResources(Entry.Value); }
     const auto RetiredLease=VisualLease; VisualLease={};
     if(auto* World=GetWorld(); World && World->GetGameInstance())
         if(auto* Data=IGamePlatformDataService::Get(*World->GetGameInstance()); Data && RetiredLease.IsValid()) Data->ReleaseResources(RetiredLease);

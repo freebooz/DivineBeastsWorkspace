@@ -72,6 +72,8 @@ private:
     int32 HomingTargetAvatarGeneration = 0;
     bool bHasHomingTarget = false;
     FVector HomingCenter = FVector::ZeroVector;
+    /** 追踪弹体接近目标时平滑缩小的螺旋半径；仅减不增，不改写无目标弹体的原运动合同。 */
+    float HomingHelixRadiusCm = 0.0f;
     float FlightSeconds = 0.0f;
     /** 一次初始化冻结的有限飞行期限；移动目标不刷新期限，避免无限追赶。无目标保持原射程/速度。 */
     float FlightEndSeconds = 0.0f;

@@ -180,7 +180,7 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
     // 音效独立消费同一服务器阶段事实，不被Niagara预载/受理失败连带静音。
     // 外调前锁住本阶段，拒绝同步重入重复发声；失败可在后续真实事实/资源通知时重试。
     const bool bImpactAudio = Snapshot.bFinished && Snapshot.bImpacted;
-    if ((!Snapshot.bFinished || bImpactAudio) &&
+    if (bImpactAudio &&
         !(bImpactAudio ? Snapshot.ImpactLocation : Actor->GetActorLocation()).ContainsNaN() &&
         !(bImpactAudio ? Flight->bImpactAudioSubmitted : Flight->bFlightAudioSubmitted))
     {

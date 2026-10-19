@@ -50,6 +50,7 @@ bool AGamePlatformCombatProjectile::AuthorityInitialize(const FGamePlatformComba
     bHasHomingTarget = Spec.Target != nullptr;
     HomingTarget = Spec.Target.Get(); HomingTargetAvatarGeneration = Spec.TargetAvatarGeneration;
     HomingCenter = Origin;
+    HomingHelixRadiusCm = Motion.HelixRadiusCm;
     FlightEndSeconds = Motion.RangeCm / Motion.SpeedCmPerSecond;
     if (!HasCurrentHomingTarget())
     {
@@ -133,12 +134,21 @@ FVector AGamePlatformCombatProjectile::AdvanceHomingPosition(float StepSeconds, 
     const double Initial=FlightMotion.InitialPhaseTurns*UE_DOUBLE_TWO_PI;
     const double PreviousPhase=Initial+FlightSeconds*FlightMotion.HelixTurnsPerSecond*UE_DOUBLE_TWO_PI;
     // 不能用新截面重新旋转全部历史位移；只推进相邻相位差，避免急转时出现跨障碍的扫掠跳段。
-    HomingCenter=GetActorLocation()-FlightMotion.HelixRadiusCm*(
+    HomingCenter=GetActorLocation()-HomingHelixRadiusCm*(
         RadialY*(FMath::Cos(PreviousPhase)-FMath::Cos(Initial))+
         RadialZ*(FMath::Sin(PreviousPhase)-FMath::Sin(Initial)));
     HomingCenter+=Axis*(StepSeconds*FlightMotion.SpeedCmPerSecond);
+    if (HomingHelixRadiusCm > 0.f)
+    {
+        // 轴线到达目标并不代表偏轴弹体命中；进入六倍原半径的接近区后收束。
+        // 从真实位置计算目标半径，只减不增；限速收缩避免目标突移时重放历史偏移或瞬移。
+        const float DesiredRadius = FlightMotion.HelixRadiusCm * FMath::Clamp(
+            static_cast<float>(FVector::Distance(GetActorLocation(), TargetCenter)) / (6.f * FlightMotion.HelixRadiusCm), 0.f, 1.f);
+        HomingHelixRadiusCm = FMath::FInterpConstantTo(HomingHelixRadiusCm,
+            FMath::Min(HomingHelixRadiusCm, DesiredRadius), StepSeconds, .5f * FlightMotion.SpeedCmPerSecond);
+    }
     const double Phase=Initial+(FlightSeconds+StepSeconds)*FlightMotion.HelixTurnsPerSecond*UE_DOUBLE_TWO_PI;
-    return HomingCenter+FlightMotion.HelixRadiusCm*(RadialY*(FMath::Cos(Phase)-FMath::Cos(Initial))+
+    return HomingCenter+HomingHelixRadiusCm*(RadialY*(FMath::Cos(Phase)-FMath::Cos(Initial))+
         RadialZ*(FMath::Sin(Phase)-FMath::Sin(Initial)));
 }
 
