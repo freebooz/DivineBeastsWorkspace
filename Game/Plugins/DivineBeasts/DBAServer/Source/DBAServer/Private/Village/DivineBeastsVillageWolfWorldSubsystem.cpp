@@ -5,11 +5,7 @@
 #include "Village/DivineBeastsVillageWolfSpawnPolicy.h"
 #include "Characters/DivineBeastsVillageWolf.h"
 #include "Components/GamePlatformAIStateComponent.h"
-<<<<<<< HEAD
-#include "Components/GamePlatformCombatComponent.h" // 服务器死亡事件需完整组件定义。
-=======
-#include "Components/GamePlatformCombatComponent.h" // 服务器死亡判定必须包含完整组件定义。
->>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
+#include "Components/GamePlatformCombatComponent.h" // 权威死亡判定必须包含完整战斗组件定义。
 #include "Components/GamePlatformExperienceComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/GamePlatformAIDefinition.h"
@@ -104,15 +100,11 @@ bool UDivineBeastsVillageWolfWorldSubsystem::HasVerifiedAnimalAssets() const
     GConfig->GetString(Section, TEXT("WolfAnimationBlueprint"), WolfAnimPath, GGameIni);
     const FSoftObjectPath Definition(DefinitionPath);
     const FSoftClassPath WolfBlueprint(WolfClassName);
-<<<<<<< HEAD
     const FSoftObjectPath WolfMesh(WolfMeshPath);
     const FSoftClassPath WolfAnimation(WolfAnimPath);
-    // 专服不加载任何Fab纯美术，但必须检查两个客户端软引用非空且指向受控动物包。
-    // 即使有人误把两个布尔开关提前改成true，也不会在Mesh/AnimBP未配置时刷出透明攻击怪。
+    // 服务端只核验客户端资产路径归属，不加载Fab外观；AI Definition及蓝图仍需服务器包实际存在。
+    // 这样即使错误开启两个开关，也不会在Mesh/AnimBP未登记时生成不可见攻击怪。
     const FString VisualRoot(TEXT("/DBAContentPack_AnimalsProtofactor/"));
-=======
-    // 两份服务器安全资源都必须存在；只检查权威包，不访问客户端模型与动画。
->>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
     return bEnabled && bClientAssetsVerified && Definition.IsValid() && WolfBlueprint.IsValid() &&
         WolfMesh.IsValid() && WolfAnimation.IsValid() &&
         WolfMesh.GetLongPackageName().StartsWith(VisualRoot) &&
@@ -134,11 +126,7 @@ bool UDivineBeastsVillageWolfWorldSubsystem::CaptureApprovedScope(FApprovedScope
     auto* Bootstrap = Instance ? Instance->GetSubsystem<UDivineBeastsServerBootstrapSubsystem>() : nullptr;
     const auto* Lifecycle = ObservedLifecycle.Get();
     const auto* Experience = ObservedExperience.Get();
-<<<<<<< HEAD
-    // 平台GetReadiness接口非const；只读取当前世界服务的就绪事实。
-=======
-    // 平台GetReadiness接口非const；保留服务原始接口类型，不改变本桥的只读资格检查职责。
->>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
+    // 平台GetReadiness是非const接口；此处仅读取本世界服务就绪事实，不改变权威状态。
     auto* Service = IGamePlatformWorldService::Get(*const_cast<UWorld*>(World));
     if (!Bootstrap || !Lifecycle || !Experience || !Service ||
         Experience->GetWorld() != World || Lifecycle->GetGameInstance() != Instance) return false;
@@ -509,11 +497,7 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
     ObservedLifecycle.Reset();
     TArray<TObjectPtr<ADivineBeastsVillageWolf>> ToDestroy = MoveTemp(OwnedWolves);
     OwnedWolves.Reset();
-<<<<<<< HEAD
-    // 先释放本世界的出生锚点账本，再销毁自己持有的狼Actor和控制器。
-=======
-    // 先释放本世界的锚点账本，再销毁自有Actor，EndPlay期间不会错误重占位置。
->>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
+    // 先清理本世界的出生锚点账本，再销毁自有狼Actor/控制器，避免退出期间位置重占。
     WolfSpawnAnchors.Reset();
     for (const auto& WolfPointer : ToDestroy)
     {
