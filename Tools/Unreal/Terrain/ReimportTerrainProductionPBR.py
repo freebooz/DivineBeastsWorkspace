@@ -105,13 +105,20 @@ def run():
    raise RuntimeError("Texture Compression设置错误："+spec["assetPath"])
   if bool(obj.get_editor_property("srgb"))!=bool(spec["sRGB"]):
    raise RuntimeError("sRGB设置错误："+spec["assetPath"])
-  get_width=getattr(obj,"blueprint_get_size_x",None)
-  get_height=getattr(obj,"blueprint_get_size_y",None)
-  # 分辨率检查必须强制执行：原校准资产仅1024，阻止导入任务假成功。
-  if not callable(get_width) or not callable(get_height):
-   raise RuntimeError("UE5.8纹理不支持原生像素大小反射："+spec["assetPath"])
-  if (get_width(),get_height())!=(2048,2048):
-   raise RuntimeError("UE纹理不是已替换的2048扫描版本："+spec["assetPath"])
+  # 通过独立编辑器AssetRegistry的Dimensions原生源图维度标签验证真实导入尺寸。
+  # UE5.8无RHI或未驻留时blueprint_get_size_x/y只读取平台当前Mip（实测可为32），
+  # 它不是Texture2D.Source源尺寸，不得据此将有效2K资产误报为32/1024像素。
+  info=assets.find_asset_data(spec["assetPath"])
+  if not info.is_valid():
+   raise RuntimeError("AssetRegistry缺少已保存纹理资产："+spec["assetPath"])
+  dimensions=str(info.get_tag_value("Dimensions") or "")
+  if dimensions!="2048x2048":
+   raise RuntimeError("UE纹理Source尺寸不是正式2048扫描版本："+spec["assetPath"]+" 当前"+dimensions)
+  imported=obj.get_editor_property("asset_import_data")
+  filename=str(imported.get_first_filename()).replace("\\","/") if imported else ""
+  expected=str(ROOT/spec["sourcePath"]).replace("\\","/")
+  if filename.lower()!=expected.lower():
+   raise RuntimeError("UE纹理导入源不匹配已签署扫描源："+spec["assetPath"]+" 实际"+filename)
  print("TERRAIN_PBR_UE_40_TEXTURES_VERIFIED mode="+MODE+" count=40",flush=True)
 
 if __name__=="__main__":run()

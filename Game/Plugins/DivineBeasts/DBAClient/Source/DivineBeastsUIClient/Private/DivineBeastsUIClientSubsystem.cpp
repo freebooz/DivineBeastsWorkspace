@@ -798,6 +798,10 @@ void UDivineBeastsUIClientSubsystem::RegisterDefaultScreenDefinitions()
         Definition->Transition = Surface.Transition;
         Definition->DefaultFocusWidgetName = Surface.DefaultFocusWidgetName;
         Definition->bSurvivesTravel = Surface.bSurvivesTravel;
+        // 登录页加载时一起保活真实切服页类，使点击进入后可立即显示进度，不等Travel开始才冷加载。
+        // 仍由UI Manager向唯一Data服务申请页面资源租约，项目不直接同步加载或保存第二份资源缓存。
+        if(Surface.SurfaceId==TEXT("UI.Screen.Login"))
+            Definition->PreloadAssets.Add(TSoftObjectPtr<UObject>(FSoftObjectPath(TEXT("/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LoadingTravel.WBP_DBA_UI_LoadingTravel_C"))));
 
         if (!Surface.MobileWidgetClassPath.IsEmpty())
         {

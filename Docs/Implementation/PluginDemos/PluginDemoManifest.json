@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "snapshot_date": "2026-10-14",
-  "git_head": "57edb579103ebabd344988b2e532e22a83b93163",
+  "snapshot_date": "2026-10-16",
+  "git_head": "7a6ce59ced197da2de7448c7eb2cd0f698ee00f0",
   "history": {
     "path": "Docs/Implementation/PluginDemos/History/PluginDemoManifest.v1.json",
     "git_revision": "eb1fe0e932967ce97078df12c8080cf5121c99b4",
@@ -137,6 +137,13 @@
     {
       "plugin_id": "DBAWorldPack_Village",
       "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/DBAWorldPack_Village.uplugin",
+      "architecture_layer": "Project",
+      "plugin_kind": "content_pack",
+      "feature_audit_status": "unreviewed"
+    },
+    {
+      "plugin_id": "DBAWorldPack_MainArena",
+      "descriptor_path": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_MainArena/DBAWorldPack_MainArena.uplugin",
       "architecture_layer": "Project",
       "plugin_kind": "content_pack",
       "feature_audit_status": "unreviewed"

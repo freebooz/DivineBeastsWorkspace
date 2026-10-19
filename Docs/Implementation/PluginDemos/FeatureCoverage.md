@@ -3,7 +3,7 @@
 来源：PluginDemoManifest.json；由ValidatePluginDemoManifest.py导出，不独立维护状态。
 历史线索保留于History/PluginDemoManifest.v1.json，不能视为实际功能验收。
 
-登记插件 66；范围未完整审计 66；已登记功能 4；已接线 4。
+登记插件 67；范围未完整审计 67；已登记功能 4；已接线 4。
 覆盖率：分母未知，不显示百分比。
 当前作者源不携带运行/人工签收，真实结果必须查独立版本化报告。
 
@@ -30,6 +30,7 @@
 | DBASFXPack_Core | 项目层 | 内容包 | 待审计 | 0 |
 | DBAServer | 项目层 | 代码 | 待审计 | 0 |
 | DBAUIPack_Core | 项目层 | 内容包 | 待审计 | 0 |
+| DBAWorldPack_MainArena | 项目层 | 内容包 | 待审计 | 0 |
 | DBAWorldPack_Village | 项目层 | 内容包 | 待审计 | 0 |
 | DBAWorlds | 项目层 | 代码 | 待审计 | 0 |
 | GamePlatformAI | 平台层 | 代码 | 待审计 | 0 |

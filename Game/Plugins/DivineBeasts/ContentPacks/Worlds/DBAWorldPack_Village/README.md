@@ -46,3 +46,7 @@
 - GitHub工程为公开仓库；`Environment/ThirdParty/ElectricDreams/`（受许可第三方原始树木、材质、贴图）只在本地由UE编辑器迁移，按根级`.gitignore`排除公开源代码提交。不复制到GamePlatform（平台层）、MobaCommon（竞技层）或开发审核关卡，也不将第三方源模型发布为单独资产包。
 - `Tools/Unreal/PCG/InspectElectricDreamsSample.py`（Electric Dreams官方源工程预检）核对来源项目、森林示例关卡、文件头及公开Git隔离；即使通过也不等同Fab账号授权、UE5.8加载、地图烘焙或Client/Server双端Cook验收。
 - 用户需经Fab官方资源库及Epic Games Launcher创建完整示例工程；本地三层PCG候选点资产不依赖不存在的第三方素材。真实迁移后先执行AssetRegistry/依赖闭包审查及命名空间修正，才允许设置正式StaticMeshSpawner（静态网格生成器）。
+
+## 2026-10-16 狼怪物与导航修复
+
+本包持有Quaternius CC0狼的SourceArt、客户端Creatures/Wolf和服务器AI定义。通过Monolith真实导入Idle/Walking、建立平台动画基类派生AnimBP并烘焙出生点外围导航；两个PlayerStart保持原坐标。服务器排除Creatures/Wolf叶子，保留AI与地图。开发配置启用四只狼；发行默认关闭。资源来源与重载证据见Docs/MonolithGenerationManifest.json，实际构建、Cook、人工验收边界见工作空间Docs/Implementation/VillageWolvesAndPartyOperations20261016.md。

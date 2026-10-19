@@ -28,6 +28,7 @@ void UDivineBeastsUIReentryObserver::HandleCommandCompleted(FGuid RequestId, FNa
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/EditableTextBox.h"
+#include "Components/ProgressBar.h"
 #include "Components/VerticalBox.h"
 #include "Blueprint/WidgetTree.h"
 #include "Engine/Engine.h"
@@ -106,6 +107,9 @@ bool FDivineBeastsLoadingTravelViewModelReplacementTest::RunTest(const FString&)
     const TStrongObjectPtr<UDivineBeastsLoadingViewModel> Incoming(NewObject<UDivineBeastsLoadingViewModel>());
     const TStrongObjectPtr<UGamePlatformLoadingScreenService> Service(NewObject<UGamePlatformLoadingScreenService>());
     const TStrongObjectPtr<UTextBlock> Stage(NewObject<UTextBlock>(Screen.Get()));
+    // 使用真实控件与LoadingService事件，核对未知/已知进度、失活及重新显示，不靠Tick推动。
+    const TStrongObjectPtr<UProgressBar> Progress(NewObject<UProgressBar>(Screen.Get()));
+    const TStrongObjectPtr<UTextBlock> Percent(NewObject<UTextBlock>(Screen.Get()));
     ON_SCOPE_EXIT
     {
         Screen->DeactivateWidget();
@@ -115,6 +119,11 @@ bool FDivineBeastsLoadingTravelViewModelReplacementTest::RunTest(const FString&)
     auto* StageProperty = FindFProperty<FObjectPropertyBase>(Screen->GetClass(), TEXT("StageText"));
     if (!TestNotNull(TEXT("真实BindWidget StageText字段存在"), StageProperty)) return false;
     StageProperty->SetObjectPropertyValue_InContainer(Screen.Get(), Stage.Get());
+    auto* ProgressProperty = FindFProperty<FObjectPropertyBase>(Screen->GetClass(), TEXT("LoadProgress"));
+    auto* PercentProperty = FindFProperty<FObjectPropertyBase>(Screen->GetClass(), TEXT("ProgressPercentText"));
+    if (!TestNotNull(TEXT("进度条绑定字段"), ProgressProperty) || !TestNotNull(TEXT("百分比绑定字段"), PercentProperty)) return false;
+    ProgressProperty->SetObjectPropertyValue_InContainer(Screen.Get(), Progress.Get());
+    PercentProperty->SetObjectPropertyValue_InContainer(Screen.Get(), Percent.Get());
     const FText InitialStage = FText::FromString(TEXT("实际加载初始阶段"));
     const FGamePlatformLoadingToken Token = Service->AcquireToken(InitialStage, -1.0f);
     if (!TestTrue(TEXT("真实Loading令牌受理"), Token.IsValid())) return false;
@@ -123,6 +132,7 @@ bool FDivineBeastsLoadingTravelViewModelReplacementTest::RunTest(const FString&)
     Screen->InitializeActivatableViewModel(Previous.Get());
     Screen->ActivateWidget();
     TestTrue(TEXT("真实激活后的初始快照可见"), Stage->GetText().EqualTo(InitialStage));
+    TestTrue(TEXT("未知进度使用原生流动动画"), Progress->UseMarquee());
     Screen->InitializeActivatableViewModel(Incoming.Get());
     TestEqual(TEXT("合法替换保持新VM身份"), Screen->GetLoadingViewModel(), Incoming.Get());
     TestFalse(TEXT("旧VM页面生命周期已经结束"), Previous->IsPageActive());
@@ -136,9 +146,17 @@ bool FDivineBeastsLoadingTravelViewModelReplacementTest::RunTest(const FString&)
     const FText UpdatedStage = FText::FromString(TEXT("实际加载下一阶段"));
     TestTrue(TEXT("真实令牌阶段更新"), Service->UpdateToken(Token, UpdatedStage, -1.0f));
     TestTrue(TEXT("新VM真实快照事件更新StageText"), Stage->GetText().EqualTo(UpdatedStage));
+    TestTrue(TEXT("真实加载进度更新受理"), Service->UpdateToken(Token, UpdatedStage, 0.65f));
+    TestFalse(TEXT("可量化后停止流动动画"), Progress->UseMarquee());
+    TestEqual(TEXT("事件立即显示真实65%"), Progress->GetPercent(), 0.65f);
+    TestFalse(TEXT("可量化百分比文字非空"), Percent->GetText().IsEmpty());
     Screen->DeactivateWidget();
     TestFalse(TEXT("失活后新VM动态订阅也被撤销"), Incoming->OnViewStateChanged.GetAllObjects().Contains(Screen.Get()));
     TestFalse(TEXT("失活后LoadingService无VM订阅残留"), Service->OnSnapshotChanged.IsBound());
+    Service->UpdateToken(Token, UpdatedStage, 0.9f);
+    TestEqual(TEXT("失活后不能被后台变化覆盖"), Progress->GetPercent(), 0.65f);
+    Screen->ActivateWidget();
+    TestEqual(TEXT("重新显示读取最新完整快照"), Progress->GetPercent(), 0.9f);
     return true;
 }
 

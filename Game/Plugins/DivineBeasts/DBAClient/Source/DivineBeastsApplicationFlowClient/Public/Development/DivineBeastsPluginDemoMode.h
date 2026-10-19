@@ -7,6 +7,8 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsPluginDemoMode final
 {
     /** 唯一允许的初始演示总览地图包路径，非资产加载成功保证。 */
     static const TCHAR* GetHubMapPackage();
+    /** 仅开发客户端允许的电影镜头专项地图（无需正式登录，不暴露后端权限）。 */
+    static const TCHAR* GetCameraReviewMapPackage();
     /** 纯策略判定供自动化测试；地图路径必须精确一致。 */
     static bool IsAllowedArguments(bool bDevelopment, bool bInteractiveClient,
         bool bExplicitOptIn, bool bConflictingDevelopmentMode, const FString& RequestedEntryMap);

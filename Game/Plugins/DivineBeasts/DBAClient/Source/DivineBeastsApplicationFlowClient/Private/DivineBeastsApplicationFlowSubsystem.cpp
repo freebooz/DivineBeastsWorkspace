@@ -1996,6 +1996,7 @@ bool UDivineBeastsApplicationFlowSubsystem::ReleaseLoadingOperation()
     }
 
     ViewState.LoadingObservationId.Invalidate();
+    ViewState.LoadingProgress01 = -1.0f;
     ActiveTransferOperationId.Invalidate();
 
     bool bSuccess = true;
@@ -2345,30 +2346,34 @@ void UDivineBeastsApplicationFlowSubsystem::HandleLoadingSnapshot(
     switch (Snapshot.State)
     {
     case EGamePlatformLoadingState::Idle:
-        ViewState.LoadingSummary = TEXT("Idle");
+        ViewState.LoadingSummary = TEXT("正在准备进入世界");
         break;
     case EGamePlatformLoadingState::Running:
-        ViewState.LoadingSummary = TEXT("Running");
+        ViewState.LoadingSummary = TEXT("正在加载世界与角色，等待服务器确认");
         break;
     case EGamePlatformLoadingState::Ready:
-        ViewState.LoadingSummary = TEXT("Ready");
+        ViewState.LoadingSummary = TEXT("加载完成，正在进入世界");
         break;
     case EGamePlatformLoadingState::DegradedReady:
-        ViewState.LoadingSummary = TEXT("DegradedReady");
+        ViewState.LoadingSummary = TEXT("基础资源就绪，正在进入世界");
         break;
     case EGamePlatformLoadingState::Failed:
-        ViewState.LoadingSummary = TEXT("Failed");
+        ViewState.LoadingSummary = TEXT("世界加载失败");
         break;
     case EGamePlatformLoadingState::Cancelled:
-        ViewState.LoadingSummary = TEXT("Cancelled");
+        ViewState.LoadingSummary = TEXT("世界加载已取消");
         break;
     case EGamePlatformLoadingState::TimedOut:
-        ViewState.LoadingSummary = TEXT("TimedOut");
+        ViewState.LoadingSummary = TEXT("世界加载超时");
         break;
     default:
         ViewState.LoadingSummary.Reset();
         break;
     }
+
+    // 只投影当前操作通知携带的真实任务完成比例；不按经过时间推算，不轮询UI状态。
+    ViewState.LoadingProgress01 = FMath::IsFinite(Snapshot.OverallProgress01)
+        ? static_cast<float>(FMath::Clamp(Snapshot.OverallProgress01,0.0,1.0)) : -1.0f;
 
     ObserveCurrentGameplayWorld();
     if (Snapshot.State == EGamePlatformLoadingState::Ready ||

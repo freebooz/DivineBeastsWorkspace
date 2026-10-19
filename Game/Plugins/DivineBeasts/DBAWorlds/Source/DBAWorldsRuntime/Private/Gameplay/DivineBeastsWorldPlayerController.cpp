@@ -460,7 +460,12 @@ void ADivineBeastsWorldPlayerController::SetSelectedWorldTarget(AActor* Target)
     // 界面选择不等于攻击授权；受控Pawn可靠提交目标意图，平台按世界/化身/距离二次检查。
     if (APawn* ControlledPawn=GetPawn())
         if (auto* Combat=ControlledPawn->FindComponentByClass<UGamePlatformCombatComponent>()) Combat->RequestProjectileTarget(Target);
-    if (SelectedWorldTarget.Get() == Target) return;
+    // 同Actor重生后显式再点仍须发布选择事件；UI已经在死亡时清理，不能等待引用地址改变。
+    if (SelectedWorldTarget.Get() == Target)
+    {
+        if (Target) OnWorldTargetChanged.Broadcast();
+        return;
+    }
     if (AActor* Previous = SelectedWorldTarget.Get()) Previous->OnEndPlay.RemoveDynamic(this, &ThisClass::HandleSelectedTargetEndPlay);
     SelectedWorldTarget = Target;
     if (Target) Target->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleSelectedTargetEndPlay);

@@ -16,7 +16,13 @@ bool FDivineBeastsPluginDemoPolicyTest::RunTest(const FString& Parameters)
         return FDivineBeastsPluginDemoMode::IsAllowedArguments(Dev, Client, OptIn, Conflict, Path);
     };
     TestTrue(TEXT("开发交互客户端的明确总览入口允许"),Allowed(true,true,true,false,Map));
-    TestFalse(TEXT("发行配置拒绝"),Allowed(false,true,true,false,Map));
+    const FString CameraReview = FDivineBeastsPluginDemoMode::GetCameraReviewMapPackage();
+    TestTrue(TEXT("开发客户端显式电影镜头演示入口允许"), Allowed(true,true,true,false,CameraReview));
+    TestFalse(TEXT("电影镜头演示在发行配置拒绝"), Allowed(false,true,true,false,CameraReview));
+    TestFalse(TEXT("专用服务器电影镜头演示拒绝"), Allowed(true,false,true,false,CameraReview));
+    TestFalse(TEXT("未经双参数许可的电影镜头演示拒绝"), Allowed(true,true,false,false,CameraReview));
+    TestFalse(TEXT("电影镜头地图模糊匹配拒绝"), Allowed(true,true,true,false,CameraReview + TEXT("_Fake")));
+    TestFalse(TEXT("电影镜头地图大小写不一致拒绝"), Allowed(true,true,true,false,CameraReview.ToLower()));    TestFalse(TEXT("发行配置拒绝"),Allowed(false,true,true,false,Map));
     TestFalse(TEXT("服务器和命令工具拒绝"),Allowed(true,false,true,false,Map));
     TestFalse(TEXT("未授权参数拒绝"),Allowed(true,true,false,false,Map));
     TestFalse(TEXT("Foundation开发模式冲突拒绝"),Allowed(true,true,true,true,Map));

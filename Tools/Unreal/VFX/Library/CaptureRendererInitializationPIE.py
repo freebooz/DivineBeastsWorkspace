@@ -24,6 +24,8 @@ class RendererCapture:
         self.audit=json.loads((DIRECTORY/'InitializationInputs.json').read_text(encoding='utf8'))
         self.cases=[dict(system=v['system'],parameters=v['userParameters']) for v in self.audit['systems']]
         self.cases.append(dict(system='/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_Cast',parameters=[]))
+        suffixes=globals().get('RENDERER_CAPTURE_SYSTEM_SUFFIXES')
+        if suffixes:self.cases=[v for v in self.cases if v['system'].rsplit('/',1)[-1] in suffixes]
         self.frames=DIRECTORY/'Frames';self.frames.mkdir(exist_ok=True)
         self.world=unreal.EditorLevelLibrary.get_pie_worlds(False)[0]
         self.api=unreal.get_default_object(unreal.GameplayStatics);self.actors=[];self.component=None
@@ -67,7 +69,8 @@ class RendererCapture:
         self.parameter_names={p['name'] for p in case['parameters']}
         self.update_pose(0)
         self.component.activate(True);self.case_started=unreal.GameplayStatics.get_time_seconds(self.world)
-        self.samples=[0.12,0.4,2.0 if ('PetalsAura' in case['system'] or 'IceArrow_Cast' in case['system']) else 0.9]
+        self.samples=([0.02,0.05,0.09] if case['system'].endswith('/NS_Energy_MagicSpark_Legacy') else
+            [0.12,0.4,2.0 if ('PetalsAura' in case['system'] or 'IceArrow_Cast' in case['system']) else 0.9])
         self.sample_index=0;self.phase='sample';self.persist()
 
     def update_pose(self,age):
@@ -91,7 +94,8 @@ class RendererCapture:
                 expected=next((e for e in self.audit['emitters'] if e['system']==self.row['system'] and e['emitter']==name),None)
                 data=dict(particles=len(colors),maxAlpha=max([c.a for c in colors],default=0))
                 if expected:
-                    attribute=expected['attribute'];values=list(cache.read_vector2_attribute(attribute,name,0)) if attribute=='SpriteSize' else list(cache.read_float_attribute(attribute,name,0))
+                    attribute=expected['attribute'];bound=expected.get('boundAttribute',attribute)
+                    values=list(cache.read_vector2_attribute(bound,name,0)) if attribute=='SpriteSize' else list(cache.read_float_attribute(bound,name,0))
                     positive=[]
                     for j,value in enumerate(values):
                         dimensions=[value.x,value.y] if attribute=='SpriteSize' else [value]

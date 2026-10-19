@@ -9,10 +9,10 @@
 
 | 槽位 | 临时机制 | 一级基础伤害 | 气势消耗 | 冷却 | 射程 | 操作 |
 |---|---|---:|---:|---:|---:|---|
-| 普通攻击 | 前向单目标权威攻击 | 40 | 0 | 0秒 | 250cm | 普攻键 |
+| Primary兼容槽 | 花瓣绽放：自己或选中有效友方恢复目标最大生命20% | 0（治疗） | 0 | 10秒 | 2000cm | 键1 |
 | 被动 | 不触发主动效果的暂占槽 | 0 | 0 | 0秒 | 0cm | 无 |
-| 技能一 | 火焰弹，选中目标追踪／未选直线 | 40 | 0 | 2秒 | 2000cm | 键1 |
-| 技能二 | 寒冰箭，选中目标追踪／未选直线 | 30 | 0 | 1.5秒 | 2000cm | 键2 |
+| 技能一 | 火焰弹，选中目标追踪／未选直线 | 40 | 0 | 2秒 | 2000cm | 键2 |
+| 技能二 | 寒冰箭，选中目标追踪／未选直线 | 30 | 0 | 1.5秒 | 2000cm | 键3 |
 | 终极技能 | 奥术飞弹，3枚螺旋弹体，每枚基础12伤害 | 12×3 | 0 | 3秒 | 2000cm | 键4 |
 
 说明：2026-10-15按用户明确指令将全部法术气势费用归零，并增加选中目标冻结追踪；原伤害／冷却／射程不变，飞行中及连发不随新选择切敌，冻结目标失效终止。以上数字只用于当前占位调试，不是十二生肖最终数值批准；没有燃烧、冻结、减速、位移或额外被动效果。正式战斗伤害继续由平台 Combat 统一结算，技能先经过 GAS 服务端 Commit（提交）后才生成投射物；客户端不授予技能。
@@ -61,3 +61,15 @@
 实际GAS目标连发回归暴露原36法术行仍保留费用，当前平台Magic零费校验因此拒绝施法。通过正式UE5.8 Monolith在原资产身份下修正36行、36中性兼容成本GE、36GA空成本引用及12UIProfile说明；成本原始快照和保存记录在`Game/Saved/Validation/SpellMomentumMigration`，真实uasset备份在`Saved/Validation/WorldEntryFix20261015/SpellAssetsBefore`。两个作者入口共同复用零费SLOTS，保留原GAS冷却，不靠补资源实现免费。独立只读检查现逐行验证36条Magic、36份中性GE及保留冷却，采用唯一时间戳报告；最终冷读与原生运行记录由本轮执行报告补充，不沿用2026-10-13旧费用合同结论。
 
 本轮独立原生重载85包后只读验证PASS：12英雄、60定义／GA、12技能集／UIProfile、36条Magic费用为0、36中性GE及36原冷却合同通过。随后最终33项UE回归全部成功，包含两类真实GAS连发的冻结选择／销毁并GC／目标换代，并断言气势始终等于真实初值；原始聚合`Saved/Validation/WorldEntryFix20261015/FinalNativeVerified.json`。源码Client／Server与Editor新构建均退出0，最终包与联机仍须看本轮后续Cook／运行记录。
+
+## 2026-10-16 数字1治疗接线修复
+
+最新双打包客户端与Village专服使用`VillageDevelopmentClient/Server`及`-DBADevelopmentSkills`。旧配置把十二英雄覆盖到`dba.abilityset.<hero>_dev@1`，`DivineBeastsAbilityLoadoutComponent`因此跳过英雄已迁移的`_placeholder@1`默认集合；数字1仍授予历史候选普攻，不能进入`Healing`或产生花瓣治疗确认。这是运行配置与真实授权链的冲突，不能通过重复导入Niagara修复。
+
+本次两份开发配置移除旧候选集合映射，保留双重开发许可和原有诊断/Cook范围，运行时沿用英雄`DefaultAbilitySetId`。客户端`DivineBeastsAbilityUIProfile`扫描同步改为十二英雄包的`UI/Abilities`，避免用旧候选Profile解释当前占位技能ID；开发候选资产和原生显式覆盖机制保留，独立验证需要另行明确配置，普通联调不自动替换技能。
+
+权威治疗继续复用`DivineBeastsPlaceholderGameplayAbility`及平台`ApplyHealing`，最大生命20%、10秒GAS冷却、零气势费用、友方资格和失效拒绝规则均不变。受疗确认映射到`Presentation.DivineBeasts.Development.Magic.Healing.Impact`，Definition为`/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom`，引用已迁移的`/DBAPresentationPack_Core/VFX/Library/07_Status/NS_Nature_PetalBloom_Aura`，不在客户端自行加血。
+
+项目客户端适配补充Standalone/ListenServer的本地权威Combat事件桥接，交给既有World反馈总线按EventId去重，保证源与受疗者的两次同一确认只播放一次。首次绑定只读取存量Actor，此后由新增、EndPlay与Combat事件维护，世界解绑撤销全部订阅；网络客户端仍只消费专服确认。MainArena在既有双重开发许可下沿用同一映射，不新增通用地图白名单或专服表现依赖。
+
+已执行`Tests/Assets/TestZodiacDevelopmentAbilityAuthoring.py`：修复前新增合同出现2处预期失败，修复后4项通过。`DivineBeasts.Presentation.Healing.TargetAndLifecycle`新增真实本地主机`ApplyHealing`、源/目标重复确认及解绑回归，本次子任务未构建或执行UE；由主任务统一完成固定参数增量构建、真实资产重载、打包与专服/客户端验收。原`DivineBeasts.Abilities.Placeholder.ServerGAS.PrimaryHealing`仍是权威治疗的最小回归入口。中文说明核对范围限于本次配置、表现适配、依赖声明及相关测试，不宣称历史源码全量合规。

@@ -106,7 +106,8 @@ def main():
             exists=p.editor_python("import unreal\nprint('COMPAT_EXISTS',unreal.EditorAssetLibrary.does_asset_exist("+repr(target)+"))")
             if 'COMPAT_EXISTS True' not in json.dumps(exists):
                 # Niagara词法分析要求位运算符与输入标识分开；只补空白，不改变原始计算。
-                outputs=([dict(name='RotationOut',type='float')] if script.endswith('/NM_VFX_RandomRotation') else [])
+                outputs=([dict(name='RotationOut',type='float')] if script.endswith('/NM_VFX_RandomRotation') else
+                    [dict(name='VelocityOut',type='vec3')] if script.endswith('/NM_VFX_Drag') else [])
                 p.niagara('create_module_from_hlsl',name=target.rsplit('/',1)[-1],save_path=target,hlsl=descriptor['hlsl'].replace('Mode&1','Mode & 1'),inputs=descriptor['inputs'],outputs=outputs,description='SSLM原库模块兼容包装；保留原始HLSL，输入与渲染由系统迁移记录恢复。')
         new_nodes=[]
         for record in selected:

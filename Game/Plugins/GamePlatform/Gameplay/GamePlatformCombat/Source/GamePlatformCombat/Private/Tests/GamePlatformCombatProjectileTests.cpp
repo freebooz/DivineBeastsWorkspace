@@ -2,6 +2,7 @@
 // RED阶段曾显式报告缺少生产类型；类型加入后直接编译真实路径，验证曲线运动、伤害与过期来源拒绝。
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "Misc/ScopeExit.h"
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
@@ -167,6 +168,9 @@ bool FGamePlatformProjectileSelectionTest::RunTest(const FString&)
 {
     FProjectileTestWorld Fixture;
     if (!Fixture.Initialize()) return false;
+    int32 AvatarObservationCount = 0;
+    const auto ObservationHandle = Fixture.TargetCombat->OnCombatObservationChanged().AddLambda([&]() { ++AvatarObservationCount; });
+    ON_SCOPE_EXIT { Fixture.TargetCombat->OnCombatObservationChanged().Remove(ObservationHandle); };
     int32 Generation=-1;
     TestNull(TEXT("初始无选中目标"),Fixture.SourceCombat->GetSelectedProjectileTarget(1000,Generation));
     TestEqual(TEXT("空快照代次归零"),Generation,0);
@@ -184,6 +188,7 @@ bool FGamePlatformProjectileSelectionTest::RunTest(const FString&)
     TestFalse(TEXT("旧来源取消不能覆盖后继选择"),Fixture.SourceCombat->AuthoritySelectProjectileTarget(nullptr,0,0));
     TestEqual(TEXT("旧取消后当前选择仍在"),Fixture.SourceCombat->GetSelectedProjectileTarget(1000,Generation),Fixture.Target);
     Fixture.TargetCombat->ResetForNewAvatar(2);
+    TestEqual(TEXT("化身重置提交后只读观察者立即获得一次通知，不依赖位置/生命差值"), AvatarObservationCount, 1);
     TestNull(TEXT("同Actor新化身不继承旧选择"),Fixture.SourceCombat->GetSelectedProjectileTarget(1000,Generation));
     TestTrue(TEXT("目标换代后仍可识别旧意图"), Fixture.SourceCombat->GetSelectedProjectileTargetIntent(IntentTarget, IntentSource, IntentGeneration) && IntentGeneration == 1);
     TestTrue(TEXT("显式选择新化身"),Fixture.SourceCombat->AuthoritySelectProjectileTarget(Fixture.Target,1,2));

@@ -30,3 +30,5 @@
 证据目录：`Saved/Validation/PetalBloomIntegration20261015`，包含 `Plan.json`、`Verification.json`、`CompileReloaded.json`、`PetalFrame/Result.json`及真实PNG。客户端Cook为 `6a95a6eb-bd60-485a-b87a-8444d3570146`，治疗/动作/冰箭52项最终容器门禁通过；专服Cook为 `20b718c5-252e-487b-afcd-8609d8286d94`，实际Stage/Pak表现剥离通过。最终构建、定向回归与双客户端进程身份另见同目录 `Runtime.json`，不将进程启动视为人工联机治疗验收。
 
 回退使用本次 `HealingAssetsBefore`、`LibrarySystemsBefore`和模块原始输入证据恢复自有改动；不覆盖其他未提交修改，不改D盘源库。源资源按用户指定本机项目来源记录，未附独立再分发许可材料；本次不执行外部分发。中文说明审核覆盖迁移桥、三个迁移/修复工具、PIE采样、治疗作者与定向回归入口，未声称完成存量全项目注释审计。
+
+2026-10-16增量：19项真实写入、GPU渲染及地面冰箭复核见[VFX初始化与冰箭地面起手](VFXInitializationAndIceCast20261016.md)。原始19条工具提示保留，不能与项目未解决项0混称。

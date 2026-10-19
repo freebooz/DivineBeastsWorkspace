@@ -5,7 +5,11 @@
 #include "Village/DivineBeastsVillageWolfSpawnPolicy.h"
 #include "Characters/DivineBeastsVillageWolf.h"
 #include "Components/GamePlatformAIStateComponent.h"
+<<<<<<< HEAD
 #include "Components/GamePlatformCombatComponent.h" // 服务器死亡事件需完整组件定义。
+=======
+#include "Components/GamePlatformCombatComponent.h" // 服务器死亡判定必须包含完整组件定义。
+>>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
 #include "Components/GamePlatformExperienceComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Data/GamePlatformAIDefinition.h"
@@ -21,6 +25,7 @@
 #include "Misc/PackageName.h"
 #include "UObject/SoftObjectPath.h" // 服务器使用蓝图软类，不引用客户端第三方狼网格。
 #include "NavigationSystem.h"
+#include "NavigationData.h"
 #include "Server/DivineBeastsServerBootstrapSubsystem.h"
 #include "Server/GamePlatformServerLifecycleSubsystem.h"
 #include "Types/GamePlatformCombatEvent.h"
@@ -64,6 +69,7 @@ void UDivineBeastsVillageWolfWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
     if (&InWorld != GetWorld() || bClosing || !WorldOperation.IsValid()) return;
+    ObserveNavigation();
     ObserveExperience();
     if (!HasVerifiedAnimalAssets())
     {
@@ -98,11 +104,15 @@ bool UDivineBeastsVillageWolfWorldSubsystem::HasVerifiedAnimalAssets() const
     GConfig->GetString(Section, TEXT("WolfAnimationBlueprint"), WolfAnimPath, GGameIni);
     const FSoftObjectPath Definition(DefinitionPath);
     const FSoftClassPath WolfBlueprint(WolfClassName);
+<<<<<<< HEAD
     const FSoftObjectPath WolfMesh(WolfMeshPath);
     const FSoftClassPath WolfAnimation(WolfAnimPath);
     // 专服不加载任何Fab纯美术，但必须检查两个客户端软引用非空且指向受控动物包。
     // 即使有人误把两个布尔开关提前改成true，也不会在Mesh/AnimBP未配置时刷出透明攻击怪。
     const FString VisualRoot(TEXT("/DBAContentPack_AnimalsProtofactor/"));
+=======
+    // 两份服务器安全资源都必须存在；只检查权威包，不访问客户端模型与动画。
+>>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
     return bEnabled && bClientAssetsVerified && Definition.IsValid() && WolfBlueprint.IsValid() &&
         WolfMesh.IsValid() && WolfAnimation.IsValid() &&
         WolfMesh.GetLongPackageName().StartsWith(VisualRoot) &&
@@ -124,7 +134,11 @@ bool UDivineBeastsVillageWolfWorldSubsystem::CaptureApprovedScope(FApprovedScope
     auto* Bootstrap = Instance ? Instance->GetSubsystem<UDivineBeastsServerBootstrapSubsystem>() : nullptr;
     const auto* Lifecycle = ObservedLifecycle.Get();
     const auto* Experience = ObservedExperience.Get();
+<<<<<<< HEAD
     // 平台GetReadiness接口非const；只读取当前世界服务的就绪事实。
+=======
+    // 平台GetReadiness接口非const；保留服务原始接口类型，不改变本桥的只读资格检查职责。
+>>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
     auto* Service = IGamePlatformWorldService::Get(*const_cast<UWorld*>(World));
     if (!Bootstrap || !Lifecycle || !Experience || !Service ||
         Experience->GetWorld() != World || Lifecycle->GetGameInstance() != Instance) return false;
@@ -183,7 +197,24 @@ void UDivineBeastsVillageWolfWorldSubsystem::HandleLifecycleChanged(const FGameP
         Snapshot.State == EGamePlatformServerLifecycleState::Stopped ||
         Snapshot.State == EGamePlatformServerLifecycleState::Failed)
     { CloseScope(); return; }
+    ObserveNavigation();
     ObserveExperience();
+    TryFillWolves();
+}
+
+void UDivineBeastsVillageWolfWorldSubsystem::ObserveNavigation()
+{
+    if(bClosing||!WorldOperation.IsValid()||ObservedNavigation.IsValid())return;
+    auto* Navigation=GetWorld()?UNavigationSystemV1::GetCurrent(GetWorld()):nullptr;
+    if(!Navigation)return;
+    ObservedNavigation=Navigation;
+    Navigation->OnNavigationGenerationFinishedDelegate.AddUniqueDynamic(this,&ThisClass::HandleNavigationFinished);
+}
+
+void UDivineBeastsVillageWolfWorldSubsystem::HandleNavigationFinished(ANavigationData* NavigationData)
+{
+    if(bClosing||!IsValid(NavigationData)||NavigationData->GetWorld()!=GetWorld())return;
+    // 每次有限补齐仍重新验证角色、体验、代次、NavMesh与安全区；重复通知不会超过四只。
     TryFillWolves();
 }
 
@@ -316,9 +347,13 @@ bool UDivineBeastsVillageWolfWorldSubsystem::SpawnOneWolf(const FTransform& Spaw
         SpawnAt.GetLocation(),SpawnAt.Rotator());
     if (IsValid(Controller)) Controller->Possess(Wolf);
     FApprovedScope Current;
-    if (!IsValid(Controller) || !IsValid(Wolf) || Wolf->GetController()!=Controller ||
-        !Wolf->AuthorityInitializeWolf(75.0f) || !CaptureApprovedScope(Current) || !(Current == Original))
+    const bool bControllerBound=IsValid(Controller)&&IsValid(Wolf)&&Wolf->GetController()==Controller;
+    const bool bCombatReady=bControllerBound&&Wolf->AuthorityInitializeWolf(75.0f);
+    const bool bScopeCurrent=bCombatReady&&CaptureApprovedScope(Current)&&(Current==Original);
+    if (!bControllerBound || !bCombatReady || !bScopeCurrent)
     {
+        UE_LOG(LogTemp,Warning,TEXT("VillageWolfSpawnRejected: ControllerBound=%d CombatReady=%d ScopeCurrent=%d"),
+            bControllerBound,bCombatReady,bScopeCurrent);
         // 没有完整人工验收资产、导航、控制器、生命或World资格就拒绝产出半可交互敌人。
         if (IsValid(Controller)) Controller->Destroy();
         if (IsValid(Wolf)) Wolf->Destroy();
@@ -462,6 +497,9 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
         World->GetTimerManager().ClearTimer(ReplenishTimer);
         World->GetTimerManager().ClearTimer(SpawnBatchTimer);
     }
+    if(auto* Navigation=ObservedNavigation.Get())
+        Navigation->OnNavigationGenerationFinishedDelegate.RemoveDynamic(this,&ThisClass::HandleNavigationFinished);
+    ObservedNavigation.Reset();
     WolfActorClass = nullptr;
     if (auto* Exp=ObservedExperience.Get()) Exp->Unsubscribe(ExperienceSubscription);
     ExperienceSubscription={};
@@ -471,7 +509,11 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
     ObservedLifecycle.Reset();
     TArray<TObjectPtr<ADivineBeastsVillageWolf>> ToDestroy = MoveTemp(OwnedWolves);
     OwnedWolves.Reset();
+<<<<<<< HEAD
     // 先释放本世界的出生锚点账本，再销毁自己持有的狼Actor和控制器。
+=======
+    // 先释放本世界的锚点账本，再销毁自有Actor，EndPlay期间不会错误重占位置。
+>>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
     WolfSpawnAnchors.Reset();
     for (const auto& WolfPointer : ToDestroy)
     {

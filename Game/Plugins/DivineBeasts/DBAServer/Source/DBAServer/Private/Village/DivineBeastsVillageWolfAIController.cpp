@@ -2,6 +2,7 @@
 #include "Village/DivineBeastsVillageWolfAIController.h"
 
 #include "Characters/DivineBeastsVillageWolf.h"
+#include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -71,5 +72,12 @@ bool ADivineBeastsVillageWolfAIController::TryExecuteNativeAttack(AActor& Valida
     Spec.HitContext.ImpactNormal = Hit.ImpactNormal.GetSafeNormal();
     Spec.HitContext.ValidatedDistance = FVector::Distance(Start, End);
     // 最终由平台统一核验角色身份、命中、护盾、伤害和死亡。失败不能声称成功。
-    return SourceCombat->ApplyDamage(Spec).IsSuccess();
+    const bool bApplied = SourceCombat->ApplyDamage(Spec).IsSuccess();
+    // 复用平台已有复制表现事实，不另建狼攻击RPC、动画播放器或客户端伤害时序。
+    // 动画发布失败也不能回滚真实伤害；反伤/死亡重入后禁止再发布新咬击。
+    if (bApplied && IsValid(Wolf) && Wolf->IsWolfAlive() && !Wolf->IsActorBeingDestroyed())
+        if (auto* Cast = Wolf->FindComponentByClass<UGamePlatformAbilityCastComponent>())
+            Cast->PublishConfirmedCast(Spec.EventId, Spec.SourceAbilityId, FName(TEXT("VillageWolf.Bite")),
+                Spec.SourceAvatarGeneration, 0.8f);
+    return bApplied;
 }

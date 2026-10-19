@@ -1,5 +1,15 @@
 # 插件架构优化执行记录
 
+## 2026-10-16 结构命名、依赖声明与交付索引纠偏
+
+- 本轮实际工作空间`E:/work/2026/DivineBeastsWorkspace`、`main`（基线`7a6ce59`），开始时存在多个并行会话共用的未提交代码和UE原生资产。本轮未清理、重置、重命名既有`.uasset`/`.umap`、提交Git或停止他人作业。
+- 修复`DBAWorlds.uplugin`遗漏的平台战斗依赖`GamePlatformCombat`与`DBAArena.uplugin`的`GamePlatformGameplay`客户端TargetAllowList；原六组Client/Server/Editor组合存在5组相关错误，修复后全部通过。
+- 新水体`GamePlatformWater`有独立三模块并已被正式世界实际消费，故纳入当前World分类身份；当前48代码/机制插件（平台层41、MOBA2、DBA5）、19登记内容包、67物理描述。更新`AGENTS.md`、`DesignBaselineAudit.psm1`、正式设计与目录规划和定向回归，不删除稳定旧身份。最新`ValidateDesignBaseline.ps1`返回0，公共/竞技Client/Server/Editor六组装配成功，继承检查565个Public头/1229类型/207边通过；Pester三组架构与负例测试33/33成功。
+- 补齐`DBAWorldPack_MainArena/README.md`，修复交付清单漏登`GamePlatformWater`、`DBASFXPack_Core`、`DBAWorldPack_MainArena`三个真实插件。旧`.worktrees/v`证据文件在当前工作区缺失的三项历史Passed改为HistoricalOnly，仅保留追溯信息。`ValidatePluginDeliveryManifest.py`现返回0：67插件、48代码、19内容、8个保留模块，不自动提升生产验收状态。
+- 当前命名门禁`TestEnglishProjectNames.ps1`对154822条目录／文件对象及67份插件描述执行，违规0；Git管理和新增的8505文件名检查（含3415游戏资产）未发现非ASCII非文档名、大小写冲突或含空格的源与资源名。测试是文件与描述命名，不证明正式UE资产显示、引用重定向或Shader正常。
+- 水体资源脚本`ValidateGamePlatformWaterAssets.py --require-review-map`退出0，34项已登记源图/UE文件存在；材质能力注册201项静态门禁通过，60函数、12材质层及7UI配方离线合同测试16/16通过。寒冰箭静态验证依赖`numpy`与`Pillow`，本机UE内置Python缺少对应第三方模块，故未取得该项测试结果，也未修改生产UE环境。UE编辑器进程存在，但HWebCodex未发现可调用的Editor/Monolith工具连接；未开展新的蓝图或材质的引擎写入、Cold Reload和三目标构建。
+
+
 ## 基线
 - 用户授权：给出最佳实施计划后按计划执行。
 - 起始HEAD：7d44194333cda24f8a14495695e1d478deef5a97；原分支main。本任务没有执行提交/推送。

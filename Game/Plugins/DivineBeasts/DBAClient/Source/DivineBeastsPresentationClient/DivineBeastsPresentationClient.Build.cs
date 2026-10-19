@@ -22,7 +22,11 @@ public class DivineBeastsPresentationClient : ModuleRules
             "DivineBeastsPresentationRuntime",
             "GamePlatformPresentationCore",
             "GamePlatformPresentationClient",
+            // 公开狼动画实例向下继承平台既有移动快照基类，不重复采样/实现一套Locomotion。
+            "GamePlatformAnimationClient",
             "GamePlatformData",
+            // 公开反射头中的本地主机治疗事件桥接使用平台Combat值类型，必须声明真实公开依赖。
+            "GamePlatformCombat",
             // 项目公开蓝图表面命中回执直接依赖平台Marks公共值类型；同时支持既有Game开发目标。
             "GamePlatformSurfaceClient"
         });
@@ -34,9 +38,10 @@ public class DivineBeastsPresentationClient : ModuleRules
             "DivineBeastsCharactersRuntime",
             // 只读项目开发资格和平台复制投射物事实，不链接服务器私有或项目伤害执行器。
             "DivineBeastsAbilitiesRuntime",
-            "GamePlatformCombat",
             // 施法适配只读中立复制事实，不依赖GAS私有执行器或Niagara类型。
             "GamePlatformAbilitySystem",
+            // Editor回归测试直接使用UAbilitySystemComponent与FGameplayEffectSpec符号，必须显式链接GAS。
+            "GameplayAbilities",
             // 新开发法术适配直接请求已登记语义标签，须链接实现，不靠公共头的传递可见性。
             "GameplayTags",
             // 本地玩家表现编排按世界天气快照订阅，只有第三层依赖平台天气Runtime；不引入服务器私有或天气客户端执行器。

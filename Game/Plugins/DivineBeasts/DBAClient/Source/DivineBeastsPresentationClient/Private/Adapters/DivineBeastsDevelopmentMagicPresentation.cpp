@@ -80,11 +80,22 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
     { if (Handle.IsValid()) DeactivateContentPack(Handle); return; }
     if (!Handle.IsValid()) { UnbindDevelopmentMagicWorld(); return; }
     DevelopmentMagicPack = Handle;
-    for (TActorIterator<AGamePlatformCombatProjectile> It(World); It; ++It) HandleDevelopmentMagicSpawn(*It);
+    // 进入世界时只读一次存量快照，此后靠Actor新增/EndPlay和Combat事件维护，不扫描Tick。
+    for (TActorIterator<AActor> It(World); It; ++It) HandleDevelopmentMagicSpawn(*It);
 }
 
 void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicSpawn(AActor* Actor)
 {
+    UWorld* World = DevelopmentMagicWorld.Get();
+    if (bClosing || !IsValid(Actor) || !World || World->bIsTearingDown || Actor->GetWorld() != World) return;
+    // Dedicated Server不创建本地表现作用域；普通网络客户端只消费服务器Multicast，不能本地重算。
+    if ((World->GetNetMode() == NM_Standalone || World->GetNetMode() == NM_ListenServer) && Actor->HasAuthority())
+        if (auto* Combat = Actor->FindComponentByClass<UGamePlatformCombatComponent>(); Combat && !DevelopmentAuthorityHealingSources.Contains(Combat))
+        {
+            DevelopmentAuthorityHealingSources.Add(Combat);
+            Combat->OnCombatEvent.AddUniqueDynamic(this, &ThisClass::HandleDevelopmentAuthorityHealingFeedback);
+            Actor->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleDevelopmentMagicEndPlay);
+        }
     auto* Projectile = Cast<AGamePlatformCombatProjectile>(Actor);
     if (bClosing || !Projectile || Projectile->GetWorld() != DevelopmentMagicWorld.Get() ||
         DevelopmentMagicFlights.Contains(Projectile)) return;
@@ -113,6 +124,12 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicPack(
 
 void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicEndPlay(AActor* Ended, EEndPlayReason::Type)
 {
+    if (Ended)
+    {
+        if (auto* Combat = Ended->FindComponentByClass<UGamePlatformCombatComponent>(); Combat && DevelopmentAuthorityHealingSources.Remove(Combat) > 0)
+            Combat->OnCombatEvent.RemoveDynamic(this, &ThisClass::HandleDevelopmentAuthorityHealingFeedback);
+        Ended->OnEndPlay.RemoveDynamic(this, &ThisClass::HandleDevelopmentMagicEndPlay);
+    }
     auto* Actor = Cast<AGamePlatformCombatProjectile>(Ended);
     FDevelopmentMagicFlight Old;
     if (!Actor || !DevelopmentMagicFlights.RemoveAndCopyValue(Actor, Old)) return;
@@ -251,6 +268,13 @@ void UDivineBeastsPresentationClientSubsystem::UnbindDevelopmentMagicWorld()
             Feedback->OnConfirmedFeedback().Remove(DevelopmentHealingFeedbackHandle);
     }
     DevelopmentHealingFeedbackHandle.Reset();
+    auto OldHealingSources = MoveTemp(DevelopmentAuthorityHealingSources); DevelopmentAuthorityHealingSources.Reset();
+    for (const auto& WeakCombat : OldHealingSources)
+        if (auto* Combat = WeakCombat.Get())
+        {
+            Combat->OnCombatEvent.RemoveDynamic(this, &ThisClass::HandleDevelopmentAuthorityHealingFeedback);
+            if (AActor* Owner = Combat->GetOwner()) Owner->OnEndPlay.RemoveDynamic(this, &ThisClass::HandleDevelopmentMagicEndPlay);
+        }
     DevelopmentMagicSpawnHandle.Reset();
     ContentPackChanged.Remove(DevelopmentMagicPackHandle); DevelopmentMagicPackHandle.Reset();
     // 先整体撤销所有权，再跨同步取消/包终态通知。迭代的是本栈旧快照，不会被重入扩容/Reset破坏。
@@ -269,6 +293,18 @@ void UDivineBeastsPresentationClientSubsystem::UnbindDevelopmentMagicWorld()
         }
     }
     if (OldPack.IsValid()) DeactivateContentPack(OldPack);
+}
+
+void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentAuthorityHealingFeedback(const FGamePlatformCombatEvent& Event)
+{
+    UWorld* World = DevelopmentMagicWorld.Get();
+    if (bClosing || !World || World->bIsTearingDown ||
+        (World->GetNetMode() != NM_Standalone && World->GetNetMode() != NM_ListenServer) ||
+        Event.EventType != EGamePlatformCombatEventType::Healing ||
+        !IsValid(Event.TargetActor) || !Event.TargetActor->HasAuthority() || Event.TargetActor->GetWorld() != World) return;
+    // 复用平台唯一有界去重缓存，不为主机另建事件账本；平台总线仍只广播只读确认事实。
+    if (auto* Feedback = World->GetSubsystem<UGamePlatformCombatFeedbackWorldSubsystem>())
+        Feedback->DispatchConfirmedFeedback(Event);
 }
 
 void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentHealingFeedback(const FGamePlatformCombatEvent& Event)

@@ -240,14 +240,15 @@ FDivineBeastsUIViewState UDivineBeastsApplicationUIAdapter::BuildViewState(
     // Boot / Initialize 使用独立 Boot 页面，避免被通用 LoadingTravel 抢占。
     const bool bWorldLoading =
         FlowState.Error == EDivineBeastsFlowError::None &&
-        (FlowState.CurrentStep == FDivineBeastsFlowNodes::TransferWorld() ||
+        (FlowState.CurrentStep == FDivineBeastsFlowNodes::RequestWorld() ||
+        FlowState.CurrentStep == FDivineBeastsFlowNodes::TransferWorld() ||
         FlowState.CurrentStep == FDivineBeastsFlowNodes::WorldReady());
     Result.Loading.bIsLoading = bWorldLoading;
     Result.Loading.ActiveTokenCount = bWorldLoading ? 1 : 0;
     Result.Loading.Stage = FlowState.LoadingSummary.IsEmpty()
-        ? FText::GetEmpty()
+        ? NSLOCTEXT("DivineBeastsUI","RequestingWorld","正在申请世界实例，请稍候")
         : FText::FromString(FlowState.LoadingSummary);
-    Result.Loading.Progress = -1.0f;
+    Result.Loading.Progress = bWorldLoading ? FlowState.LoadingProgress01 : -1.0f;
 
     Result.World.ExperienceId = FlowState.Assignment.ExperienceId;
     Result.World.WorldId = FlowState.Assignment.WorldId;

@@ -1,3 +1,7 @@
+# 2026-10-16 状态补充
+
+下文保留2026-10-14的Fab方案历史。当前已改为接入作者Quaternius发布的CC0狼，未领取或导入PROTOFACTOR产品。实际路径、两段动画、导航与Cook隔离见[当前修复与操作说明](VillageWolvesAndPartyOperations20261016.md)，不要再以旧阻塞说明推断当前资产为空。
+
 # SSLM 新手村 ANIMAL VARIETY PACK 狼怪物接入记录（2026-10-14）
 
 ## 目标、授权与当前证据

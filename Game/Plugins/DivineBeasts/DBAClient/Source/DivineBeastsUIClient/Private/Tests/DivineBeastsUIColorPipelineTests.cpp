@@ -239,4 +239,33 @@ bool FDivineBeastsRemainingPagesRHIReportTest::RunTest(const FString&)
     }
     return true;
 }
+/** 小队操作说明使用真实保存页面，复用线性RHI回读；不伪造账号、成员或匹配状态。
+ * 验证目的为资产可构造、GPU可绘制和文件可导出，交互与网络仍由各自定向回归验证。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPartyPagesRHIReportTest,
+    "DivineBeasts.UI.Party.RHISavedPages",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPartyPagesRHIReportTest::RunTest(const FString&)
+{
+    if(GUsingNullRHI){AddError(TEXT("小队操作界面证据必须使用真实RHI。"));return false;}
+    for(const TCHAR* Name:{TEXT("WBP_DBA_PartyPanel"),TEXT("WBP_DBA_PartyInviteModal"),TEXT("WBP_DBA_PartyReadyCheckModal")})
+    {
+        const FString ClassPath=FString(TEXT("/DBAUIPack_Core/UI/Social/"))+Name+TEXT(".")+Name+TEXT("_C");
+        const FString FileName=FString(TEXT("Party/"))+Name+TEXT(".png");
+        TestTrue(TEXT("真实小队页面线性浮点RHI导出"),DivineBeastsUIColorTests::SavePagePreview(
+            *ClassPath,*FileName,FIntPoint(960,720),*this,false));
+    }
+    return true;
+}
+/** 真实保存加载页的原生RHI证据；只验证布局和绑定资产可绘制，实际进度由另项事件回归验证。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsLoadingPageRHIReportTest,
+    "DivineBeasts.UI.LoadingTravel.RHISavedPage",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsLoadingPageRHIReportTest::RunTest(const FString&)
+{
+    if (GUsingNullRHI) { AddError(TEXT("加载页证据必须使用真实RHI。")); return false; }
+    return TestTrue(TEXT("真实加载页面线性浮点RHI导出"), DivineBeastsUIColorTests::SavePagePreview(
+        TEXT("/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LoadingTravel.WBP_DBA_UI_LoadingTravel_C"),
+        TEXT("LoadingTravel_1920x1080.png"), FIntPoint(1920,1080), *this, false));
+}
 #endif

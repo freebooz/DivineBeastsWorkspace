@@ -1,0 +1,27 @@
+{
+  "source": "Wolf.blend",
+  "outputs": [
+    "Wolf_Textured.blend",
+    "Wolf_Textured.fbx"
+  ],
+  "uv": {
+    "channel": "UV0",
+    "loop_count": 1286,
+    "minimum_face_area": 5.2123858585773064e-05,
+    "total_face_area": 0.3540432708408123,
+    "bounds": [
+      0.0,
+      0.0,
+      1.0,
+      1.0
+    ]
+  },
+  "source_indexed_vertices_faces_weights_world_matrix_unchanged": true,
+  "reimport_fbx_vertex_weights_and_geometric_faces_match": true,
+  "vertex_count": 313,
+  "face_count": 332,
+  "bone_count": 34,
+  "max_bone_rest_matrix_error": 0.0,
+  "fbx_sha256": "e6306511973b4cb97069b0ccc7e6423841f0e0bdb82fd37919944d1803436b23",
+  "ue_reimport": "pending; existing Skeleton, ImportAnimations=false, no new PhysicsAsset, preserve materials"
+}

@@ -1,6 +1,8 @@
 {
   "SchemaVersion": 1,
   "ObservedAt": "2026-10-12",
+  "ReconciledAt": "2026-10-16",
+  "ReconciliationZh": "2026-10-16按真实67份插件描述与19份内容包登记补充水体、音效、主竞技场三条身份；其他项目模块成熟度继续沿用有来源的历史记录。早期部分.worktrees/v证据文件已经不存在，原引用仅留历史追索，相关场景不得继续标记为当前可验证通过。",
   "SourceCommit": "7d44194333cda24f8a14495695e1d478deef5a97",
   "WorkspaceState": "UncommittedImplementation",
   "ScopeZh": "插件身份、模块成熟度和验收入口；SourceCommit为本轮起始基线。实测按Evidence中的工作区与RunId分别登记：编译源码固定为v Editor16快照，Data11/PCG8保留Build5绑定（对应模块源码/DLL未变），不代表持续变化的原工作区当前HEAD。SourcePresent只说明存在源码，不等于生产功能、完整场景或G1-G5通过。",
@@ -1226,6 +1228,60 @@
         "arena",
         "vfx-review"
       ]
+    },
+    {
+      "Id": "DBASFXPack_Core",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/DBASFXPack_Core.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "DBAWorldPack_MainArena",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_MainArena/DBAWorldPack_MainArena.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_MainArena/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "arena",
+        "content-delivery"
+      ]
+    },
+    {
+      "Id": "GamePlatformWater",
+      "Descriptor": "Game/Plugins/GamePlatform/World/GamePlatformWater/GamePlatformWater.uplugin",
+      "Layer": "GamePlatform",
+      "Kind": "Code",
+      "Readme": "Game/Plugins/GamePlatform/World/GamePlatformWater/README.md",
+      "Modules": [
+        {
+          "Name": "GamePlatformWaterRuntime",
+          "HostType": "Runtime",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformWaterClient",
+          "HostType": "ClientOnly",
+          "Maturity": "SourcePresent"
+        },
+        {
+          "Name": "GamePlatformWaterEditor",
+          "HostType": "Editor",
+          "Maturity": "SourcePresent"
+        }
+      ],
+      "Scenarios": [
+        "architecture",
+        "vfx-review",
+        "server-cook"
+      ]
     }
   ],
   "Scenarios": [
@@ -1243,8 +1299,8 @@
         "运行现有架构门禁，核对当前描述、模块与内容登记。",
         "分别计算公共项目与竞技项目的Client/Server/Editor依赖闭包。"
       ],
-      "Expected": "当前64个描述与47代码/17内容登记一致；无层级反向依赖、身份重复或端侧泄漏。",
-      "Status": "Passed",
+      "Expected": "2026-10-12历史64个描述／47代码／17内容；2026-10-16当前应为67个描述／48代码／19内容，且无层级反向依赖、身份重复或端侧泄漏。新基线需独立执行实时验证，不继承历史证据。",
+      "Status": "HistoricalOnly",
       "RunId": "ca0faf13-ff77-471f-b9e2-956a44627e27",
       "Evidence": [
         ".worktrees/v/Saved/Validation/PluginArchitectureOptimization/20261012/ArchitectureScenario/ca0faf13-ff77-471f-b9e2-956a44627e27/result.json",
@@ -1265,7 +1321,7 @@
         "核对Data组16个必需完整身份逐一唯一且Success，包含资源租约、4个Index和2个SourceIndexRegistry用例；重复查找不重新扫描，重复ID/编辑器候选/资源退出仍关闭式失败。"
       ],
       "Expected": "当前源码与完整Editor构建证据相符，Data组16个必需测试身份实际发现且逐一唯一Success；所有权和迟到回调边界保持。",
-      "Status": "Passed",
+      "Status": "HistoricalOnly",
       "RunId": "20261012-0400-4000-8000-000000000011",
       "Evidence": [
         ".worktrees/v/Saved/Validation/FoundationM0/20261012-0400-4000-8000-000000000005/Build/result.json",
@@ -1313,7 +1369,7 @@
         "核对剩余世界计数、模块同时在场历史峰值及模块Reset。"
       ],
       "Expected": "统计为全部存活世界之和；退出世界不能清零其他世界或被旧更新复活。",
-      "Status": "Passed",
+      "Status": "HistoricalOnly",
       "RunId": "20261012-0400-4000-8000-000000000018",
       "Evidence": [
         ".worktrees/v/Saved/Validation/FoundationM0/20261012-0400-4000-8000-000000000016/Build/result.json",

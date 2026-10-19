@@ -13,12 +13,13 @@
 #include "GamePlatformPresentationCatalog.h"
 #include "GamePlatformPresentationTypes.h"
 #include "Types/GamePlatformDataLease.h"
+#include "Types/GamePlatformCombatEvent.h" // 本地主机动态事件桥接的反射参数需要完整类型。
 #include "DivineBeastsPresentationClientSubsystem.generated.h"
 
 class UGamePlatformPresentationClientSubsystem;
+class UGamePlatformCombatComponent;
 class UWorld;struct FGamePlatformWeatherSnapshot;
 class AGamePlatformCombatProjectile;
-struct FGamePlatformCombatEvent;
 struct FGamePlatformCombatProjectileFacts;
 
 DECLARE_MULTICAST_DELEGATE_FourParams(
@@ -360,6 +361,8 @@ private:
     FDelegateHandle DevelopmentMagicSpawnHandle, DevelopmentMagicPackHandle;
     /** 仅订阅本世界确认治疗反馈；目标实例由平台去重事实决定，旅行时成对解绑。 */
     FDelegateHandle DevelopmentHealingFeedbackHandle;
+    /** 主机/单机无客户端Multicast，只订阅本World权威Combat；弱引用不延长实体生命周期。 */
+    TSet<TWeakObjectPtr<UGamePlatformCombatComponent>> DevelopmentAuthorityHealingSources;
     FDivineBeastsPresentationContentPackHandle DevelopmentMagicPack;
     TMap<TWeakObjectPtr<AGamePlatformCombatProjectile>, FDevelopmentMagicFlight> DevelopmentMagicFlights;
     void BindDevelopmentMagicWorld(UWorld* World);
@@ -370,6 +373,8 @@ private:
     void HandleDevelopmentMagicFacts(AGamePlatformCombatProjectile* Actor, const FGamePlatformCombatProjectileFacts& Facts);
     /** 只将实际受疗者的同代确认事件投影为树叶视觉，不读UI选择、不补血、不回放旧世界事件。 */
     void HandleDevelopmentHealingFeedback(const FGamePlatformCombatEvent& Event);
+    /** 单机/主机的权威确认治疗转交既有World反馈总线；源/目标重复通知使用同一EventId去重。 */
+    UFUNCTION() void HandleDevelopmentAuthorityHealingFeedback(const FGamePlatformCombatEvent& Event);
     void HandleDevelopmentMagicPack(const FDivineBeastsPresentationContentPackHandle& Handle,
         EDivineBeastsPresentationContentPackState State, const FString& Error);
 };

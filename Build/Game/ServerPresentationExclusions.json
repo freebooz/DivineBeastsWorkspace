@@ -412,6 +412,13 @@
       "Profiles": "VillageDevelopmentServer",
       "Availability": "Present",
       "Reason": "开发技能的客户端UIProfile；只排除UI子目录，保留开发技能权威定义、AlwaysCook与显式启用开关。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Creatures/Wolf",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Creatures/Wolf",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "CC0狼模型、材质、骨骼和动画蓝图只供客户端表现；权威AI独立位于Village/AI，地图与导航保持服务器可用。"
     }
   ],
   "StageOnlyDirectories": [

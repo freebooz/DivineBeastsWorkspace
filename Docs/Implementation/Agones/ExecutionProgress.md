@@ -1,5 +1,15 @@
 # Agones 集成执行记录（2026-10-13）
 
+## 2026-10-16 MainArena 赛后排空与零人回执安全门禁（续修）
+
+- 真实追查确认：`GamePlatformArenaServerSubsystem`在专服世界订阅`OnResultPending`（可信结果待提交），`GamePlatformArenaServerCoordinator`通过Go控制面提交结果并在提交成功后调用`MarkResultCommitted`；Go端`Backend/internal/app/matchservice/runtime.go`会在结果持久化及真实零玩家条件满足后调用`FinalizeArena`。之前“无人调用结果提交”的判断不正确，未重复建立另一条提交流程。
+- 缺口为旧版本没有将比赛安全迁出与平台`CompleteDrain`（完成排空）及Agones最终`Stopped -> SDK /shutdown`连接起来。本次在`GamePlatformArenaServerSubsystem.cpp/.h`追加仅专用竞技世界的安全回收调度：后端可信结果确认、模式为`Completed`、仍为原`GameServerId`，且没有真实`PlayerController`时停止新准入，并发出零人心跳。此逻辑不影响常驻OpenWorld/Village，不强踢仍在服务器的玩家。
+- 安全加固：平台`GamePlatformServerLifecycleSubsystem`区分心跳启动与真正成功回执，记录最后被Provider明确确认的人数与操作代次；比赛结果确认时冻结全部旧请求的最新发起代次，只有其后发起的`0人`心跳实际成功才允许进入`BeginDrain`。网络失败、旧0人回执、人数反弹、旧世界或错实例均不能绕开。只有平台Drain被控制面确认且所有在途操作结束，才允许`CompleteDrain`触发既有Agones关闭请求。
+- 新增`ServerHeartbeatAckFenceTests.cpp`（平台原生回执代次测试），以及`GamePlatformArenaSafeDrainGateTests.cpp`（竞技原生安全资格测试）。新增`Tests/Architecture/ArenaSafeDrainLifecycle.Tests.ps1`跨模块静态门禁；已真实执行该门禁及既有服务器生命周期共10项Pester测试，10通过0失败，另曾执行服务器/插件模块图11项均通过。`TestServerArchitecture.ps1`及`git diff --check`亦通过。以上不是UE原生测试实跑、联网心跳ACK或Kubernetes集群验收。
+- **2026-10-16真实编译验收**：另一会话UBT先占用构建锁，本次第一次模块构建请求因等待锁而撤销，并核对终止了仅属于本会话的UBT子进程；未影响其它任务。锁释放后，使用固定UE5.8源引擎`D:/UnrealEngine-5.8.0-release`、`Win64 Development Server`、`-NoSharedPCH -NoUBA -MaxParallelActions 8`，分别执行`Build/Game/BuildFoundation.ps1 -Server -OnlyModules GamePlatformArenaServer`（证据`Saved/Validation/FoundationM0/5a62ff39-0284-4d01-b32f-b426fad908d7/Build`）和`-OnlyModules GamePlatformServer`（证据`Saved/Validation/FoundationM0/1f291122-e3ae-4122-8c41-813bc716dd3c/Build`），**两次真实UBT均返回Succeeded、构建结果Passed、退出码0**。后者日志明确含`GamePlatformServerLifecycleSubsystem.cpp`与`ServerHeartbeatAckFenceTests.cpp`编译动作。此结果是两个模块及必要编译依赖的服务器目标定向编译，不是完整Server/Editor/Client目标构建、自动化原生测试实跑或Agones联机验收。
+- **仍未验收**：由于当前Runner未发现可用的Go命令，本轮Go控制面测试未执行；UE Editor原生自动化两项的真正发现/运行、完成比赛后客户端迁回、失效/迟到心跳处理、原版与Agones的真实Pod回收以及客户端/服务器Cook均需要独立证据。代码实现及静态合同的通过不得替代这些门禁。
+
+
 ## 已读取真实工程现状
 
 - GamePlatformServer（平台控制面）已包含 Register / Heartbeat / Ready / Drain / Stop 状态机、串行重试与失效回调。

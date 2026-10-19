@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "sourceKind": "calibration_only_not_gaea",
+  "engine": "UE5.8",
+  "mapPath": "/Game/Development/Terrain/Maps/L_DBA_TerrainMaskReview",
+  "materialPath": "/DBAWorldPack_Village/Terrain/Materials/M_DBA_Terrain_MultiLayer10",
+  "layerInfoRoot": "/DBAWorldPack_Village/Terrain/LayerInfos",
+  "layers": [
+    {
+      "layerId": "Grass",
+      "layerName": "LS_Grass",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_Grass",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Grass.r8"
+    },
+    {
+      "layerId": "ForestSoil",
+      "layerName": "LS_ForestSoil",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_ForestSoil",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_ForestSoil.r8"
+    },
+    {
+      "layerId": "Dirt",
+      "layerName": "LS_Dirt",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_Dirt",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Dirt.r8"
+    },
+    {
+      "layerId": "Rock",
+      "layerName": "LS_Rock",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_Rock",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Rock.r8"
+    },
+    {
+      "layerId": "Scree",
+      "layerName": "LS_Scree",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_Scree",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Scree.r8"
+    },
+    {
+      "layerId": "Sand",
+      "layerName": "LS_Sand",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_Sand",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Sand.r8"
+    },
+    {
+      "layerId": "Gravel",
+      "layerName": "LS_Gravel",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_Gravel",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Gravel.r8"
+    },
+    {
+      "layerId": "RoadDirt",
+      "layerName": "LS_RoadDirt",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_RoadDirt",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_RoadDirt.r8"
+    },
+    {
+      "layerId": "FarmSoil",
+      "layerName": "LS_FarmSoil",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_FarmSoil",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_FarmSoil.r8"
+    },
+    {
+      "layerId": "ShoreMud",
+      "layerName": "LS_ShoreMud",
+      "assetPath": "/DBAWorldPack_Village/Terrain/LayerInfos/LI_DBA_Terrain_ShoreMud",
+      "rawSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_ShoreMud.r8"
+    }
+  ],
+  "heightSource": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Height_1009_LE.r16",
+  "gridSamplesX": 1009,
+  "gridSamplesY": 1009,
+  "sectionSizeQuads": 63,
+  "numSubsections": 2,
+  "componentsX": 8,
+  "componentsY": 8,
+  "axisConvention": "pixel_row_down_world_y_positive_up_flip_import_y",
+  "worldSizeCm": [
+    100800.0,
+    100800.0
+  ],
+  "minHeightCm": -10000.0,
+  "maxHeightCm": 20000.0,
+  "files": [
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Height_1009_LE.r16",
+      "sha256": "84b6f0e86f3ae08252068f259b5d08456259ca2b848bf2ec25901c2bdd807f88",
+      "bytes": 2036162
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Grass.r8",
+      "sha256": "89e33eeb9d63002b6f9f5acefd15474dcbe2d0eebd93b7f2e4a0a335271d5d33",
+      "bytes": 1018081
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_ForestSoil.r8",
+      "sha256": "c3f993b9935d1aba05560999e902e667e666c1e0459d1850ec01649d0236617a",
+      "bytes": 1018081
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Dirt.r8",
+      "sha256": "ef4d266076ddc545de2d465f7497819203a4d6a81cae7ac6b62bbe0bfe30d30a",
+      "bytes": 1018081
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Rock.r8",
+      "sha256": "537a7457aae4918f6e4cee4f2da5d12ac17710839ca002a57bcbdbcc0a82a7c9",
+      "bytes": 1018081
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Scree.r8",
+      "sha256": "bf4ef63ce8a6c93a8408677da6a870292aeab63c548a1863867fb475187c0244",
+      "bytes": 1018081
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Sand.r8",
+      "sha256": "62ecf1ab2e7bcb9475e43629a6c1a3aedaf857f3d6cb34d1b858841a9e82d35a",
+      "bytes": 1018081
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_Gravel.r8",
+      "sha256": "3a951f67fbdcb84d65ea4aa081efa763dd87bd946e2efa53ba6659d600682949",
+      "bytes": 1018081
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_RoadDirt.r8",
+      "sha256": "9fa2e6a8bda6379944e1bad07814d047133ecd3ff182584143cf69c184f5dce5",
+      "bytes": 1018081
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_FarmSoil.r8",
+      "sha256": "460c0308b2696688e1a643a5a00334ecac98420b569db746f3b67c7a519949d8",
+      "bytes": 1018081
+    },
+    {
+      "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/CalibrationDerivedV2/Raw/Weights/LS_ShoreMud.r8",
+      "sha256": "75592902cb51a24a233214a673868e6c24e35b73526c388251f64e7d3bdceaf1",
+      "bytes": 1018081
+    }
+  ],
+  "noteZh": "V2校准权重保留玩法排除独立语义；未提供道路源时RoadDirt必须为零，仍非真实Gaea 2.3出口",
+  "projectionVersion": 2,
+  "projectionManifestSHA256": "8037db5278241e124fea0239b256307022c38d433f6c0e43ccbd13a62823eec1"
+}

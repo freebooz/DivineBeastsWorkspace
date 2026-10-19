@@ -2,6 +2,15 @@
 
 所属：DivineBeastsWorkspace/Tools/Unreal/Terrain。唯一工程：Game/DivineBeastsArena.uproject（UE5.8），项目实际内容归DBAWorldPack_Village；平台底层机制使用GamePlatformSurfaceEditor与GamePlatformPCGEditor。
 
+## 2026-10-16 十层PBR真实原生实施增量
+
+- 十种扫描材质正式40份UE Texture2D及10份新Height已由UE5.8导入；`M_DBA_Terrain_Production10`与审核MI保存并通过独立编辑器母材质重载（262表达式）。四份Forest/Rock/Shore/Road权重过滤PCG Graph、1009×1009独立Landscape审核图、四类绑定由真实制作流水线保存；正式Village共享地图未改。
+- 原`Rollback_TerrainCalibration_SourceAndUEAssets.zip`丢失后已精确重新创建：Git历史30张技术PNG、30个当前干净UE纹理、1份旧清单共61项，保存在`Game/Saved/Validation/TerrainPBR_20261012`（忽略目录，需独立备份）。
+- 新增`CalibrationDerivedV2/Raw`原生R16/R8，`ExportTerrainLandscapeRaw.py --projection-version 2`保证道路与通用排除分离，旧V1文件不改；未提供真实Gaea 2.3出口，仍属技术校准。
+- 更新`ReimportTerrainProductionPBR.py`：独立冷重载以UE AssetRegistry的`Dimensions` 2048x2048及真实导入源检查，不再误用只代表运行时平台Mip的`blueprint_get_size_x/y`；完整独立流程验证因其他会话Editor占用需后续复跑。
+- `AuthorTerrainProductionQualityProfiles.py`准备High/Medium/Low三档原生MI及可选高度混合静态开关，**当前仅源码生成，尚未在引擎创建三档资产**；不得据此宣称正式性能达标。
+- 本轮现状、可复现证据及缺失门禁见`Docs/Implementation/TerrainProductionPBRExecution_20261016.md`，以下2026-10-12历史说明保留为当时状态，不可覆盖新证据。
+
 ## 2026-10-12 十种正式扫描PBR（实际进度）
 
 - `AcquireTerrainProductionPBR.py`（官方CC0纹理获取、哈希检验、61项回退备份及同名源图受控替换）；10×4张2K源PNG已替换，历史Gaea V1地貌清单不改写；另有`TerrainProductionPBRManifest_v1.json`（正式扫描图来源合同）。

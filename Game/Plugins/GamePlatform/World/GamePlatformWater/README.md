@@ -1,5 +1,8 @@
 # GamePlatformWater（平台通用水体插件）
 
+> 2026-10-16复核：本插件正式纳入平台World（世界）分类的三层基线。水体独立审核地图`/Game/Development/Water/Maps/L_GP_WaterReview`现有真实`.umap`文件；静态严格资源检查通过，但还未取得本轮UE冷加载、Shader、效果截图、GPU及多人运行验收，下方2026-10-14描述是历史制作阶段记录。
+
+
 插件职责：提供双端静态水域几何、服务器深度/流速判定和低频水域Presence（水域状态）复制；客户端根据Presence向已有GamePlatformPresentation（中立表现系统）提交水纹、飞溅语义并支持画质预算。GamePlatformWaterEditor（编辑器模块）只审查本地图的区域ID、规则和范围，不自动修改项目关卡。
 
 依赖方向：GamePlatformWaterRuntime（双端权威数据）不依赖Niagara、Water插件GPU模拟、UI、Fluid Flux或第三层项目；GamePlatformWaterClient（客户端表现）对接UE5.8原生Water（湖泊与河流）和GamePlatformPresentation（中立表现入口），具体Niagara系统和播放归GamePlatformVFX（平台VFX）。项目层DBAWorldsRuntime（项目世界运行）只依赖Runtime，不可引用Client。服务器不Cook纯水面材质和特效。

@@ -1,0 +1,28 @@
+{
+  "original_source": "../Wolf.blend",
+  "authoring": "SSLM derived from Quaternius CC0 rig",
+  "root_motion": false,
+  "outputs": [
+    {
+      "file": "Wolf_Bite.fbx",
+      "sha256": "55125fd19f915204fe257524b1e86805b8ff4ad6c6c92bcfea2af2c7deb2e991",
+      "frames": [
+        1,
+        25
+      ],
+      "fps": 30,
+      "duration_seconds": 0.8
+    },
+    {
+      "file": "Wolf_Death.fbx",
+      "sha256": "31fb2013af914ec6c92fc2b37a93c2700d19bc702a6d535edf35148199d54946",
+      "frames": [
+        1,
+        49
+      ],
+      "fps": 30,
+      "duration_seconds": 1.6
+    }
+  ],
+  "note_zh": "咬击0.8秒，死亡1.6秒并保持末帧；真实UE导入、骨架兼容与客户端播放尚须Monolith核验。"
+}

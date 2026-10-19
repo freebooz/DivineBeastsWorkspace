@@ -254,7 +254,12 @@ void UDivineBeastsCharacterPreviewSubsystem::DeactivatePreviewScene()
         Controller->GetViewTarget() == PreviewStage.Get() &&
         PreviousViewTarget.IsValid())
     {
-        Controller->SetViewTarget(PreviousViewTarget.Get());
+        // 退出角色工作室时锁住即将卸载关卡的最后一帧，平滑恢复既有前端机位。
+        // 不改变角色身份、输入、Session或服务器玩法，旧ViewTarget必须有效才恢复。
+        Controller->SetViewTargetWithBlend(
+            PreviousViewTarget.Get(),
+            FMath::Clamp(PreviewStage->CameraBlendSeconds, 0.0f, 2.0f),
+            VTBlend_Cubic, 2.0f, true);
     }
     PreviousViewTarget.Reset();
 
@@ -427,7 +432,15 @@ void UDivineBeastsCharacterPreviewSubsystem::BindPreviewCamera()
             Observer->SetActorHiddenInGame(true);
         }
     }
-    Controller->SetViewTarget(PreviewStage.Get());
+    // 正式角色选择/创建流程沿用原有舞台与PlayerCameraManager，
+    // 仅在首次切入时平滑过渡。重复的LevelShown回调不重新启动镜头混合。
+    if (Controller->GetViewTarget() != PreviewStage.Get())
+    {
+        Controller->SetViewTargetWithBlend(
+            PreviewStage.Get(),
+            FMath::Clamp(PreviewStage->CameraBlendSeconds, 0.0f, 2.0f),
+            VTBlend_Cubic, 2.0f, true);
+    }
 }
 
 void UDivineBeastsCharacterPreviewSubsystem::CancelPendingLoads()

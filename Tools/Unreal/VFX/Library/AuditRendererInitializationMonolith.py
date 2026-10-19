@@ -31,7 +31,15 @@ def main():
         for warning in diagnostic['warnings']:
             name=warning['emitter'];attribute='SpriteSize' if 'SpriteSize' in warning['message'] else 'RibbonWidth'
             modules=unwrap(p.niagara('get_ordered_modules',asset_path=path,emitter=name))
-            record=dict(system=path,emitter=name,attribute=attribute,modules=modules,proof=[])
+            bindings=unwrap(p.niagara('get_renderer_bindings',asset_path=path,emitter=name,renderer_index=0))
+            binding=next(v['bound_to'] for v in bindings if v['name']==('SpriteSizeBinding' if attribute=='SpriteSize' else 'RibbonWidthBinding'))
+            record=dict(system=path,emitter=name,attribute=attribute,boundAttribute=binding.removeprefix('Particles.'),modules=modules,proof=[])
+            # 显式零生成率是作者停用该层，不得为验证凭空增加雾粒子。
+            rate_nodes=[m for m in modules if m['enabled'] and m['usage']=='emitter_update' and m['function_name']=='SpawnRate']
+            burst_nodes=[m for m in modules if m['enabled'] and m['usage']=='emitter_update' and 'SpawnBurst' in m['function_name']]
+            if rate_nodes and not burst_nodes:
+                rates=[p.niagara('get_module_input_value',asset_path=path,emitter=name,module_node=m['node_guid'],input='SpawnRate') for m in rate_nodes]
+                record['explicitNoSpawn']=all(v.get('value') in ('0','0.0','0.000000') and not v.get('is_linked') and not v.get('is_dynamic_input') for v in rates)
             for module in modules:
                 if module['usage']!='particle_spawn' or not module['enabled']:continue
                 script=module['script_path'].split('.')[0]

@@ -24,7 +24,7 @@ ADivineBeastsVillageWolf::ADivineBeastsVillageWolf()
     GetCharacterMovement()->MaxWalkSpeed = 375.0f;
     GetCharacterMovement()->bOrientRotationToMovement = true;
     bUseControllerRotationYaw = false;
-    // 服务器不烘焙/加载Fab纯美术；初始Mesh为空由项目客户端资源服务补齐。
+    // 服务器不烘焙/加载客户端纯美术；初始Mesh为空由项目客户端资源服务补齐。
     GetGamePlatformAbilitySystemComponent()->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 }
 
@@ -62,6 +62,7 @@ bool ADivineBeastsVillageWolf::AuthorityInitializeWolf(float MaxHealth)
         !FMath::IsNearlyEqual(CombatComponent->GetCombatHealth(), MaxHealth)) return false;
     bWolfDead = false;
     bWolfInitialized = true;
+    OnRep_WolfLife();
     ForceNetUpdate();
     return true;
 }
@@ -92,6 +93,7 @@ void ADivineBeastsVillageWolf::HandleAuthorityDeath(const FGamePlatformCombatEve
         !IsValid(CombatComponent) || !CombatComponent->IsCombatDead() ||
         CombatComponent->GetCombatAvatarGeneration() != Event.TargetAvatarGeneration) return;
     bWolfDead = true;
+    // 基类已在权威死亡广播前撤销Cast窗口；本层只发布物种生命快照，不重复结算或取消。
     OnRep_WolfDead();
     ForceNetUpdate();
 }
@@ -103,6 +105,12 @@ void ADivineBeastsVillageWolf::OnRep_WolfDead()
         GetCharacterMovement()->StopMovementImmediately();
         GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }
+    OnRep_WolfLife();
+}
+
+void ADivineBeastsVillageWolf::OnRep_WolfLife()
+{
+    if (!bClosing) WolfLifeChanged.Broadcast(this);
 }
 
 void ADivineBeastsVillageWolf::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -117,5 +125,6 @@ void ADivineBeastsVillageWolf::EndPlay(const EEndPlayReason::Type Reason)
     bClosing = true;
     OnAuthoritativeDeath().Remove(DeathDelegate);
     DeathDelegate.Reset();
+    WolfLifeChanged.Clear();
     Super::EndPlay(Reason);
 }

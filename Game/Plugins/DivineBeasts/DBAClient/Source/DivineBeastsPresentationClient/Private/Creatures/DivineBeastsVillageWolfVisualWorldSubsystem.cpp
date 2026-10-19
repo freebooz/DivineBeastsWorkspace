@@ -1,4 +1,4 @@
-// SSLM狼群外观由客户端从已授权内容包装配；权威AI/Combat与Fab第三方版权资产互不反向依赖。
+// SSLM狼群外观由客户端从已授权内容包装配；权威AI/Combat不依赖第三方模型的作者或资源格式。
 #include "Creatures/DivineBeastsVillageWolfVisualWorldSubsystem.h"
 
 #include "Characters/DivineBeastsVillageWolf.h"
@@ -48,6 +48,7 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ObserveActor(AActor* Spawned)
 
 void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals()
 {
+<<<<<<< HEAD
     // 未正式导入Fab或未审核时不替换客户端Mesh，不根据网络存在生成假狼外观。
     if (bClosing || bLoading || bReady || bVisualLoadAttempted || !GConfig) return;
     bool bVerified=false;
@@ -56,6 +57,20 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals()
     if (!bVerified)
     {
         // 许可未批准属于正常开发阶段，跳过外观；不产生假的狼资产租约。
+=======
+    // 未正式导入并核验真实模型时不替换客户端Mesh，不根据网络存在生成假狼外观。
+    if (bClosing || bLoading || !GConfig) return;
+    bool bVerified=false;
+    const TCHAR* Section=TEXT("DivineBeasts.VillageWolves");
+    GConfig->GetBool(Section,TEXT("bClientVisualsVerified"),bVerified,GGameIni);
+    if (!bVerified) return;
+    GConfig->GetFloat(Section,TEXT("WolfMeshScale"),WolfMeshScale,GGameIni);
+    GConfig->GetFloat(Section,TEXT("WolfMeshYawDegrees"),WolfMeshYawDegrees,GGameIni);
+    if(!FMath::IsFinite(WolfMeshScale)||WolfMeshScale<0.01f||WolfMeshScale>10.0f||
+        !FMath::IsFinite(WolfMeshYawDegrees)||FMath::Abs(WolfMeshYawDegrees)>360.0f)
+    {
+        UE_LOG(LogTemp,Warning,TEXT("VillageWolfVisualProfileRejected: 模型比例或朝向无效。"));
+>>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
         return;
     }
     FString MeshName, AnimName;
@@ -102,6 +117,7 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals()
                 IsValid(Asset->GetSkeleton()) && AnimClass->GetTargetSkeleton()==Asset->GetSkeleton();
             if (!Self->bReady)
             {
+<<<<<<< HEAD
                 // 已加载但与真实狼骨架不匹配的美术不得持续占用世界资源租约和显存。
                 // 失效请求只拒绝本世界这一份租约，不卸载其它系统合法持有的共享资源。
                 const FGamePlatformDataLease RejectedLease = Self->VisualLease;
@@ -111,6 +127,9 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::BeginLoadVisuals()
                         Resources && RejectedLease.IsValid())
                         Resources->ReleaseResources(RejectedLease);
                 UE_LOG(LogTemp, Warning, TEXT("VillageWolfVisualRejected: 狼骨骼或AnimBlueprint与已审核资源不匹配，已释放本次资源租约。"));
+=======
+                UE_LOG(LogTemp,Warning,TEXT("VillageWolfVisualRejected: 狼的骨骼或动画蓝图资源未通过真实导入/校验。"));
+>>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
                 return;
             }
             const auto Wolves=Self->ObservedWolves.Array();
@@ -148,6 +167,7 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ApplyVisual(ADivineBeastsVill
     if (bClosing || Wolf.IsActorBeingDestroyed()) return;
     Mesh->SetAnimInstanceClass(Animation);
     if (bClosing || Wolf.IsActorBeingDestroyed()) return;
+<<<<<<< HEAD
     // 狼与人体模型轴向、比例可能不同；只有美术审核后显式填写的项目参数才覆盖默认变换。
     // 这些值只作用于客户端视觉骨骼，不能改变服务器胶囊、战斗判定或物理。
     float HeightOffsetCm = 0.0f;
@@ -171,6 +191,17 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ApplyVisual(ADivineBeastsVill
     }
     Mesh->SetRelativeLocation(FVector(0.0f, 0.0f,
         -Wolf.GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + HeightOffsetCm));
+=======
+    Mesh->SetRelativeScale3D(FVector(WolfMeshScale));
+    const FRotator MeshRotation(0.0f, WolfMeshYawDegrees, 0.0f);
+    const FVector GroundedMeshOffset(0.0f, 0.0f, -Wolf.GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+    Mesh->SetRelativeRotation(MeshRotation);
+    Mesh->SetRelativeLocation(GroundedMeshOffset);
+    // Character网络平滑会用缓存的初始Mesh偏移重置模拟代理的位置；
+    // 只设置RelativeLocation会使远端狼在下一次网络更新后回到胶囊中心并悬空。
+    Wolf.CacheInitialMeshOffset(GroundedMeshOffset, MeshRotation);
+    UE_LOG(LogTemp,Log,TEXT("VillageWolfVisualApplied: 已按世界租约装配真实狼模型与动画，Scale=%.3f"),WolfMeshScale);
+>>>>>>> bbd909b855f26b2bca7627f1188e07469c412a2b
 }
 
 void UDivineBeastsVillageWolfVisualWorldSubsystem::HandleWolfEndPlay(AActor* Ended,EEndPlayReason::Type)

@@ -38,6 +38,13 @@ void UDivineBeastsDemoWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
     SourceWorld = &InWorld;
+    // CameraReview拥有独立的真实UMG按钮控制器，不应再叠加通用PluginDemoOverlay。
+    // 只拦截受控开发地图，Hub和正式情景演示逻辑完全不变。
+    const FString CurrentWorldPackage = UWorld::RemovePIEPrefix(InWorld.GetOutermost()->GetName());
+    if (CurrentWorldPackage == FDivineBeastsPluginDemoMode::GetCameraReviewMapPackage())
+    {
+        return;
+    }
     // 开发模式也可能预览正式资产：只允许在专用总览或显式已登记关卡中加载控制台。
     if (UGameInstance* Instance = InWorld.GetGameInstance())
     {

@@ -64,6 +64,10 @@ public:
         return AvatarGeneration;
     }
 
+    /** 游戏线程只读观察通知：死亡/化身复制或权威重置提交后发布，消费者自行读取当前公开状态。
+     * 不提供写权限、不驱动伤害；订阅归消费者作用域，EndPlay前必须解绑，不依赖Tick检查旧化身。 */
+    FSimpleMulticastDelegate& OnCombatObservationChanged() { return CombatObservationChanged; }
+
     /** 本地受控Pawn提交选中目标意图；true仅表示提交，服务器独立校验，不接受伤害/命中自报。
      * 与本Pawn的GAS请求共用Actor可靠通道；非战斗目标按清空处理，无Tick或自动寻敌。 */
     bool RequestProjectileTarget(AActor* Target);
@@ -161,7 +165,7 @@ private:
     UPROPERTY(ReplicatedUsing=OnRep_Dead)
     bool bDead = false;
 
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing=OnRep_AvatarGeneration)
     int32 AvatarGeneration = 1;
 
     UPROPERTY(Replicated)
@@ -201,6 +205,10 @@ private:
 
     UFUNCTION()
     void OnRep_Dead();
+    UFUNCTION()
+    void OnRep_AvatarGeneration();
+    /** 只读表现观察者不参与服务器结算；独立于可丢包CombatFeedback，不以远程特效事实推测死亡。 */
+    FSimpleMulticastDelegate CombatObservationChanged;
 
     void HandleControlTagChanged(const FGameplayTag Tag, int32 NewCount);
 

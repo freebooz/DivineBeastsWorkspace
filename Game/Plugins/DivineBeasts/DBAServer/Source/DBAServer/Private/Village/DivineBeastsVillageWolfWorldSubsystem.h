@@ -10,6 +10,8 @@
 class ADivineBeastsVillageWolf;
 class UGamePlatformExperienceComponent;
 class UGamePlatformServerLifecycleSubsystem;
+class UNavigationSystemV1;
+class ANavigationData;
 struct FGamePlatformCombatEvent;
 struct FGamePlatformServerLifecycleSnapshot;
 
@@ -46,6 +48,9 @@ private:
     bool CaptureApprovedScope(FApprovedScope& OutScope) const;
     /** 订阅既有体验事实；避免每帧扫描世界/玩家。 */
     void ObserveExperience();
+    /** 导航可能晚于服务器Ready完成；只订阅本世界通知，不轮询或在无落点时强刷。 */
+    void ObserveNavigation();
+    UFUNCTION() void HandleNavigationFinished(ANavigationData* NavigationData);
     /** 服务端Ready/Experience Active推动首次有限散布。 */
     void TryFillWolves();
     /** 多圈候选+NavMesh+真实地形+碰撞+22米保护+原生锚点严格>30米，缺空间不强制生成。 */
@@ -68,6 +73,7 @@ private:
     TMap<TWeakObjectPtr<ADivineBeastsVillageWolf>, FVector> WolfSpawnAnchors;
     TWeakObjectPtr<UGamePlatformExperienceComponent> ObservedExperience;
     TWeakObjectPtr<UGamePlatformServerLifecycleSubsystem> ObservedLifecycle;
+    TWeakObjectPtr<UNavigationSystemV1> ObservedNavigation;
     FGamePlatformGameplayRegistration ExperienceSubscription;
     FDelegateHandle LifecycleSubscription;
     FTimerHandle ReplenishTimer;
