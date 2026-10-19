@@ -7,6 +7,35 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "UObject/UObjectGlobals.h"
+#include "EngineUtils.h" // TActorIterator：仅对新手村已加载的真实Actor执行事件驱动发现。
+
+int32 UDivineBeastsWaterAudioAnchorComponent::BindTaggedRealWaterSources(UWorld* World)
+{
+    check(IsInGameThread());
+    if (!World || !World->IsGameWorld() || World->bIsTearingDown ||
+        World->GetNetMode() == NM_DedicatedServer) return 0;
+    int32 Count = 0;
+    for (TActorIterator<AActor> ActorIt(World); ActorIt; ++ActorIt)
+    {
+        AActor* Source = *ActorIt;
+        if (!IsValid(Source) || !Source->ActorHasTag(TEXT("SSLM.WaterSource"))) continue;
+        TArray<USceneComponent*> Points;
+        Source->GetComponents(Points);
+        for (USceneComponent* Point : Points)
+        {
+            if (!IsValid(Point) || !Point->ComponentHasTag(TEXT("SSLM.WaterAudioPoint")))
+                continue;
+            const bool bA = Point->ComponentHasTag(TEXT("SSLM.WaterStreamA"));
+            const bool bB = Point->ComponentHasTag(TEXT("SSLM.WaterStreamB"));
+            // 每个真实标记点必须明确选择且只能选择一条实际Looping音源。
+            if (bA == bB) continue;
+            const FName ClipId = bA ? FName(TEXT("Ambience.WaterStreamA"))
+                                    : FName(TEXT("Ambience.WaterStreamB"));
+            if (EnsureRuntimeAnchor(Source, Point, ClipId)) ++Count;
+        }
+    }
+    return Count;
+}
 
 UDivineBeastsWaterAudioAnchorComponent*
 UDivineBeastsWaterAudioAnchorComponent::EnsureRuntimeAnchor(
