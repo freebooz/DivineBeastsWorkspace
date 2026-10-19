@@ -18,10 +18,10 @@ REQUIRE_ANIMS = os.environ.get("SSLM_REQUIRE_FORMAL_FOOTSTEP_NOTIFY", "0") == "1
 
 
 def audit():
-    anchor_class = getattr(unreal, "DivineBeastsWaterAudioAnchorComponent", None)
+    # Shared地图只保存原生SceneComponent作为服务端安全的水声标记点，客户端组件必须运行时实例化。
     notify_class = getattr(unreal, "DivineBeastsAudioFootstepNotify", None)
-    if anchor_class is None or notify_class is None:
-        raise RuntimeError("客户端C++模块未编译/加载，缺新水声组件或脚步Notify反射类")
+    if notify_class is None:
+        raise RuntimeError("客户端C++模块未编译/加载，缺正式脚步Notify反射类")
 
     world = unreal.EditorLoadingAndSavingUtils.load_map(VILLAGE_MAP)
     if not world:
@@ -31,17 +31,24 @@ def audit():
     for actor in actors:
         if not actor:
             continue
-        for component in actor.get_components_by_class(anchor_class):
+        for component in actor.get_components_by_class(unreal.SceneComponent):
+            component_tags = {str(t) for t in component.get_editor_property("component_tags")}
+            if "SSLM.WaterAudioPoint" not in component_tags:
+                continue
             if not actor.actor_has_tag(unreal.Name("SSLM.WaterSource")):
-                raise RuntimeError("水声组件Owner不是已标记真实水体Actor：" + actor.get_path_name())
-            clip = str(component.get_editor_property("water_loop_clip_id"))
+                raise RuntimeError("声音标记点未绑定经确认的真实水体Actor：" + actor.get_path_name())
+            has_a = "SSLM.WaterStreamA" in component_tags
+            has_b = "SSLM.WaterStreamB" in component_tags
+            if has_a == has_b:
+                raise RuntimeError("一个真实水声标记点必须且只允许指定一条循环水声：" + component.get_path_name())
+            clip = "Ambience.WaterStreamA" if has_a else "Ambience.WaterStreamB"
             if clip not in ALLOWED_LOOPS:
-                raise RuntimeError("水声组件Clip不是两条已验证循环音之一：" + clip)
+                raise RuntimeError("真实场景标记点配置非法循环音：" + clip)
             point = component.get_world_location()
             if not all(abs(float(v)) < 1.0e12 for v in (point.x, point.y, point.z)):
-                raise RuntimeError("水声组件原生坐标无效：" + actor.get_path_name())
+                raise RuntimeError("水声标记点原生坐标无效：" + actor.get_path_name())
             anchors.append((actor.get_path_name(), component.get_path_name(), clip))
-            # 此处打印的是UE原生Actor/Component实际位置，不向地图写入任何猜测坐标。
+            # 记录真实SceneComponent坐标，ClientOnly音频组件不会进入服务端共享地图。
             print("SSLM_VILLAGE_AUDIO_REAL_ANCHOR", actor.get_path_name(),
                   component.get_path_name(), clip, point)
     print("SSLM_VILLAGE_AUDIO_LOADED_ACTORS", len(actors))
@@ -49,7 +56,7 @@ def audit():
     if not anchors:
         print("SSLM_VILLAGE_AUDIO_PENDING_NO_CONFIRMED_SCENE_SOURCE")
         if REQUIRE_SCENE:
-            raise RuntimeError("正式新手村当前加载的场景尚无可验证的水声组件")
+            raise RuntimeError("正式新手村当前加载的场景尚无可验证的原生水声标记点")
 
     library = unreal.AnimationLibrary
     ready = 0
