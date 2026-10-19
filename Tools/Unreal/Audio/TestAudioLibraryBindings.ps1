@@ -55,6 +55,9 @@ if(!$waterAnchorHeader.Contains('public USceneComponent') -or
    !$waterAnchor.Contains('ActorHasTag') -or !$waterAnchor.Contains('GetComponentLocation()') -or
    !$waterAnchor.Contains('StartAudioLibraryLoop') -or !$waterAnchor.Contains('StopAudioLibraryLoop') -or
    !$waterAnchor.Contains('EndPlay') -or !$waterAnchor.Contains('OnContentPackChanged') -or
+   !$waterAnchor.Contains('BindTaggedRealWaterSources') -or !$waterAnchor.Contains('EnsureRuntimeAnchor') -or
+   !$waterAnchor.Contains('SSLM.WaterAudioPoint') -or !$waterAnchor.Contains('AddInstanceComponent') -or
+   !$runtime.Contains('BindTaggedRealWaterSources') -or
    !$waterAnchor.Contains('NM_DedicatedServer')){
   throw '新手村水源Actor锚点、异步接线或生命周期保护缺失'
 }
