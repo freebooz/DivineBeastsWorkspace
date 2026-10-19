@@ -8,6 +8,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Audio/DivineBeastsWaterAudioAnchorComponent.h"
 
 namespace
 {
@@ -60,6 +61,11 @@ void UDivineBeastsPresentationClientSubsystem::EnsureAudioLibraryForWorld(UWorld
             UE_LOG(LogTemp, Verbose, TEXT("SSLM可选音频分类 %s 未就绪：%s"),
                 *Groups[Index].ToString(), *Error);
     }
+    // 只有正式Village且有真实Actor+SceneComponent标签时创建客户端水声组件。
+    // 场景只保存服务器兼容的通用标记点，不序列化ClientOnly音频类；该扫描不在Tick执行。
+    if (IsVillageSoundWorld(World) && !bClosing && AudioLibraryWorld.Get() == World &&
+        !World->bIsTearingDown)
+        UDivineBeastsWaterAudioAnchorComponent::BindTaggedRealWaterSources(World);
 }
 
 FDivineBeastsPresentationContentPackHandle
