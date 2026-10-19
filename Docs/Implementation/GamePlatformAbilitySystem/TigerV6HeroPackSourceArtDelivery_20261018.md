@@ -35,3 +35,7 @@
 恢复编辑器与Monolith服务后，应严格按动作队列逐一用 `ui.import_texture_from_bytes` 创建8个真Texture2D，随后经 `editor.run_python` 对UI二维压缩、UI组、sRGB、NoMips、NeverStream、双线性和Clamp进行设置及引擎回读、保存/冷重载；确保只有客户端/Editor加载，不进入Dedicated Server最小Cook。用户对生成的**八张真实原画**进行最终人审通过、且服务器V6授权获批后，才允许在唯一Tiger UI Profile内按稳定AbilityId增补/更新映射。已有 `UDivineBeastsAbilityBarViewModel`（客户端技能栏视图模型）应继续复用异步资源租约及OwnerOnly授权，不新建平行服务。
 
 目前状态：**源图片已入寅虎英雄包；引擎原生纹理、正式Profile绑定、新手村/战斗HUD与Cook验收尚未完成。**
+
+## 2026-10-19 追加：UE5.8原生导入完成
+
+此前2026-10-18“Editor未启动／Monolith无Provider”的描述是当日阻断历史记录。2026-10-19 已在正确工程启动UE5.8编辑器，直接通过本机Monolith MCP代理调用 `ui.import_texture_from_bytes` 完成八张正式48像素Texture2D导入，并用 `editor.run_python` 设置且保存原生纹理。独立UE5.8命令行进程对八份新资产均通过冷重载。具体原生资产路径、SHA与验收标记详见 `TigerV6UE58NativeIconImportReport_20261019.md`。当前艺术终审、唯一Tiger UI Profile生产绑定、GAS授权及Village/HUD仍未完成。

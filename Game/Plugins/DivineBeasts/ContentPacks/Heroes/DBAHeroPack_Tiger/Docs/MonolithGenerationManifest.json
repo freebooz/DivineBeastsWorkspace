@@ -406,5 +406,143 @@
     "NativeGASStatus": "See Docs/Implementation/SSLMVillagePlaceholderSkills_20261013.md final execution evidence",
     "ManualVisualAccepted": false,
     "IndependentReadbackEvidence": "Game/Saved/Validation/VillageSkillPlaceholder20261013/ColdReadback_20261015T121234783736Z.json"
+  },
+  "TigerV6SelectedSkillIconImport": {
+    "Revision": "V6_20261019",
+    "Status": "NativeTexturesSavedAndColdReloadVerified_ArtReviewPending",
+    "CreationTool": "Monolith MCP / ui.import_texture_from_bytes",
+    "PropertySaveTool": "Monolith MCP / editor.run_python",
+    "EngineVersion": "UE5.8.0",
+    "MonolithVersion": "0.23.0",
+    "HeroId": "Hero.Zodiac.Tiger",
+    "Selection": [
+      "1A",
+      "2B",
+      "3C",
+      "4A",
+      "5A",
+      "6B",
+      "7B",
+      "8B"
+    ],
+    "NativeTextureCount": 8,
+    "TextureSourcePixels": [
+      48,
+      48
+    ],
+    "Settings": "TC_EDITOR_ICON, TEXTUREGROUP_UI, sRGB, NoMipmaps, NeverStream, Bilinear, ClampX/Y",
+    "FreshProcessValidation": "SSLM_TIGER_V6_NATIVE_EIGHT_TEXTURES_COLD_VERIFY_PASS",
+    "FreshProcessLog": "Game/Saved/Logs/TigerV6NativeColdVerify_20261019.log",
+    "NativeAssets": [
+      {
+        "Order": 1,
+        "DisplayNameV6": "白虎爪",
+        "StableAbilityId": "dba.ability.tiger_eight_claw_strike@1",
+        "InputSlotId": "Primary",
+        "ObjectPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S01_WhiteTigerClaw_V6.T_DBA_Tiger_S01_WhiteTigerClaw_V6",
+        "PngSha256": "e3817fc2665ca0a25543f58378efc37b714d82fa5df32ae03e66aafad60aadae",
+        "NativeAssetSha256": "e8d0d98b0cf7c2c0518728348f5367ae93f2860bb9c93ecda8f35929a5b64b4a",
+        "NativeAssetBytes": 11216,
+        "EditorImportSaved": true,
+        "PropertiesReadBack": true,
+        "ColdReloadVerified": true
+      },
+      {
+        "Order": 2,
+        "DisplayNameV6": "裂爪",
+        "StableAbilityId": "dba.ability.tiger_eight_golden_rake@1",
+        "InputSlotId": "Slot1",
+        "ObjectPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S02_ArmorRend_V6.T_DBA_Tiger_S02_ArmorRend_V6",
+        "PngSha256": "2e615194fb3326440e642c71e72cdbc408e6536a329801a2c3ab29ca9a907c9f",
+        "NativeAssetSha256": "dec340010287a76a1fa9892ffb93f22ff3b3df23f7dd826fb4d417e0a9ce359c",
+        "NativeAssetBytes": 12787,
+        "EditorImportSaved": true,
+        "PropertiesReadBack": true,
+        "ColdReloadVerified": true
+      },
+      {
+        "Order": 3,
+        "DisplayNameV6": "双爪袭",
+        "StableAbilityId": "dba.ability.tiger_eight_tiger_pounce@1",
+        "InputSlotId": "Slot2",
+        "ObjectPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S03_DualClawAssault_V6.T_DBA_Tiger_S03_DualClawAssault_V6",
+        "PngSha256": "331675770575e431b3ea4ff2636e2409fde5e1cec1cadbd3419a4b62d49ed010",
+        "NativeAssetSha256": "9891d0d0b986cc68b8ba7a0ba395eecd4733053408a43b80f30425c5da271b19",
+        "NativeAssetBytes": 11742,
+        "EditorImportSaved": true,
+        "PropertiesReadBack": true,
+        "ColdReloadVerified": true
+      },
+      {
+        "Order": 4,
+        "DisplayNameV6": "啸岭扑杀",
+        "StableAbilityId": "dba.ability.tiger_eight_tiger_roar_storm@1",
+        "InputSlotId": "Slot4",
+        "ObjectPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S04_RidgeHuntUltimate_V6.T_DBA_Tiger_S04_RidgeHuntUltimate_V6",
+        "PngSha256": "89d4df19d67bbfa7152681c10e315c64b57ce024a56a877b3e0a7c607094c7cc",
+        "NativeAssetSha256": "a467b45826e5b9535974903f480273472afc9e7099a6160ab232f40298d6e858",
+        "NativeAssetBytes": 12095,
+        "EditorImportSaved": true,
+        "PropertiesReadBack": true,
+        "ColdReloadVerified": true
+      },
+      {
+        "Order": 5,
+        "DisplayNameV6": "扑杀",
+        "StableAbilityId": "dba.ability.tiger_eight_leaping_claw@1",
+        "InputSlotId": "Slot3",
+        "ObjectPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S05_PredatorLeap_V6.T_DBA_Tiger_S05_PredatorLeap_V6",
+        "PngSha256": "1f555d3a7c1ec877fc5f99a67c458e764b05546fdd90e13c81225e6cddda41be",
+        "NativeAssetSha256": "7b150563281717935c26b5b9f5d2b6830dcb86e636435dee192c924d64b371fe",
+        "NativeAssetBytes": 11038,
+        "EditorImportSaved": true,
+        "PropertiesReadBack": true,
+        "ColdReloadVerified": true
+      },
+      {
+        "Order": 6,
+        "DisplayNameV6": "虎踞",
+        "StableAbilityId": "dba.ability.tiger_eight_regal_guard@1",
+        "InputSlotId": "Slot5",
+        "ObjectPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S06_TigerGuard_V6.T_DBA_Tiger_S06_TigerGuard_V6",
+        "PngSha256": "657991df65e16f72643ca4ee44a53f7c754d49e9deb4008bfe689eba6f43aa47",
+        "NativeAssetSha256": "8419dd19fe976dc5b4a2c411a96de9f168197c994f64ba155308ebdae7e0cbe9",
+        "NativeAssetBytes": 10292,
+        "EditorImportSaved": true,
+        "PropertiesReadBack": true,
+        "ColdReloadVerified": true
+      },
+      {
+        "Order": 7,
+        "DisplayNameV6": "虎啸",
+        "StableAbilityId": "dba.ability.tiger_eight_roar_shock@1",
+        "InputSlotId": "Slot6",
+        "ObjectPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S07_RoarWave_V6.T_DBA_Tiger_S07_RoarWave_V6",
+        "PngSha256": "68d0a083459f46be854131cc10aadaaab9425d8cddad9afe508f35608f09ab91",
+        "NativeAssetSha256": "2127881f13bdba31ccb5b1c21441084bebfacbeaecbe7791c50a7680b403f41e",
+        "NativeAssetBytes": 12772,
+        "EditorImportSaved": true,
+        "PropertiesReadBack": true,
+        "ColdReloadVerified": true
+      },
+      {
+        "Order": 8,
+        "DisplayNameV6": "开猎",
+        "StableAbilityId": "dba.ability.tiger_eight_battle_fervor@1",
+        "InputSlotId": "Slot7",
+        "ObjectPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S08_HuntMark_V6.T_DBA_Tiger_S08_HuntMark_V6",
+        "PngSha256": "d61a48be90d9e8503c8275653c684ea5a3f1d27b7449755af8b0f06b2e4e9857",
+        "NativeAssetSha256": "4d2586623193f9400ce4e23a4dd87474983ae6889fed1c9d9b62f3dc18922383",
+        "NativeAssetBytes": 11994,
+        "EditorImportSaved": true,
+        "PropertiesReadBack": true,
+        "ColdReloadVerified": true
+      }
+    ],
+    "ArtworkApproved": false,
+    "FormalUIProfileMapped": false,
+    "ActualHUDVisualAccepted": false,
+    "LegacyV1Kept": true,
+    "GameplayGASNotChanged": true
   }
 }

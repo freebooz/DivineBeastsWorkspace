@@ -116,8 +116,32 @@ if($VerifySelectedStaging) {
         $seenSource[$src.Sha256]=$true;$seen48[$small48.Sha256]=$true;$seen64[$small64.Sha256]=$true
         Write-Output ("所选{0} 源图/母版/64/48/SHA验证通过，UE原生导入仍另验" -f $want)
     }
-    Assert-Truth ($final.hasNewUETextures -eq $false -and $final.hasProductionApproval -eq $false) '源图交付不能假报UE纹理或投产已完成'
-    Write-Output '门禁【所选八张源艺术纹理】通过：8组真实独立1024/64/48/SHA；24候选整体、人工终稿和UE原生Texture2D仍未完成。'
+    # 本门禁原先假设尚无 UE 原生纹理，现应兼容真实Monolith导入完成但美术及HUD未获批准的状态。
+    # 无原生资产时不能冒充已导入；有原生资产时必须逐项匹配原生uasset真实SHA与队列。
+    Assert-Truth ($final.hasProductionApproval -eq $false) '只完成纹理导入，不能自动宣称投产'
+    if ($final.hasNewUETextures) {
+        $queuePath=Join-Path $dir 'TigerV6MonolithImportQueue_20261018.json'
+        $native=Get-Content -LiteralPath $queuePath -Raw -Encoding UTF8 | ConvertFrom-Json
+        Assert-Truth ($native.heroId -eq 'Hero.Zodiac.Tiger' -and $native.items.Count -eq 8) '原生纹理导入队列身份或数量不正确'
+        Assert-Truth ($native.independentColdReloadVerified -eq $true) '未登记独立UE5.8冷重载成功记录'
+        $nativeHashes=@{}
+        for($i=0;$i -lt 8;$i++) {
+            $n=$native.items[$i]
+            $e=$final.entries[$i]
+            Assert-Truth ($n.assetName -eq $e.assetName -and $n.abilityId -eq $e.abilityId -and $n.sourcePngSha256 -eq $e.png48Sha256) "第$($i+1)项原生导入身份或PNG来源不正确"
+            $path=Join-Path $repo ('Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Tiger/Content/UI/Abilities/'+$n.assetName+'.uasset')
+            Assert-Truth (Test-Path -LiteralPath $path -PathType Leaf) "第$($i+1)份UE原生uasset缺失"
+            $sha=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+            Assert-Truth ($sha -eq $n.importedEngineAssetHash -and $sha -eq $e.engineAssetSha256) "第$($i+1)份原生uasset真实SHA256与登记不一致"
+            Assert-Truth (-not $nativeHashes.ContainsKey($sha)) "第$($i+1)份原生uasset字节内容重复"
+            Assert-Truth ($n.imported -and $n.assetPropertyVerified -and $n.saveReloadVerified -and $e.engineTextureVerified) "第$($i+1)项原生导入/属性/独立冷重载状态未记录完整"
+            Assert-Truth (-not $e.uiProfileMappedVerified -and -not $e.realHudVerified) "不允许以原生纹理导入冒充技能栏绑定或HUD验收"
+            $nativeHashes[$sha]=$true
+        }
+        Write-Output '门禁【所选八张源艺术及原生资产静态回读】通过：8组1024/64/48来源与8份真实uasset SHA一致；独立UE运行证据须另行校验；人工终审、UIProfile、HUD仍待完成。'
+    } else {
+        Write-Output '门禁【所选八张源艺术纹理】通过：8组独立1024/64/48；原生Texture2D尚未导入。'
+    }
 }
 
 # 素材路径与文件的真实性校验是独立阶段；没有图片则明确失败，不返回软通过。

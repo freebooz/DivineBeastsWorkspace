@@ -3,7 +3,7 @@
   "scopeZh": "寅虎V6八技能48像素纹理Monolith原生导入动作队列",
   "heroId": "Hero.Zodiac.Tiger",
   "heroContentPack": "DBAHeroPack_Tiger",
-  "phase": "SOURCE_ART_STAGED_NATIVE_TEXTURE_IMPORT_BLOCKED",
+  "phase": "EIGHT_NATIVE_TEXTURE2D_SAVED_AND_COLD_VERIFIED_PENDING_ART_AND_PROFILE",
   "workspace": "DivineBeastsWorkspace",
   "requiredUnrealProject": "Game/DivineBeastsArena.uproject",
   "requiredEngineVersion": "5.8.0",
@@ -39,10 +39,10 @@
       "sourcePngSha256": "e3817fc2665ca0a25543f58378efc37b714d82fa5df32ae03e66aafad60aadae",
       "targetAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S01_WhiteTigerClaw_V6.T_DBA_Tiger_S01_WhiteTigerClaw_V6",
       "assetName": "T_DBA_Tiger_S01_WhiteTigerClaw_V6",
-      "imported": false,
-      "importedEngineAssetHash": null,
-      "assetPropertyVerified": false,
-      "saveReloadVerified": false
+      "imported": true,
+      "importedEngineAssetHash": "e8d0d98b0cf7c2c0518728348f5367ae93f2860bb9c93ecda8f35929a5b64b4a",
+      "assetPropertyVerified": true,
+      "saveReloadVerified": true
     },
     {
       "order": 2,
@@ -54,10 +54,10 @@
       "sourcePngSha256": "2e615194fb3326440e642c71e72cdbc408e6536a329801a2c3ab29ca9a907c9f",
       "targetAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S02_ArmorRend_V6.T_DBA_Tiger_S02_ArmorRend_V6",
       "assetName": "T_DBA_Tiger_S02_ArmorRend_V6",
-      "imported": false,
-      "importedEngineAssetHash": null,
-      "assetPropertyVerified": false,
-      "saveReloadVerified": false
+      "imported": true,
+      "importedEngineAssetHash": "dec340010287a76a1fa9892ffb93f22ff3b3df23f7dd826fb4d417e0a9ce359c",
+      "assetPropertyVerified": true,
+      "saveReloadVerified": true
     },
     {
       "order": 3,
@@ -69,10 +69,10 @@
       "sourcePngSha256": "331675770575e431b3ea4ff2636e2409fde5e1cec1cadbd3419a4b62d49ed010",
       "targetAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S03_DualClawAssault_V6.T_DBA_Tiger_S03_DualClawAssault_V6",
       "assetName": "T_DBA_Tiger_S03_DualClawAssault_V6",
-      "imported": false,
-      "importedEngineAssetHash": null,
-      "assetPropertyVerified": false,
-      "saveReloadVerified": false
+      "imported": true,
+      "importedEngineAssetHash": "9891d0d0b986cc68b8ba7a0ba395eecd4733053408a43b80f30425c5da271b19",
+      "assetPropertyVerified": true,
+      "saveReloadVerified": true
     },
     {
       "order": 4,
@@ -84,10 +84,10 @@
       "sourcePngSha256": "89d4df19d67bbfa7152681c10e315c64b57ce024a56a877b3e0a7c607094c7cc",
       "targetAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S04_RidgeHuntUltimate_V6.T_DBA_Tiger_S04_RidgeHuntUltimate_V6",
       "assetName": "T_DBA_Tiger_S04_RidgeHuntUltimate_V6",
-      "imported": false,
-      "importedEngineAssetHash": null,
-      "assetPropertyVerified": false,
-      "saveReloadVerified": false
+      "imported": true,
+      "importedEngineAssetHash": "a467b45826e5b9535974903f480273472afc9e7099a6160ab232f40298d6e858",
+      "assetPropertyVerified": true,
+      "saveReloadVerified": true
     },
     {
       "order": 5,
@@ -99,10 +99,10 @@
       "sourcePngSha256": "1f555d3a7c1ec877fc5f99a67c458e764b05546fdd90e13c81225e6cddda41be",
       "targetAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S05_PredatorLeap_V6.T_DBA_Tiger_S05_PredatorLeap_V6",
       "assetName": "T_DBA_Tiger_S05_PredatorLeap_V6",
-      "imported": false,
-      "importedEngineAssetHash": null,
-      "assetPropertyVerified": false,
-      "saveReloadVerified": false
+      "imported": true,
+      "importedEngineAssetHash": "7b150563281717935c26b5b9f5d2b6830dcb86e636435dee192c924d64b371fe",
+      "assetPropertyVerified": true,
+      "saveReloadVerified": true
     },
     {
       "order": 6,
@@ -114,10 +114,10 @@
       "sourcePngSha256": "657991df65e16f72643ca4ee44a53f7c754d49e9deb4008bfe689eba6f43aa47",
       "targetAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S06_TigerGuard_V6.T_DBA_Tiger_S06_TigerGuard_V6",
       "assetName": "T_DBA_Tiger_S06_TigerGuard_V6",
-      "imported": false,
-      "importedEngineAssetHash": null,
-      "assetPropertyVerified": false,
-      "saveReloadVerified": false
+      "imported": true,
+      "importedEngineAssetHash": "8419dd19fe976dc5b4a2c411a96de9f168197c994f64ba155308ebdae7e0cbe9",
+      "assetPropertyVerified": true,
+      "saveReloadVerified": true
     },
     {
       "order": 7,
@@ -129,10 +129,10 @@
       "sourcePngSha256": "68d0a083459f46be854131cc10aadaaab9425d8cddad9afe508f35608f09ab91",
       "targetAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S07_RoarWave_V6.T_DBA_Tiger_S07_RoarWave_V6",
       "assetName": "T_DBA_Tiger_S07_RoarWave_V6",
-      "imported": false,
-      "importedEngineAssetHash": null,
-      "assetPropertyVerified": false,
-      "saveReloadVerified": false
+      "imported": true,
+      "importedEngineAssetHash": "2127881f13bdba31ccb5b1c21441084bebfacbeaecbe7791c50a7680b403f41e",
+      "assetPropertyVerified": true,
+      "saveReloadVerified": true
     },
     {
       "order": 8,
@@ -144,10 +144,18 @@
       "sourcePngSha256": "d61a48be90d9e8503c8275653c684ea5a3f1d27b7449755af8b0f06b2e4e9857",
       "targetAssetPath": "/DBAHeroPack_Tiger/UI/Abilities/T_DBA_Tiger_S08_HuntMark_V6.T_DBA_Tiger_S08_HuntMark_V6",
       "assetName": "T_DBA_Tiger_S08_HuntMark_V6",
-      "imported": false,
-      "importedEngineAssetHash": null,
-      "assetPropertyVerified": false,
-      "saveReloadVerified": false
+      "imported": true,
+      "importedEngineAssetHash": "4d2586623193f9400ce4e23a4dd87474983ae6889fed1c9d9b62f3dc18922383",
+      "assetPropertyVerified": true,
+      "saveReloadVerified": true
     }
-  ]
+  ],
+  "nativeImportDate": "2026-10-19",
+  "importedCount": 8,
+  "allPropertiesVerified": true,
+  "independentColdReloadVerified": true,
+  "nativeImportMethod": "Monolith MCP / ui_query.import_texture_from_bytes",
+  "propertySaveMethod": "Monolith MCP / editor_query.run_python",
+  "independentVerificationTool": "Tools/Unreal/UI/VerifyTigerV6ImportedTexturesUE58.py",
+  "independentVerificationLog": "Game/Saved/Logs/TigerV6NativeColdVerify_20261019.log"
 }

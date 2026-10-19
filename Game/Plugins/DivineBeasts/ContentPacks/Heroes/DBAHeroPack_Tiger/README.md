@@ -27,3 +27,9 @@
 
 当前内容为客户端表现，服务器排除须按统一服务器策略及真实容器检查；将来增加权威必需资源时必须先拆分精确目录并更新回归，不能靠历史整包规则误删。
 运行 `Tests/Assets/ValidateZodiacAbilityDelivery.py --inventory` 核对库存，`--release` 检查正式交付前置；缺批准时保留失败/未完成状态。统一场景和证据入口见 `Docs/Implementation/PluginArchitectureOptimization/PluginDeliveryManifest.json`。二进制资产只由真实UE工具生成/保存，UI资产制作使用Monolith。
+
+## 寅虎 V6 图标原生纹理导入（2026-10-19）
+
+已使用 Monolith MCP 导入八套所选V6技能图标到 `Content/UI/Abilities/`（原生Texture2D，真实48×48），逐项保存、设置UI压缩/sRGB/无Mip/Bilinear/Clamp，且在独立UE5.8进程冷重载通过。1024源原画与64/48PNG仍在 `SourceArt/UI/SkillIcons/V6/`。原五张V1纹理及现行 `DA_DBA_Tiger_PlaceholderUIProfile` 不覆盖；八项V6正式技能授权、美术终审、UI Profile绑定、真实HUD与Cook尚未完成。
+
+证据：`Docs/Implementation/GamePlatformAbilitySystem/TigerV6UE58NativeIconImportReport_20261019.md`（原生导入与验证报告），`Docs/MonolithGenerationManifest.json` 的 `TigerV6SelectedSkillIconImport`（V6资产清单）。
