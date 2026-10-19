@@ -6,6 +6,44 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "UObject/UObjectGlobals.h"
+
+UDivineBeastsWaterAudioAnchorComponent*
+UDivineBeastsWaterAudioAnchorComponent::EnsureRuntimeAnchor(
+    AActor* VerifiedWaterActor, USceneComponent* RealSoundPoint, FName ClipId)
+{
+    check(IsInGameThread());
+    if (!IsValid(VerifiedWaterActor) || !IsValid(RealSoundPoint) ||
+        RealSoundPoint->GetOwner() != VerifiedWaterActor ||
+        !VerifiedWaterActor->ActorHasTag(TEXT("SSLM.WaterSource")) ||
+        (ClipId != TEXT("Ambience.WaterStreamA") &&
+         ClipId != TEXT("Ambience.WaterStreamB"))) return nullptr;
+    UWorld* World = VerifiedWaterActor->GetWorld();
+    if (!World || !World->IsGameWorld() || World->bIsTearingDown ||
+        World->GetNetMode() == NM_DedicatedServer) return nullptr;
+    UGameInstance* Instance = World->GetGameInstance();
+    ULocalPlayer* Player = Instance ? Instance->GetFirstGamePlayer() : nullptr;
+    if (!Player || Player->GetWorld() != World) return nullptr;
+
+    // 标记点是服务端也能Cook的通用USceneComponent；客户端专属音频适配绝不保存进共享地图资产。
+    TArray<UDivineBeastsWaterAudioAnchorComponent*> Existing;
+    VerifiedWaterActor->GetComponents(Existing);
+    for (auto* Item : Existing)
+        if (IsValid(Item) && Item->GetAttachParent() == RealSoundPoint)
+        {
+            if (Item->WaterLoopClipId != ClipId) return nullptr; // 同一物理位置禁止双Loop叠加。
+            Item->RefreshWaterAudio();
+            return Item;
+        }
+    auto* Created = NewObject<UDivineBeastsWaterAudioAnchorComponent>(VerifiedWaterActor);
+    if (!Created) return nullptr;
+    Created->WaterLoopClipId = ClipId;
+    Created->SetupAttachment(RealSoundPoint); // 精确使用真实场景标记点变换，不提供任何虚构坐标。
+    VerifiedWaterActor->AddInstanceComponent(Created);
+    Created->RegisterComponent();
+    Created->RefreshWaterAudio();
+    return Created;
+}
 
 UDivineBeastsWaterAudioAnchorComponent::UDivineBeastsWaterAudioAnchorComponent()
 {
