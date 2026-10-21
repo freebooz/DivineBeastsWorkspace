@@ -116,6 +116,17 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
     if (bHealing && !IsHealingTargetCurrent())
     { EndAbility(Handle, ActorInfo, ActivationInfo, true, true); return; }
 
+    // 在Commit前冻结选择意图。已选目标超距/失效必须拒绝，不能过滤成nullptr后改射直线并消耗冷却。
+    TWeakObjectPtr<AActor> SelectedCastTarget;
+    int32 SelectedSourceGeneration = 0, SelectedTargetGeneration = 0;
+    const bool bSelectedCastTarget = bProjectile && Combat->GetSelectedProjectileTargetIntent(
+        SelectedCastTarget, SelectedSourceGeneration, SelectedTargetGeneration);
+    int32 ValidatedTargetGeneration = 0;
+    if (bSelectedCastTarget && (!SelectedCastTarget.IsValid() || SelectedSourceGeneration != AvatarGeneration ||
+        Combat->GetSelectedProjectileTarget(Balance.CastRangeCm, ValidatedTargetGeneration) != SelectedCastTarget.Get() ||
+        ValidatedTargetGeneration != SelectedTargetGeneration))
+    { EndAbility(Handle, ActorInfo, ActivationInfo, true, true); return; }
+
     const bool bCommitted = CommitAbility(Handle, ActorInfo, ActivationInfo);
     // 成本/冷却回调可能同步结束或替换激活；只允许本次已Commit的化身执行权威伤害。
     if (ActivationToken != Token || !IsActive()) return;
@@ -178,9 +189,10 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
     CastSpec.DamageType = Balance.DamageType;
     CastSpec.SourceAbilityId = Balance.AbilityId;
     CastSpec.SourceAvatarGeneration = AvatarGeneration;
-    // 兼容已批准的原生开发样板，同样只追踪服务器冻结的选中目标。
-    FrozenProjectileTarget=Combat->GetSelectedProjectileTarget(Balance.CastRangeCm,CastSpec.TargetAvatarGeneration);
-    bHadFrozenTarget=FrozenProjectileTarget.IsValid();
+    // Commit回调即使改选，也不能改写本次已经校验的原目标。
+    FrozenProjectileTarget=SelectedCastTarget;
+    CastSpec.TargetAvatarGeneration=SelectedTargetGeneration;
+    bHadFrozenTarget=bSelectedCastTarget;
     CastSpec.Target=nullptr; // Timer之间不持有目标裸/强引用；每枚在释放时从弱身份重新验证。
     RemainingShots = ProjectileCount;
     ReleasedShots = 0;

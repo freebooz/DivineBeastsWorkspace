@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "purpose": "File and 48px distinguishability screening only; not human visual approval nor game runtime test",
+  "candidateCount": 24,
+  "provisionalMasterCount": 8,
+  "png64Count": 8,
+  "png48Count": 8,
+  "allPngDimensionsCorrect": true,
+  "all8HashesUnique": true,
+  "min48pHashDistanceAmongDifferentSkills": 9,
+  "mostSimilarPairs": [
+    [
+      9,
+      "回月",
+      "月痕"
+    ],
+    [
+      16,
+      "千月回环",
+      "月痕"
+    ],
+    [
+      17,
+      "千月回环",
+      "回月"
+    ],
+    [
+      18,
+      "千月回环",
+      "月影"
+    ],
+    [
+      21,
+      "玉刃",
+      "月影"
+    ],
+    [
+      23,
+      "玉刃",
+      "月痕"
+    ],
+    [
+      24,
+      "千月回环",
+      "踏月"
+    ]
+  ],
+  "skills": [
+    {
+      "skill": "月辉弹",
+      "png64Dimensions": [
+        64,
+        64
+      ],
+      "png48Dimensions": [
+        48,
+        48
+      ],
+      "sha64": "c18bb95d498d9eea30d5a96d7c4f325d16fc5e48ec135062f2b8f14212b55b83",
+      "sha48": "66f694f6a3f89845336cd4a180d82ee2bc8835d83d8f044506575dc391e80811",
+      "lumaContrastP90P10": 63.7,
+      "status": "FILE_VALID_VISUAL_HUMAN_REVIEW_PENDING"
+    },
+    {
+      "skill": "玉刃",
+      "png64Dimensions": [
+        64,
+        64
+      ],
+      "png48Dimensions": [
+        48,
+        48
+      ],
+      "sha64": "c697f84334e63832f26db15423b3655d3bfbad7feaa5eae7448e761554b29408",
+      "sha48": "c7e18494204e4152df98302c3c47748a9cf2c66be4ca49e111d7fac2119f1cc2",
+      "lumaContrastP90P10": 91.0,
+      "status": "FILE_VALID_VISUAL_HUMAN_REVIEW_PENDING"
+    },
+    {
+      "skill": "落英月雨",
+      "png64Dimensions": [
+        64,
+        64
+      ],
+      "png48Dimensions": [
+        48,
+        48
+      ],
+      "sha64": "a1f1365db5af0ebd50ce50efcf24c7b077c5cedde46fa41c2b4ba8fb1ca579a8",
+      "sha48": "e38a3cef8dacab8c093053a6ba8aff5ba60bb65b885f21a3dcecb72e0d5451b7",
+      "lumaContrastP90P10": 144.0,
+      "status": "FILE_VALID_VISUAL_HUMAN_REVIEW_PENDING"
+    },
+    {
+      "skill": "千月回环",
+      "png64Dimensions": [
+        64,
+        64
+      ],
+      "png48Dimensions": [
+        48,
+        48
+      ],
+      "sha64": "447f1eb3cd89c7a696d3524a97102ffd1de6e79c735eb32f0da1c0d2e7ae933a",
+      "sha48": "3b875d0068ff3e4ef37d629bf840c69e61b70c0873c8c69e37941720c1835813",
+      "lumaContrastP90P10": 94.0,
+      "status": "FILE_VALID_VISUAL_HUMAN_REVIEW_PENDING"
+    },
+    {
+      "skill": "踏月",
+      "png64Dimensions": [
+        64,
+        64
+      ],
+      "png48Dimensions": [
+        48,
+        48
+      ],
+      "sha64": "6cdf6c3e33584f01ee1eb379ce9ea2a81fe7b95581f692a1c3e7aab9f3ccc795",
+      "sha48": "e04c97862311b1d080503561408da085c2847e99113a1f727e3b5f491b147b03",
+      "lumaContrastP90P10": 78.0,
+      "status": "FILE_VALID_VISUAL_HUMAN_REVIEW_PENDING"
+    },
+    {
+      "skill": "回月",
+      "png64Dimensions": [
+        64,
+        64
+      ],
+      "png48Dimensions": [
+        48,
+        48
+      ],
+      "sha64": "aad439fc599ff5249c095df4675de3357ef18560e4534b727baec046b386816a",
+      "sha48": "534619de1eb175a0798a54706fcd727d8b6e0c178248ef838defa9d91e9270d5",
+      "lumaContrastP90P10": 125.1,
+      "status": "FILE_VALID_VISUAL_HUMAN_REVIEW_PENDING"
+    },
+    {
+      "skill": "月痕",
+      "png64Dimensions": [
+        64,
+        64
+      ],
+      "png48Dimensions": [
+        48,
+        48
+      ],
+      "sha64": "9eb5f04fca82822c231f87e836800f5b00b78081bd2f2b39556152fc6294fafc",
+      "sha48": "c7098b25dbd7d24f65c60f39b5b3693c58c4e63f6be7b9bc0d310b77797de302",
+      "lumaContrastP90P10": 101.0,
+      "status": "FILE_VALID_VISUAL_HUMAN_REVIEW_PENDING"
+    },
+    {
+      "skill": "月影",
+      "png64Dimensions": [
+        64,
+        64
+      ],
+      "png48Dimensions": [
+        48,
+        48
+      ],
+      "sha64": "fb1fd09de95d65176152ce7681b2ee1972dc9f411c14bb66b86d57cc8820f818",
+      "sha48": "5e0f898b032d908e63d66ccf9fdb66231b59c59782d80832bc43824d61c5c83c",
+      "lumaContrastP90P10": 92.0,
+      "status": "FILE_VALID_VISUAL_HUMAN_REVIEW_PENDING"
+    }
+  ],
+  "artApproval": "PENDING_HUMAN_REVIEW",
+  "ueImport": "NOT_STARTED",
+  "hudValidation": "NOT_STARTED"
+}

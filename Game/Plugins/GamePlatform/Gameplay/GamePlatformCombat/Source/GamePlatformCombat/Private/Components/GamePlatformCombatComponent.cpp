@@ -204,7 +204,8 @@ AActor* UGamePlatformCombatComponent::GetSelectedProjectileTarget(float MaximumR
         !IsValid(Target) || Target->IsActorBeingDestroyed() || Target->GetWorld()!=GetWorld() || !TargetCombat ||
         TargetCombat->IsCombatDead() || TargetCombat->GetCombatAvatarGeneration()!=SelectedProjectileTargetGeneration ||
         Source->GetActorLocation().ContainsNaN() || Target->GetActorLocation().ContainsNaN() ||
-        FVector::DistSquared(Source->GetActorLocation(),Target->GetActorLocation())>FMath::Square(MaximumRangeCm) ||
+        // 选中资格与弹体初始化共用碰撞中心和0.01厘米数值容差，避免合法50米边界先被过滤为空目标。
+        FVector::DistSquared(GetCombatTargetPoint(),TargetCombat->GetCombatTargetPoint())>FMath::Square(static_cast<double>(MaximumRangeCm)+.01) ||
         (SourcePolicy && !SourcePolicy->CanSourceCombat()) || (TargetPolicy && !TargetPolicy->CanReceiveCombat())) return nullptr;
     OutTargetGeneration=SelectedProjectileTargetGeneration; return Target;
 }

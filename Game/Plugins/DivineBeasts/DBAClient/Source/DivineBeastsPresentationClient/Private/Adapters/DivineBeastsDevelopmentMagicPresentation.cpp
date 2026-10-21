@@ -339,13 +339,8 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentHealingFeedback(
         !IsValid(Target) || Target->GetWorld()!=World || Target->IsActorBeingDestroyed() ||
         !Combat || Combat->IsCombatDead() || Event.TargetAvatarGeneration<=0 ||
         Combat->GetCombatAvatarGeneration()!=Event.TargetAvatarGeneration) return;
-    // 严格按已批准的十二个Primary身份映射，拒绝任意网络字符串拼资源或其它治疗误播。
-    bool bApproved=false;
-    for(const TCHAR* Hero:{TEXT("rat"),TEXT("ox"),TEXT("tiger"),TEXT("rabbit"),TEXT("dragon"),TEXT("snake"),
-        TEXT("horse"),TEXT("goat"),TEXT("monkey"),TEXT("rooster"),TEXT("dog"),TEXT("boar")})
-        if(Event.SourceAbilityId==FName(*(FString(TEXT("dba.ability."))+Hero+TEXT("_placeholder_primary@1"))))
-        { bApproved=true; break; }
-    if(!bApproved) return;
+    // 既有治疗与明确批准的角色恢复映射共用唯一表现链；拒绝未登记的技能/样式。
+    if(!DivineBeastsPlaceholderMagicVisualPolicy::IsApprovedPlaceholderSpell(Event.SourceAbilityId,TEXT("Healing"))) return;
     FVector Feet=Target->GetActorLocation();
     if(const auto* Capsule=Target->GetCapsuleComponent()) Feet.Z-=Capsule->GetScaledCapsuleHalfHeight();
     FGamePlatformPresentationRequest Request;

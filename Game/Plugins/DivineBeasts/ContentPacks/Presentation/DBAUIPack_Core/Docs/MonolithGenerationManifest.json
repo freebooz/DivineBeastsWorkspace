@@ -2508,5 +2508,17 @@
     "Lifecycle": "NativeConstruct/OnEndFrame/NativeDestruct",
     "RuntimeSwitch": "-GamePlatformShowFPS",
     "Evidence": "Saved/Validation/FPSAndAudioDiagnostics_20261018/FPSColdReload.json"
+  },
+  "PlayableHotbar20261021": {
+    "CreationTool": "Monolith MCP 0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+    "bPreviewSelectedHeroIcons": false,
+    "CompiledAndSaved": true,
+    "ColdReloadPassed": true,
+    "HeroCount": 12,
+    "ActiveSlotsPerHero": 8,
+    "AuthoritySource": "Existing OwnerOnly Loadout and native GAS events",
+    "Evidence": "Saved/Validation/SkillBar20261021/GREEN.saved.json",
+    "HumanAccepted": false
   }
 }

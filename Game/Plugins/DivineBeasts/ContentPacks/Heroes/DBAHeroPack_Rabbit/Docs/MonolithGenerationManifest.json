@@ -406,5 +406,18 @@
     "NativeGASStatus": "See Docs/Implementation/SSLMVillagePlaceholderSkills_20261013.md final execution evidence",
     "ManualVisualAccepted": false,
     "IndependentReadbackEvidence": "Game/Saved/Validation/VillageSkillPlaceholder20261013/ColdReadback_20261015T121234783736Z.json"
+  },
+  "RabbitV6PreReviewImport20261021": {
+    "CreationTool": "Monolith MCP 0.23.0",
+    "RuntimeTextureCount": 8,
+    "AuditTextureCount": 8,
+    "CandidateSourcesPreserved": 24,
+    "SourcePixelIdentical": 16,
+    "ColdReloadPassed": true,
+    "ProfileEntries": 14,
+    "ExistingV1Preserved": true,
+    "NativeEvidence": "Saved/Validation/RabbitV6IconImport20261021/ColdRead.json",
+    "HumanArtApproved": false,
+    "NetworkHUDVerified": false
   }
 }

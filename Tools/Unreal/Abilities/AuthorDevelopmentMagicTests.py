@@ -201,7 +201,7 @@ def author():
         for name, data in SPELLS.items():
             identifier = "dba.ability." + hero.lower() + "_dev_" + name.lower() + "@1"
             rows.append({"Name": hero + "_" + name + "_L1", "AbilityId": identifier, "Level": 1, "BaseDamage": data["Damage"],
-                         "DamageType": "Magic", "CooldownSeconds": data["Cooldown"], "MomentumCost": data["Cost"], "CastRangeCm": 2000, "AreaRadiusCm": 0})
+                         "DamageType": "Magic", "CooldownSeconds": data["Cooldown"], "MomentumCost": data["Cost"], "CastRangeCm": 5000, "AreaRadiusCm": 0})
     if not unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(table, json.dumps(rows)): raise RuntimeError("魔法数值表导入失败")
     save(table)
     for hero, entries in heroes.items():
@@ -225,7 +225,7 @@ def author():
             definition.set_editor_property("BalanceTable", table); definition.set_editor_property("LevelRowNames", [hero + "_" + name + "_L1"])
             definition.set_editor_property("MagicKind", getattr(unreal.DivineBeastsDevelopmentMagicKind, {"Fireball": "FIREBALL", "Frostbolt": "FROSTBOLT", "ArcaneMissiles": "ARCANE_MISSILES"}[name]))
             motion = unreal.GamePlatformCombatProjectileMotion()
-            for field, number in {"SpeedCmPerSecond": data["Speed"], "RangeCm": 2000, "CollisionRadiusCm": 8,
+            for field, number in {"SpeedCmPerSecond": data["Speed"], "RangeCm": 5000, "CollisionRadiusCm": 8,
                                   "HelixRadiusCm": data["Radius"], "HelixTurnsPerSecond": data["Turns"], "InitialPhaseTurns": 0}.items():
                 motion.set_editor_property(field, number)
             definition.set_editor_property("ProjectileMotion", motion); definition.set_editor_property("ProjectileCount", data["Count"])

@@ -7,6 +7,7 @@
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
@@ -322,7 +323,9 @@ bool FGamePlatformProjectilePossessionSelectionTest::RunTest(const FString&)
     Fixture.Target->SetActorLocation(FVector(600, 200, 0));
     Projectile->Tick(0.1f);
     TestFalse(TEXT("清选择没有取消已初始化弹体"), Projectile->IsFlightFinished());
-    TestTrue(TEXT("交接后弹体继续转向原目标的新位置"), Projectile->GetActorLocation().Y > 20);
+    const double InstantAimY = 100.f * FVector(600, 200, 0).GetSafeNormal().Y;
+    TestTrue(TEXT("交接后继续逐步转向原目标，不能不追踪或直接吸附目标方向"),
+        Projectile->GetActorLocation().Y > 1 && Projectile->GetActorLocation().Y < InstantAimY);
     for (int32 Step = 0; Step < 4 && !Projectile->IsFlightFinished(); ++Step) Projectile->Tick(0.25f);
     TestTrue(TEXT("原冻结目标正常被真实Sweep命中"), Projectile->IsFlightFinished() && Projectile->GetFlightFacts().bImpacted);
     TestEqual(TEXT("交接前弹体仍仅结算一次原有12伤害"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
@@ -346,10 +349,11 @@ bool FGamePlatformProjectileHomingWallTest::RunTest(const FString&)
     if (!Fixture.Initialize()) return false;
     Fixture.Target->SetActorLocation(FVector(200,200,0));
     AActor* Wall=Fixture.World->SpawnActor<AActor>();
-    auto* Sphere=NewObject<USphereComponent>(Wall);Sphere->InitSphereRadius(35);
-    Wall->SetRootComponent(Sphere);Wall->AddInstanceComponent(Sphere);
-    Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);Sphere->SetCollisionResponseToAllChannels(ECR_Block);
-    Sphere->RegisterComponent();Wall->SetActorLocation(FVector(100,100,0));Wall->DispatchBeginPlay();
+    // 小球可被加宽的真实弧线合法绕过；改用跨越飞行平面的实体墙，保持验证真实遮挡而非固定旧路线。
+    auto* Box=NewObject<UBoxComponent>(Wall);Box->InitBoxExtent(FVector(5,500,200));
+    Wall->SetRootComponent(Box);Wall->AddInstanceComponent(Box);
+    Box->SetCollisionEnabled(ECollisionEnabled::QueryOnly);Box->SetCollisionResponseToAllChannels(ECR_Block);
+    Box->RegisterComponent();Wall->SetActorLocation(FVector(100,100,0));Wall->DispatchBeginPlay();
     auto Spec=Fixture.CastSpec();Spec.Target=Fixture.Target;Spec.TargetAvatarGeneration=1;
     FGamePlatformCombatProjectileMotion Motion;Motion.RangeCm=500;
     auto* Projectile=Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
@@ -425,9 +429,10 @@ bool FGamePlatformProjectileCurvedReverseTest::RunTest(const FString&)
     if (!TestTrue(TEXT("正后方射程边界目标不因起射偏移而被拒绝"), Projectile->AuthorityInitialize(Spec, Motion, FVector::ForwardVector))) return false;
     Projectile->Tick(1.f / 120.f);
     TestTrue(TEXT("正后方先沿前方起飞而非立即反向"), Projectile->GetActorLocation().X > 59.f);
-    TestTrue(TEXT("180度退化情况下仍生成有限弯曲"), FMath::Abs(Projectile->GetActorLocation().Y) > .1f);
-    for (int32 Step = 0; Step < 50 && !Projectile->IsFlightFinished(); ++Step) Projectile->Tick(.05f);
-    TestEqual(TEXT("有限弧线补偿让合法射程目标正常被命中"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
+    // 贝塞尔的起点切线严格沿前方，横向偏移二阶增长；先验证微小曲率，再在完整飞行中验证真实命中。
+    TestTrue(TEXT("180度退化情况下仍生成有限弯曲"), FMath::Abs(Projectile->GetActorLocation().Y) > .01f);
+    for (int32 Step = 0; Step < 80 && !Projectile->IsFlightFinished(); ++Step) Projectile->Tick(.05f);
+    TestEqual(TEXT("加宽贝塞尔的有限弧长预算让合法射程目标正常被命中"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
     TestTrue(TEXT("后方追踪正常收敛，不无限绕圈"), Projectile->IsFlightFinished());
     FProjectileTestWorld Vertical;
     if (!Vertical.Initialize()) return false;
@@ -521,6 +526,91 @@ bool FGamePlatformProjectileSmallAngleArcTest::RunTest(const FString&)
         Facing->Tick(FMath::Min(.1f, Distance / Motion.SpeedCmPerSecond * .25f));
         TestTrue(TEXT("朝向静止目标时仍为直线"),
             FVector::CrossProduct(Facing->GetActorLocation(), TargetDirection).Size() < .01);
+        Fixture.Target->SetActorLocation(TargetDirection * (Distance + .1));
+        auto* OutOfRange = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+        Spec.EventId = FGuid::NewGuid();
+        TestFalse(TEXT("浮点边界容差不能接受超出0.1厘米的真实目标"),
+            OutOfRange->AuthorityInitialize(Spec, Motion, FVector::ForwardVector));
+    }
+    FProjectileTestWorld Close;
+    if (!Close.Initialize()) return false;
+    Close.Source->SetActorLocation(FVector::ZeroVector);
+    const FVector CloseDirection = FRotator(0, 5, 0).Vector();
+    Close.Target->SetActorLocation(CloseDirection * 50.f);
+    // 第一段留在目标外；否则已确认命中后的中心定位会掩盖实际Sweep弧段。
+    CastChecked<USphereComponent>(Close.Target->GetRootComponent())->SetSphereRadius(1.f);
+    auto CloseSpec = Close.CastSpec(); CloseSpec.Target = Close.Target; CloseSpec.TargetAvatarGeneration = 1;
+    FGamePlatformCombatProjectileMotion Fast; Fast.RangeCm = 100; Fast.SpeedCmPerSecond = 20000;
+    auto* FastProjectile = Close.World->SpawnActor<AGamePlatformCombatProjectile>();
+    if (!TestTrue(TEXT("极近高速小偏角初始化"), FastProjectile->AuthorityInitialize(CloseSpec, Fast, FVector::ForwardVector))) return false;
+    FastProjectile->Tick(15.f / Fast.SpeedCmPerSecond);
+    TestTrue(TEXT("15厘米子步内也不能吸附为目标方向"),
+        FVector::CrossProduct(FastProjectile->GetActorLocation(), CloseDirection).Size() > .05);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileLongRangeConvergenceTest,
+    "GamePlatform.Combat.Projectile.CurvedLongRangeConvergence",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileLongRangeConvergenceTest::RunTest(const FString&)
+{
+    for (const float Range : {10000.f, 100000.f})
+        for (const float Yaw : {45.f, 90.f, 180.f})
+        {
+            FProjectileTestWorld Fixture;
+            if (!Fixture.Initialize()) return false;
+            Fixture.Source->SetActorLocation(FVector::ZeroVector);
+            Fixture.Target->SetActorLocation(FRotator(0, Yaw, 0).Vector() * Range);
+            auto Spec = Fixture.CastSpec(); Spec.Target = Fixture.Target; Spec.TargetAvatarGeneration = 1;
+            FGamePlatformCombatProjectileMotion Motion; Motion.RangeCm = Range;
+            auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+            if (!TestTrue(TEXT("合法远射程边界目标初始化"), Projectile->AuthorityInitialize(Spec, Motion, FVector::ForwardVector))) return false;
+            // 大偏角的贝塞尔弧段比直线路程长；以两倍直飞时间作为测试等待上限，期限不随追逐延长。
+            const int32 MaxSteps = FMath::CeilToInt((2.f * Range / Motion.SpeedCmPerSecond + .5f) / .1f) + 1;
+            for (int32 Step = 0; Step < MaxSteps && !Projectile->IsFlightFinished(); ++Step) Projectile->Tick(.1f);
+            TestEqual(FString::Printf(TEXT("%.0f厘米/%.0f度弧线仍在有限期限内命中"), Range, Yaw),
+                Fixture.TargetCombat->GetCombatHealth(), 88.f);
+            TestTrue(TEXT("远距离弧线真实Sweep确认且已收敛"), Projectile->IsFlightFinished() && Projectile->GetFlightFacts().bImpacted);
+        }
+    return true;
+}
+
+// 50米是中心间的最大施法距离；侧向/背向必须有米级连续弧段，而不是在枪口瞬间吸附再直飞。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileVisibleRangeArcTest,
+    "GamePlatform.Combat.Projectile.VisibleArcAtFiftyMetres",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileVisibleRangeArcTest::RunTest(const FString&)
+{
+    for (const float Yaw : {45.f, 90.f, 135.f, 180.f})
+    {
+        FProjectileTestWorld Fixture;
+        if (!Fixture.Initialize()) return false;
+        Fixture.Source->SetActorLocation(FVector::ZeroVector);
+        const FVector TargetDirection = FRotator(0, Yaw, 0).Vector();
+        Fixture.Target->SetActorLocation(TargetDirection * 5000.f);
+        if (!TestTrue(TEXT("50米内目标可以明确选择"), Fixture.SourceCombat->AuthoritySelectProjectileTarget(Fixture.Target, 1, 1))) return false;
+        int32 Generation = 0;
+        if (!TestEqual(TEXT("50米边界保留锁定"), Fixture.SourceCombat->GetSelectedProjectileTarget(5000.f, Generation), Fixture.Target)) return false;
+        auto Spec = Fixture.CastSpec(); Spec.Target = Fixture.Target; Spec.TargetAvatarGeneration = Generation;
+        FGamePlatformCombatProjectileMotion Motion; Motion.RangeCm = 5000; Motion.SpeedCmPerSecond = 1200;
+        auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>(FVector(50, 0, 0), FRotator::ZeroRotator);
+        if (!TestTrue(TEXT("50米边界从角色前方真实起射"), Projectile->AuthorityInitialize(Spec, Motion, FVector::ForwardVector))) return false;
+        double MaxDeviation = 0;
+        int32 Steps = 0;
+        const int32 Limit = FMath::CeilToInt((2.f * Motion.RangeCm / Motion.SpeedCmPerSecond + .5f) * 120.f);
+        while (!Projectile->IsFlightFinished() && Steps++ < Limit)
+        {
+            Projectile->Tick(1.f / 120.f);
+            MaxDeviation = FMath::Max(MaxDeviation, FVector::CrossProduct(Projectile->GetActorLocation(), TargetDirection).Size());
+        }
+        // 50米下加大弧形后的最低可见宽度：45/90/135/180度分别8.5/14.5/15.5/12.5米。
+        const double MinimumDeviation = Yaw < 90.f ? 850. : (Yaw < 135.f ? 1450. : (Yaw < 180.f ? 1550. : 1250.));
+        TestTrue(FString::Printf(TEXT("%.0f度具有可见宽弧：偏离弦线%.1f厘米，至少%.0f厘米"), Yaw, MaxDeviation, MinimumDeviation), MaxDeviation >= MinimumDeviation);
+        AddInfo(FString::Printf(TEXT("50米贝塞尔实测：初始偏角%.0f度，最大偏弦%.1f厘米，步数%d"), Yaw, MaxDeviation, Steps));
+        TestTrue(TEXT("有限期限内真实Sweep命中原目标"), Projectile->IsFlightFinished() && Projectile->GetFlightFacts().bImpacted);
+        TestEqual(TEXT("弧形飞行只结算一次真实伤害"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
+        Fixture.Target->SetActorLocation(TargetDirection * 5000.1f);
+        TestNull(TEXT("超过最远50米不允许锁定施法"), Fixture.SourceCombat->GetSelectedProjectileTarget(5000.f, Generation));
     }
     return true;
 }

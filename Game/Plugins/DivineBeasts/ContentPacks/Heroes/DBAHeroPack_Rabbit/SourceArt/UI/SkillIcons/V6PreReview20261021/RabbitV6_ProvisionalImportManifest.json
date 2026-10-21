@@ -1,0 +1,618 @@
+{
+  "schemaVersion": 1,
+  "project": "SSLM",
+  "version": "Rabbit V6 draft",
+  "createdDate": "2026-10-19",
+  "state": "24_INDEPENDENT_PROCEDURAL_CONCEPT_CANDIDATES_8_PROVISIONAL_64_48_NO_UE_IMPORT_NO_HUMAN_APPROVAL",
+  "heroId": "Hero.Zodiac.Rabbit",
+  "heroZh": "卯兔·踏月玉灵",
+  "passiveZh": "月闪（独立被动，不占8槽）",
+  "sourceOfTruthV6": "Docs/Design/ZodiacHistoryFirstEightSkillsV6_Review.json",
+  "sourceOfTruthProductionV5": "Docs/Design/ApprovedSkillDisplayNames_V5.json",
+  "runtimeApprovalRegistry": "Docs/Implementation/GamePlatformAbilitySystem/V6SkillImplementationRegistry_20261018.json",
+  "artPolicy": "Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md",
+  "heroContentPack": "DBAHeroPack_Rabbit",
+  "displaySlotOrder": [
+    "Primary",
+    "Slot1",
+    "Slot2",
+    "Slot4",
+    "Slot3",
+    "Slot5",
+    "Slot6",
+    "Slot7"
+  ],
+  "masterPixels": [
+    1024,
+    1024
+  ],
+  "reviewPixels": [
+    64,
+    64
+  ],
+  "runtimePixels": [
+    48,
+    48
+  ],
+  "candidateCountPerSkill": 3,
+  "preserveExistingV1Assets": true,
+  "notAuthorizedForProductionV6": true,
+  "uiProfileIdentity": "DivineBeastsAbilityUIProfile:Hero.Zodiac.Rabbit",
+  "provisionalUIProfileRule": "V6仅在专用只读审核Widget预览；服务器正式授予与名称/机制批准后再迁移唯一主资产，不能创建第二个同ID的正式Profile",
+  "highRiskSemantics": [
+    "第4槽：旧群体治疗→回环闪击",
+    "第8槽：旧友军治疗→可受击月影残像；沿用@1时需检查部署兼容性，必要时版本化新的AbilityId并作正式迁移"
+  ],
+  "requiredTextureSettings": {
+    "textureGroup": "UI",
+    "srgb": true,
+    "compression": "UserInterface2D",
+    "mipGen": "NoMipmaps",
+    "neverStream": true,
+    "filter": "Bilinear",
+    "addressX": "Clamp",
+    "addressY": "Clamp",
+    "mustReadBackEnumsInUE58": true
+  },
+  "qualityRules": [
+    "单技能单画独立生成2048母版；每项3候选、审核后择一",
+    "八个图标形态主体互不雷同；48px原生显示具识别度",
+    "不在图案中烘焙UI边框、快捷键、冷却和文字",
+    "64和48分别由同一母版生成，不由64二次缩到48",
+    "生成最终PNG前sRGB与Alpha预乘处理；拒绝边缘白边和双Gamma",
+    "新资产与既有V1贴图并存，禁止静默覆盖",
+    "48像素真实UE HUD、Village、Arena及双客户端验收，截图留证"
+  ],
+  "entries": [
+    {
+      "order": 1,
+      "slotId": "Primary",
+      "roleZh": "基础攻击",
+      "abilityId": "dba.ability.rabbit_eight_jade_moon_shot@1",
+      "displayNameV6ProposalZh": "月辉弹",
+      "currentApprovedV5NameZh": "月辉弹",
+      "nameChangeRequiresReview": false,
+      "v6MechanismZh": "射出单枚月辉弹作远程基础攻击，命中积累普攻气势。",
+      "distinctVisualAnchorZh": "中心一枚发亮月光玉弹＋单条短弧尾迹，朝右上，轮廓不与月刃重合。",
+      "artDirectionZh": "一枚由青白光芯凝结的椭圆月辉弹，从左下朝右上疾射；单独球形能量核心、一道薄而弯的银青月牙尾迹，明确“单发远程”而非大法术，背景柔和暗月纹。",
+      "generationPromptZh": "《神兽联盟》SSLM卯兔·踏月玉灵 V6 原创技能图标。独立正方形高级奇幻游戏技能图标、东方神话电影级数字绘画、真实温润抛光半透明青玉、清晰月白能量、浅粉桃花辅助色、细腻柔和主光和边缘光、具有空间层次的体积光、玄墨青暗底（#10282D），以银蓝#B5CADC和灵玉青#68D7B4统一风格；高对比但不刺眼，单一主体占画面约75%，最多背景/主体/强调光三层，构图完整适合48×48显示，边缘清晰自然。纯图形，图标中不添加外框、按键、编号、文字、Logo、水印、伤害数值或冷却蒙层。无胶片颗粒、无杂乱噪声、不过度锐化、不过曝泛光、不过度细节、无血腥、无旧王印和废弃五行克制符号。禁止模仿或复刻其他游戏的现成图标。 技能「月辉弹」：一枚由青白光芯凝结的椭圆月辉弹，从左下朝右上疾射；单独球形能量核心、一道薄而弯的银青月牙尾迹，明确“单发远程”而非大法术，背景柔和暗月纹。 单独生成这一项，不拼图，不混入其他七种技能。",
+      "assetName": "T_DBA_Rabbit_S01_MoonlightBolt_V6",
+      "masterFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Rabbit_S01_MoonlightBolt_V6_Master_2048.png",
+      "review64Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/64/T_DBA_Rabbit_S01_MoonlightBolt_V6_64.png",
+      "runtime48Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/48/T_DBA_Rabbit_S01_MoonlightBolt_V6_48.png",
+      "engineAssetFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_S01_MoonlightBolt_V6.uasset",
+      "softObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_S01_MoonlightBolt_V6.T_DBA_Rabbit_S01_MoonlightBolt_V6",
+      "candidateCount": 3,
+      "selectedCandidate": "A",
+      "masterSha256": "29f29fa6bf2d904ba5092d1c88586a8a184430146fb370ae1d0a43887170f0f3",
+      "png64Sha256": "c18bb95d498d9eea30d5a96d7c4f325d16fc5e48ec135062f2b8f14212b55b83",
+      "png48Sha256": "66f694f6a3f89845336cd4a180d82ee2bc8835d83d8f044506575dc391e80811",
+      "engineAssetSha256": null,
+      "artReviewStatus": "CURATOR_PROVISIONAL_NOT_HUMAN_APPROVED",
+      "sourceVerified": true,
+      "png64Verified": true,
+      "png48Verified": true,
+      "engineTextureVerified": false,
+      "uiProfileMappedVerified": false,
+      "realHudVerified": false,
+      "candidatePreviewMaster": "ProvisionalMasters_1024/T_DBA_Rabbit_S01_MoonlightBolt_V6_ProvisionalMaster_1024.png",
+      "review64LocalFile": "Review_64/T_DBA_Rabbit_S01_MoonlightBolt_V6_64.png",
+      "runtime48LocalFile": "Runtime_48/T_DBA_Rabbit_S01_MoonlightBolt_V6_48.png"
+    },
+    {
+      "order": 2,
+      "slotId": "Slot1",
+      "roleZh": "攻击一",
+      "abilityId": "dba.ability.rabbit_eight_crescent_arc@1",
+      "displayNameV6ProposalZh": "玉刃",
+      "currentApprovedV5NameZh": "双月斩",
+      "nameChangeRequiresReview": true,
+      "v6MechanismZh": "双月刃轻斩，若刚完成成功闪避可追加一次有限反击。",
+      "distinctVisualAnchorZh": "两道平行错位弧形玉刃，明显双斩，避免X形太细。",
+      "artDirectionZh": "两柄真实半透明碧玉弯月短刃呈前后两层交错轻斩，近处主刃向右上弧斩，稍后另一柄回旋，刀刃高光可见玉石厚度和锋利轮廓；不要写成单刃定身。",
+      "generationPromptZh": "《神兽联盟》SSLM卯兔·踏月玉灵 V6 原创技能图标。独立正方形高级奇幻游戏技能图标、东方神话电影级数字绘画、真实温润抛光半透明青玉、清晰月白能量、浅粉桃花辅助色、细腻柔和主光和边缘光、具有空间层次的体积光、玄墨青暗底（#10282D），以银蓝#B5CADC和灵玉青#68D7B4统一风格；高对比但不刺眼，单一主体占画面约75%，最多背景/主体/强调光三层，构图完整适合48×48显示，边缘清晰自然。纯图形，图标中不添加外框、按键、编号、文字、Logo、水印、伤害数值或冷却蒙层。无胶片颗粒、无杂乱噪声、不过度锐化、不过曝泛光、不过度细节、无血腥、无旧王印和废弃五行克制符号。禁止模仿或复刻其他游戏的现成图标。 技能「玉刃」：两柄真实半透明碧玉弯月短刃呈前后两层交错轻斩，近处主刃向右上弧斩，稍后另一柄回旋，刀刃高光可见玉石厚度和锋利轮廓；不要写成单刃定身。 单独生成这一项，不拼图，不混入其他七种技能。",
+      "assetName": "T_DBA_Rabbit_S02_TwinJadeBlades_V6",
+      "masterFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Rabbit_S02_TwinJadeBlades_V6_Master_2048.png",
+      "review64Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/64/T_DBA_Rabbit_S02_TwinJadeBlades_V6_64.png",
+      "runtime48Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/48/T_DBA_Rabbit_S02_TwinJadeBlades_V6_48.png",
+      "engineAssetFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_S02_TwinJadeBlades_V6.uasset",
+      "softObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_S02_TwinJadeBlades_V6.T_DBA_Rabbit_S02_TwinJadeBlades_V6",
+      "candidateCount": 3,
+      "selectedCandidate": "C",
+      "masterSha256": "a5e3cd8e380d24d866a4de8fb7b8fb5c7403a887d3a8497bb191c33c8f3c88eb",
+      "png64Sha256": "c697f84334e63832f26db15423b3655d3bfbad7feaa5eae7448e761554b29408",
+      "png48Sha256": "c7e18494204e4152df98302c3c47748a9cf2c66be4ca49e111d7fac2119f1cc2",
+      "engineAssetSha256": null,
+      "artReviewStatus": "CURATOR_PROVISIONAL_NOT_HUMAN_APPROVED",
+      "sourceVerified": true,
+      "png64Verified": true,
+      "png48Verified": true,
+      "engineTextureVerified": false,
+      "uiProfileMappedVerified": false,
+      "realHudVerified": false,
+      "candidatePreviewMaster": "ProvisionalMasters_1024/T_DBA_Rabbit_S02_TwinJadeBlades_V6_ProvisionalMaster_1024.png",
+      "review64LocalFile": "Review_64/T_DBA_Rabbit_S02_TwinJadeBlades_V6_64.png",
+      "runtime48LocalFile": "Runtime_48/T_DBA_Rabbit_S02_TwinJadeBlades_V6_48.png"
+    },
+    {
+      "order": 3,
+      "slotId": "Slot2",
+      "roleZh": "攻击二",
+      "abilityId": "dba.ability.rabbit_eight_falling_petals@1",
+      "displayNameV6ProposalZh": "落英月雨",
+      "currentApprovedV5NameZh": "落英雨",
+      "nameChangeRequiresReview": true,
+      "v6MechanismZh": "指定区域落下月玉花瓣形成圆形伤害区；非治疗技能。",
+      "distinctVisualAnchorZh": "粉白锋利花瓣自上向下＋底部单一圆圈范围提示，粉色数量克制。",
+      "artDirectionZh": "由上而下的三至五枚厚实桃粉色月玉花瓣化为锋刃，垂直坠向下方一圈银青色圆形冲击波，伤害区域边界清晰；不是治愈花雨，不画爱心。",
+      "generationPromptZh": "《神兽联盟》SSLM卯兔·踏月玉灵 V6 原创技能图标。独立正方形高级奇幻游戏技能图标、东方神话电影级数字绘画、真实温润抛光半透明青玉、清晰月白能量、浅粉桃花辅助色、细腻柔和主光和边缘光、具有空间层次的体积光、玄墨青暗底（#10282D），以银蓝#B5CADC和灵玉青#68D7B4统一风格；高对比但不刺眼，单一主体占画面约75%，最多背景/主体/强调光三层，构图完整适合48×48显示，边缘清晰自然。纯图形，图标中不添加外框、按键、编号、文字、Logo、水印、伤害数值或冷却蒙层。无胶片颗粒、无杂乱噪声、不过度锐化、不过曝泛光、不过度细节、无血腥、无旧王印和废弃五行克制符号。禁止模仿或复刻其他游戏的现成图标。 技能「落英月雨」：由上而下的三至五枚厚实桃粉色月玉花瓣化为锋刃，垂直坠向下方一圈银青色圆形冲击波，伤害区域边界清晰；不是治愈花雨，不画爱心。 单独生成这一项，不拼图，不混入其他七种技能。",
+      "assetName": "T_DBA_Rabbit_S03_PetalMoonRain_V6",
+      "masterFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Rabbit_S03_PetalMoonRain_V6_Master_2048.png",
+      "review64Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/64/T_DBA_Rabbit_S03_PetalMoonRain_V6_64.png",
+      "runtime48Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/48/T_DBA_Rabbit_S03_PetalMoonRain_V6_48.png",
+      "engineAssetFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_S03_PetalMoonRain_V6.uasset",
+      "softObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_S03_PetalMoonRain_V6.T_DBA_Rabbit_S03_PetalMoonRain_V6",
+      "candidateCount": 3,
+      "selectedCandidate": "B",
+      "masterSha256": "eef893bc97f0f95f6be7365a9e8ca0ad6938f5642c55f8ba1d7abdb0f8967c70",
+      "png64Sha256": "a1f1365db5af0ebd50ce50efcf24c7b077c5cedde46fa41c2b4ba8fb1ca579a8",
+      "png48Sha256": "e38a3cef8dacab8c093053a6ba8aff5ba60bb65b885f21a3dcecb72e0d5451b7",
+      "engineAssetSha256": null,
+      "artReviewStatus": "CURATOR_PROVISIONAL_NOT_HUMAN_APPROVED",
+      "sourceVerified": true,
+      "png64Verified": true,
+      "png48Verified": true,
+      "engineTextureVerified": false,
+      "uiProfileMappedVerified": false,
+      "realHudVerified": false,
+      "candidatePreviewMaster": "ProvisionalMasters_1024/T_DBA_Rabbit_S03_PetalMoonRain_V6_ProvisionalMaster_1024.png",
+      "review64LocalFile": "Review_64/T_DBA_Rabbit_S03_PetalMoonRain_V6_64.png",
+      "runtime48LocalFile": "Runtime_48/T_DBA_Rabbit_S03_PetalMoonRain_V6_48.png"
+    },
+    {
+      "order": 4,
+      "slotId": "Slot4",
+      "roleZh": "终极",
+      "abilityId": "dba.ability.rabbit_eight_moon_bloom@1",
+      "displayNameV6ProposalZh": "千月回环",
+      "currentApprovedV5NameZh": "返影斩",
+      "nameChangeRequiresReview": true,
+      "v6MechanismZh": "借有效月影和目标依次闪击，最后回到起点附近；不沿用旧群体治疗。",
+      "distinctVisualAnchorZh": "三道弧月环抱亮玉闪击核心，环状回身方向明确、轮廓最醒目，金光只在大招局部。",
+      "artDirectionZh": "三道粗细分明的银白半月斩光形成向心旋转回环，环内有一个锐利青玉瞬闪核心，少量鎏金边缘指向回归起点；画面显示连续环绕攻击及归位，不画治疗光环。",
+      "generationPromptZh": "《神兽联盟》SSLM卯兔·踏月玉灵 V6 原创技能图标。独立正方形高级奇幻游戏技能图标、东方神话电影级数字绘画、真实温润抛光半透明青玉、清晰月白能量、浅粉桃花辅助色、细腻柔和主光和边缘光、具有空间层次的体积光、玄墨青暗底（#10282D），以银蓝#B5CADC和灵玉青#68D7B4统一风格；高对比但不刺眼，单一主体占画面约75%，最多背景/主体/强调光三层，构图完整适合48×48显示，边缘清晰自然。纯图形，图标中不添加外框、按键、编号、文字、Logo、水印、伤害数值或冷却蒙层。无胶片颗粒、无杂乱噪声、不过度锐化、不过曝泛光、不过度细节、无血腥、无旧王印和废弃五行克制符号。禁止模仿或复刻其他游戏的现成图标。 技能「千月回环」：三道粗细分明的银白半月斩光形成向心旋转回环，环内有一个锐利青玉瞬闪核心，少量鎏金边缘指向回归起点；画面显示连续环绕攻击及归位，不画治疗光环。 单独生成这一项，不拼图，不混入其他七种技能。",
+      "assetName": "T_DBA_Rabbit_S04_ThousandMoonOrbit_V6",
+      "masterFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Rabbit_S04_ThousandMoonOrbit_V6_Master_2048.png",
+      "review64Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/64/T_DBA_Rabbit_S04_ThousandMoonOrbit_V6_64.png",
+      "runtime48Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/48/T_DBA_Rabbit_S04_ThousandMoonOrbit_V6_48.png",
+      "engineAssetFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_S04_ThousandMoonOrbit_V6.uasset",
+      "softObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_S04_ThousandMoonOrbit_V6.T_DBA_Rabbit_S04_ThousandMoonOrbit_V6",
+      "candidateCount": 3,
+      "selectedCandidate": "A",
+      "masterSha256": "b7f3572042c680e3295dee126e3e9e5e053f2e2879553505f6e4b546ecea2c2b",
+      "png64Sha256": "447f1eb3cd89c7a696d3524a97102ffd1de6e79c735eb32f0da1c0d2e7ae933a",
+      "png48Sha256": "3b875d0068ff3e4ef37d629bf840c69e61b70c0873c8c69e37941720c1835813",
+      "engineAssetSha256": null,
+      "artReviewStatus": "CURATOR_PROVISIONAL_NOT_HUMAN_APPROVED",
+      "sourceVerified": true,
+      "png64Verified": true,
+      "png48Verified": true,
+      "engineTextureVerified": false,
+      "uiProfileMappedVerified": false,
+      "realHudVerified": false,
+      "candidatePreviewMaster": "ProvisionalMasters_1024/T_DBA_Rabbit_S04_ThousandMoonOrbit_V6_ProvisionalMaster_1024.png",
+      "review64LocalFile": "Review_64/T_DBA_Rabbit_S04_ThousandMoonOrbit_V6_64.png",
+      "runtime48LocalFile": "Runtime_48/T_DBA_Rabbit_S04_ThousandMoonOrbit_V6_48.png"
+    },
+    {
+      "order": 5,
+      "slotId": "Slot3",
+      "roleZh": "移动",
+      "abilityId": "dba.ability.rabbit_eight_moon_leap@1",
+      "displayNameV6ProposalZh": "踏月",
+      "currentApprovedV5NameZh": "踏月",
+      "nameChangeRequiresReview": false,
+      "v6MechanismZh": "短距离踏月位移，合法完美闪避窗成功时部分返还冷却。",
+      "distinctVisualAnchorZh": "足尖落在青白弯月踏板之上＋右上动线，无大范围攻击波。",
+      "artDirectionZh": "一个精致的玉白兔武者足尖踩在斜向上升的弯月阶石上，脚下青玉月牙脉冲，向右上方一道凝练跃迁流线；突出踩踏位移方向，不能做成普通静态月亮。",
+      "generationPromptZh": "《神兽联盟》SSLM卯兔·踏月玉灵 V6 原创技能图标。独立正方形高级奇幻游戏技能图标、东方神话电影级数字绘画、真实温润抛光半透明青玉、清晰月白能量、浅粉桃花辅助色、细腻柔和主光和边缘光、具有空间层次的体积光、玄墨青暗底（#10282D），以银蓝#B5CADC和灵玉青#68D7B4统一风格；高对比但不刺眼，单一主体占画面约75%，最多背景/主体/强调光三层，构图完整适合48×48显示，边缘清晰自然。纯图形，图标中不添加外框、按键、编号、文字、Logo、水印、伤害数值或冷却蒙层。无胶片颗粒、无杂乱噪声、不过度锐化、不过曝泛光、不过度细节、无血腥、无旧王印和废弃五行克制符号。禁止模仿或复刻其他游戏的现成图标。 技能「踏月」：一个精致的玉白兔武者足尖踩在斜向上升的弯月阶石上，脚下青玉月牙脉冲，向右上方一道凝练跃迁流线；突出踩踏位移方向，不能做成普通静态月亮。 单独生成这一项，不拼图，不混入其他七种技能。",
+      "assetName": "T_DBA_Rabbit_S05_Moonstep_V6",
+      "masterFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Rabbit_S05_Moonstep_V6_Master_2048.png",
+      "review64Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/64/T_DBA_Rabbit_S05_Moonstep_V6_64.png",
+      "runtime48Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/48/T_DBA_Rabbit_S05_Moonstep_V6_48.png",
+      "engineAssetFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_S05_Moonstep_V6.uasset",
+      "softObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_S05_Moonstep_V6.T_DBA_Rabbit_S05_Moonstep_V6",
+      "candidateCount": 3,
+      "selectedCandidate": "B",
+      "masterSha256": "956c5cb6f656a694a57d61b468088ba92095037203451d6e67406670ae7f7852",
+      "png64Sha256": "6cdf6c3e33584f01ee1eb379ce9ea2a81fe7b95581f692a1c3e7aab9f3ccc795",
+      "png48Sha256": "e04c97862311b1d080503561408da085c2847e99113a1f727e3b5f491b147b03",
+      "engineAssetSha256": null,
+      "artReviewStatus": "CURATOR_PROVISIONAL_NOT_HUMAN_APPROVED",
+      "sourceVerified": true,
+      "png64Verified": true,
+      "png48Verified": true,
+      "engineTextureVerified": false,
+      "uiProfileMappedVerified": false,
+      "realHudVerified": false,
+      "candidatePreviewMaster": "ProvisionalMasters_1024/T_DBA_Rabbit_S05_Moonstep_V6_ProvisionalMaster_1024.png",
+      "review64LocalFile": "Review_64/T_DBA_Rabbit_S05_Moonstep_V6_64.png",
+      "runtime48LocalFile": "Runtime_48/T_DBA_Rabbit_S05_Moonstep_V6_48.png"
+    },
+    {
+      "order": 6,
+      "slotId": "Slot5",
+      "roleZh": "防御",
+      "abilityId": "dba.ability.rabbit_eight_jade_moon_shield@1",
+      "displayNameV6ProposalZh": "回月",
+      "currentApprovedV5NameZh": "回月",
+      "nameChangeRequiresReview": false,
+      "v6MechanismZh": "回到最近月影或退后，清除减速并小额自疗；不能无限重置位置。",
+      "distinctVisualAnchorZh": "宽厚回卷月牙盾＋明显向后回撤轨迹，以防御面区别双月刃。",
+      "artDirectionZh": "一枚半透明青玉月牙自前方回卷形成弧形防护屏，背后一道收回到左下的银白回身光迹，中心短暂柔和清澈玉色疗愈脉冲；不画大型治疗十字。",
+      "generationPromptZh": "《神兽联盟》SSLM卯兔·踏月玉灵 V6 原创技能图标。独立正方形高级奇幻游戏技能图标、东方神话电影级数字绘画、真实温润抛光半透明青玉、清晰月白能量、浅粉桃花辅助色、细腻柔和主光和边缘光、具有空间层次的体积光、玄墨青暗底（#10282D），以银蓝#B5CADC和灵玉青#68D7B4统一风格；高对比但不刺眼，单一主体占画面约75%，最多背景/主体/强调光三层，构图完整适合48×48显示，边缘清晰自然。纯图形，图标中不添加外框、按键、编号、文字、Logo、水印、伤害数值或冷却蒙层。无胶片颗粒、无杂乱噪声、不过度锐化、不过曝泛光、不过度细节、无血腥、无旧王印和废弃五行克制符号。禁止模仿或复刻其他游戏的现成图标。 技能「回月」：一枚半透明青玉月牙自前方回卷形成弧形防护屏，背后一道收回到左下的银白回身光迹，中心短暂柔和清澈玉色疗愈脉冲；不画大型治疗十字。 单独生成这一项，不拼图，不混入其他七种技能。",
+      "assetName": "T_DBA_Rabbit_S06_MoonRecall_V6",
+      "masterFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Rabbit_S06_MoonRecall_V6_Master_2048.png",
+      "review64Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/64/T_DBA_Rabbit_S06_MoonRecall_V6_64.png",
+      "runtime48Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/48/T_DBA_Rabbit_S06_MoonRecall_V6_48.png",
+      "engineAssetFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_S06_MoonRecall_V6.uasset",
+      "softObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_S06_MoonRecall_V6.T_DBA_Rabbit_S06_MoonRecall_V6",
+      "candidateCount": 3,
+      "selectedCandidate": "A",
+      "masterSha256": "85a777cef114cd25eac4224c5e986d304a8ed7f3b7a047b64bd4b7c43bc999d3",
+      "png64Sha256": "aad439fc599ff5249c095df4675de3357ef18560e4534b727baec046b386816a",
+      "png48Sha256": "534619de1eb175a0798a54706fcd727d8b6e0c178248ef838defa9d91e9270d5",
+      "engineAssetSha256": null,
+      "artReviewStatus": "CURATOR_PROVISIONAL_NOT_HUMAN_APPROVED",
+      "sourceVerified": true,
+      "png64Verified": true,
+      "png48Verified": true,
+      "engineTextureVerified": false,
+      "uiProfileMappedVerified": false,
+      "realHudVerified": false,
+      "candidatePreviewMaster": "ProvisionalMasters_1024/T_DBA_Rabbit_S06_MoonRecall_V6_ProvisionalMaster_1024.png",
+      "review64LocalFile": "Review_64/T_DBA_Rabbit_S06_MoonRecall_V6_64.png",
+      "runtime48LocalFile": "Runtime_48/T_DBA_Rabbit_S06_MoonRecall_V6_48.png"
+    },
+    {
+      "order": 7,
+      "slotId": "Slot6",
+      "roleZh": "控制",
+      "abilityId": "dba.ability.rabbit_eight_lunar_bind@1",
+      "displayNameV6ProposalZh": "月痕",
+      "currentApprovedV5NameZh": "绊月刃",
+      "nameChangeRequiresReview": true,
+      "v6MechanismZh": "投出月刃造成减速，已积累限定层数者可短暂定身。",
+      "distinctVisualAnchorZh": "一枚落点月刃＋两道锁缚月光带，构图中心是固定目标而非挥砍。",
+      "artDirectionZh": "一枚青银月刃钉在深色敌影脚边，地面形成两道宽阔交叉银青约束纹链与一个小而明确的束缚定点；重点是停滞、月痕和拘束，不是纯攻击双刀。",
+      "generationPromptZh": "《神兽联盟》SSLM卯兔·踏月玉灵 V6 原创技能图标。独立正方形高级奇幻游戏技能图标、东方神话电影级数字绘画、真实温润抛光半透明青玉、清晰月白能量、浅粉桃花辅助色、细腻柔和主光和边缘光、具有空间层次的体积光、玄墨青暗底（#10282D），以银蓝#B5CADC和灵玉青#68D7B4统一风格；高对比但不刺眼，单一主体占画面约75%，最多背景/主体/强调光三层，构图完整适合48×48显示，边缘清晰自然。纯图形，图标中不添加外框、按键、编号、文字、Logo、水印、伤害数值或冷却蒙层。无胶片颗粒、无杂乱噪声、不过度锐化、不过曝泛光、不过度细节、无血腥、无旧王印和废弃五行克制符号。禁止模仿或复刻其他游戏的现成图标。 技能「月痕」：一枚青银月刃钉在深色敌影脚边，地面形成两道宽阔交叉银青约束纹链与一个小而明确的束缚定点；重点是停滞、月痕和拘束，不是纯攻击双刀。 单独生成这一项，不拼图，不混入其他七种技能。",
+      "assetName": "T_DBA_Rabbit_S07_LunarBind_V6",
+      "masterFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Rabbit_S07_LunarBind_V6_Master_2048.png",
+      "review64Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/64/T_DBA_Rabbit_S07_LunarBind_V6_64.png",
+      "runtime48Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/48/T_DBA_Rabbit_S07_LunarBind_V6_48.png",
+      "engineAssetFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_S07_LunarBind_V6.uasset",
+      "softObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_S07_LunarBind_V6.T_DBA_Rabbit_S07_LunarBind_V6",
+      "candidateCount": 3,
+      "selectedCandidate": "C",
+      "masterSha256": "e465409747a0d9db178071a6d593451005739c758a3464519f73089da1ab0b1c",
+      "png64Sha256": "9eb5f04fca82822c231f87e836800f5b00b78081bd2f2b39556152fc6294fafc",
+      "png48Sha256": "c7098b25dbd7d24f65c60f39b5b3693c58c4e63f6be7b9bc0d310b77797de302",
+      "engineAssetSha256": null,
+      "artReviewStatus": "CURATOR_PROVISIONAL_NOT_HUMAN_APPROVED",
+      "sourceVerified": true,
+      "png64Verified": true,
+      "png48Verified": true,
+      "engineTextureVerified": false,
+      "uiProfileMappedVerified": false,
+      "realHudVerified": false,
+      "candidatePreviewMaster": "ProvisionalMasters_1024/T_DBA_Rabbit_S07_LunarBind_V6_ProvisionalMaster_1024.png",
+      "review64LocalFile": "Review_64/T_DBA_Rabbit_S07_LunarBind_V6_64.png",
+      "runtime48LocalFile": "Runtime_48/T_DBA_Rabbit_S07_LunarBind_V6_48.png"
+    },
+    {
+      "order": 8,
+      "slotId": "Slot7",
+      "roleZh": "特色",
+      "abilityId": "dba.ability.rabbit_eight_jade_heal@1",
+      "displayNameV6ProposalZh": "月影",
+      "currentApprovedV5NameZh": "回春露",
+      "nameChangeRequiresReview": true,
+      "v6MechanismZh": "生成可受击的短暂月影残像；攻击残像的敌人暴露，非旧版友军治疗。",
+      "distinctVisualAnchorZh": "一实一虚的双兔耳剪影，错位和透明度是识别中心；不画复杂人物全身。",
+      "artDirectionZh": "前方一个清晰发光的玉兔耳战士肩部与长耳简化轮廓，侧后方另一个虚化半透明同形月影残像，两个剪影错位，残像边缘柔和分裂，冷暖光比鲜明；绝不出现治疗药瓶或心形。",
+      "generationPromptZh": "《神兽联盟》SSLM卯兔·踏月玉灵 V6 原创技能图标。独立正方形高级奇幻游戏技能图标、东方神话电影级数字绘画、真实温润抛光半透明青玉、清晰月白能量、浅粉桃花辅助色、细腻柔和主光和边缘光、具有空间层次的体积光、玄墨青暗底（#10282D），以银蓝#B5CADC和灵玉青#68D7B4统一风格；高对比但不刺眼，单一主体占画面约75%，最多背景/主体/强调光三层，构图完整适合48×48显示，边缘清晰自然。纯图形，图标中不添加外框、按键、编号、文字、Logo、水印、伤害数值或冷却蒙层。无胶片颗粒、无杂乱噪声、不过度锐化、不过曝泛光、不过度细节、无血腥、无旧王印和废弃五行克制符号。禁止模仿或复刻其他游戏的现成图标。 技能「月影」：前方一个清晰发光的玉兔耳战士肩部与长耳简化轮廓，侧后方另一个虚化半透明同形月影残像，两个剪影错位，残像边缘柔和分裂，冷暖光比鲜明；绝不出现治疗药瓶或心形。 单独生成这一项，不拼图，不混入其他七种技能。",
+      "assetName": "T_DBA_Rabbit_S08_MoonEcho_V6",
+      "masterFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Rabbit_S08_MoonEcho_V6_Master_2048.png",
+      "review64Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/64/T_DBA_Rabbit_S08_MoonEcho_V6_64.png",
+      "runtime48Png": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/SourceArt/UI/SkillIcons/V6/48/T_DBA_Rabbit_S08_MoonEcho_V6_48.png",
+      "engineAssetFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rabbit/Content/UI/Abilities/T_DBA_Rabbit_S08_MoonEcho_V6.uasset",
+      "softObjectPath": "/DBAHeroPack_Rabbit/UI/Abilities/T_DBA_Rabbit_S08_MoonEcho_V6.T_DBA_Rabbit_S08_MoonEcho_V6",
+      "candidateCount": 3,
+      "selectedCandidate": "A",
+      "masterSha256": "e95dbd7775a2b6d94eb40cc24e4dc313d7f6d90df21029bbc936ad30caee7fc3",
+      "png64Sha256": "fb1fd09de95d65176152ce7681b2ee1972dc9f411c14bb66b86d57cc8820f818",
+      "png48Sha256": "5e0f898b032d908e63d66ccf9fdb66231b59c59782d80832bc43824d61c5c83c",
+      "engineAssetSha256": null,
+      "artReviewStatus": "CURATOR_PROVISIONAL_NOT_HUMAN_APPROVED",
+      "sourceVerified": true,
+      "png64Verified": true,
+      "png48Verified": true,
+      "engineTextureVerified": false,
+      "uiProfileMappedVerified": false,
+      "realHudVerified": false,
+      "candidatePreviewMaster": "ProvisionalMasters_1024/T_DBA_Rabbit_S08_MoonEcho_V6_ProvisionalMaster_1024.png",
+      "review64LocalFile": "Review_64/T_DBA_Rabbit_S08_MoonEcho_V6_64.png",
+      "runtime48LocalFile": "Runtime_48/T_DBA_Rabbit_S08_MoonEcho_V6_48.png"
+    }
+  ],
+  "candidateProduction": "original procedural rendered concept sketches; not generative concept art nor human-approved cinematic masters",
+  "candidateFiles": [
+    {
+      "order": 1,
+      "name": "月辉弹",
+      "candidate": "A",
+      "path": "Candidates_1024/Rabbit_S01_A_MoonlightBolt.png",
+      "sha256": "29f29fa6bf2d904ba5092d1c88586a8a184430146fb370ae1d0a43887170f0f3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 1,
+      "name": "月辉弹",
+      "candidate": "B",
+      "path": "Candidates_1024/Rabbit_S01_B_MoonlightBolt.png",
+      "sha256": "a74d2e2173dff4288c4ee53b1cd025b275a8a5aa3c61c34582f8c0e63d27a448",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 1,
+      "name": "月辉弹",
+      "candidate": "C",
+      "path": "Candidates_1024/Rabbit_S01_C_MoonlightBolt.png",
+      "sha256": "862bc181012c2f5acee78ab5142a8c3ca02fa784508fb7830c5708326aa51bc4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 2,
+      "name": "玉刃",
+      "candidate": "A",
+      "path": "Candidates_1024/Rabbit_S02_A_TwinJadeBlades.png",
+      "sha256": "c9d6fd8b6ad6b9c2efe381759d086c4c6c02c1a07a5364851ac8d6f11553b50d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 2,
+      "name": "玉刃",
+      "candidate": "B",
+      "path": "Candidates_1024/Rabbit_S02_B_TwinJadeBlades.png",
+      "sha256": "8745d0fdb15f5b61b4f3e0908aeab043365b57059df59567a283bc85bf5c377d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 2,
+      "name": "玉刃",
+      "candidate": "C",
+      "path": "Candidates_1024/Rabbit_S02_C_TwinJadeBlades.png",
+      "sha256": "a5e3cd8e380d24d866a4de8fb7b8fb5c7403a887d3a8497bb191c33c8f3c88eb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 3,
+      "name": "落英月雨",
+      "candidate": "A",
+      "path": "Candidates_1024/Rabbit_S03_A_PetalMoonRain.png",
+      "sha256": "643aac08f14a8e50417ed9c66c9734d1a4571ab012e2f4ea07a5b4154c1c99a0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 3,
+      "name": "落英月雨",
+      "candidate": "B",
+      "path": "Candidates_1024/Rabbit_S03_B_PetalMoonRain.png",
+      "sha256": "eef893bc97f0f95f6be7365a9e8ca0ad6938f5642c55f8ba1d7abdb0f8967c70",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 3,
+      "name": "落英月雨",
+      "candidate": "C",
+      "path": "Candidates_1024/Rabbit_S03_C_PetalMoonRain.png",
+      "sha256": "2306165194c7dc29712b8fa2f4bc994160458c5557f910a0e2c87b2a1c291887",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 4,
+      "name": "千月回环",
+      "candidate": "A",
+      "path": "Candidates_1024/Rabbit_S04_A_ThousandMoonOrbit.png",
+      "sha256": "b7f3572042c680e3295dee126e3e9e5e053f2e2879553505f6e4b546ecea2c2b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 4,
+      "name": "千月回环",
+      "candidate": "B",
+      "path": "Candidates_1024/Rabbit_S04_B_ThousandMoonOrbit.png",
+      "sha256": "9afb5007c3c5cd0d1618872f1e7d97ba0313ca67728f01fede1abfea4fecf351",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 4,
+      "name": "千月回环",
+      "candidate": "C",
+      "path": "Candidates_1024/Rabbit_S04_C_ThousandMoonOrbit.png",
+      "sha256": "94fa98e6e0c9f755fe0546e005b29d9f93d6435c7e55d1f5e46982c179527dc6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 5,
+      "name": "踏月",
+      "candidate": "A",
+      "path": "Candidates_1024/Rabbit_S05_A_Moonstep.png",
+      "sha256": "db48ed905f6fd4e3c0d88e1eacee5cec17d7a516f249b151068d11755dc592ff",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 5,
+      "name": "踏月",
+      "candidate": "B",
+      "path": "Candidates_1024/Rabbit_S05_B_Moonstep.png",
+      "sha256": "956c5cb6f656a694a57d61b468088ba92095037203451d6e67406670ae7f7852",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 5,
+      "name": "踏月",
+      "candidate": "C",
+      "path": "Candidates_1024/Rabbit_S05_C_Moonstep.png",
+      "sha256": "c4a12fb18a4f7f7941ff43976b9e449b3c190ca39c331d18e2376f7ef1f73c75",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 6,
+      "name": "回月",
+      "candidate": "A",
+      "path": "Candidates_1024/Rabbit_S06_A_MoonRecall.png",
+      "sha256": "85a777cef114cd25eac4224c5e986d304a8ed7f3b7a047b64bd4b7c43bc999d3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 6,
+      "name": "回月",
+      "candidate": "B",
+      "path": "Candidates_1024/Rabbit_S06_B_MoonRecall.png",
+      "sha256": "9f8a9bae4e3af74f8568d430449b9efe4ef9896e3f591bf9526ce1df45f9c553",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 6,
+      "name": "回月",
+      "candidate": "C",
+      "path": "Candidates_1024/Rabbit_S06_C_MoonRecall.png",
+      "sha256": "e5114ced9218911aecc2577b444edc29c8eaee2f2aed36d17d716422a3f2bda0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 7,
+      "name": "月痕",
+      "candidate": "A",
+      "path": "Candidates_1024/Rabbit_S07_A_LunarBind.png",
+      "sha256": "53040646149392a69ca485203f67ab5558e48ba1c412d1c9143350646fb320c3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 7,
+      "name": "月痕",
+      "candidate": "B",
+      "path": "Candidates_1024/Rabbit_S07_B_LunarBind.png",
+      "sha256": "27b3f406a9decaf8e050476cb23d420f0aed4edff58596631b1ff36e94c487a2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 7,
+      "name": "月痕",
+      "candidate": "C",
+      "path": "Candidates_1024/Rabbit_S07_C_LunarBind.png",
+      "sha256": "e465409747a0d9db178071a6d593451005739c758a3464519f73089da1ab0b1c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 8,
+      "name": "月影",
+      "candidate": "A",
+      "path": "Candidates_1024/Rabbit_S08_A_MoonEcho.png",
+      "sha256": "e95dbd7775a2b6d94eb40cc24e4dc313d7f6d90df21029bbc936ad30caee7fc3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 8,
+      "name": "月影",
+      "candidate": "B",
+      "path": "Candidates_1024/Rabbit_S08_B_MoonEcho.png",
+      "sha256": "458159294e5bf6cc04bc426e41306accac38aeb9ac71d44b4bf2a49df56422e2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "order": 8,
+      "name": "月影",
+      "candidate": "C",
+      "path": "Candidates_1024/Rabbit_S08_C_MoonEcho.png",
+      "sha256": "51e55456a23c490cd00515d5f7d3e6cd54a8b29010dc6dd4f267caf65324f0c7",
+      "size": [
+        1024,
+        1024
+      ]
+    }
+  ],
+  "approvedByHuman": false,
+  "productionChangesMade": 0,
+  "hasNewUETextures": false
+}

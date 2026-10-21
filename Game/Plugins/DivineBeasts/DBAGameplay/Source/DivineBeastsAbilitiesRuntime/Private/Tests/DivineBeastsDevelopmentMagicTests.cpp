@@ -82,7 +82,7 @@ enum class EScenario : uint8
 {
     AssetContracts, GameplayEffects, Burst, Cancel, StaleSource, CommitAvatarSwap,
     SpawnSuccessor, SpawnStaleSource, ZeroMomentum, FreshSpawnInput,
-    TargetSelectionSwitch, TargetDestroyedGC, TargetAvatarChanged, Healing, FrostboltWindup
+    TargetSelectionSwitch, TargetDestroyedGC, TargetAvatarChanged, Healing, FrostboltWindup, TargetRange
 };
 
 /** 来自真实 Actor 事件的只读证据；弱引用不延长弹体寿命，终态快照允许销毁后继续审计。 */
@@ -167,6 +167,8 @@ public:
             if (Scenario == EScenario::GameplayEffects) { CheckGameplayEffects(); return true; }
             if (Scenario == EScenario::FreshSpawnInput) { CheckFreshSpawnInput(); return true; }
             if (Scenario == EScenario::Healing) { CheckPrimaryHealing(); return true; }
+            if (Scenario == EScenario::TargetRange)
+            { bCastStarted = BeginSelectedTargetRange(); return !bCastStarted; }
             if (Scenario == EScenario::FrostboltWindup)
             { bCastStarted = BeginFrostboltWindup(); return !bCastStarted; }
             if (!BeginRealActivation()) { return true; }
@@ -175,6 +177,12 @@ public:
         }
         World->Tick(LEVELTICK_All, 0.05f);
         ++FlightFrames;
+        if (Scenario == EScenario::TargetRange)
+        {
+            // TimerManager按真实引擎帧去重；不能在同一Automation帧内循环Tick伪造0.6秒连发。
+            if (FlightFrames < 12) return false;
+            CheckSelectedTargetRangeTerminal(); return true;
+        }
         if (Scenario == EScenario::FrostboltWindup) { return CheckFrostboltWindupFrame(); }
         if (Scenario == EScenario::Burst)
         {
@@ -294,7 +302,7 @@ private:
             bValid &= Test->TestEqual(Label + TEXT("一次提交弹数"), Definition->ProjectileCount, Expected.Count);
             bValid &= Test->TestEqual(Label + TEXT("连发间隔秒"), Definition->ProjectileIntervalSeconds, Expected.Interval);
             bValid &= Test->TestEqual(Label + TEXT("速度厘米每秒"), Definition->ProjectileMotion.SpeedCmPerSecond, Expected.Speed);
-            bValid &= Test->TestEqual(Label + TEXT("轴向射程厘米"), Definition->ProjectileMotion.RangeCm, 2000.f);
+            bValid &= Test->TestEqual(Label + TEXT("最远施放距离50米"), Definition->ProjectileMotion.RangeCm, 5000.f);
             bValid &= Test->TestEqual(Label + TEXT("螺旋半径厘米"), Definition->ProjectileMotion.HelixRadiusCm, Expected.HelixRadius);
             bValid &= Test->TestEqual(Label + TEXT("螺旋频率转每秒"), Definition->ProjectileMotion.HelixTurnsPerSecond, Expected.HelixTurns);
             FDivineBeastsAbilityBalanceRow Balance; FString Error;
@@ -305,7 +313,7 @@ private:
             bValid &= Test->TestEqual(Label + TEXT("法术伤害类型"), Balance.DamageType, EGamePlatformDamageType::Magic);
             bValid &= Test->TestEqual(Label + TEXT("气势成本"), Balance.MomentumCost, Expected.Cost);
             bValid &= Test->TestEqual(Label + TEXT("冷却秒"), Balance.CooldownSeconds, Expected.Cooldown);
-            bValid &= Test->TestEqual(Label + TEXT("数值表射程厘米"), Balance.CastRangeCm, 2000.f);
+            bValid &= Test->TestEqual(Label + TEXT("数值表最远距离50米"), Balance.CastRangeCm, 5000.f);
             bValid &= Test->TestFalse(Label + TEXT("拒绝零级"), Definition->TryGetLoadedBalance(0, Balance, Error));
             bValid &= Test->TestFalse(Label + TEXT("拒绝未制作的第二级"), Definition->TryGetLoadedBalance(2, Balance, Error));
             bValid &= Test->TestNull(Label + TEXT("法术通过原生GAS无成本路径"), Ability->GetCostGameplayEffect());
@@ -747,6 +755,44 @@ private:
             FrozenTarget.Get(), Combat->GetCombatAvatarGeneration(), TargetCombat->GetCombatAvatarGeneration()));
     }
 
+    /** 实际GAS分别验证50米外不Commit/不出弹、50米边界可施法；开发和正式占位GA共用夹具，不能只查表。 */
+    bool BeginSelectedTargetRange()
+    {
+        auto* Eligibility = Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>();
+        if (!Eligibility) { Test->AddError(TEXT("缺少真实资格组件")); return false; }
+        Eligibility->SetServerPlayerActive(true);
+        if (!FillMomentum() || !InitializeBurstTargets()) return false;
+        UClass* AbilityClass = bUsePlaceholder ? PlaceholderArcaneClass : AbilityClasses[2];
+        AbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, Pawn.Get()));
+        CommitHandle = ASC->AbilityCommittedCallbacks.AddLambda([this](UGameplayAbility* Ability)
+        { if (Ability->GetCurrentAbilitySpecHandle() == AbilityHandle) ++CommitCount; });
+        SpawnHandle = Instance->GetWorld()->AddOnActorSpawnedHandler(
+            FOnActorSpawned::FDelegate::CreateRaw(this, &FRealMagicCommand::ObserveProjectile));
+        auto* Combat = Pawn->GetGamePlatformCombatComponent();
+        const FVector Center = Combat->GetCombatTargetPoint();
+        FrozenTarget->SetActorLocation(Center + FVector(0, 5000.1, 0));
+        ASC->TryActivateAbility(AbilityHandle, false); // GAS可接纳调用后由服务器技能取消，不能只断言TryActivate返回值。
+        Test->TestEqual(TEXT("超过50米的已选目标不消耗冷却Commit"), CommitCount, 0);
+        Test->TestEqual(TEXT("超过50米不能丢失目标后改成直射"), Projectiles.Num(), 0);
+        FrozenTarget->SetActorLocation(Center + FVector(0, 5000, 0));
+        Test->TestTrue(TEXT("50米边界真实GAS仍可施法"), ASC->TryActivateAbility(AbilityHandle, false));
+        Test->TestEqual(TEXT("合法目标只Commit一次"), CommitCount, 1);
+        Test->TestEqual(TEXT("边界首枚真实释放"), Projectiles.Num(), 1);
+        return true;
+    }
+
+    /** 跨12个真实帧后检查实际Timer连发及飞行位置；不手改GFrameCounter或能力私有状态。 */
+    void CheckSelectedTargetRangeTerminal()
+    {
+        Test->TestEqual(TEXT("边界完整三发仍冻结原目标"), Projectiles.Num(), 3);
+        for (const auto& Shot : Projectiles)
+        {
+            Test->TestTrue(TEXT("每枚经过服务器初始化而非空壳"), Shot.Facts.bStarted);
+            Test->TestTrue(TEXT("沿角色前向出射后向侧方目标弯曲"), Shot.Actor.IsValid() &&
+                Shot.Actor->GetActorLocation().X > Shot.Origin.X && Shot.Actor->GetActorLocation().Y > Shot.Origin.Y);
+        }
+    }
+
     /** 第一枚已通过真实AuthorityInitialize后才变更外部事实；Destroy后同步完整GC会揭示跨Timer悬空引用。 */
     bool MutateTargetAfterFirstShot()
     {
@@ -1173,6 +1219,24 @@ bool FDivineBeastsPlaceholderFrostboltWindupTest::RunTest(const FString&)
 {
     ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
         DivineBeastsDevelopmentMagicTests::EScenario::FrostboltWindup, true)); return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlaceholderTargetRangeTest,
+    "DivineBeasts.Abilities.Placeholder.ServerGAS.SelectedTargetFiftyMetres",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlaceholderTargetRangeTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::TargetRange, true)); return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentTargetRangeTest,
+    "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.SelectedTargetFiftyMetres",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsDevelopmentTargetRangeTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::TargetRange)); return true;
 }
 
 #endif // WITH_DEV_AUTOMATION_TESTS

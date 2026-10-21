@@ -26,10 +26,10 @@ HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
 SLOTS = (
     ("Primary", "花瓣绽放", "PRIMARY", "SLOT3", 0, 0, 10, 2000, 0, 0, 1, 0),
     ("Passive", "被动技能（占位）", "PASSIVE", "", 0, 0, 0, 0, 0, 0, 1, 0),
-    ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 2000, 1200, 0, 1, 0),
-    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 2000, 1600, 0, 1, 0),
-    ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 2000, 1400, 18, 3, .2),
-    ("DirectedMissile", "定向飞弹", "ACTIVE", "PRIMARY", 40, 0, 2, 2000, 1200, 0, 1, 0),
+    ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 5000, 1200, 0, 1, 0),
+    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 5000, 1600, 0, 1, 0),
+    ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 5000, 1400, 18, 3, .2),
+    ("DirectedMissile", "定向飞弹", "ACTIVE", "PRIMARY", 40, 0, 2, 5000, 1200, 0, 1, 0),
 )
 MAGIC_SLOTS = ("Fireball", "Frostbolt", "ArcaneMissiles", "DirectedMissile")
 COOLDOWNS = ("Primary",) + MAGIC_SLOTS
@@ -534,3 +534,79 @@ if __name__ == "__main__":
     except Exception as error:
         unreal.log_error("SSLM_PLACEHOLDER_AUTHORING_FAILED=" + str(error))
         raise
+
+
+def migrate_attack_range_50m():
+    """Monolith窄迁移：108条攻击数值和对应运动参数改为5000厘米，治疗/被动及其它字段不变。
+
+    只处理三张既有占位/开发表；先检查全部身份并备份原始包，遇到人工不同参数即停止。
+    真正保存由UE完成；冷重载、服务器GAS、Cook和联机验收另行执行，不由本函数宣称通过。
+    """
+    import copy
+    import shutil
+    folder = WORKSPACE / 'Saved/Validation/TargetRange50m20261021'
+    check(Path(unreal.Paths.get_project_file_path()).resolve() == WORKSPACE/'Game/DivineBeastsArena.uproject', '正式工程身份不符')
+    check(not unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages() and
+          not unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages(), '存在未保存人工包，拒绝覆盖')
+    plans, motions, attack_ids = [], [], set()
+    roots = ((ROOT, 'DT_DBA_PlaceholderBalance', 72, 48),
+             (ROOT+'/HotbarFallbacks', 'DT_DBA_PlayableHotbarFallbackBalance', 36, 24),
+             ('/Game/Development/DivineBeasts/Abilities/MagicTests', 'DT_DBA_DevMagicBalance', 36, 36))
+    for base, name, total, attacks in roots:
+        table = unreal.load_asset(base+'/'+name)
+        check(isinstance(table, unreal.DataTable), '数值表缺失 '+name)
+        before = json.loads(unreal.DataTableFunctionLibrary.export_data_table_to_json_string(table))
+        after = copy.deepcopy(before)
+        check(len(before) == total, '数值行数发生作者变化 '+name)
+        count = 0
+        for row in after:
+            if row['BaseDamage'] <= 0: continue
+            check(row['CastRangeCm'] in (2000, 5000), '已有另行设计的射程 '+row['Name'])
+            key = row['Name'].removesuffix('_L1')
+            if 'HotbarFallbacks' in base:
+                hero, slot = key.split('_')
+                path = base+'/GA_DBA_'+hero+'_Hotbar'+slot
+            elif base.startswith('/Game/'):
+                hero, spell = key.split('_')
+                path = base+'/DA_DBA_'+hero+'_Dev'+spell
+            else:
+                hero, _, spell = key.split('_')
+                path = base+'/GA_DBA_'+hero+'_Placeholder'+spell
+            obj = unreal.load_asset(path)
+            check(obj is not None, '运动资产缺失 '+path)
+            is_bp = isinstance(obj, unreal.Blueprint)
+            value = unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(path)) if is_bp else obj
+            motion = value.get_editor_property('ProjectileMotion')
+            check(motion.get_editor_property('RangeCm') == row['CastRangeCm'], '数值和运动范围不一致 '+path)
+            motions.append((path, obj, value, motion, is_bp))
+            attack_ids.add(row['AbilityId']);row['CastRangeCm'] = 5000;count += 1
+        check(count == attacks, '攻击行分类发生变化 '+name)
+        plans.append((table, before, after))
+    check(len(motions) == 108 and len(attack_ids) == 108, '攻击资产身份重复或不完整')
+    # UE挂载点转物理目录仅用于原包备份；禁止用文件工具制作或修改uasset。
+    for obj in [p[0] for p in plans]+[m[1] for m in motions]:
+        package = obj.get_path_name().split('.')[0]
+        relative = ('Game/Content/'+package[len('/Game/'):]+'.uasset') if package.startswith('/Game/') else (
+            'Game/Plugins/DivineBeasts/DBAGameplay/Content/'+package[len('/DBAGameplay/'):]+'.uasset')
+        source = WORKSPACE/relative
+        check(source.is_file(), '真实包备份源缺失 '+relative)
+        dest = folder/'Backup'/relative
+        check(not dest.exists(), '本轮备份已存在，先检查前次迁移结果')
+        dest.parent.mkdir(parents=True, exist_ok=True);shutil.copy2(source, dest)
+    (folder/'RangeAssets.before.json').write_text(json.dumps({t.get_path_name():b for t,b,a in plans},ensure_ascii=False,indent=2),encoding='utf-8')
+    for table, before, after in plans:
+        check(unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(table,json.dumps(after,ensure_ascii=False)), 'UE填表失败')
+        save(table)
+    for path, obj, value, motion, is_bp in motions:
+        motion.set_editor_property('RangeCm',5000.)
+        value.set_editor_property('ProjectileMotion',motion)
+        if is_bp: unreal.BlueprintEditorLibrary.compile_blueprint(obj)
+        save(obj)
+        actual = unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(path)) if is_bp else obj
+        check(actual.get_editor_property('ProjectileMotion').get_editor_property('RangeCm') == 5000, '编译后范围不符 '+path)
+    result = {'Saved':True,'AttackRows':108,'AttackMotionAssets':108,'MaxTargetRangeCm':5000,
+              'PreservedHealingRangeCm':2000,'HumanAccepted':False,'ColdReloadVerified':False,
+              'MotionPaths':[m[0] for m in motions]}
+    (folder/'RangeAssets.saved.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+    print('SSLM_ATTACK_RANGE_SAVED_50M',len(motions))
+    return result

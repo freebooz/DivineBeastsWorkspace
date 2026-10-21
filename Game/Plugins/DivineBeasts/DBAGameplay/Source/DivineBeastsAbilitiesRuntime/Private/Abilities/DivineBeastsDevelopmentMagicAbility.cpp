@@ -34,6 +34,15 @@ void UDivineBeastsDevelopmentMagicAbility::ActivateAbility(FGameplayAbilitySpecH
         !CastWorld || CastWorld->bIsTearingDown || SourceGeneration<=0 ||
         !FMath::IsNearlyEqual(Balance.CastRangeCm, Definition->ProjectileMotion.RangeCm))
     { EndAbility(Handle, ActorInfo, ActivationInfo, true, true); return; }
+    // 与正式占位技能共用选择合同：有意图却超距/失效时在Commit前拒绝，不误作无目标直射。
+    TWeakObjectPtr<AActor> SelectedCastTarget;
+    int32 SelectedSourceGeneration = 0, SelectedTargetGeneration = 0, ValidatedTargetGeneration = 0;
+    const bool bSelectedCastTarget = Combat->GetSelectedProjectileTargetIntent(
+        SelectedCastTarget, SelectedSourceGeneration, SelectedTargetGeneration);
+    if (bSelectedCastTarget && (!SelectedCastTarget.IsValid() || SelectedSourceGeneration != SourceGeneration ||
+        Combat->GetSelectedProjectileTarget(Balance.CastRangeCm, ValidatedTargetGeneration) != SelectedCastTarget.Get() ||
+        ValidatedTargetGeneration != SelectedTargetGeneration))
+    { EndAbility(Handle, ActorInfo, ActivationInfo, true, true); return; }
     const bool bCommitted=CommitAbility(Handle, ActorInfo, ActivationInfo);
     // 原生GAS同步成本/冷却回调可能取消施法；不沿用Commit前资格生成投射物。
     if (CastActivationToken!=ActivationToken || !IsActive()) return;
@@ -43,9 +52,10 @@ void UDivineBeastsDevelopmentMagicAbility::ActivateAbility(FGameplayAbilitySpecH
     CastSpec = {}; CastSpec.Source = Avatar; CastSpec.Magnitude = Balance.BaseDamage;
     CastSpec.DamageType = Balance.DamageType; CastSpec.SourceAbilityId = Balance.AbilityId;
     CastSpec.SourceAvatarGeneration = SourceGeneration;
-    // 只冻结服务器已验证的当前选择；未选/失效/超射程保持直线，不扫描周围敌人。
-    FrozenProjectileTarget=Combat->GetSelectedProjectileTarget(Balance.CastRangeCm,CastSpec.TargetAvatarGeneration);
-    bHadFrozenTarget=FrozenProjectileTarget.IsValid();
+    // 真正未选择才保持原直线；Commit中的外部回调改选不影响这次冻结身份。
+    FrozenProjectileTarget=SelectedCastTarget;
+    CastSpec.TargetAvatarGeneration=SelectedTargetGeneration;
+    bHadFrozenTarget=bSelectedCastTarget;
     CastSpec.Target=nullptr; // Timer之间不持有目标裸/强引用；每枚在释放时从弱身份重新验证。
     Motion = Definition->ProjectileMotion; StyleId = Definition->GetPresentationStyleId();
     RemainingProjectiles = Definition->ProjectileCount; ReleasedProjectiles = 0;
