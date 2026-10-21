@@ -87,6 +87,10 @@ def main():
     require(unreal.SystemLibrary.get_engine_version().startswith('5.8.0'),'引擎版本不符')
     require(MODE in ('inspect','apply','verify','reload'),'未知执行模式')
     plan=json.loads(PLAN.read_text(encoding='utf-8'))
+    # 命令行UE资产目录可能尚未完成异步枚举，先同步刷新本批英雄挂载点。
+    # 仅发现既有原生对象，不创建同英雄第二套Profile或触碰其他内容包。
+    registry=unreal.AssetRegistryHelpers.get_asset_registry()
+    registry.scan_paths_synchronous(['/DBAHeroPack_'+hero['hero']+'/UI/Abilities' for hero in plan['heroes']],force_rescan=True)
     protect()
     checks=[(hero,*inspect_hero(hero,MODE in ('verify','reload'))) for hero in plan['heroes']]
     if MODE=='apply':

@@ -25,7 +25,10 @@ def node(kind,name,x,y,width,height,content=None,style=None):
 
 def difference_hash(image):
     """dHash仅检测需要人工再看的近似图，不定义未经批准的艺术合格阈值。"""
-    data=list(image.convert('L').resize((9,8),Image.Resampling.LANCZOS).get_flattened_data())
+    small=image.convert('L').resize((9,8),Image.Resampling.LANCZOS)
+    # 兼容UE捆绑的Pillow 10.4及较新版本；两种方法均按相同行主序读取像素。
+    pixels=small.get_flattened_data() if hasattr(small,'get_flattened_data') else small.getdata()
+    data=list(pixels)
     return sum(int(data[y*9+x]>data[y*9+x+1])<<(y*8+x) for y in range(8) for x in range(8))
 
 def main():

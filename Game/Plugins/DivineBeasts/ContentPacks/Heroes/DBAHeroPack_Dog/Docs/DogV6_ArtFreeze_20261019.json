@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "projectCode": "SSLM",
+  "heroId": "Hero.Zodiac.Dog",
+  "heroNameZh": "戌狗·守阙天犬",
+  "status": "USER_DIRECTED_V6_ART_ONLY_FREEZE",
+  "createdInResponseTo": "用户2026-10-19七阶段实施请求",
+  "source": "Docs/Design/ZodiacHistoryFirstEightSkillsV6_Review.json",
+  "v5Source": "Docs/Design/ApprovedSkillDisplayNames_V5.json",
+  "productionNameStatus": "V5_CURRENT_UNCHANGED",
+  "gasAuthorizationStatus": "NOT_GRANTED",
+  "passive": {
+    "nameZh": "守阙",
+    "occupiesActiveSlot": false
+  },
+  "slotOrder": [
+    "Primary",
+    "Slot1",
+    "Slot2",
+    "Slot4",
+    "Slot3",
+    "Slot5",
+    "Slot6",
+    "Slot7"
+  ],
+  "notesZh": [
+    "V6当前机制及改名仅冻结美术表现定义，不改变V5生产审批状态。",
+    "稳定AbilityId保留，loyal_heal为历史身份不代表V6治疗效果。",
+    "仍使用既有唯一UIProfile与ViewModel，不创建平行技能系统或授予GAS能力。",
+    "已有V1图标和占位Profile保持原样；新图仅用独立V6命名。",
+    "阶段性1024插值图不是独立原生母版，不能凭尺寸称为美术终版。"
+  ],
+  "skills": [
+    {
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "v6NameZh": "天犬咬",
+      "productionV5NameZh": "天犬咬",
+      "abilityId": "dba.ability.dog_eight_guardian_bite@1",
+      "mechanicsZh": "犬牙正向短咬",
+      "visualAnchorZh": "白金犬牙和单次咬痕",
+      "textureAssetName": "T_DBA_Dog_S01_GuardianBite_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S01_GuardianBite_V6",
+      "png48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S01_GuardianBite_V6.png",
+      "png64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S01_GuardianBite_V6_64x64.png"
+    },
+    {
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "v6NameZh": "反咬",
+      "productionV5NameZh": "护主咬",
+      "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
+      "mechanicsZh": "反击最近攻击誓约友军的敌人并降低其下一击效果",
+      "visualAnchorZh": "回头反咬与攻击回弹",
+      "textureAssetName": "T_DBA_Dog_S02_CounterBite_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S02_CounterBite_V6",
+      "png48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S02_CounterBite_V6.png",
+      "png64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S02_CounterBite_V6_64x64.png"
+    },
+    {
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "v6NameZh": "双灵爪",
+      "productionV5NameZh": "双灵爪",
+      "abilityId": "dba.ability.dog_eight_spirit_rake@1",
+      "mechanicsZh": "双爪连续追击同一敌人，至多两次命中",
+      "visualAnchorZh": "两组交错灵犬爪印",
+      "textureAssetName": "T_DBA_Dog_S03_TwinSpiritClaws_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S03_TwinSpiritClaws_V6",
+      "png48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S03_TwinSpiritClaws_V6.png",
+      "png64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S03_TwinSpiritClaws_V6_64x64.png"
+    },
+    {
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "v6NameZh": "天门守阙",
+      "productionV5NameZh": "天门护",
+      "abilityId": "dba.ability.dog_eight_oath_guardian@1",
+      "mechanicsZh": "受护友军前立可破坏的巨型定向天门拦截冲锋和投射",
+      "visualAnchorZh": "玄金巨门和天犬纹章",
+      "textureAssetName": "T_DBA_Dog_S04_CelestialGateWard_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S04_CelestialGateWard_V6",
+      "png48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S04_CelestialGateWard_V6.png",
+      "png64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S04_CelestialGateWard_V6_64x64.png"
+    },
+    {
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "v6NameZh": "援步",
+      "productionV5NameZh": "援步",
+      "abilityId": "dba.ability.dog_eight_hound_leap@1",
+      "mechanicsZh": "快速援护移动到指定友军合法位置并短时保护",
+      "visualAnchorZh": "飞跃天犬和援护轨迹",
+      "textureAssetName": "T_DBA_Dog_S05_RescueStep_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S05_RescueStep_V6",
+      "png48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S05_RescueStep_V6.png",
+      "png64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S05_RescueStep_V6_64x64.png"
+    },
+    {
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "v6NameZh": "护主",
+      "productionV5NameZh": "护主",
+      "abilityId": "dba.ability.dog_eight_guardian_ring@1",
+      "mechanicsZh": "替誓约友军承担关键伤害且附可破坏门盾",
+      "visualAnchorZh": "天犬正面抵挡与玉金护盾",
+      "textureAssetName": "T_DBA_Dog_S06_ProtectAlly_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S06_ProtectAlly_V6",
+      "png48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S06_ProtectAlly_V6.png",
+      "png64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S06_ProtectAlly_V6_64x64.png"
+    },
+    {
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "v6NameZh": "拦门",
+      "productionV5NameZh": "截冲盾",
+      "abilityId": "dba.ability.dog_eight_tracking_slow@1",
+      "mechanicsZh": "小型门盾截停突进并短暂眩晕",
+      "visualAnchorZh": "竖小门盾和反推冲击波",
+      "textureAssetName": "T_DBA_Dog_S07_ChargeGateBlock_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S07_ChargeGateBlock_V6",
+      "png48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S07_ChargeGateBlock_V6.png",
+      "png64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S07_ChargeGateBlock_V6_64x64.png"
+    },
+    {
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "v6NameZh": "誓约",
+      "productionV5NameZh": "誓愈",
+      "abilityId": "dba.ability.dog_eight_loyal_heal@1",
+      "mechanicsZh": "指定唯一受护友军建立护卫契约并关联反击目标",
+      "visualAnchorZh": "双符印与鎏金守护链接",
+      "textureAssetName": "T_DBA_Dog_S08_GuardianOath_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S08_GuardianOath_V6",
+      "png48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S08_GuardianOath_V6.png",
+      "png64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S08_GuardianOath_V6_64x64.png"
+    }
+  ]
+}

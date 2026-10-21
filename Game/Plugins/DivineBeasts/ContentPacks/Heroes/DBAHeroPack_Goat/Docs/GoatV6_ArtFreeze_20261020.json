@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "heroId": "Hero.Zodiac.Goat",
+  "heroNameZh": "未羊·玉角灵铃",
+  "passive": {
+    "nameZh": "灵愿",
+    "occupiesSlot": false
+  },
+  "source": "Docs/Design/ZodiacHistoryFirstEightSkillsV6_Review.json",
+  "artFreeze": "2026-10-20",
+  "frozenScope": "V6_ART_ONLY",
+  "productionV5NamesUnchanged": true,
+  "artApproval": "PENDING_HUMAN_REVIEW",
+  "gasAuthorization": "NOT_GRANTED",
+  "assetImportStatus": "SOURCE_TRANSFER_BLOCKED",
+  "archiveName": "SSLM_GoatV6_EightSkillIconAssets_20261019.zip",
+  "slotOrder": [
+    "Primary",
+    "Slot1",
+    "Slot2",
+    "Slot4",
+    "Slot3",
+    "Slot5",
+    "Slot6",
+    "Slot7"
+  ],
+  "skills": [
+    {
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.goat_eight_jade_horn@1",
+      "v6DisplayNameZh": "玉角刺",
+      "productionV5NameZh": "玉角刺",
+      "descriptionZh": "玉角灵光短刺命中近处敌人。",
+      "visualAnchorZh": "羊角穿刺",
+      "texturePath": "/DBAHeroPack_Goat/UI/Abilities/V6/Textures/T_DBA_Goat_V6_01_JadeHorn",
+      "sourceFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Original/T_DBA_Goat_V6_01_JadeHorn_Source.png",
+      "png64": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Review64/T_DBA_Goat_V6_01_JadeHorn_64.png",
+      "png48": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Runtime48/T_DBA_Goat_V6_01_JadeHorn_48.png",
+      "sha256": {
+        "source": "0ec7990d98448f75a7c2498f26a4cd86efd35c0ea0e252f41bf988e986c4a2b3",
+        "png64": "0bc359628e5ad11a4f8915c6c6a235b3162d8318c6e2f3a775c1a13767a233dd",
+        "png48": "e813a115f0408f30ff8ac0e51adece3a9073ce7f6ec44a12deb22445ad527614"
+      }
+    },
+    {
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.goat_eight_jade_beam@1",
+      "v6DisplayNameZh": "净光",
+      "productionV5NameZh": "引锋光",
+      "descriptionZh": "净玉光命中敌人造成轻伤、命中有效友军则微量治疗；敌友双模式必须互斥判定。",
+      "visualAnchorZh": "净玉光束",
+      "texturePath": "/DBAHeroPack_Goat/UI/Abilities/V6/Textures/T_DBA_Goat_V6_02_PureJadeLight",
+      "sourceFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Original/T_DBA_Goat_V6_02_PureJadeLight_Source.png",
+      "png64": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Review64/T_DBA_Goat_V6_02_PureJadeLight_64.png",
+      "png48": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Runtime48/T_DBA_Goat_V6_02_PureJadeLight_48.png",
+      "sha256": {
+        "source": "eab125bad2cefe10eb28daebc6b37e1429774e60f209c4c2aa60301c77edde6c",
+        "png64": "e5279f3bbfc6e253d66b354abc6b718ab5f7b29fb6c13eb6f5bcbba49fe15309",
+        "png48": "fb7aa576cdeeed095653941961050ab2acb06996abaa5db9116ab1f3fb98b749"
+      }
+    },
+    {
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.goat_eight_rune_ring@1",
+      "v6DisplayNameZh": "玉符环",
+      "productionV5NameZh": "玉符环",
+      "descriptionZh": "在指定点激活玉符环，产生一次区域伤害波纹。",
+      "visualAnchorZh": "俯视玉符法环",
+      "texturePath": "/DBAHeroPack_Goat/UI/Abilities/V6/Textures/T_DBA_Goat_V6_03_JadeSigilRing",
+      "sourceFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Original/T_DBA_Goat_V6_03_JadeSigilRing_Source.png",
+      "png64": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Review64/T_DBA_Goat_V6_03_JadeSigilRing_64.png",
+      "png48": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Runtime48/T_DBA_Goat_V6_03_JadeSigilRing_48.png",
+      "sha256": {
+        "source": "6d645f7c5b3cf6b82df47a56e8228a7dfeeaf6146f8f2049a40cf6093ce5197b",
+        "png64": "d5502144a61f0e53ecef993d543de89beb5ab0bd6992c0e81dbf9eabaf25ab88",
+        "png48": "81a06400b631663b5cef3b12d013b3ac8c79162a80604e926373bddb193f1d0a"
+      }
+    },
+    {
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.goat_eight_sanctuary_dome@1",
+      "v6DisplayNameZh": "万愿归铃",
+      "productionV5NameZh": "护愿铃",
+      "descriptionZh": "摇响群体灵铃，持续有限治疗、短护盾及轻控制净化；敌方仅受软压制。",
+      "visualAnchorZh": "大型灵铃守护领域",
+      "texturePath": "/DBAHeroPack_Goat/UI/Abilities/V6/Textures/T_DBA_Goat_V6_04_GreatWishBell",
+      "sourceFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Original/T_DBA_Goat_V6_04_GreatWishBell_Source.png",
+      "png64": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Review64/T_DBA_Goat_V6_04_GreatWishBell_64.png",
+      "png48": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Runtime48/T_DBA_Goat_V6_04_GreatWishBell_48.png",
+      "sha256": {
+        "source": "df27c98e13cd10dfa31e20a41276f76a1914dccecc90cdcebab6e7830f163f3f",
+        "png64": "a5c2c763de237f44519288f04a56ef7aa9c90c2667140b6c13b3565445a0eed0",
+        "png48": "7da79590ee5f1314a880c2001b48d197e5306bdbe7d046e22f3b5a30cb60c327"
+      }
+    },
+    {
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.goat_eight_light_hoof@1",
+      "v6DisplayNameZh": "铃步",
+      "productionV5NameZh": "铃步",
+      "descriptionZh": "向合法低血友军短距铃步并给少量落点治疗。",
+      "visualAnchorZh": "铃步流光落点",
+      "texturePath": "/DBAHeroPack_Goat/UI/Abilities/V6/Textures/T_DBA_Goat_V6_05_BellStep",
+      "sourceFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Original/T_DBA_Goat_V6_05_BellStep_Source.png",
+      "png64": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Review64/T_DBA_Goat_V6_05_BellStep_64.png",
+      "png48": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Runtime48/T_DBA_Goat_V6_05_BellStep_48.png",
+      "sha256": {
+        "source": "c40e38420bd395e18fc6878d52d676b0c8b9f6bc7f14ab5f419ae9e523fc09e2",
+        "png64": "e04789ce4b53c05373ec590f57d232d75db25088cdfd03507b21b6b2932e0af8",
+        "png48": "aa4f44e3f08b33954c03498ed4b515522695951eed34383b003b6b81bf8effe0"
+      }
+    },
+    {
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.goat_eight_jade_barrier@1",
+      "v6DisplayNameZh": "守愿",
+      "productionV5NameZh": "守愿",
+      "descriptionZh": "提前守愿：仅一次阻止受护者致命伤害并给弱盾，触发后进入长冷却；免死机制另审。",
+      "visualAnchorZh": "双羊角护盾",
+      "texturePath": "/DBAHeroPack_Goat/UI/Abilities/V6/Textures/T_DBA_Goat_V6_06_GuardianWish",
+      "sourceFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Original/T_DBA_Goat_V6_06_GuardianWish_Source.png",
+      "png64": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Review64/T_DBA_Goat_V6_06_GuardianWish_64.png",
+      "png48": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Runtime48/T_DBA_Goat_V6_06_GuardianWish_48.png",
+      "sha256": {
+        "source": "e1929d7aa961928eb21603076708351e20208f0369113b8cf58eec5c3e9cfcaa",
+        "png64": "f2d2da3cff899380825deb57738a1f38cbde8585967b59ddecdfb9c4697a08fa",
+        "png48": "f5b9719d8aa40e90e2abdad834b12d48e09bdd2469d6a1a461ff08df19201d4d"
+      }
+    },
+    {
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.goat_eight_jade_bind@1",
+      "v6DisplayNameZh": "安魂",
+      "productionV5NameZh": "缓铃",
+      "descriptionZh": "安魂铃声减慢敌人并削弱其下一次爆发，偏守护型软控。",
+      "visualAnchorZh": "铃声压制紫能量",
+      "texturePath": "/DBAHeroPack_Goat/UI/Abilities/V6/Textures/T_DBA_Goat_V6_07_SoulCalmBell",
+      "sourceFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Original/T_DBA_Goat_V6_07_SoulCalmBell_Source.png",
+      "png64": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Review64/T_DBA_Goat_V6_07_SoulCalmBell_64.png",
+      "png48": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Runtime48/T_DBA_Goat_V6_07_SoulCalmBell_48.png",
+      "sha256": {
+        "source": "1d720dd098844244e55b673a167ffdf62a2bcc220a21ec532ea5ebc10d887ba5",
+        "png64": "8214189b756b882d919067f292589ca7112885705b911e757f249282eebd9b66",
+        "png48": "cda0ed9e8a746eb8109d31fcd4105323241e0a081703feb784d3e047883c7329"
+      }
+    },
+    {
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.goat_eight_healing_dew@1",
+      "v6DisplayNameZh": "铃印",
+      "productionV5NameZh": "回春铃",
+      "descriptionZh": "为友军施加短祈愿符提高下一次治疗并净化一次轻控；不是直接治疗回血技。",
+      "visualAnchorZh": "竖立祈愿玉符铃印",
+      "texturePath": "/DBAHeroPack_Goat/UI/Abilities/V6/Textures/T_DBA_Goat_V6_08_BlessingSeal",
+      "sourceFile": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Original/T_DBA_Goat_V6_08_BlessingSeal_Source.png",
+      "png64": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Review64/T_DBA_Goat_V6_08_BlessingSeal_64.png",
+      "png48": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/SourceArt/UI/SkillIcons/V6/Runtime48/T_DBA_Goat_V6_08_BlessingSeal_48.png",
+      "sha256": {
+        "source": "1f6483a214efff9e37957c45c7be12f03bf55045b07ae2d0c8e56db50d8d7100",
+        "png64": "c880bed1b86032d85887ba8f229e9e39cb85f3f7a4508f91a6b07f6736a1a54a",
+        "png48": "3607a5c51ab389010631a69c05a93a4e0890032f4b7b99aa10797cce45bcf198"
+      }
+    }
+  ],
+  "notesZh": [
+    "本文件只冻结八个技能的展示和配图合同，正式技能名称当前仍以V5授权为准。",
+    "归档包内真实PNG尚未成功传入Windows工作区，不能标记原生Texture2D已导入。",
+    "正确来源应有8张1254源图、8张64审核图和8张48运行图，逐一校验SHA。",
+    "玉角刺和净光在48像素下近似，须人工美术复核。",
+    "只读美术预览不创建可施法GAS授予或私自修改服务器技能数据。"
+  ]
+}

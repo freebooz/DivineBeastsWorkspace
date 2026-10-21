@@ -70,7 +70,15 @@ def main():
     require(controller is not None,'缺少本地预览控制器')
     data=state()
     if MODE=='show':
-        require(HERO in ['Rat','Tiger','Snake','Ox','Dragon'],'未核验英雄')
+        require(HERO in ['Rat','Tiger','Snake','Ox','Dragon','Dog'],'不在技能图标审核支持范围')
+        # 戌狗仅在八张真实原生纹理及独立审核Widget均存在后才允许加入只读HUD。
+        if HERO == 'Dog':
+            frozen = json.loads((ROOT/'Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/Docs/DogV6_ArtFreeze_20261019.json').read_text(encoding='utf-8'))
+            library = unreal.EditorAssetLibrary
+            require(len(frozen['skills']) == 8 and all(library.does_asset_exist(item['texturePath']) for item in frozen['skills']),
+                    '戌狗V6八张真实纹理尚未导入，不得启动只读HUD审核')
+            require(library.does_asset_exist('/DBAHeroPack_Dog/UI/Review/WBP_DBA_Dog_SkillIconReviewV6'),
+                    '戌狗原生审核Widget尚未创建')
         # Standalone仍会生成前端根布局；只在本次只读审查中暂时隐藏，结束恢复，不提交登录。
         if 'hiddenRoots' not in data:
             roots=unreal.WidgetLibrary.get_all_widgets_of_class(value,unreal.UserWidget,True)
