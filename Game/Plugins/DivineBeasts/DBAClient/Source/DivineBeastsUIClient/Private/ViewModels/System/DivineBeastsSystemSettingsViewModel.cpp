@@ -1,9 +1,10 @@
-// 项目设置ViewModel只调用平台设备接口；保存、参数校验和预览原值均由GamePlatformSettings唯一拥有。
+// 项目设置ViewModel消费平台设备与SFX接口；各领域唯一拥有持久值，UI只投影并提交命令。
 #include "ViewModels/System/DivineBeastsSystemSettingsViewModel.h"
 #include "DivineBeastsUIClientSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Interfaces/IGamePlatformDeviceSettingsService.h"
+#include "Interfaces/IGamePlatformSFXUserSettingsService.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "HAL/PlatformTime.h"
 
@@ -12,10 +13,24 @@ IGamePlatformDeviceSettingsService* UDivineBeastsSystemSettingsViewModel::GetDev
     auto* GI = SettingsGameInstance.Get();
     return GI ? IGamePlatformDeviceSettingsService::Get(*GI) : nullptr;
 }
+IGamePlatformSFXUserSettingsService* UDivineBeastsSystemSettingsViewModel::GetAudioService() const
+{
+    auto* GI = SettingsGameInstance.Get();
+    return GI ? IGamePlatformSFXUserSettingsService::Get(*GI) : nullptr;
+}
+void UDivineBeastsSystemSettingsViewModel::HandleAudioSettingsChanged(const FGamePlatformSFXUserVolumes& Snapshot, int32 ExpectedPageGeneration)
+{
+    if (!IsPageActive() || GetPageGeneration() != ExpectedPageGeneration) return;
+    AudioSnapshot = Snapshot;
+    MarkStateChanged();
+}
 
 void UDivineBeastsSystemSettingsViewModel::OnPageBegan()
 {
     Super::OnPageBegan();
+    // BeginPage重复进入也不叠加音频订阅；解绑旧来源后再安装新页面代次。
+    if (auto* PreviousAudio = GetAudioService()) PreviousAudio->RemoveChangedHandler(AudioSubscription);
+    AudioSubscription.Reset();
     auto* UIOwner = GetTypedOuter<UDivineBeastsUIClientSubsystem>();
     SettingsGameInstance = UIOwner && UIOwner->GetLocalPlayer() ? UIOwner->GetLocalPlayer()->GetGameInstance() : nullptr;
     auto* Service = GetDeviceService();
@@ -41,16 +56,63 @@ void UDivineBeastsSystemSettingsViewModel::OnPageBegan()
         else Service->Unsubscribe(Subscription);
         if (!Result.IsSuccess()) { bDeviceSettingsAvailable = false; DeviceError = FText::FromString(Result.Message); }
     }
+    auto* Audio = GetAudioService();
+    bAudioSettingsAvailable = Audio != nullptr;
+    AudioSnapshot = {};
+    AudioError = Audio ? FText::GetEmpty() : FText::FromString(TEXT("当前环境暂不支持修改音量。"));
+    if (Audio && IsPageActive())
+    {
+        AudioSnapshot = Audio->GetSnapshot();
+        const int32 ExpectedGeneration = GetPageGeneration();
+        const auto ExpectedGI = SettingsGameInstance;
+        AudioSubscription = Audio->AddChangedHandler(FGamePlatformSFXUserVolumesChanged::FDelegate::CreateWeakLambda(this,
+            [this, ExpectedGeneration, ExpectedGI](const auto& Snapshot)
+            {
+                if (SettingsGameInstance == ExpectedGI) HandleAudioSettingsChanged(Snapshot, ExpectedGeneration);
+            }));
+    }
     if (IsPageActive()) MarkStateChanged();
 }
 
 void UDivineBeastsSystemSettingsViewModel::OnPageEnded()
 {
+    if (auto* Audio = GetAudioService())
+    {
+        Audio->RemoveChangedHandler(AudioSubscription);
+        // 键盘调整未经历鼠标CaptureEnd时也保存；音量独立于需要回滚的显示预览。
+        const auto Result = Audio->CommitVolumes();
+        if (!Result.IsSuccess()) UE_LOG(LogTemp, Warning, TEXT("[DBA UI] Audio settings save failed: %s"), *Result.Code.ToString());
+    }
+    AudioSubscription.Reset();
+    bAudioSettingsAvailable = false;
     if (auto* Service = GetDeviceService()) Service->Unsubscribe(DeviceSubscription);
     DeviceSubscription = {};
     if (bCommandInProgress) bCleanupAfterCommand = true;
     else CleanupDeviceSettings();
     Super::OnPageEnded();
+}
+
+bool UDivineBeastsSystemSettingsViewModel::SetAudioVolume(EGamePlatformSFXSoundGroup Group, float Value)
+{
+    auto* Service = GetAudioService();
+    if (!IsPageActive() || !Service) return false;
+    const int32 CommandGeneration = GetPageGeneration();
+    const auto Result = Service->SetVolume(Group, Value);
+    if (!IsPageActive() || GetPageGeneration() != CommandGeneration) return false;
+    AudioError = Result.IsSuccess() ? FText::GetEmpty() : FText::FromString(Result.Message);
+    if (IsPageActive()) MarkStateChanged();
+    return Result.IsSuccess();
+}
+bool UDivineBeastsSystemSettingsViewModel::SaveAudioVolumes()
+{
+    auto* Service = GetAudioService();
+    if (!IsPageActive() || !Service) return false;
+    const int32 CommandGeneration = GetPageGeneration();
+    const auto Result = Service->CommitVolumes();
+    if (!IsPageActive() || GetPageGeneration() != CommandGeneration) return false;
+    AudioError = Result.IsSuccess() ? FText::GetEmpty() : FText::FromString(Result.Message);
+    if (IsPageActive()) MarkStateChanged();
+    return Result.IsSuccess();
 }
 
 bool UDivineBeastsSystemSettingsViewModel::PublishResult(const FGamePlatformResult& Result)

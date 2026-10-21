@@ -87,3 +87,22 @@ def import_preview(skills):
         tex.set_editor_property("srgb",True)
         check(lib.save_loaded_asset(tex,only_if_is_dirty=False),"Texture2D保存失败："+pkg)
     return verify_native_textures(skills)
+
+def main():
+    """依照操作模式进行真实纹理导入或检查，留存独立原生证据。"""
+    check(MODE in ('inspect', 'import_preview', 'verify'), '操作模式不受支持')
+    freeze, plan = read_inputs()
+    if MODE == 'import_preview':
+        passed = import_preview(freeze['skills'])
+    else:
+        passed = verify_native_textures(freeze['skills'])
+    OUT.mkdir(parents=True, exist_ok=True)
+    result = {'heroId':'Hero.Zodiac.Goat', 'mode':MODE, 'textures':passed,
+              'profileBound':False, 'hudVerified':False, 'gasGranted':False}
+    (OUT / ('GoatV6_' + MODE + '.json')).write_text(
+        json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+    print(json.dumps(result, ensure_ascii=False))
+
+
+if __name__ == '__main__':
+    main()

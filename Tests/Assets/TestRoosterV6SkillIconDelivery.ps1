@@ -40,8 +40,9 @@ try{
             try{$stream.CopyTo($ms);$bytes=$ms.ToArray()}
             finally{$stream.Dispose();$ms.Dispose()}
             if($bytes.Length -lt 24 -or $bytes[0] -ne 137 -or $bytes[1] -ne 80 -or $bytes[2] -ne 78 -or $bytes[3] -ne 71){throw ('非PNG图像：'+$relative)}
-            $width=($bytes[16] -shl 24) -bor ($bytes[17] -shl 16) -bor ($bytes[18] -shl 8) -bor $bytes[19]
-            $height=($bytes[20] -shl 24) -bor ($bytes[21] -shl 16) -bor ($bytes[22] -shl 8) -bor $bytes[23]
+            # byte移位仍返回byte，会截断1254等大于255的尺寸；先提升为32位整数读取PNG大端字段。
+            $width=([int]$bytes[16] -shl 24) -bor ([int]$bytes[17] -shl 16) -bor ([int]$bytes[18] -shl 8) -bor [int]$bytes[19]
+            $height=([int]$bytes[20] -shl 24) -bor ([int]$bytes[21] -shl 16) -bor ([int]$bytes[22] -shl 8) -bor [int]$bytes[23]
             if($width -ne $expected -or $height -ne $expected){throw ('分辨率错误：'+$relative)}
             if($expected -eq 48){
                 $sha=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()

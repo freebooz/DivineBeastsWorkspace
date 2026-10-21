@@ -432,5 +432,59 @@
     "EvidenceDirectory": "Saved/Validation/HotbarHeroIcons20261021",
     "NativeAndCookEvidenceDirectory": "Saved/Validation/HotbarRespawn20261021",
     "RuntimeHUDAndHumanAcceptance": "PendingSeparateVerification"
+  },
+  "RoosterV6Imported20261021": {
+    "sourceWrapper": "SSLM_85E9A1V6_UE5.8_AFE5A589E88C8C%85.zip",
+    "innerArchiveSHA256": "e20c8c3408de67766c0e9983567031ebf8061c63024f924db5fd207699c4a7e6",
+    "monolithVersion": "0.23.0",
+    "engineVersion": "5.8.0",
+    "nativeRuntime48": 8,
+    "nativeReview64": 8,
+    "reviewWidget": "/DBAHeroPack_Rooster/UI/Review/WBP_DBA_Rooster_SkillIconReviewV6",
+    "widgetParent": "/Script/GamePlatformUIClient.GamePlatformComponentWidget",
+    "compileErrors": 0,
+    "compileWarnings": 0,
+    "savedAndReloaded": true,
+    "sourcePixelComparison": {
+      "passed": true,
+      "textures": 16
+    },
+    "profilePath": "/DBAHeroPack_Rooster/UI/Abilities/DA_DBA_Rooster_PlaceholderUIProfile",
+    "profileEntryCount": 14,
+    "oldMetadataPreserved": 9,
+    "authorizedHotbarSlotsMapped": 8,
+    "gameplayAuthorizationChanged": false,
+    "oldV1TexturesPreserved": true,
+    "sourcePNGs": 24,
+    "nativeAssets": [
+      "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_01_GoldenPeck",
+      "/DBAHeroPack_Rooster/UI/Review/V6/Textures/T_DBA_Rooster_V6_01_GoldenPeck_64",
+      "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_02_DawnFan",
+      "/DBAHeroPack_Rooster/UI/Review/V6/Textures/T_DBA_Rooster_V6_02_DawnFan_64",
+      "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_03_MorningWave",
+      "/DBAHeroPack_Rooster/UI/Review/V6/Textures/T_DBA_Rooster_V6_03_MorningWave_64",
+      "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_04_DawnDomain",
+      "/DBAHeroPack_Rooster/UI/Review/V6/Textures/T_DBA_Rooster_V6_04_DawnDomain_64",
+      "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_05_SwiftStep",
+      "/DBAHeroPack_Rooster/UI/Review/V6/Textures/T_DBA_Rooster_V6_05_SwiftStep_64",
+      "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_06_FeatherWard",
+      "/DBAHeroPack_Rooster/UI/Review/V6/Textures/T_DBA_Rooster_V6_06_FeatherWard_64",
+      "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_07_SonicBreak",
+      "/DBAHeroPack_Rooster/UI/Review/V6/Textures/T_DBA_Rooster_V6_07_SonicBreak_64",
+      "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_08_MorningBeacon",
+      "/DBAHeroPack_Rooster/UI/Review/V6/Textures/T_DBA_Rooster_V6_08_MorningBeacon_64"
+    ],
+    "actions": [
+      "UE AssetImportTask via Monolith",
+      "Existing unique Profile augmentation; retain names and descriptions",
+      "Bind current AbilitySet InputTag aliases through existing hotbar tool",
+      "Duplicate shared review layout; replace all hero image references",
+      "Compile/save/reload",
+      "Blocking import audit",
+      "Native PNG export and exact RGBA comparison"
+    ],
+    "verificationEvidence": "Saved/Validation/RoosterV6Import20261021/Delivery.json",
+    "manualArtAccepted": false,
+    "onlineAdmissionVerified": false
   }
 }

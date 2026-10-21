@@ -19,6 +19,10 @@
 
 ## 当前可核验状态
 
+2026-10-21补充：下载目录包装包已收到，内层ZIP SHA与原清单一致。通过Monolith 0.23.0、UE5.8.0创建8张48运行纹理、8张64审核纹理及原生审核Widget，保存重载与16张逐像素RGBA比对通过。现有Profile从9项增补为14项，旧ID/名称/说明保留；3项同ID旧技能仅换图，通过真实AbilitySet的InputTag接上全部8个现有授权槽位。没有授予任何新的V6玩法。
+
+重复执行导入/verify不会覆盖V1。原有`bind`增补策略已适配同ID正式旧名称，旧条目只更新图标；审核页由`Tools/Unreal/UI/FinalizeRoosterV6IconsMonolith.py`制作。后续GPU及离线HUD结果见`Saved/Validation/RoosterV6Import20261021/Delivery.json`，真实联机/人工美术签收单独标注。下列上传阻塞为2026-10-19历史状态，已由本次本机下载包解决。
+
 - ChatGPT对话端8份源图、8份64审核图、8份48运行图及完整ZIP已生成并可下载；尺寸及SHA检查通过。
 - 向HWebCodex调用`import_conversation_files_to_project`接收图片/ZIP时，返回 `host-provided download URL resolves to a non-public address`，因此远程主机并没有收到原图。
 - 本轮已提前制作部署清单与安全导入工具，但没有真实UE纹理、Profile绑定或Village/MainArena截图的验收证据。图片上传成功后才能继续导入，禁止把仅准备脚本误报为已导入。

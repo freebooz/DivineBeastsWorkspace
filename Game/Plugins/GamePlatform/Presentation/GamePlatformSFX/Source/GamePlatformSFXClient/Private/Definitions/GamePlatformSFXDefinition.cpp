@@ -15,6 +15,9 @@ FGamePlatformResult UGamePlatformSFXDefinition::ValidateDefinition() const
             TEXT("SFX Definition必须提供SoundBase软引用。"));
     }
 
+    if (SoundGroup != EGamePlatformSFXSoundGroup::Effects && SoundGroup != EGamePlatformSFXSoundGroup::Ambient && SoundGroup != EGamePlatformSFXSoundGroup::Music)
+        return FGamePlatformResult::Failure(TEXT("SFX.SoundGroupInvalid"), TEXT("SFX Definition必须选择有效的用户混音分组。"));
+
     if (!FMath::IsFinite(VolumeMultiplier) || VolumeMultiplier < 0.0f || VolumeMultiplier > 4.0f ||
         !FMath::IsFinite(PitchMultiplier) || PitchMultiplier < 0.25f || PitchMultiplier > 4.0f ||
         !FMath::IsFinite(FadeInSeconds) || FadeInSeconds < 0.0f || FadeInSeconds > 10.0f ||

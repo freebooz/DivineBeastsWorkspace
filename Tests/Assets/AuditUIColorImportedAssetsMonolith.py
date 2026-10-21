@@ -21,14 +21,28 @@ def main():
     manifest = globals().get("IMPORT_MANIFEST")
     if manifest is None:
         manifest = json.loads(policy.DEFAULT_MANIFEST.read_text(encoding="utf-8-sig"))
+    # 英雄技能图同属第三层项目UI，允许调用方显式声明已登记的纯内容英雄包；默认公共UI边界不变。
+    ui_roots = manifest.get("UIRoots", ["/DBAUIPack_Core/UI/"])
+    if not ui_roots:
+        raise RuntimeError("UI审计目标范围不能为空")
+    for ui_root in ui_roots:
+        if ui_root == "/DBAUIPack_Core/UI/":
+            continue
+        mount = ui_root.split("/")[1] if isinstance(ui_root, str) and ui_root.startswith("/") else ""
+        descriptor = root / "Game/Plugins/DivineBeasts/ContentPacks/Heroes" / mount / (mount + ".uplugin")
+        if not (mount.isascii() and mount.startswith("DBAHeroPack_") and ui_root == "/" + mount + "/UI/" and descriptor.is_file()):
+            raise RuntimeError("目标必须为明确存在的项目英雄UI内容包")
+        plugin = json.loads(descriptor.read_text(encoding="utf-8-sig"))
+        if not plugin.get("CanContainContent") or plugin.get("Modules"):
+            raise RuntimeError("英雄UI目标必须为纯内容包")
     results = []
     for item in manifest["Files"]:
         dest = item["Destination"]
         source = (root / item["Source"]).resolve()
         errors = []
         settings = {}
-        if not dest.startswith("/DBAUIPack_Core/UI/") or not dest.isascii():
-            errors.append("资产目标越过项目公共UI边界")
+        if not any(dest.startswith(ui_root) for ui_root in ui_roots) or not dest.isascii():
+            errors.append("资产目标越过本次明确的项目UI边界")
         else:
             texture = unreal.load_asset(dest)
             if texture is None or texture.get_class().get_name() != "Texture2D":
@@ -51,7 +65,9 @@ def main():
                         "Errors": errors, "Passed": not errors})
     report = {"Project": str(project), "Count": len(results), "Passed": sum(r["Passed"] for r in results),
               "GPUVerified": False, "ClientCookVerified": False, "ManualAcceptance": False, "Results": results}
-    target = root / "Saved/Validation/AnimationHUD/UIColorImportBlockingAudit.json"
+    target = Path(globals().get("AUDIT_OUTPUT", root / "Saved/Validation/AnimationHUD/UIColorImportBlockingAudit.json")).resolve()
+    if not any(target.is_relative_to(base.resolve()) for base in (root / "Saved", root / "Game/Saved")):
+        raise RuntimeError("审计证据路径必须位于本工作空间Saved内")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if report["Passed"] != report["Count"]:

@@ -3,6 +3,7 @@
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/TextBlock.h"
+#include "Components/Slider.h"
 #include "DivineBeastsUIClientSubsystem.h"
 #include "Engine/LocalPlayer.h"
 #include "InputCoreTypes.h"
@@ -20,6 +21,14 @@ void UDivineBeastsDeviceSettingsScreen::NativeOnActivated()
     ConfirmButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleConfirm);
     RevertButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleRevert);
     BackButton->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleBack);
+    EffectsVolumeSlider->OnValueChanged.AddUniqueDynamic(this, &ThisClass::HandleEffectsVolumeChanged);
+    AmbientVolumeSlider->OnValueChanged.AddUniqueDynamic(this, &ThisClass::HandleAmbientVolumeChanged);
+    MusicVolumeSlider->OnValueChanged.AddUniqueDynamic(this, &ThisClass::HandleMusicVolumeChanged);
+    for (USlider* Slider : {EffectsVolumeSlider.Get(), AmbientVolumeSlider.Get(), MusicVolumeSlider.Get()})
+    {
+        Slider->OnMouseCaptureEnd.AddUniqueDynamic(this, &ThisClass::HandleAudioCaptureEnd);
+        Slider->OnControllerCaptureEnd.AddUniqueDynamic(this, &ThisClass::HandleAudioCaptureEnd);
+    }
     RefreshPresentation();
 }
 void UDivineBeastsDeviceSettingsScreen::NativeOnDeactivated()
@@ -28,6 +37,14 @@ void UDivineBeastsDeviceSettingsScreen::NativeOnDeactivated()
     ConfirmButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleConfirm);
     RevertButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleRevert);
     BackButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleBack);
+    EffectsVolumeSlider->OnValueChanged.RemoveDynamic(this, &ThisClass::HandleEffectsVolumeChanged);
+    AmbientVolumeSlider->OnValueChanged.RemoveDynamic(this, &ThisClass::HandleAmbientVolumeChanged);
+    MusicVolumeSlider->OnValueChanged.RemoveDynamic(this, &ThisClass::HandleMusicVolumeChanged);
+    for (USlider* Slider : {EffectsVolumeSlider.Get(), AmbientVolumeSlider.Get(), MusicVolumeSlider.Get()})
+    {
+        Slider->OnMouseCaptureEnd.RemoveDynamic(this, &ThisClass::HandleAudioCaptureEnd);
+        Slider->OnControllerCaptureEnd.RemoveDynamic(this, &ThisClass::HandleAudioCaptureEnd);
+    }
     Super::NativeOnDeactivated(); // 平台EndPage使VM解绑并回滚本页未确认预览。
 }
 void UDivineBeastsDeviceSettingsScreen::OnViewModelStateChanged(int32 Revision, int32 PageGeneration)
@@ -67,6 +84,35 @@ void UDivineBeastsDeviceSettingsScreen::RefreshPresentation()
     RevertButton->SetIsEnabled(Snapshot.bPreviewActive);
     StatusText->SetText(FText::FromString(Snapshot.bPreviewActive ? TEXT("请在15秒内确认；超时或返回将恢复原设置。") : TEXT("调整显示与画质，然后点击应用。")));
     ErrorText->SetText(VM->DeviceError);
+    {
+        const TGuardValue<bool> Presenting(bPresentingAudio, true);
+        const auto PresentVolume = [VM](USlider* Slider, UTextBlock* Text, float Gain)
+        {
+            Slider->SetValue(Gain);
+            Slider->SetIsEnabled(VM->bAudioSettingsAvailable);
+            Text->SetText(FText::FromString(FString::Printf(TEXT("%d%%"), FMath::RoundToInt(Gain * 100.0f))));
+        };
+        PresentVolume(EffectsVolumeSlider, EffectsVolumeText, VM->AudioSnapshot.Effects);
+        PresentVolume(AmbientVolumeSlider, AmbientVolumeText, VM->AudioSnapshot.Ambient);
+        PresentVolume(MusicVolumeSlider, MusicVolumeText, VM->AudioSnapshot.Music);
+    }
+    if (AudioHelpText) AudioHelpText->SetText(VM->AudioError.IsEmpty() ? FText::FromString(TEXT("音量即时生效，自动保存")) : VM->AudioError);
+}
+void UDivineBeastsDeviceSettingsScreen::HandleEffectsVolumeChanged(float Value)
+{
+    if (!bPresentingAudio && IsActivated()) if (auto* VM = SettingsVM()) VM->SetAudioVolume(EGamePlatformSFXSoundGroup::Effects, Value);
+}
+void UDivineBeastsDeviceSettingsScreen::HandleAmbientVolumeChanged(float Value)
+{
+    if (!bPresentingAudio && IsActivated()) if (auto* VM = SettingsVM()) VM->SetAudioVolume(EGamePlatformSFXSoundGroup::Ambient, Value);
+}
+void UDivineBeastsDeviceSettingsScreen::HandleMusicVolumeChanged(float Value)
+{
+    if (!bPresentingAudio && IsActivated()) if (auto* VM = SettingsVM()) VM->SetAudioVolume(EGamePlatformSFXSoundGroup::Music, Value);
+}
+void UDivineBeastsDeviceSettingsScreen::HandleAudioCaptureEnd()
+{
+    if (IsActivated()) if (auto* VM = SettingsVM()) VM->SaveAudioVolumes();
 }
 void UDivineBeastsDeviceSettingsScreen::HandleApply()
 {

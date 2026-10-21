@@ -1,0 +1,83 @@
+{
+  "SchemaVersion": 1,
+  "Plugin": "DBASFXPack_Core",
+  "CreationTool": "Monolith MCP",
+  "Scope": "2026-10-21 existing native sound groups and loop settings only; not a complete historical asset audit",
+  "UserSoundGroups_20261021": {
+    "Tool": "Monolith MCP audio and editor.run_python",
+    "Date": "2026-10-21",
+    "Definitions": [
+      {
+        "asset": "/DBASFXPack_Core/Audio/Music/Definitions/DA_DBA_SFX_Music_Login",
+        "group": "MUSIC"
+      },
+      {
+        "asset": "/DBASFXPack_Core/Audio/Music/Definitions/DA_DBA_SFX_Music_Village",
+        "group": "MUSIC"
+      },
+      {
+        "asset": "/DBASFXPack_Core/Audio/Ambience/Definitions/DA_DBA_SFX_Ambience_Forest",
+        "group": "AMBIENT"
+      },
+      {
+        "asset": "/DBASFXPack_Core/Audio/Library/Ambience/Definitions/DA_DBA_SFX_Ambience_WaterStreamA",
+        "group": "AMBIENT"
+      },
+      {
+        "asset": "/DBASFXPack_Core/Audio/Library/Ambience/Definitions/DA_DBA_SFX_Ambience_WaterStreamB",
+        "group": "AMBIENT"
+      },
+      {
+        "asset": "/DBASFXPack_Core/Audio/Library/Ambience/Definitions/DA_DBA_SFX_Ambience_Birds",
+        "group": "AMBIENT"
+      },
+      {
+        "asset": "/DBASFXPack_Core/Weather/Definitions/DA_DBA_SFX_Weather_Rain",
+        "group": "AMBIENT"
+      },
+      {
+        "asset": "/DBASFXPack_Core/Weather/Definitions/DA_DBA_SFX_Weather_Snow",
+        "group": "AMBIENT"
+      }
+    ],
+    "DefaultOtherDefinitions": "Effects",
+    "LoopVirtualization": [
+      {
+        "sound": "/DBASFXPack_Core/Audio/Ambience/Waves/S_DBA_Ambience_Forest_01.S_DBA_Ambience_Forest_01",
+        "mode": "<VirtualizationMode.PLAY_WHEN_SILENT: 1>"
+      },
+      {
+        "sound": "/DBASFXPack_Core/Audio/Library/Ambience/Waves/S_DBA_Ambience_Birds.S_DBA_Ambience_Birds",
+        "mode": "<VirtualizationMode.PLAY_WHEN_SILENT: 1>"
+      },
+      {
+        "sound": "/DBASFXPack_Core/Audio/Library/Ambience/Waves/S_DBA_Ambience_WaterStreamA.S_DBA_Ambience_WaterStreamA",
+        "mode": "<VirtualizationMode.PLAY_WHEN_SILENT: 1>"
+      },
+      {
+        "sound": "/DBASFXPack_Core/Audio/Library/Ambience/Waves/S_DBA_Ambience_WaterStreamB.S_DBA_Ambience_WaterStreamB",
+        "mode": "<VirtualizationMode.PLAY_WHEN_SILENT: 1>"
+      },
+      {
+        "sound": "/DBASFXPack_Core/Audio/Music/Waves/S_DBA_Music_Login_01.S_DBA_Music_Login_01",
+        "mode": "<VirtualizationMode.PLAY_WHEN_SILENT: 1>"
+      },
+      {
+        "sound": "/DBASFXPack_Core/Audio/Music/Waves/S_DBA_Music_Village_01.S_DBA_Music_Village_01",
+        "mode": "<VirtualizationMode.PLAY_WHEN_SILENT: 1>"
+      },
+      {
+        "sound": "/DBASFXPack_Core/Weather/Audio/SW_DBA_Weather_RainHeavy_Loop.SW_DBA_Weather_RainHeavy_Loop",
+        "mode": "<VirtualizationMode.PLAY_WHEN_SILENT: 1>"
+      },
+      {
+        "sound": "/DBASFXPack_Core/Weather/Audio/SW_DBA_Weather_Wind_Loop.SW_DBA_Weather_Wind_Loop",
+        "mode": "<VirtualizationMode.PLAY_WHEN_SILENT: 1>"
+      }
+    ],
+    "OriginalSoundLogicalIdVolumePitchAndFadePreserved": true,
+    "SavedAndReloaded": true,
+    "Evidence": "Saved/Validation/AudioSettings20261021",
+    "AudiblePlaybackAccepted": false
+  }
+}

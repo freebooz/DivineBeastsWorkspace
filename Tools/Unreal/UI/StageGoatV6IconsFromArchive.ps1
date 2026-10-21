@@ -117,9 +117,11 @@ try {
         hero='Goat';heroId='Hero.Zodiac.Goat';profilePath=$ProfilePath;profileFile=$ProfileFile;entries=$Rows
     })}
     $Plan|ConvertTo-Json -Depth 20|Set-Content -LiteralPath (Join-Path $Evidence 'IntegrationPlan.json') -Encoding UTF8
-    # 既有羊的V1纹理、唯一Profile，以及原有能力合同都必须保持不变；只记录SHA，不复制进源包。
+    # 保护V1纹理不变；唯一Profile允许通用工具在备份后增补只读条目，
+    # 因此不能把允许变化的Profile文件加入操作前后都固定SHA的ProtectedFiles。
+    Assert-True (Test-Path -LiteralPath (Join-Path $Root $ProfileFile) -PathType Leaf) '唯一UIProfile缺失'
     $Protected=[ordered]@{}
-    $ProtectedFiles=@($ProfileFile)+@(Get-ChildItem -LiteralPath (Join-Path $Root "$Pack/Content/UI/Abilities") -File -Filter 'T_DBA_Goat_*_V1.uasset'|ForEach-Object{[IO.Path]::GetRelativePath($Root,$_.FullName).Replace('\','/')})
+    $ProtectedFiles=@(Get-ChildItem -LiteralPath (Join-Path $Root "$Pack/Content/UI/Abilities") -File -Filter 'T_DBA_Goat_*_V1.uasset'|ForEach-Object{[IO.Path]::GetRelativePath($Root,$_.FullName).Replace('\','/')})
     foreach($rel in $ProtectedFiles){$abs=Join-Path $Root $rel;Assert-True (Test-Path $abs) "原有资产缺失：$rel";$Protected[$rel]=Sha-File $abs}
     $Protected|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $Evidence 'ProtectedFiles.json') -Encoding UTF8
     [pscustomobject]@{status='ART_SOURCES_STAGED';pngCount=$Required.Count;profilePlan='Saved/Validation/GoatV6IconImport20261020/IntegrationPlan.json';ueImported=$false;profileModified=$false;hudVerified=$false}|ConvertTo-Json -Compress

@@ -6,6 +6,7 @@
 #include "Components/AudioComponent.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Types/GamePlatformDataLease.h"
+#include "Types/GamePlatformSFXUserSettingsTypes.h"
 #include "GamePlatformSFXWorldSubsystem.generated.h"
 
 class UAudioComponent;
@@ -38,6 +39,7 @@ public:
 
 private:
     friend class FGamePlatformSFXLifecycleRegressionTest;
+    friend class FGamePlatformSFXUserSettingsTest;
     /** 唯一组件起播边界；基础音量、音高与引擎淡入包络各自配置，不持有额外播放器。 */
     static void StartComponentPlayback(UAudioComponent& Component, float TargetVolume,
         float TargetPitch, float FadeInSeconds, float StartTimeSeconds);
@@ -56,10 +58,17 @@ private:
         FGamePlatformDataLease Lease;
         TSet<FName> AllowedFloatParameters;
         float DefaultFadeOutSeconds = 0.0f;
+        /** 保留Definition×Request原始基础音量，用户增益从不回写这里，静音恢复不靠除法。 */
+        float BaseVolume = 1.0f;
+        EGamePlatformSFXSoundGroup SoundGroup = EGamePlatformSFXSoundGroup::Effects;
         bool bStopRequested = false;
     };
 
     bool IsHandleCurrent(const FGamePlatformSFXHandle& Handle) const;
+    void HandleUserVolumesChanged(const FGamePlatformSFXUserVolumes& Volumes);
+    float GetMixedVolume(EGamePlatformSFXSoundGroup Group, float BaseVolume) const;
+    FGamePlatformSFXUserVolumes UserVolumes;
+    FDelegateHandle UserVolumesSubscription;
     void HandleDefinitionLoaded(
         FGamePlatformSFXHandle Handle,
         const FGamePlatformDataLease& Lease,

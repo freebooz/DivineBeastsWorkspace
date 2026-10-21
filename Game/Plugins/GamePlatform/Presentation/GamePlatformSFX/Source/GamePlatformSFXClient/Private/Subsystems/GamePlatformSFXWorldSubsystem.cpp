@@ -10,6 +10,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Interfaces/IGamePlatformDataService.h"
+#include "Interfaces/IGamePlatformSFXUserSettingsService.h"
 #include "AudioDevice.h"
 #include "GameFramework/Actor.h"
 #include "HAL/PlatformTime.h"
@@ -50,12 +51,22 @@ void UGamePlatformSFXWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
     Super::Initialize(Collection);
     bClosing = false;
     Generation = FMath::Max(1, Generation);
+    if (auto* GI = GetWorld()->GetGameInstance())
+        if (auto* Settings = IGamePlatformSFXUserSettingsService::Get(*GI))
+        {
+            UserVolumes = Settings->GetSnapshot();
+            UserVolumesSubscription = Settings->AddChangedHandler(FGamePlatformSFXUserVolumesChanged::FDelegate::CreateUObject(
+                this, &ThisClass::HandleUserVolumesChanged));
+        }
 }
 
 void UGamePlatformSFXWorldSubsystem::Deinitialize()
 {
     if (bClosing) return; // 终态监听可以重入关闭，第一次清理栈负责清理全部自有账本。
     bClosing = true;
+    if (auto* World = GetWorld()) if (auto* GI = World->GetGameInstance())
+        if (auto* Settings = IGamePlatformSFXUserSettingsService::Get(*GI)) Settings->RemoveChangedHandler(UserVolumesSubscription);
+    UserVolumesSubscription.Reset();
     ++Generation;
 
     TArray<FGuid> ActiveIds;
@@ -354,8 +365,24 @@ bool UGamePlatformSFXWorldSubsystem::SetVolumeMultiplier(
         return false;
     }
 
-    Component->SetVolumeMultiplier(Value);
+    Active->BaseVolume = Value;
+    Component->SetVolumeMultiplier(GetMixedVolume(Active->SoundGroup, Active->BaseVolume));
     return true;
+}
+
+float UGamePlatformSFXWorldSubsystem::GetMixedVolume(EGamePlatformSFXSoundGroup Group, float BaseVolume) const
+{
+    return BaseVolume * UserVolumes.GetGain(Group);
+}
+void UGamePlatformSFXWorldSubsystem::HandleUserVolumesChanged(const FGamePlatformSFXUserVolumes& Volumes)
+{
+    check(IsInGameThread());
+    if (bClosing) return;
+    UserVolumes = Volumes;
+    // SetVolumeMultiplier只修改基础增益，不调用Play/FadeIn/AdjustVolume，因此不重启或覆盖引擎淡入/淡出包络。
+    for (auto& Pair : ActiveInstances)
+        if (auto* Component = Pair.Value.Component.Get())
+            Component->SetVolumeMultiplier(GetMixedVolume(Pair.Value.SoundGroup, Pair.Value.BaseVolume));
 }
 
 FGamePlatformSFXDiagnostics UGamePlatformSFXWorldSubsystem::GetDiagnostics() const
@@ -500,6 +527,8 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
     Active.Lease = Lease;
     Active.AllowedFloatParameters = Definition->GetAllowedFloatParameters();
     Active.DefaultFadeOutSeconds = Definition->GetFadeOutSeconds();
+    Active.BaseVolume = TargetVolume;
+    Active.SoundGroup = Definition->GetSoundGroup();
     ActiveInstances.Add(Handle.Id, MoveTemp(Active));
     PendingPlays.Remove(Handle.Id);
 
@@ -511,7 +540,7 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
     // UE失败启动不发AudioFinished，但仍广播Stopped；先绑定再播放能覆盖异步Concurrency拒绝。
     Component->OnAudioPlayStateChangedNative.AddUObject(this,
         &UGamePlatformSFXWorldSubsystem::HandleAudioPlayStateChanged);
-    StartComponentPlayback(*Component, TargetVolume, TargetPitch,
+    StartComponentPlayback(*Component, GetMixedVolume(Definition->GetSoundGroup(), TargetVolume), TargetPitch,
         Definition->GetFadeInSeconds(), Request.StartTimeSeconds);
     if (!ActiveInstances.Contains(Handle.Id)) return;
     if (!Component->IsPlaying())

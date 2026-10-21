@@ -29,6 +29,8 @@ public class DivineBeastsUIClient : ModuleRules
             "GamePlatformOnline",
             // 设置页公开快照合同来自现有平台设备设置服务；不另存一份设备配置。
             "GamePlatformSettingsClient",
+            // 系统设置公开三路音频快照，音量持久化与混音仍由平台SFX领域唯一拥有。
+            "GamePlatformSFXClient",
             // 当前公开战斗反馈映射直接暴露 FGamePlatformCombatEvent，
             // 背包和任务页面的公开头同样直接暴露平台客户端快照类型，
             // 因此这些模块都是调用方编译公开接口所需的真实 Public 依赖。

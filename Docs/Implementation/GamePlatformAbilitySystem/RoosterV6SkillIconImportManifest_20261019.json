@@ -20,9 +20,9 @@
     48,
     48
   ],
-  "UEImportState": "WAITING_IMAGE_TRANSFER",
-  "profileState": "NOT_BOUND",
-  "hudEvidence": "NOT_TESTED",
+  "UEImportState": "IMPORTED_SAVED_RELOADED",
+  "profileState": "BOUND_EXISTING_PROFILE_AND_AUTHORIZED_HOTBAR_ALIASES",
+  "hudEvidence": "See Saved/Validation/RoosterV6Import20261021/Delivery.json; no online acceptance implied",
   "humanVisualSelection": "用户指定前轮已生成的八图用于精修，但运行场景与44/48真实效果需人工验收",
   "entries": [
     {
@@ -129,5 +129,6 @@
       "sha256_48": "4ea4a5f7a66281ac1fef5177d79098bd9bc832ef6ff77bd829c3d36a9c4fda76",
       "texturePath": "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_08_MorningBeacon"
     }
-  ]
+  ],
+  "sourceReceived20261021": true
 }

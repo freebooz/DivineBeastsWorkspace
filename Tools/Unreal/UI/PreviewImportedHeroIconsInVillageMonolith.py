@@ -70,7 +70,15 @@ def main():
     require(controller is not None,'缺少本地预览控制器')
     data=state()
     if MODE=='show':
-        require(HERO in ['Rat','Tiger','Snake','Ox','Dragon','Dog'],'不在技能图标审核支持范围')
+        require(HERO in ['Rat','Tiger','Snake','Ox','Dragon','Dog','Goat','Rooster'],'不在技能图标审核支持范围')
+        if HERO == 'Rooster':
+            plan = json.loads((ROOT/'Docs/Implementation/GamePlatformAbilitySystem/RoosterV6SkillIconImportManifest_20261019.json').read_text(encoding='utf-8'))
+            library = unreal.EditorAssetLibrary
+            # PIE中EditorAssetLibrary目录接口会拒绝访问；以可运行的真实Texture2D加载核验。
+            require(len(plan['entries']) == 8 and all(isinstance(unreal.load_asset(row['texturePath']), unreal.Texture2D) for row in plan['entries']),
+                    '酉鸡V6八张运行纹理尚未导入')
+            require(unreal.load_class(None, '/DBAHeroPack_Rooster/UI/Review/WBP_DBA_Rooster_SkillIconReviewV6.WBP_DBA_Rooster_SkillIconReviewV6_C') is not None,
+                    '酉鸡原生64/48审核Widget尚未由Monolith创建')
         # 戌狗仅在八张真实原生纹理及独立审核Widget均存在后才允许加入只读HUD。
         if HERO == 'Dog':
             frozen = json.loads((ROOT/'Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/Docs/DogV6_ArtFreeze_20261019.json').read_text(encoding='utf-8'))
@@ -79,6 +87,17 @@ def main():
                     '戌狗V6八张真实纹理尚未导入，不得启动只读HUD审核')
             require(library.does_asset_exist('/DBAHeroPack_Dog/UI/Review/WBP_DBA_Dog_SkillIconReviewV6'),
                     '戌狗原生审核Widget尚未创建')
+        # 未羊美术预览必须确认全部八个原生Texture2D和专属审核Widget均存在。
+        # 此检查只允许离线美术审查，不代表GAS、Battle HUD联网或正式战斗授权。
+        if HERO == 'Goat':
+            goat = json.loads((ROOT/'Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Goat/Docs/GoatV6_ArtFreeze_20261020.json').read_text(encoding='utf-8'))
+            library = unreal.EditorAssetLibrary
+            require(len(goat['skills']) == 8 and all(
+                    library.does_asset_exist(row['texturePath']) for row in goat['skills']),
+                    '未羊V6八张原生纹理尚未导入，禁止启动HUD审核')
+            require(library.does_asset_exist('/DBAHeroPack_Goat/UI/Review/WBP_DBA_Goat_SkillIconReviewV6'),
+                    '未羊原生技能审核Widget尚未由Monolith创建')
+
         # Standalone仍会生成前端根布局；只在本次只读审查中暂时隐藏，结束恢复，不提交登录。
         if 'hiddenRoots' not in data:
             roots=unreal.WidgetLibrary.get_all_widgets_of_class(value,unreal.UserWidget,True)
@@ -121,12 +140,17 @@ def main():
             for index in range(1,9):
                 icon=review.get_editor_property('Icon%d_%d'%(size,index))
                 geometry=unreal.SlateLibrary.get_local_size(icon.get_cached_geometry())
+                geometry_method='CachedSlateGeometry'
+                if HERO=='Rooster' and geometry.x==0 and geometry.y==0:
+                    # UE优化路径可能不给Python暴露静态Image缓存几何；只记录声明布局，须另验真实截图像素。
+                    geometry=icon.get_editor_property('slot').get_size()
+                    geometry_method='DeclaredCanvasSlot_RequiresNativeScreenshotPixelAudit'
                 require(abs(geometry.x-size)<0.01 and abs(geometry.y-size)<0.01,'控件实际布局尺寸错误')
                 tint=icon.get_editor_property('color_and_opacity')
                 require(all(abs(x-1)<0.001 for x in [tint.r,tint.g,tint.b,tint.a]),'原图存在额外乘色')
                 texture=unreal.WidgetLibrary.get_brush_resource_as_texture2d(icon.get_editor_property('brush'))
                 require(texture is not None,'原生Image画刷没有真实纹理')
-                metrics.append({'name':icon.get_name(),'size':[geometry.x,geometry.y],'texture':texture.get_path_name(),'whiteTint':True})
+                metrics.append({'name':icon.get_name(),'size':[geometry.x,geometry.y],'texture':texture.get_path_name(),'whiteTint':True,'geometryMethod':geometry_method})
         filename=OUT/(HERO+'_VillageHUD_ReadOnly.png')
         record={'hero':HERO,'world':value.get_path_name(),'gameMode':'GameModeBase','standalone':True,
             'hudClass':data['hud'].get_class().get_path_name(),'reviewClass':review.get_class().get_path_name(),
@@ -134,7 +158,8 @@ def main():
             'abilityBarSlots':[{'slotId':str(slot.slot_id),'abilityId':str(slot.content_id),'enabled':slot.enabled if hasattr(slot,'enabled') else slot.get_editor_property('bEnabled')} for slot in data['hud'].get_editor_property('AbilityBar').get_ability_slots()],
             'screenshotRequested':str(filename),'screenshotWrittenVerified':False,'onlineAdmissionVerified':False}
         (OUT/(HERO+'_HUDPreview.json')).write_text(json.dumps(record,ensure_ascii=False,indent=2),encoding='utf-8')
-        unreal.SystemLibrary.execute_console_command(value,'Shot '+str(filename).replace('\\','/')+' SHOWUI',controller)
+        # UE5.8只接受开头SHOWUI或-showui参数；filename必须显式指定，nosuffix保留可核验原文件名。
+        unreal.SystemLibrary.execute_console_command(value,'Shot SHOWUI filename='+str(filename).replace('\\','/')+' -nosuffix',controller)
         print('SSLM_ICON_REVIEW_SCREENSHOT_REQUESTED '+HERO)
     else:
         print(json.dumps({'world':value.get_path_name(),'standalone':True,'hero':data.get('hero')},ensure_ascii=False))

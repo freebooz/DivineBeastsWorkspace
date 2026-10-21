@@ -2520,5 +2520,44 @@
     "AuthoritySource": "Existing OwnerOnly Loadout and native GAS events",
     "Evidence": "Saved/Validation/SkillBar20261021/GREEN.saved.json",
     "HumanAccepted": false
+  },
+  "AudioAndOriginalIconRGB_20261021": {
+    "Tool": "Monolith MCP ui and editor.run_python",
+    "Date": "2026-10-21",
+    "SettingsAsset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Settings",
+    "Parent": "/Script/DivineBeastsUIClient.DivineBeastsDeviceSettingsScreen",
+    "Size": [
+      640,
+      720
+    ],
+    "Controls": [
+      "EffectsVolumeSlider",
+      "AmbientVolumeSlider",
+      "MusicVolumeSlider",
+      "EffectsVolumeText",
+      "AmbientVolumeText",
+      "MusicVolumeText",
+      "AudioHelpText"
+    ],
+    "SliderContract": {
+      "minimum": 0,
+      "maximum": 1,
+      "step": 0.01,
+      "keyboardFocusable": true
+    },
+    "OriginalDevicePreviewPreserved": true,
+    "IconSlot": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+    "RemovedBinding": "AbilityIconPalette.EffectMaterial=M_DBA_NatureAbilityIconPalette",
+    "EffectMaterialAfter": null,
+    "IconRGBAAndWhiteTintUnchanged": true,
+    "RetainerAndLayoutPreserved": true,
+    "CompiledSavedAndReloaded": true,
+    "BlueprintErrors": 0,
+    "BlueprintWarnings": 0,
+    "Evidence": [
+      "Saved/Validation/AudioSettings20261021",
+      "Saved/Validation/HotbarOriginalRGB20261021"
+    ],
+    "RHIAndClientAcceptance": "SeparateEvidenceRequired"
   }
 }

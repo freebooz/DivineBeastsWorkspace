@@ -25,6 +25,10 @@
 #include "Panels/Combat/DivineBeastsPlayerStatusPanel.h"
 #include "Components/GamePlatformCastProgressWidget.h"
 #include "Components/ProgressBar.h"
+#include "Panels/Combat/DivineBeastsAbilityBarPanel.h"
+#include "Definitions/DivineBeastsAbilityUIProfile.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/RetainerBox.h"
 
 namespace DivineBeastsUIColorTests
 {
@@ -313,6 +317,161 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
             TEXT("/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login.WBP_DBA_UI_Login_C"),*FileName,Size,*this,true));
     }
     return true;
+}
+
+/**
+ * 真实槽位整树的最终GPU颜色门禁，覆盖UImage之后的Retainer/父控件乘色。
+ * 与同张运行Texture的白乘色Slate直绘比较，不能用图标指针相等或裸Texture测试放行。
+ * 所有对象均为已保存Widget的瞬态测试实例，不修改资产、不伪造GAS授权或人工验收。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsHeroAbilitySlotRGBTest,
+    "DivineBeasts.UI.Color.HeroAbilitySlotRGB",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsHeroAbilitySlotRGBTest::RunTest(const FString&)
+{
+    if (GUsingNullRHI) { AddError(TEXT("技能图标最终颜色必须使用真实RHI。")); return false; }
+    UClass* Class = LoadClass<UDivineBeastsAbilityBarPanel>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar.WBP_DBA_UI_AbilityBar_C"));
+    if (!TestNotNull(TEXT("已保存技能栏"), Class)) return false;
+    ICommonInputModule::GetSettings().LoadData();
+    struct FIconProbe { const TCHAR* Hero; const TCHAR* Input; const TCHAR* Widget; const TCHAR* Ability; };
+    const FIconProbe Probes[] = {
+        {TEXT("Goat"), TEXT("Primary"), TEXT("PrimaryAbilitySlot"), TEXT("directedmissile")},
+        {TEXT("Goat"), TEXT("Slot1"), TEXT("ActiveAbilitySlot1"), TEXT("fireball")},
+        {TEXT("Goat"), TEXT("Slot2"), TEXT("ActiveAbilitySlot2"), TEXT("frostbolt")},
+        {TEXT("Goat"), TEXT("Slot4"), TEXT("UltimateAbilitySlot"), TEXT("arcanemissiles")},
+        {TEXT("Rat"), TEXT("Primary"), TEXT("PrimaryAbilitySlot"), TEXT("directedmissile")},
+        {TEXT("Rabbit"), TEXT("Primary"), TEXT("PrimaryAbilitySlot"), TEXT("directedmissile")},
+        {TEXT("Rooster"), TEXT("Primary"), TEXT("PrimaryAbilitySlot"), TEXT("directedmissile")},
+        {TEXT("Rooster"), TEXT("Slot1"), TEXT("ActiveAbilitySlot1"), TEXT("fireball")},
+        {TEXT("Rooster"), TEXT("Slot2"), TEXT("ActiveAbilitySlot2"), TEXT("frostbolt")},
+        {TEXT("Rooster"), TEXT("Slot4"), TEXT("UltimateAbilitySlot"), TEXT("arcanemissiles")},
+        {TEXT("Rooster"), TEXT("Slot3"), TEXT("MovementAbilitySlot"), TEXT("primary")},
+        {TEXT("Rooster"), TEXT("Slot5"), TEXT("DefenseAbilitySlot"), TEXT("dba.ability.rooster_eight_wing_guard@1")},
+        {TEXT("Rooster"), TEXT("Slot6"), TEXT("ControlAbilitySlot"), TEXT("dba.ability.rooster_eight_sonic_silence@1")},
+        {TEXT("Rooster"), TEXT("Slot7"), TEXT("SignatureAbilitySlot"), TEXT("dba.ability.rooster_eight_first_light_heal@1")}};
+    bool bPassed = true;
+    for (const auto& Probe : Probes)
+    {
+        TStrongObjectPtr<UDivineBeastsAbilityBarPanel> Bar(
+            NewObject<UDivineBeastsAbilityBarPanel>(GetTransientPackage(), Class));
+        if (!TestTrue(TEXT("真实技能栏初始化成功"), Bar->Initialize())) return false;
+        auto* Slot = Cast<UGamePlatformSlotWidget>(Bar->GetWidgetFromName(Probe.Widget));
+        if (!TestNotNull(TEXT("真实技能槽"), Slot)) return false;
+        // 父Widget初始化已递归初始化子UserWidget；再次Initialize返回false并不代表构造失败。
+        if (!TestNotNull(TEXT("父技能栏已初始化子槽位WidgetTree"), Slot->WidgetTree.Get())) return false;
+        auto* Icon = Cast<UImage>(Slot->GetWidgetFromName(TEXT("AbilityIcon")));
+        if (!TestNotNull(TEXT("真实技能图像"), Icon)) return false;
+        const FString ProfilePath = FString::Printf(
+            TEXT("/DBAHeroPack_%s/UI/Abilities/DA_DBA_%s_PlaceholderUIProfile.DA_DBA_%s_PlaceholderUIProfile"),
+            Probe.Hero, Probe.Hero, Probe.Hero);
+        const auto* Profile = LoadObject<UDivineBeastsAbilityUIProfile>(nullptr, *ProfilePath);
+        if (!TestNotNull(TEXT("已保存当前英雄Profile"), Profile)) return false;
+        const FName AbilityId(*((FString(Probe.Ability).StartsWith(TEXT("dba."))) ? FString(Probe.Ability)
+            : FString::Printf(TEXT("dba.ability.%s_placeholder_%s@1"), *FString(Probe.Hero).ToLower(), Probe.Ability)));
+        const auto* Entry = Profile->FindEntry(AbilityId);
+        if (!TestNotNull(TEXT("实际授权ID图标条目"), Entry)) return false;
+        UTexture2D* Texture = Entry->Icon.LoadSynchronous();
+        if (!TestNotNull(TEXT("真实当前角色Texture2D"), Texture)) return false;
+        // TakeWidget先完成槽位构造，随后与运行时相同由事件投影当前图标，避免测构造占位图。
+        const auto SlateWidget = Slot->TakeWidget();
+        FGamePlatformUISlotState State;
+        State.SlotId = FName(*(FString(TEXT("Platform.Ability.Input.DivineBeasts.")) + Probe.Input));
+        State.ContentId = AbilityId; State.Icon = Texture; State.bEnabled = false; State.bPending = true;
+        Bar->ApplyAbilitySlots({State});
+        bPassed &= TestTrue(TEXT("原图UImage必须白色乘色"), Icon->GetColorAndOpacity().Equals(FLinearColor::White));
+        bPassed &= TestTrue(TEXT("原图画刷必须白色乘色"), Icon->GetBrush().TintColor.GetSpecifiedColor().Equals(FLinearColor::White));
+        TStrongObjectPtr<UTextureRenderTarget2D> Target(NewObject<UTextureRenderTarget2D>());
+        Target->ClearColor = FLinearColor::Transparent;
+        constexpr int32 Side = 96;
+        Target->InitCustomFormat(Side, Side, PF_FloatRGBA, true);
+        Target->UpdateResourceImmediate(true);
+        auto* Renderer = new FWidgetRenderer(false, true);
+        const auto Draw = [&]()
+        {
+            // 仅显式请求测试离屏渲染；不据此声称运行时失效通知或业务状态已验证。
+            TArray<UWidget*> Widgets;
+            Slot->WidgetTree->GetAllWidgets(Widgets);
+            for (auto* Widget : Widgets)
+                if (auto* Retainer = Cast<URetainerBox>(Widget)) Retainer->RequestRender();
+            Renderer->DrawWidget(Target.Get(), SlateWidget, FVector2D(Side, Side), 0.f);
+            FlushRenderingCommands();
+        };
+        Draw();
+        if (GShaderCompilingManager) GShaderCompilingManager->FinishAllCompilation();
+        Draw();
+        TArray<FFloat16Color> Pixels;
+        const bool bRead = Target->GameThread_GetRenderTargetResource()->ReadFloat16Pixels(Pixels)
+            && Pixels.Num() == Side * Side;
+        if (!TestTrue(TEXT("槽位整树最终RHI像素可回读"), bRead)) { BeginCleanup(Renderer); return false; }
+        const FGeometry Geometry = Icon->GetCachedGeometry();
+        const FVector2D Extent = Geometry.GetLocalSize();
+        if (!TestTrue(TEXT("实际技能图标有有效绘制尺寸"), Extent.X > 1. && Extent.Y > 1.))
+            { BeginCleanup(Renderer); return false; }
+        int32 Compared = 0;
+        for (const FVector2D UV : {FVector2D(.25, .25), FVector2D(.5, .3), FVector2D(.7, .4),
+            FVector2D(.3, .6), FVector2D(.5, .6), FVector2D(.7, .65)})
+        {
+            const FVector2D Absolute = Geometry.LocalToAbsolute(Extent * UV);
+            const int32 X = FMath::FloorToInt(Absolute.X), Y = FMath::FloorToInt(Absolute.Y);
+            if (!TestTrue(TEXT("采样点位于槽位目标中"), X >= 0 && X < Side && Y >= 0 && Y < Side)) continue;
+            const FVector2D Local = Geometry.AbsoluteToLocal(FVector2D(X + .5, Y + .5));
+            FLinearColor Expected;
+            if (!TestTrue(TEXT("同张运行Texture白乘色直绘参考有效"), DivineBeastsUIColorTests::RenderLinear(Texture,
+                FVector2f(Local.X / Extent.X, Local.Y / Extent.Y), Expected))) continue;
+            if (Expected.A < .98f) continue; // 半透明边界与底板合成不作为RGB滤色判定点。
+            const FLinearColor Actual = Pixels[Y * Side + X].GetFloats();
+            ++Compared;
+            bPassed &= TestTrue(*FString::Printf(TEXT("%s %s 实际槽位保留原图RGB actual=%s reference=%s"),
+                Probe.Hero, Probe.Input, *Actual.ToString(), *Expected.ToString()),
+                FMath::Abs(Actual.R - Expected.R) <= .035f && FMath::Abs(Actual.G - Expected.G) <= .035f
+                && FMath::Abs(Actual.B - Expected.B) <= .035f);
+        }
+        bPassed &= TestTrue(TEXT("至少五个不透明内部点实际比较RGB"), Compared >= 5);
+        const FString Path = FPaths::ProjectSavedDir() / TEXT("Validation/UIColorRHI/HeroAbilitySlots") /
+            FString::Printf(TEXT("%s_%s.png"), Probe.Hero, Probe.Input);
+        IFileManager::Get().MakeDirectory(*FPaths::GetPath(Path), true);
+        TUniquePtr<FArchive> Writer(IFileManager::Get().CreateFileWriter(*Path));
+        bPassed &= TestTrue(TEXT("真实槽位颜色证据导出"), Writer && FImageUtils::ExportRenderTarget2DAsPNG(Target.Get(), *Writer));
+        if (Writer) Writer->Close();
+        BeginCleanup(Renderer);
+    }
+    return bPassed;
+}
+
+/** 酉鸡本轮16张原稿的原生RHI颜色与原尺寸审核页；不授予GAS或连接服务器。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsRoosterV6SourceColorTest,
+    "DivineBeasts.UI.Color.RoosterV6Sources",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsRoosterV6SourceColorTest::RunTest(const FString&)
+{
+    if (GUsingNullRHI) { AddError(TEXT("酉鸡颜色必须以真实RHI验证")); return false; }
+    const TCHAR* Names[] = {TEXT("GoldenPeck"), TEXT("DawnFan"), TEXT("MorningWave"), TEXT("DawnDomain"),
+        TEXT("SwiftStep"), TEXT("FeatherWard"), TEXT("SonicBreak"), TEXT("MorningBeacon")};
+    bool bPassed = true;
+    for (int32 Index = 0; Index < 8; ++Index)
+    for (const int32 Size : {48, 64})
+    {
+        const FString Path = FString::Printf(TEXT("/DBAHeroPack_Rooster/UI/%s/Textures/T_DBA_Rooster_V6_%02d_%s%s"),
+            Size == 48 ? TEXT("Abilities/V6") : TEXT("Review/V6"), Index + 1, Names[Index], Size == 48 ? TEXT("") : TEXT("_64"));
+        UTexture2D* Texture = LoadObject<UTexture2D>(nullptr, *Path);
+        if (!TestNotNull(TEXT("酉鸡真实原尺寸纹理"), Texture)) { bPassed = false; continue; }
+        FImage Source;
+        if (!TestTrue(TEXT("酉鸡导入源像素与原生尺寸正确"), Texture->Source.GetMipImage(Source, 0)
+            && Source.SizeX == Size && Source.SizeY == Size && Source.Format == ERawImageFormat::BGRA8)) { bPassed = false; continue; }
+        for (const FVector2f UV : {FVector2f(.3f, .4f), FVector2f(.5f, .5f), FVector2f(.7f, .6f)})
+        {
+            FLinearColor Actual;
+            if (!TestTrue(TEXT("酉鸡真实GPU回读"), DivineBeastsUIColorTests::RenderLinear(Texture, UV, Actual))) { bPassed = false; continue; }
+            const auto Expected = DivineBeastsUIColorTests::SampleDesign(Source, UV);
+            bPassed &= TestTrue(*FString::Printf(TEXT("%s RGB误差≤0.008 actual=%s expected=%s"), *Path, *Actual.ToString(), *Expected.ToString()),
+                FMath::Abs(Actual.R - Expected.R) <= .008f && FMath::Abs(Actual.G - Expected.G) <= .008f && FMath::Abs(Actual.B - Expected.B) <= .008f);
+        }
+    }
+    bPassed &= TestTrue(TEXT("酉鸡真实审核Widget原生RHI导出"), DivineBeastsUIColorTests::SavePagePreview(
+        TEXT("/DBAHeroPack_Rooster/UI/Review/WBP_DBA_Rooster_SkillIconReviewV6.WBP_DBA_Rooster_SkillIconReviewV6_C"),
+        TEXT("RoosterV6_Review64_Runtime48.png"), FIntPoint(1064, 274), *this, false));
+    return bPassed;
 }
 
 // 新增九份公共页复用上方既有线性浮点RHI/单次PNG编码链路，不调用Monolith已知错误的widget截图。

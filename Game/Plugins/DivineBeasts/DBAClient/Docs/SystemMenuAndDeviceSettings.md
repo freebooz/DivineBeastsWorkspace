@@ -40,7 +40,15 @@ Router 的同步配置事件使用重入保护；每个本地玩家只订阅自�
 
 预览期限以 `FPlatformTime::Seconds` 单调时钟计算，仅本页拥有预览期间注册临时 CoreTicker 检查截止时间；世界暂停和 TimeDilation 不延长期限。确认、回滚与页面清理精确撤销句柄，弱引用及页面代次拒绝迟到调度。它不是 Widget 业务 Tick；主线程阻塞时只能在下一次引擎调度恢复原设置。
 
-目前 GamePlatformSFX 只有具体音效实例音量接口，没有主音量/混音持久合同；GamePlatformInput 没有完整可交付按键设置页。此轮不显示假音量或按键设置按钮。后续需先完成对应领域的真实合同与消费者迁移，再接入此菜单；不能在 UI 另存一份音频/输入真源。
+2026-10-21音量增量：`IGamePlatformSFXUserSettingsService`在GameInstance作用域拥有效果音、环境音、背景音乐三路0..1用户增益与独立`Saved/Config/.../GamePlatformAudioUserSettings.ini`；显示设备服务不拥有音量。页面初始读取一次完整快照，其后通过音量变化事件更新百分比；`SetVolume`即时应用，鼠标/手柄CaptureEnd、页面退出或GameInstance结束时`CommitVolumes`仅保存脏值。键盘调整最迟在退出本页保存，不逐次拖动写盘。音频保存失败使用`AudioHelpText`独立中文提示，不覆盖设备`ErrorText`，不延长或确认15秒显示预览。
+
+`EGamePlatformSFXSoundGroup`与播放空间正交，旧Definition默认`Effects`；音乐和环境Definition须由Monolith显式保存分类。唯一SFX World执行器订阅用户增益，保留每个实例Definition×Request的未混音BaseVolume，当前实例和后续实例均只乘一次组增益；实例音量命令修改BaseVolume，不回写用户增益，0音量恢复无需除法。调整不调用Play、FadeIn或AdjustVolume，原生Fade包络独立运行。持续音乐/环境Sound须使用原生`PlayWhenSilent`，防止静音后引擎终止Loop。失活、重进页面和World退出精确解绑并核对代次；不增加音频轮询、播放器、网络字段或服务器依赖。GamePlatformInput仍无完整可交付按键设置页，本轮不新增按键设置。
+
+Monolith新增必需`USlider`：`EffectsVolumeSlider`、`AmbientVolumeSlider`、`MusicVolumeSlider`，范围0..1、StepSize=0.01且可键盘/手柄聚焦；必需`UTextBlock`：`EffectsVolumeText`、`AmbientVolumeText`、`MusicVolumeText`，显示0–100%；`AudioHelpText`为可选绑定，交付页应提供自动保存提示和失败反馈。三路使用原生C++事件，蓝图无需业务图表。
+
+明确分类的8份DBASFXPack_Core定义：`Audio/Music/Definitions/DA_DBA_SFX_Music_Login`与`...Village`为Music；`Audio/Ambience/Definitions/DA_DBA_SFX_Ambience_Forest`、`Audio/Library/Ambience/Definitions/DA_DBA_SFX_Ambience_WaterStreamA`、`...WaterStreamB`、`...Birds`、`Weather/Definitions/DA_DBA_SFX_Weather_Rain`与`...Snow`为Ambient。其余技能、UI、脚步、世界交互、水花和Creatures攻击/反馈定义保持Effects，不能仅按2D或Creatures名称推断分类。
+
+新增回归源码：`GamePlatform.SFX.UserSettings.PersistenceAndMixing`用独立临时INI验证0/1、NaN/越界、保存/恢复/失败重试、变化/解绑/通知重入，以及实际AudioComponent混音和解除静音；`DivineBeasts.UI.Settings.AudioPageLifetime`验证页面代次和显示预览隔离；既有`DivineBeasts.UI.Settings.AssetContract`扩展验证真实保存Slider/文本；`DivineBeasts.UI.Settings.AudioGroupsAssetContract`验证上述真实Definition分类和Loop静音恢复资产合同。源码/静态门禁不是正式Editor/Client构建、自动化执行、Cook或实际试听结论，均由根任务统一补证。
 
 ## 注销与退出
 

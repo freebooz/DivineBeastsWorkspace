@@ -100,6 +100,10 @@ def import_textures(unreal, plan):
         asset.set_editor_property("srgb", True)
         asset.set_editor_property("compression_settings", unreal.TextureCompressionSettings.TC_EDITOR_ICON)
         asset.set_editor_property("mip_gen_settings", unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
+        asset.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_UI)
+        asset.set_editor_property("address_x", unreal.TextureAddress.TA_CLAMP)
+        asset.set_editor_property("address_y", unreal.TextureAddress.TA_CLAMP)
+        asset.set_editor_property("use_legacy_gamma", False)
         require(asset_library.save_loaded_asset(asset, only_if_is_dirty=False), "纹理保存失败：" + package_name)
         tag = str(asset_library.find_asset_data(package_name).get_tag_value("Dimensions"))
         require(tag in ("48x48", "48X48"), "真实纹理应当为48x48：" + package_name + "=" + tag)
@@ -130,8 +134,26 @@ def snapshot_entry(entry):
             "description": str(entry.get_editor_property("description")),
             "icon": path}
 
+def authorized_hotbar(unreal, readonly=False):
+    """复用唯一槽位接线器，限定酉鸡；复查实际授权ID，重复执行不覆盖原有恢复点。"""
+    import importlib.util
+    helper_path = WORKSPACE / "Tools/Unreal/UI/BindAuthorizedHotbarHeroIconsMonolith.py"
+    spec = importlib.util.spec_from_file_location("rooster_authorized_hotbar_binding", helper_path)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    helper.HEROES = ("Rooster",)
+    helper.OUT = LOG_DIR / "AuthorizedHotbar"
+    helper.MODE = "inspect"
+    report = helper.main()
+    if not readonly and report["mismatches"]:
+        helper.MODE = "apply"
+        helper.main()
+    helper.MODE = "verify"
+    helper.main()
+
+
 def bind_profile(unreal, plan):
-    """保留旧条目；ID匹配但图或文案冲突直接停止。"""
+    """保留旧ID、名称和说明；同ID只更新美术图，并按真实InputTag接线既有授权别名。"""
     lib = unreal.EditorAssetLibrary
     profile = inspect_single_profile(unreal, plan)
     entries = list(profile.get_editor_property("entries"))
@@ -139,17 +161,19 @@ def bind_profile(unreal, plan):
     require(len({x["id"] for x in old}) == len(old), "旧Profile有重复技能ID")
     existing = {x["id"]: x for x in old}
     missing = []
+    changed_icons = []
     for row in plan["entries"]:
         texture = lib.load_asset(row["texturePath"])
         require(isinstance(texture, unreal.Texture2D), "先执行import创建真纹理：" + row["texturePath"])
         old_row = existing.get(row["abilityId"])
         if old_row is not None:
-            require(old_row["name"] == row["displayNameZh"] and
-                    old_row["icon"] == row["texturePath"] and old_row["description"].strip(),
-                    "已有同ID条目与V6不一致，禁止覆盖：" + row["abilityId"])
+            require(old_row["name"].strip() and old_row["description"].strip(), "已有条目展示身份损坏")
+            if old_row["icon"] != row["texturePath"]:
+                changed_icons.append(row)
         else:
             missing.append(row)
-    if not missing:
+    if not missing and not changed_icons:
+        authorized_hotbar(unreal)
         print("SSLM_ROOSTER_V6_PROFILE_ALREADY_MATCHES")
         return
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -160,6 +184,9 @@ def bind_profile(unreal, plan):
     require(profile_file.is_file(), "现有Profile二进制文件缺失")
     snapshot.write_text(json.dumps(old, ensure_ascii=False, indent=2), encoding="utf-8")
     shutil.copy2(profile_file, backup)
+    for row in changed_icons:
+        entry = next(e for e in entries if str(e.get_editor_property("ability_id")) == row["abilityId"])
+        entry.set_editor_property("icon", lib.load_asset(row["texturePath"]))
     for row in missing:
         entry = unreal.DivineBeastsAbilityUIEntry()
         entry.set_editor_property("ability_id", unreal.Name(row["abilityId"]))
@@ -173,7 +200,11 @@ def bind_profile(unreal, plan):
     require(lib.save_loaded_asset(profile, only_if_is_dirty=False), "Profile保存失败")
     # 二次只读快照：必须保留原有条目。
     latest = [snapshot_entry(e) for e in list(profile.get_editor_property("entries"))]
-    require(all(x in latest for x in old), "旧Profile条目遭到修改")
+    by_id = {x["id"]: x for x in latest}
+    require(all(all(by_id[x["id"]][key] == x[key] for key in ("id", "name", "description")) for x in old),
+            "旧Profile的ID、名称或说明遭到修改")
+    # 复用既有唯一接线工具；限定本英雄，读取真实AbilitySet的InputTag，不按名称/图片顺序猜授权ID。
+    authorized_hotbar(unreal)
     print("SSLM_ROOSTER_V6_PROFILE_NEW_ENTRIES", len(missing))
 
 def verify(unreal, plan):
@@ -194,6 +225,7 @@ def verify(unreal, plan):
     vm = unreal.new_object(unreal.DivineBeastsAbilityBarViewModel)
     require(len(vm.get_slots()) == 0 and len(vm.get_slot_details()) == 0, "未授权状态出现伪造技能")
     vm.unbind_from_loadout()
+    authorized_hotbar(unreal, readonly=True)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     (LOG_DIR / "Verify.json").write_text(
         json.dumps({"heroId":plan["heroId"], "nativeUE48TextureCount":8,

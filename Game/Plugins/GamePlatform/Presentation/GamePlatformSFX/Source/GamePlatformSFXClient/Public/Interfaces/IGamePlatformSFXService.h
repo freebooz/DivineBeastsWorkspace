@@ -38,7 +38,7 @@ public:
     /** 只允许Definition白名单内的浮点参数；仅活动AudioComponent可更新。 */
     virtual bool SetFloatParameter(const FGamePlatformSFXHandle& Handle, FName Name, float Value) = 0;
 
-    /** 设置实例线性音量倍数；调用方自行遵守业务设置与混音策略。 */
+    /** 设置实例未混音的基础线性音量；最终音量仍乘所属用户分组增益，不改变引擎Fade包络。 */
     virtual bool SetVolumeMultiplier(const FGamePlatformSFXHandle& Handle, float Value) = 0;
 
     /** 返回低频诊断快照，不扫描资产目录、不读取磁盘。 */
