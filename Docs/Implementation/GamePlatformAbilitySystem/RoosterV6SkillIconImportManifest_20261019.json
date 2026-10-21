@@ -7,7 +7,11 @@
   "packRoot": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster",
   "profilePath": "/DBAHeroPack_Rooster/UI/Abilities/DA_DBA_Rooster_PlaceholderUIProfile",
   "zipRelativePath": "Game/Saved/ArtReview/RoosterV6/SSLM_RoosterV6_8SkillIcons_ReadyForUE58.zip",
+  "repositoryZipRelativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/SourceArt/UI/SkillIcons/V6/Delivery/SSLM_RoosterV6_8SkillIcons_ReadyForUE58.zip",
   "zipSha256": "e20c8c3408de67766c0e9983567031ebf8061c63024f924db5fd207699c4a7e6",
+  "zipSizeBytes": 20149472,
+  "sourceDeliveryState": "VERIFIED_ARCHIVE_IN_HERO_PACK",
+  "sourceDeliveryRecord": "Docs/Implementation/GamePlatformAbilitySystem/RoosterV6_SourceDelivery_20261021.md",
   "expectedSourceSize": [
     1254,
     1254
@@ -20,10 +24,10 @@
     48,
     48
   ],
-  "UEImportState": "WAITING_IMAGE_TRANSFER",
+  "UEImportState": "WAITING_REAL_EDITOR_IMPORT",
   "profileState": "NOT_BOUND",
   "hudEvidence": "NOT_TESTED",
-  "humanVisualSelection": "用户指定前轮已生成的八图用于精修，但运行场景与44/48真实效果需人工验收",
+  "humanVisualSelection": "用户指定前轮已生成的八图用于精修，运行场景与64/48真实显示效果仍需人工验收",
   "entries": [
     {
       "order": 1,
