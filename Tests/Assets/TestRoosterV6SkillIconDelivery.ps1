@@ -15,15 +15,31 @@ for($i=0;$i -lt 8;$i++){
         throw ('V6技能映射不一致：第'+($i+1)+'槽')
     }
 }
-$zipPath=Join-Path $workspace $plan.zipRelativePath
+$relativeCandidates=@([string]$plan.zipRelativePath)
+if($plan.PSObject.Properties['repositoryZipRelativePath']){
+    $relativeCandidates += [string]$plan.repositoryZipRelativePath
+}
+# 接收目录优先并检查词法路径边界；Windows执行前仍需核对目录联接的实际目标。
+# 已有坏包由下方SHA门禁拒绝，不静默回退。
+$workspacePrefix=[IO.Path]::GetFullPath($workspace)+[IO.Path]::DirectorySeparatorChar
+$candidates=@(foreach($relative in $relativeCandidates){
+    $candidate=[IO.Path]::GetFullPath((Join-Path $workspace $relative))
+    if([IO.Path]::IsPathRooted($relative) -or -not $candidate.StartsWith($workspacePrefix,[StringComparison]::OrdinalIgnoreCase)){
+        throw ('源包路径必须位于工作空间内：'+$relative)
+    }
+    $candidate
+})
+$zipPath=@($candidates | Where-Object {Test-Path -LiteralPath $_ -PathType Leaf} | Select-Object -First 1)[0]
+if(-not $zipPath){$zipPath=$candidates[0]}
 if(-not (Test-Path -LiteralPath $zipPath -PathType Leaf)){
     Write-Output 'ROOSTER_V6_MANIFEST_REGISTRY_OK=8'
     Write-Output ('ROOSTER_V6_ZIP_WAITING=' + $zipPath)
-    if($RequireZip){throw '缺少ChatGPT导出的8技能纹理ZIP，请先放入Game/Saved/ArtReview/RoosterV6'}
+    if($RequireZip){throw '缺少已校验的8技能纹理ZIP，请取得英雄包内交付包或放入Game/Saved/ArtReview/RoosterV6'}
     return
 }
 $ziphash=(Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
 if($ziphash -ne $plan.zipSha256){throw '完整ZIP SHA256不匹配'}
+Write-Output ('ROOSTER_V6_VERIFIED_ZIP=' + $zipPath)
 Add-Type -AssemblyName System.IO.Compression
 $z=[System.IO.Compression.ZipFile]::OpenRead($zipPath)
 try{

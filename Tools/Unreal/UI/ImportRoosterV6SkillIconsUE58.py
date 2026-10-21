@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """SSLM 酉鸡 V6 图标原生UE5.8导入与唯一UIProfile增补。
 使用Monolith editor.run_python调用，默认inspect只读；需显式设置ROOSTER_V6_MODE。
+源包优先采用既有Saved接收位置；缺失时读取英雄包内按原SHA冻结的完整交付包。
 不碰服务器GAS/AbilitySet、不覆盖V1源图、不创建第二份主资产。
 """
 from pathlib import Path
@@ -25,6 +26,25 @@ def dimensions(blob):
     require(len(blob) > 24 and blob[:8] == b"\x89PNG\r\n\x1a\n", "仅允许有效PNG")
     return struct.unpack(">II", blob[16:24])
 
+def resolve_archive(plan):
+    """选择工作空间内的源包；已接收的坏包必须报错，不用仓库回退掩盖故障。
+
+    输入为清单中的相对路径，返回优先存在的完整ZIP路径。所有候选都先检查
+    路径边界；两处均缺失时返回原接收路径，由调用方保持缺输入门禁。
+    """
+    relatives = [plan["zipRelativePath"]]
+    if plan.get("repositoryZipRelativePath"):
+        relatives.append(plan["repositoryZipRelativePath"])
+    root = WORKSPACE.resolve()
+    candidates = []
+    for value in relatives:
+        relative = Path(value)
+        candidate = (root / relative).resolve()
+        require(not relative.is_absolute() and candidate != root and root in candidate.parents,
+                "源包路径必须位于工作空间内：" + str(value))
+        candidates.append(candidate)
+    return next((path for path in candidates if path.is_file()), candidates[0])
+
 def load_inputs():
     plan = json.loads(PLAN.read_text(encoding="utf-8"))
     require(plan["heroId"] == "Hero.Zodiac.Rooster" and len(plan["entries"]) == 8, "技能清单不完整")
@@ -33,7 +53,7 @@ def load_inputs():
     require([r["order"] for r in plan["entries"]] == list(range(1, 9)), "技能顺序不连续")
     required_slots = ["Primary", "Slot1", "Slot2", "Slot4", "Slot3", "Slot5", "Slot6", "Slot7"]
     require([r["slotId"] for r in plan["entries"]] == required_slots, "八槽顺序不匹配")
-    filename = WORKSPACE / plan["zipRelativePath"]
+    filename = resolve_archive(plan)
     if not filename.is_file():
         print("SSLM_ROOSTER_V6_WAITING_ART_ZIP:", filename)
         return plan, None, {}
@@ -51,7 +71,7 @@ def load_inputs():
                 if field == "runtime48":
                     require(sha(blob) == entry["sha256_48"], "正式48纹理SHA不匹配：" + member)
                 image_bytes[member] = blob
-    print("SSLM_ROOSTER_V6_SOURCE_PREFLIGHT_OK", len(image_bytes))
+    print("SSLM_ROOSTER_V6_SOURCE_PREFLIGHT_OK", len(image_bytes), str(filename))
     return plan, filename, image_bytes
 
 def check_editor():

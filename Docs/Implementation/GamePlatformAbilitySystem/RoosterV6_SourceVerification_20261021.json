@@ -1,0 +1,364 @@
+{
+  "schemaVersion": 1,
+  "scopeZh": "真实源图文件校验；不代表引擎导入、配置绑定或人工视觉验收",
+  "dateAsiaShanghai": "2026-10-21",
+  "remoteDelivery": "NOT_PUSHED_AUTOMATIC_REVIEW_BLOCKED",
+  "baselineCommit": "9b1b1426c2b57661cf16475e38f96df124288e0c",
+  "heroId": "Hero.Zodiac.Rooster",
+  "archivePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/SourceArt/UI/SkillIcons/V6/Delivery/SSLM_RoosterV6_8SkillIcons_ReadyForUE58.zip",
+  "zipSizeBytes": 20149472,
+  "zipSha256": "e20c8c3408de67766c0e9983567031ebf8061c63024f924db5fd207699c4a7e6",
+  "zipMatchesFrozenManifest": true,
+  "zipCrcPassed": true,
+  "internalIdentityMappingMatches": true,
+  "imageCount": 24,
+  "entries": [
+    {
+      "order": 1,
+      "slotId": "Primary",
+      "abilityId": "dba.ability.rooster_eight_golden_peck@1",
+      "displayNameZh": "金羽击",
+      "texturePath": "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_01_GoldenPeck",
+      "images": [
+        {
+          "role": "master",
+          "zipMember": "SourceArt/Masters/T_DBA_Rooster_V6_01_GoldenPeck_Master1254.png",
+          "decodedDimensions": [
+            1254,
+            1254
+          ],
+          "sha256": "e039bf15f5ebc29049993222a7e9af59503c0fb6d8b2c3a395be3f1f7d773891",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "review64",
+          "zipMember": "Review/64/T_DBA_Rooster_V6_01_GoldenPeck_64.png",
+          "decodedDimensions": [
+            64,
+            64
+          ],
+          "sha256": "5faf00d9661178d6ff46a8187b6b194d78e22a51e7271badaa516c1fd4a63983",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "runtime48",
+          "zipMember": "Runtime/48/T_DBA_Rooster_V6_01_GoldenPeck.png",
+          "decodedDimensions": [
+            48,
+            48
+          ],
+          "sha256": "55e84d95a708880d938b212bd077b668d3489724ff182b9a60d6ac311caf1142",
+          "matchesFrozenHash": true
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "slotId": "Slot1",
+      "abilityId": "dba.ability.rooster_eight_feather_fan@1",
+      "displayNameZh": "破晓",
+      "texturePath": "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_02_DawnFan",
+      "images": [
+        {
+          "role": "master",
+          "zipMember": "SourceArt/Masters/T_DBA_Rooster_V6_02_DawnFan_Master1254.png",
+          "decodedDimensions": [
+            1254,
+            1254
+          ],
+          "sha256": "dc41fa0b95eca6c2c81d626e33ce68f65b7c7f257897a2f9db91ca7033535db4",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "review64",
+          "zipMember": "Review/64/T_DBA_Rooster_V6_02_DawnFan_64.png",
+          "decodedDimensions": [
+            64,
+            64
+          ],
+          "sha256": "b189c841860ab00606f6eb2a7c8891450dda88c9dac883bd0a420189bae1533a",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "runtime48",
+          "zipMember": "Runtime/48/T_DBA_Rooster_V6_02_DawnFan.png",
+          "decodedDimensions": [
+            48,
+            48
+          ],
+          "sha256": "985e39484deb956796c95e339884d4c0808c51d70ab590c78a1105d48f8cbfca",
+          "matchesFrozenHash": true
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "slotId": "Slot2",
+      "abilityId": "dba.ability.rooster_eight_sunrise_wave@1",
+      "displayNameZh": "晨鸣波",
+      "texturePath": "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_03_MorningWave",
+      "images": [
+        {
+          "role": "master",
+          "zipMember": "SourceArt/Masters/T_DBA_Rooster_V6_03_MorningWave_Master1254.png",
+          "decodedDimensions": [
+            1254,
+            1254
+          ],
+          "sha256": "04af748a2cbc73e2909c49c7d888cbb257a51d32ed70d6289474f9f2f1333429",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "review64",
+          "zipMember": "Review/64/T_DBA_Rooster_V6_03_MorningWave_64.png",
+          "decodedDimensions": [
+            64,
+            64
+          ],
+          "sha256": "1ef3b63a8872ecb58b42f9a13db78d514fdd437abb540de59b2a5418da614777",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "runtime48",
+          "zipMember": "Runtime/48/T_DBA_Rooster_V6_03_MorningWave.png",
+          "decodedDimensions": [
+            48,
+            48
+          ],
+          "sha256": "5297c4160b986023d25f0eaae0a80737f338100669bb32af0ccbf136beb4b117",
+          "matchesFrozenHash": true
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "slotId": "Slot4",
+      "abilityId": "dba.ability.rooster_eight_dawn_resonance@1",
+      "displayNameZh": "破晓金鸣",
+      "texturePath": "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_04_DawnDomain",
+      "images": [
+        {
+          "role": "master",
+          "zipMember": "SourceArt/Masters/T_DBA_Rooster_V6_04_DawnDomain_Master1254.png",
+          "decodedDimensions": [
+            1254,
+            1254
+          ],
+          "sha256": "e45ae145b11c5a63cf072af006e08bbee7fa9172db6bdaefd6ded9cea9d7f8b6",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "review64",
+          "zipMember": "Review/64/T_DBA_Rooster_V6_04_DawnDomain_64.png",
+          "decodedDimensions": [
+            64,
+            64
+          ],
+          "sha256": "38e6d69951890200b75e2e673a48e2b7e9ba1d176ee554a4bb8ce8196347a5fc",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "runtime48",
+          "zipMember": "Runtime/48/T_DBA_Rooster_V6_04_DawnDomain.png",
+          "decodedDimensions": [
+            48,
+            48
+          ],
+          "sha256": "e36de1e8f981bc0f7b433b56b609185e7e71b924af8374659a9025badec0c3dc",
+          "matchesFrozenHash": true
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "slotId": "Slot3",
+      "abilityId": "dba.ability.rooster_eight_feather_glide@1",
+      "displayNameZh": "鸣步",
+      "texturePath": "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_05_SwiftStep",
+      "images": [
+        {
+          "role": "master",
+          "zipMember": "SourceArt/Masters/T_DBA_Rooster_V6_05_SwiftStep_Master1254.png",
+          "decodedDimensions": [
+            1254,
+            1254
+          ],
+          "sha256": "e634790d6e3bc6419303b05232550705ce311aace4726d4e07e6bde4f2d7cdb6",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "review64",
+          "zipMember": "Review/64/T_DBA_Rooster_V6_05_SwiftStep_64.png",
+          "decodedDimensions": [
+            64,
+            64
+          ],
+          "sha256": "8619529c2f252fa9fb1126596d2b436d9c1b7cad7374802e2b72210fec71c25b",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "runtime48",
+          "zipMember": "Runtime/48/T_DBA_Rooster_V6_05_SwiftStep.png",
+          "decodedDimensions": [
+            48,
+            48
+          ],
+          "sha256": "d9c93d33b2206d10c1d833e63fcd9bea5e6d14987ea9bfb8d39ac1787bbe2af6",
+          "matchesFrozenHash": true
+        }
+      ]
+    },
+    {
+      "order": 6,
+      "slotId": "Slot5",
+      "abilityId": "dba.ability.rooster_eight_wing_guard@1",
+      "displayNameZh": "金羽",
+      "texturePath": "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_06_FeatherWard",
+      "images": [
+        {
+          "role": "master",
+          "zipMember": "SourceArt/Masters/T_DBA_Rooster_V6_06_FeatherWard_Master1254.png",
+          "decodedDimensions": [
+            1254,
+            1254
+          ],
+          "sha256": "7f3b477646bd341ef00ee42fe31d5acb757eb045e07cf92de7f49b07a70e136e",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "review64",
+          "zipMember": "Review/64/T_DBA_Rooster_V6_06_FeatherWard_64.png",
+          "decodedDimensions": [
+            64,
+            64
+          ],
+          "sha256": "0e18a3560355d5d39904467cedb302e999ec7613838a0cd0f991818231f5263a",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "runtime48",
+          "zipMember": "Runtime/48/T_DBA_Rooster_V6_06_FeatherWard.png",
+          "decodedDimensions": [
+            48,
+            48
+          ],
+          "sha256": "c601638d126eb6f12f33778226e7c78d14f23e3b0ea947833d921bab7313118e",
+          "matchesFrozenHash": true
+        }
+      ]
+    },
+    {
+      "order": 7,
+      "slotId": "Slot6",
+      "abilityId": "dba.ability.rooster_eight_sonic_silence@1",
+      "displayNameZh": "鸣震",
+      "texturePath": "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_07_SonicBreak",
+      "images": [
+        {
+          "role": "master",
+          "zipMember": "SourceArt/Masters/T_DBA_Rooster_V6_07_SonicBreak_Master1254.png",
+          "decodedDimensions": [
+            1254,
+            1254
+          ],
+          "sha256": "80208eb5069c7c688d8949256662fab00476dcbf38bbc0da638c36eda174f51e",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "review64",
+          "zipMember": "Review/64/T_DBA_Rooster_V6_07_SonicBreak_64.png",
+          "decodedDimensions": [
+            64,
+            64
+          ],
+          "sha256": "9a186dd3d9c6aac53b4d4e446354dffb64b6070feecaf4a326a5bd27143a0a7f",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "runtime48",
+          "zipMember": "Runtime/48/T_DBA_Rooster_V6_07_SonicBreak.png",
+          "decodedDimensions": [
+            48,
+            48
+          ],
+          "sha256": "0f7cf1264657050322d71b6da41ef99d027f1e7edad2f621bcb5499c2c5d80cb",
+          "matchesFrozenHash": true
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "slotId": "Slot7",
+      "abilityId": "dba.ability.rooster_eight_first_light_heal@1",
+      "displayNameZh": "晨鸣",
+      "texturePath": "/DBAHeroPack_Rooster/UI/Abilities/V6/Textures/T_DBA_Rooster_V6_08_MorningBeacon",
+      "images": [
+        {
+          "role": "master",
+          "zipMember": "SourceArt/Masters/T_DBA_Rooster_V6_08_MorningBeacon_Master1254.png",
+          "decodedDimensions": [
+            1254,
+            1254
+          ],
+          "sha256": "76a4062e53256a06dd77ccab78c7ae5daf0aeef8118c5e8405e1018319812a51",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "review64",
+          "zipMember": "Review/64/T_DBA_Rooster_V6_08_MorningBeacon_64.png",
+          "decodedDimensions": [
+            64,
+            64
+          ],
+          "sha256": "86af40f40dd0f078f883eca3f54b3653627c413ffe5a0af441a98dce8abf841a",
+          "matchesFrozenHash": true
+        },
+        {
+          "role": "runtime48",
+          "zipMember": "Runtime/48/T_DBA_Rooster_V6_08_MorningBeacon.png",
+          "decodedDimensions": [
+            48,
+            48
+          ],
+          "sha256": "4ea4a5f7a66281ac1fef5177d79098bd9bc832ef6ff77bd829c3d36a9c4fda76",
+          "matchesFrozenHash": true
+        }
+      ]
+    }
+  ],
+  "nativeUETexturesImportedThisRun": 0,
+  "profileBinding": "NOT_EXECUTED",
+  "coldReload": "NOT_EXECUTED",
+  "hudEvidence": "NOT_TESTED",
+  "humanVisualAcceptance": "PENDING",
+  "serverAuthorizationChanged": false,
+  "powershellValidationExecuted": false,
+  "zipMemberCount": 38,
+  "legacyV1Assets": [
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/Content/UI/Abilities/T_DBA_Rooster_Active01_FeatherFan_V1.uasset",
+      "gitBlobSha1": "ac1aafe102b3cc9dc72c14c330c8526218037853",
+      "matchesBaseline": true
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/Content/UI/Abilities/T_DBA_Rooster_Active02_SonicRing_V1.uasset",
+      "gitBlobSha1": "ebaad7355c8d3fdd8a2e3ea5f9a0ed7759d6e4cd",
+      "matchesBaseline": true
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/Content/UI/Abilities/T_DBA_Rooster_BasicAttack_FeatherStrike_V1.uasset",
+      "gitBlobSha1": "c33a70d0456535613be384deb4e0b8129622da91",
+      "matchesBaseline": true
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/Content/UI/Abilities/T_DBA_Rooster_Passive_DawnSpirit_V1.uasset",
+      "gitBlobSha1": "0afca770392c070726d935c5620fe2b9d423eb89",
+      "matchesBaseline": true
+    },
+    {
+      "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/Content/UI/Abilities/T_DBA_Rooster_Ultimate_DawnRadiance_V1.uasset",
+      "gitBlobSha1": "51ac8ace156845eb3a6f8c4ef32360563691175f",
+      "matchesBaseline": true
+    }
+  ]
+}
