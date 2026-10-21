@@ -94,7 +94,20 @@
       "/DBAWorldPack_Village/Creatures/Wolf/AM_DBA_VillageWolf_Bite",
       "/DBAWorldPack_Village/Creatures/Wolf/ABP_DBA_VillageWolf"
     ],
-    "Actions": ["fbx_reimport_existing_mesh", "import_texture", "edit_material", "import_animation", "create_montage", "reparent_blueprint", "add_anim_graph_node", "add_slot_node", "connect_anim_graph_pins", "compile_blueprint", "save_asset", "readback"],
+    "Actions": [
+      "fbx_reimport_existing_mesh",
+      "import_texture",
+      "edit_material",
+      "import_animation",
+      "create_montage",
+      "reparent_blueprint",
+      "add_anim_graph_node",
+      "add_slot_node",
+      "connect_anim_graph_pins",
+      "compile_blueprint",
+      "save_asset",
+      "readback"
+    ],
     "SkeletonChanged": false,
     "MeshUVChannels": 1,
     "MeshTriangles": 622,
@@ -110,10 +123,28 @@
     "Status": "SavedReloadedAndPoseSampled_ClientRuntimePending",
     "AnimationRoot": "/DBAWorldPack_Village/Creatures/VampireALusth/Animations",
     "OriginalSkeletonBones": 99,
-    "MeshScale": [1, 1, 1],
-    "MovementSamplesCmPerSecond": [0, 180, 500],
+    "MeshScale": [
+      1,
+      1,
+      1
+    ],
+    "MovementSamplesCmPerSecond": [
+      0,
+      180,
+      500
+    ],
     "RunningSequenceRateScale": 1.94439,
-    "Actions": ["fbx_import_animation", "edit_blendspace_sample", "add_blendspace_sample", "bake_blend_space", "set_anim_graph_node_property", "compile_blueprint", "save_packages", "reload_packages", "readback"],
+    "Actions": [
+      "fbx_import_animation",
+      "edit_blendspace_sample",
+      "add_blendspace_sample",
+      "bake_blend_space",
+      "set_anim_graph_node_property",
+      "compile_blueprint",
+      "save_packages",
+      "reload_packages",
+      "readback"
+    ],
     "AnimBlueprintCompileErrors": 0,
     "AnimBlueprintCompileWarnings": 0,
     "ReloadEvidence": "Saved/Validation/CharacterAnimationAudit_20261018/ReloadEvidence.json",
@@ -121,5 +152,18 @@
     "Report": "Docs/Implementation/ImportedCharacterAnimationAudit_20261018.md",
     "ManualVisualAccepted": false,
     "NotesZh": "Vampire原模型弓身姿态保留，装配无额外Pitch/Roll倾斜。修正来源骨长、跑步速率、死亡落地及旧移动片段引用，尚待本轮客户端实际显示验收。"
+  },
+  "WorldRespawnPolicy_20261021": {
+    "Asset": "/DBAWorldPack_Village/Definitions/DA_DBA_Experience_Village_Tutorial",
+    "Tool": "Monolith MCP editor.run_python",
+    "ChangedProperty": "RespawnPolicy",
+    "Before": "Disabled",
+    "After": "ServerAuthorized",
+    "SavedAndPackageReloaded": true,
+    "ArenaPolicy": "UnchangedDisabled",
+    "MapAndPlayerStartsChanged": false,
+    "Evidence": "Saved/Validation/WorldRespawn20261021",
+    "SHA256": "2dafa20d0cde7b1a343981b2c86163de18c162d9167a1a03dc1ed293f17fa4fa",
+    "NetworkRespawnVerified": false
   }
 }

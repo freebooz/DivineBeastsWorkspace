@@ -2,7 +2,9 @@
 
 本轮完成正式源包找回、逐项校验和仓库交付路径修复。真实UE5.8编辑器未取得可执行连接，八份Texture2D（二维纹理资源）、唯一UIProfile（技能界面配置）绑定、冷重载和游戏画面验收仍未完成。
 
-**交付位置：当前仅有本地独立分支提交。** 自动审批拒绝向 `freebooz/DivineBeastsWorkspace` 推送这批源图和代码，理由是该仓库未被认定为可信目的地、缺少对具体上传内容的授权。拒绝后只读查询该远程分支返回404，未创建远程分支或草稿合并请求，主分支未改变。需用户确认将下列10个文件（含20.1 MB完整原包）上传至该仓库后，才可继续正常推送。
+**交付位置：完整原包已进入Windows工程接收目录，并已提交到GitHub独立分支。** 用户确认后继续执行，避开本地Git身份凭据缺失，利用已连接GitHub账号和Windows已有Git身份完成同一批10文件的正常交付。初次自动审批拒绝为历史记录，当前无需重复授权；主分支未由本任务合并。
+
+完整ZIP交付提交：`755cfda789ae15495f82bdefb47dc19e22b0fce7`。最终分支不含传输分片，保留与原清单SHA相同的完整20,149,472字节ZIP。Windows接收位置为 `Game/Saved/ArtReview/RoosterV6/SSLM_RoosterV6_8SkillIcons_ReadyForUE58.zip`，源图8项门禁已实际通过。
 
 本轮提交范围：
 
@@ -20,7 +22,7 @@
 ## 最新基线与本轮范围
 
 - 起点为GitHub主分支提交 `9b1b1426c2b57661cf16475e38f96df124288e0c`，提交时间为北京时间2026-10-21 19:08:37。本轮使用独立分支，不改写正在使用的Windows工程或主分支。
-- 主分支仍只有2026-10-19的酉鸡V6接线记录和导入清单，尚无后续酉鸡V6完成记录。英雄包内有五份V1技能Texture2D和现有占位UIProfile，未发现八份V6原生纹理。
+- 续行核对主分支 `f309135074e2a1ab62fe1a76ebc7945cc5325203`：酉鸡现有Profile较初轮基线已有后续修改，仍未发现八份V6原生纹理。本轮未覆盖该二进制配置。其它任务随后将主工程推进至 `e5dea071c258200a810dadbe8ffbdbfee68b5d2a`，本轮交付前后该HEAD保持不变。
 - 不重新生成图像，不修改原包字节，不覆盖V1，不修改服务器技能身份、授权、Cook（资源烘焙）规则或现有ViewModel（视图模型）源码。
 
 ## 找回的正式源包
@@ -57,13 +59,19 @@ Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/SourceArt/UI/S
 - `python3 Tools/Unreal/UI/ImportRoosterV6SkillIconsUE58.py`：默认只读预检通过，实际从英雄包读取完整ZIP并核验24张图；未导入UE资产。
 - 源图实际解码、全部尺寸/哈希验证完成；源图正确不代表引擎显示颜色和小尺寸可读性验收通过。
 - `git diff --check`：通过。本轮不改任何 `.uasset`（引擎资产文件）或 `.umap`（地图文件）。
-- 当前本地环境没有PowerShell 7，修改后的PowerShell入口未执行；其真实Windows运行结果待补。未执行UE编译、引擎自动化、客户端或服务器烘焙。
+- Windows PowerShell 7.6.7真实执行修复后的交付入口，输出 `ROOSTER_V6_REGISTRY_AND_ZIP_PREFLIGHT_OK=8` 和 `ROOSTER_V6_NATIVE_48_ASSET_READY_TO_IMPORT=8`。在隔离验证目录加载本分支脚本、清单、现有技能注册表及完整原包，没有覆盖主工程的未提交源文件。
+- 实跑发现并修复原有尺寸读取缺陷：PNG宽度原始字节为 `[0,0,4,230]`，Byte（字节）左移在PowerShell中截断，旧算式得到230；操作数先转Int32（32位整数）后正确得到1254，48和64读取保持正确。修复经独立代码复核，真实原包由失败转为通过。
+- 未执行UE编译、引擎自动化、客户端或服务器烘焙。
 
 ## 真实环境阻塞
 
-HWebCodex连接返回超过300秒未在线；可用Cwebcodex的Monolith调用明确返回 `Unreal Editor not running`（虚幻编辑器未运行）。附件接收尝试返回 `requires trusted MCP host-file provenance`（需要可信附件来源凭据），没有成功写入Windows项目。未改用手工二进制或文本伪造资产。
+初轮HWebCodex离线、附件直传受阻。续行HWebCodex已恢复，但附件入口仍拒绝非公网下载地址。原包最终通过已授权仓库完成正常Git交付：GitHub接口单次请求上限16 MiB，故先受控传送两个原字节分片，随后由Windows恢复完整ZIP并核对SHA，最终分支树移除分片，仅保留完整原包。全程未改动图像内容。
 
-Cwebcodex初始工程观察为主分支本地领先3项、落后41项，且执行队列中有其它活动任务。本轮未强制重置、拉取合并、停止其它任务或覆盖其工程；本轮只读环境诊断在开始执行前已取消，不能据此推定已找到或启动正确引擎。本地仓库分支交付不等于远端已推送或Windows已同步。
+真实Windows工程为 `E:/work/2026/DivineBeastsWorkspace`，锁定引擎实物位于 `D:/UnrealEngine-5.8.0-release`，Build.version确认为5.8.0。后续只读观察到UE编辑器PID 39160，命令行工程确为 `Game/DivineBeastsArena.uproject`；这只能证明进程身份。HWebCodex的MCP注册服务器列表为空，Monolith不可调用；Cwebcodex原Monolith入口仍返回编辑器不可用，未取得可操作的正确工程Monolith会话。没有改动服务权限或绕过MCP资产制作规则。
+
+已有编辑器属于正在进行的其它工作，本轮没有关闭、重启或操作其未提交资产。酉鸡Profile在开始时有后续未提交修改，之后由其它任务提交；本轮使用独立Git索引处理交付分支，主工程HEAD在交付前后均为 `e5dea071c258200a810dadbe8ffbdbfee68b5d2a`，未切换、暂存或覆盖该工作区。
+
+Windows真实交付证据：`Game/Saved/Validation/RoosterV6IconImport/Delivery_62adbdd33e744cbc9ae5c8c01c71e3e9/DeliveryResult.json` 及 `WindowsPreflight.txt`。结果明确为源图已交付、原生纹理导入数0、Profile绑定未执行、HUD未测试。
 
 ## 后续真实UE5.8执行与验收门禁
 
@@ -79,4 +87,4 @@ Cwebcodex初始工程观察为主分支本地领先3项、落后41项，且执�
 
 ## 中文说明检查与剩余范围
 
-本轮修改的Python/PowerShell交付入口及新增测试具备中文职责、路径优先级、失败与副作用说明；仅改文件预检和交付位置。原有UE资产操作函数的完整注释、真实引擎幂等绑定、全局Profile唯一性及全部运行门禁仍按实际执行补证，不将本轮源包交付描述为全链路完成。
+本轮修改的Python/PowerShell交付入口及新增测试具备中文职责、路径优先级、失败与副作用说明；仅改文件预检、PNG尺寸解码及交付位置。原有UE资产操作函数的完整注释、真实引擎幂等绑定、全局Profile唯一性及全部运行门禁仍按实际执行补证，不将本轮源包交付描述为全链路完成。

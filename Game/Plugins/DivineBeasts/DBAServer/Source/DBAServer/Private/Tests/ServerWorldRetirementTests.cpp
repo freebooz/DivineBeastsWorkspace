@@ -2,6 +2,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Server/DivineBeastsServerBootstrapSubsystem.h"
 #include "Server/GamePlatformServerLifecycleSubsystem.h"
+#include "Identity/DivineBeastsProjectCatalog.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Async/Async.h"
@@ -48,6 +49,14 @@ bool FDivineBeastsServerWorldRetirementTest::RunTest(const FString&)
     Bootstrap->ObservedWorld = World.Get(); Bootstrap->ValidatedWorld = World.Get();
     Bootstrap->BootstrapOperationId = FGuid::NewGuid();
     Bootstrap->bWorldValidated = true; Bootstrap->State = EDivineBeastsServerBootstrapState::Ready;
+    Bootstrap->ServerBootId = TEXT("test.world.character.boot");
+    // 明确缺少真实Experience的世界；OpenWorld也必须失败关闭，不能按旧分支直接报告零玩家而允许Ready。
+    Bootstrap->ActiveProfile.ServerRoleId = FDivineBeastsProjectCatalog::GetOpenWorldServerRole();
+    Bootstrap->ActiveExperienceId = FDivineBeastsProjectCatalog::GetOpenWorldHubExperience();
+    TestEqual(TEXT("常驻世界没有Active体验时拒绝Ready资格"), Bootstrap->GetCurrentPlayerCount(), -1);
+    Bootstrap->ActiveProfile.ServerRoleId = FDivineBeastsProjectCatalog::GetVillageServerRole();
+    Bootstrap->ActiveExperienceId = FDivineBeastsProjectCatalog::GetVillageTutorialExperience();
+    TestEqual(TEXT("新手村保留实际体验Ready门禁"), Bootstrap->GetCurrentPlayerCount(), -1);
     Bootstrap->HandleWorldCleanup(World.Get(), true, true);
     TestFalse(TEXT("旧世界退出撤销世界验证"), Bootstrap->bWorldValidated);
     TestTrue(TEXT("完整世界退出保留退休栅栏"), Bootstrap->bWorldRetired);

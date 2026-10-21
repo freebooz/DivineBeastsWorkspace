@@ -406,5 +406,31 @@
     "NativeGASStatus": "See Docs/Implementation/SSLMVillagePlaceholderSkills_20261013.md final execution evidence",
     "ManualVisualAccepted": false,
     "IndependentReadbackEvidence": "Game/Saved/Validation/VillageSkillPlaceholder20261013/ColdReadback_20261015T121234783736Z.json"
+  },
+  "AuthorizedHotbarIconBinding_20261021": {
+    "ProfileAssetPath": "/DBAHeroPack_Dog/UI/Abilities/DA_DBA_Dog_PlaceholderUIProfile.DA_DBA_Dog_PlaceholderUIProfile",
+    "ProfileClass": "/Script/DivineBeastsUIClient.DivineBeastsAbilityUIProfile",
+    "Tool": "Monolith MCP editor.run_python",
+    "Engine": "5.8.0",
+    "Date": "2026-10-21",
+    "ChangedSlotCount": 5,
+    "MappedSlotCount": 8,
+    "RetainedTemporarySlotCount": 0,
+    "Actions": [
+      "InspectActualAbilitySetAndProfile",
+      "BackupOriginalPackage",
+      "ReplaceAuthorizedEntryIconOnly",
+      "SaveDataAsset",
+      "ReloadPackage",
+      "VerifyMappingAndProtectedFields"
+    ],
+    "SavedAndPackageReloaded": true,
+    "MappingMismatches": 0,
+    "GameplayIdentityAndApprovalChanged": false,
+    "TexturesChanged": false,
+    "ProfileSHA256": "24a4fb9708641045a9c312ec17f3e36f82de86881aacf9eb5181ac4765d13417",
+    "EvidenceDirectory": "Saved/Validation/HotbarHeroIcons20261021",
+    "NativeAndCookEvidenceDirectory": "Saved/Validation/HotbarRespawn20261021",
+    "RuntimeHUDAndHumanAcceptance": "PendingSeparateVerification"
   }
 }

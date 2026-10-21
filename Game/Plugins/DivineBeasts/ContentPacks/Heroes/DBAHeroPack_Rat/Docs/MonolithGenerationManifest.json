@@ -422,5 +422,31 @@
     "CookVerified": false,
     "ManualHUDAcceptance": false,
     "Evidence": "Saved/Validation/RatV6Import20261019/FinalVerification.json"
+  },
+  "AuthorizedHotbarIconBinding_20261021": {
+    "ProfileAssetPath": "/DBAHeroPack_Rat/UI/Abilities/DA_DBA_Rat_PlaceholderUIProfile.DA_DBA_Rat_PlaceholderUIProfile",
+    "ProfileClass": "/Script/DivineBeastsUIClient.DivineBeastsAbilityUIProfile",
+    "Tool": "Monolith MCP editor.run_python",
+    "Engine": "5.8.0",
+    "Date": "2026-10-21",
+    "ChangedSlotCount": 5,
+    "MappedSlotCount": 8,
+    "RetainedTemporarySlotCount": 0,
+    "Actions": [
+      "InspectActualAbilitySetAndProfile",
+      "BackupOriginalPackage",
+      "ReplaceAuthorizedEntryIconOnly",
+      "SaveDataAsset",
+      "ReloadPackage",
+      "VerifyMappingAndProtectedFields"
+    ],
+    "SavedAndPackageReloaded": true,
+    "MappingMismatches": 0,
+    "GameplayIdentityAndApprovalChanged": false,
+    "TexturesChanged": false,
+    "ProfileSHA256": "d6cf1c000239fdcf5e05c9696967446be56971198a0332cc37589422b4ddfe50",
+    "EvidenceDirectory": "Saved/Validation/HotbarHeroIcons20261021",
+    "NativeAndCookEvidenceDirectory": "Saved/Validation/HotbarRespawn20261021",
+    "RuntimeHUDAndHumanAcceptance": "PendingSeparateVerification"
   }
 }

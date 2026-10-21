@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scopeZh": "真实源图文件校验；不代表引擎导入、配置绑定或人工视觉验收",
   "dateAsiaShanghai": "2026-10-21",
-  "remoteDelivery": "NOT_PUSHED_AUTOMATIC_REVIEW_BLOCKED",
+  "remoteDelivery": "GITHUB_BRANCH_DELIVERED",
   "baselineCommit": "9b1b1426c2b57661cf16475e38f96df124288e0c",
   "heroId": "Hero.Zodiac.Rooster",
   "archivePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Rooster/SourceArt/UI/SkillIcons/V6/Delivery/SSLM_RoosterV6_8SkillIcons_ReadyForUE58.zip",
@@ -332,7 +332,7 @@
   "hudEvidence": "NOT_TESTED",
   "humanVisualAcceptance": "PENDING",
   "serverAuthorizationChanged": false,
-  "powershellValidationExecuted": false,
+  "powershellValidationExecuted": true,
   "zipMemberCount": 38,
   "legacyV1Assets": [
     {
@@ -360,5 +360,26 @@
       "gitBlobSha1": "51ac8ace156845eb3a6f8c4ef32360563691175f",
       "matchesBaseline": true
     }
-  ]
+  ],
+  "sourceArchiveCommit": "755cfda789ae15495f82bdefb47dc19e22b0fce7",
+  "windowsSourceDelivery": {
+    "state": "VERIFIED_SHA256_AND_8_ENTRY_PREFLIGHT",
+    "archivePath": "E:/work/2026/DivineBeastsWorkspace/Game/Saved/ArtReview/RoosterV6/SSLM_RoosterV6_8SkillIcons_ReadyForUE58.zip",
+    "archiveBytes": 20149472,
+    "sha256": "e20c8c3408de67766c0e9983567031ebf8061c63024f924db5fd207699c4a7e6",
+    "powershellVersion": "7.6.7",
+    "preflightEntryCount": 8,
+    "fixedPngWidthBefore": 230,
+    "fixedPngWidthAfter": 1254,
+    "workspaceHeadBefore": "e5dea071c258200a810dadbe8ffbdbfee68b5d2a",
+    "workspaceHeadAfter": "e5dea071c258200a810dadbe8ffbdbfee68b5d2a",
+    "evidenceRelativePath": "Game/Saved/Validation/RoosterV6IconImport/Delivery_62adbdd33e744cbc9ae5c8c01c71e3e9/DeliveryResult.json"
+  },
+  "engineConnection": {
+    "observedEditorPid": 39160,
+    "projectArgumentMatches": true,
+    "engineVersion": "5.8.0",
+    "hwebcodexRegisteredMcpServers": 0,
+    "monolithConnected": false
+  }
 }
