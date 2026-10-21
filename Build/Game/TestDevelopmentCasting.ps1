@@ -22,9 +22,11 @@ $engine=Get-FoundationEngine $EngineRoot
 foreach($prefix in $Prefixes){if($prefix -notmatch '^[A-Za-z0-9.]+$'){throw '测试前缀只允许稳定英文标识，不能执行额外控制台命令。'}}
 # 验证完整Editor证据，而非凭旧DLL时间或编辑器能启动就宣称本轮源码已编译。
 $requiredModules=@('GamePlatformAbilitySystem','DivineBeastsCharactersRuntime')
-$includeWolfServer=@($Prefixes|Where-Object {$_.StartsWith('DivineBeasts.Server.VillageWolf.')}).Count -gt 0
-# 仅显式选择专服狼回归时装配真实服务端模块；普通施法/UI用例仍保持原客户端装配。
-if($includeWolfServer){$requiredModules+=@('DBAServer','GamePlatformAIServer')}
+$includeWolfServer=@($Prefixes|Where-Object {$_ -eq 'DivineBeasts.Server.VillageWolf' -or $_.StartsWith('DivineBeasts.Server.VillageWolf.')}).Count -gt 0
+$includeProjectServer=@($Prefixes|Where-Object {$_ -eq 'DivineBeasts.Server' -or $_.StartsWith('DivineBeasts.Server.')}).Count -gt 0
+# 只为显式选择的专服回归加载对应模块；死亡重生测试复用真实准入桥，不启动后台服务。
+if($includeProjectServer){$requiredModules+='DBAServer'}
+if($includeWolfServer){$requiredModules+='GamePlatformAIServer'}
 if(@($Prefixes|Where-Object {$_.StartsWith('DivineBeasts.Presentation.')}).Count -gt 0){$requiredModules+='DivineBeastsPresentationClient'}
 # 远古石灵开发怪物已退役；施法回归只装配实际需要的平台与项目客户端模块。
 $proof=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules $requiredModules
@@ -38,7 +40,7 @@ $arguments=@((Join-Path $workspace 'Game/DivineBeastsArena.uproject'),'/DBAFront
     '-CustomConfig=VillageDevelopmentClient','-DBADevelopmentSkills','-textconfig',
     '-ini:EditorSettings:/Script/UnrealEd.EditorPerformanceSettings:bThrottleCPUWhenNotForeground=False',
     "-abslog=$(Join-Path $directory 'Unreal.log')","-ExecCmds=Automation RunTests $selector",'-TestExit=Automation Test Queue Empty',"-ReportExportPath=$report")
-if($includeWolfServer){$arguments+='-EnablePlugins=DBAServer'}
+if($includeProjectServer){$arguments+='-EnablePlugins=DBAServer'}
 
 $process=Invoke-FoundationProcess -FilePath (Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe') -Arguments $arguments -WorkingDirectory $workspace -OutputDirectory $directory -TimeoutSeconds $TimeoutSeconds
 # 超时、进程失败与断言失败分开留证，不能把未进入测试队列写成测试通过。

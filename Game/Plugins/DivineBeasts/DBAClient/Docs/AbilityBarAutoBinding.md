@@ -60,3 +60,11 @@ DBAClient 只读 DBAGameplay/DivineBeastsAbilitiesRuntime（项目权威授权�
 - `DivineBeasts.UI.Resources.RootLayout.LocalPlayerIsolationAndInvalidClass`
 
 测试直接驱动真实组件事件、ViewModel 绑定/销毁以及本地玩家子系统的控制器/安装/退出入口；Data 替身仅控制资源终态及记录释放，根布局最后的视口挂载是显式测试边界。测试不伪造真实角色 Ready 或 GAS 授权；因此缺资源行为验证不能替代已授权技能栏的最终视觉验收。源码、Automation、真实 UI 资产、Cook/Stage、多人/多PIE画面分别留证。新增用例当前已写入，实际构建/运行结果以 `Docs/Implementation/PluginArchitectureOptimization/task-3-report.md` 及主代理统一验证记录为准。
+
+## 2026-10-21 真实授权技能图标接线修复
+
+技能栏运行路径以服务器已授权的 `AbilityId` 查找唯一英雄 Profile；美术预览的八个身份不等于当前占位授权身份。先前新图存在但未接到对应授权条目，导致游戏继续显示公共临时图。修复只替换现有 Profile 条目的 `Icon`，不改技能身份、中文文字、GAS 授权、数值或最终美术审批状态，也不打开只读美术预览来替代可施法的技能栏。
+
+`Tools/Unreal/UI/BindAuthorizedHotbarHeroIconsMonolith.py` 通过 Monolith 串行执行只读检查、原包备份、修改、保存和校验。Rat/Ox/Tiger/Rabbit/Dragon/Snake/Dog 使用各自现有 Profile 的显式八图顺序；Horse/Goat/Monkey/Rooster/Boar 仅有旧版五张图，其中四个主动图按历史作者清单的完整英雄身份、输入标签及真实 Monolith 清单绑定。后五个英雄的第五至第八槽保留既有临时图，不能宣称未制作的专用图已完成。
+
+本轮实读96个输入槽，76槽有明确角色图，20槽保留临时图；50处错绑已在引擎内修正，保存及包重载后对应关系无差异。保留原图RGB，不修改纹理、WBP、Widget业务更新机制或Data租约所有权。证据在 `Saved/Validation/HotbarHeroIcons20261021`；原生回归、Cook、真实客户端与人工签收分别记录在 `Saved/Validation/HotbarRespawn20261021`，不能由本段资产结果推断后者已通过。

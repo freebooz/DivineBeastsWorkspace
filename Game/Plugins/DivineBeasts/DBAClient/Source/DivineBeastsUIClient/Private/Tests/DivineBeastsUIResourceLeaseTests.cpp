@@ -7,6 +7,7 @@
 #include "ViewModels/Combat/DivineBeastsAbilityBarViewModel.h"
 #include "DivineBeastsUIClientSubsystem.h"
 #include "Definitions/DivineBeastsAbilityUIProfile.h"
+#include "Definitions/GamePlatformAbilitySetDefinition.h"
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Manager/GamePlatformUIManagerSubsystem.h"
@@ -285,6 +286,61 @@ struct FRootLeaseFixture
         World->DestroyWorld(false);
     }
 };
+}
+
+/**
+ * 真实异构Profile均走生产VM的租约完成→ValidateProfile→图标批次完成；
+ * Data替身仅控制异步终态，测试显式加载真实资源，不伪造身份Ready、技能授权或线上Data成功。
+ * 额外按实际Set编号查已验证Profile，防止美术条目或旧四图结构让整Profile被拒绝。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsExistingHeroProfileLeaseTest,
+    "DivineBeasts.UI.Resources.AbilityProfileAndIcons.ExistingHeroProfiles",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsExistingHeroProfileLeaseTest::RunTest(const FString&)
+{
+    if (!TestNotNull(TEXT("真实Engine"), GEngine)) return false;
+    for (const TCHAR* Hero : {TEXT("Rat"), TEXT("Ox"), TEXT("Tiger"), TEXT("Rabbit"), TEXT("Dragon"),
+        TEXT("Snake"), TEXT("Horse"), TEXT("Goat"), TEXT("Monkey"), TEXT("Rooster"), TEXT("Dog"), TEXT("Boar")})
+    {
+        FAbilityLeaseFixture F;
+        const FString ProfilePath = FString::Printf(
+            TEXT("/DBAHeroPack_%s/UI/Abilities/DA_DBA_%s_PlaceholderUIProfile.DA_DBA_%s_PlaceholderUIProfile"), Hero, Hero, Hero);
+        TStrongObjectPtr<UDivineBeastsAbilityUIProfile> Profile(
+            LoadObject<UDivineBeastsAbilityUIProfile>(nullptr, *ProfilePath));
+        const FString SetPath = FString::Printf(
+            TEXT("/DBAGameplay/Abilities/Placeholders/DA_DBA_%s_PlaceholderAbilitySet.DA_DBA_%s_PlaceholderAbilitySet"), Hero, Hero);
+        const auto* Set = LoadObject<UGamePlatformAbilitySetDefinition>(nullptr, *SetPath);
+        if (!TestNotNull(TEXT("实际保存Profile"), Profile.Get()) || !TestNotNull(TEXT("实际保存Set"), Set)) return false;
+        TMap<FName, FSoftObjectPath> Paths;
+        Paths.Add(Profile->HeroDefinitionId, FSoftObjectPath(Profile.Get()));
+        FLeaseAccess::Configure(*F.VM.Get(), F.Data, Paths);
+        FLeaseAccess::SetSnapshot(*F.Source.Get(), Profile->HeroDefinitionId);
+        TestTrue(TEXT("真实VM绑定Loadout观察源"), F.VM->BindToLoadout(F.Source.Get()));
+        if (!TestEqual(TEXT("先申请Profile租约"), F.Data.Requests.Num(), 1)) return false;
+        F.Data.Complete(0, true);
+        TestEqual(FString(Hero) + TEXT("真实Profile通过生产HandleProfileLoaded校验"),
+            FLeaseAccess::Profile(*F.VM.Get()), Profile.Get());
+        if (!TestEqual(FString(Hero) + TEXT("通过后才申请图标租约"), F.Data.Requests.Num(), 2)) return false;
+        for (const FSoftObjectPath& Path : F.Data.Requests[1]->Lease.ResourcePaths)
+            if (!TestNotNull(TEXT("图标批次每个路径都是真实Texture2D"), Cast<UTexture2D>(Path.TryLoad()))) return false;
+        F.Data.Complete(1, true);
+        TestTrue(FString(Hero) + TEXT("真实图标终态进入生产VM"), FLeaseAccess::IconsReady(*F.VM.Get()));
+        const auto* Verified = FLeaseAccess::Profile(*F.VM.Get());
+        if (!TestNotNull(TEXT("图标终态保留当前Profile"), Verified)) return false;
+        for (const auto& Grant : Set->Abilities)
+        {
+            const FName AbilityId(*Grant.AbilityId.ToString());
+            const auto* Entry = Verified->FindEntry(AbilityId);
+            if (!TestNotNull(FString(Hero) + TEXT("实际Set技能ID可在已验证Profile中找到 ") + AbilityId.ToString(), Entry)) return false;
+            TestNotNull(TEXT("该条目实际图标已驻留"), Entry->Icon.Get());
+        }
+        TestTrue(TEXT("没有真实角色Ready与GAS时仍不制造授权显示"), F.VM->GetSlotsRef().IsEmpty());
+        F.VM->UnbindFromLoadout();
+        TestEqual(TEXT("解绑释放Profile自身租约"), F.Data.Requests[0]->Releases, 1);
+        TestEqual(TEXT("解绑释放图标自身租约"), F.Data.Requests[1]->Releases, 1);
+        TestNull(TEXT("解绑撤销已验证Profile"), FLeaseAccess::Profile(*F.VM.Get()));
+    }
+    return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAbilityResourceHeroSwitchTest,

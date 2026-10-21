@@ -462,7 +462,7 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
     const TWeakObjectPtr<UWorld> ExpectedWorld(&World);
     const TWeakObjectPtr<UGameInstance> ExpectedInstance(GetGameInstance());
     const FString ExpectedBootId = ServerBootId;
-    if(Instance.ServerRoleId==TEXT("GameServer.Role.Village"))
+    if (DivineBeasts::WorldCharacterAdmission::SupportsAutomaticRespawn(ActiveExperienceId))
     {
     // 已核对Profile、真实地图和服务器Target后，桥接到平台World/Data与Gameplay唯一运行实例。
     auto* Mode=World.GetAuthGameMode<ADivineBeastsWorldGameMode>();
@@ -473,7 +473,10 @@ void UDivineBeastsServerBootstrapSubsystem::RegisterValidatedWorld(UWorld& World
         || !FGamePlatformId::TryParse(Instance.ExperienceId+TEXT("@1"),Context.ExperienceId))
     {SetFailed(TEXT("ProjectWorldIdentityInvalid"));return;}
     Context.ServerInstanceId=Instance.GameServerId; Context.ServerStartGeneration=1;
-    Context.ServerRole=TEXT("Village"); Context.AuthorityKind=EGamePlatformWorldAuthority::SessionProjection;
+    // 常驻世界与村庄使用同一出生/准入执行器；上下文必须保留真实角色，不能把OpenWorld伪装成Village。
+    Context.ServerRole = ActiveProfile.ServerRoleId == FDivineBeastsProjectCatalog::GetVillageServerRole()
+        ? FName(TEXT("Village")) : FName(TEXT("OpenWorld"));
+    Context.AuthorityKind=EGamePlatformWorldAuthority::SessionProjection;
     FGamePlatformVersion::TryParse(Instance.BuildVersion,Context.BuildVersion);
     const FPrimaryAssetId WorldAsset(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),FName(*Instance.WorldId));
     const auto BoundWorldResult = WorldService->InitializeBoundWorld(WorldAsset,Context);
@@ -674,8 +677,8 @@ void UDivineBeastsServerBootstrapSubsystem::TryPublishReady()
     if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
     FString Reason;
     if (!IsConfiguredWorldValid(*ValidatedWorld.Get(), Reason)) { SetFailed(TEXT("ServerReadyGateLost")); return; }
-    // Village出生依赖唯一Experience执行器；Preparing/Failed均不能接纳。其他角色沿用既有Profile门禁。
-    if (ActiveProfile.ServerRoleId == TEXT("GameServer.Role.Village"))
+    // Village/OpenWorld出生依赖唯一Experience；缺少真实资产、Preparing或Failed均不能发布Ready。
+    if (DivineBeasts::WorldCharacterAdmission::SupportsAutomaticRespawn(ActiveExperienceId))
     {
         const int32 Players = GetCurrentPlayerCount();
         if (!IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId)) { return; }
@@ -720,7 +723,7 @@ int32 UDivineBeastsServerBootstrapSubsystem::GetCurrentPlayerCount() const
         return -1;
     }
     AGameModeBase* GameMode = World->GetAuthGameMode();
-    if(ActiveProfile.ServerRoleId!=TEXT("GameServer.Role.Village"))
+    if (!DivineBeasts::WorldCharacterAdmission::SupportsAutomaticRespawn(ActiveExperienceId))
     {
         const int32 Players = GameMode ? GameMode->GetNumPlayers() : 0;
         return IsBootstrapScopeCurrent(OperationId, ExpectedWorld, ExpectedInstance, ExpectedBootId) ? Players : -1;
