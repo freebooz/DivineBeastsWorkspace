@@ -10,6 +10,7 @@
 #include "HAL/FileManager.h"
 #include "Misc/Paths.h"
 #include "Misc/FileHelper.h"
+#include "Misc/ConfigCacheIni.h"
 #include "UObject/StrongObjectPtr.h"
 #include <limits>
 
@@ -21,7 +22,10 @@ bool FGamePlatformSFXUserSettingsTest::RunTest(const FString&)
     TStrongObjectPtr<UGameInstance> GI(NewObject<UGameInstance>());
     TStrongObjectPtr<UGamePlatformSFXUserSettingsSubsystem> Settings(NewObject<UGamePlatformSFXUserSettingsSubsystem>(GI.Get()));
     Settings->LoadVolumes(Filename);
-    TestEqual(TEXT("首次无文件默认100%"), Settings->GetSnapshot().Music, 1.0f);
+    float InitialMusic = 1.f;
+    GConfig->GetFloat(TEXT("GamePlatformSFX.UserVolumeDefaults"), TEXT("Music"), InitialMusic, GGameIni);
+    TestEqual(TEXT("首次无文件采用项目默认音乐音量"), Settings->GetSnapshot().Music, InitialMusic);
+    const int32 ExpectedChanges = 2 + (InitialMusic == 0.f ? 0 : 1);
     int32 Notifications = 0;
     const auto Subscription = Settings->AddChangedHandler(FGamePlatformSFXUserVolumesChanged::FDelegate::CreateLambda(
         [&](const auto&) { ++Notifications; }));
@@ -33,9 +37,9 @@ bool FGamePlatformSFXUserSettingsTest::RunTest(const FString&)
     TestTrue(TEXT("效果音量保存"), Settings->SetVolume(EGamePlatformSFXSoundGroup::Effects, 0.25f).IsSuccess());
     TestTrue(TEXT("环境音量保存"), Settings->SetVolume(EGamePlatformSFXSoundGroup::Ambient, 0.5f).IsSuccess());
     TestTrue(TEXT("音乐静音保存"), Settings->SetVolume(EGamePlatformSFXSoundGroup::Music, 0.0f).IsSuccess());
-    TestEqual(TEXT("仅3次真实变化"), Notifications, 3);
+    TestEqual(TEXT("只通知真实变化"), Notifications, ExpectedChanges);
     Settings->SetVolume(EGamePlatformSFXSoundGroup::Music, 0.0f);
-    TestEqual(TEXT("重复值无事件"), Notifications, 3);
+    TestEqual(TEXT("重复值无事件"), Notifications, ExpectedChanges);
     TestTrue(TEXT("一次捕获结束将三路值写盘"), Settings->CommitVolumes().IsSuccess());
     TStrongObjectPtr<UGamePlatformSFXUserSettingsSubsystem> Restored(NewObject<UGamePlatformSFXUserSettingsSubsystem>(GI.Get()));
     Restored->LoadVolumes(Filename);

@@ -25,5 +25,6 @@ public class GamePlatformSurfaceClient : ModuleRules
         PrivateDependencyModuleNames.Add("GamePlatformData");
         // 内部资源回执调用Core结果/身份方法；真实Editor DLL需要直接导入库，头可见不代表链接成立。
         PrivateDependencyModuleNames.Add("GamePlatformCore");
+        PrivateDependencyModuleNames.Add("Landscape");
     }
 }

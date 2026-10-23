@@ -28,7 +28,7 @@ void UDivineBeastsPresentationClientSubsystem::EnsureStarterAudioForWorld(UWorld
     if (!Instance || Instance->GetFirstGamePlayer() != Player) return;
 
     const FString MapName = World->GetMapName();
-    // 首期只根据正式地图身份启用自动背景音乐，避免开发审核地图误触发。
+    // 已有登录/新手村保留稳定语义身份，其余游戏世界使用同一项目默认音乐；编辑器世界已在上方排除。
     const bool bVillage = MapName.Contains(TEXT("L_Village_Start"), ESearchCase::IgnoreCase);
     const bool bFrontEnd = MapName.Contains(TEXT("L_DBA_FrontEnd"), ESearchCase::IgnoreCase) ||
         MapName.Contains(TEXT("L_DBA_CharacterStudio"), ESearchCase::IgnoreCase);
@@ -90,6 +90,8 @@ void UDivineBeastsPresentationClientSubsystem::EnsureStarterAudioForWorld(UWorld
     }
     else if (bFrontEnd)
         EnsureGroup(TEXT("Music.Login"), 1, StarterMusicPack);
+    else
+        EnsureGroup(TEXT("Music.Default"), 1, StarterMusicPack);
 
     // 同步完成数据预载时，也保证音乐导演能够在所属句柄登记后启动一次。
     SubmitStarterAudioForWorld();
@@ -149,7 +151,6 @@ void UDivineBeastsPresentationClientSubsystem::SubmitStarterAudioForWorld()
     const bool bVillage = MapName.Contains(TEXT("L_Village_Start"), ESearchCase::IgnoreCase);
     const bool bFrontEnd = MapName.Contains(TEXT("L_DBA_FrontEnd"), ESearchCase::IgnoreCase) ||
         MapName.Contains(TEXT("L_DBA_CharacterStudio"), ESearchCase::IgnoreCase);
-    if (!bVillage && !bFrontEnd) return;
 
     auto SubmitLoop = [this, World](const TCHAR* TagName, FGuid& OutId, FGameplayTag* OutTag)
     {
@@ -186,7 +187,8 @@ void UDivineBeastsPresentationClientSubsystem::SubmitStarterAudioForWorld()
     if (StarterMusicPack.IsValid() &&
         GetContentPackState(StarterMusicPack, Error) == EDivineBeastsPresentationContentPackState::Active)
         SubmitLoop(bVillage ? TEXT("Presentation.SSLM.Audio.Music.Village") :
-            TEXT("Presentation.SSLM.Audio.Music.Login"), StarterMusicRequestId, &StarterMusicTag);
+            (bFrontEnd ? TEXT("Presentation.SSLM.Audio.Music.Login") : TEXT("Presentation.SSLM.Audio.Music.Default")),
+            StarterMusicRequestId, &StarterMusicTag);
     Error.Reset();
     if (bVillage && StarterAmbiencePack.IsValid() &&
         GetContentPackState(StarterAmbiencePack, Error) == EDivineBeastsPresentationContentPackState::Active)

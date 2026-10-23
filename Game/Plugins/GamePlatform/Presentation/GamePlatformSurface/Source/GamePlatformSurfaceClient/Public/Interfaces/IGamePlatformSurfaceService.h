@@ -2,8 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Types/GamePlatformSurfaceTypes.h"
+#include "Types/GamePlatformSnowContactTypes.h"
 
 class UWorld;
+class UMaterialInstanceDynamic;
 
 /** 表面环境状态变化通知；只在状态真正变化后广播，不按帧轮询。 */
 DECLARE_MULTICAST_DELEGATE_TwoParams(
@@ -45,4 +47,9 @@ public:
 
     /** 取消此前的状态变化订阅；未知句柄按幂等方式忽略。 */
     virtual void RemoveStateChangedHandler(FDelegateHandle Handle) = 0;
+
+    /** 游戏线程提交已确认的足底接触；true仅表示进入有界视觉队列，不代表GPU或人工验收完成。 */
+    virtual bool SubmitSnowContact(const FGamePlatformSnowContact& Contact) = 0;
+    /** 复用接收者已有MID；弱登记、无材质克隆。等待高度场加载时也可登记，不承担MID所有权。 */
+    virtual bool RegisterSnowContactMaterial(UMaterialInstanceDynamic& Material) = 0;
 };

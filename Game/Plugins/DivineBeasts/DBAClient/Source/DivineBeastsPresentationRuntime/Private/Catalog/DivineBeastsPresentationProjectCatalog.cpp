@@ -200,6 +200,7 @@ FDivineBeastsPresentationProjectCatalog::BuildStarterAudioFragment(FName Categor
         { TEXT("Spell.Fire.Impact"), TEXT("Presentation.SSLM.Audio.Spell.Fire.Impact"), TEXT("presentation.dba.audio.spell.fire.impact@1") },
         { TEXT("Music.Login"), TEXT("Presentation.SSLM.Audio.Music.Login"), TEXT("presentation.dba.audio.music.login@1") },
         { TEXT("Music.Village"), TEXT("Presentation.SSLM.Audio.Music.Village"), TEXT("presentation.dba.audio.music.village@1") },
+        { TEXT("Music.Default"), TEXT("Presentation.SSLM.Audio.Music.Default"), TEXT("presentation.dba.audio.music.default@1") },
         { TEXT("Ambience.Forest"), TEXT("Presentation.SSLM.Audio.Ambience.Forest"), TEXT("presentation.dba.audio.ambience.forest@1") }
     };
     for (const FAudioEntry& Audio : Entries)

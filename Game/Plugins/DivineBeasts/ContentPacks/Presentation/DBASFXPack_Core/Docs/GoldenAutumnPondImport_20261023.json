@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "title": "Golden Autumn Pond",
+  "artistFromProvidedFilename": "Tim Janis",
+  "sourceKind": "UserProvidedLocalVideo",
+  "rightsMetadata": "User supplied media; no CC0 or redistribution license is inferred.",
+  "extraction": {
+    "sourceVideo": "Golden Autumn Pond  Beautiful Relaxing Music, Peaceful Soothing Instrumental Music by Tim Janis.mp4",
+    "videoSHA256": "afc719fb89e177a841f393fe1cdeb0fd1221e987d84f9733998c7b2ed89aa568",
+    "decodedPCMHashes": {
+      "Golden Autumn Pond  Beautiful Relaxing Music, Peaceful Soothing Instrumental Music by Tim Janis.mp4": "SHA256=b1bcb108f0cc41cbda9c6db9de5b608fe23f5f2115a284bbd965afbb686d074c",
+      "GoldenAutumnPond.m4a": "SHA256=b1bcb108f0cc41cbda9c6db9de5b608fe23f5f2115a284bbd965afbb686d074c",
+      "GoldenAutumnPond.wav": "SHA256=b1bcb108f0cc41cbda9c6db9de5b608fe23f5f2115a284bbd965afbb686d074c"
+    },
+    "pcm": {
+      "sampleRate": 44100,
+      "channels": 2,
+      "sampleWidthBytes": 2,
+      "frames": 22813696,
+      "durationSeconds": 517.3173696145125
+    },
+    "extracted": [
+      {
+        "file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/SourceArt/Audio/Music/GoldenAutumnPond.m4a",
+        "bytes": 8367217,
+        "sha256": "713476aef9b8cc93a308f5dc7f3645fc461f47112d33196483ef93e00fe37117"
+      },
+      {
+        "file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/SourceArt/Audio/Music/GoldenAutumnPond.wav",
+        "bytes": 91254996,
+        "sha256": "8237eca529b3b2e00ee04c64ad0ff96d22190bce1377d68223e6e2ded103419b"
+      }
+    ]
+  },
+  "wave": "/DBASFXPack_Core/Audio/Music/Waves/S_DBA_Music_GoldenAutumnPond",
+  "definitionIds": [
+    "presentation.dba.audio.music.default@1",
+    "presentation.dba.audio.music.login@1",
+    "presentation.dba.audio.music.village@1"
+  ],
+  "importTool": "UE5.8 AssetTools via Monolith MCP",
+  "looping": true,
+  "loadingBehavior": "PrimeOnLoad",
+  "compressionQuality": 80,
+  "validation": {
+    "extractionPCMIdentical": true,
+    "nativeAssetReadback": true,
+    "coldReload": true,
+    "runtimeMixerCapture": true,
+    "humanListeningAccepted": false,
+    "clientCookStage": true
+  },
+  "existingUserVolumesPreserved": true,
+  "virtualizationMode": "PlayWhenSilent",
+  "evidenceDirectory": "Saved/Validation/DefaultMusic20261023",
+  "buildRuns": {
+    "Editor": "88df9f28-9552-4c25-a7c4-a71c629a40bc",
+    "Client": "274ac70f-26fa-4af9-a7ac-a07363bc2e8e",
+    "ClientCook": "316f384e-a01d-4c0b-ae65-7e290360c069"
+  }
+}

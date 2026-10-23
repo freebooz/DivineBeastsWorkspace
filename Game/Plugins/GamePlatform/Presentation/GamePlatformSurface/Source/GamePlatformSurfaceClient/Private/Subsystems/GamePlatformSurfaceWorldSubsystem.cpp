@@ -51,6 +51,7 @@ void UGamePlatformSurfaceWorldSubsystem::Deinitialize()
 {
     bClosing = true;
     StateChanged.Clear();
+    ReleaseSnowContacts();
     ReleaseMaterialBinding();
     Super::Deinitialize();
 }
@@ -80,6 +81,7 @@ FGamePlatformSurfaceUpdateResult UGamePlatformSurfaceWorldSubsystem::ApplyEnviro
     if (bStateChanged)
     {
         CurrentState = Sanitized;
+        if (CurrentState.GlobalSnowAmount < .001f) ClearSnowContacts();
         ++Revision;
     }
 

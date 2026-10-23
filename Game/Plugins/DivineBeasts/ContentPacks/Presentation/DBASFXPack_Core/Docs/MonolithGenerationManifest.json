@@ -79,5 +79,22 @@
     "SavedAndReloaded": true,
     "Evidence": "Saved/Validation/AudioSettings20261021",
     "AudiblePlaybackAccepted": false
+  },
+  "DefaultMusic_20261023": {
+    "tool": "Monolith MCP editor.run_python + UE AssetTools",
+    "sourceManifest": "GoldenAutumnPondImport_20261023.json",
+    "sound": "/DBASFXPack_Core/Audio/Music/Waves/S_DBA_Music_GoldenAutumnPond",
+    "definitions": [
+      "presentation.dba.audio.music.default@1",
+      "presentation.dba.audio.music.login@1",
+      "presentation.dba.audio.music.village@1"
+    ],
+    "singleSharedWave": true,
+    "saved": true,
+    "coldReloadVerified": true,
+    "nativeMixerRecorded": true,
+    "clientCookVerified": true,
+    "runtimeProof": "Saved/Validation/DefaultMusic20261023",
+    "humanListeningAccepted": false
   }
 }

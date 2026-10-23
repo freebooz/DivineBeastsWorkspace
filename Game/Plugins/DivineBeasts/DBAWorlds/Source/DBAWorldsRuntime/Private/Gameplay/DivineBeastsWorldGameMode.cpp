@@ -35,7 +35,8 @@ void ADivineBeastsWorldGameMode::BeginPlay()
 #if !UE_BUILD_SHIPPING
     // 仅当测试操作者显式传入两个开发参数，并且真正运行Village Dedicated Server时，
     // 才使用固定序列验证天气复制。不能让客户端、普通服务器或Shipping隐式启用。
-    if (FParse::Param(FCommandLine::Get(), TEXT("DBAVillageSnowReviewSchedule")))
+    bVillageGroundSnowReview = FParse::Param(FCommandLine::Get(), TEXT("DBAVillageGroundSnowReviewSchedule"));
+    if (bVillageGroundSnowReview || FParse::Param(FCommandLine::Get(), TEXT("DBAVillageSnowReviewSchedule")))
     {
         const bool bDedicatedVillage =
             World->GetNetMode() == NM_DedicatedServer &&
@@ -191,6 +192,11 @@ void ADivineBeastsWorldGameMode::PostLogin(APlayerController* NewPlayer)
 #if !UE_BUILD_SHIPPING
 void ADivineBeastsWorldGameMode::AdvanceVillageSnowReviewWeather()
 {
+    if (bVillageGroundSnowReview)
+    {
+        AdvanceVillageGroundSnowReviewWeather();
+        return;
+    }
     UWorld* World = GetWorld();
     if (bWeatherShuttingDown || !HasAuthority() || !IsValid(World) ||
         World->bIsTearingDown || World->GetNetMode() != NM_DedicatedServer ||
@@ -250,6 +256,83 @@ void ADivineBeastsWorldGameMode::AdvanceVillageSnowReviewWeather()
             VillageSnowReviewTimer, this,
             &ADivineBeastsWorldGameMode::AdvanceVillageSnowReviewWeather,
             NextDelaySeconds, false);
+    }
+}
+
+void ADivineBeastsWorldGameMode::AdvanceVillageGroundSnowReviewWeather()
+{
+    UWorld* World = GetWorld();
+    if (bWeatherShuttingDown || !bVillageGroundSnowReview || !HasAuthority() ||
+        !IsValid(World) || World->bIsTearingDown ||
+        World->GetNetMode() != NM_DedicatedServer ||
+        World->GetOutermost()->GetName() != TEXT("/DBAWorldPack_Village/Maps/L_Village_Start") ||
+        VillageSnowReviewStep < 0 || VillageSnowReviewStep > 4) return;
+    UGamePlatformWeatherWorldSubsystem* Weather = World->GetSubsystem<UGamePlatformWeatherWorldSubsystem>();
+    if (!Weather) return;
+
+    FGamePlatformWeatherState Target;
+    float TransitionSeconds = 4.f;
+    float HoldAndTransitionSeconds = 30.f;
+    const int32 Step = VillageSnowReviewStep++;
+    const TCHAR* Phase = TEXT("LightSnow");
+    switch (Step)
+    {
+    case 0:
+        Target.Type = EGamePlatformWeatherType::LightSnow;
+        Target.SnowIntensity = .35f;
+        Target.SnowAmount = .23f;
+        Target.TemperatureCelsius = -2.f;
+        break;
+    case 1:
+        Phase = TEXT("HeavySnow");
+        Target.Type = EGamePlatformWeatherType::HeavySnow;
+        Target.SnowIntensity = .90f;
+        Target.SnowAmount = .85f;
+        Target.WindIntensity = .25f;
+        Target.TemperatureCelsius = -8.f;
+        TransitionSeconds = 18.f;
+        HoldAndTransitionSeconds = 60.f;
+        break;
+    case 2:
+        // 停止降雪仅撤销雪花，低温下保留原积雪，不能同时切回绿色地面。
+        Phase = TEXT("StoppedSnow");
+        Target.Type = EGamePlatformWeatherType::Cloudy;
+        Target.SnowAmount = .85f;
+        Target.TemperatureCelsius = -4.f;
+        TransitionSeconds = 2.f;
+        HoldAndTransitionSeconds = 35.f;
+        break;
+    case 3:
+        // 升温后沿服务器时间逐渐退雪并留下湿地；无逐粒子复制、无客户端自行改天气。
+        Phase = TEXT("MeltingSnow");
+        Target.Type = EGamePlatformWeatherType::Cloudy;
+        Target.Wetness = .65f;
+        Target.TemperatureCelsius = 6.f;
+        TransitionSeconds = 40.f;
+        HoldAndTransitionSeconds = 55.f; // 融雪完成后保留15秒无雪湿地，供双端取证。
+        break;
+    case 4:
+        // 四阶段审核结束后恢复积雪并保持，避免人工查看时只能看到已融尽地面。
+        Phase = TEXT("HeldHeavySnow");
+        Target.Type = EGamePlatformWeatherType::HeavySnow;
+        Target.SnowIntensity = .90f;
+        Target.SnowAmount = .85f;
+        Target.WindIntensity = .25f;
+        Target.TemperatureCelsius = -8.f;
+        TransitionSeconds = 10.f;
+        break;
+    default: return;
+    }
+    const bool bApplied = Weather->SetWeather(Target, TransitionSeconds);
+    UE_LOG(LogTemp, Display,
+        TEXT("VILLAGE_GROUND_SNOW_SERVER_PHASE step=%d phase=%s snow=%.3f intensity=%.3f wet=%.3f transition=%.1f revision=%d accepted=%d"),
+        Step, Phase, Target.SnowAmount, Target.SnowIntensity, Target.Wetness, TransitionSeconds,
+        Weather->GetCurrentSnapshot().Revision, bApplied ? 1 : 0);
+    if (bApplied && VillageSnowReviewStep <= 4)
+    {
+        World->GetTimerManager().SetTimer(VillageSnowReviewTimer, this,
+            &ADivineBeastsWorldGameMode::AdvanceVillageSnowReviewWeather,
+            HoldAndTransitionSeconds, false);
     }
 }
 #endif

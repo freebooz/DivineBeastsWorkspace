@@ -118,6 +118,7 @@
 - `FrontEndClient`与`VillageDevelopmentClient`分别显式收录首批4类及扩展库8类的Definitions目录，由Cook追踪实际声音和策略依赖；不纳入试听副本、SourceArt或音频审核地图，不修改服务器配置。
 - 既有 `Tests/Assets/TestFrontEndClientContainer.ps1`新增41条定义及41条声源的实际ExportBundleData检查。对旧容器实测返回1，82项音频缺失、其他既有必需资源缺失0；新包须通过同一门禁才能启动。
 - `Build/Game/RunFrontEndClients.ps1`默认传入`-GamePlatformShowFPS`；既有平台根布局消费帧结束通知，将`FrameRateText`投影为FPS整数，每0.25秒发布一次变化。公共根布局经Monolith原位添加左上角(16,16)、16号白色文字，独立冷重载确认；`-ShowFPS:$false`关闭显示，不改持久化玩家配置，不使用右侧彩色原生统计。
+- 2026-10-23用户明确帧率用于性能监视：启动脚本默认`FrameRateLimit=0`，显式执行`t.MaxFPS 0`，取消原有默认60帧限制；显示使用真实帧数与墙钟经过时间计算，不截断为60。显式传入正数时才主动限帧，显示开关与限帧独立。
 
 本次修复不补写正式动画的脚步Notify，也不新增场景水流锚点；这些事件接线仍遵守前述独立制作与人工审核边界。包内容验证、进程启动和扬声器实际试听分别记录。
 

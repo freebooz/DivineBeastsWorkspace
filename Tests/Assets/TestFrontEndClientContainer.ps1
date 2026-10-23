@@ -4,7 +4,7 @@
 只读检查锁定引擎导出的客户端IoStore清单中是否包含前端运行必需的软引用资产。
 .DESCRIPTION
 输入为UnrealPak -ListContainer -Csv生成的真实CSV；逐项要求WindowsClient的非空ExportBundleData。
-覆盖RootLayout、登录/角色页面、动态卡片、应用流程、十二生肖外观及41条音频定义/声源；不以源码存在代替包内存在。
+覆盖RootLayout、登录/角色页面、动态卡片、应用流程、十二生肖外观及42条音频定义/配套声源；不以源码存在代替包内存在。
 退出0表示包内容门禁通过，1表示缺失或清单无效；不代表登录、材质效果或新手村联机通过。
 #>
 [CmdletBinding()]
@@ -187,7 +187,7 @@ try {
         $required+='DBAUIPack_Core/Content/UI/Materials/Social/M_DBA_PartyJade_V1.uasset'
     }
     # 音频逻辑ID通过目录软加载，AssetManager扫描不能保证Cook。
-    # 逐项检查41条定义和声源，避免仅天气声音入包却把新增音效标记为发布完成。
+    # 逐项检查42条定义和声源；默认/登录/新手村三份音乐定义共用同一曲目，不要求退休旧曲目继续入包。
     $audioRequired = @()
     $audioRoot = 'DBASFXPack_Core/Content/Audio'
     $starterAudio = @(
@@ -197,8 +197,9 @@ try {
         @('Spells','Spell_FrostCast','Spell_Frost_Cast_01'),
         @('Spells','Spell_FrostImpact','Spell_Frost_Impact_01'),
         @('Spells','Spell_FireImpact','Spell_Fire_Impact_01'),
-        @('Music','Music_Login','Music_Login_01'),
-        @('Music','Music_Village','Music_Village_01'),
+        @('Music','Music_Default','Music_GoldenAutumnPond'),
+        @('Music','Music_Login','Music_GoldenAutumnPond'),
+        @('Music','Music_Village','Music_GoldenAutumnPond'),
         @('Ambience','Ambience_Forest','Ambience_Forest_01')
     )
     foreach ($entry in $starterAudio) {
@@ -214,6 +215,7 @@ try {
         $audioRequired += "$audioRoot/Library/$($entry.category)/Definitions/DA_DBA_SFX_$($entry.category)_$($entry.id).uasset"
         $audioRequired += "$audioRoot/Library/$($entry.category)/Waves/$waveName.uasset"
     }
+    $audioRequired = @($audioRequired | Sort-Object -Unique)
     $required += $audioRequired
 
     # 软路径在C++目录中构造，地图引用扫描不能发现；要求实际导出数据而非配置或仅包名。

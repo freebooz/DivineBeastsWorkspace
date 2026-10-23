@@ -49,10 +49,14 @@ private:
     /** 两个客户端通过正常PostLogin完成准入才开始固定审查，避免冷启动导致错过小雪。 */
     bool bVillageSnowReviewArmed = false;
     bool bVillageSnowReviewStarted = false;
+    /** 显式地面积雪人工审核序列；与历史断线重入序列分别选择，绝不默认启用。 */
+    bool bVillageGroundSnowReview = false;
     int32 VillageSnowReviewJoinedPlayers = 0;
     virtual void PostLogin(APlayerController* NewPlayer) override;
     int32 VillageSnowReviewStep = 0;
     void AdvanceVillageSnowReviewWeather();
+    /** 小雪、大雪、停雪保留与升温融化；只向唯一平台Weather提交目标快照。 */
+    void AdvanceVillageGroundSnowReviewWeather();
 #endif
     void BeginLoadInitialWeatherPreset();
     void HandleInitialWeatherPresetCompleted(

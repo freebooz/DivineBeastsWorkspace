@@ -11,7 +11,10 @@ param([Parameter(Mandatory)][string]$ServerExe,
     [string]$RegionId='us-west',[ValidateRange(1024,65535)][int]$Port=17781,
     [switch]$DevelopmentArena,[switch]$DevelopmentMonsters,
     # 仅打开AI事件日志，用于核对真实巡逻位移；不改变AI配置或行为。
-    [switch]$AIMovementDiagnostics,[guid]$RunId=[guid]::NewGuid())
+    [switch]$AIMovementDiagnostics,
+    # 用户显式地面积雪人工审核：两名玩家正常PostLogin后才演示小雪/大雪/停雪/融雪。
+    # 非Shipping GameMode还会核对DedicatedServer/Village/unattended，普通部署默认关闭。
+    [switch]$GroundSnowReview,[guid]$RunId=[guid]::NewGuid())
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
@@ -49,9 +52,10 @@ foreach($taskArgument in @('/DBAWorldPack_Village/Maps/L_Village_Start','-Server
 if($DevelopmentArena){$taskInfo.ArgumentList.Add('-DBADevelopmentArena')}
 if($DevelopmentMonsters){$taskInfo.ArgumentList.Add('-DBADevelopmentMonsters')}
 if($AIMovementDiagnostics){$taskInfo.ArgumentList.Add('-LogCmds=LogGamePlatformAI Verbose')}
+if($GroundSnowReview){$taskInfo.ArgumentList.Add('-DBAVillageGroundSnowReviewSchedule')}
 $taskChild=[Diagnostics.Process]::Start($taskInfo)
 $taskRecord=[pscustomobject]@{PID=$taskChild.Id;StartUtcTicks=$taskChild.StartTime.ToUniversalTime().Ticks.ToString();Exe=$taskExe;
-    ServerId=$taskServerId;BootId=$taskBoot;Port=$Port;Log=$taskLog;PlayerDataConfigured=$true;PlayerAdmissionVerified=$false;AIMovementDiagnostics=[bool]$AIMovementDiagnostics}
+    ServerId=$taskServerId;BootId=$taskBoot;Port=$Port;Log=$taskLog;PlayerDataConfigured=$true;PlayerAdmissionVerified=$false;AIMovementDiagnostics=[bool]$AIMovementDiagnostics;GroundSnowReview=[bool]$GroundSnowReview}
 $taskRecord|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $taskDirectory 'Server.json') -Encoding utf8
 $taskRecord|ConvertTo-Json
 } catch {

@@ -10,6 +10,10 @@ UDivineBeastsVillageSnowSettings::UDivineBeastsVillageSnowSettings()
         "/GamePlatformSurface/Textures/Weather/T_GP_Weather_SnowAlbedo.T_GP_Weather_SnowAlbedo"));
     SnowNormalTexture = FSoftObjectPath(TEXT(
         "/GamePlatformSurface/Textures/Weather/T_GP_Weather_SnowNormal.T_GP_Weather_SnowNormal"));
+    SnowORMTexture = FSoftObjectPath(TEXT(
+        "/GamePlatformSurface/Textures/Weather/T_GP_Weather_SnowORM.T_GP_Weather_SnowORM"));
+    SnowHeightTexture = FSoftObjectPath(TEXT(
+        "/GamePlatformSurface/Textures/Snow/T_GP_Snow_MicroHeight.T_GP_Snow_MicroHeight"));
     // 2026-10-18用户授权将V3.0正式用于Village：仅客户端通过既有世界租约装配，不修改共享Landscape资产。
     // V3草地色是同一Poly Haven CC0扫描BaseColor的派生，Normal/ORM必须取该源扫描对应版本，
     // 防止颜色与微表面来自两套不同扫描而出现不真实的光照/高光。原V3母材质和审核地图继续独立。

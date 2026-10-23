@@ -16,6 +16,10 @@
 #include "Components/MeshComponent.h"
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Interfaces/GamePlatformLandscapeMaterialBridge.h"
+#include "Interfaces/IGamePlatformSurfaceService.h"
+#include "Components/GamePlatformSnowFootContactComponent.h"
+#include "GameFramework/Character.h"
 #include "UObject/Package.h"
 #if !UE_BUILD_SHIPPING
 #include "Misc/CommandLine.h"
@@ -24,6 +28,8 @@
 #include "Engine/GameViewportClient.h"
 #include "UnrealClient.h"
 #include "Misc/DateTime.h"
+#include "HAL/PlatformProcess.h"
+#include "Misc/Paths.h"
 #endif
 
 
@@ -37,6 +43,9 @@ namespace
     const FName CoverageName(TEXT("VillageSnowCoverageTexture"));
     const FName AlbedoName(TEXT("VillageSnowAlbedoTexture"));
     const FName NormalName(TEXT("VillageSnowNormalTexture"));
+    const FName SnowORMName(TEXT("VillageSnowORMTexture"));
+    const FName SnowHeightName(TEXT("VillageSnowHeightTexture"));
+    constexpr int32 VillageSurfaceTextureCount = 8;
     const FName GroundAlbedoName(TEXT("VillageGroundAlbedoTexture"));
     const FName GroundNormalName(TEXT("VillageGroundNormalTexture"));
     const FName GroundORMName(TEXT("VillageGroundORMTexture"));
@@ -87,8 +96,11 @@ void UDivineBeastsVillageSnowWorldSubsystem::Initialize(FSubsystemCollectionBase
     bReviewWeatherTrace = FParse::Param(FCommandLine::Get(), TEXT("DBAVillageSnowTraceWeather"));
     LastTracedSnowAmount = -1.f;
     LastTracedWeatherType = -1;
-    bReviewScreenshotEnabled = FParse::Param(FCommandLine::Get(), TEXT("DBAVillageSnowCaptureReview"));
+    bGroundSnowReviewCapture = FParse::Param(FCommandLine::Get(), TEXT("DBAVillageGroundSnowCaptureReview"));
+    bReviewScreenshotEnabled = bGroundSnowReviewCapture || FParse::Param(FCommandLine::Get(), TEXT("DBAVillageSnowCaptureReview"));
     bReviewScreenshotQueued = false;
+    PendingReviewPhase = NAME_None;
+    CapturedReviewPhases.Reset();
 #endif
 }
 
@@ -106,6 +118,9 @@ void UDivineBeastsVillageSnowWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
         FOnActorSpawned::FDelegate::CreateUObject(
             this, &UDivineBeastsVillageSnowWorldSubsystem::OnLandscapeActorSpawned));
     TryRequestSnowTextures();
+
+    // 首次快照装配一次已存在角色，后续使用同一Actor生成事件，不逐帧扫描。
+    for (TActorIterator<ACharacter> It(&InWorld); It; ++It) AttachSnowFootContacts(*It);
 
     WeatherClient = InWorld.GetSubsystem<UGamePlatformWeatherClientWorldSubsystem>();
     if (!WeatherClient.IsValid())
@@ -164,13 +179,14 @@ void UDivineBeastsVillageSnowWorldSubsystem::TryRequestSnowTextures()
 
     const TArray<FSoftObjectPath> Paths = {
         Config->SnowCoverageTexture, Config->SnowAlbedoTexture, Config->SnowNormalTexture,
+        Config->SnowORMTexture, Config->SnowHeightTexture,
         Config->GroundAlbedoTexture, Config->GroundNormalTexture, Config->GroundORMTexture
     };
     TSet<FSoftObjectPath> UniquePaths;
     for (const FSoftObjectPath& Path : Paths) if (Path.IsValid()) UniquePaths.Add(Path);
-    if (UniquePaths.Num() != 6)
+    if (UniquePaths.Num() != VillageSurfaceTextureCount)
     {
-        UE_LOG(LogDBAVillageSnow, Error, TEXT("Village客户端六张草地/雪纹理配置为空、非法或重复，拒绝异步加载。"));
+        UE_LOG(LogDBAVillageSnow, Error, TEXT("Village客户端八张草地/雪纹理配置为空、非法或重复，拒绝异步加载。"));
         return;
     }
 
@@ -206,7 +222,7 @@ void UDivineBeastsVillageSnowWorldSubsystem::HandleTexturesReady(
 
     UGameInstance* GameInstance = World->GetGameInstance();
     IGamePlatformDataService* Data = GameInstance ? IGamePlatformDataService::Get(*GameInstance) : nullptr;
-    bool bAllTexturesLoaded = CompletedLease.ResourcePaths.Num() == 6;
+    bool bAllTexturesLoaded = CompletedLease.ResourcePaths.Num() == VillageSurfaceTextureCount;
     for (const FSoftObjectPath& Path : CompletedLease.ResourcePaths)
         bAllTexturesLoaded = bAllTexturesLoaded && IsValid(Cast<UTexture2D>(Path.ResolveObject()));
     if (!Data || !Result.IsSuccess() ||
@@ -232,7 +248,7 @@ void UDivineBeastsVillageSnowWorldSubsystem::HandleTexturesReady(
     if (BoundLandscapeCount > 0)
     {
         UE_LOG(LogDBAVillageSnow, Log,
-            TEXT("VILLAGE_GROUND_MID_VERIFY_SUCCESS VILLAGE_SNOW_MID_VERIFY_SUCCESS：%d处Landscape的草地/雪六纹理、雪量及湿润已写入并回读一致。"),
+            TEXT("VILLAGE_GROUND_MID_VERIFY_SUCCESS VILLAGE_SNOW_MID_VERIFY_SUCCESS：%d处Landscape的草地/雪八纹理、雪量及湿润已写入并回读一致。"),
             BoundLandscapeCount);
     }
     else
@@ -258,7 +274,20 @@ void UDivineBeastsVillageSnowWorldSubsystem::OnLandscapeActorSpawned(AActor* Act
         }
         // 只处理标记过的项目岩石组件；其余Actor绝不覆盖材质。
         ApplyMossMaterialToActor(Actor);
+        AttachSnowFootContacts(Actor);
     }
+}
+
+void UDivineBeastsVillageSnowWorldSubsystem::AttachSnowFootContacts(AActor* Actor)
+{
+    auto* Character = Cast<ACharacter>(Actor);
+    if (bClosing || !bVillageWorld || !IsValid(Character) || Character->GetWorld()!=GetWorld() ||
+        Character->FindComponentByClass<UGamePlatformSnowFootContactComponent>()) return;
+    auto* Component=NewObject<UGamePlatformSnowFootContactComponent>(Character);
+    Component->SetContactMesh(Character->GetMesh());
+    Character->AddInstanceComponent(Component);
+    Component->RegisterComponent();
+    SnowFootContactComponents.Add(Component);
 }
 
 bool UDivineBeastsVillageSnowWorldSubsystem::ApplyToLandscape(ALandscapeProxy* Landscape)
@@ -311,7 +340,7 @@ bool UDivineBeastsVillageSnowWorldSubsystem::ApplyToLandscape(ALandscapeProxy* L
     Landscape->SetLandscapeMaterialScalarParameterValue(SnowAmountName, CurrentSnowAmount);
     Landscape->SetLandscapeMaterialScalarParameterValue(WetnessName, CurrentWetness);
     if (!bTexturesReady) return true; // 仅标量基础模式，不记入纹理验证成功集合。
-    if (TextureLease.ResourcePaths.Num() != 6) return false;
+    if (TextureLease.ResourcePaths.Num() != VillageSurfaceTextureCount) return false;
     // 雪量插值频繁变化，只需更新标量；已回读成功的贴图应由当前世界长期租约持有。
     if (TexturesAppliedLandscapes.Contains(TWeakObjectPtr<ALandscapeProxy>(Landscape))) return true;
 
@@ -325,14 +354,19 @@ bool UDivineBeastsVillageSnowWorldSubsystem::ApplyToLandscape(ALandscapeProxy* L
     UTexture2D* Coverage = ResolveOwnedTexture(Config->SnowCoverageTexture);
     UTexture2D* Albedo = ResolveOwnedTexture(Config->SnowAlbedoTexture);
     UTexture2D* Normal = ResolveOwnedTexture(Config->SnowNormalTexture);
+    UTexture2D* SnowORM = ResolveOwnedTexture(Config->SnowORMTexture);
+    UTexture2D* SnowHeight = ResolveOwnedTexture(Config->SnowHeightTexture);
     UTexture2D* GroundAlbedo = ResolveOwnedTexture(Config->GroundAlbedoTexture);
     UTexture2D* GroundNormal = ResolveOwnedTexture(Config->GroundNormalTexture);
     UTexture2D* GroundORM = ResolveOwnedTexture(Config->GroundORMTexture);
     if (!IsValid(Coverage) || !IsValid(Albedo) || !IsValid(Normal) ||
+        !IsValid(SnowORM) || !IsValid(SnowHeight) ||
         !IsValid(GroundAlbedo) || !IsValid(GroundNormal) || !IsValid(GroundORM)) return false;
     Landscape->SetLandscapeMaterialTextureParameterValue(CoverageName, Coverage);
     Landscape->SetLandscapeMaterialTextureParameterValue(AlbedoName, Albedo);
     Landscape->SetLandscapeMaterialTextureParameterValue(NormalName, Normal);
+    Landscape->SetLandscapeMaterialTextureParameterValue(SnowORMName, SnowORM);
+    Landscape->SetLandscapeMaterialTextureParameterValue(SnowHeightName, SnowHeight);
     Landscape->SetLandscapeMaterialTextureParameterValue(GroundAlbedoName, GroundAlbedo);
     Landscape->SetLandscapeMaterialTextureParameterValue(GroundNormalName, GroundNormal);
     Landscape->SetLandscapeMaterialTextureParameterValue(GroundORMName, GroundORM);
@@ -341,7 +375,7 @@ bool UDivineBeastsVillageSnowWorldSubsystem::ApplyToLandscape(ALandscapeProxy* L
     Landscape->SetLandscapeMaterialVectorParameterValue(TEXT("VillageWetColor"), FLinearColor(.55f, .60f, .52f, 1.f));
 
     // 不能以Setter调用或Data租约返回成功代替真正的运行时表现绑定。
-    // 每个已有MID回读六个Texture、两个天气数值及干燥白色乘色；少一个都视为未通过。
+    // 每个已有MID回读八个Texture、两个天气数值及干燥白色乘色；少一个都视为未通过。
     int32 MidCount = 0;
     int32 VerifiedMidCount = 0;
     for (ULandscapeComponent* Component : Landscape->LandscapeComponents)
@@ -354,6 +388,8 @@ bool UDivineBeastsVillageSnowWorldSubsystem::ApplyToLandscape(ALandscapeProxy* L
             if (Mid->K2_GetTextureParameterValue(CoverageName) == Coverage &&
                 Mid->K2_GetTextureParameterValue(AlbedoName) == Albedo &&
                 Mid->K2_GetTextureParameterValue(NormalName) == Normal &&
+                Mid->K2_GetTextureParameterValue(SnowORMName) == SnowORM &&
+                Mid->K2_GetTextureParameterValue(SnowHeightName) == SnowHeight &&
                 Mid->K2_GetTextureParameterValue(GroundAlbedoName) == GroundAlbedo &&
                 Mid->K2_GetTextureParameterValue(GroundNormalName) == GroundNormal &&
                 Mid->K2_GetTextureParameterValue(GroundORMName) == GroundORM &&
@@ -372,6 +408,34 @@ bool UDivineBeastsVillageSnowWorldSubsystem::ApplyToLandscape(ALandscapeProxy* L
             VerifiedMidCount, MidCount, *GetPathNameSafe(Landscape));
         return false;
     }
+    int32 NaniteSlots = 0;
+    FString NaniteDiagnostic;
+    if (!BindGamePlatformLandscapeNaniteMIDs(*Landscape, NaniteSlots, NaniteDiagnostic))
+    {
+        UE_LOG(LogDBAVillageSnow, Warning, TEXT("Village Nanite雪材质绑定未就绪：%s"), *NaniteDiagnostic);
+        return false;
+    }
+    if (NaniteSlots > 0)
+    {
+        // 日志也从已就绪的真实MID读取；地形组件数组可能保留空槽，不能假定首槽有效。
+        float VerifiedDisplacement = 0.f;
+        for (ULandscapeComponent* Component : Landscape->LandscapeComponents)
+        {
+            if (IsValid(Component))
+                if (UMaterialInstanceDynamic* Mid = Cast<UMaterialInstanceDynamic>(Component->GetMaterialInstance(0, true)))
+                {
+                    VerifiedDisplacement = Mid->K2_GetScalarParameterValue(TEXT("Displacement Multiplier"));
+                    break;
+                }
+        }
+        UE_LOG(LogDBAVillageSnow, Display, TEXT("VILLAGE_SNOW_NANITE_MID_VERIFY_SUCCESS slots=%d displacement=%.3f"),
+            NaniteSlots, VerifiedDisplacement);
+    }
+    if (auto* Surface=IGamePlatformSurfaceService::Get(*GetWorld()))
+        for (const auto& Component:Landscape->LandscapeComponents)
+            if (IsValid(Component))
+                for (const auto& Mid:Component->MaterialInstancesDynamic)
+                    if (IsValid(Mid)) Surface->RegisterSnowContactMaterial(*Mid);
     TexturesAppliedLandscapes.Add(Landscape);
     return true;
 }
@@ -383,7 +447,23 @@ void UDivineBeastsVillageSnowWorldSubsystem::TraceWeatherVisualForReview(
 {
     if (!bReviewWeatherTrace || !bTexturesReady || bClosing || !bVillageWorld) return;
     const int32 Type = static_cast<int32>(State.Type);
-    if (LastTracedSnowAmount >= 0.f &&
+    FName ReviewPhase;
+    if (bGroundSnowReviewCapture)
+    {
+        if (State.Type == EGamePlatformWeatherType::LightSnow && CurrentSnowAmount >= .225f && CurrentSnowAmount <= .235f)
+            ReviewPhase = TEXT("LightSnow");
+        else if (State.Type == EGamePlatformWeatherType::HeavySnow && CurrentSnowAmount >= .845f)
+            ReviewPhase = CapturedReviewPhases.Contains(FName(TEXT("MeltedGround")))
+                ? FName(TEXT("HeldHeavySnow")) : FName(TEXT("HeavySnow"));
+        else if (State.Type == EGamePlatformWeatherType::Cloudy && State.SnowIntensity <= .002f)
+        {
+            if (CurrentSnowAmount >= .845f && State.TemperatureCelsius < 0.f) ReviewPhase = TEXT("StoppedSnow");
+            else if (CurrentSnowAmount >= .39f && CurrentSnowAmount <= .44f) ReviewPhase = TEXT("MeltingSnow");
+            else if (CurrentSnowAmount <= .002f && CurrentWetness >= .64f) ReviewPhase = TEXT("MeltedGround");
+        }
+    }
+    const bool bNewCapturePhase = !ReviewPhase.IsNone() && !CapturedReviewPhases.Contains(ReviewPhase);
+    if (!bNewCapturePhase && LastTracedSnowAmount >= 0.f &&
         FMath::Abs(CurrentSnowAmount - LastTracedSnowAmount) < .085f &&
         LastTracedWeatherType == Type)
     {
@@ -427,14 +507,17 @@ void UDivineBeastsVillageSnowWorldSubsystem::TraceWeatherVisualForReview(
     // 即便MID尚未可见也记录失败状态，绝不能把天气值接收当作雪层绑定成功。
     LastTracedSnowAmount = CurrentSnowAmount;
     LastTracedWeatherType = Type;
-    // 仅在数值和MID均验证通过的大雪状态中安排一次真实渲染截图；
-    // 开发审核专用命令参数，绝不在普通客户端默认开启屏幕捕获。
+    // 仅在数值和MID均验证通过时安排原生截图。历史参数仍只截大雪一次，
+    // 地面审核参数分别截薄雪、实覆、停雪、融化中途和融化完成；正式客户端默认关闭。
     if (bMatched && bReviewScreenshotEnabled && !bReviewScreenshotQueued &&
-        CurrentSnowAmount >= .78f && State.Type == EGamePlatformWeatherType::HeavySnow)
+        ((bGroundSnowReviewCapture && bNewCapturePhase) ||
+         (!bGroundSnowReviewCapture && CurrentSnowAmount >= .78f && State.Type == EGamePlatformWeatherType::HeavySnow)))
     {
         if (UWorld* MutableWorld = GetWorld())
         {
             bReviewScreenshotQueued = true;
+            PendingReviewPhase = bGroundSnowReviewCapture ? ReviewPhase : FName(TEXT("HeavySnow"));
+            CapturedReviewPhases.Add(PendingReviewPhase);
             MutableWorld->GetTimerManager().SetTimer(
                 ReviewScreenshotTimer, this,
                 &UDivineBeastsVillageSnowWorldSubsystem::CaptureWeatherReviewScreenshot,
@@ -449,17 +532,25 @@ void UDivineBeastsVillageSnowWorldSubsystem::CaptureWeatherReviewScreenshot()
     UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
     UGameViewportClient* Viewport = Instance ? Instance->GetGameViewportClient() : nullptr;
     if (bClosing || !bVillageWorld || !IsValid(World) || World->bIsTearingDown ||
-        CurrentSnowAmount < .75f || !IsValid(Viewport) || !Viewport->Viewport)
+        (!bGroundSnowReviewCapture && CurrentSnowAmount < .75f) || !IsValid(Viewport) || !Viewport->Viewport)
     {
         UE_LOG(LogDBAVillageSnow, Warning,
-            TEXT("VILLAGE_SNOW_REVIEW_SCREENSHOT_SKIPPED：天气未达到大雪或真实游戏视口不可用。"));
+            TEXT("VILLAGE_SNOW_REVIEW_SCREENSHOT_SKIPPED：天气审核条件或真实游戏视口不可用。"));
         return;
     }
-    const FString Filename = FString::Printf(
-        TEXT("VillageSnowHeavyReview_%s.png"),
+    FString Filename = FString::Printf(
+        TEXT("VillageSnow_%s_PID%u_%s.png"), *PendingReviewPhase.ToString(), FPlatformProcess::GetCurrentProcessId(),
         *FDateTime::UtcNow().ToString(TEXT("%Y%m%d_%H%M%S")));
-    // false排除UMG/Slate悬浮层，以便审查真实Landscape像素，而不是登录UI遮挡。
+    FString ReviewDirectory;
+    if (bGroundSnowReviewCapture && FParse::Value(FCommandLine::Get(), TEXT("DBAVillageGroundSnowMediaRoot="), ReviewDirectory) &&
+        !ReviewDirectory.IsEmpty() && !FPaths::IsRelative(ReviewDirectory))
+    {
+        // 仅显式开发参数指定输出目录；唯一PID避免两个客户端同秒截图互相覆盖。
+        Filename = FPaths::Combine(ReviewDirectory, Filename);
+    }
+    // false排除UMG/Slate悬浮层，保留原生场景像素。双客户端身份另由进程和日志绑定。
     FScreenshotRequest::RequestScreenshot(Filename, false, false);
+    bReviewScreenshotQueued = !bGroundSnowReviewCapture;
     UE_LOG(LogDBAVillageSnow, Display,
         TEXT("VILLAGE_SNOW_REVIEW_SCREENSHOT_REQUESTED：真实GPU帧已请求，文件名=%s（仍需核实是否实际落盘及像素内容）。"),
         *Filename);
@@ -526,6 +617,8 @@ void UDivineBeastsVillageSnowWorldSubsystem::Deinitialize()
     if (UWorld* World = GetWorld(); World && ActorSpawnedHandle.IsValid())
         World->RemoveOnActorSpawnedHandler(ActorSpawnedHandle);
     ActorSpawnedHandle.Reset();
+    for (const auto& Component:SnowFootContactComponents) if (Component.IsValid()) Component->DestroyComponent();
+    SnowFootContactComponents.Reset();
     ReleaseResources();
     bVillageWorld = false;
     Super::Deinitialize();

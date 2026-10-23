@@ -13,6 +13,7 @@ class AActor;
 class UMeshComponent;
 class UMaterialInterface;
 class UGamePlatformWeatherClientWorldSubsystem;
+class UGamePlatformSnowFootContactComponent;
 struct FGamePlatformWeatherState;
 struct FGamePlatformResult;
 
@@ -58,6 +59,8 @@ private:
 
     /** 处理流送后生成的Landscape代理；仅本世界游戏线程，无全局持续Tick。 */
     void OnLandscapeActorSpawned(AActor* Actor);
+    /** 一次角色生成事件装配平台足底表现组件；不改变共享服务器Actor类。 */
+    void AttachSnowFootContacts(AActor* Actor);
     /** 只有真实Landscape MID已应用数值及高清贴图且回读一致，才返回成功。 */
     bool ApplyToLandscape(ALandscapeProxy* Landscape);
 
@@ -105,6 +108,7 @@ private:
     TWeakObjectPtr<UGamePlatformWeatherClientWorldSubsystem> WeatherClient;
     FDelegateHandle WeatherChangedHandle;
     FDelegateHandle ActorSpawnedHandle;
+    TArray<TWeakObjectPtr<UGamePlatformSnowFootContactComponent>> SnowFootContactComponents;
     FGamePlatformDataLease TextureLease;
     /** 已写入并回读六张草地/雪纹理的Landscape弱标识；天气过渡不重复设置Texture参数。 */
     TSet<TWeakObjectPtr<ALandscapeProxy>> TexturesAppliedLandscapes;
@@ -121,6 +125,10 @@ private:
     int32 LastTracedWeatherType = -1;
     bool bReviewScreenshotEnabled = false;
     bool bReviewScreenshotQueued = false;
+    /** 显式开发人工审核：各雪阶段仅请求一张原生截图，不参与正式UI或天气状态。 */
+    bool bGroundSnowReviewCapture = false;
+    FName PendingReviewPhase;
+    TSet<FName> CapturedReviewPhases;
     FTimerHandle ReviewScreenshotTimer;
 #endif
 };

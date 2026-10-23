@@ -6,10 +6,13 @@
 #include "Interfaces/IGamePlatformSurfaceService.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Types/GamePlatformDataLease.h"
+#include "TimerManager.h"
 #include "GamePlatformSurfaceWorldSubsystem.generated.h"
 
 class UMaterialParameterCollection;
 class UMaterialParameterCollectionInstance;
+class UMaterialInstanceDynamic;
+class UTextureRenderTarget2D;
 
 /**
  * GamePlatformSurface世界服务。
@@ -34,6 +37,8 @@ public:
     virtual FDelegateHandle AddStateChangedHandler(
         const FGamePlatformSurfaceStateChanged::FDelegate& Handler) override;
     virtual void RemoveStateChangedHandler(FDelegateHandle Handle) override;
+    virtual bool SubmitSnowContact(const FGamePlatformSnowContact& Contact) override;
+    virtual bool RegisterSnowContactMaterial(UMaterialInstanceDynamic& Material) override;
 
 private:
     friend class FGamePlatformSurfaceBindingRefreshTest;
@@ -61,4 +66,29 @@ private:
 
     TWeakObjectPtr<UMaterialParameterCollectionInstance> BoundInstance;
     FGamePlatformSurfaceStateChanged StateChanged;
+
+    // 局部压雪归同一Surface世界服务；实现分离到Private/Snow，不新增Subsystem/资产管理器。
+    bool BeginSnowContactLoad();
+    void OnSnowContactMaterialLoaded(int64 Generation, const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
+    void FlushSnowContacts();
+    void BindSnowContactReceivers();
+    void ClearSnowContacts();
+    void ReleaseSnowContacts();
+    UPROPERTY(Transient) TObjectPtr<UTextureRenderTarget2D> SnowContactField;
+    UPROPERTY(Transient) TObjectPtr<UTextureRenderTarget2D> SnowContactScratch;
+    UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> SnowContactUpdateMID;
+    UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> SnowContactCopyMID;
+    TArray<TWeakObjectPtr<UMaterialInstanceDynamic>> SnowContactReceivers;
+    TArray<FGamePlatformSnowContact> PendingSnowContacts;
+    TArray<FGuid> SnowContactRecentIds;
+    FGamePlatformDataLease SnowContactLease;
+    FTimerHandle SnowContactDecayTimer;
+    FTimerHandle SnowContactFlushTimer;
+    int64 SnowContactGeneration = 0;
+    FVector2D SnowContactOrigin = FVector2D::ZeroVector;
+    double SnowContactLastUpdate = 0.;
+    double SnowContactLastStamp = -1.;
+    int32 SnowContactSubmitted = 0;
+    bool bSnowContactLoadAttempted = false;
+    bool bSnowContactFlushQueued = false;
 };

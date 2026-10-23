@@ -57,6 +57,8 @@ bool FDivineBeastsVillageSnowBridgeContractTest::RunTest(const FString& Paramete
         TestTrue(TEXT("宏观雪纹理使用合法软对象路径"), Config->SnowCoverageTexture.IsValid());
         TestTrue(TEXT("雪色贴图只存软引用"), Config->SnowAlbedoTexture.IsValid());
         TestTrue(TEXT("雪法线贴图只存软引用"), Config->SnowNormalTexture.IsValid());
+        TestTrue(TEXT("雪ORM贴图只存软引用"), Config->SnowORMTexture.IsValid());
+        TestTrue(TEXT("雪高度贴图只存软引用"), Config->SnowHeightTexture.IsValid());
         // 新正式视觉合同：V3草地色与该CC0扫描的法线/ORM配对，不回退到历史黄褐色基础色。
         TestEqual(TEXT("正式Village客户端应使用已创建V3.0草地色软路径"),
             Config->GroundAlbedoTexture.ToString(),

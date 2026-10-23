@@ -13,8 +13,8 @@ param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2
     # 保留960×540可显式选择用于登录小窗口回归，但不代表大型角色页完整可见。
     [ValidateRange(960,3840)][int]$WindowWidth=1920,
     [ValidateRange(540,2160)][int]$WindowHeight=1080,
-    # 同机双窗口验证默认每端60帧，避免无限制渲染争用显卡；0保留游戏设置，不修改持久化玩家偏好。
-    [ValidateRange(0,240)][int]$FrameRateLimit=60,
+    # 性能监视默认不限帧；0显式清除本次进程的t.MaxFPS限制，正数仅供调用方主动限帧，不写玩家偏好。
+    [ValidateRange(0,240)][int]$FrameRateLimit=0,
     # 开发联调默认显示根布局左上角FPS；可用-ShowFPS:$false关闭，独立于限帧且不写玩家设置。
     [switch]$ShowFPS=$true,
     # 只记录运动/复制的事件采样，供人工移动后按三端时间戳定位延迟，不包含登录信息。
@@ -128,8 +128,7 @@ foreach($i in 1..$Count) {
         $info.ArgumentList.Add($argument)
     }
     # FPS由平台根布局消费帧结束通知；原生stat fps固定右侧和彩色，不满足项目视觉合同。
-    $startupCommands=@()
-    if ($FrameRateLimit -gt 0) { $startupCommands+="t.MaxFPS $FrameRateLimit" }
+    $startupCommands=@("t.MaxFPS $FrameRateLimit")
     if ($ShowFPS) { $info.ArgumentList.Add('-GamePlatformShowFPS') }
     if ($startupCommands.Count) { $info.ArgumentList.Add('-ExecCmds='+($startupCommands -join ',')) }
     if ($MovementDiagnostics) { $info.ArgumentList.Add('-DBAMovementDiagnostics') }

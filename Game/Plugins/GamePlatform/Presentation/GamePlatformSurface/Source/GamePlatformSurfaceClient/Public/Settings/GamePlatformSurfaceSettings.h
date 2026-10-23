@@ -6,6 +6,7 @@
 
 class UMaterialParameterCollection;
 class UGamePlatformSurfaceMarkCatalog;
+class UMaterialInterface;
 
 /**
  * GamePlatformSurface（游戏平台环境表面）客户端配置。
@@ -39,4 +40,13 @@ public:
     /** MPC缺失或参数契约不完整时是否记录一次客户端警告；不影响服务器。 */
     UPROPERTY(Config, EditAnywhere, Category="Diagnostics")
     bool bWarnOnMaterialBindingFailure = true;
+
+    /** 可选压雪功能由项目启用；平台默认关闭，不影响没有雪的游戏。 */
+    UPROPERTY(Config, EditAnywhere, Category="Surface|SnowContacts") bool bEnableSnowContacts = false;
+    /** 通过Data世界租约异步加载的批量更新材质；不允许服务器依赖。 */
+    UPROPERTY(Config, EditAnywhere, Category="Surface|SnowContacts") TSoftObjectPtr<UMaterialInterface> SnowContactUpdateMaterial;
+    /** 高档纹理分辨率，安全范围256—1024；两张RG16f在1024时合计8MiB数据。 */
+    UPROPERTY(Config, EditAnywhere, Category="Surface|SnowContacts") int32 SnowContactResolution = 1024;
+    /** 单世界局部滚动窗口边长，厘米，默认16米。 */
+    UPROPERTY(Config, EditAnywhere, Category="Surface|SnowContacts") float SnowContactExtentCm = 1600.f;
 };

@@ -12,9 +12,13 @@ namespace
 const TCHAR* AudioSettingsSection = TEXT("GamePlatformSFX.UserVolumes");
 float ReadGain(const FConfigFile& File, const TCHAR* Key)
 {
-    float Value = 1.0f;
+    float Default = 1.0f;
+    // 项目通过数据声明首次默认值；已保存的设备偏好仍优先，平台不识别具体游戏。
+    if (GConfig) GConfig->GetFloat(TEXT("GamePlatformSFX.UserVolumeDefaults"), Key, Default, GGameIni);
+    Default = FMath::IsFinite(Default) ? FMath::Clamp(Default, 0.0f, 1.0f) : 1.0f;
+    float Value = Default;
     File.GetFloat(AudioSettingsSection, Key, Value);
-    return FMath::IsFinite(Value) ? FMath::Clamp(Value, 0.0f, 1.0f) : 1.0f;
+    return FMath::IsFinite(Value) ? FMath::Clamp(Value, 0.0f, 1.0f) : Default;
 }
 }
 
@@ -61,6 +65,8 @@ void UGamePlatformSFXUserSettingsSubsystem::LoadVolumes(const FString& Filename)
     Snapshot.Effects = ReadGain(File, TEXT("Effects"));
     Snapshot.Ambient = ReadGain(File, TEXT("Ambient"));
     Snapshot.Music = ReadGain(File, TEXT("Music"));
+    UE_LOG(LogTemp, Display, TEXT("GP_AUDIO_USER_VOLUMES effects=%.3f ambient=%.3f music=%.3f"),
+        Snapshot.Effects, Snapshot.Ambient, Snapshot.Music);
     bDirty = false;
 }
 bool UGamePlatformSFXUserSettingsSubsystem::SaveVolumes(const FGamePlatformSFXUserVolumes& Candidate) const

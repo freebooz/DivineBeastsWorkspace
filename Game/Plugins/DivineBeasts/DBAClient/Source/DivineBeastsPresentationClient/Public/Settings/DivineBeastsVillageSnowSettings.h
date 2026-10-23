@@ -10,7 +10,7 @@
 /**
  * 新手村地形草地与雪层客户端资源入口（历史Snow类型身份不改名）。
  * 默认开启，独立关卡不受影响；加载失败保持地图共享中性材质，不伪造成功。
- * 六张地形贴图共用世界租约；岩石材质单独租约。地图切换时仅释放自身需求。
+ * 八张地形贴图共用世界租约；岩石材质单独租约。地图切换时仅释放自身需求。
  */
 UCLASS(Config=Game, DefaultConfig, meta=(DisplayName="Divine Beasts Village Snow"))
 class DIVINEBEASTSPRESENTATIONCLIENT_API UDivineBeastsVillageSnowSettings final : public UDeveloperSettings
@@ -35,6 +35,14 @@ public:
     /** 纯客户端切线空间积雪法线贴图。 */
     UPROPERTY(Config, EditAnywhere, Category="Village Snow")
     FSoftObjectPath SnowNormalTexture;
+
+    /** 同一雪扫描的线性ORM：R环境遮蔽、G粗糙度、B金属度；与颜色和法线配套。 */
+    UPROPERTY(Config, EditAnywhere, Category="Village Snow")
+    FSoftObjectPath SnowORMTexture;
+
+    /** 同一雪扫描的线性高度，用于受距离限制的近景视差；不改变碰撞或真实地形高度。 */
+    UPROPERTY(Config, EditAnywhere, Category="Village Snow")
+    FSoftObjectPath SnowHeightTexture;
 
     /** 项目公共扫描草地基础色，sRGB；保持原图颜色，运行时采用白色乘色。 */
     UPROPERTY(Config, EditAnywhere, Category="Village Ground")
