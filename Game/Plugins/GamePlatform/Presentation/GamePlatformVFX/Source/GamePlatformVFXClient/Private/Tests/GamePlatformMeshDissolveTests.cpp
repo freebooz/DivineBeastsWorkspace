@@ -12,10 +12,11 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformMeshDissolveLifecycleTest,
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FGamePlatformMeshDissolveLifecycleTest::RunTest(const FString&)
 {
-    UWorld* World=UWorld::CreateWorld(EWorldType::Game,false);
+    const auto Initialization=UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(false)
+        .RequiresHitProxies(false).CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
+    UWorld* World=UWorld::CreateWorld(EWorldType::Game,false,NAME_None,nullptr,true,
+        ERHIFeatureLevel::Num,&Initialization);
     if(!TestNotNull(TEXT("真实世界"),World))return false;
-    World->InitializeNewWorld(UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(false)
-        .RequiresHitProxies(false).CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false));
     AActor* Actor=World->SpawnActor<AActor>();
     auto* Mesh=NewObject<UStaticMeshComponent>(Actor);
     Actor->AddInstanceComponent(Mesh);Mesh->RegisterComponent();

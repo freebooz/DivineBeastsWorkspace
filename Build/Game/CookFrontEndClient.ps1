@@ -17,6 +17,8 @@ param([string]$EngineRoot, [switch]$Cook,
     [switch]$SkipDebugSymbols=$true,
     # Zen服务实际不可用时显式回退原生文件Cook输出；不关闭IoStore、DDC或现有发布门禁。
     [switch]$SkipZenStore,
+    # 文件Cook遇到深层资产名超过260字符时，显式使用独占短输出目录；不改变资产身份或跳过检查。
+    [ValidatePattern('^[A-Za-z]:[\\/]SSLM-Cook[\\/][a-fA-F0-9]{8,32}$')][string]$ShortCookRoot,
     # 必须匹配当前公共UI与原图的真实RHI颜色报告；资源变化后旧报告拒绝发布。
     [string]$UIColorRHIReport,
     # 默认发行前端保持开发资源隔离；候选技能必须显式选择用户批准的开发客户端配置。
@@ -42,12 +44,25 @@ try {
     $lock=Enter-FoundationEngineLock $engine.Root
     # 锁内核验，防止预检后被另一构建替换Editor DLL，再启动UAT。
     $details.CookEditorGate=Assert-FoundationCookEditorBuildResult -Workspace $context.Workspace -EngineRoot $engine.Root -BuildResultPath $EditorBuildResult
+    if($ShortCookRoot -and -not $SkipZenStore){throw 'ShortCookRoot只用于显式文件Cook（SkipZenStore）。'}
     $cookDirectory=Join-Path $context.Directory 'Cooked/WindowsClient'
     if ($SkipZenStore) {
         # 文件Cook会拼接完整插件目录，深层验证目录会触发Windows的260字符限制。
         # 仅此恢复模式使用工作区内独占短路径；不改源资产身份、不复用或清理旧Cook。
         # UAT要求最终目录仍以平台名结尾，否则Stage会再追加一层WindowsClient。
         $cookDirectory=Join-Path $context.Workspace ('Saved/C/'+$RunId.ToString('N').Substring(0,8)+'/WindowsClient')
+        if($ShortCookRoot){
+            $shortRoot=[IO.Path]::GetFullPath($ShortCookRoot)
+            $shortParent=Split-Path -Parent $shortRoot
+            if(Test-Path -LiteralPath $shortParent){
+                if((Get-Item -LiteralPath $shortParent).Attributes -band [IO.FileAttributes]::ReparsePoint){throw '短Cook父目录不得为重解析点。'}
+            }
+            if(Test-Path -LiteralPath $shortRoot){throw '短Cook目录已经存在，拒绝覆盖。'}
+            $null=New-Item -ItemType Directory -Path $shortRoot -Force
+            @{Workspace=$context.Workspace;RunId=$RunId.ToString();Purpose='Exclusive frontend file Cook'}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $shortRoot 'Owner.json') -Encoding utf8
+            $cookDirectory=Join-Path $shortRoot 'WindowsClient'
+            $details.ShortCookRoot=$shortRoot
+        }
         if (Test-Path -LiteralPath $cookDirectory) { throw '文件Cook独占短路径已存在，拒绝覆盖。' }
     }
     $stageDirectory=Join-Path $context.Directory 'Stage'
