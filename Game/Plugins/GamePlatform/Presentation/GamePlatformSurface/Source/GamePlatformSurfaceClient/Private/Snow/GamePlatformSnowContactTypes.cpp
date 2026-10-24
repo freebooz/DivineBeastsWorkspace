@@ -11,7 +11,9 @@ bool FGamePlatformSnowFootContactGate::Update(const FVector& Foot, float Height,
 {
     if (Foot.ContainsNaN() || !FMath::IsFinite(Height) || !FMath::IsFinite(Speed) || !FMath::IsFinite(Now)) return false;
     if (!bGrounded || Height > 18.f) { bNearGround = false; return false; }
-    if (Speed < 10.f || Height > 12.f || bNearGround) return false;
+    // 脚骨位于鞋底上方；14cm包含常见踝骨约11cm与CharacterMovement约2cm悬距。
+    // 仍须离地18cm重新布防，且调用方随后用真实地面射线确认，不以胶囊中心替代脚底。
+    if (Speed < 10.f || Height > 14.f || bNearGround) return false;
     bNearGround = true;
     if (bHasStamped && (Now-LastTime < .08 || FVector::DistSquared2D(Foot,LastLocation) < FMath::Square(12.f))) return false;
     bHasStamped = true; LastLocation = Foot; LastTime = Now;

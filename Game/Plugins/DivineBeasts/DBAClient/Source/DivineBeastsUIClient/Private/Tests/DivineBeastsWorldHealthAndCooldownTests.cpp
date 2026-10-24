@@ -22,6 +22,7 @@
 #include "Components/Overlay.h"
 #include "Components/TextBlock.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Framework/GamePlatformPlayerStateBase.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldHealthResourceTest,
     "DivineBeasts.UI.World.HealthBar.ResourceEventProjection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -39,8 +40,12 @@ bool FDivineBeastsWorldHealthResourceTest::RunTest(const FString&)
     auto* Fill = Cast<UProgressBar>(Widget->GetWidgetFromName(TEXT("ResourceFill")));
     if (!TestNotNull(TEXT("真实命名生命填充"), Fill)) return false;
     FGamePlatformWorldUIRequest Request; Request.RequestId = FGuid::NewGuid(); Request.SurfaceKey = TEXT("HealthTest");
+    Request.PrimaryText = FText::FromString(TEXT("青玉玩家"));
     Request.Resource.MaximumValue = 300.; Request.Resource.CurrentValue = 300.;
     Widget->ApplyWorldUIRequest(Request); TestEqual(TEXT("初始化事件显示真实满血"), Fill->GetPercent(), 1.f);
+    auto* PlayerName = Cast<UTextBlock>(Widget->GetWidgetFromName(TEXT("NameText")));
+    if (!TestNotNull(TEXT("真实名称文本控件"), PlayerName)) return false;
+    TestEqual(TEXT("真实名称板显示请求中的玩家名称"), PlayerName->GetText().ToString(), Request.PrimaryText.ToString());
     auto* SelectionOutline = Cast<UImage>(Widget->GetWidgetFromName(TEXT("SelectionOutline")));
     auto* SelectionMarker = Cast<UTextBlock>(Widget->GetWidgetFromName(TEXT("SelectionMarker")));
     TestNull(TEXT("项目名称板已移除选中矩形框"), SelectionOutline);
@@ -213,6 +218,63 @@ bool FDivineBeastsWorldHealthBarRootReadyTest::RunTest(const FString&)
     TestEqual(TEXT("原请求仅存在于新投影层，无重复实例"), SecondLayer->GetChildrenCount(), 1);
     TestEqual(TEXT("两次真实Root变化各通知一次"), Notifications, 2);
     TestTrue(TEXT("原请求身份仍可明确注销"), UI->UnregisterWorldUI(Request.RequestId));
+    return true;
+}
+// 角色先到、PlayerState后到、名称复制/修改及控制权切换均走真实事件；不读取后端或模拟网络准入。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlayerNameplateEventsTest,
+    "DivineBeasts.UI.World.HealthBar.PlayerNamesAndSelfExclusion", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlayerNameplateEventsTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString())); UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    World->InitializeActorsForPlay(FURL());
+    auto* Controller = World->SpawnActor<APlayerController>();
+    TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine)); Controller->SetPlayer(Player.Get());
+    auto* Own = World->SpawnActor<ADivineBeastsCharacter>(); Controller->Possess(Own);
+    auto* Other = World->SpawnActor<ADivineBeastsCharacter>();
+    TStrongObjectPtr<UDivineBeastsWorldHealthBarPresenter> Presenter(NewObject<UDivineBeastsWorldHealthBarPresenter>());
+    ON_SCOPE_EXIT { Presenter->Clear(); };
+    Presenter->ObservedWorld = World; Presenter->LocalPlayer = Player.Get();
+    Presenter->ObserveActor(Own); Presenter->ObserveActor(Other); Presenter->ApplyHealth(Other, 125.f, 200.f);
+    TestFalse(TEXT("自己的名称和血条均不注册"), Presenter->Bindings.Contains(Own));
+    TestTrue(TEXT("其他玩家无需选中即请求显示真实血条"), Presenter->Bindings.FindChecked(Other).Request.bDisplayRequested);
+    auto* State = World->SpawnActor<AGamePlatformPlayerStateBase>(); State->SetPlayerName(TEXT("青玉玩家"));
+    Other->SetPlayerState(State);
+    TestEqual(TEXT("迟到PlayerState通知立即显示角色名称"), Presenter->Bindings.FindChecked(Other).Request.PrimaryText.ToString(), FString(TEXT("青玉玩家")));
+    State->SetPlayerName(TEXT("流光玩家"));
+    TestEqual(TEXT("名称变化通知立即更新且不等待移动"), Presenter->Bindings.FindChecked(Other).Request.PrimaryText.ToString(), FString(TEXT("流光玩家")));
+    auto* SuccessorState = World->SpawnActor<AGamePlatformPlayerStateBase>(); SuccessorState->SetPlayerName(TEXT("后继玩家"));
+    Other->SetPlayerState(SuccessorState); State->SetPlayerName(TEXT("过期名称"));
+    TestEqual(TEXT("旧PlayerState通知不能覆盖后继名称"), Presenter->Bindings.FindChecked(Other).Request.PrimaryText.ToString(), FString(TEXT("后继玩家")));
+    Controller->Possess(Other); Presenter->Publish(Other);
+    TestFalse(TEXT("成为自己后即使收到血量通知也不会显示头顶名称板"), Presenter->Bindings.Contains(Other));
+    Presenter->Clear(); SuccessorState->SetPlayerName(TEXT("销毁后名称"));
+    TestEqual(TEXT("失活后名称事件不能恢复注册"), Presenter->GetObservedCount(), 0);
+    return true;
+}
+
+// 真实128个怪物先到时仍为后来玩家让出既有预算；不提高平台实例上限或新增轮询。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlayerNameplateBudgetTest,
+    "DivineBeasts.UI.World.HealthBar.PlayerPriorityWithinBudget", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlayerNameplateBudgetTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString())); UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    TStrongObjectPtr<UDivineBeastsWorldHealthBarPresenter> Presenter(NewObject<UDivineBeastsWorldHealthBarPresenter>());
+    ON_SCOPE_EXIT { Presenter->Clear(); }; Presenter->ObservedWorld = World;
+    for (int32 Index = 0; Index < 128; ++Index)
+    {
+        FActorSpawnParameters Spawn; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        auto* Monster = World->SpawnActor<ADivineBeastsVillageWolf>(Spawn);
+        if (!TestNotNull(TEXT("预算夹具真实狼怪"), Monster)) return false;
+        Presenter->ObserveActor(Monster);
+    }
+    TestEqual(TEXT("怪物已占满既有预算"), Presenter->GetObservedCount(), 128);
+    auto* Other = World->SpawnActor<ADivineBeastsCharacter>(); Presenter->ObserveActor(Other);
+    TestTrue(TEXT("后来玩家不能被满额怪物挤掉"), Presenter->Bindings.Contains(Other));
+    TestEqual(TEXT("玩家替换低优先级名称板，实例预算仍为128"), Presenter->GetObservedCount(), 128);
     return true;
 }
 #endif

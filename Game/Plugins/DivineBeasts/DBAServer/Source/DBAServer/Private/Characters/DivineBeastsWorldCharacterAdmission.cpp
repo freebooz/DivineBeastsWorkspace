@@ -59,9 +59,10 @@ bool ParseSelectedCharacter(const FString& Json, const FString& VerifiedPlayerId
     }
     return false;
 }
-bool ParseSelectedHero(const FString& Json, const FString& SelectedCharacterId, FName& OutHeroId)
+bool ParseSelectedHero(const FString& Json, const FString& SelectedCharacterId, FName& OutHeroId, FString* OutCharacterName)
 {
     OutHeroId = NAME_None;
+    if (OutCharacterName) OutCharacterName->Reset();
     TSharedPtr<FJsonObject> Object;
     const TArray<TSharedPtr<FJsonValue>>* Roster = nullptr;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Object) || !Object.IsValid()

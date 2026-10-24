@@ -50,7 +50,7 @@ try{
     # 账号配置只传当前新客户端；实际启动器继续做字段、唯一性、口令非空的完整校验。
     # 同时显式启用测试账号开关，普通启动器会清理旧凭据，不能只设置父环境而漏掉此开关。
     & (Join-Path $PSScriptRoot 'RunFrontEndClients.ps1') -ClientExe $ClientExe -Count $Count -GatewayUrl $GatewayUrl `
-        -WindowWidth 1920 -WindowHeight 1080 -FrameRateLimit 60 -MovementDiagnostics `
+        -WindowWidth 1920 -WindowHeight 1080 -FrameRateLimit 0 -MovementDiagnostics `
         -DevelopmentSkills -DevelopmentArena -DevelopmentMonsters -DevelopmentTestAccounts -RunId $RunId
 }finally{
     [Environment]::SetEnvironmentVariable('DIVINEBEASTS_DEV_LOGIN_ACCOUNTS_JSON',$taskPrevious,'Process')

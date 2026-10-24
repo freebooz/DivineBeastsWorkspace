@@ -3,10 +3,12 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Types/GamePlatformWeatherTypes.h"
+#include "Types/GamePlatformWeatherAtmosphereProfile.h"
 #include "GamePlatformWeatherClientWorldSubsystem.generated.h"
 
 /** 当前客户端本世界天气插值结果通知；表现提供者不可用不影响服务器天气事实。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformWeatherVisualChanged, const FGamePlatformWeatherState&);
+class FGamePlatformWeatherAtmosphere;
 
 /** 在天气过渡期间才短期定时更新材质，完成后释放Timer；不复制服务器调度器。 */
 UCLASS()
@@ -33,12 +35,16 @@ public:
      */
     void RefreshPresentationAfterContentActivation(bool bVisual);
 
+    /** 项目组合根在本世界启用光雾联动；禁用/重配先恢复原场景，生命周期仍归本Subsystem。 */
+    void ConfigureAtmosphere(const FGamePlatformWeatherAtmosphereProfile& Profile);
+
 private:
     void OnSnapshotReceived(const FGamePlatformWeatherSnapshot& Snapshot);
     void UpdateTransition();
     /** 分离快照首帧与Timer推进；避免首帧用未来目标天气瞬间播放满量雨雪。 */
     void SampleAndApplyTransition(bool bRefreshPresentation);
     void ApplyVisualState(const FGamePlatformWeatherState& State);
+    void ApplyAtmosphere(const FGamePlatformWeatherState& State);
     float GetEstimatedServerTimeSeconds() const;
     /** ChannelFilter: -1全部，0仅VFX，1仅SFX；保持独立请求身份，禁止跨通道误取消。 */
     void SendPresentationEvent(const FGamePlatformWeatherState& State,
@@ -51,6 +57,7 @@ private:
     FGamePlatformWeatherVisualChanged VisualChanged;
     FDelegateHandle SourceSnapshotHandle;
     FTimerHandle TransitionTimer;
+    TSharedPtr<FGamePlatformWeatherAtmosphere> Atmosphere;
     /** VFX和SFX使用不同请求身份，避免统一表现总线/播放器将两条请求去重成一条。 */
     FGuid ActiveVfxRequestId;
     FGuid ActiveSfxRequestId;

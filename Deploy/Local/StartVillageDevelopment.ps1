@@ -14,7 +14,13 @@ param([Parameter(Mandatory)][string]$ServerExe,
     [switch]$AIMovementDiagnostics,
     # 用户显式地面积雪人工审核：两名玩家正常PostLogin后才演示小雪/大雪/停雪/融雪。
     # 非Shipping GameMode还会核对DedicatedServer/Village/unattended，普通部署默认关闭。
-    [switch]$GroundSnowReview,[guid]$RunId=[guid]::NewGuid())
+    [switch]$GroundSnowReview,
+    # 固定大雪驻留供日常手动登录审核；不重播四阶段序列。
+    [switch]$HoldHeavySnow,
+    # 只运行本次怪物空间规则的原生开发测试；不改变认证、战斗或天气。
+    [switch]$RunMonsterSpawnPolicyTests,[switch]$RunDefaultCombatResourceTests,
+    # 固定技能蓝图/CDO加载回归；不暴露任意控制台命令入口。
+    [switch]$RunCookedPlaceholderSerializationTests,[guid]$RunId=[guid]::NewGuid())
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
@@ -53,6 +59,17 @@ if($DevelopmentArena){$taskInfo.ArgumentList.Add('-DBADevelopmentArena')}
 if($DevelopmentMonsters){$taskInfo.ArgumentList.Add('-DBADevelopmentMonsters')}
 if($AIMovementDiagnostics){$taskInfo.ArgumentList.Add('-LogCmds=LogGamePlatformAI Verbose')}
 if($GroundSnowReview){$taskInfo.ArgumentList.Add('-DBAVillageGroundSnowReviewSchedule')}
+if($HoldHeavySnow){$taskInfo.ArgumentList.Add('-DBAVillageHoldHeavySnow')}
+if($RunCookedPlaceholderSerializationTests){
+    $taskInfo.ArgumentList.Add('-ExecCmds=Automation RunTests DivineBeasts.Abilities.CookedPlaceholderSerialization')
+    $taskInfo.ArgumentList.Add("-ReportExportPath=$(Join-Path $taskDirectory 'NativeAutomation')")
+}elseif($RunDefaultCombatResourceTests){
+    $taskInfo.ArgumentList.Add('-ExecCmds=Automation RunTests DivineBeasts.Server.DefaultCombatResources')
+    $taskInfo.ArgumentList.Add("-ReportExportPath=$(Join-Path $taskDirectory 'NativeAutomation')")
+}elseif($RunMonsterSpawnPolicyTests){
+    $taskInfo.ArgumentList.Add('-ExecCmds=Automation RunTests DivineBeasts.Server.VillageWolf.SpawnPolicyTwoHundred')
+    $taskInfo.ArgumentList.Add("-ReportExportPath=$(Join-Path $taskDirectory 'NativeAutomation')")
+}
 $taskChild=[Diagnostics.Process]::Start($taskInfo)
 $taskRecord=[pscustomobject]@{PID=$taskChild.Id;StartUtcTicks=$taskChild.StartTime.ToUniversalTime().Ticks.ToString();Exe=$taskExe;
     ServerId=$taskServerId;BootId=$taskBoot;Port=$Port;Log=$taskLog;PlayerDataConfigured=$true;PlayerAdmissionVerified=$false;AIMovementDiagnostics=[bool]$AIMovementDiagnostics;GroundSnowReview=[bool]$GroundSnowReview}

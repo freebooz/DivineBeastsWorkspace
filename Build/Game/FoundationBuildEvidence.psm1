@@ -219,10 +219,18 @@ function New-FoundationEditorBuildEvidence {
     $products=Get-FBEEditorProducts $Context.Workspace $Engine
     [pscustomobject]@{SchemaVersion=1;Kind='SuccessfulFullEditorTarget';RunId=$Context.RunId;Workspace=(Get-FBEPath $Context.Workspace);Project=(Resolve-FBEPath $Context.Workspace 'Game/DivineBeastsArena.uproject');EngineRoot=(Get-FBEPath $Engine.Root);Target='DivineBeastsArenaEditor';Platform='Win64';Configuration='Development';Before=$BeforeFile;After=$AfterFile;InputSHA256=$After.SHA256;InputFileCount=$After.FileCount;Process=$process;Products=$products;EngineIdentity=(Get-FBEEngineIdentity $Engine);Scope=$script:InputScope;Limitations='Unsigned local build evidence; successful full incremental target is eligible. Source endpoint snapshots exclude assets, generated output, engine source, SDK and external roots; no claim that every DLL was relinked.'}
 }
+function Get-FBECookRelevantInputHash($Inventory) {
+    # Cook唯一可改的四份引擎生成顺序日志；反射头、配置、模块与其它文件均继续参与哈希。
+    $generated=@('Game/Build/WindowsClient/FileOpenOrder/CookerOpenOrder.log',
+        'Game/Build/WindowsClient/FileOpenOrder/EditorOpenOrder.log',
+        'Game/Build/WindowsServer/FileOpenOrder/CookerOpenOrder.log',
+        'Game/Build/WindowsServer/FileOpenOrder/EditorOpenOrder.log')
+    Get-FBEHash @($Inventory.Entries | Where-Object { $_.Path -cnotin $generated }) 'FoundationCookEditorInputs-v1'
+}
 function Assert-FoundationEditorBuildResult {
     <# 入口门禁：缺少参数/结果文件为NotExecuted；已提供但错误、陈旧或不合格的证据为Failed。
        在启动UE前同步验证；成功返回可写入测试result的关联摘要，不启动或停止任何进程。 #>
-    param([Parameter(Mandatory)][string]$Workspace,[Parameter(Mandatory)]$Engine,[string]$BuildResultPath,[string[]]$RequiredModules=@())
+    param([Parameter(Mandatory)][string]$Workspace,[Parameter(Mandatory)]$Engine,[string]$BuildResultPath,[string[]]$RequiredModules=@(),[switch]$AllowCookFileOrderChanges)
     if ([string]::IsNullOrWhiteSpace($BuildResultPath)) { throw [IO.FileNotFoundException]::new('Execute需要-BuildResultPath指向本工作区成功完整Editor构建结果。') }
     $workspacePath=Get-FBEPath $Workspace
     $resultPath=Resolve-FBEPath $workspacePath $BuildResultPath
@@ -247,7 +255,12 @@ function Assert-FoundationEditorBuildResult {
         if ($process.Path -cne $proof.Process.Path -or $process.SHA256 -cne $proof.Process.SHA256) { throw '构建process.json已变化。' }
         if (([DateTime]$before.CapturedAtUtc).ToUniversalTime().Ticks -gt $targets[0].Result.StartTimeTicks -or ([DateTime]$after.CapturedAtUtc).ToUniversalTime().Ticks -lt $targets[0].Result.StartTimeTicks) { throw '源码快照时间未包围构建。' }
         $current=Get-FoundationCompileInputInventory $workspacePath
-        if ($current.SHA256 -cne $after.SHA256 -or $proof.InputSHA256 -cne $after.SHA256 -or $proof.InputFileCount -ne $after.FileCount) { throw '当前源码输入与完整Editor构建不一致；需重新完成完整Editor目标。' }
+        if ($proof.InputSHA256 -cne $after.SHA256 -or $proof.InputFileCount -ne $after.FileCount) { throw 'Editor构建输入证据自洽性失败。' }
+        if ($current.SHA256 -cne $after.SHA256) {
+            if (-not $AllowCookFileOrderChanges -or (Get-FBECookRelevantInputHash $current) -cne (Get-FBECookRelevantInputHash $after)) {
+                throw '当前源码输入与完整Editor构建不一致；需重新完成完整Editor目标。'
+            }
+        }
         $products=Get-FBEEditorProducts $workspacePath $Engine
         if ((Get-FBEHash $proof.Products.Files 'FoundationEditorProducts-v1') -cne $proof.Products.SHA256 -or $products.SHA256 -cne $proof.Products.SHA256 -or $products.BuildId -cne $proof.Products.BuildId) { throw '当前receipt、DLL或.modules与完整Editor构建不一致。' }
         $verifiedModuleFiles=@{}

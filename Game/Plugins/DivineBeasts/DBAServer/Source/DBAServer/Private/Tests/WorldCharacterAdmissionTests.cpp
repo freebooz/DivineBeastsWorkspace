@@ -35,6 +35,12 @@ bool FWorldCharacterAdmissionRosterTest::RunTest(const FString&)
     TestFalse(TEXT("Disabled拒绝"), ParseSelectedHero(TEXT(R"({"characters":[{"characterId":"fixture-b","status":"Disabled","heroDefinitionId":"Hero.Zodiac.Tiger"}]})"), TEXT("fixture-b"), Hero));
     TestFalse(TEXT("未知Hero拒绝，不推算资产路径"), ParseSelectedHero(TEXT(R"({"characters":[{"characterId":"fixture-b","status":"Active","heroDefinitionId":"Hero.Unknown"}]})"), TEXT("fixture-b"), Hero));
     TestFalse(TEXT("损坏JSON拒绝"), ParseSelectedHero(TEXT("invalid-json"), TEXT("fixture-b"), Hero));
+    // 只公开已选角色名；不使用账号、CharacterId、其它角色或客户端URL里的名称。
+    FString PublicName = TEXT("旧名称");
+    TestTrue(TEXT("有名称的真实Roster仍沿用既有准入"), ParseSelectedHero(TEXT(R"({"characters":[{"characterId":"fixture-a","status":"Active","heroDefinitionId":"Hero.Zodiac.Rat","characterName":"另一个角色"},{"characterId":"fixture-b","status":"Active","heroDefinitionId":"Hero.Zodiac.Tiger","characterName":"青玉玩家"}]})"), TEXT("fixture-b"), Hero, &PublicName));
+    TestEqual(TEXT("公开的是选中角色名称"), PublicName, FString(TEXT("青玉玩家")));
+    TestTrue(TEXT("旧Roster缺少名称不影响准入"), ParseSelectedHero(Roster, TEXT("fixture-b"), Hero, &PublicName));
+    TestTrue(TEXT("缺少名称清空旧名称"), PublicName.IsEmpty());
     return true;
 }
 // 使用真实Controller/Pawn/身份组件，无GameInstance数据服务是明确失败夹具；不注册或签发生产服务器准入。

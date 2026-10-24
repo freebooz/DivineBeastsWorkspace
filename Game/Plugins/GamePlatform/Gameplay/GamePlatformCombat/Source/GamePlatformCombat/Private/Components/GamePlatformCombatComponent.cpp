@@ -72,6 +72,63 @@ void UGamePlatformCombatComponent::BeginPlay()
     AbilitySystemComponent->RegisterGameplayTagEvent(
         GamePlatformCombatTags::Control_Slow, EGameplayTagEventType::NewOrRemoved)
         .AddUObject(this, &UGamePlatformCombatComponent::HandleControlTagChanged);
+    if (GetOwner()->HasAuthority() && IsValid(CombatAttributeSet))
+    {
+        const float Rate = GetDefault<UGamePlatformCombatSettings>()->EnergyRegenerationPerSecond;
+        EnergyRecoveryPerSecond = FMath::IsFinite(Rate) ? FMath::Clamp(Rate, 0.f, 100000.f) : 0.f;
+        EnergyChangedSubscription = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+            UGamePlatformCombatAttributeSet::GetEnergyAttribute()).AddUObject(this,
+                &UGamePlatformCombatComponent::HandleEnergyAttributeChanged);
+        MaxEnergyChangedSubscription = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+            UGamePlatformCombatAttributeSet::GetMaxEnergyAttribute()).AddUObject(this,
+                &UGamePlatformCombatComponent::HandleEnergyAttributeChanged);
+        UpdateEnergyRecovery();
+    }
+}
+
+void UGamePlatformCombatComponent::HandleEnergyAttributeChanged(const FOnAttributeChangeData&)
+{
+    UpdateEnergyRecovery();
+}
+
+void UGamePlatformCombatComponent::StopEnergyRecovery()
+{
+    if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(EnergyRecoveryTimer);
+}
+
+void UGamePlatformCombatComponent::UpdateEnergyRecovery()
+{
+    UWorld* World = GetWorld();
+    const auto* Attributes = GetCombatAttributeSet();
+    if (bCombatClosing || !IsValid(GetOwner()) || !GetOwner()->HasAuthority() ||
+        !World || World->bIsTearingDown || !Attributes || EnergyRecoveryPerSecond <= 0.f ||
+        bDead || Attributes->GetHealth() <= 0.f || Attributes->GetEnergy() >= Attributes->GetMaxEnergy())
+    {
+        StopEnergyRecovery();
+        return;
+    }
+    if (!World->GetTimerManager().IsTimerActive(EnergyRecoveryTimer))
+        World->GetTimerManager().SetTimer(EnergyRecoveryTimer, this,
+            &UGamePlatformCombatComponent::ApplyEnergyRecovery, 1.f, true);
+}
+
+void UGamePlatformCombatComponent::ApplyEnergyRecovery()
+{
+    UpdateEnergyRecovery();
+    auto* ASC = GetAbilitySystemComponent();
+    const auto* Attributes = GetCombatAttributeSet();
+    UWorld* World = GetWorld();
+    if (bCombatClosing || !IsValid(GetOwner()) || !GetOwner()->HasAuthority() ||
+        !World || World->bIsTearingDown || !ASC || !Attributes || bDead ||
+        Attributes->GetHealth() <= 0.f || EnergyRecoveryPerSecond <= 0.f) return;
+    const float Amount = FMath::Min(EnergyRecoveryPerSecond,
+        FMath::Max(0.f, Attributes->GetMaxEnergy() - Attributes->GetEnergy()));
+    if (Amount <= 0.f) return;
+    const TStrongObjectPtr<UGamePlatformCombatComponent> KeepThis(this);
+    const TStrongObjectPtr<UGamePlatformAbilitySystemComponent> KeepASC(ASC);
+    FGameplayEffectSpec Spec(GetDefault<UGamePlatformEnergyRecoveryGameplayEffect>(), ASC->MakeEffectContext(), 1.f);
+    Spec.SetSetByCallerMagnitude(FName(TEXT("GamePlatform.Energy.Restore")), Amount);
+    ASC->ApplyGameplayEffectSpecToSelf(Spec);
 }
 
 void UGamePlatformCombatComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -79,6 +136,16 @@ void UGamePlatformCombatComponent::EndPlay(const EEndPlayReason::Type EndPlayRea
     // GAS效果移除会同步通知；先永久关闭并失效在途Reset，再进入受控旧句柄清理。
     if (bCombatClosing) return;
     bCombatClosing = true;
+    StopEnergyRecovery();
+    if (IsValid(AbilitySystemComponent))
+    {
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+            UGamePlatformCombatAttributeSet::GetEnergyAttribute()).Remove(EnergyChangedSubscription);
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+            UGamePlatformCombatAttributeSet::GetMaxEnergyAttribute()).Remove(MaxEnergyChangedSubscription);
+    }
+    EnergyChangedSubscription.Reset();
+    MaxEnergyChangedSubscription.Reset();
     if (APawn* ControlledPawn=Cast<APawn>(GetOwner()))
         ControlledPawn->ReceiveControllerChangedDelegate.RemoveDynamic(this,&UGamePlatformCombatComponent::HandleProjectileControllerChanged);
     SelectedProjectileTarget.Reset(); SelectedProjectileSourceGeneration=SelectedProjectileTargetGeneration=0;

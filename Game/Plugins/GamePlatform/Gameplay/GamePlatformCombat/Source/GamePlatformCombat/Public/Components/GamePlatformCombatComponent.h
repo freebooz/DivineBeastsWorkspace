@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayEffectTypes.h"
+#include "TimerManager.h"
 #include "GameplayTagContainer.h"
 #include "Interfaces/GamePlatformCombatStateProvider.h"
 #include "Types/GamePlatformCombatEvent.h"
@@ -10,6 +11,8 @@
 #include "Types/GamePlatformCombatResult.h"
 #include "Types/GamePlatformCombatSpec.h"
 #include "GamePlatformCombatComponent.generated.h"
+
+struct FOnAttributeChangeData;
 
 class APawn;
 class AController;
@@ -172,6 +175,16 @@ public:
     FGamePlatformCombatEventDelegate OnCombatEvent;
 
 private:
+    /** 只有权威方缺能量时启动；满值/死亡/退出停止，属性与上限变化通过委托收敛。 */
+    void HandleEnergyAttributeChanged(const FOnAttributeChangeData& Data);
+    void UpdateEnergyRecovery();
+    void ApplyEnergyRecovery();
+    void StopEnergyRecovery();
+    FDelegateHandle EnergyChangedSubscription;
+    FDelegateHandle MaxEnergyChangedSubscription;
+    FTimerHandle EnergyRecoveryTimer;
+    float EnergyRecoveryPerSecond = 0.f;
+
     /** GT组件生命周期身份；BeginPlay建立新作用域，EndPlay先失效，旧同步栈不能复活。 */
     uint64 ComponentLifecycleGeneration = 0;
     /** 与复制Avatar值独立的重置操作身份；本次合法推进Avatar不会自行使操作失效。 */

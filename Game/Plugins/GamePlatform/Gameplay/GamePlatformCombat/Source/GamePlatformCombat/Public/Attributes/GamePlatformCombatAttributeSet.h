@@ -43,7 +43,7 @@ public:
     FGameplayAttributeData MaxHealth;
     GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, MaxHealth)
 
-    /** 通用能量（蓝条资源），与项目气势Momentum严格分离；默认100/100，技能消耗待正式GE配置。 */
+    /** 通用能量（蓝条资源），与项目气势Momentum分离；默认100/100，成本与恢复由权威GAS处理。 */
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Energy, Category="Combat|Resources")
     FGameplayAttributeData Energy;
     GAMEPLATFORM_ATTRIBUTE_ACCESSORS(UGamePlatformCombatAttributeSet, Energy)

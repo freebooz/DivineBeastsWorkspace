@@ -21,6 +21,8 @@
 
 ## 三层边界
 
+客户端组合根可通过`ConfigureAtmosphere`选择中立光雾Profile，默认关闭。私有适配器捕获原场景动态方向光、天光与高度雾基线，复用权威快照的有限插值；阴天单独降低照度，雨雪随强度降照度，雪与FogIntensity增强雾。世界流送使用LevelAdded事件，晴天/失活恢复基线。无原雾时创建一个不复制的Transient高度雾；失活销毁，不写入地图，不新增体积雾和天空重捕获。平台不识别地图/生肖，Dedicated Server不实例化本适配器。
+
 - `GamePlatformWorld`：世界/区域身份和就绪；不承接雨滴渲染与天气权威调度。
 - `GamePlatformSurface`：雪、苔藓、湿润、积水材质参数；天气客户端只改六个动态参数，保留苔藓和积雪高度基础配置，具体项目若还有其他写入方必须建立单一所有者/状态合成，禁止多个系统互相覆盖。
 - `GamePlatformPresentation`：统一语义目录/Provider；`GamePlatformVFX`/Niagara负责粒子，`GamePlatformSFX`负责音频；天气插件不复制这些执行器。

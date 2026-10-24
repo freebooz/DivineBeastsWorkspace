@@ -10,9 +10,8 @@
 
 UGameplayEffect* UDivineBeastsDevelopmentMagicAbility::GetCostGameplayEffect() const
 {
-    // 使用原生GAS无成本合同；不是跳过Commit，也不在施法后退款或补气势。
-    // 即使蓝图遗留费用引用，服务器与客户端的资源资格检查均不会扣除或要求气势。
-    return nullptr;
+    // 保持不消耗气势，改为唯一GAS成本GE扣除默认能量；不退款、不绕过Commit。
+    return BuildDefaultEnergyCost(nullptr);
 }
 
 void UDivineBeastsDevelopmentMagicAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle,

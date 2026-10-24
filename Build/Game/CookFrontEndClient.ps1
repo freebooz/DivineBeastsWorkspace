@@ -10,6 +10,8 @@
 退出2表示未执行，1表示检查失败；引擎非零码原样保留。通过不等于新手村网络准入通过。
 #>
 param([string]$EngineRoot, [switch]$Cook,
+    # 可显式绑定完整Editor构建；缺省核验最新成功完整Editor证据，拒绝陈旧反射DLL。
+    [string]$EditorBuildResult,
     # 默认不向每个独占Stage重复复制数GB的PDB；原始调试符号仍归Game/Binaries。
     # 需要随包调试时显式传-SkipDebugSymbols:$false，不降低配置、不跳过Cook与资产容器检查。
     [switch]$SkipDebugSymbols=$true,
@@ -29,6 +31,7 @@ try {
     $engine=Get-FoundationEngine $EngineRoot
     $details.EngineVersion=$engine.Version
     $details.EngineRoot=$engine.Root
+    Import-Module (Join-Path $PSScriptRoot 'FoundationCookEvidence.psm1') -Force
     $tool=Get-FoundationManagedTool $engine AutomationTool
     Assert-FoundationFile $context.Project
     Assert-FoundationFile (Join-Path $context.Workspace "Game/Config/Custom/$CustomConfig/DefaultGame.ini")
@@ -37,6 +40,8 @@ try {
     if($LASTEXITCODE -ne 0){throw '真实RHI颜色门禁未通过；拒绝发布缺失、失败或过期的UI颜色证据。'}
     $details.UIColorRHIReport=[IO.Path]::GetFullPath($UIColorRHIReport)
     $lock=Enter-FoundationEngineLock $engine.Root
+    # 锁内核验，防止预检后被另一构建替换Editor DLL，再启动UAT。
+    $details.CookEditorGate=Assert-FoundationCookEditorBuildResult -Workspace $context.Workspace -EngineRoot $engine.Root -BuildResultPath $EditorBuildResult
     $cookDirectory=Join-Path $context.Directory 'Cooked/WindowsClient'
     if ($SkipZenStore) {
         # 文件Cook会拼接完整插件目录，深层验证目录会触发Windows的260字符限制。

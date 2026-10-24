@@ -1,0 +1,11 @@
+# 技能蓝图烘焙结构一致性修复
+
+真实故障：两个已打包Client登录后加载Goat占位技能CDO，在AsyncLoading2发生71/55字节不一致。10月24日Client/Server已构建，但Cook使用的DivineBeastsAbilitiesRuntime Editor DLL仍为10月21日版本，早于本轮技能基类反射变更。源码及Client/Server收据一致不足以证明Cook反射一致。非公开字段没有Python蛇形别名，Python别名查询不是字段存在证据；最终以原生FindFProperty和真实打包CDO加载回归为准。
+
+修复复用FoundationBuildEvidence完整Editor进程、输入、receipt、模块DLL及引擎身份校验；两个Cook入口必须先通过该证据，且记录实际Editor构建关联。仅允许Cook自身改写四份明确的FileOpenOrder日志，不允许忽略反射头、配置或模块变化。不修改引擎序列化器、技能稳定身份或关闭校验。
+
+原生回归DivineBeasts.Abilities.CookedPlaceholderSerialization在实际打包程序中读取十二生肖六类共72个GA蓝图类与CDO，不登录、不授予、不修改共享CDO。按用户要求先清理受影响模块旧Intermediate，完整Editor后再完整Client/Server增量构建、干净双端Cook/Stage、实际进程版本核验。最终两个客户端从登录开始，联机和人工视觉仍分别报告。
+
+状态：已清理限定模块778MiB旧Intermediate，Editor完整构建b9362552-3f92-4667-a328-a5f022f7452a、Client/Server完整构建d72993ac-4807-42d1-a49b-dc194ca35438均通过。Client Cook 45f11ae4-9c45-4ae7-b26e-2edaac19cb87与Server Cook 98f3809d-d9bc-4055-9c04-95bc599900fa均通过，记录相同Editor构建及相同模块产物哈希。客户端实际包使用NullRHI完成72类/CDO加载并退出0；真实新手村专服也完成同一原生测试，均为1个自动化测试、72个类，不冒充72个独立测试或GPU验收。
+
+新手村/竞技场已同步至相同Server包。已重新打开两个正常登录客户端（PID31408、672），未自动认证。正式地图SHA256与修复前逐字节一致，原场景与资源保留。证据：Saved/Validation/CookedAbilitySerialization20261024/562b57ff-8c1a-4cba-a765-b11e3aa0cf03。真实用户登录准入、施法及视觉仍待人工复测；历史崩溃包不可再作为验收版本。

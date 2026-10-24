@@ -53,6 +53,8 @@ public:
 private:
     // 隔离自动化只注入观察作用域，验证真实Actor通知和换Pawn；不伪装屏幕注册或后端准入。
     friend class FDivineBeastsWorldHealthBarLifecycleTest;
+    friend class FDivineBeastsPlayerNameplateEventsTest;
+    friend class FDivineBeastsPlayerNameplateBudgetTest;
     friend class FDivineBeastsWorldTargetSelectionTest;
     void ObserveActor(AActor* Actor, bool bSelectionOnly = false);
     void ApplyHealth(AActor* Actor, float Health, float Maximum);

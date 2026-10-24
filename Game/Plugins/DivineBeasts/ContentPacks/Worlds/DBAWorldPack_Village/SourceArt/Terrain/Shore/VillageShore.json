@@ -1,0 +1,22 @@
+{
+  "waterZ": -80.0,
+  "widthCm": 600.0,
+  "worldOrigin": [
+    -12225.0,
+    -12675.0
+  ],
+  "worldSize": [
+    13500.0,
+    21750.0
+  ],
+  "mask": "E:\\work\\2026\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\ContentPacks\\Worlds\\DBAWorldPack_Village\\SourceArt\\Terrain\\Shore\\VillageShoreWetnessMask.png",
+  "SHA256": "3d4abd30c0ec2916398d04d7d741f7801a6bca21d0d67fb3178823876b2014c3",
+  "waterSamples": 5268,
+  "dryBankAreaM2": 1980.0,
+  "cameraTarget": [
+    -9000.0,
+    4200.0,
+    -51.577413
+  ],
+  "sourcePBR": "/DBAWorldPack_Village/Terrain/Textures/ShoreMud"
+}

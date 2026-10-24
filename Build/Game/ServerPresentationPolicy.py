@@ -375,13 +375,14 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
             if package.casefold() in seen:
                 raise PolicyError(f"重复排除目录: {package}")
             seen.add(package.casefold())
-            # 世界包同时拥有地图/权威水域与纯视觉预设。仅准许本次实际Cook核验的
-            # 水材质、视觉蓝图及狼/吸血鬼模型动画叶子；地图与权威AI定义仍禁止剥离。
+            # 世界包同时拥有地图/权威水域与纯视觉预设。仅准许明确登记的视觉叶子；
+            # Ferns由独立装饰类剥离，真实Cook结果仍须另验，地图与权威AI定义禁止剥离。
             is_reviewed_world_visual_leaf = package.casefold() in (
                 "/dbaworldpack_village/water/materials",
                 "/dbaworldpack_village/water/blueprints",
                 "/dbaworldpack_village/creatures/wolf",
                 "/dbaworldpack_village/creatures/vampirealusth",
+                "/dbaworldpack_village/pcg/ferns",
             )
             if package in ("/Game", "/Engine", "/Game/Development") or (not is_reviewed_world_visual_leaf and any(
                     _under(package.casefold(), root.casefold()) or _under(root.casefold(), package.casefold())

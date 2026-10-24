@@ -128,6 +128,10 @@ void UDivineBeastsVillageSnowWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
         UE_LOG(LogDBAVillageSnow, Warning, TEXT("Village客户端未初始化WeatherClient，雪材质保持基础模式。"));
         return;
     }
+    // 第三层只为新手村启用中立光雾策略；平台不识别地图名，不创建第二套天气播放器。
+    FGamePlatformWeatherAtmosphereProfile AtmosphereProfile;
+    AtmosphereProfile.bEnabled = true;
+    WeatherClient->ConfigureAtmosphere(AtmosphereProfile);
     WeatherChangedHandle = WeatherClient->AddVisualChangedHandler(
         FGamePlatformWeatherVisualChanged::FDelegate::CreateUObject(
             this, &UDivineBeastsVillageSnowWorldSubsystem::OnVisualWeatherChanged));
@@ -285,6 +289,9 @@ void UDivineBeastsVillageSnowWorldSubsystem::AttachSnowFootContacts(AActor* Acto
         Character->FindComponentByClass<UGamePlatformSnowFootContactComponent>()) return;
     auto* Component=NewObject<UGamePlatformSnowFootContactComponent>(Character);
     Component->SetContactMesh(Character->GetMesh());
+    // 当前玩家/NPC使用Mixamo骨架；保留UE标准骨架候选，异步外观完成后由通用组件解析。
+    Component->SetContactBoneCandidates({TEXT("foot_l"),TEXT("mixamorig:LeftFoot"),TEXT("LeftFoot")},
+        {TEXT("foot_r"),TEXT("mixamorig:RightFoot"),TEXT("RightFoot")});
     Character->AddInstanceComponent(Component);
     Component->RegisterComponent();
     SnowFootContactComponents.Add(Component);

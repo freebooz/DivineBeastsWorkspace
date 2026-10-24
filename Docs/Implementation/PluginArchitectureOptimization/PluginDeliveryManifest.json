@@ -1282,6 +1282,18 @@
         "vfx-review",
         "server-cook"
       ]
+    },
+    {
+      "Id": "DBAFoliagePack_Core",
+      "Descriptor": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFoliagePack_Core/DBAFoliagePack_Core.uplugin",
+      "Layer": "DivineBeasts",
+      "Kind": "Content",
+      "Readme": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFoliagePack_Core/README.md",
+      "Modules": [],
+      "Scenarios": [
+        "architecture",
+        "content-delivery"
+      ]
     }
   ],
   "Scenarios": [

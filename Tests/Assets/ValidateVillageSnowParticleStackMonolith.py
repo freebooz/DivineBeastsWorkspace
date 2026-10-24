@@ -6,6 +6,7 @@
 """
 import importlib.util
 import json
+import re
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("snow_native_query", Path(__file__).with_name("VerifySnowNativeGraphsMonolith.py"))
@@ -15,6 +16,23 @@ ASSET = "/GamePlatformVFX/Weather/Niagara/NS_GP_Weather_Snow_Detailed"
 
 
 def main():
+    # 实际资产曾退回默认正Z速度及100cm小盒；必须检查真正启用栈的参数而非制作规格。
+    for emitter in ('NE_GP_Snow_Near', 'NE_GP_Snow_Far'):
+        def vector(module, parameter):
+            result = native.mcp_call(9316, 'niagara', 'get_module_input_value', {
+                'asset_path': ASSET, 'emitter': emitter, 'module_node': module, 'input': parameter})
+            assert not result.get('is_default'), emitter + ':' + parameter + '仍使用引擎默认值'
+            values = [float(v) for v in re.findall(r'-?\d+(?:\.\d+)?', result['value'])]
+            assert len(values) == 3, result
+            return values
+        velocity = vector('AddVelocity', 'Velocity')
+        size = vector('BoxLocation', 'Box Size')
+        offset = vector('BoxLocation', 'Box Offset')
+        assert velocity[2] < -50 and abs(velocity[2]) > abs(velocity[0]), '雪花必须主要向世界下方运动'
+        assert offset[2] - size[2] / 2 >= 350, '降雪必须从观察主体上空至少350cm开始'
+        space = native.mcp_call(9316, 'niagara', 'get_emitter_property', {
+            'asset_path': ASSET, 'emitter': emitter, 'property': 'bLocalSpace'})
+        assert space['value'] is False, '已生成雪花不得跟随角色旋转'
     for emitter in ("NE_GP_Snow_Near", "NE_GP_Snow_Far", "NE_GP_Snow_GroundDrift"):
         result = native.mcp_call(9316, "niagara", "get_ordered_modules", {
             "asset_path": ASSET, "emitter": emitter, "usage": "particle_spawn"})

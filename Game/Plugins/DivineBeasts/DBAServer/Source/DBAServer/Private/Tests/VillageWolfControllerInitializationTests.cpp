@@ -13,7 +13,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVillageWolfSingleControllerInitializationTest,
     "DivineBeasts.Server.VillageWolf.SingleControllerInitialization",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::ServerContext | EAutomationTestFlags::EngineFilter)
 bool FVillageWolfSingleControllerInitializationTest::RunTest(const FString&)
 {
     const UWorld::InitializationValues Values=UWorld::InitializationValues().AllowAudioPlayback(false)
@@ -32,8 +32,8 @@ bool FVillageWolfSingleControllerInitializationTest::RunTest(const FString&)
     Controller->Possess(Wolf);
     TestEqual(TEXT("项目控制器保持占有"),Wolf->GetController(),static_cast<AController*>(Controller));
     TestNull(TEXT("控制器Owner不能反向指向Pawn而构成所有权环"),Controller->GetOwner());
-    TestTrue(TEXT("占有后真实Combat首次初始化成功"),Wolf->AuthorityInitializeWolf(75.0f));
-    TestEqual(TEXT("权威生命为75"),Wolf->GetGamePlatformCombatComponent()->GetCombatHealth(),75.0f);
+    TestTrue(TEXT("占有后真实Combat首次初始化成功"),Wolf->AuthorityInitializeWolf(100.0f));
+    TestEqual(TEXT("权威生命为100"),Wolf->GetGamePlatformCombatComponent()->GetCombatHealth(),100.0f);
     int32 ControllerCount=0;
     for(TActorIterator<AGamePlatformAIController> It(World);It;++It)++ControllerCount;
     TestEqual(TEXT("世界中只有一套狼AI控制器"),ControllerCount,1);

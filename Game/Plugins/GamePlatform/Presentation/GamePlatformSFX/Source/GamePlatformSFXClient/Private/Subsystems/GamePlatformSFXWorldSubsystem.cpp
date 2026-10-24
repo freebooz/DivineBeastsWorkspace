@@ -550,6 +550,12 @@ void UGamePlatformSFXWorldSubsystem::HandleDefinitionLoaded(
         return;
     }
 
+    // 只为低频音乐/环境启动记录真实组件状态；IsPlaying不是扬声器听感验收，仍需输出录音。
+    if (Definition->GetSoundGroup() != EGamePlatformSFXSoundGroup::Effects)
+        UE_LOG(LogGamePlatformSFX, Verbose,
+            TEXT("GP_SFX_LOOP_PLAYING group=%d definition=%s base=%.3f mixed=%.3f playing=%d"),
+            static_cast<int32>(Definition->GetSoundGroup()), *Definition->GetName(), TargetVolume,
+            Component->VolumeMultiplier, Component->IsPlaying() ? 1 : 0);
     if (auto* Snapshot = PlaybackSnapshots.Find(Handle.Id))
     { Snapshot->State = EGamePlatformSFXPlaybackState::Playing; Snapshot->Code = EGamePlatformSFXResultCode::Played; }
     ++Diagnostics.PlayedInstances;

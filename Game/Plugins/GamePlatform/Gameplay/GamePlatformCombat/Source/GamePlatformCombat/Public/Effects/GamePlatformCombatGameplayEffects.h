@@ -3,6 +3,15 @@
 #include "GameplayEffect.h"
 #include "GamePlatformCombatGameplayEffects.generated.h"
 
+/** 通用瞬时能量恢复；服务器Spec通过DataName GamePlatform.Energy.Restore声明恢复量。 */
+UCLASS()
+class GAMEPLATFORMCOMBAT_API UGamePlatformEnergyRecoveryGameplayEffect final : public UGameplayEffect
+{
+    GENERATED_BODY()
+public:
+    UGamePlatformEnergyRecoveryGameplayEffect();
+};
+
 UCLASS()
 class GAMEPLATFORMCOMBAT_API UGamePlatformDamageGameplayEffect final
     : public UGameplayEffect

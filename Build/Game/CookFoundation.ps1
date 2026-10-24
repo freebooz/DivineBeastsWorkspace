@@ -10,6 +10,7 @@ Server先验证单源排除规则及受管INI漂移，UAT成功后逐个读取�
 返回0成功，1脚本失败，2未执行；外部非零退出码原样保留。
 #>
 param([string]$EngineRoot, [switch]$Cook, [ValidateSet('Client','Server')][string]$Target = 'Client',
+    [string]$EditorBuildResult,
     # 保留Foundation默认行为；新手村开发验证必须显式选配置，不在发行默认中启用候选技能。
     [ValidateSet('FoundationStandalone','VillageServer','VillageDevelopmentServer','PluginDemoClient')][string]$CustomConfig='FoundationStandalone',
     [switch]$Pak,
@@ -31,6 +32,7 @@ try {
     }
     $engine = Get-FoundationEngine $EngineRoot
     $details.EngineVersion = $engine.Version; $details.EngineRoot = $engine.Root
+    Import-Module (Join-Path $PSScriptRoot 'FoundationCookEvidence.psm1') -Force
     # 在UAT/引擎锁之前验证全部受管配置；配置漂移时不开始本次Cook，也不修改旧产物。
     $serverPresentationPolicy = $null
     if ($Target -eq 'Server') {
@@ -69,6 +71,7 @@ try {
     Assert-FoundationFile (Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe')
     $tool = Get-FoundationManagedTool $engine AutomationTool
     $lock = Enter-FoundationEngineLock $engine.Root
+    $details.CookEditorGate=Assert-FoundationCookEditorBuildResult -Workspace $context.Workspace -EngineRoot $engine.Root -BuildResultPath $EditorBuildResult
     # UE单平台-outputdir不自动附加平台；Stage仅在目录末段匹配CookPlatform时使用原路径。
     $cookDirectory = Join-Path $context.Directory "Cooked/Windows$Target"
     if ($SkipZenStore) {

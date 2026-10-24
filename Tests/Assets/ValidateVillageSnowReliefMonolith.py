@@ -27,7 +27,10 @@ def ancestors(key):
     return found
 parameters={n.get('props',{}).get('ParameterName'):n for n in nodes if n['class'] in ('ScalarParameter','VectorParameter')}
 displacement=parameters['Displacement Multiplier']
-assert float(displacement['props']['DefaultValue'])==5.,'置换默认值应为5'
+assert float(displacement['props']['DefaultValue'])==10.,'松雪层最大置换应为10cm'
+depth=parameters['Snow Footprint Depth Cm']
+assert float(depth['props']['DefaultValue'])==5.,'脚印压陷仍限制在5cm'
+assert depth['id'] in ancestors(out['Displacement']),'压陷深度没有进入真实输出'
 assert displacement['id'] in ancestors(out['Displacement']),'置换参数没有进入真实输出'
 tint=parameters['VillageSnow Subsurface Tint']
 rgb=[float(v) for v in re.findall(r'[RGB]=([0-9.]+)',tint['props']['DefaultValue'])]
@@ -38,4 +41,4 @@ for name,value in [('Snow Noise Density',12.),('Snow Fine Noise Density',48.),('
     node=parameters[name]
     assert abs(float(node['props']['DefaultValue'])-value)<1e-6,name
     assert node['id'] in ancestors(out['Displacement']),name+'未影响真实雪高度'
-print('VILLAGE_SNOW_RELIEF_NATIVE_GRAPH_PASS PBR+SSS tint linear(.547744,.710151,1)+noise+true Displacement=5 no-WPO')
+print('VILLAGE_SNOW_RELIEF_NATIVE_GRAPH_PASS PBR+SSS+noise Displacement=10cm FootprintDepth=5cm no-WPO')

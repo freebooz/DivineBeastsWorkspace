@@ -13,6 +13,9 @@ bool FGamePlatformSnowContactGateTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("抬脚仅重新布防"),Left.Update(FVector(30,0,0),25,100,true,2.2));
     TestTrue(TEXT("再次落地形成下一步"),Left.Update(FVector(40,0,0),6,100,true,2.4));
     TestTrue(TEXT("右脚独立门闩"),Right.Update(FVector(20,10,0),6,100,true,2.4));
+    FGamePlatformSnowFootContactGate Ankle;
+    TestFalse(TEXT("踝骨仍在摆动阶段不压雪"),Ankle.Update(FVector::ZeroVector,14.1f,100,true,0));
+    TestTrue(TEXT("真实踝骨高度含引擎悬距仍可接地"),Ankle.Update(FVector::ZeroVector,13.5f,100,true,.1));
     Left.Update(FVector(40,0,0),25,100,true,2.5);
     TestFalse(TEXT("原地抖动不反复叠印"),Left.Update(FVector(41,0,0),6,100,true,2.6));
     FGamePlatformSnowContact Contact; Contact.EventId=FGuid::NewGuid();

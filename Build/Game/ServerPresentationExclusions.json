@@ -447,6 +447,20 @@
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "通用技能的审核及运行Niagara、材质和网格均为纯客户端表现；服务器只使用DBAGameplay授权与Combat权威弹体，不Cook这些资源。"
+    },
+    {
+      "PackagePath": "/DBAFoliagePack_Core",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFoliagePack_Core/Content",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端/编辑器植物原型库，当前不承担服务器碰撞、导航或玩法权威；只由批准场景显式消费。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/PCG/Ferns",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/PCG/Ferns",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯装饰蕨类PCG图和专用放置器；Cooker按独立类剥离生成HISM，权威地形、掩码、道路与导航继续保留。真实Cook须独立验证。"
     }
   ],
   "StageOnlyDirectories": [
@@ -569,6 +583,12 @@
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core",
       "Availability": "Present",
       "Reason": "实际公共声音包已经存在；继续仅客户端Stage剥离，包含音频、定义和插件发布文件。"
+    },
+    {
+      "PackagePath": "/DBAFoliagePack_Core",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFoliagePack_Core",
+      "Availability": "Present",
+      "Reason": "植物纯表现内容及插件侧文件不进入专服Stage。"
     }
   ]
 }

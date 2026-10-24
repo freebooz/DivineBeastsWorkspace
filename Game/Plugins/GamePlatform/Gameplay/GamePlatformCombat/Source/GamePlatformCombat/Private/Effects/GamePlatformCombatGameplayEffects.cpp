@@ -8,6 +8,18 @@
 #include "Tags/GamePlatformAbilitySystemTags.h"
 #include "Tags/GamePlatformCombatTags.h"
 
+UGamePlatformEnergyRecoveryGameplayEffect::UGamePlatformEnergyRecoveryGameplayEffect()
+{
+    DurationPolicy = EGameplayEffectDurationType::Instant;
+    FGameplayModifierInfo Modifier;
+    Modifier.Attribute = UGamePlatformCombatAttributeSet::GetEnergyAttribute();
+    Modifier.ModifierOp = EGameplayModOp::Additive;
+    FSetByCallerFloat Amount;
+    Amount.DataName = TEXT("GamePlatform.Energy.Restore");
+    Modifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(Amount);
+    Modifiers.Add(Modifier);
+}
+
 namespace
 {
 void ConfigureGrantedTag(

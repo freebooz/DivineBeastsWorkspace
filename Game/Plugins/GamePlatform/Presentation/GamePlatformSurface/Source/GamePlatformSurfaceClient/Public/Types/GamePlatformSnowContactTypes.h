@@ -26,6 +26,6 @@ struct GAMEPLATFORMSURFACECLIENT_API FGamePlatformSnowFootContactGate
     bool bHasStamped = false;
     FVector LastLocation = FVector::ZeroVector;
     double LastTime = -1.;
-    /** 近地12cm，离地18cm重置；移动中每脚相隔至少12cm/80ms。非法/空中输入不生成事件。 */
+    /** 脚骨近地14cm，离地18cm重置；移动中每脚相隔至少12cm/80ms。非法/空中输入不生成事件。 */
     bool Update(const FVector& Foot, float HeightAboveFloorCm, float SpeedCmPerSecond, bool bGrounded, double Now);
 };

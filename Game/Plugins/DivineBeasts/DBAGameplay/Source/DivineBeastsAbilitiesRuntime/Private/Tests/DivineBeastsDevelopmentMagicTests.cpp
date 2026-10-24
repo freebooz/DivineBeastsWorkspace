@@ -316,7 +316,7 @@ private:
             bValid &= Test->TestEqual(Label + TEXT("数值表最远距离50米"), Balance.CastRangeCm, 5000.f);
             bValid &= Test->TestFalse(Label + TEXT("拒绝零级"), Definition->TryGetLoadedBalance(0, Balance, Error));
             bValid &= Test->TestFalse(Label + TEXT("拒绝未制作的第二级"), Definition->TryGetLoadedBalance(2, Balance, Error));
-            bValid &= Test->TestNull(Label + TEXT("法术通过原生GAS无成本路径"), Ability->GetCostGameplayEffect());
+            bValid &= Test->TestNotNull(Label + TEXT("法术通过原生GAS能量成本路径"), Ability->GetCostGameplayEffect());
             const UClass* LegacyCostClass = Cast<UClass>(MagicPath(TEXT("GE"), Expected, TEXT("Cost"), true).ResolveObject());
             const UGameplayEffect* Cost = LegacyCostClass ? LegacyCostClass->GetDefaultObject<UGameplayEffect>() : nullptr;
             const UGameplayEffect* Cooldown = Ability->GetCooldownGameplayEffect();
@@ -340,7 +340,7 @@ private:
             if (!Test->TestNotNull(TEXT("真实占位奥术GA及原生执行器"), Ability)) return false;
             bValid &= Test->TestNotNull(TEXT("占位GA保留真实冷却GE"), Ability->GetCooldownGameplayEffect());
             // 法术零费用由原生GAS成本合同保证，不能只把表改零而继续消费旧蓝图成本GE。
-            bValid &= Test->TestNull(TEXT("占位法术通过原生GAS无成本路径"), Ability->GetCostGameplayEffect());
+            bValid &= Test->TestNotNull(TEXT("占位法术通过原生GAS能量成本路径"), Ability->GetCostGameplayEffect());
             bValid &= Test->TestEqual(TEXT("占位GA确实为三发奥术"), Ability->PlaceholderMode, EDivineBeastsPlaceholderAbilityMode::ArcaneMissiles);
             bValid &= Test->TestEqual(TEXT("占位真实三发数"), Ability->ProjectileCount, 3);
             bValid &= Test->TestEqual(TEXT("占位真实间隔0.2秒"), Ability->ProjectileIntervalSeconds, 0.2f);
@@ -399,7 +399,7 @@ private:
         if (!Test->TestNotNull(TEXT("已迁移真实Primary GA"), Ability)) return;
         if (!Test->TestEqual(TEXT("稳定Primary身份追加治疗模式"), Ability->PlaceholderMode, EDivineBeastsPlaceholderAbilityMode::Healing) ||
             !Test->TestNotNull(TEXT("Primary真实冷却GE"), Ability->GetCooldownGameplayEffect())) return;
-        Test->TestNull(TEXT("治疗没有气势成本GE"), Ability->GetCostGameplayEffect());
+        Test->TestNotNull(TEXT("治疗使用独立能量成本GE"), Ability->GetCostGameplayEffect());
         const FGameplayTag CooldownTag = FGameplayTag::RequestGameplayTag(TEXT("DivineBeasts.Placeholder.Cooldown.Primary"));
         auto* SourceCombat = Pawn->GetGamePlatformCombatComponent();
         auto* Eligibility = Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>();

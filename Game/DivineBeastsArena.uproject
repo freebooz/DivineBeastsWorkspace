@@ -177,7 +177,11 @@
     {
       "Name": "DBAPresentationPack_Core",
       "Enabled": true,
-      "TargetAllowList": ["Game", "Client", "Editor"]
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
     },
     {
       "Name": "DBAUIPack_Core",
@@ -195,6 +199,15 @@
     {
       "Name": "DBAWorldPack_MainArena",
       "Enabled": true
+    },
+    {
+      "Name": "DBAFoliagePack_Core",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
     }
   ]
 }

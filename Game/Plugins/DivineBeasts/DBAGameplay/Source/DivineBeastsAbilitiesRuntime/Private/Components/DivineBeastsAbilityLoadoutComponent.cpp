@@ -6,6 +6,8 @@
 #include "Abilities/DivineBeastsV6GameplayAbility.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Attributes/DivineBeastsMomentumAttributeSet.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
+#include "Settings/GamePlatformCombatSettings.h"
 
 #include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Definitions/DivineBeastsAbilityDefinition.h"
@@ -540,6 +542,13 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
             const UGameplayEffect* CostEffect = Configured->GetCostGameplayEffect();
             float ActualMomentumChange = 0.0f;
             int32 MomentumModifiers = 0;
+            int32 EnergyModifiers = 0;
+            const float DefaultEnergy = GetDefault<UGamePlatformCombatSettings>()->DefaultAbilityEnergyCost;
+            if (!FMath::IsFinite(DefaultEnergy) || DefaultEnergy < 0.f)
+            {
+                OutError = TEXT("默认能量费用配置非法，拒绝授予技能。");
+                return false;
+            }
             if (CostEffect)
             {
                 // 数值行只声明单一Momentum负向修改。瞬时GE仍可能通过Execution、周期或
@@ -555,10 +564,11 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
                 }
                 for (const FGameplayModifierInfo& Modifier : CostEffect->Modifiers)
                 {
-                    if (Modifier.Attribute !=
-                        UDivineBeastsMomentumAttributeSet::GetMomentumAttribute())
+                    const bool bMomentum = Modifier.Attribute == UDivineBeastsMomentumAttributeSet::GetMomentumAttribute();
+                    const bool bEnergy = Modifier.Attribute == UGamePlatformCombatAttributeSet::GetEnergyAttribute();
+                    if (!bMomentum && !bEnergy)
                     {
-                        // 其他资源需要扩充经过批准的数值字段和校验，不在此暗中加入成本。
+                        // 只接受已明确支持的气势和能量，不允许借成本GE修改生命等其它属性。
                         OutError = TEXT("项目技能成本效果包含未在数值表声明的资源修改。");
                         return false;
                     }
@@ -570,9 +580,26 @@ bool UDivineBeastsAbilityLoadoutComponent::ApplyAbilitySet(
                         OutError = TEXT("技能气势成本无法按真实技能等级计算静态负数，拒绝授权。");
                         return false;
                     }
-                    ++MomentumModifiers;
-                    ActualMomentumChange += Change;
+                    if (bEnergy)
+                    {
+                        if (Change >= 0.f)
+                        {
+                            OutError = TEXT("能量成本必须是静态、有限的负数。");
+                            return false;
+                        }
+                        ++EnergyModifiers;
+                    }
+                    else
+                    {
+                        ++MomentumModifiers;
+                        ActualMomentumChange += Change;
+                    }
                 }
+            }
+            if (EnergyModifiers > 1 || (Configured->UsesDefaultSpellEnergy() && DefaultEnergy > 0.f && EnergyModifiers != 1))
+            {
+                OutError = TEXT("法术必须通过唯一GAS成本GE声明一次能量扣除。");
+                return false;
             }
             if ((Balance.MomentumCost > 0.0f && (!CostEffect || MomentumModifiers == 0)) ||
                 !FMath::IsNearlyEqual(

@@ -25,6 +25,12 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Ability")
     FPrimaryAssetId AbilityDefinitionId;
 
+    /** 法术默认采用项目能量费；普攻和被动不追加。显式合法GE仍是技能专用费用真源。 */
+    virtual bool UsesDefaultSpellEnergy() const;
+    virtual UGameplayEffect* GetCostGameplayEffect() const override;
+    /** 在唯一GAS成本GE中补充默认能量，不改写共享蓝图CDO，不另建扣费执行器。 */
+    UGameplayEffect* BuildDefaultEnergyCost(UGameplayEffect* OriginalCost) const;
+
     /**
      * 记录当前技能激活是否已经通过 GAS CommitAbility（正式消耗与冷却提交）。
      * 伤害必须在服务器有效激活且成功 Commit 后执行；多段技能在同一次激活中共用此资格。
@@ -48,6 +54,13 @@ private:
     /** 每个 InstancedPerActor 技能独立持有，结束/取消时立即清零，不复制。 */
     UPROPERTY(Transient)
     bool bCommittedForCurrentActivation = false;
+    bool bCommitInProgress = false;
+    uint64 CommitActivationGeneration = 0;
+    UPROPERTY(Transient)
+    TObjectPtr<UGameplayEffect> CachedEnergyCost = nullptr;
+    UPROPERTY(Transient)
+    TObjectPtr<UGameplayEffect> CachedOriginalCost = nullptr;
+    float CachedEnergyCostAmount = -1.f;
 
 public:
 

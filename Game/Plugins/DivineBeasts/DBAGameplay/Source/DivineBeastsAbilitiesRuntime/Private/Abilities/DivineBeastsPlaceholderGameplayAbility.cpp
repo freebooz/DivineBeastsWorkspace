@@ -23,7 +23,7 @@ UGameplayEffect* UDivineBeastsPlaceholderGameplayAbility::GetCostGameplayEffect(
     if (PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::Fireball ||
         PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::Frostbolt ||
         PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::ArcaneMissiles ||
-        PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::Healing) return nullptr;
+        PlaceholderMode==EDivineBeastsPlaceholderAbilityMode::Healing) return BuildDefaultEnergyCost(nullptr);
     return Super::GetCostGameplayEffect();
 }
 

@@ -11,6 +11,14 @@ class GAMEPLATFORMCOMBAT_API UGamePlatformCombatSettings final : public UDevelop
     GENERATED_BODY()
 
 public:
+    /** 服务器每秒恢复的通用能量；0关闭，项目配置决定实际默认，不驱动UI轮询。 */
+    UPROPERTY(Config, EditAnywhere, Category="Energy", meta=(ClampMin="0.0"))
+    float EnergyRegenerationPerSecond = 0.0f;
+
+    /** 未声明专用能量成本时可采用的默认费用；具体技能负责选择是否使用，0为免费。 */
+    UPROPERTY(Config, EditAnywhere, Category="Energy", meta=(ClampMin="0.0"))
+    float DefaultAbilityEnergyCost = 0.0f;
+
     UPROPERTY(Config, EditAnywhere, Category="Magnitude", meta=(ClampMin="0.0"))
     float MaxDamageMagnitude = 100000.0f;
 

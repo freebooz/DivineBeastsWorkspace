@@ -71,8 +71,10 @@ public:
         const FGameplayAbilityActivationInfo ActivationInfo,
         bool bReplicateEndAbility, bool bWasCancelled) override;
 
-    /** 三类占位法术及治疗使用原生GAS无成本合同，抵御旧蓝图成本引用；普通攻击继续遵循原配置。 */
+    /** 三类占位法术及治疗使用默认能量GE，继续排除旧气势成本；普通攻击保持原配置。 */
     virtual UGameplayEffect* GetCostGameplayEffect() const override;
+    virtual bool UsesDefaultSpellEnergy() const override
+    { return PlaceholderMode != EDivineBeastsPlaceholderAbilityMode::Primary && PlaceholderMode != EDivineBeastsPlaceholderAbilityMode::Passive; }
 
     virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle,
         const FGameplayAbilityActorInfo* ActorInfo,

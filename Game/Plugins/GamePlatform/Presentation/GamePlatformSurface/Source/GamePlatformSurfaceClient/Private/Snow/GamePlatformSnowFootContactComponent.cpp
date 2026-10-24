@@ -6,12 +6,21 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
+#include "Engine/SkeletalMesh.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogSurfaceSnowFoot,Log,All);
 
 UGamePlatformSnowFootContactComponent::UGamePlatformSnowFootContactComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
 }
 void UGamePlatformSnowFootContactComponent::SetContactMesh(USkeletalMeshComponent* Mesh) { ContactMesh = Mesh; }
+void UGamePlatformSnowFootContactComponent::SetContactBoneCandidates(const TArray<FName>& Left, const TArray<FName>& Right)
+{
+    BoneCandidates[0]=Left; BoneCandidates[1]=Right;
+    for (auto& Candidates:BoneCandidates) if (Candidates.Num()>8) Candidates.SetNum(8);
+    ResolvedMesh.Reset();
+}
 void UGamePlatformSnowFootContactComponent::BeginPlay()
 {
     Super::BeginPlay();
@@ -37,11 +46,21 @@ void UGamePlatformSnowFootContactComponent::OnBonesFinalized()
     if (!Movement) return;
     const bool bGrounded = Movement->IsMovingOnGround() && Movement->CurrentFloor.IsWalkableFloor();
     const float Speed = Character->GetVelocity().Size2D();
-    const FName Sockets[] = { TEXT("foot_l"), TEXT("foot_r") };
+    if (ResolvedMesh.Get()!=Mesh->GetSkeletalMeshAsset())
+    {
+        ResolvedMesh=Mesh->GetSkeletalMeshAsset();
+        for (int32 Index=0;Index<2;++Index)
+        {
+            ContactBones[Index]=NAME_None; Feet[Index]={};
+            for (const FName Candidate:BoneCandidates[Index])
+                if (!Candidate.IsNone() && Mesh->DoesSocketExist(Candidate)) { ContactBones[Index]=Candidate; break; }
+        }
+        UE_LOG(LogSurfaceSnowFoot,Display,TEXT("GP_SNOW_FOOT_BONES owner=%s left=%s right=%s"),*Character->GetName(),*ContactBones[0].ToString(),*ContactBones[1].ToString());
+    }
     for (int32 Index=0; Index<2; ++Index)
     {
-        if (!Mesh->DoesSocketExist(Sockets[Index])) continue;
-        const FVector Foot = Mesh->GetSocketLocation(Sockets[Index]);
+        if (ContactBones[Index].IsNone()) continue;
+        const FVector Foot = Mesh->GetSocketLocation(ContactBones[Index]);
         const auto& Floor = Movement->CurrentFloor.HitResult;
         const float Height = FVector::DotProduct(Foot-Floor.ImpactPoint,Floor.ImpactNormal);
         if (!Feet[Index].Update(Foot,Height,Speed,bGrounded,World->GetTimeSeconds())) continue;

@@ -14,6 +14,7 @@
 #include "Components/SceneComponent.h"
 #include "TimerManager.h"
 #include "GameplayTagsManager.h"
+#include "Atmosphere/GamePlatformWeatherAtmosphere.h"
 
 namespace
 {
@@ -69,6 +70,7 @@ void UGamePlatformWeatherClientWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 void UGamePlatformWeatherClientWorldSubsystem::Deinitialize()
 {
     bClosing = true;
+    Atmosphere.Reset(); // 恢复光雾基线并移除仅本地持有的临时雾。
     if (UWorld* World = GetWorld())
     {
         World->GetTimerManager().ClearTimer(TransitionTimer);
@@ -196,6 +198,7 @@ void UGamePlatformWeatherClientWorldSubsystem::RefreshPresentationAfterContentAc
 void UGamePlatformWeatherClientWorldSubsystem::ApplyVisualState(const FGamePlatformWeatherState& State)
 {
     LastVisualState = State;
+    ApplyAtmosphere(State);
     if (UWorld* World = GetWorld())
     {
         if (IGamePlatformSurfaceService* Surface = IGamePlatformSurfaceService::Get(*World))
@@ -215,6 +218,31 @@ void UGamePlatformWeatherClientWorldSubsystem::ApplyVisualState(const FGamePlatf
     // 派发稳定值快照，委托内部再次切换天气时不更改正在发出的数据。
     const FGamePlatformWeatherState PublishedState = LastVisualState;
     VisualChanged.Broadcast(PublishedState);
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::ConfigureAtmosphere(const FGamePlatformWeatherAtmosphereProfile& Profile)
+{
+    check(IsInGameThread());
+    Atmosphere.Reset();
+    if (bClosing || !Profile.bEnabled || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown ||
+        GetWorld()->GetNetMode() == NM_DedicatedServer) return;
+    Atmosphere = MakeShared<FGamePlatformWeatherAtmosphere>(*GetWorld(), Profile);
+    ApplyAtmosphere(LastVisualState);
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::ApplyAtmosphere(const FGamePlatformWeatherState& State)
+{
+    if (!Atmosphere) return;
+    float Cloud = FGamePlatformWeatherAtmosphere::CloudWeight(State);
+    if (ActiveSnapshot.Revision > 0)
+    {
+        const float Alpha = ActiveSnapshot.TransitionSeconds > 0.f ? FMath::Clamp(
+            (GetEstimatedServerTimeSeconds() - ActiveSnapshot.StartedAtServerSeconds) /
+            ActiveSnapshot.TransitionSeconds, 0.f, 1.f) : 1.f;
+        Cloud = FMath::Lerp(FGamePlatformWeatherAtmosphere::CloudWeight(ActiveSnapshot.From.Decode()),
+            FGamePlatformWeatherAtmosphere::CloudWeight(ActiveSnapshot.To.Decode()), Alpha);
+    }
+    Atmosphere->Apply(Cloud, FMath::Max(State.FogIntensity, State.SnowIntensity));
 }
 
 FDelegateHandle UGamePlatformWeatherClientWorldSubsystem::AddVisualChangedHandler(

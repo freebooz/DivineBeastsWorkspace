@@ -1,0 +1,133 @@
+{
+  "date": "2026-10-24",
+  "source": "User supplied local Downloads files",
+  "engine": "UE5.8.0",
+  "importer": "SpeedTreeImportFactory via direct Monolith MCP",
+  "tree_scale": 1.0,
+  "sources": [
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/AcaciaBark_Color.png",
+      "bytes": 3352611,
+      "sha256": "1b9647355b546000eec7f7230717568eb24895a6d38fd6db508f1c223040f168"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/AcaciaBark_Normal.png",
+      "bytes": 2451917,
+      "sha256": "5694a9c8e483477acb2576bf29a090e9c38ccaccf412d89c4013c02a8e7de49a"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Ends_Color.png",
+      "bytes": 427812,
+      "sha256": "fb6c4cdf48004904bbfa50b0191cb1973c01d899729bd4d1d737498ea1afb704"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Ends_Normal.png",
+      "bytes": 340794,
+      "sha256": "f49188ee2cf3947f4874c295c77738348a1f2c3f23b5e40a6af653f673726517"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Grass_Color.png",
+      "bytes": 613121,
+      "sha256": "a18d0a0acefaef540228c6e5daf5d79c69e0c4d29524f246841981db32569fe0"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Grass_Normal.png",
+      "bytes": 499673,
+      "sha256": "520611645b6027c5fd0c8723f7b6c2141531b320e855d949272439422df9122e"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Roof_Color.png",
+      "bytes": 3410741,
+      "sha256": "097496ad7874727c2ca4c3c226276b65b8918d4e814afcd1ef0a5706f3b4737c"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Roof_Normal.png",
+      "bytes": 2575262,
+      "sha256": "2d85948fa9754e787c47d086cad655c2a21b5aad0bcf594495e04b2efe0435f3"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Sandstone_Color.png",
+      "bytes": 894809,
+      "sha256": "2ec4dbf717b7b683ecb44376ce5e6ea8b8b48e52c8789693bf035881fbfe0ec5"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Sandstone_Normal.png",
+      "bytes": 705948,
+      "sha256": "ca42e5db768bda7b1552bd1b4a37a45a3f26c3b6b0a15b7b92c2a10673d7c1fd"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/ThatchHut_Low.st9",
+      "bytes": 1354936,
+      "sha256": "3aae91ca9033b4d4621af33e2b3546affa39554918924405caefe61307dae93e"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/ThatchHut_Low_Color.png",
+      "bytes": 35509231,
+      "sha256": "783282def792c1f9cca81213e5a7847f4ff9c6fdd5ccc3b1bbc9a9d187ca3cfa"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/ThatchHut_Low_Normal.png",
+      "bytes": 20091528,
+      "sha256": "1d7a3ff1bdea0e96023ad554c209d88ab03a5635fbf50d3a685af90451b02c3d"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Walls_Color.png",
+      "bytes": 3142467,
+      "sha256": "d437551a04e3ac9a7b45f2c2ed2ce8b02607963c755ea3af7038d683e6621d62"
+    },
+    {
+      "path": "SourceArt/Buildings/ThatchHut_Low/Walls_Normal.png",
+      "bytes": 2083171,
+      "sha256": "ab7da2c31f177d8103d303a173596b0280a41668260516b5b3e7724ff2421a5f"
+    }
+  ],
+  "assets": [
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/MI_DBA_ThatchHut_AcaciaBark.MI_DBA_ThatchHut_AcaciaBark",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/MI_DBA_ThatchHut_Atlas.MI_DBA_ThatchHut_Atlas",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/MI_DBA_ThatchHut_Ends.MI_DBA_ThatchHut_Ends",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/MI_DBA_ThatchHut_Grass.MI_DBA_ThatchHut_Grass",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/MI_DBA_ThatchHut_Roof.MI_DBA_ThatchHut_Roof",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/MI_DBA_ThatchHut_Sandstone.MI_DBA_ThatchHut_Sandstone",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/MI_DBA_ThatchHut_Walls.MI_DBA_ThatchHut_Walls",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/SM_DBA_Village_ThatchHut_Low.SM_DBA_Village_ThatchHut_Low",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_AcaciaBark_Color.T_DBA_ThatchHut_AcaciaBark_Color",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_AcaciaBark_Normal.T_DBA_ThatchHut_AcaciaBark_Normal",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Atlas_Color.T_DBA_ThatchHut_Atlas_Color",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Atlas_Normal.T_DBA_ThatchHut_Atlas_Normal",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Ends_Color.T_DBA_ThatchHut_Ends_Color",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Ends_Normal.T_DBA_ThatchHut_Ends_Normal",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Grass_Color.T_DBA_ThatchHut_Grass_Color",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Grass_Normal.T_DBA_ThatchHut_Grass_Normal",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Roof_Color.T_DBA_ThatchHut_Roof_Color",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Roof_Normal.T_DBA_ThatchHut_Roof_Normal",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Sandstone_Color.T_DBA_ThatchHut_Sandstone_Color",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Sandstone_Normal.T_DBA_ThatchHut_Sandstone_Normal",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Walls_Color.T_DBA_ThatchHut_Walls_Color",
+    "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/T_DBA_ThatchHut_Walls_Normal.T_DBA_ThatchHut_Walls_Normal"
+  ],
+  "placement": {
+    "label": "Village_ThatchHut_Lakeside",
+    "path": "/DBAWorldPack_Village/Maps/L_Village_Start.L_Village_Start:PersistentLevel.StaticMeshActor_1",
+    "transform": "<Struct 'Transform' (0x000001BE784A2730) {rotation: {x: -0.000000, y: -0.000000, z: -0.766044, w: 0.642788}, translation: {x: -4580.000000, y: 8670.000000, z: 365.327172}, scale3d: {x: 1.750000, y: 1.500000, z: 1.000000}}>",
+    "mesh": "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/SM_DBA_Village_ThatchHut_Low.SM_DBA_Village_ThatchHut_Low"
+  },
+  "validation": {
+    "native_errors": 0,
+    "native_warnings": 0,
+    "native_assets_total_both_models": 39,
+    "saved_packages_reloaded": true,
+    "map_saved_reloaded": true,
+    "old_actors_unchanged": 32,
+    "old_tree_instances_unchanged": 107,
+    "cook_stage_performed": false,
+    "client_deployment_performed": false
+  },
+  "initial_placement": {
+    "label": "Village_ThatchHut_Lakeside",
+    "path": "/DBAWorldPack_Village/Maps/L_Village_Start.L_Village_Start:PersistentLevel.StaticMeshActor_1",
+    "transform": "<Struct 'Transform' (address) {rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}, translation: {x: -9300.000000, y: 7400.000000, z: 365.327172}, scale3d: {x: 1.000000, y: 1.000000, z: 1.000000}}>",
+    "mesh": "/DBAWorldPack_Village/Environment/Buildings/ThatchHut/SM_DBA_Village_ThatchHut_Low.SM_DBA_Village_ThatchHut_Low",
+    "collision_profile": "BlockAll"
+  },
+  "placement_source": "Live editor state preserved before manual-client publication on 2026-10-24"
+}

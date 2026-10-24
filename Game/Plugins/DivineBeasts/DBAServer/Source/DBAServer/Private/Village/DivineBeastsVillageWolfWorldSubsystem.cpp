@@ -24,6 +24,9 @@
 #include "UObject/SoftObjectPath.h" // 服务器使用蓝图软类，不引用客户端第三方狼网格。
 #include "NavigationSystem.h"
 #include "NavigationData.h"
+#include "Actors/GamePlatformPCGActors.h"
+#include "Services/GamePlatformPCGSpatialRules.h"
+#include "HAL/PlatformTime.h"
 #include "Server/DivineBeastsServerBootstrapSubsystem.h"
 #include "Server/GamePlatformServerLifecycleSubsystem.h"
 #include "Types/GamePlatformCombatEvent.h"
@@ -181,6 +184,8 @@ void UDivineBeastsVillageWolfWorldSubsystem::ObserveNavigation()
 void UDivineBeastsVillageWolfWorldSubsystem::HandleNavigationFinished(ANavigationData* NavigationData)
 {
     if(bClosing||!IsValid(NavigationData)||NavigationData->GetWorld()!=GetWorld())return;
+    CachedSpawnGrounds.Reset();
+    bSpawnCandidatesBuilt = false;
     // 每次有限补齐仍重新验证角色、体验、代次、NavMesh与安全区；重复通知不会超过四只。
     TryFillWolves();
 }
@@ -196,6 +201,93 @@ void UDivineBeastsVillageWolfWorldSubsystem::HandleExperienceChanged(const FGame
            OwnedScope.ExperienceEpoch != Snapshot.ExperienceEpoch)))
     { CloseScope(); return; }
     TryFillWolves();
+}
+
+bool UDivineBeastsVillageWolfWorldSubsystem::BuildSpawnCandidates() const
+{
+    using FPolicy = FDivineBeastsVillageWolfSpawnPolicy;
+    if (bSpawnCandidatesBuilt) return !CachedSpawnGrounds.IsEmpty();
+    UWorld* World = GetWorld();
+    auto* Nav = IsValid(World) ? UNavigationSystemV1::GetCurrent(World) : nullptr;
+    if (!World || World->bIsTearingDown || !Nav) return false;
+    const ANavigationData* NavData = Nav->GetDefaultNavDataInstance(FNavigationSystem::DontCreate);
+    if (!NavData) return false;
+    TArray<FBox> NavBounds;
+    Nav->GetNavigationBoundsForNavData(*NavData, NavBounds);
+    FBox Bounds(ForceInit);
+    for (const FBox& Box : NavBounds) Bounds += Box;
+    if (!Bounds.IsValid) return false;
+    const int32 NX = FMath::FloorToInt(Bounds.GetSize().X / FPolicy::CandidateGridStepCm);
+    const int32 NY = FMath::FloorToInt(Bounds.GetSize().Y / FPolicy::CandidateGridStepCm);
+    if (NX <= 0 || NY <= 0 || static_cast<int64>(NX) * NY > FPolicy::MaxCandidateCells)
+    {
+        UE_LOG(LogTemp, Error, TEXT("VillageMonsterCandidatesRefused: 导航范围超出有界网格预算。"));
+        return false;
+    }
+
+    // 只读平台WorldDirector明确登记的数值几何，不运行装饰PCG，不复制空间算法。
+    TArray<FGamePlatformPCGSpatialMask> Masks;
+    bool bHasDirector = false;
+    for (TActorIterator<AGamePlatformPCGWorldDirector> It(World); It; ++It)
+    {
+        TArray<FGamePlatformPCGSpatialMask> Local;
+        FString Error;
+        if (!It->CollectSpatialMasks(Local, Error))
+        {
+            UE_LOG(LogTemp, Error, TEXT("VillageMonsterCandidatesRefused: PCG排除数据无效 %s"), *Error);
+            return false;
+        }
+        bHasDirector = true;
+        Masks.Append(MoveTemp(Local));
+    }
+    if (!bHasDirector) return false; // 缺少已审查排除合同，不能忽略水域/道路继续刷怪。
+    for (auto& Mask : Masks) Mask.HalfWidthCm += 100.f;
+    TArray<FGamePlatformPCGPreparedSpatialMask> Prepared;
+    if (!FGamePlatformPCGSpatialRules::PrepareMasks(Masks, Prepared)) return false;
+    const auto IsExcluded = [&Prepared](const FVector& Point)
+    {
+        float Strength = 0.f;
+        FGuid Source;
+        return !FGamePlatformPCGSpatialRules::EvaluatePrepared(FVector2D(Point), 0, .5f,
+            Prepared, Strength, Source) || Strength >= .5f;
+    };
+    const double Started = FPlatformTime::Seconds();
+    const float FloorZ = GetDefault<ADivineBeastsVillageWolf>()->GetCharacterMovement()->GetWalkableFloorZ();
+    FCollisionQueryParams Query(TEXT("VillageMonsterCandidateGround"), false);
+    FCollisionObjectQueryParams GroundObjects(ECC_WorldStatic);
+    TArray<FVector> Starts;
+    for (TActorIterator<APlayerStart> It(World); It; ++It) Starts.Add(It->GetActorLocation());
+    if (Starts.IsEmpty()) return false;
+    for (int32 Y = 0; Y < NY; ++Y)
+    for (int32 X = 0; X < NX; ++X)
+    {
+        FVector Point(Bounds.Min.X + (X + .5f) * FPolicy::CandidateGridStepCm,
+            Bounds.Min.Y + (Y + .5f) * FPolicy::CandidateGridStepCm, Bounds.Max.Z + 500.f);
+        if (IsExcluded(Point)) continue;
+        FHitResult Ground;
+        if (!World->LineTraceSingleByObjectType(Ground, Point,
+            FVector(Point.X, Point.Y, Bounds.Min.Z - 500.f), GroundObjects, Query) ||
+            Ground.ImpactNormal.Z < FloorZ) continue;
+        FNavLocation Projected;
+        if (!Nav->ProjectPointToNavigation(Ground.ImpactPoint, Projected, FVector(130.f,130.f,300.f)) ||
+            FMath::Abs(Projected.Location.Z - Ground.ImpactPoint.Z) > 150.f || IsExcluded(Projected.Location)) continue;
+        Point = Projected.Location;
+        bool bSafe = true;
+        for (const FVector& Start : Starts)
+            if (!FPolicy::IsOutsidePlayerStart(Point, Start)) { bSafe = false; break; }
+        for (const FVector& Existing : CachedSpawnGrounds)
+            if (!FPolicy::HasSpawnSeparation(Point, Existing)) { bSafe = false; break; }
+        if (bSafe) CachedSpawnGrounds.Add(Point);
+    }
+    FRandomStream Random(FPolicy::ScatterSeed);
+    for (int32 I = CachedSpawnGrounds.Num() - 1; I > 0; --I)
+        CachedSpawnGrounds.Swap(I, Random.RandRange(0, I));
+    bSpawnCandidatesBuilt = true;
+    UE_LOG(LogTemp, Display,
+        TEXT("VillageMonsterCandidates ready=%d target=%d spacingCm=%.0f masks=%d cells=%d buildMs=%.2f seed=%d"),
+        CachedSpawnGrounds.Num(), FPolicy::MaxAliveWolves, FPolicy::MinimumSpawnSeparationCm,
+        Masks.Num(), NX * NY, (FPlatformTime::Seconds() - Started) * 1000., FPolicy::ScatterSeed);
+    return !CachedSpawnGrounds.IsEmpty();
 }
 
 bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(
@@ -227,17 +319,12 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(
     Occupancy.AddObjectTypesToQuery(ECC_Pawn);
     Occupancy.AddObjectTypesToQuery(ECC_PhysicsBody);
 
-    // 不再集中在出生点26/34/42米的狭窄三圈；在45至290米范围内有限采样。
-    // 优先轮换不同PlayerStart，避免多玩家出生点附近的怪群都集中于第一个出生点。
-    // 真实服务器根据导航、坡度、占位和历史生成锚点裁剪；无安全点则宁可少于10只。
-    for (int32 StartOffset = 0; StartOffset < Starts.Num(); ++StartOffset)
+    if (!BuildSpawnCandidates()) return false;
+    // 缓存已按固定种子打乱；每次仍复核权威导航、胶囊占位及原始生成锚点。
+    const APlayerStart* Start = Starts[SpawnOrdinal % Starts.Num()];
+    for (int32 Offset = 0; Offset < CachedSpawnGrounds.Num(); ++Offset)
     {
-        const APlayerStart* Start = Starts[(StartOffset + SpawnOrdinal) % Starts.Num()];
-        for (int32 Ring = 0; Ring < FPolicy::RingCount; ++Ring)
-        for (int32 Direction = 0; Direction < FPolicy::DirectionsPerRing; ++Direction)
-        {
-            const FVector Candidate = FPolicy::MakeCandidate(
-                Start->GetActorLocation(), Ring, Direction, SpawnOrdinal);
+            const FVector Candidate = CachedSpawnGrounds[(Offset + SpawnOrdinal) % CachedSpawnGrounds.Num()];
             FNavLocation NavPoint;
             if (!Nav->ProjectPointToNavigation(Candidate, NavPoint, FVector(130.0f, 130.0f, 550.0f)))
                 continue;
@@ -261,9 +348,10 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(
                 NavPoint.Location - FVector(0,0,650), ECC_Visibility, Query) ||
                 !Ground.bBlockingHit || Ground.ImpactNormal.Z < CreatureDefaults->GetCharacterMovement()->GetWalkableFloorZ())
                 continue;
-            const FVector Center = Ground.ImpactPoint + FVector(0,0,HalfHeight + 4);
+            const FVector Center = Ground.ImpactPoint + FVector(0,0,
+                FPolicy::SpawnHeightOnSlope(HalfHeight, Radius, Ground.ImpactNormal.Z));
 
-            // 最终落点重新按真实地表XY严格核验：水平距离必须>3000厘米，刚好30米也拒绝。
+            // 最终落点按地表XY复核：水平距离必须>2400厘米。
             for (const APlayerStart* AnyStart : Starts)
                 if (!FPolicy::IsOutsidePlayerStart(Center, AnyStart->GetActorLocation()))
                 { bSafe = false; break; }
@@ -281,7 +369,6 @@ bool UDivineBeastsVillageWolfWorldSubsystem::FindSpawnTransform(
             const FVector FacingStart = Start->GetActorLocation() - Center;
             OutTransform = FTransform(FRotator(0, FacingStart.Rotation().Yaw, 0), Center);
             return true;
-        }
     }
     return false;
 }
@@ -416,7 +503,7 @@ bool UDivineBeastsVillageWolfWorldSubsystem::SpawnOneWolf(const FTransform& Spaw
     if (IsValid(Controller)) Controller->Possess(Wolf);
     FApprovedScope Current;
     const bool bControllerBound=IsValid(Controller)&&IsValid(Wolf)&&Wolf->GetController()==Controller;
-    const bool bCombatReady=bControllerBound&&Wolf->AuthorityInitializeWolf(75.0f);
+    const bool bCombatReady=bControllerBound&&Wolf->AuthorityInitializeWolf(100.0f);
     const bool bScopeCurrent=bCombatReady&&CaptureApprovedScope(Current)&&(Current==Original);
     if (!bControllerBound || !bCombatReady || !bScopeCurrent)
     {
@@ -469,7 +556,7 @@ void UDivineBeastsVillageWolfWorldSubsystem::TryFillWolves()
         if (IsValid(Wolf) && !Wolf->IsActorBeingDestroyed() && Wolf->IsWolfAlive())
             ++Alive;
 
-    // 四只一批、0.2秒间隔，分散NavMesh投射/占位查询的同帧开销；严格10只上限。
+    // 四只一批、0.2秒间隔，分散AI/导航启动峰值；两类怪物合计200只上限。
     int32 SpawnedThisBatch = 0;
     bool bBlocked = false;
     for (int32 Ordinal = Alive; Ordinal < FPolicy::MaxAliveWolves &&
@@ -479,7 +566,7 @@ void UDivineBeastsVillageWolfWorldSubsystem::TryFillWolves()
         const bool bVampire = Ordinal % 2 == 1;
         if (!FindSpawnTransform(Ordinal, bVampire, SpawnAt))
         {
-            UE_LOG(LogTemp, Warning, TEXT("VillageWolfScatterLimited: 活体%d/上限%d；没有满足>30米出生锚点间距、NavMesh、地形或22米安全区的有效位置。"),
+            UE_LOG(LogTemp, Warning, TEXT("VillageWolfScatterLimited: 活体%d/上限%d；没有满足>24米锚点间距、NavMesh、地形或22米安全区的有效位置。"),
                 Alive, FPolicy::MaxAliveWolves);
             bBlocked = true;
             break;
@@ -494,6 +581,8 @@ void UDivineBeastsVillageWolfWorldSubsystem::TryFillWolves()
         ++SpawnedThisBatch;
     }
     bCreating = false;
+    UE_LOG(LogTemp, Display, TEXT("VillageMonsterPopulation alive=%d target=%d spawnedThisBatch=%d candidates=%d"),
+        Alive, FPolicy::MaxAliveWolves, SpawnedThisBatch, CachedSpawnGrounds.Num());
 
     if (!bBlocked && SpawnedThisBatch > 0 && Alive < FPolicy::MaxAliveWolves &&
         !bClosing && !World->bIsTearingDown)
@@ -584,6 +673,8 @@ void UDivineBeastsVillageWolfWorldSubsystem::CloseScope()
     OwnedNPCs.Reset();
     // 先释放本世界的锚点账本，再销毁自有Actor，EndPlay期间不会错误重占位置。
     WolfSpawnAnchors.Reset();
+    CachedSpawnGrounds.Reset();
+    bSpawnCandidatesBuilt = false;
     for (const auto& WolfPointer : ToDestroy)
     {
         ADivineBeastsVillageWolf* Wolf = WolfPointer.Get();

@@ -1,0 +1,15 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "SSLM Foliage Core",
+  "Description": "第三层植物纯内容库：树木、灌木、草、花、共享材质、FoliageType与平台PCG配置；当前含已批准原型树，不实现生成器或玩法权威。",
+  "Category": "DivineBeasts.Content.Presentation",
+  "CreatedBy": "DivineBeastsWorkspace",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Plugins": [
+    {"Name": "GamePlatformPCG", "Enabled": true, "TargetAllowList": ["Game", "Client", "Editor"]},
+    {"Name": "GamePlatformData", "Enabled": true, "TargetAllowList": ["Game", "Client", "Editor"]}
+  ]
+}

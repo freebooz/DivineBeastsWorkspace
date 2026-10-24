@@ -1,73 +1,45 @@
-// SSLM 狼群散布无须Fab美术即可执行的服务器几何回归。
-// 仅验证10只候选容量、30米严格间距与安全区，不冒充真实NavMesh/地图/联网验收。
+// 原生几何回归：200总量、24米间距、22米保护及平台空间掩码；不冒充地图验收。
 #include "Village/DivineBeastsVillageWolfSpawnPolicy.h"
-
+#include "Services/GamePlatformPCGSpatialRules.h"
 #include "Misc/AutomationTest.h"
-
 #if WITH_DEV_AUTOMATION_TESTS
-
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsVillageWolfSpawnPolicyTest,
-    "DivineBeasts.Server.VillageWolf.SpawnPolicyTenAndThirtyMeters",
-    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-
+    "DivineBeasts.Server.VillageWolf.SpawnPolicyTwoHundred",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::ServerContext | EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsVillageWolfSpawnPolicyTest::RunTest(const FString&)
 {
-    using FPolicy = FDivineBeastsVillageWolfSpawnPolicy;
-    TestEqual(TEXT("同时存活数量上限为10只"), FPolicy::MaxAliveWolves, 10);
-    TestEqual(TEXT("单批最大新增4只，防止单帧同时10次AI/导航启动"), FPolicy::MaxWolvesPerBatch, 4);
-    TestTrue(TEXT("跨批次0.2秒间隔应保持正值"),
-        FMath::IsNearlyEqual(FPolicy::SpawnBatchIntervalSeconds, 0.20f));
-    TestEqual(TEXT("严格最小散布距离为3000厘米"), FPolicy::MinimumSpawnSeparationCm, 3000.0f);
-
-    const FVector Start = FVector::ZeroVector;
-    TestFalse(TEXT("正好30米必须拒绝"), FPolicy::HasSpawnSeparation(Start, FVector(3000.0f, 0, 0)));
-    TestFalse(TEXT("29.99米必须拒绝"), FPolicy::HasSpawnSeparation(Start, FVector(2999.0f, 0, 0)));
-    TestTrue(TEXT("30.01米应满足间距"), FPolicy::HasSpawnSeparation(Start, FVector(3001.0f, 0, 0)));
-    TestFalse(TEXT("只有高度差不能绕过水平间距限制"),
-        FPolicy::HasSpawnSeparation(Start, FVector(0, 0, 10000.0f)));
-    TestFalse(TEXT("22米内禁止在玩家出生区刷怪"),
-        FPolicy::IsOutsidePlayerStart(FVector(2199.0f, 0, 0), Start));
-    TestTrue(TEXT("22米以外可以继续进行其它安全查询"),
-        FPolicy::IsOutsidePlayerStart(FVector(2201.0f, 0, 0), Start));
-
-    // 理想平地容量验证：选择真实排列顺序中的第一个合格候选点。
-    // 如果连续10个锚点无法满足严格距离，本用例立即失败；实际地图依然需要NavMesh和地形检查。
-    TArray<FVector> SpawnAnchors;
-    for (int32 Ordinal = 0; Ordinal < FPolicy::MaxAliveWolves; ++Ordinal)
+    using P=FDivineBeastsVillageWolfSpawnPolicy;
+    TestEqual(TEXT("两类怪物合计上限200"),P::MaxAliveWolves,200);
+    TestEqual(TEXT("每批仍为4只"),P::MaxWolvesPerBatch,4);
+    TestTrue(TEXT("平地保留原4cm净距"),FMath::IsNearlyEqual(P::SpawnHeightOnSlope(85.f,55.f,1.f),89.f));
+    const float SlopeHeight=P::SpawnHeightOnSlope(85.f,55.f,.75f);
+    TestTrue(TEXT("斜面胶囊球端仍须保留法线方向4cm净距"),
+        FMath::IsNearlyEqual((SlopeHeight-(85.f-55.f))*.75f-55.f,4.f));
+    TestFalse(TEXT("恰好24米拒绝"),P::HasSpawnSeparation(FVector::ZeroVector,FVector(2400,0,0)));
+    TestTrue(TEXT("超过24米通过"),P::HasSpawnSeparation(FVector::ZeroVector,FVector(2401,0,0)));
+    TestFalse(TEXT("高差不能绕过水平间距"),P::HasSpawnSeparation(FVector::ZeroVector,FVector(100,0,10000)));
+    TestFalse(TEXT("出生22米内拒绝"),P::IsOutsidePlayerStart(FVector(2199,0,0),FVector::ZeroVector));
+    TestTrue(TEXT("出生22米外通过其它检查"),P::IsOutsidePlayerStart(FVector(2201,0,0),FVector::ZeroVector));
+    TArray<FVector> Anchors;
+    for(int32 Y=0;Y<39;++Y) for(int32 X=0;X<39;++X)
     {
-        bool bAccepted = false;
-        for (int32 Ring = 0; Ring < FPolicy::RingCount && !bAccepted; ++Ring)
-        {
-            for (int32 Direction = 0; Direction < FPolicy::DirectionsPerRing; ++Direction)
-            {
-                const FVector Proposed = FPolicy::MakeCandidate(Start, Ring, Direction, Ordinal);
-                if (!FPolicy::IsOutsidePlayerStart(Proposed, Start))
-                    continue;
-                bool bSeparated = true;
-                for (const FVector& Existing : SpawnAnchors)
-                    if (!FPolicy::HasSpawnSeparation(Proposed, Existing))
-                    {
-                        bSeparated = false;
-                        break;
-                    }
-                if (!bSeparated)
-                    continue;
-                SpawnAnchors.Add(Proposed);
-                bAccepted = true;
-                break;
-            }
-        }
-        if (!TestTrue(*FString::Printf(TEXT("理想平地候选第%d只狼必须有合格散布点"), Ordinal + 1),
-                bAccepted))
-            return false;
+        const FVector Point(-24500+X*P::CandidateGridStepCm,-24500+Y*P::CandidateGridStepCm,0);
+        bool Safe=P::IsOutsidePlayerStart(Point,FVector::ZeroVector);
+        for(const FVector& Existing:Anchors) if(!P::HasSpawnSeparation(Point,Existing)){Safe=false;break;}
+        if(Safe) Anchors.Add(Point);
     }
-    TestEqual(TEXT("多圈候选在理想平地能容纳10只"), SpawnAnchors.Num(), 10);
-    for (int32 i = 0; i < SpawnAnchors.Num(); ++i)
-        for (int32 j = i + 1; j < SpawnAnchors.Num(); ++j)
-            if (!TestTrue(TEXT("任意两个生成锚点间距必须严格超过30米"),
-                    FPolicy::HasSpawnSeparation(SpawnAnchors[i], SpawnAnchors[j])))
-                return false;
+    TestTrue(TEXT("平地网格容量足以容纳200只及备用点"),Anchors.Num()>=P::MaxAliveWolves);
+    FGamePlatformPCGSpatialMask Mask;
+    Mask.SourceId=FGuid::NewGuid();Mask.DomainId=TEXT("Water.Lake");Mask.Priority=100;
+    Mask.bClosed=true;Mask.Vertices={FVector2D(-1000,-1000),FVector2D(1000,-1000),FVector2D(1000,1000),FVector2D(-1000,1000)};
+    TArray<FGamePlatformPCGSpatialMask> Masks={Mask};
+    TArray<FGamePlatformPCGPreparedSpatialMask> Prepared;
+    TestTrue(TEXT("复用平台预计算空间掩码"),FGamePlatformPCGSpatialRules::PrepareMasks(Masks,Prepared));
+    float Strength=0;FGuid Source;
+    TestTrue(TEXT("湖内查询合法"),FGamePlatformPCGSpatialRules::EvaluatePrepared(FVector2D::ZeroVector,0,.5f,Prepared,Strength,Source));
+    TestTrue(TEXT("湖内必须排除"),Strength>=.5f);
+    TestTrue(TEXT("湖外查询合法"),FGamePlatformPCGSpatialRules::EvaluatePrepared(FVector2D(2000,0),0,.5f,Prepared,Strength,Source));
+    TestEqual(TEXT("湖外不应误排除"),Strength,0.f);
     return true;
 }
-
-#endif // WITH_DEV_AUTOMATION_TESTS
+#endif

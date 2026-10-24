@@ -14,7 +14,8 @@ struct FGamePlatformCombatEvent;
 namespace DivineBeasts::WorldCharacterAdmission
 {
     bool ParseSelectedCharacter(const FString& Json, const FString& VerifiedPlayerId, FString& OutCharacterId);
-    bool ParseSelectedHero(const FString& Json, const FString& SelectedCharacterId, FName& OutHeroId);
+    /** 可选输出已选角色公开名称；名称缺失只影响显示，不改变既有英雄准入资格。 */
+    bool ParseSelectedHero(const FString& Json, const FString& SelectedCharacterId, FName& OutHeroId, FString* OutCharacterName = nullptr);
     /** 仅消费当前实际Pawn的角色Ready，不能把AuthorityBind返回的受理结论当作初始化成功。 */
     bool IsPawnReadyForActivation(const APlayerController& Controller);
     /** Shared目录映射的Village/OpenWorld才有五秒自动重生；竞技世界继续由模式决定淘汰结果。 */

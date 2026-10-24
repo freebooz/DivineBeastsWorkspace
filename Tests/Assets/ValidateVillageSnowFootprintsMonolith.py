@@ -21,4 +21,11 @@ outputs={o['property']:o['expression'] for o in full['material_outputs']}
 for output in ['Displacement','Normal','Roughness']:
     assert params['SnowContactTexture'] in ancestors(outputs[output]),'脚印未进入'+output
 assert 'SnowContactOriginExtent' in params,'缺少局部高度场的世界坐标合同'
+# 通过真实连线验证原草地/雪覆盖混合仍在最终法线祖先中，不按节点创建顺序猜名称。
+normal_nodes=ancestors(outputs['Normal'])
+ground_normal=params['VillageGroundNormalTexture']
+snow_normal=params['VillageSnowNormalTexture']
+assert ground_normal in normal_nodes and snow_normal in normal_nodes,'脚印绕过原地面与雪法线混合'
+coverage=params['VillageSnowAmount']
+assert coverage in normal_nodes,'零雪量必须仍控制地面与雪法线混合'
 print('VILLAGE_SNOW_FOOTPRINT_NATIVE_GRAPH_PASS displacement+normal+roughness')

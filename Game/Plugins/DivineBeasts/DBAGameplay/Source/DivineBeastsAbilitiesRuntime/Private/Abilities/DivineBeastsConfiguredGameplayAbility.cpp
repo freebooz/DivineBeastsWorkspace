@@ -9,6 +9,48 @@
 #include "GameFramework/Actor.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
+#include "Settings/GamePlatformCombatSettings.h"
+#include "GameplayEffect.h"
+
+bool UDivineBeastsConfiguredGameplayAbility::UsesDefaultSpellEnergy() const
+{
+    const auto* Definition = Cast<UDivineBeastsAbilityDefinition>(
+        UAssetManager::Get().GetPrimaryAssetObject(AbilityDefinitionId));
+    return !Definition || (Definition->Kind != EDivineBeastsAbilityKind::Primary &&
+        Definition->Kind != EDivineBeastsAbilityKind::Passive);
+}
+
+UGameplayEffect* UDivineBeastsConfiguredGameplayAbility::BuildDefaultEnergyCost(UGameplayEffect* OriginalCost) const
+{
+    const float Amount = GetDefault<UGamePlatformCombatSettings>()->DefaultAbilityEnergyCost;
+    if (Amount <= 0.f) return OriginalCost;
+    if (OriginalCost)
+        for (const auto& Modifier : OriginalCost->Modifiers)
+            if (Modifier.Attribute == UGamePlatformCombatAttributeSet::GetEnergyAttribute()) return OriginalCost;
+    if (CachedEnergyCost && CachedOriginalCost == OriginalCost && CachedEnergyCostAmount == Amount)
+        return CachedEnergyCost;
+    auto* Self = const_cast<UDivineBeastsConfiguredGameplayAbility*>(this);
+    UGameplayEffect* Effect = OriginalCost ? DuplicateObject<UGameplayEffect>(OriginalCost, Self)
+        : NewObject<UGameplayEffect>(Self);
+    Effect->SetFlags(RF_Transient);
+    if (!OriginalCost) Effect->DurationPolicy = EGameplayEffectDurationType::Instant;
+    FGameplayModifierInfo Modifier;
+    Modifier.Attribute = UGamePlatformCombatAttributeSet::GetEnergyAttribute();
+    Modifier.ModifierOp = EGameplayModOp::Additive;
+    Modifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(-Amount));
+    Effect->Modifiers.Add(Modifier);
+    Self->CachedOriginalCost = OriginalCost;
+    Self->CachedEnergyCostAmount = Amount;
+    Self->CachedEnergyCost = Effect;
+    return Effect;
+}
+
+UGameplayEffect* UDivineBeastsConfiguredGameplayAbility::GetCostGameplayEffect() const
+{
+    UGameplayEffect* Original = Super::GetCostGameplayEffect();
+    return UsesDefaultSpellEnergy() ? BuildDefaultEnergyCost(Original) : Original;
+}
 
 void UDivineBeastsConfiguredGameplayAbility::ActivateAbility(
     const FGameplayAbilitySpecHandle Handle,
@@ -18,6 +60,8 @@ void UDivineBeastsConfiguredGameplayAbility::ActivateAbility(
 {
     // 任意新激活均重新开始提交资格；不得沿用上次施法的成本与冷却承诺。
     bCommittedForCurrentActivation = false;
+    bCommitInProgress = false;
+    ++CommitActivationGeneration;
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 }
 
@@ -29,9 +73,15 @@ bool UDivineBeastsConfiguredGameplayAbility::CommitAbility(
 {
     // 引擎 GAS 负责 CheckCost、CheckCooldown、ApplyCost、ApplyCooldown 和网络预测，
     // 项目只记住“当前激活已成功提交”的事件，不复制成本/冷却计算。
+    if (bCommittedForCurrentActivation) return true;
+    if (bCommitInProgress) return false;
+    const uint64 Expected = CommitActivationGeneration;
+    bCommitInProgress = true;
     const bool bSucceeded = Super::CommitAbility(
         Handle, ActorInfo, ActivationInfo, OptionalRelevantTags);
-    bCommittedForCurrentActivation = bSucceeded;
+    if (Expected != CommitActivationGeneration) return false;
+    bCommitInProgress = false;
+    bCommittedForCurrentActivation = bSucceeded && IsActive();
     return bSucceeded;
 }
 
@@ -42,6 +92,8 @@ void UDivineBeastsConfiguredGameplayAbility::EndAbility(
     bool bReplicateEndAbility, bool bWasCancelled)
 {
     bCommittedForCurrentActivation = false;
+    bCommitInProgress = false;
+    ++CommitActivationGeneration;
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 

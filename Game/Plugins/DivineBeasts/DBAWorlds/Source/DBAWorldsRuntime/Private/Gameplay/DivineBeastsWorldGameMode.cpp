@@ -33,6 +33,23 @@ void ADivineBeastsWorldGameMode::BeginPlay()
         return;
     }
 #if !UE_BUILD_SHIPPING
+    // 用户指定的新手村大雪驻留，只消费既有权威Weather服务；不改变准入与出生链。
+    if (FParse::Param(FCommandLine::Get(), TEXT("DBAVillageHoldHeavySnow")) &&
+        FParse::Param(FCommandLine::Get(), TEXT("unattended")) &&
+        World->GetNetMode() == NM_DedicatedServer &&
+        World->GetOutermost()->GetName() == TEXT("/DBAWorldPack_Village/Maps/L_Village_Start"))
+    {
+        FGamePlatformWeatherState HeldSnow;
+        HeldSnow.Type = EGamePlatformWeatherType::HeavySnow;
+        HeldSnow.SnowIntensity = .90f;
+        HeldSnow.SnowAmount = .85f;
+        HeldSnow.WindIntensity = .25f;
+        HeldSnow.FogIntensity = .5f;
+        HeldSnow.TemperatureCelsius = -8.f;
+        const bool bHeld = Weather->SetWeather(HeldSnow, 0.f);
+        UE_LOG(LogTemp, Display, TEXT("VILLAGE_HELD_HEAVY_SNOW accepted=%d amount=0.85 intensity=0.90"), bHeld ? 1 : 0);
+        return;
+    }
     // 仅当测试操作者显式传入两个开发参数，并且真正运行Village Dedicated Server时，
     // 才使用固定序列验证天气复制。不能让客户端、普通服务器或Shipping隐式启用。
     bVillageGroundSnowReview = FParse::Param(FCommandLine::Get(), TEXT("DBAVillageGroundSnowReviewSchedule"));
