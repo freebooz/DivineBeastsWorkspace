@@ -42,6 +42,7 @@ public:
 
 private:
     friend class FGamePlatformSurfaceBindingRefreshTest;
+    friend class FGamePlatformSurfaceWindBindingTest;
     /** 首次申请Data普通资源租约；等待/失败不会因状态事件重复申请，只有Refresh换代重试。 */
     bool ResolveMaterialBinding();
     void HandleMaterialBindingLoaded(int64 RequestGeneration, const FGamePlatformDataLease& Lease,

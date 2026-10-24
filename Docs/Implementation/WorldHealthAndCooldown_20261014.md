@@ -12,6 +12,15 @@
 
 ## 真实资产
 
+### 玩家名称板修复（2026-10-24）
+
+- 用户要求其他玩家角色显示头顶血条和玩家名称，当前LocalPlayer自己的Pawn不显示这两项；自身主HUD沿用原链路。复用既有`WBP_DBA_WorldHealthBar`的`NameText`和`ResourceFill`，本次不修改视觉资产。
+- 服务器从可信PlayerData响应中读取**当前已选角色的`characterName`**，通过引擎既有`APlayerState.PlayerName`公开复制；不复制账号、完整Roster或持久CharacterId。旧响应缺少名称时只使用通用显示，不改变原有英雄准入资格。
+- 平台PlayerState将姓名RepNotify转为原生通知；项目Character将PlayerState迟到/换绑转为原生通知；项目Presenter先绑定再读快照，换State、EndPlay、Clear时成对解绑，旧来源通知不能覆盖新名称。生命仍只消费GAS真实复制值，不新增Tick或轮询。
+- 保留既有128项预算和60米显示距离；后来玩家优先替换最远未选中的怪物名称板，避免200怪物先到时耗尽玩家显示位置。发布时重新核对当前LocalPlayer的Pawn，成为自己后立即撤销已有头顶名称板。
+- 原生回归同时覆盖真实UMG姓名投影、姓名晚到/变化/换绑、自己排除、128怪物预算、现有Possess/EndPlay/Root和选中生命周期。构建、回归与后续客户端验证证据归`Saved/Validation/PlayerNameplates20261024`；未完成真实联机和人工画面检查前不宣称运行验收通过。
+- 本轮完整Editor `ca272013-bcaa-4f96-833b-d3ed9f0b0c2f`及Client/Server `7dd0bfce-56cd-4312-a274-f0ac7bebbcb0`均退出0；六项界面回归加独立精确筛选的一项服务器名称回归全部Success。原联合筛选计数失败报告原样保留，完整七项集合和运行边界见`FinalValidation.json`。随后Client Cook `322fd754-8f96-446b-9d8e-11c936e02824`的UAT及629项必需资源检查成功，但发布被火球审查特效GPU着色器未声明`Index`拦截；Server Cook `e937e6ef-e20d-4766-8aa7-b98aaf6e4dd6`通过。运行进程未替换，联机未验收。用户后续又调整84份魔法弹速资产，旧Cook结果不能作为新速度版本的准入证据，必须重新完成匹配发布。
+
 均使用正式Game/DivineBeastsArena.uproject、UE5.8和Monolith0.23.0创建或修改并编译保存，未改地图、PlayerStart或源图RGB。
 
 | 资产 | 实际变化 |

@@ -70,11 +70,25 @@ def survey():
         polygon.append([p.x,p.y,p.z])
     water=sum(p[2] for p in polygon)/len(polygon)
     assert max(abs(p[2]-water) for p in polygon)<.01,'湖面必须为水平面'
+    river=next(a for a in actors if a.get_actor_label()=='HillsideWater_River')
+    rc=river.get_component_by_class(u.WaterBodyRiverComponent);rs=rc.get_water_spline()
+    assert not rc.get_editor_property('affects_landscape')
+    river_points=[];segments=max(1,math.ceil(rs.get_spline_length()/STEP))
+    for i in range(segments+1):
+        distance=rs.get_spline_length()*i/segments
+        p=rs.get_location_at_distance_along_spline(distance,u.SplineCoordinateSpace.WORLD)
+        key=rs.get_input_key_value_at_distance_along_spline(distance)
+        river_points.append([p.x,p.y,p.z,rc.get_river_width_at_spline_input_key(key)])
+    controls=[]
+    for i in range(rs.get_number_of_spline_points()):
+        p=rs.get_location_at_spline_point(i,u.SplineCoordinateSpace.WORLD)
+        controls.append([p.x,p.y,p.z,rc.get_river_width_at_spline_input_key(float(i)),rc.get_water_velocity_at_spline_input_key(float(i))])
     margin=WIDTH+STEP*2
-    ox=math.floor((min(p[0] for p in polygon)-margin)/STEP)*STEP
-    oy=math.floor((min(p[1] for p in polygon)-margin)/STEP)*STEP
-    nx=math.ceil((max(p[0] for p in polygon)+margin-ox)/STEP)+1
-    ny=math.ceil((max(p[1] for p in polygon)+margin-oy)/STEP)+1
+    bounds=polygon+[[p[0]+sign*p[3]/2,p[1]+sign*p[3]/2,p[2]] for p in river_points for sign in [-1,1]]
+    ox=math.floor((min(p[0] for p in bounds)-margin)/STEP)*STEP
+    oy=math.floor((min(p[1] for p in bounds)-margin)/STEP)*STEP
+    nx=math.ceil((max(p[0] for p in bounds)+margin-ox)/STEP)+1
+    ny=math.ceil((max(p[1] for p in bounds)+margin-oy)/STEP)+1
     # 只读Landscape碰撞；不把树、茅屋屋顶或水面当作地形。
     ignore=[a for a in actors if not isinstance(a,u.LandscapeProxy)]
     world=u.get_editor_subsystem(u.UnrealEditorSubsystem).get_editor_world();heights=[]
@@ -88,7 +102,8 @@ def survey():
             row.append(float(z.group(1)))
         heights.append(row)
     write('Survey',{'origin':[ox,oy],'step':STEP,'nx':nx,'ny':ny,'waterZ':water,'polygon':polygon,'heights':heights,
-        'waterTransform':f['stable'](lake.get_actor_transform()),'affectsLandscape':False})
+        'waterTransform':f['stable'](lake.get_actor_transform()),'affectsLandscape':False,
+        'riverPoints':river_points,'riverControls':controls,'riverTransform':f['stable'](river.get_actor_transform())})
     print('READ_ONLY_SHORE_SURVEY',nx*ny,'waterZ',water)
 
 
@@ -96,14 +111,34 @@ def plan():
     import numpy as np
     from PIL import Image
     survey=json.loads((OUT/'Survey.json').read_text(encoding='utf-8'))
+    assert len(survey.get('riverPoints',[]))>1,'先通过Monolith读取本次河道，禁止复用仅含湖泊的旧采样'
     nx,ny=survey['nx'],survey['ny'];step=survey['step'];ox,oy=survey['origin']
     yy,xx=np.mgrid[0:ny,0:nx];xx=xx*step+ox;yy=yy*step+oy
     inside=np.zeros((ny,nx),dtype=bool);points=survey['polygon']
     for a,b in zip(points,points[1:]+points[:1]):
         inside ^= ((a[1]>yy)!=(b[1]>yy)) & (xx < (b[0]-a[0])*(yy-a[1])/((b[1]-a[1]) or 1e-12)+a[0])
     heights=np.array(survey['heights']);water=inside & (heights<survey['waterZ'])
+    surface=np.full(water.shape,survey['waterZ'],dtype=float)
+    river_water=np.zeros(water.shape,dtype=bool)
+    nearest_river=np.full(water.shape,np.inf)
+    river_distance=np.full(water.shape,np.inf)
+    for a,b in zip(survey.get('riverPoints',[]),survey.get('riverPoints',[])[1:]):
+        dx,dy=b[0]-a[0],b[1]-a[1]
+        t=np.clip(((xx-a[0])*dx+(yy-a[1])*dy)/max(dx*dx+dy*dy,1e-9),0,1)
+        distance=np.hypot(xx-a[0]-t*dx,yy-a[1]-t*dy)
+        river_distance=np.minimum(river_distance,distance)
+        width=(a[3]+t*(b[3]-a[3]))/2
+        level=a[2]+t*(b[2]-a[2])
+        actual=(distance<=width)&(heights<level)
+        use=actual&(distance<nearest_river)
+        nearest_river=np.where(use,distance,nearest_river)
+        surface=np.where(use,level,surface)
+        river_water|=actual
+    water|=river_water
+    assert river_water.sum()>0,'河岸必须基于真实露出河面生成'
     assert water.sum()>100,'必须从真实露出水面开始生成岸带'
     distance=np.full(water.shape,WIDTH+step)
+    nearest_level=np.zeros(water.shape)
     cells=math.ceil(WIDTH/step)
     # 有界精确偏移距离，避免引入新依赖；仅离线执行，不进入游戏逐帧路径。
     for dy in range(-cells,cells+1):
@@ -112,8 +147,14 @@ def plan():
             if d>WIDTH:continue
             ya,yb=max(0,dy),min(ny,ny+dy);xa,xb=max(0,dx),min(nx,nx+dx)
             hit=water[ya-dy:yb-dy,xa-dx:xb-dx]
-            distance[ya:yb,xa:xb]=np.minimum(distance[ya:yb,xa:xb],np.where(hit,d,WIDTH+step))
+            better=hit&(d<distance[ya:yb,xa:xb])
+            distance[ya:yb,xa:xb]=np.where(better,d,distance[ya:yb,xa:xb])
+            nearest_level[ya:yb,xa:xb]=np.where(better,surface[ya-dy:yb-dy,xa-dx:xb-dx],nearest_level[ya:yb,xa:xb])
     t=np.clip((distance-100)/(WIDTH-100),0,1);coverage=1-t*t*(3-2*t)
+    def smooth(a,b,x):
+        t=np.clip((x-a)/(b-a),0,1);return t*t*(3-2*t)
+    # 河面沿程下降，必须使用对应水面高程；不能用湖面固定高度裁剪整条河。
+    coverage*=smooth(nearest_level-140,nearest_level-15,heights)*(1-smooth(nearest_level+180,nearest_level+400,heights))
     ART.mkdir(parents=True,exist_ok=True)
     path=ART/'VillageShoreWetnessMask.png'
     Image.fromarray(np.rint(coverage*255).astype(np.uint8)).resize((1024,1024),Image.Resampling.BILINEAR).save(path)
@@ -121,13 +162,19 @@ def plan():
     idx=np.argwhere(bank)
     selected=min(idx,key=lambda p:abs((ox+p[1]*step)+8200)+abs((oy+p[0]*step)-4200))
     cy,cx=[int(v) for v in selected]
+    river_bank=np.argwhere(bank&(river_distance<WIDTH+600))
+    river_target=None
+    if len(river_bank):
+        ry,rx=[int(v) for v in min(river_bank,key=lambda p:abs((ox+p[1]*step)+10000)+abs((oy+p[0]*step)+15000))]
+        river_target=[ox+rx*step,oy+ry*step,float(heights[ry,rx])]
     spec={'waterZ':survey['waterZ'],'widthCm':WIDTH,'worldOrigin':[ox-step/2,oy-step/2],
         'worldSize':[nx*step,ny*step],'mask':str(path),'SHA256':hashlib.sha256(path.read_bytes()).hexdigest(),
-        'waterSamples':int(water.sum()),'dryBankAreaM2':float(bank.sum()*step*step/10000),
+        'waterSamples':int(water.sum()),'riverWaterSamples':int(river_water.sum()),'dryBankAreaM2':float(bank.sum()*step*step/10000),
         'cameraTarget':[ox+cx*step,oy+cy*step,float(heights[cy,cx])],
+        'riverCameraTarget':river_target,
         'sourcePBR':'/DBAWorldPack_Village/Terrain/Textures/ShoreMud'}
     (ART/'VillageShore.json').write_text(json.dumps(spec,indent=2),encoding='utf-8')
-    print(json.dumps({k:v for k,v in spec.items() if k in ['widthCm','dryBankAreaM2','waterSamples']}))
+    print(json.dumps({k:v for k,v in spec.items() if k in ['widthCm','dryBankAreaM2','waterSamples','riverWaterSamples','riverCameraTarget']}))
 
 
 def author():
@@ -171,8 +218,8 @@ def author():
     coverage=texture('VillageShoreMask',MASK,uv,u.MaterialSamplerType.SAMPLERTYPE_LINEAR_GRAYSCALE,True)
     water=scalar('VillageShoreWaterZCm',spec['waterZ']);strength=scalar('VillageShoreStrength',1.)
     road=next(n for n in old.values() if isinstance(n,u.MaterialExpressionTextureSampleParameter2D) and str(n.get_editor_property('parameter_name'))=='ForestPathMask')
-    alpha=custom('ShoreCoverage','return saturate(Mask*Strength)*(1-saturate(Road))*smoothstep(Water-140,Water-15,P.z);',
-        {'Mask':(coverage,'R'),'Strength':(strength,''),'Road':(road,'R'),'Water':(water,''),'P':(world,'')},u.CustomMaterialOutputType.CMOT_FLOAT1)
+    alpha=custom('ShoreCoverage','return saturate(Mask*Strength)*(1-saturate(Road));',
+        {'Mask':(coverage,'R'),'Strength':(strength,''),'Road':(road,'R')},u.CustomMaterialOutputType.CMOT_FLOAT1)
     root=spec['sourcePBR']+'/T_DBA_Terrain_ShoreMud_'
     color=texture('VillageShoreMudBaseColor',root+'BaseColor',detail,u.MaterialSamplerType.SAMPLERTYPE_COLOR)
     normal=texture('VillageShoreMudNormal',root+'Normal',detail,u.MaterialSamplerType.SAMPLERTYPE_NORMAL)
@@ -194,6 +241,27 @@ def author():
     print('NATIVE_SHORE_MUD_CONNECTED',WIDTH,'cm')
 
 
+def update_combined_mask():
+    """湖岸现有材质原位扩展河岸；共享一张遮罩、同一PBR组，不叠加新材质层。"""
+    u,f=context();lib=u.MaterialEditingLibrary
+    spec=json.loads((ART/'VillageShore.json').read_text(encoding='utf-8'))
+    assert spec.get('riverWaterSamples',0)>0,'必须先完成真实河道采样'
+    task=u.AssetImportTask();task.filename=spec['mask'];task.destination_path=BASE;task.destination_name=MASK.rsplit('/',1)[1]
+    task.automated=True;task.save=True;task.replace_existing=True
+    u.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+    mask=u.load_asset(MASK);mask.set_editor_property('srgb',False);mask.set_editor_property('compression_settings',u.TextureCompressionSettings.TC_GRAYSCALE)
+    mask.set_editor_property('address_x',u.TextureAddress.TA_CLAMP);mask.set_editor_property('address_y',u.TextureAddress.TA_CLAMP)
+    assert u.EditorAssetLibrary.save_loaded_asset(mask,False)
+    material=u.load_asset(MATERIAL)
+    for n in lib.get_material_expressions(material):
+        desc=str(n.get_editor_property('desc'))
+        if desc=='VillageShore.WorldRect':n.set_editor_property('default_value',u.LinearColor(*spec['worldOrigin'],*spec['worldSize']))
+        if desc=='VillageShore.ShoreCoverage':n.set_editor_property('code','return saturate(Mask*Strength)*(1-saturate(Road));')
+    errors=lib.recompile_material(material);assert not errors,list(errors)
+    assert u.EditorAssetLibrary.save_loaded_asset(material,False)
+    print('LAKE_AND_RIVER_SHARED_SHORE_MASK_SAVED',spec['riverWaterSamples'])
+
+
 def audit(phase='Generated',save=False):
     u,f=context();before=json.loads((OUT/'Before.json').read_text(encoding='utf-8'))
     assert f['snapshot']()==before['scene'],'人工场景/原有树实例变化，停止保存'
@@ -212,6 +280,16 @@ def audit(phase='Generated',save=False):
     lake=next(a for a in actors if a.get_actor_label()=='HillsideWater_Lake');survey=json.loads((OUT/'Survey.json').read_text(encoding='utf-8'))
     assert f['stable'](lake.get_actor_transform())==survey['waterTransform']
     assert not lake.get_component_by_class(u.WaterBodyComponent).get_editor_property('affects_landscape')
+    if 'riverControls' in survey:
+        river=next(a for a in actors if a.get_actor_label()=='HillsideWater_River')
+        rc=river.get_component_by_class(u.WaterBodyRiverComponent);rs=rc.get_water_spline()
+        assert f['stable'](river.get_actor_transform())==survey['riverTransform']
+        assert not rc.get_editor_property('affects_landscape')
+        current=[]
+        for i in range(rs.get_number_of_spline_points()):
+            p=rs.get_location_at_spline_point(i,u.SplineCoordinateSpace.WORLD)
+            current.append([p.x,p.y,p.z,rc.get_river_width_at_spline_input_key(float(i)),rc.get_water_velocity_at_spline_input_key(float(i))])
+        assert current==survey['riverControls'],'河道形状/宽度/流速变化'
     digest=hashlib.sha256('\n'.join(sorted(transforms)).encode()).hexdigest()
     first=OUT/'AuditGenerated.json'
     if phase!='Generated':assert digest==json.loads(first.read_text(encoding='utf-8'))['instanceSHA256']
@@ -225,7 +303,8 @@ def audit(phase='Generated',save=False):
 def camera(shore=True):
     u,f=context()
     if shore:
-        p=json.loads((ART/'VillageShore.json').read_text(encoding='utf-8'))['cameraTarget']
+        spec=json.loads((ART/'VillageShore.json').read_text(encoding='utf-8'))
+        p=spec['riverCameraTarget'] if shore=='river' else [-10200,-6900,-51.589621]
         target=u.Vector(p[0]+300,p[1]-100,p[2]-60);location=u.Vector(p[0]-1000,p[1]-1600,p[2]+900)
     else:
         location=u.Vector(-11152.943569,-11163.959116,770.861567);target=u.Vector(-12002.943569,-9913.959116,180.861567)

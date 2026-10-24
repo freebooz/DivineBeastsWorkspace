@@ -93,6 +93,17 @@ void ADivineBeastsWorldGameMode::BeginPlay()
         return;
     }
 
+    // 配置只补齐未显式选择的静态世界天气；上述开发审查序列及自动天气优先。
+    // 表为空时完全保持旧行为，村庄风参数仍由既有天气Definition拥有。
+    if (InitialWeatherPresetId.IsNone())
+    {
+        FString PackageName = World->GetOutermost()->GetName();
+        // PIE复制包前缀不属于正式资源身份，移除后与同一服务器配置键匹配。
+        const FString Prefix = World->StreamingLevelsPrefix;
+        if (!Prefix.IsEmpty()) PackageName.ReplaceInline(*Prefix, TEXT(""));
+        if (const FName* Configured = InitialWeatherPresetIdsByWorld.Find(FName(*PackageName)))
+            InitialWeatherPresetId = *Configured;
+    }
     if (!InitialWeatherPresetId.IsNone())
     {
         BeginLoadInitialWeatherPreset();

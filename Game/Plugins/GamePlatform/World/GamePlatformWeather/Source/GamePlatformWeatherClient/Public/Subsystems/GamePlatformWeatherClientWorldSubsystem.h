@@ -44,6 +44,8 @@ private:
     /** 分离快照首帧与Timer推进；避免首帧用未来目标天气瞬间播放满量雨雪。 */
     void SampleAndApplyTransition(bool bRefreshPresentation);
     void ApplyVisualState(const FGamePlatformWeatherState& State);
+    /** 快照/内容就绪事件写风端点；持续运动由GPU推进，不新增Timer。 */
+    void ApplyWindSnapshot(const FGamePlatformWeatherSnapshot& Snapshot);
     void ApplyAtmosphere(const FGamePlatformWeatherState& State);
     float GetEstimatedServerTimeSeconds() const;
     /** ChannelFilter: -1全部，0仅VFX，1仅SFX；保持独立请求身份，禁止跨通道误取消。 */

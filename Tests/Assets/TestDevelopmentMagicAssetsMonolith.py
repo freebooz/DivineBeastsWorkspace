@@ -8,9 +8,10 @@ import json
 import unreal
 
 HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar")
-EXPECTED = {"Fireball": (1200.0, 0.0, 0.0, 1, 0.0),
-            "Frostbolt": (1600.0, 0.0, 0.0, 1, 0.0),
-            "ArcaneMissiles": (1400.0, 18.0, 3.0, 3, 0.2)}
+# 2026-10-24性能/观感调速：仅提高恒定轴向速度，保留50米射程、连发和螺旋合同。
+EXPECTED = {"Fireball": (6000.0, 0.0, 0.0, 1, 0.0),
+            "Frostbolt": (8000.0, 0.0, 0.0, 1, 0.0),
+            "ArcaneMissiles": (7000.0, 18.0, 3.0, 3, 0.2)}
 ROOT = "/Game/Development/DivineBeasts/Abilities/MagicTests"
 
 def identifier(value):

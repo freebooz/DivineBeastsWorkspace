@@ -67,7 +67,7 @@ bool ParseSelectedHero(const FString& Json, const FString& SelectedCharacterId, 
     const TArray<TSharedPtr<FJsonValue>>* Roster = nullptr;
     if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Object) || !Object.IsValid()
         || !Object->TryGetArrayField(TEXT("characters"), Roster) || SelectedCharacterId.IsEmpty()) return false;
-    int32 Matches = 0; FName HeroId;
+    int32 Matches = 0; FName HeroId; FString CharacterName;
     for (const auto& Value : *Roster)
     {
         const TSharedPtr<FJsonObject>* Entry = nullptr; FString Id, Status, Hero;
@@ -77,9 +77,17 @@ bool ParseSelectedHero(const FString& Json, const FString& SelectedCharacterId, 
             || !(*Entry)->TryGetStringField(TEXT("heroDefinitionId"), Hero) || Hero.Len() > 256
             || !FDivineBeastsHeroCatalog::IsCoreHeroId(FName(*Hero))) return false;
         HeroId = FName(*Hero);
+        // 姓名是可选公开显示信息；缺失/异常不放宽也不收紧原有英雄准入，且不能泄漏旧连接名称。
+        if ((*Entry)->TryGetStringField(TEXT("characterName"), CharacterName))
+        {
+            CharacterName.TrimStartAndEndInline();
+            if (CharacterName.Len() > 48) CharacterName.Reset(); // 后端上限24个Unicode码点，UTF-16最多48单元。
+        }
     }
     if (Matches != 1) return false;
-    OutHeroId = HeroId; return true;
+    OutHeroId = HeroId;
+    if (OutCharacterName) *OutCharacterName = CharacterName;
+    return true;
 }
 }
 
@@ -197,7 +205,7 @@ void FDivineBeastsWorldCharacterAdmission::ReadRoster(APlayerController& Control
     RequestJson(Controller, Connection, TEXT("/internal/v1/playerdata/characters"), [WeakThis, C, Connection](FString Json)
     {
         auto Self = WeakThis.Pin(); if (!Self || !Self->IsCurrent(C.Get(), Connection)) return;
-        if (!DivineBeasts::WorldCharacterAdmission::ParseSelectedHero(Json, Connection->CharacterId, Connection->HeroId))
+        if (!DivineBeasts::WorldCharacterAdmission::ParseSelectedHero(Json, Connection->CharacterId, Connection->HeroId, &Connection->CharacterName))
         { Self->Fail(*C, Connection, TEXT("WorldCharacterRosterInvalid")); return; }
         Self->PublishAdmission(*C, Connection);
     });
@@ -208,6 +216,9 @@ void FDivineBeastsWorldCharacterAdmission::PublishAdmission(APlayerController& C
     if (!IsCurrent(&Controller, Connection)) return;
     if (!State) { Fail(Controller, Connection, TEXT("WorldCharacterPlayerStateMissing")); return; }
     Connection->PlayerState = State;
+    // 先发布服务器验证的角色名，再生成Pawn；沿用引擎PlayerName公开复制，不复制账号或完整Roster。
+    State->SetPlayerName(Connection->CharacterName.IsEmpty() ? TEXT("玩家") : Connection->CharacterName);
+    if (!IsCurrent(&Controller, Connection)) return;
     const TWeakPtr<FDivineBeastsWorldCharacterAdmission> WeakThis = AsShared(); const TWeakObjectPtr<APlayerController> C = &Controller;
     // 先订阅再Submit：平台可以同步推进到Possessed；不能只在HTTP完成瞬间检查一次尚不存在的Pawn。
     Connection->LifecycleHandle = State->OnLifecycleChanged.AddWeakLambda(State, [WeakThis, C, Connection]()

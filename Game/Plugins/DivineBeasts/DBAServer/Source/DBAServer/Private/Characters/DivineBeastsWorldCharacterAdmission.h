@@ -43,6 +43,7 @@ private:
     {
         FGamePlatformServerVerifiedAdmission Verified;
         FString CharacterId;
+        FString CharacterName; // 可信Roster已选角色的公开名称；不使用账号或客户端Travel名称。
         FName HeroId;
         FGuid OperationId;
         TWeakObjectPtr<AGamePlatformPlayerStateBase> PlayerState;

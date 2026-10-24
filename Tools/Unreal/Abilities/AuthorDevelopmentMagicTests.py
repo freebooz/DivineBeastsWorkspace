@@ -14,13 +14,14 @@ from datetime import datetime, timezone
 WORKSPACE = Path(__file__).resolve().parents[3]
 ROOT = "/Game/Development/DivineBeasts/Abilities"
 MAGIC = ROOT + "/MagicTests"
+# 2026-10-24快速恒速：仅调整飞行，50米射程、施法、伤害、冷却及连发保持既定合同。
 SPELLS = {
     "Fireball": {"Slot": "Active01", "NameZh": "火焰弹（开发测试）", "Damage": 40, "Cost": 0, "Cooldown": 2,
-                 "Speed": 1200, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
+                 "Speed": 6000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
     "Frostbolt": {"Slot": "Active02", "NameZh": "寒冰箭（开发测试）", "Damage": 30, "Cost": 0, "Cooldown": 1.5,
-                  "Speed": 1600, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
+                  "Speed": 8000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
     "ArcaneMissiles": {"Slot": "Ultimate", "NameZh": "螺旋奥术飞弹（开发测试）", "Damage": 12, "Cost": 0, "Cooldown": 3,
-                       "Speed": 1400, "Radius": 18, "Turns": 3, "Count": 3, "Interval": 0.2},
+                       "Speed": 7000, "Radius": 18, "Turns": 3, "Count": 3, "Interval": 0.2},
 }
 
 

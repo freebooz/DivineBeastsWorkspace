@@ -250,6 +250,34 @@ FGamePlatformSurfaceUpdateResult UGamePlatformSurfaceWorldSubsystem::PushCurrent
         { GamePlatformSurfaceParameters::TemperatureCelsius, CurrentState.TemperatureCelsius }
     };
 
+    const TPair<FName, FVector4> WindVectors[] =
+    {
+        { GamePlatformSurfaceParameters::GlobalWindFrom, CurrentState.Wind.From },
+        { GamePlatformSurfaceParameters::GlobalWindTo, CurrentState.Wind.To },
+        { GamePlatformSurfaceParameters::GlobalWindTiming, CurrentState.Wind.Timing }
+    };
+    // 风四项作为一个合同校验；缺风时不写半套风，也不能阻断原八项雨雪表面状态。
+    // 这同时支持原生MPC升级前的安全分阶段部署，失配仍明确返回，不能冒充完整绑定。
+    float ScalarValue;
+    FLinearColor VectorValue;
+    if (!Instance->GetScalarParameterValue(GamePlatformSurfaceParameters::GlobalWindSeed, ScalarValue))
+        ++Result.FailedParameterCount;
+    for (const auto& Pair : WindVectors)
+        if (!Instance->GetVectorParameterValue(Pair.Key, VectorValue)) ++Result.FailedParameterCount;
+    if (Result.FailedParameterCount == 0)
+    {
+        if (Instance->SetScalarParameterValue(GamePlatformSurfaceParameters::GlobalWindSeed, CurrentState.Wind.Seed))
+            ++Result.UpdatedParameterCount;
+        else ++Result.FailedParameterCount;
+        for (const auto& Pair : WindVectors)
+        {
+            const FVector4& Value = Pair.Value;
+            if (Instance->SetVectorParameterValue(Pair.Key, FLinearColor(Value.X, Value.Y, Value.Z, Value.W)))
+                ++Result.UpdatedParameterCount;
+            else ++Result.FailedParameterCount;
+        }
+    }
+
     for (const TPair<FName, float>& Pair : Parameters)
     {
         if (Instance->SetScalarParameterValue(Pair.Key, Pair.Value))
@@ -265,12 +293,13 @@ FGamePlatformSurfaceUpdateResult UGamePlatformSurfaceWorldSubsystem::PushCurrent
     if (Result.FailedParameterCount > 0)
     {
         Result.Status = EGamePlatformSurfaceUpdateStatus::ParameterContractMismatch;
-        UE_LOG(
+        if (!bLoggedBindingFailure) UE_LOG(
             LogGamePlatformSurface,
             Warning,
             TEXT("Surface MPC参数契约不完整：成功写入%d项，失败%d项；请运行编辑器资产校验。"),
             Result.UpdatedParameterCount,
             Result.FailedParameterCount);
+        bLoggedBindingFailure = true;
     }
     else
     {

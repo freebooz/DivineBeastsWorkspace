@@ -27,6 +27,7 @@ struct FDivineBeastsWorldHealthBarBinding
     TWeakObjectPtr<UDivineBeastsCharacterComponent> Identity;
     TWeakObjectPtr<AGamePlatformPlayerStateBase> PlayerState;
     FDelegateHandle IdentityHandle, PlayerStateHandle; // 身份就绪/公开准入变化驱动关系与化身失效检查。
+    FDelegateHandle PawnPlayerStateHandle, PlayerNameHandle; // 迟到State/名称复制及换绑通知，移除时成对解绑。
     TWeakObjectPtr<UGamePlatformCombatComponent> Combat;
     FDelegateHandle CombatObservationHandle; // 可靠复制死亡/化身通知，不能依赖可丢包VFX反馈。
     FGamePlatformWorldUIRequest Request;

@@ -58,14 +58,15 @@ struct FExpectedMagic
     float Interval, HelixRadius, HelixTurns; // 连发间隔秒、半径厘米、频率转/秒。
 };
 
+// 2026-10-24快速恒速配置；独立核对已保存定义，施法、射程、伤害和连发期望保持不变。
 static const FExpectedMagic ExpectedMagic[] =
 {
     {TEXT("Fireball"), TEXT("dba.ability.rat_dev_fireball@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Active01"),
-        EDivineBeastsDevelopmentMagicKind::Fireball, 40.f, 0.f, 2.f, 1200.f, 1, 0.f, 0.f, 0.f},
+        EDivineBeastsDevelopmentMagicKind::Fireball, 40.f, 0.f, 2.f, 6000.f, 1, 0.f, 0.f, 0.f},
     {TEXT("Frostbolt"), TEXT("dba.ability.rat_dev_frostbolt@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Active02"),
-        EDivineBeastsDevelopmentMagicKind::Frostbolt, 30.f, 0.f, 1.5f, 1600.f, 1, 0.f, 0.f, 0.f},
+        EDivineBeastsDevelopmentMagicKind::Frostbolt, 30.f, 0.f, 1.5f, 8000.f, 1, 0.f, 0.f, 0.f},
     {TEXT("ArcaneMissiles"), TEXT("dba.ability.rat_dev_arcanemissiles@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Ultimate"),
-        EDivineBeastsDevelopmentMagicKind::ArcaneMissiles, 12.f, 0.f, 3.f, 1400.f, 3, 0.2f, 18.f, 3.f}
+        EDivineBeastsDevelopmentMagicKind::ArcaneMissiles, 12.f, 0.f, 3.f, 7000.f, 3, 0.2f, 18.f, 3.f}
 };
 
 /** 定位已保存对象或蓝图生成类，仅构造软路径；不加载、注册、创建或写入资产。 */

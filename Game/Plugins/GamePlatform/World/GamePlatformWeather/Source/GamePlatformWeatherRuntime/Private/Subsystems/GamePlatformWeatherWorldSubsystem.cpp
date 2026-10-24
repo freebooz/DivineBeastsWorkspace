@@ -79,6 +79,8 @@ bool UGamePlatformWeatherWorldSubsystem::PublishTransition(
     Next.To = FGamePlatformWeatherQuantizedState::Encode(TargetState);
     Next.StartedAtServerSeconds = CurrentServerTime;
     Next.TransitionSeconds = TransitionSeconds;
+    Next.WindSeed = CurrentSnapshot.WindSeed;
+    Next.WindPhaseAtStartCycles = CurrentSnapshot.SampleWindPhaseCycles(CurrentServerTime);
     Next.Revision = CurrentSnapshot.Revision + 1;
     return Replicator->PublishAuthoritativeSnapshot(Next);
 }
@@ -190,6 +192,8 @@ void UGamePlatformWeatherWorldSubsystem::ObserveReplicator(
         !FMath::IsFinite(Snapshot.StartedAtServerSeconds) ||
         !FMath::IsFinite(Snapshot.TransitionSeconds) ||
         Snapshot.TransitionSeconds < 0.f || Snapshot.TransitionSeconds > 3600.f ||
+        !FMath::IsFinite(Snapshot.WindPhaseAtStartCycles) || Snapshot.WindPhaseAtStartCycles < 0.f ||
+        Snapshot.WindPhaseAtStartCycles >= 1.f ||
         !Snapshot.From.Decode().IsValid() || !Snapshot.To.Decode().IsValid())
         return;
     Replicator = const_cast<AGamePlatformWeatherReplicator*>(Source);

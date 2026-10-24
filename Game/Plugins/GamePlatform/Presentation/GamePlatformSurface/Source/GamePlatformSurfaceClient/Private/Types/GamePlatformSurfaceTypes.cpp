@@ -3,6 +3,26 @@
 // 表面环境状态的纯数据校验与归一化实现；不访问世界、材质或网络状态。
 #include "Types/GamePlatformSurfaceTypes.h"
 
+bool FGamePlatformSurfaceWindTransition::IsValid() const
+{
+    const auto ValidEndpoint = [](const FVector4& Value)
+    {
+        return !Value.ContainsNaN() && Value.X >= 0.0 && Value.X < 360.0 &&
+            Value.Y >= 0.0 && Value.Y <= 1.0 && Value.Z >= 0.0 && Value.Z <= 1.0 &&
+            Value.W >= 0.0 && Value.W <= 2.0;
+    };
+    return ValidEndpoint(From) && ValidEndpoint(To) && !Timing.ContainsNaN() &&
+        Timing.X >= 0.0 && Timing.Y >= 0.0 && Timing.Y <= 3600.0 &&
+        Timing.Z >= 0.0 && Timing.Z < 1.0 && Seed >= 0 && Seed <= 65535;
+}
+
+bool FGamePlatformSurfaceWindTransition::IsNearlyEqual(
+    const FGamePlatformSurfaceWindTransition& Other, const float Tolerance) const
+{
+    return From.Equals(Other.From, Tolerance) && To.Equals(Other.To, Tolerance) &&
+        Timing.Equals(Other.Timing, Tolerance) && Seed == Other.Seed;
+}
+
 bool FGamePlatformSurfaceEnvironmentState::IsFinite() const
 {
     return FMath::IsFinite(GlobalWetness) &&
@@ -12,7 +32,7 @@ bool FGamePlatformSurfaceEnvironmentState::IsFinite() const
            FMath::IsFinite(GlobalPuddleAmount) &&
            FMath::IsFinite(RainIntensity) &&
            FMath::IsFinite(SnowIntensity) &&
-           FMath::IsFinite(TemperatureCelsius);
+           FMath::IsFinite(TemperatureCelsius) && Wind.IsValid();
 }
 
 FGamePlatformSurfaceEnvironmentState FGamePlatformSurfaceEnvironmentState::GetClamped() const
@@ -41,7 +61,8 @@ bool FGamePlatformSurfaceEnvironmentState::IsNearlyEqual(
            FMath::IsNearlyEqual(GlobalPuddleAmount, Other.GlobalPuddleAmount, Tolerance) &&
            FMath::IsNearlyEqual(RainIntensity, Other.RainIntensity, Tolerance) &&
            FMath::IsNearlyEqual(SnowIntensity, Other.SnowIntensity, Tolerance) &&
-           FMath::IsNearlyEqual(TemperatureCelsius, Other.TemperatureCelsius, Tolerance);
+           FMath::IsNearlyEqual(TemperatureCelsius, Other.TemperatureCelsius, Tolerance) &&
+           Wind.IsNearlyEqual(Other.Wind, Tolerance);
 }
 
 bool FGamePlatformSurfaceUpdateResult::IsStateAccepted() const

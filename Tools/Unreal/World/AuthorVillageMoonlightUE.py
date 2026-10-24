@@ -40,14 +40,16 @@ def inspect_lighting():
     return rows
 
 
-def apply_moonlight():
+def apply_moonlight(preserve_fog=False, output_dir=None):
+    """复用既有月光；仅切换照明时保留现有雾参数，证据可单独归档。"""
+    out = Path(output_dir) if output_dir else OUT
     MIST["world"]()
     assert not unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages(), "地图有未保存修改，拒绝覆盖"
-    assert not unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages(), "内容有未保存修改"
+    # 只保存当前地图；其他任务未保存的内容资产保持原样，不执行SaveAll。
     before_starts = MIST["player_starts"]()
     before = inspect_lighting()
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    backup = OUT / "Backups" / (stamp + "_BeforeMoonlight")
+    backup = out / "Backups" / (stamp + "_BeforeMoonlight")
     backup.mkdir(parents=True)
     map_file = MIST["CONTENT"] / "Maps/L_Village_Start.umap"
     shutil.copy2(map_file, backup / "L_Village_Start.umap")
@@ -58,7 +60,7 @@ def apply_moonlight():
     sky = [a for a in actors if isinstance(a, unreal.SkyLight)]
     assert len(main) == len(sky) == 1, "只调整现有唯一主光和天光"
     moon = main[0].get_component_by_class(unreal.DirectionalLightComponent)
-    moon.set_editor_property("intensity", .85)
+    moon.set_editor_property("intensity", 1.0)
     moon.set_light_color(MIST["srgb_color"]((190, 214, 242)), True)
     moon.set_editor_property("light_source_angle", 1.2)
     main[0].set_actor_rotation(unreal.Rotator(pitch=-32, yaw=-35, roll=0), False)
@@ -66,9 +68,11 @@ def apply_moonlight():
     moon.set_editor_property("atmosphere_sun_light", True)
     moon.set_editor_property("atmosphere_sun_light_index", 0)
     sky_component = sky[0].get_component_by_class(unreal.SkyLightComponent)
-    sky_component.set_editor_property("intensity", .18)
+    sky_component.set_editor_property("intensity", .65)
     sky_component.set_editor_property("real_time_capture", True)
     for a in actors:
+        if preserve_fog:
+            continue
         if isinstance(a, unreal.ExponentialHeightFog):
             a.get_component_by_class(unreal.ExponentialHeightFogComponent).set_editor_property(
                 "fog_inscattering_luminance", MIST["srgb_color"]((72, 93, 115)))
@@ -89,7 +93,7 @@ def apply_moonlight():
                        "auto_exposure_method": unreal.AutoExposureMethod.AEM_MANUAL,
                        "override_auto_exposure_apply_physical_camera_exposure": True,
                        "auto_exposure_apply_physical_camera_exposure": False,
-                       "override_auto_exposure_bias": True, "auto_exposure_bias": 2.3,
+                       "override_auto_exposure_bias": True, "auto_exposure_bias": 2.5,
                        "override_bloom_intensity": True, "bloom_intensity": .1}.items():
         settings.set_editor_property(key, value)
     pp.set_editor_property("settings", settings)
@@ -99,12 +103,14 @@ def apply_moonlight():
     result = {"status": "SavedPendingColdAndVisualVerification", "map": MIST["MAP"],
               "request": "光照调整暗一些，月光照明", "lighting": inspect_lighting(),
               "mapSHA256": digest, "backup": str(backup), "playerStarts": before_starts,
+              "fogPreserved": preserve_fog,
               "colorPolicyException": "用户明确指定Village月夜氛围，覆盖该地图默认晨光方向",
               "gpuMeasured": False, "manualVisualAccepted": False}
-    (OUT / "MoonlightAuthoring.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-    fog_report = MIST["inspect"]()
-    fog_report.update(status=result["status"], mapSHA256=digest,
-                      backup=json.loads((OUT / "Authoring.json").read_text(encoding="utf-8"))["backup"])
-    (OUT / "Authoring.json").write_text(json.dumps(fog_report, ensure_ascii=False, indent=2), encoding="utf-8")
+    (out / "MoonlightAuthoring.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    if not preserve_fog:
+        fog_report = MIST["inspect"]()
+        fog_report.update(status=result["status"], mapSHA256=digest,
+                          backup=json.loads((OUT / "Authoring.json").read_text(encoding="utf-8"))["backup"])
+        (out / "Authoring.json").write_text(json.dumps(fog_report, ensure_ascii=False, indent=2), encoding="utf-8")
     print("VILLAGE_MOONLIGHT_SAVED", digest)
     return result

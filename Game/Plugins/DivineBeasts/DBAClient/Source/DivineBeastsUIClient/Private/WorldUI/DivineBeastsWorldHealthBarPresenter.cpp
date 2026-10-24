@@ -27,6 +27,16 @@
 #include "Engine/GameInstance.h"
 #include "GameFramework/GameStateBase.h"
 
+namespace
+{
+/** 远端Controller并不复制；在PlayerState尚未到达时按现有项目角色类别为玩家预留显示资格。 */
+bool IsPlayerCharacterCandidate(const AActor* Actor)
+{
+    return Actor && Actor->IsA<ADivineBeastsCharacter>() &&
+        !Actor->IsA<ADivineBeastsVillageWolf>() && !Actor->IsA<ADivineBeastsVillageVampire>();
+}
+}
+
 void UDivineBeastsWorldHealthBarPresenter::Initialize(ULocalPlayer* InPlayer, UWorld* InWorld,
     TSubclassOf<UGamePlatformWorldWidgetBase> InWidgetClass, UMaterialInterface* InSelectionRingMaterial)
 {
@@ -72,11 +82,32 @@ void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSel
     UWorld* World = ObservedWorld.Get();
     if (!World || World->bIsTearingDown || !IsValid(Actor) ||
         (!bSelectionOnly && !Actor->IsA<ADivineBeastsCharacter>()) || Actor->GetWorld() != World ||
-        Bindings.Contains(Actor) || Bindings.Num() >= 128) return;
+        Bindings.Contains(Actor)) return;
     auto* Controller = LocalPlayer.IsValid() ? LocalPlayer->GetPlayerController(ObservedWorld.Get()) : nullptr;
     if (Controller && Controller->GetPawn() == Actor) return; // 自己已有主HUD血条。
+    if (Bindings.Num() >= 128)
+    {
+        if (!IsPlayerCharacterCandidate(Actor)) return;
+        // 不扩大平台128个实例预算；后来玩家优先替换最远的未选中怪物，避免200怪物耗尽玩家位置。
+        const FVector Origin = Controller && Controller->GetPawn() ? Controller->GetPawn()->GetActorLocation() : Actor->GetActorLocation();
+        TWeakObjectPtr<AActor> Candidate; double Farthest = -1.;
+        for (const auto& Pair : Bindings)
+            if (auto* Existing = Pair.Key.Get(); Existing && !Pair.Value.bSelectionOnly &&
+                Existing != SelectedTarget.Get() &&
+                (Existing->IsA<ADivineBeastsVillageWolf>() || Existing->IsA<ADivineBeastsVillageVampire>()))
+            {
+                const double Distance = FVector::DistSquared(Origin, Existing->GetActorLocation());
+                if (Distance > Farthest) { Candidate = Existing; Farthest = Distance; }
+            }
+        if (!Candidate.IsValid()) return;
+        const uint64 BeforeEviction = ObservationGeneration;
+        RemoveActor(Candidate.Get());
+        // 注销Widget可能同步结束作用域；旧栈不能在Clear或后继注册后继续加入实体。
+        if (BeforeEviction != ObservationGeneration || !ObservedWorld.IsValid() || World->bIsTearingDown ||
+            !IsValid(Actor) || Bindings.Contains(Actor) || Bindings.Num() >= 128) return;
+    }
     auto& Binding = Bindings.Add(Actor);
-    Binding.bSelectionOnly = bSelectionOnly;
+    Binding.bSelectionOnly = bSelectionOnly && !IsPlayerCharacterCandidate(Actor);
     Binding.Request.RequestId = FGuid::NewGuid();
     Binding.Request.SurfaceKey = TEXT("DBA.World.HealthBar"); Binding.Request.StyleId = TEXT("DBA.World.HealthBar");
     Binding.Request.MaxVisibleDistance = 6000.f; Binding.Request.Resource.ResourceId = TEXT("Health");
@@ -90,6 +121,13 @@ void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSel
     Actor->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleActorEndPlay);
     const uint64 Generation = ObservationGeneration;
     const TWeakObjectPtr<AActor> WeakActor(Actor);
+    if (auto* Character = Cast<ADivineBeastsCharacter>(Actor))
+        Binding.PawnPlayerStateHandle = Character->OnPlayerStateChangedEvent().AddWeakLambda(this,
+            [this, Generation, WeakActor]()
+            {
+                if (Generation != ObservationGeneration || !WeakActor.IsValid()) return;
+                BindPlayerState(WeakActor.Get()); Publish(WeakActor.Get());
+            });
     if (auto* Combat = Actor->FindComponentByClass<UGamePlatformCombatComponent>())
     {
         Binding.Combat = Combat;
@@ -153,8 +191,16 @@ void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor)
     // Travel销毁Pawn时仍可能同步触发控制器关系通知；旧World开始退出后禁止再创建UMG实例。
     UWorld* World = ObservedWorld.Get();
     if (!World || World->bIsTearingDown || !IsValid(Actor) || Actor->GetWorld() != World) return;
+    const auto* Controller = LocalPlayer.IsValid() ? LocalPlayer->GetPlayerController(World) : nullptr;
+    if (Controller && Controller->GetPawn() == Actor) { RemoveActor(Actor); return; }
     auto* Binding = Bindings.Find(Actor);
     if (!Binding) return;
+    if (IsPlayerCharacterCandidate(Actor))
+    {
+        const auto* State = Binding->PlayerState.Get();
+        const FString Name = State ? State->GetPlayerName() : FString();
+        Binding->Request.PrimaryText = FText::FromString(Name.IsEmpty() ? TEXT("玩家") : Name);
+    }
     if (SelectedTarget.Get() == Actor)
     {
         const auto* Combat = Actor->FindComponentByClass<UGamePlatformCombatComponent>();
@@ -269,15 +315,24 @@ void UDivineBeastsWorldHealthBarPresenter::BindPlayerState(AActor* Actor)
     auto* Pawn = Cast<APawn>(Actor);
     auto* State = Pawn ? Pawn->GetPlayerState<AGamePlatformPlayerStateBase>() : nullptr;
     if (Binding->PlayerState.Get() == State) return;
-    if (auto* Previous = Binding->PlayerState.Get()) Previous->OnLifecycleChanged.Remove(Binding->PlayerStateHandle);
-    Binding->PlayerState = State; Binding->PlayerStateHandle.Reset();
+    if (auto* Previous = Binding->PlayerState.Get())
+    {
+        Previous->OnLifecycleChanged.Remove(Binding->PlayerStateHandle);
+        Previous->OnPublicPlayerNameChanged.Remove(Binding->PlayerNameHandle);
+    }
+    Binding->PlayerState = State; Binding->PlayerStateHandle.Reset(); Binding->PlayerNameHandle.Reset();
     if (!State) return;
     const uint64 Generation = ObservationGeneration;
     const TWeakObjectPtr<AActor> WeakActor(Actor);
-    Binding->PlayerStateHandle = State->OnLifecycleChanged.AddWeakLambda(this, [this, Generation, WeakActor]()
+    const TWeakObjectPtr<AGamePlatformPlayerStateBase> WeakState(State);
+    auto Changed = [this, Generation, WeakActor, WeakState]()
     {
-        if (Generation == ObservationGeneration && WeakActor.IsValid()) Publish(WeakActor.Get());
-    });
+        if (Generation != ObservationGeneration || !WeakActor.IsValid() || !WeakState.IsValid()) return;
+        const auto* Current = Bindings.Find(WeakActor);
+        if (Current && Current->PlayerState == WeakState) Publish(WeakActor.Get());
+    };
+    Binding->PlayerStateHandle = State->OnLifecycleChanged.AddWeakLambda(this, Changed);
+    Binding->PlayerNameHandle = State->OnPublicPlayerNameChanged.AddWeakLambda(this, Changed);
 }
 
 void UDivineBeastsWorldHealthBarPresenter::RefreshRelations()
@@ -370,7 +425,12 @@ void UDivineBeastsWorldHealthBarPresenter::RemoveActor(AActor* Actor)
     }
     if (auto* Root = Binding.TransformSource.Get()) Root->TransformUpdated.Remove(Binding.TransformHandle);
     if (auto* Identity = Binding.Identity.Get()) Identity->OnReadinessChanged().Remove(Binding.IdentityHandle);
-    if (auto* State = Binding.PlayerState.Get()) State->OnLifecycleChanged.Remove(Binding.PlayerStateHandle);
+    if (auto* State = Binding.PlayerState.Get())
+    {
+        State->OnLifecycleChanged.Remove(Binding.PlayerStateHandle);
+        State->OnPublicPlayerNameChanged.Remove(Binding.PlayerNameHandle);
+    }
+    if (auto* Character = Cast<ADivineBeastsCharacter>(Actor)) Character->OnPlayerStateChangedEvent().Remove(Binding.PawnPlayerStateHandle);
     if (auto* Combat = Binding.Combat.Get()) Combat->OnCombatObservationChanged().Remove(Binding.CombatObservationHandle);
     if (Actor) Actor->OnDestroyed.RemoveDynamic(this, &ThisClass::HandleActorDestroyed);
     if (Actor) Actor->OnEndPlay.RemoveDynamic(this, &ThisClass::HandleActorEndPlay);

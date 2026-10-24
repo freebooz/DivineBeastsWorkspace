@@ -19,6 +19,28 @@ enum class EGamePlatformSurfaceUpdateStatus : uint8
     MaterialBindingPending UMETA(DisplayName="材质参数绑定加载中")
 };
 
+/** 客户端中立风投影；仅缓存同一世界的端点/时间，不持有天气权威或Weather模块类型。 */
+USTRUCT(BlueprintType)
+struct GAMEPLATFORMSURFACECLIENT_API FGamePlatformSurfaceWindTransition
+{
+    GENERATED_BODY()
+    /** 端点=(世界Yaw角度,强度0..1,阵风比例0..1,频率0..2Hz)。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Surface|Wind")
+    FVector4 From = FVector4(0, 0, 0, 0);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Surface|Wind")
+    FVector4 To = FVector4(0, 0, 0, 0);
+    /** (服务器起点秒,过渡时长秒,起点相位周期,服务器与材质世界时差秒)。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Surface|Wind")
+    FVector4 Timing = FVector4(0, 0, 0, 0);
+    /** 稳定空间种子，范围0..65535；不由Surface生成或复制。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Surface|Wind")
+    int32 Seed = 2026;
+    /** 所有值必须有限且符合风合同；拒绝整包非法更新，不静默截断方向。 */
+    bool IsValid() const;
+    /** 比较全部端点/时基/种子，用于事件去重，不推进动画。 */
+    bool IsNearlyEqual(const FGamePlatformSurfaceWindTransition& Other, float Tolerance = KINDA_SMALL_NUMBER) const;
+};
+
 /**
  * 跨游戏通用的环境表面状态。
  *
@@ -61,6 +83,9 @@ struct GAMEPLATFORMSURFACECLIENT_API FGamePlatformSurfaceEnvironmentState
     /** 环境温度，单位摄氏度；只供材质表现使用，默认20摄氏度。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Surface", meta=(Units="Celsius"))
     float TemperatureCelsius = 20.0f;
+    /** 统一植物风端点；雨雪调用方合并完整状态时必须保留本字段。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Surface|Wind")
+    FGamePlatformSurfaceWindTransition Wind;
 
     /** 所有字段是否为有限数值；出现NaN/Inf时拒绝更新，避免污染全世界材质统一缓冲。 */
     bool IsFinite() const;
@@ -86,11 +111,11 @@ struct GAMEPLATFORMSURFACECLIENT_API FGamePlatformSurfaceUpdateResult
     UPROPERTY(BlueprintReadOnly, Category="Surface")
     int32 Revision = 0;
 
-    /** 本次成功写入材质参数集合的标量参数数量。 */
+    /** 本次成功写入材质参数集合的参数数量，包含标量和向量。 */
     UPROPERTY(BlueprintReadOnly, Category="Surface")
     int32 UpdatedParameterCount = 0;
 
-    /** 本次因参数缺失等原因未写入的标量参数数量。 */
+    /** 本次因参数缺失等原因未写入的参数数量，包含标量和向量。 */
     UPROPERTY(BlueprintReadOnly, Category="Surface")
     int32 FailedParameterCount = 0;
 

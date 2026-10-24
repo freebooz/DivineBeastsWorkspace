@@ -22,7 +22,9 @@ bool FGamePlatformWeatherState::IsValid() const
     return static_cast<uint8>(Type) <= static_cast<uint8>(EGamePlatformWeatherType::Blizzard) &&
         IsRatioValid(RainIntensity) && IsRatioValid(SnowIntensity) &&
         IsRatioValid(Wetness) && IsRatioValid(SnowAmount) && IsRatioValid(PuddleAmount) &&
-        IsRatioValid(FogIntensity) && IsRatioValid(WindIntensity) &&
+        IsRatioValid(FogIntensity) && IsRatioValid(WindIntensity) && IsRatioValid(WindGustStrength) &&
+        FMath::IsFinite(WindYawDegrees) && WindYawDegrees >= 0.f && WindYawDegrees < 360.f &&
+        FMath::IsFinite(WindGustFrequencyHz) && WindGustFrequencyHz >= 0.f && WindGustFrequencyHz <= 2.f &&
         FMath::IsFinite(TemperatureCelsius) && TemperatureCelsius >= -100.f && TemperatureCelsius <= 100.f;
 }
 
@@ -39,6 +41,10 @@ FGamePlatformWeatherState FGamePlatformWeatherState::Interpolate(
     Result.PuddleAmount = FMath::Lerp(From.PuddleAmount, To.PuddleAmount, Fraction);
     Result.FogIntensity = FMath::Lerp(From.FogIntensity, To.FogIntensity, Fraction);
     Result.WindIntensity = FMath::Lerp(From.WindIntensity, To.WindIntensity, Fraction);
+    Result.WindYawDegrees = FMath::Fmod(From.WindYawDegrees +
+        FMath::FindDeltaAngleDegrees(From.WindYawDegrees, To.WindYawDegrees) * Fraction + 360.f, 360.f);
+    Result.WindGustStrength = FMath::Lerp(From.WindGustStrength, To.WindGustStrength, Fraction);
+    Result.WindGustFrequencyHz = FMath::Lerp(From.WindGustFrequencyHz, To.WindGustFrequencyHz, Fraction);
     Result.TemperatureCelsius = FMath::Lerp(From.TemperatureCelsius, To.TemperatureCelsius, Fraction);
     return Result;
 }
@@ -55,6 +61,9 @@ FGamePlatformWeatherQuantizedState FGamePlatformWeatherQuantizedState::Encode(co
     Result.Puddle = EncodeRatio(State.PuddleAmount);
     Result.Fog = EncodeRatio(State.FogIntensity);
     Result.Wind = EncodeRatio(State.WindIntensity);
+    Result.WindYaw = static_cast<uint16>(FMath::RoundToInt(State.WindYawDegrees * (65536.f / 360.f)) & 65535);
+    Result.WindGust = EncodeRatio(State.WindGustStrength);
+    Result.WindGustMilliHz = static_cast<uint16>(FMath::RoundToInt(State.WindGustFrequencyHz * 1000.f));
     Result.TemperatureTenths = static_cast<int16>(FMath::RoundToInt(State.TemperatureCelsius * 10.f));
     return Result;
 }
@@ -70,6 +79,9 @@ FGamePlatformWeatherState FGamePlatformWeatherQuantizedState::Decode() const
     Result.PuddleAmount = DecodeRatio(Puddle);
     Result.FogIntensity = DecodeRatio(Fog);
     Result.WindIntensity = DecodeRatio(Wind);
+    Result.WindYawDegrees = static_cast<float>(WindYaw) * (360.f / 65536.f);
+    Result.WindGustStrength = DecodeRatio(WindGust);
+    Result.WindGustFrequencyHz = static_cast<float>(WindGustMilliHz) / 1000.f;
     Result.TemperatureCelsius = static_cast<float>(TemperatureTenths) / 10.f;
     return Result;
 }
@@ -80,6 +92,18 @@ FGamePlatformWeatherState FGamePlatformWeatherSnapshot::Sample(float ServerTimeS
     if (Revision <= 0 || TransitionSeconds <= 0.f) return Destination;
     const float Alpha = FMath::Clamp((ServerTimeSeconds - StartedAtServerSeconds) / TransitionSeconds, 0.f, 1.f);
     return FGamePlatformWeatherState::Interpolate(From.Decode(), Destination, Alpha);
+}
+
+float FGamePlatformWeatherSnapshot::SampleWindPhaseCycles(const float ServerTimeSeconds) const
+{
+    // 使用double积分，避免长时间运行后float乘积丢失周期小数。
+    const double Time = FMath::Max(0.0, static_cast<double>(ServerTimeSeconds) - StartedAtServerSeconds);
+    const double Duration = TransitionSeconds;
+    const double F0 = From.Decode().WindGustFrequencyHz, F1 = To.Decode().WindGustFrequencyHz;
+    const double Integral = Duration <= 0.0 ? F1 * Time : Time < Duration
+        ? F0 * Time + (F1 - F0) * Time * Time / (2.0 * Duration)
+        : (F0 + F1) * Duration * .5 + F1 * (Time - Duration);
+    return static_cast<float>(FMath::Fmod(Integral + WindPhaseAtStartCycles, 1.0));
 }
 
 bool FGamePlatformWeatherScheduleEntry::IsValid() const

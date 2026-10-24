@@ -3,6 +3,7 @@
 
 #include "Characters/DivineBeastsVillageWolf.h"
 #include "Characters/DivineBeastsVillageVampire.h"
+#include "Characters/DivineBeastsDeathDissolveComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/GameInstance.h"
@@ -143,6 +144,7 @@ void UDivineBeastsVillageWolfVisualWorldSubsystem::ApplyVisual(ADivineBeastsVill
     // Character网络平滑会用缓存的初始Mesh偏移重置模拟代理的位置；
     // 只设置RelativeLocation会使远端狼在下一次网络更新后回到胶囊中心并悬空。
     Wolf.CacheInitialMeshOffset(GroundedMeshOffset, MeshRotation);
+    UDivineBeastsDeathDissolveComponent::NotifyVisualsChanged(&Wolf);
     UE_LOG(LogTemp,Log,TEXT("VillageCreatureVisualApplied: 已按世界租约装配怪物模型与动画，Vampire=%d Scale=%.3f"),
         Wolf.IsA<ADivineBeastsVillageVampire>(), Visual.Scale);
 }

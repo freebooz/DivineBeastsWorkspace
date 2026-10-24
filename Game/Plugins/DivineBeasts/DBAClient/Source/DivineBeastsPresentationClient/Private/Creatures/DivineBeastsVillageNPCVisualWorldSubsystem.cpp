@@ -3,6 +3,7 @@
 
 #include "Animation/AnimInstance.h"
 #include "Characters/DivineBeastsVillageNPC.h"
+#include "Characters/DivineBeastsDeathDissolveComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/GameInstance.h"
@@ -103,6 +104,7 @@ void UDivineBeastsVillageNPCVisualWorldSubsystem::ApplyVisual(ADivineBeastsVilla
     if (!IsValid(Mesh) || !IsValid(Asset) || !IsValid(Animation)) return;
     Mesh->SetSkeletalMeshAsset(Asset);
     Mesh->SetAnimInstanceClass(Animation);
+    UDivineBeastsDeathDissolveComponent::NotifyVisualsChanged(&NPC);
     const FRotator Rotation(0.0f, -90.0f, 0.0f);
     const FVector Offset(0.0f, 0.0f, -NPC.GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
     Mesh->SetRelativeScale3D(FVector::OneVector);

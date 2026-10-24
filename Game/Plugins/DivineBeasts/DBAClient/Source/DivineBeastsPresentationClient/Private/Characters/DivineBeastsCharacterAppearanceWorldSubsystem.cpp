@@ -2,6 +2,8 @@
 #include "Characters/DivineBeastsCharacterAppearanceWorldSubsystem.h"
 
 #include "Characters/DivineBeastsCharacterAppearanceComponent.h"
+#include "Characters/DivineBeastsDeathDissolveComponent.h"
+#include "Components/GamePlatformCombatComponent.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
 
@@ -55,6 +57,12 @@ void UDivineBeastsCharacterAppearanceWorldSubsystem::EnsureAppearanceComponent(
     if (!World || World->GetNetMode() == NM_DedicatedServer
         || (World->WorldType != EWorldType::Game && World->WorldType != EWorldType::PIE)) return;
     ACharacter* Character = Cast<ACharacter>(Actor);
+    if(Character && Character->FindComponentByClass<UGamePlatformCombatComponent>() &&
+        !Character->FindComponentByClass<UDivineBeastsDeathDissolveComponent>())
+    {
+        auto* Death=NewObject<UDivineBeastsDeathDissolveComponent>(Character);
+        Character->AddInstanceComponent(Death);Death->RegisterComponent();
+    }
     if (!Character ||
         Character->FindComponentByClass<UDivineBeastsCharacterAppearanceComponent>())
     {

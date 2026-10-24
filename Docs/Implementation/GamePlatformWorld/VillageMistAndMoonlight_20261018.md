@@ -1,5 +1,11 @@
 # SSLM新手村薄雾与月光调整
 
+## 2026-10-24 临时强月光覆盖
+
+用户要求新手村临时改为月光，并明确“月光照明要强，能照亮场景”；在3.0 lux预览后，进一步指定主光调整为1。本次最终复用正式地图既有主光、天光和曝光Volume：主光1.0 lux、sRGB BED6F2、Pitch -32/Yaw -35、光源角1.2；天光0.65；Manual曝光Bias 2.5。此段取代下文历史照明值，不改当前雾参数、天气/停雪状态、地形、水体、道路、手工场景和出生点。作者工具增加保留雾及独立证据目录参数，只保存当前地图，其他任务未保存内容保持原状。
+
+通过直接Monolith/UE5.8保存并重载核对实际参数、非光照场景、雾及出生点，蕨类实例仍为7,238。场景比较排除引擎自动生成的`/PCG/DebugObjects/`诊断网格，不删除这些对象。证据和原地图备份位于`Saved/Validation/VillageMoonlight20261024`；`Main1ReloadVerification.json`及`StableHandoff.json`记录最终1.0主光的地图指纹，`StrongMoonlightOverview.png`及`ReloadVerification.json`仅为此前3.0主光的历史预览。尚未Cook/部署到运行客户端，最终1.0主光人工视觉、天气切换及GPU验收未完成。
+
 用户先要求增加新手村雾，随后明确“光照调整暗一些，月光照明”。最终按月夜方向执行，覆盖该地图在配色V3规范中的默认晨光方向；不修改其他世界的视觉预设。
 
 归属：`DBAWorldPack_Village/Content/Maps/L_Village_Start.umap`。通过Monolith MCP 0.23.0与锁定UE5.8编辑器原位保存；复用引擎原生渲染，不增加平台类型、客户端播放器、Niagara System、材质、天气权威或日夜循环。平台天气复制和Surface既有链路保持原职责。

@@ -8,6 +8,7 @@
 
 #include "Characters/DivineBeastsCharacterAppearanceCatalog.h"
 #include "Characters/DivineBeastsCharacterAppearanceProfile.h"
+#include "Characters/DivineBeastsDeathDissolveComponent.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -333,6 +334,7 @@ void UDivineBeastsCharacterAppearanceComponent::HandleVisualResourcesLoaded(
     }
 
     AppliedHeroDefinitionId = ExpectedHeroDefinitionId;
+    UDivineBeastsDeathDissolveComponent::NotifyVisualsChanged(Character);
     UE_LOG(LogTemp, Display, TEXT("WorldAppearance applied: Pawn=%s Local=%d Hero=%s Anim=%s"), *Character->GetName(), Character->IsLocallyControlled()?1:0, *ExpectedHeroDefinitionId.ToString(), *GetNameSafe(AnimClass));
 }
 

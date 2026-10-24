@@ -70,6 +70,11 @@ void ADivineBeastsCharacter::PossessedBy(AController* NewController)
 }
 void ADivineBeastsCharacter::OnRep_Controller()
 { Super::OnRep_Controller(); RefreshAbilityActorInfo(); }
+void ADivineBeastsCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
+{
+    Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+    PlayerStateChanged.Broadcast();
+}
 void ADivineBeastsCharacter::UnPossessed()
 {
     if (HasAuthority()) AITarget->SetAITargetEnabled(false);

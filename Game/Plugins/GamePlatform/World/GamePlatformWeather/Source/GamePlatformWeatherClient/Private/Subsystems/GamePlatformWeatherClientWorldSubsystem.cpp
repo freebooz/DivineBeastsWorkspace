@@ -107,6 +107,8 @@ void UGamePlatformWeatherClientWorldSubsystem::OnSnapshotReceived(
             !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
         GetWorld()->GetTimerManager().ClearTimer(TransitionTimer);
         ActiveSnapshot = FGamePlatformWeatherSnapshot();
+        ApplyWindSnapshot(ActiveSnapshot);
+        if (bClosing || SnapshotApplyGeneration != ApplyGeneration || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
         ApplyVisualState(FGamePlatformWeatherState());
         return;
     }
@@ -116,6 +118,8 @@ void UGamePlatformWeatherClientWorldSubsystem::OnSnapshotReceived(
     if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
         ActiveSnapshot.Revision != ReceivedRevision || !IsValid(GetWorld()) ||
         GetWorld()->bIsTearingDown) return;
+    ApplyWindSnapshot(Snapshot);
+    if (bClosing || SnapshotApplyGeneration != ApplyGeneration || ActiveSnapshot.Revision != ReceivedRevision) return;
     // 首帧按照服务器实际时间采样；取消/表现同步回调可能递归送来更新的快照。
     SampleAndApplyTransition(false);
     if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
@@ -186,6 +190,7 @@ void UGamePlatformWeatherClientWorldSubsystem::RefreshPresentationAfterContentAc
     // 内容包迟于OnRep加载时只刷新所属领域；不能因为SFX定义晚到
     // 就撤销、重建已经在播放的Niagara雨雪实例（反之亦然）。
     const int32 Channel = bVisual ? 0 : 1;
+    if (bVisual) ApplyWindSnapshot(ActiveSnapshot);
     const uint64 ApplyGeneration = SnapshotApplyGeneration;
     const FGamePlatformWeatherState Current =
         ActiveSnapshot.Sample(GetEstimatedServerTimeSeconds());
@@ -218,6 +223,27 @@ void UGamePlatformWeatherClientWorldSubsystem::ApplyVisualState(const FGamePlatf
     // 派发稳定值快照，委托内部再次切换天气时不更改正在发出的数据。
     const FGamePlatformWeatherState PublishedState = LastVisualState;
     VisualChanged.Broadcast(PublishedState);
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::ApplyWindSnapshot(const FGamePlatformWeatherSnapshot& Snapshot)
+{
+    UWorld* World = GetWorld();
+    if (bClosing || !IsValid(World) || World->bIsTearingDown) return;
+    if (auto* Surface = IGamePlatformSurfaceService::Get(*World))
+    {
+        auto Visual = Surface->GetEnvironmentState();
+        Visual.Wind = FGamePlatformSurfaceWindTransition();
+        if (Snapshot.Revision > 0)
+        {
+            const auto From = Snapshot.From.Decode(), To = Snapshot.To.Decode();
+            Visual.Wind.From = FVector4(From.WindYawDegrees, From.WindIntensity, From.WindGustStrength, From.WindGustFrequencyHz);
+            Visual.Wind.To = FVector4(To.WindYawDegrees, To.WindIntensity, To.WindGustStrength, To.WindGustFrequencyHz);
+            Visual.Wind.Timing = FVector4(Snapshot.StartedAtServerSeconds, Snapshot.TransitionSeconds,
+                Snapshot.WindPhaseAtStartCycles, GetEstimatedServerTimeSeconds() - World->GetTimeSeconds());
+            Visual.Wind.Seed = Snapshot.WindSeed;
+        }
+        Surface->ApplyEnvironmentState(Visual);
+    }
 }
 
 void UGamePlatformWeatherClientWorldSubsystem::ConfigureAtmosphere(const FGamePlatformWeatherAtmosphereProfile& Profile)
