@@ -8,10 +8,10 @@ import json
 import unreal
 
 HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar")
-# 2026-10-24性能/观感调速：仅提高恒定轴向速度，保留50米射程、连发和螺旋合同。
-EXPECTED = {"Fireball": (4000.0, 0.0, 0.0, 1, 0.0),
-            "Frostbolt": (4000.0, 0.0, 0.0, 1, 0.0),
-            "ArcaneMissiles": (4000.0, 18.0, 3.0, 3, 0.2)}
+# 2026-10-25用户指定默认30米/秒，保留50米射程、连发和螺旋合同。
+EXPECTED = {"Fireball": (3000.0, 0.0, 0.0, 1, 0.0),
+            "Frostbolt": (3000.0, 0.0, 0.0, 1, 0.0),
+            "ArcaneMissiles": (3000.0, 18.0, 3.0, 3, 0.2)}
 ROOT = "/Game/Development/DivineBeasts/Abilities/MagicTests"
 
 def identifier(value):
@@ -19,7 +19,7 @@ def identifier(value):
     return str(value.get_editor_property('Namespace'))+'.'+str(value.get_editor_property('Name'))+'@'+str(value.get_editor_property('LogicalVersion'))
 
 
-def main():
+def main(report_path=None):
     """全部收集错误后抛出；独占Saved报告不包含密码/凭据，也不覆盖既有导入报告。"""
     project = Path(unreal.Paths.get_project_file_path()).resolve()
     if project.name != "DivineBeastsArena.uproject":
@@ -121,7 +121,7 @@ def main():
             elif definition.get_editor_property('NiagaraSystem')!=unreal.load_asset(path): errors.append('VFX软系统引用缺失或指向其他资源: '+path)
     report = {"Project": str(project), "Inspected": inspected, "Errors": errors,
               "Passed": not errors, "NetworkVerified": False, "ManualVisualAccepted": False}
-    output = project.parents[1] / "Saved/Validation/MagicHUD20261012/MagicAssets.json"
+    output = Path(report_path) if report_path else project.parents[1] / "Saved/Validation/MagicHUD20261012/MagicAssets.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     if errors:

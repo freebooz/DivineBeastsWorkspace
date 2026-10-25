@@ -2,6 +2,8 @@
 
 日期：2026-10-25。工程：`Game/DivineBeastsArena.uproject`，锁定UE5.8.0。状态：**三套隔离原型、20张固定机位原图、12场性能采样和最终独立进程冷重载已完成；P5人工审核及正式合入待批准。正式地图仍保持原阴天。**
 
+后续直接授权的地面泛白修正只将正式地图曝光补偿由+2.5 EV调整到+1.0 EV，详见`VillageOvercastLighting_20261025.md`及`Saved/Validation/VillageGroundExposure20261025`。本报告P0哈希和三套隔离副本属于修正前的历史基线，不再代表当前正式地图字节；晨间光雾副本仍未合入。
+
 本任务依据用户附件《神兽联盟新手村光照与环境雾优化及 Monolith MCP 自动配置调研实施提示词 V1.0》。附件原文位于 `C:/Users/Administrator/.codex/attachments/1571ed80-31a7-4383-b700-436008072411/已粘贴的文本.txt`。本轮目标是清晨7:00—9:00的艺术氛围，不建立天文日夜系统，不复制参考图的阴森浓雾风格。色彩继续遵守[SSLM配色V3](../Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)，不修改原材质/贴图RGB或使用全屏青色滤镜。
 
 证据总目录：`Saved/Validation/VillageMorningEnvironment20261025`。下文“原生通过”仅指所列对象、字段与版本的真实写入/回读，不代表联机、Cook、GPU预算或人工视觉通过。旧失败记录保留，不以外层请求成功覆盖内部Python异常。

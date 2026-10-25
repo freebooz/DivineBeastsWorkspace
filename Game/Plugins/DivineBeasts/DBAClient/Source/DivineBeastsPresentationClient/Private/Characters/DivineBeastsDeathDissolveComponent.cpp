@@ -1,4 +1,5 @@
 #include "Characters/DivineBeastsDeathDissolveComponent.h"
+#include "Characters/DivineBeastsVillageWolf.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "GameFramework/Actor.h"
 
@@ -21,7 +22,15 @@ void UDivineBeastsDeathDissolveComponent::HandleStateChanged()
     if(!IsValid(State)||!IsValid(Owner)||Owner->IsActorBeingDestroyed()||State->GetOwner()!=Owner||
         State->GetWorld()!=GetWorld())return;
     if(State->IsCombatDead()&&State->GetCombatAvatarGeneration()>0)
-        StartDissolve(State->GetCombatAvatarGeneration(),FGamePlatformMeshDissolveSettings());
+    {
+        FGamePlatformMeshDissolveSettings Settings;
+        if(Owner->IsA<ADivineBeastsVillageWolf>())
+        {
+            Settings.DelaySeconds=ADivineBeastsVillageWolf::DeathPresentationHoldSeconds;
+            Settings.DurationSeconds=ADivineBeastsVillageWolf::DeathDissolveDurationSeconds;
+        }
+        StartDissolve(State->GetCombatAvatarGeneration(),Settings);
+    }
     else ResetDissolve();
 }
 void UDivineBeastsDeathDissolveComponent::NotifyVisualsChanged(AActor* Actor)

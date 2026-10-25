@@ -38,7 +38,7 @@ public:
     EDivineBeastsPlaceholderAbilityMode PlaceholderMode =
         EDivineBeastsPlaceholderAbilityMode::Passive;
 
-    /** 服务器恒速默认4000、允许3000..5000厘米/秒，客户端仅展示；射程与跟踪仍由平台权威弹体执行。 */
+    /** 服务器恒速默认3000、允许3000..5000厘米/秒，客户端仅展示；射程与跟踪仍由平台权威弹体执行。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder")
     FGamePlatformCombatProjectileMotion ProjectileMotion;
 

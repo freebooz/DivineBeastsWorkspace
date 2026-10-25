@@ -23,6 +23,13 @@ class DIVINEBEASTSCHARACTERSRUNTIME_API ADivineBeastsVillageWolf : public ADivin
 public:
     ADivineBeastsVillageWolf();
 
+    /** 本项目怪物死亡后保留完整外观3秒，再用1.5秒消散；双端共用时间合同。 */
+    static constexpr float DeathPresentationHoldSeconds = 3.0f;
+    static constexpr float DeathDissolveDurationSeconds = 1.5f;
+    /** 服务器尸体寿命覆盖完整表现，并留0.5秒复制余量；不改变14秒补充怪物的节奏。 */
+    static constexpr float DeathCorpseLifetimeSeconds =
+        DeathPresentationHoldSeconds + DeathDissolveDurationSeconds + 0.5f;
+
     /** 仅服务端游戏线程、已Possess且组件有效时初始化；失败绝不产生可攻击但不可受伤的怪物。 */
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="SSLM|VillageWolf")
     bool AuthorityInitializeWolf(float MaxHealth);

@@ -17,11 +17,11 @@ MAGIC = ROOT + "/MagicTests"
 # 恒速、50米射程、伤害/冷却及连发合同不变；2026-10-25火球/冰箭默认0.5秒起手由原生共享常量拥有。
 SPELLS = {
     "Fireball": {"Slot": "Active01", "NameZh": "火焰弹（开发测试）", "Damage": 40, "Cost": 0, "Cooldown": 2,
-                 "Speed": 4000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
+                 "Speed": 3000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
     "Frostbolt": {"Slot": "Active02", "NameZh": "寒冰箭（开发测试）", "Damage": 30, "Cost": 0, "Cooldown": 1.5,
-                  "Speed": 4000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
+                  "Speed": 3000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
     "ArcaneMissiles": {"Slot": "Ultimate", "NameZh": "螺旋奥术飞弹（开发测试）", "Damage": 12, "Cost": 0, "Cooldown": 3,
-                       "Speed": 4000, "Radius": 18, "Turns": 3, "Count": 3, "Interval": 0.2},
+                       "Speed": 3000, "Radius": 18, "Turns": 3, "Count": 3, "Interval": 0.2},
 }
 
 

@@ -29,7 +29,7 @@ def main(report_name='MotionAudit.json'):
                 'HelixTurnsPerSecond', 'InitialPhaseTurns')]
             actual += [int(cdo.get_editor_property('ProjectileCount')),
                        float(cdo.get_editor_property('ProjectileIntervalSeconds'))]
-            expected = [4000., 5000., 8., radius, turns, 0., count, interval]
+            expected = [3000., 5000., 8., radius, turns, 0., count, interval]
             passed = (cdo.get_editor_property('PlaceholderMode') == mode and
                       all(abs(a-b) < .0001 for a, b in zip(actual, expected)))
             record = {'asset': path, 'motion_count_interval': actual,

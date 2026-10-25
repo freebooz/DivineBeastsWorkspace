@@ -34,7 +34,6 @@
 namespace
 {
     /** 原有死亡退场与刷新延迟不变，狼群上限和位置间距统一由项目散布策略管理。 */
-    constexpr float WolfCorpseLifetimeSeconds = 4.0f;
     constexpr float WolfRespawnDelaySeconds = 14.0f;
 }
 
@@ -603,7 +602,7 @@ void UDivineBeastsVillageWolfWorldSubsystem::HandleWolfDeath(const FGamePlatform
     auto* Wolf=Cast<ADivineBeastsVillageWolf>(Event.TargetActor.Get());
     if (bClosing || !IsValid(Wolf) || !OwnedWolves.Contains(Wolf) ||
         Event.EventType!=EGamePlatformCombatEventType::Death || !Wolf->GetGamePlatformCombatComponent()->IsCombatDead()) return;
-    Wolf->SetLifeSpan(WolfCorpseLifetimeSeconds);
+    Wolf->SetLifeSpan(ADivineBeastsVillageWolf::DeathCorpseLifetimeSeconds);
     // 停止尚未执行的初始批次，避免14秒重生冷却期间提前补满。
     GetWorld()->GetTimerManager().ClearTimer(SpawnBatchTimer);
     FApprovedScope Scope;

@@ -58,15 +58,15 @@ struct FExpectedMagic
     float Interval, HelixRadius, HelixTurns; // 连发间隔秒、半径厘米、频率转/秒。
 };
 
-// 2026-10-24快速恒速配置；独立核对已保存定义，施法、射程、伤害和连发期望保持不变。
+// 2026-10-25默认30米/秒恒速配置；独立核对已保存定义，施法、射程、伤害和连发期望保持不变。
 static const FExpectedMagic ExpectedMagic[] =
 {
     {TEXT("Fireball"), TEXT("dba.ability.rat_dev_fireball@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Active01"),
-        EDivineBeastsDevelopmentMagicKind::Fireball, 40.f, 0.f, 2.f, 4000.f, 1, 0.f, 0.f, 0.f},
+        EDivineBeastsDevelopmentMagicKind::Fireball, 40.f, 0.f, 2.f, 3000.f, 1, 0.f, 0.f, 0.f},
     {TEXT("Frostbolt"), TEXT("dba.ability.rat_dev_frostbolt@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Active02"),
-        EDivineBeastsDevelopmentMagicKind::Frostbolt, 30.f, 0.f, 1.5f, 4000.f, 1, 0.f, 0.f, 0.f},
+        EDivineBeastsDevelopmentMagicKind::Frostbolt, 30.f, 0.f, 1.5f, 3000.f, 1, 0.f, 0.f, 0.f},
     {TEXT("ArcaneMissiles"), TEXT("dba.ability.rat_dev_arcanemissiles@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Ultimate"),
-        EDivineBeastsDevelopmentMagicKind::ArcaneMissiles, 12.f, 0.f, 3.f, 4000.f, 3, 0.2f, 18.f, 3.f}
+        EDivineBeastsDevelopmentMagicKind::ArcaneMissiles, 12.f, 0.f, 3.f, 3000.f, 3, 0.2f, 18.f, 3.f}
 };
 
 /** 定位已保存对象或蓝图生成类，仅构造软路径；不加载、注册、创建或写入资产。 */
@@ -127,6 +127,7 @@ public:
             ASC->AbilityCommittedCallbacks.Remove(CommitHandle);
             ASC->OnGameplayEffectAppliedDelegateToSelf.Remove(EffectHandle);
             if (AbilityHandle.IsValid()) { ASC->CancelAbilityHandle(AbilityHandle); ASC->ClearAbility(AbilityHandle); }
+            if (PrimaryMissileHandle.IsValid()) { ASC->CancelAbilityHandle(PrimaryMissileHandle); ASC->ClearAbility(PrimaryMissileHandle); }
         }
         // 身份组件拥有自己的 Hero 租约；先结束借用者，不能提前释放本测试的预热需求。
         if (Pawn.IsValid()) { Pawn->Destroy(); }
@@ -173,7 +174,8 @@ public:
             { Test->AddError(TEXT("真实Hero初始化未Ready，拒绝伪造服务器GAS夹具")); return true; }
             if (Scenario == EScenario::GameplayEffects) { CheckGameplayEffects(); return true; }
             if (Scenario == EScenario::FreshSpawnInput) { CheckFreshSpawnInput(); return true; }
-            if (Scenario == EScenario::Healing) { CheckPrimaryHealing(); return true; }
+            if (Scenario == EScenario::Healing)
+            { bCastStarted = BeginPrimaryHealing(); return !bCastStarted; }
             if (Scenario == EScenario::TargetRange)
             { bCastStarted = BeginSelectedTargetRange(); return !bCastStarted; }
             if (IsDefaultCastWindupScenario())
@@ -184,6 +186,12 @@ public:
         }
         World->Tick(LEVELTICK_All, 0.05f);
         ++FlightFrames;
+        if (Scenario == EScenario::Healing)
+        {
+            if (FlightFrames == 9) Test->TestEqual(TEXT("按键1起手0.45秒尚无权威弹体"), Projectiles.Num(), 0);
+            if (FlightFrames < 11) return false;
+            CheckPrimaryHealing(); return true;
+        }
         if (Scenario == EScenario::TargetRange)
         {
             // TimerManager按真实引擎帧去重；不能在同一Automation帧内循环Tick伪造0.6秒连发。
@@ -201,13 +209,13 @@ public:
         }
         if (Scenario == EScenario::Burst && FlightFrames == 1)
         {
-            // 第一枚初相位为0：恒速4000厘米/秒在0.05秒前进200厘米，横向螺旋合同保持不变。
+            // 第一枚初相位为0：恒速3000厘米/秒在0.05秒前进150厘米，横向螺旋合同保持不变。
             // 期望值手算于计划的18厘米/3转每秒，不调用待测 PositionAt 或 Motion 来生成期望。
             if (!Projectiles.IsEmpty() && Projectiles[0].Actor.IsValid())
             {
                 const FVector Displacement = Projectiles[0].Actor->GetActorLocation() - Projectiles[0].Origin;
                 Test->TestTrue(TEXT("首枚弹体真实沿螺旋运动而非只播放尾迹"),
-                    Displacement.Equals(FVector(200.0, -7.419865, 14.562306), 0.1));
+                    Displacement.Equals(FVector(150.0, -7.419865, 14.562306), 0.1));
             }
             else { Test->AddError(TEXT("螺旋运动断言缺少真实存活的第一枚弹体")); }
         }
@@ -285,10 +293,10 @@ private:
     bool CheckAssetContracts()
     {
         bool bValid = true;
-        bValid &= Test->TestEqual(TEXT("新建开发法术默认恒速4000厘米/秒"),
-            GetDefault<UDivineBeastsDevelopmentMagicDefinition>()->ProjectileMotion.SpeedCmPerSecond, 4000.f);
-        bValid &= Test->TestEqual(TEXT("新建正式占位法术默认恒速4000厘米/秒"),
-            GetDefault<UDivineBeastsPlaceholderGameplayAbility>()->ProjectileMotion.SpeedCmPerSecond, 4000.f);
+        bValid &= Test->TestEqual(TEXT("新建开发法术默认恒速3000厘米/秒"),
+            GetDefault<UDivineBeastsDevelopmentMagicDefinition>()->ProjectileMotion.SpeedCmPerSecond, 3000.f);
+        bValid &= Test->TestEqual(TEXT("新建正式占位法术默认恒速3000厘米/秒"),
+            GetDefault<UDivineBeastsPlaceholderGameplayAbility>()->ProjectileMotion.SpeedCmPerSecond, 3000.f);
         for (int32 Index = 0; Index < UE_ARRAY_COUNT(ExpectedMagic); ++Index)
         {
             const auto& Expected = ExpectedMagic[Index];
@@ -416,43 +424,52 @@ private:
      * 验证20%目标最大生命、上限、0气势、10秒GAS冷却、敌方不获治疗，以及死亡/超距/旧代次拒绝且不自疗。
      * 关系替身不进入生产；竞技Roster桥另由真实装配负责。本测试不声称联机/UI/VFX已经验收。
      */
-    void CheckPrimaryHealing()
+    bool BeginPrimaryHealing()
     {
         UWorld* World = Instance->GetWorld();
         UClass* HealingClass = Cast<UClass>(FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/GA_DBA_Rat_PlaceholderPrimary.GA_DBA_Rat_PlaceholderPrimary_C")).ResolveObject());
         const auto* Ability = HealingClass ? HealingClass->GetDefaultObject<UDivineBeastsPlaceholderGameplayAbility>() : nullptr;
-        if (!Test->TestNotNull(TEXT("已迁移真实Primary GA"), Ability)) return;
+        if (!Test->TestNotNull(TEXT("已迁移真实Primary GA"), Ability)) return false;
         if (!Test->TestEqual(TEXT("稳定Primary身份追加治疗模式"), Ability->PlaceholderMode, EDivineBeastsPlaceholderAbilityMode::Healing) ||
-            !Test->TestNotNull(TEXT("Primary真实冷却GE"), Ability->GetCooldownGameplayEffect())) return;
+            !Test->TestNotNull(TEXT("Primary真实冷却GE"), Ability->GetCooldownGameplayEffect())) return false;
         Test->TestNotNull(TEXT("治疗使用独立能量成本GE"), Ability->GetCostGameplayEffect());
-        const FGameplayTag CooldownTag = FGameplayTag::RequestGameplayTag(TEXT("DivineBeasts.Placeholder.Cooldown.Primary"));
-        auto* SourceCombat = Pawn->GetGamePlatformCombatComponent();
         auto* Eligibility = Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>();
         Eligibility->SetServerPlayerActive(true);
         ASC->SetNumericAttributeBase(UDivineBeastsMomentumAttributeSet::GetMomentumAttribute(), 0.f);
         const auto* Set = Cast<UGamePlatformAbilitySetDefinition>(FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/DA_DBA_Rat_PlaceholderAbilitySet.DA_DBA_Rat_PlaceholderAbilitySet")).ResolveObject());
-        if (!Test->TestNotNull(TEXT("真实技能授权集"), Set)) return;
+        if (!Test->TestNotNull(TEXT("真实技能授权集"), Set)) return false;
         const FGameplayTag HealingInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot3"));
         const FGameplayTag MissileInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Primary"));
         const auto* HealGrant = Set->Abilities.FindByPredicate([&](const auto& G) { return G.InputTag == HealingInput; });
         const auto* MissileGrant = Set->Abilities.FindByPredicate([&](const auto& G) { return G.InputTag == MissileInput; });
-        if (!Test->TestNotNull(TEXT("数字5真实治疗授权"), HealGrant) || !Test->TestNotNull(TEXT("数字1真实飞弹授权"), MissileGrant)) return;
-        if (!Test->TestTrue(TEXT("数字5保留原治疗类"), HealGrant->AbilityClass.Get() == HealingClass)) return;
+        if (!Test->TestNotNull(TEXT("数字5真实治疗授权"), HealGrant) || !Test->TestNotNull(TEXT("数字1真实飞弹授权"), MissileGrant)) return false;
+        if (!Test->TestTrue(TEXT("数字5保留原治疗类"), HealGrant->AbilityClass.Get() == HealingClass)) return false;
         const auto* MissileClass = MissileGrant->AbilityClass.Get();
         const auto* MissileCDO = MissileClass ? Cast<UDivineBeastsPlaceholderGameplayAbility>(MissileClass->GetDefaultObject()) : nullptr;
-        if (!Test->TestNotNull(TEXT("定向飞弹真实类已预热"), MissileCDO)) return;
+        if (!Test->TestNotNull(TEXT("定向飞弹真实类已预热"), MissileCDO)) return false;
         Test->TestEqual(TEXT("独立定向飞弹表现语义"), MissileCDO->PresentationStyleOverride, FName(TEXT("DBA.Development.DirectedMissile")));
         LocalInputPlayer.Reset(NewObject<ULocalPlayer>(GEngine)); Controller->SetPlayer(LocalInputPlayer.Get());
         FGameplayAbilitySpec HealSpec(HealingClass, 1); HealSpec.GetDynamicSpecSourceTags().AddTag(HealingInput);
         AbilityHandle = ASC->GiveAbility(HealSpec);
         FGameplayAbilitySpec MissileSpec(MissileGrant->AbilityClass.Get(), 1); MissileSpec.GetDynamicSpecSourceTags().AddTag(MissileInput);
-        const auto MissileHandle = ASC->GiveAbility(MissileSpec);
-        if (!InitializeBurstTargets()) return;
+        PrimaryMissileHandle = ASC->GiveAbility(MissileSpec);
+        if (!InitializeBurstTargets()) return false;
         Pawn->SetActorRotation(FRotator(0, 90, 0));
         SpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateRaw(this, &FRealMagicCommand::ObserveProjectile));
         Test->TestTrue(TEXT("按键1平台输入受理"), ASC->AbilityInputPressed(MissileInput, ASC->GetInputToken()).IsSuccess());
         ASC->ProcessAbilityInput(); ASC->AbilityInputReleased(MissileInput, ASC->GetInputToken());
-        Test->TestEqual(TEXT("按键1只创建一枚权威弹体"), Projectiles.Num(), 1);
+        Test->TestEqual(TEXT("按键1真实Fireball模式在起手开始时尚未出弹"), Projectiles.Num(), 0);
+        return true;
+    }
+
+    /** 跨真实自动化帧推进0.55秒后检查出弹，再执行既有治疗断言；不在同帧循环Tick伪造Timer。 */
+    void CheckPrimaryHealing()
+    {
+        UWorld* World = Instance->GetWorld();
+        auto* SourceCombat = Pawn->GetGamePlatformCombatComponent();
+        const FGameplayTag CooldownTag = FGameplayTag::RequestGameplayTag(TEXT("DivineBeasts.Placeholder.Cooldown.Primary"));
+        const FGameplayTag HealingInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot3"));
+        Test->TestEqual(TEXT("按键1起手0.55秒只创建一枚权威弹体"), Projectiles.Num(), 1);
         if (Projectiles.Num()==1)
         {
             Test->TestEqual(TEXT("弹体复制正确表现身份"), Projectiles[0].Facts.PresentationStyleId, FName(TEXT("DBA.Development.DirectedMissile")));
@@ -471,7 +488,7 @@ private:
         if (FrozenTarget.IsValid()) FrozenTarget->Destroy();
         if (AlternateTarget.IsValid()) AlternateTarget->Destroy();
         FrozenTarget.Reset(); AlternateTarget.Reset();
-        ASC->CancelAbilityHandle(MissileHandle); ASC->ClearAbility(MissileHandle);
+        ASC->CancelAbilityHandle(PrimaryMissileHandle); ASC->ClearAbility(PrimaryMissileHandle); PrimaryMissileHandle = FGameplayAbilitySpecHandle();
         const auto ClearCooldown = [&]()
         { ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(CooldownTag)); };
         const auto SetHealth = [](UGamePlatformAbilitySystemComponent* System, float Health)
@@ -758,7 +775,12 @@ private:
             {
                 Projectiles[Index].Facts = Facts;
                 if (Facts.bStarted && Projectiles[Index].StartedWorldSeconds<0)
+                {
                     Projectiles[Index].StartedWorldSeconds=SourceProjectile->GetWorld()->GetTimeSeconds();
+                    // 此输入回归在0.55秒检查真实起射与第一个运动步，暂停自有Actor的自动Tick，
+                    // 防止跨帧等待后已发生的合法转向污染起射断言；其余运动用例保持正常World Tick。
+                    if (Scenario == EScenario::Healing) SourceProjectile->SetActorTickEnabled(false);
+                }
             });
         if (Scenario == EScenario::SpawnStaleSource && !bReentered)
         {
@@ -802,7 +824,7 @@ private:
             TargetASC->RegisterComponent(); Combat->RegisterComponent(); TargetASC->InitAbilityActorInfo(Target, Target);
             return Target;
         };
-        // 改选回归使用50米范围内的远目标：4000厘米/秒飞行0.6秒仍未自然命中，才能逐枚检查冻结选择。
+        // 改选回归使用50米范围内的远目标：3000厘米/秒飞行0.6秒仍未自然命中，才能逐枚检查冻结选择。
         // 其他场景保留原近目标，以继续覆盖取消、销毁、治疗与首段转弯。
         const float SideDistance = Scenario == EScenario::TargetSelectionSwitch ? 4500.f : 500.f;
         FrozenTarget = SpawnTarget(FVector(1000, SideDistance, 1000));
@@ -1088,6 +1110,7 @@ private:
     UClass* CostClass = nullptr;
     UClass* CooldownClass = nullptr;
     FGameplayAbilitySpecHandle AbilityHandle;
+    FGameplayAbilitySpecHandle PrimaryMissileHandle; // 治疗回归跨帧借用的真实数字1授权，由同一夹具收回。
     FGameplayTagContainer WindupCooldownTags; // 起手场景借用的真实冷却标签值，跨潜伏帧不持有Ability/CDO裸引用。
     FDelegateHandle SpawnHandle, CommitHandle, EffectHandle;
     TArray<FObservedProjectile> Projectiles;

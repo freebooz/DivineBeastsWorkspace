@@ -26,11 +26,11 @@ HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
 SLOTS = (
     ("Primary", "花瓣绽放", "PRIMARY", "SLOT3", 0, 0, 10, 2000, 0, 0, 1, 0),
     ("Passive", "被动技能（占位）", "PASSIVE", "", 0, 0, 0, 0, 0, 0, 1, 0),
-    # 2026-10-24用户要求快速飞行：厘米/秒恒速，不增加起飞加速阶段；其它平衡参数沿用原值。
-    ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 5000, 4000, 0, 1, 0),
-    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 5000, 4000, 0, 1, 0),
-    ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 5000, 4000, 18, 3, .2),
-    ("DirectedMissile", "定向飞弹", "ACTIVE", "PRIMARY", 40, 0, 2, 5000, 4000, 0, 1, 0),
+    # 2026-10-25用户指定默认30米/秒恒速；其它平衡参数沿用原值。
+    ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 5000, 3000, 0, 1, 0),
+    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 5000, 3000, 0, 1, 0),
+    ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 5000, 3000, 18, 3, .2),
+    ("DirectedMissile", "定向飞弹", "ACTIVE", "PRIMARY", 40, 0, 2, 5000, 3000, 0, 1, 0),
 )
 MAGIC_SLOTS = ("Fireball", "Frostbolt", "ArcaneMissiles", "DirectedMissile")
 COOLDOWNS = ("Primary",) + MAGIC_SLOTS
