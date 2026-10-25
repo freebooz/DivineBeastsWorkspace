@@ -69,17 +69,13 @@ def audit(stage):
     if not collection:
         issues.append('缺少真实平台MPC')
     else:
-        scalars = {str(p.get_editor_property('parameter_name')): p.get_editor_property('default_value')
-                   for p in collection.get_editor_property('scalar_parameters')}
-        vectors = {str(p.get_editor_property('parameter_name')): p.get_editor_property('default_value')
-                   for p in collection.get_editor_property('vector_parameters')}
-        if len(scalars) != 9 or scalars.get(contract.WIND_SCALAR) != 2026.:
-            issues.append('风标量/原八标量合同不完整')
-        if set(vectors) != set(contract.WIND_VECTORS):
-            issues.append('风From/To/Timing向量合同不完整')
-        for name, value in vectors.items():
-            if any(getattr(value, axis) != 0. for axis in ('r', 'g', 'b', 'a')):
-                issues.append('风向量默认值不为关闭状态: ' + name)
+        scalars = [(str(p.get_editor_property('parameter_name')), p.get_editor_property('default_value'))
+                   for p in collection.get_editor_property('scalar_parameters')]
+        vectors = []
+        for p in collection.get_editor_property('vector_parameters'):
+            value = p.get_editor_property('default_value')
+            vectors.append((str(p.get_editor_property('parameter_name')), tuple(getattr(value, axis) for axis in ('r', 'g', 'b', 'a'))))
+        issues.extend(contract.validate_mpc_records(scalars, vectors))
     required = [contract.GLOBAL_FUNCTION, contract.GENERIC_FUNCTION]
     if stage != 'PlatformContract':
         required += [contract.ST9_FUNCTION, contract.ST9_MASTER]
@@ -92,6 +88,32 @@ def audit(stage):
             assets[path] = asset
             if u.EditorAssetLibrary.get_metadata_tag(asset, 'UnifiedWindState') != 'GraphAuthored':
                 issues.append('资产作者未形成完整图: ' + path)
+    for path, expected_outputs, expected_code in (
+            (contract.GLOBAL_FUNCTION, {'DirectionWS', 'Strength', 'Phase', 'ServerTimeSeconds'}, contract.GLOBAL_STATE_HLSL),
+            (contract.GENERIC_FUNCTION, {'WorldPositionOffset'}, contract.GENERIC_WPO_HLSL)):
+        function = assets.get(path)
+        if not function:
+            continue
+        outputs = [e for e in author.expressions(function) if isinstance(e, u.MaterialExpressionFunctionOutput)]
+        if len(outputs) != len(expected_outputs) or {str(e.get_editor_property('output_name')) for e in outputs} != expected_outputs:
+            issues.append('函数必要输出不完整: ' + path)
+        if any(not any(author.LIB.get_inputs_for_material_function_expression(function, e)) for e in outputs):
+            issues.append('函数输出断线: ' + path)
+        tree = function_tree(function)
+        custom_nodes = [e for owner, e in tree if owner == function and isinstance(e, u.MaterialExpressionCustom)
+                        and e.get_editor_property('code') == expected_code]
+        if len(custom_nodes) != 1:
+            issues.append('函数真实输出链缺少唯一对应实现: ' + path)
+        elif any(not value for value in author.LIB.get_inputs_for_material_function_expression(function, custom_nodes[0])):
+            issues.append('函数核心计算输入断线: ' + path)
+        if path == contract.GLOBAL_FUNCTION:
+            names = [str(e.get_editor_property('parameter_name')) for owner, e in tree if owner == function
+                     and isinstance(e, u.MaterialExpressionCollectionParameter)
+                     and e.get_editor_property('collection') == collection]
+            if set(names) != set((*contract.WIND_VECTORS, contract.WIND_SCALAR)):
+                issues.append('全局函数没有实际消费完整MPC风合同')
+        elif not has_global_wind(function):
+            issues.append('普通植物函数未消费共享风')
     if contract.ST9_MASTER in assets:
         master = assets[contract.ST9_MASTER]
         if not has_global_wind(master):
@@ -106,6 +128,7 @@ def audit(stage):
                       and e.get_editor_property('code') == contract.FINITE_WEIGHT_HLSL]
             if len(guards) < 3:
                 issues.append('ST9数值权重有限值保护缺失')
+    runtime_materials = set()
     if stage in ('Coverage', 'ColdReload'):
         baseline_path = author.EVIDENCE / 'SceneProtection.json'
         scene = author.scene_snapshot()
@@ -118,17 +141,26 @@ def audit(stage):
                 if not contract.is_plant_mesh(component['mesh']):
                     continue
                 mesh = u.load_asset(component['mesh'])
-                if mesh.get_editor_property('nanite_settings').get_editor_property('enabled'):
-                    issues.append('需额外核对Nanite覆盖材质，当前不宣称已覆盖: ' + component['mesh'])
+                is_nanite = mesh.get_editor_property('nanite_settings').get_editor_property('enabled')
                 paths = set(component['materials'])
                 paths.update(slot.get_editor_property('material_interface').get_path_name()
                              for slot in mesh.get_editor_property('static_materials')
                              if slot.get_editor_property('material_interface'))
+                runtime_materials.update(p.split('.')[0] for p in paths if p)
                 for path in paths:
                     material = u.load_asset(path) if path else None
                     parent = material.get_editor_property('parent') if isinstance(material, u.MaterialInstanceConstant) else material
                     if not isinstance(parent, u.Material) or not has_global_wind(parent):
                         issues.append('植物材质漏接: ' + str(path))
+                    if is_nanite and material:
+                        override = material.get_nanite_overide_material()
+                        effective = override or material
+                        root = effective.get_editor_property('parent') if isinstance(effective, u.MaterialInstanceConstant) else effective
+                        if not isinstance(root, u.Material) or not has_global_wind(root):
+                            issues.append('Nanite真实覆盖材质漏接风: ' + str(path))
+                        bound = u.GamePlatformSurfaceMaterialAuthoringLibrary.get_effective_material_wpo_bound(effective)
+                        if bound <= 0.:
+                            issues.append('Nanite植物未设置实际WPO上限: ' + str(path))
     if stage == 'ColdReload':
         saved = json.loads((author.EVIDENCE / 'SavedOwnedAssets.json').read_text(encoding='utf-8'))
         if saved.get('author_pid') == os.getpid() or 'author_pid' not in saved:
@@ -139,6 +171,8 @@ def audit(stage):
     report = {'stage': stage, 'status': 'FAIL' if issues else 'PASS', 'issues': sorted(set(issues)),
               'editor_pid': os.getpid(), 'assets_found': sorted(assets),
               'shader_compile_verified': False, 'gpu_verified': False, 'manual_visual_accepted': False}
+    if stage in ('Coverage', 'ColdReload'):
+        report['runtime_materials'] = sorted(runtime_materials)
     author.write('Audit_' + stage + '.json', report)
     print(json.dumps(report, ensure_ascii=False))
     if issues:

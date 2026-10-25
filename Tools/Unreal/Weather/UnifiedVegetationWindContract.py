@@ -13,6 +13,24 @@ ST9_MASTER = ST9_ROOT + '/M_DBA_Foliage_ST9_Master'
 REVIEW_MAP = '/DBAWorldPack_Village/Development/Wind/Maps/L_DBA_VegetationWind_Review'
 WIND_VECTORS = ('GlobalWindFrom', 'GlobalWindTo', 'GlobalWindTiming')
 WIND_SCALAR = 'GlobalWindSeed'
+SCALAR_DEFAULTS = {'GP_Surface_GlobalWetness': 0., 'GP_Surface_GlobalSnowAmount': 0.,
+                   'GP_Surface_GlobalSnowHeightCm': 0., 'GP_Surface_GlobalMossInfluence': 1.,
+                   'GP_Surface_GlobalPuddleAmount': 0., 'GP_Surface_RainIntensity': 0.,
+                   'GP_Surface_SnowIntensity': 0., 'GP_Surface_TemperatureCelsius': 20., 'GlobalWindSeed': 2026.}
+
+
+def validate_mpc_records(scalars, vectors):
+    """逐项验证C++合同的作者投影；保留列表长度检查重复，不能只用字典计数掩盖重名。"""
+    issues = []
+    if len(scalars) != len(SCALAR_DEFAULTS) or len(dict(scalars)) != len(scalars):
+        issues.append('MPC标量数量/重复项不符')
+    if dict(scalars) != SCALAR_DEFAULTS:
+        issues.append('MPC标量名称或默认值不符')
+    if len(vectors) != 3 or len(dict(vectors)) != len(vectors) or set(dict(vectors)) != set(WIND_VECTORS):
+        issues.append('MPC风向量数量/名称/重复项不符')
+    if any(tuple(value) != (0., 0., 0., 0.) for _, value in vectors):
+        issues.append('MPC风向量默认值不符')
+    return issues
 
 # 全部计算在GPU；Yaw沿最短弧，频率线性过渡的积分与Weather快照相同。
 # 空间阵风沿统一主方向传播，种子只平移阵风，绝不随机主风向。
@@ -36,7 +54,7 @@ return float4(direction,max(0.0,strength),phase);
 GENERIC_WPO_HLSL = '''
 float height=saturate((PositionLS.z-RootZcm)/max(HeightCm,0.01));
 float anchored=height*height*saturate(Weight);
-float main=0.8+0.2*sin(Phase*6.28318530718);
+float main=0.8+0.2*sin(TimeSeconds*0.7+dot(PositionWS.xy,float2(0.0006,0.0011))+Phase*6.28318530718);
 float fade=MaxDistanceCm>0.0?1.0-smoothstep(MaxDistanceCm*0.8,MaxDistanceCm,DistanceCm):1.0;
 return DirectionWS*max(0.0,AmplitudeCm)*anchored*Strength*main*fade;
 '''

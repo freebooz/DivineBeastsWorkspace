@@ -8,7 +8,7 @@
 
 **Tech Stack:** 锁定UE5.8.0、C++/UHT、原生天气复制Actor、Material Parameter Collection、SpeedTree9、WPO、ISM/HISM、直接Monolith MCP、现有Foundation构建/烘焙工具。
 
-**Spec:** 本文件“设计合同”；依据本对话已给出的统一风场方案。状态为**执行计划，尚未实施**。本次只新增计划和目录登记。
+**Spec:** 本文件“设计合同”；依据本对话已给出的统一风场方案。状态为**实施中**；源码、工具及真实验收边界见`UnifiedVegetationWindProgress_20261024.md`。用户2026-10-25再次要求实际实现，继续原生资产与客户端验证。
 
 ## Global Constraints
 
@@ -90,8 +90,8 @@
 
 **Interfaces:** 产生`Baseline.json`：每个植物组件的Actor/组件路径、Mesh/全部LOD材质、实例变换哈希、碰撞/专服加载属性、World身份、原生风参数和源文件哈希。作者工具暴露`inspect()`、`author_platform()`、`author_st9()`、`author_review()`、`bind_village()`、`save_owned()`；审计工具暴露`audit(stage: str)`。
 
-- [ ] 读取当前分支、未提交修改、编辑器工程/World、正在运行的客户端/专服及并行编辑状态；为后续正式资产保存约定短暂独占窗口。
-- [ ] 导出所有实际植物与手工场景基线；单独记录PlayerStarts、地形、道路、水体、茅屋与PCG实例；备份本轮将修改的真实包。
+- [x] 读取当前分支、未提交修改、编辑器工程/World、正在运行的客户端/专服及并行编辑状态；原生作者前保护脏包，独立Editor只改本任务包。
+- [x] 导出所有实际植物与手工场景基线；单独记录PlayerStarts、地形、道路、水体、茅屋与PCG实例；备份本轮将修改的真实包。
 - [ ] 原生检查柳树/两种蕨类的UV1/2、可选UV4/5、顶点色、SpeedTree风静态开关和零参数；输出“有效/缺失/无法确认”，不以有UV通道等同有效权重。
 - [ ] 在独立审核地图建立一株柳树、两种蕨类、原型树及Yaw=0/90/180/270°的StaticMesh与HISM夹具；加入均匀/非均匀缩放。不得重新生成正式森林。
 - [ ] 运行`audit('Baseline')`，预期报告当前未接共享风合同的具体项，同时场景保护通过；标记本阶段差异可审阅，不提交混有用户改动的包。
@@ -104,7 +104,7 @@
 
 - [ ] 先增加`GamePlatform.Weather.Runtime.WindDirectionAndPhase`失败测试：0/90/180/270°方向、359→1°中点=0°；非法NaN/Inf/范围输入拒绝。
 - [ ] 增加量化误差与相位测试：起始相位0、f0=0.1、f1=0.2、T=10时，t=5返回0.625；t=15积分增量2.5周期、取模返回0.5；中途替换快照的起始相位等于旧快照当时相位。新增字段前测试应失败。
-- [ ] 最小实现编码/解码、最短弧插值、相位积分与PublishTransition锚定；Seed在同一世界连续快照间保持，不以客户端随机数生成权威风。
+- [x] 最小实现编码/解码、最短弧插值、相位积分与PublishTransition锚定；Seed在同一世界连续快照间保持，不以客户端随机数生成权威风。原生59d6df8e通过。
 - [ ] 测试迟加入采样、零时长、0强度、0频率、连续取消、乱序Revision及旧Replicator退出；保留原雨雪量化/调度重入测试。
 - [ ] 用完整Editor增量构建后的原生Automation运行`GamePlatform.Weather.Runtime`，结果必须实际执行且0失败；记录新增UE复制字段的版本影响，禁止热混旧端。
 
@@ -115,10 +115,10 @@
 **Interfaces:** 新增`FGamePlatformSurfaceWindTransition`及环境值`Wind`；保留`ApplyEnvironmentState`签名；新增WeatherClient私有`ApplyWindSnapshot(const FGamePlatformWeatherSnapshot&)`。Surface仍不依赖WeatherRuntime或项目层。
 
 - [ ] 先增加`GamePlatform.Surface.Wind.StateAndWorldIsolation`：两个World使用同一MPC资产但拥有不同参数实例；同值不重复写入；非法数值整包拒绝。新字段/向量绑定缺失时测试失败。
-- [ ] 实现端点与时间数据合并、3个Vector和1个Scalar的原子校验/写入；扩展参数计数，保留原8项标量和雨雪/苔藓/温度结果。
-- [ ] 实现快照首次投影、取消清空、服务器时间偏移、恢复/重同步处理；MPC异步回调沿用Data租约和BindingGeneration，不新建资产管理器。
+- [x] 实现端点与时间数据合并、3个Vector和1个Scalar的原子校验/写入；扩展参数计数，保留原8项标量和雨雪/苔藓/温度结果。
+- [x] 实现快照首次投影、取消清空、服务器时间偏移、恢复/重同步处理；MPC异步回调沿用Data租约和BindingGeneration，不新建资产管理器。
 - [ ] 增加`GamePlatform.Surface.Wind.BindingAndWeatherMerge`：MPC晚到、旧代回调、换World、恢复重绑；雨雪过渡不重置Wind端点，风更新不抹掉积雪。
-- [ ] 原生Automation执行`GamePlatform.Surface`及受影响WeatherClient测试；审查无逐株Tick/定时器、无静态跨World风缓存。失败只修受影响链路。
+- [x] 原生Automation执行受影响Surface及WeatherClient测试（实际名称见RunUnifiedVegetationWindSourceTests）；审查无逐株Tick/定时器、无静态跨World风缓存。59d6df8e十项全部通过。
 
 ## Task 4：制作统一材质函数并完成ST9样板
 
@@ -126,8 +126,8 @@
 
 **Interfaces:** `MF_GP_GlobalWindState`输出DirectionWS、Intensity/Gust包络、连续Phase；`MF_GP_DirectionalVegetationWind`接受每实例位置/锚点、植物权重与位移上限，输出世界WPO。ST9适配保留原BaseColor、NormalRoughness、Subsurface及原生枝条/叶片分层。
 
-- [ ] 用Monolith扩展真实MPC并编译、保存、重载；首次`audit('PlatformContract')`必须发现尚缺的材质连接，完成函数后转为通过。
-- [ ] 原生导出SpeedTreeMaster/Wind/WindMotion图，再派生设计合同中的三个项目资产；只替换风输入与需要共享时间的分支，不编辑引擎资产，不覆盖UV/顶点色。
+- [x] 用Monolith扩展真实MPC并编译、保存、重载；PlatformContract与独立PID冷重载均通过。
+- [x] 原生检查SpeedTreeMaster/Wind/WindMotion图后派生母材质与Wind。WindMotion无Time/全局输入，继续复用引擎原函数；只替换风输入与需要共享时间的分支，不编辑引擎资产，不覆盖UV/顶点色。
 - [ ] 为柳树与两种蕨类恢复非零且可审核的树种响应；先证明Native ST9权重可用。树干轻摆、枝条分层、叶尖响应；垂柳低垂叶片不套统一高度截断。
 - [ ] 根部保持固定；每实例世界风方向不随Yaw改变；株间随机仅影响局部相位/柔度。禁止只把SimpleGrassWind当作主方向风。
 - [ ] 在隔离夹具分别验证强度0/0.25/1、四个风向、359→1°、10秒过渡及中途打断。保存原生视频和固定相机前后截图；样板通过后才能进入全部植物接线。
@@ -139,9 +139,9 @@
 **Interfaces:** `audit('Coverage')`以任务1的实际组件清单为输入，输出每个Mesh/LOD/材质覆盖的统一风来源；树种MI不得自行持有独立可写全局方向。
 
 - [ ] 先写覆盖失败检查：漏接任何植物槽、LOD或Nanite覆盖材质即失败；把含“Grass”的茅屋材质列入明确排除清单。
-- [ ] 原型树接入平台定向WPO，按真实根部和树冠响应设计简化遮罩；共享植物母材质成为唯一可复用实现，保持现有资产路径及原配色。
-- [ ] 通过Monolith逐项接线现有植物、FoliageType和Blueprint/HISM材质；不拆成独立Actor、不修改散布密度、位置、种子和碰撞。
-- [ ] 更新现有Village天气预设的风字段；核对当前GameMode的InitialWeatherPresetId/调度入口，以现有Data租约启用预设，不另建风控制器，也不改雨雪启停选择。
+- [x] 原型树接入平台定向WPO，按真实根部和树冠响应设计简化遮罩；共享植物母材质成为唯一可复用实现，保持现有资产路径及原配色。
+- [x] 通过Monolith接线当前实际植物及StaticMesh/HISM材质；不拆成独立Actor、不修改散布密度、位置、种子和碰撞。独立冷重载核对真实覆盖材质。
+- [x] 更新现有八份Village天气预设的风字段；核对当前GameMode的预设/调度入口，以现有Data租约启用预设，不另建风控制器，也不改雨雪启停选择。
 - [ ] 显式检查PCG再生成前后材质合同与实例变换哈希；核对纯装饰组件的专服加载标记/现有类剥离机制仍有效；`audit('Coverage')`零漏接、刚性对象无风位移。
 
 ## Task 6：原生GPU、生命周期与质量降级验收
@@ -162,11 +162,11 @@
 
 **Interfaces:** 输出同一冻结输入的Editor/Client/Server完整目标结果、Cook关联Editor证据、真实容器闭包与独立版本清单。新风复制字段不允许与旧端混用。
 
-- [ ] 冻结最终源码、配置、地图和资产清单；比较任务1场景保护基线，采用当前人工编辑，不回写历史位置。新增文件/资产在同次变更中登记总体目录。
-- [ ] 按下方已存在入口运行完整Editor、Client/Server增量构建；Editor反射变化后受控保存/重启编辑器再独立加载，保护未保存手工工作。记录真实receipt、DLL和进程结果。
-- [ ] 先验证UI颜色报告，再双端Cook/Stage；显式传本次完整Editor构建结果。仅当既有Zen确实不可用时使用SkipZenStore；磁盘不足选独占输出方案，不删除旧包。
-- [ ] 容器审计必须证明Client含本次MPC/函数/母材质/植物MI的真实ExportBundleData；Server保留天气权威类型及必要碰撞，但不含Surface风材质、植物装饰和审核地图。PCG再生成后同样验证剥离。
-- [ ] 复用既有真实打包GA/CDO序列化回归，保留原UI/声音容器门禁；编译与Cook输入任何变化都重新判定受影响结果，不给旧结果补签。
+- [x] 冻结2885编译输入、787合同/资产；比较任务1场景保护基线，不回写历史位置；新增文件/资产已登记总体目录。最终三份专服材质替换配置差异单独逐字节绑定，不误算客户端输入变更。
+- [x] 完整Editor621c64da、Client/Server cebf5ab1增量构建成功；独立PID4636冷重载通过，真实receipt/DLL/进程均留证。
+- [x] UI原色RHI门禁通过，Client386782f0、Server b3436c2d实际Cook/Stage通过；复用已证实可用的文件Cook及独占短目录，没有删除旧包。
+- [x] 本次实际容器证明18项当前运行风资源有非空ExportBundleData，专服无Surface/植物库/审核地图泄漏。World模型及必要材质桩保留，专服精确父材质替换隔离风资源。未实际重新生成正式PCG，不能宣称该额外回归完成。
+- [x] 新Village真实打包GA/CDO加载回归72项通过；保留原UI/82项声音容器门禁，按真实受影响输入复用有效结果。
 
 执行时在工作空间根目录使用PowerShell 7；每个RunId新建且把最终路径写入本轮证据，不把示例路径当成已存在产物：
 
@@ -193,8 +193,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Server Cook/Stage failed; stop.' }
 
 **Interfaces:** 输出`RuntimeCompatibility.json`、两个客户端PID/启动时间/可执行路径/日志、真实准入日志和人工验收表。不要复用本计划日期以前的PID或静态BuildVersion字符串代替映像证明。
 
-- [ ] 核实真实Village、MainArena实例的PID、映像、启动时间、当前玩家和池监控归属；保留无关服务与数据。仅在可安全排空时更新本轮专服。
-- [ ] 核对新运行服务器确实来自本轮Stage、双端共享源码/复制合同及Cook输入一致；地图和必要资源属于同一冻结版本，再启动两个可见客户端，保留测试账号按钮并由用户人工登录。
+- [x] 核实并正常关闭两个已知旧验证客户端，确认竞技池无比赛后排空旧专服；只更新本轮Village/MainArena，保留五后端服务及账号/角色数据。
+- [x] 实际新Server PID52332/7388来自b3436c2d Stage，双端源码/合同/产物门禁通过；新Client PID39120/2868可见且登录就绪，保留十测试账号按钮，由用户人工登录。
 - [ ] 两客户端真实进入新手村，确认无NetChecksumMismatch、复制解析或Cooked序列化错误；记录两边相同Revision、风向/强度/阵风时间基准。
 - [ ] 人工观察当前场景全部柳树、蕨类、原型树林：统一主方向、不同摆幅；四向切换、零风、重新进入世界、一个客户端迟加入；近/远景无根部漂移、穿插加剧、剔除闪烁或阴影异常。
 - [ ] 完成结果分层：仅在真实通过后勾选原生资产/构建/Cook/准入/GPU/人工项目；任何缺权重植物、未通过性能档或人工未签收项逐项保留，不写“全部完成”。

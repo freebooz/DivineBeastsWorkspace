@@ -80,6 +80,9 @@ def author():
         bp=unreal.load_asset(p['ga_path']) if unreal.EditorAssetLibrary.does_asset_exist(p['ga_path']) else unreal.EditorAssetLibrary.duplicate_asset(p['bp'].get_path_name(),p['ga_path'])
         cdo=unreal.get_default_object(bp.generated_class())
         cdo.set_editor_property('AbilityDefinitionId',helper.primary(p['identity']))
+        # 既有副本不会继承后来修改的源蓝图默认值；重跑作者工具时同步唯一源的运动合同。
+        source_cdo=unreal.get_default_object(p['bp'].generated_class())
+        cdo.set_editor_property('ProjectileMotion',source_cdo.get_editor_property('ProjectileMotion'))
         unreal.BlueprintEditorLibrary.compile_blueprint(bp);helper.save(bp)
         cls=unreal.EditorAssetLibrary.load_blueprint_class(p['ga_path'])
         grants=list(p['set'].get_editor_property('Abilities'))

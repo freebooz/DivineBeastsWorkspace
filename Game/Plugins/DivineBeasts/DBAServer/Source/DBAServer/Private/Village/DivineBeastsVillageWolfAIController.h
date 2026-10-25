@@ -13,6 +13,9 @@ public:
     ADivineBeastsVillageWolfAIController();
 
 protected:
+    /** 人型怪物读取已验证目标英雄定义的基础移动速度；狼保持原有速度。 */
+    virtual TOptional<float> ResolveCombatTargetBaseWalkSpeed(const AActor& ValidatedTarget) const override;
+
     /** 再次核对目标、视线、距离、安全区与生命代次；最后通过平台Combat唯一入口提交伤害。 */
     virtual bool TryExecuteNativeAttack(AActor& ValidatedTarget) override;
 };

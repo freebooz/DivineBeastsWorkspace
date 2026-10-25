@@ -16,6 +16,8 @@
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIWorldPolicy.h"
 #include "Perception/AICandidateRetention.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -163,6 +165,22 @@ void AGamePlatformAIController::OnPossess(APawn* InPawn)
 
     BindCombatSignals();
     BeginDefinitionLoad();
+}
+
+void AGamePlatformAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+{
+    Super::OnMoveCompleted(RequestID, Result);
+    // 仅对成功抵达的原生脑当前目标立即重评；取消或失败不触发新的攻击请求。
+    if (!HasAuthority() || !Result.IsSuccess() || !bBrainReady || bStoppedForDeath ||
+        !ActiveDefinition || ActiveDefinition->BrainType != EGamePlatformAIBrainType::None ||
+        !IsValid(GetPawn()) || !CurrentTarget.IsValid()) return;
+    const AActor* Target = CurrentTarget.Get();
+    if (IsValid(Target) && FVector::DistSquared(GetPawn()->GetActorLocation(), Target->GetActorLocation()) <=
+        FMath::Square(ActiveDefinition->AttackRange))
+    {
+        // 依旧通过原入口核验攻击合法性和冷却，不能因抵达事件提前结算伤害。
+        EvaluateDecision();
+    }
 }
 
 void AGamePlatformAIController::OnUnPossess()
@@ -1223,6 +1241,20 @@ void AGamePlatformAIController::UpdateTargetBehavior(AActor& Target)
     if (!Candidate)
     {
         return;
+    }
+
+    // 平台自身不决定怪物速度；只有项目基于已验证目标提供基础速度时才更新移动组件。
+    const TOptional<float> BaseWalkSpeed = ResolveCombatTargetBaseWalkSpeed(Target);
+    if (BaseWalkSpeed.IsSet() && FMath::IsFinite(BaseWalkSpeed.GetValue()) && BaseWalkSpeed.GetValue() > 0.0f)
+    {
+        if (ACharacter* ChasingCharacter = Cast<ACharacter>(GetPawn()))
+        {
+            if (UCharacterMovementComponent* Movement = ChasingCharacter->GetCharacterMovement())
+            {
+                if (!FMath::IsNearlyEqual(Movement->MaxWalkSpeed, BaseWalkSpeed.GetValue()))
+                    Movement->MaxWalkSpeed = BaseWalkSpeed.GetValue();
+            }
+        }
     }
 
     const float Distance =

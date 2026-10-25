@@ -2,6 +2,8 @@
 #include "Subsystems/GamePlatformWeatherWorldSubsystem.h"
 #include "Actors/GamePlatformWeatherReplicator.h"
 #include "Definitions/GamePlatformWeatherPresetDefinition.h"
+#include "API/GamePlatformWeatherWindSource.h"
+#include "Engine/WindDirectionalSource.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "TimerManager.h"
@@ -20,6 +22,7 @@ void UGamePlatformWeatherWorldSubsystem::Initialize(FSubsystemCollectionBase& Co
     bScheduleRunning = false;
     ScheduleGeneration = 0;
     CurrentSnapshot = FGamePlatformWeatherSnapshot();
+    InitialSceneWind.Reset(); bSceneWindCaptured = false; bInitialPresetPending = false;
 }
 
 void UGamePlatformWeatherWorldSubsystem::Deinitialize()
@@ -29,6 +32,7 @@ void UGamePlatformWeatherWorldSubsystem::Deinitialize()
     SnapshotChanged.Clear();
     Schedule.Empty();
     Replicator.Reset();
+    InitialSceneWind.Reset(); bInitialPresetPending = false;
     Super::Deinitialize();
 }
 
@@ -45,13 +49,35 @@ bool UGamePlatformWeatherWorldSubsystem::ActivateWeather(const FGamePlatformWeat
     if (!IsAuthoritativeWeatherWorld() || !InitialState.IsValid()) return false;
     if (Replicator.IsValid()) return true;
     UWorld* World = GetWorld();
+    auto Initial = InitialState;
+    if (!bSceneWindCaptured)
+    {
+        AWindDirectionalSource* Source = nullptr; FString Error;
+        const auto Result = GamePlatformWeatherWindSource::Read(*World, Initial, Source, Error);
+        if (Result == EGamePlatformSceneWindResult::Invalid)
+        { UE_LOG(LogTemp, Error, TEXT("InitialWeatherSceneWindRejected: %s"), *Error); return false; }
+        bSceneWindCaptured = true;
+        if (Result == EGamePlatformSceneWindResult::Applied)
+        {
+            InitialSceneWind = Initial;
+            UE_LOG(LogTemp, Display, TEXT("SceneWindInitialPreset source=%s yaw=%.3f strength=%.3f gust=%.3f frequencyHz=%.3f"),
+                *Source->GetPathName(), Initial.WindYawDegrees, Initial.WindIntensity, Initial.WindGustStrength, Initial.WindGustFrequencyHz);
+        }
+    }
+    if (InitialSceneWind.IsSet())
+    {
+        const auto& Authored = InitialSceneWind.GetValue();
+        Initial.WindYawDegrees = Authored.WindYawDegrees; Initial.WindIntensity = Authored.WindIntensity;
+        Initial.WindGustStrength = Authored.WindGustStrength; Initial.WindGustFrequencyHz = Authored.WindGustFrequencyHz;
+    }
     FActorSpawnParameters Parameters;
     Parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     AGamePlatformWeatherReplicator* Created = World->SpawnActor<AGamePlatformWeatherReplicator>(
         AGamePlatformWeatherReplicator::StaticClass(), FTransform::Identity, Parameters);
     if (!IsValid(Created)) return false;
     Replicator = Created;
-    const FGamePlatformWeatherQuantizedState Quantized = FGamePlatformWeatherQuantizedState::Encode(InitialState);
+    const FGamePlatformWeatherQuantizedState Quantized = FGamePlatformWeatherQuantizedState::Encode(Initial);
+    bInitialPresetPending = true;
     FGamePlatformWeatherSnapshot Snapshot;
     Snapshot.From = Quantized;
     Snapshot.To = Quantized;
@@ -82,6 +108,7 @@ bool UGamePlatformWeatherWorldSubsystem::PublishTransition(
     Next.WindSeed = CurrentSnapshot.WindSeed;
     Next.WindPhaseAtStartCycles = CurrentSnapshot.SampleWindPhaseCycles(CurrentServerTime);
     Next.Revision = CurrentSnapshot.Revision + 1;
+    bInitialPresetPending = false; // 显式天气/调度也消费初始化优先级，先于同步通知重入。
     return Replicator->PublishAuthoritativeSnapshot(Next);
 }
 
@@ -101,7 +128,16 @@ bool UGamePlatformWeatherWorldSubsystem::ApplyPreset(const UGamePlatformWeatherP
 {
     check(IsInGameThread());
     if (!IsValid(Preset) || !Preset->ValidateDefinition().IsSuccess()) return false;
-    return SetWeather(Preset->Weather.State, Preset->Weather.TransitionSeconds);
+    if (!IsAuthoritativeWeatherWorld()) return false;
+    if (!Replicator.IsValid() && !ActivateWeather(FGamePlatformWeatherState())) return false;
+    auto Target = Preset->Weather.State;
+    if (bInitialPresetPending && InitialSceneWind.IsSet())
+    {
+        const auto& Authored = InitialSceneWind.GetValue();
+        Target.WindYawDegrees = Authored.WindYawDegrees; Target.WindIntensity = Authored.WindIntensity;
+        Target.WindGustStrength = Authored.WindGustStrength; Target.WindGustFrequencyHz = Authored.WindGustFrequencyHz;
+    }
+    return SetWeather(Target, Preset->Weather.TransitionSeconds);
 }
 
 bool UGamePlatformWeatherWorldSubsystem::ConfigureSchedule(

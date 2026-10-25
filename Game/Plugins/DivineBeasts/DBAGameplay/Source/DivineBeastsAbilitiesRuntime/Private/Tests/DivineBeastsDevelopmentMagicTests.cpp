@@ -62,11 +62,11 @@ struct FExpectedMagic
 static const FExpectedMagic ExpectedMagic[] =
 {
     {TEXT("Fireball"), TEXT("dba.ability.rat_dev_fireball@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Active01"),
-        EDivineBeastsDevelopmentMagicKind::Fireball, 40.f, 0.f, 2.f, 6000.f, 1, 0.f, 0.f, 0.f},
+        EDivineBeastsDevelopmentMagicKind::Fireball, 40.f, 0.f, 2.f, 4000.f, 1, 0.f, 0.f, 0.f},
     {TEXT("Frostbolt"), TEXT("dba.ability.rat_dev_frostbolt@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Active02"),
-        EDivineBeastsDevelopmentMagicKind::Frostbolt, 30.f, 0.f, 1.5f, 8000.f, 1, 0.f, 0.f, 0.f},
+        EDivineBeastsDevelopmentMagicKind::Frostbolt, 30.f, 0.f, 1.5f, 4000.f, 1, 0.f, 0.f, 0.f},
     {TEXT("ArcaneMissiles"), TEXT("dba.ability.rat_dev_arcanemissiles@1"), TEXT("DivineBeasts.Development.Cooldown.Rat.Ultimate"),
-        EDivineBeastsDevelopmentMagicKind::ArcaneMissiles, 12.f, 0.f, 3.f, 7000.f, 3, 0.2f, 18.f, 3.f}
+        EDivineBeastsDevelopmentMagicKind::ArcaneMissiles, 12.f, 0.f, 3.f, 4000.f, 3, 0.2f, 18.f, 3.f}
 };
 
 /** 定位已保存对象或蓝图生成类，仅构造软路径；不加载、注册、创建或写入资产。 */
@@ -83,8 +83,12 @@ enum class EScenario : uint8
 {
     AssetContracts, GameplayEffects, Burst, Cancel, StaleSource, CommitAvatarSwap,
     SpawnSuccessor, SpawnStaleSource, ZeroMomentum, FreshSpawnInput,
-    TargetSelectionSwitch, TargetDestroyedGC, TargetAvatarChanged, Healing, FrostboltWindup, TargetRange
+    TargetSelectionSwitch, TargetDestroyedGC, TargetAvatarChanged, Healing, FrostboltWindup, TargetRange,
+    FireballWindup
 };
+
+/** 仅测试驱动真实生命周期入口，不写能力内部令牌；正常用例另外覆盖显式取消和来源换代。 */
+enum class EWindupInterruption : uint8 { None, SourceDeath, AvatarSwap };
 
 /** 来自真实 Actor 事件的只读证据；弱引用不延长弹体寿命，终态快照允许销毁后继续审计。 */
 struct FObservedProjectile
@@ -97,15 +101,17 @@ struct FObservedProjectile
 };
 
 /**
- * 有界异步资源夹具：30秒墙钟超时；普通运行段12帧，冰箭起手/取消/换代段49帧，每帧推进隔离世界0.05秒。
+ * 有界异步资源夹具：30秒墙钟超时；普通运行段12帧，火球/冰箭起手、取消、换代段35帧，每帧推进0.05秒。
  * Data 自己完成资源加载；不手写 Ready、完成回调、GFrameCounter 或技能私有连发状态。
  * 返回 true 仅表示潜伏命令结束，成功与否由 Automation 的真实断言/错误决定。
  */
 class FRealMagicCommand final : public IAutomationLatentCommand
 {
 public:
-    FRealMagicCommand(FAutomationTestBase* InTest, EScenario InScenario, bool bInUsePlaceholder = false)
-        : Test(InTest), Scenario(InScenario), bUsePlaceholder(bInUsePlaceholder), StartedSeconds(FPlatformTime::Seconds()) {}
+    FRealMagicCommand(FAutomationTestBase* InTest, EScenario InScenario, bool bInUsePlaceholder = false,
+        EWindupInterruption InWindupInterruption = EWindupInterruption::None)
+        : Test(InTest), Scenario(InScenario), bUsePlaceholder(bInUsePlaceholder),
+          WindupInterruption(InWindupInterruption), StartedSeconds(FPlatformTime::Seconds()) {}
 
     ~FRealMagicCommand() override
     {
@@ -170,8 +176,8 @@ public:
             if (Scenario == EScenario::Healing) { CheckPrimaryHealing(); return true; }
             if (Scenario == EScenario::TargetRange)
             { bCastStarted = BeginSelectedTargetRange(); return !bCastStarted; }
-            if (Scenario == EScenario::FrostboltWindup)
-            { bCastStarted = BeginFrostboltWindup(); return !bCastStarted; }
+            if (IsDefaultCastWindupScenario())
+            { bCastStarted = BeginDefaultCastWindup(); return !bCastStarted; }
             if (!BeginRealActivation()) { return true; }
             bCastStarted = true;
             return false;
@@ -184,7 +190,7 @@ public:
             if (FlightFrames < 12) return false;
             CheckSelectedTargetRangeTerminal(); return true;
         }
-        if (Scenario == EScenario::FrostboltWindup) { return CheckFrostboltWindupFrame(); }
+        if (IsDefaultCastWindupScenario()) { return CheckDefaultCastWindupFrame(); }
         if (Scenario == EScenario::Burst)
         {
             // 在间隔前及两个间隔后读取真实Spawn数，不能只在终态数三枚而漏掉错误释放时机。
@@ -195,13 +201,13 @@ public:
         }
         if (Scenario == EScenario::Burst && FlightFrames == 1)
         {
-            // 第一枚初相位为0：0.05秒应前进70厘米，并产生真实螺旋横向位移。
+            // 第一枚初相位为0：恒速4000厘米/秒在0.05秒前进200厘米，横向螺旋合同保持不变。
             // 期望值手算于计划的18厘米/3转每秒，不调用待测 PositionAt 或 Motion 来生成期望。
             if (!Projectiles.IsEmpty() && Projectiles[0].Actor.IsValid())
             {
                 const FVector Displacement = Projectiles[0].Actor->GetActorLocation() - Projectiles[0].Origin;
                 Test->TestTrue(TEXT("首枚弹体真实沿螺旋运动而非只播放尾迹"),
-                    Displacement.Equals(FVector(70.0, -7.419865, 14.562306), 0.1));
+                    Displacement.Equals(FVector(200.0, -7.419865, 14.562306), 0.1));
             }
             else { Test->AddError(TEXT("螺旋运动断言缺少真实存活的第一枚弹体")); }
         }
@@ -256,11 +262,13 @@ private:
                 Paths.Add(FSoftObjectPath(Root + TEXT("GA_DBA_Rat_PlaceholderPrimary.GA_DBA_Rat_PlaceholderPrimary_C")));
                 Paths.Add(FSoftObjectPath(Root + TEXT("GE_DBA_Rat_PlaceholderPrimaryCooldown.GE_DBA_Rat_PlaceholderPrimaryCooldown_C")));
             }
-            if (Scenario == EScenario::FrostboltWindup)
+            if (IsDefaultCastWindupScenario())
             {
-                Paths.Add(FSoftObjectPath(Root + TEXT("DA_DBA_Rat_PlaceholderFrostbolt.DA_DBA_Rat_PlaceholderFrostbolt")));
-                Paths.Add(FSoftObjectPath(Root + TEXT("GA_DBA_Rat_PlaceholderFrostbolt.GA_DBA_Rat_PlaceholderFrostbolt_C")));
-                Paths.Add(FSoftObjectPath(Root + TEXT("GE_DBA_Rat_PlaceholderFrostboltCooldown.GE_DBA_Rat_PlaceholderFrostboltCooldown_C")));
+                const FString Spell = Scenario == EScenario::FireballWindup ? TEXT("Fireball") : TEXT("Frostbolt");
+                const FString Name = TEXT("_DBA_Rat_Placeholder") + Spell;
+                Paths.Add(FSoftObjectPath(Root + TEXT("DA") + Name + TEXT(".DA") + Name));
+                Paths.Add(FSoftObjectPath(Root + TEXT("GA") + Name + TEXT(".GA") + Name + TEXT("_C")));
+                Paths.Add(FSoftObjectPath(Root + TEXT("GE") + Name + TEXT("Cooldown.GE") + Name + TEXT("Cooldown_C")));
             }
         }
         FGamePlatformResult Accepted;
@@ -277,6 +285,10 @@ private:
     bool CheckAssetContracts()
     {
         bool bValid = true;
+        bValid &= Test->TestEqual(TEXT("新建开发法术默认恒速4000厘米/秒"),
+            GetDefault<UDivineBeastsDevelopmentMagicDefinition>()->ProjectileMotion.SpeedCmPerSecond, 4000.f);
+        bValid &= Test->TestEqual(TEXT("新建正式占位法术默认恒速4000厘米/秒"),
+            GetDefault<UDivineBeastsPlaceholderGameplayAbility>()->ProjectileMotion.SpeedCmPerSecond, 4000.f);
         for (int32 Index = 0; Index < UE_ARRAY_COUNT(ExpectedMagic); ++Index)
         {
             const auto& Expected = ExpectedMagic[Index];
@@ -290,6 +302,18 @@ private:
             AbilityClasses[Index] = AbilityClass;
             const FPrimaryAssetId ExpectedId(FPrimaryAssetType(TEXT("GamePlatformDefinition")), FName(Expected.AbilityId));
             bValid &= Test->TestTrue(Label + TEXT("静态Definition合同合法"), Definition->ValidateDefinition().IsSuccess());
+            // 复制真实定义做边界回归，不修改已保存资产或CDO以迁就测试。
+            auto* SpeedProbe = DuplicateObject<UDivineBeastsDevelopmentMagicDefinition>(Definition, GetTransientPackage());
+            for (float Speed : {3000.f, 5000.f})
+            {
+                SpeedProbe->ProjectileMotion.SpeedCmPerSecond = Speed;
+                bValid &= Test->TestTrue(Label + TEXT("接受法术速度边界3000/5000"), SpeedProbe->ValidateDefinition().IsSuccess());
+            }
+            for (float Speed : {2999.f, 5001.f})
+            {
+                SpeedProbe->ProjectileMotion.SpeedCmPerSecond = Speed;
+                bValid &= Test->TestFalse(Label + TEXT("拒绝范围外法术速度"), SpeedProbe->ValidateDefinition().IsSuccess());
+            }
             bValid &= Test->TestTrue(Label + TEXT("主资产扫描与真实对象一致"), UAssetManager::Get().GetPrimaryAssetObject(ExpectedId) == Definition);
             bValid &= Test->TestEqual(Label + TEXT("GA消费正确Definition身份"), Ability->AbilityDefinitionId, ExpectedId);
             bValid &= Test->TestEqual(Label + TEXT("Hero所属子鼠"), Definition->HeroDefinitionId, FName(TEXT("Hero.Zodiac.Rat")));
@@ -544,46 +568,78 @@ private:
         Pawn->AuthorityFriendlyTargetQuery().Unbind();
     }
 
-    /** 已保存冰箭GA的真实起手时序：0.65秒无弹、0.75秒恰一枚，取消/来源换代不产生迟到发射。 */
-    bool BeginFrostboltWindup()
+    /** 两种执行器的已保存火球/冰箭均要求0.5秒权威起手；不依据生产常量生成预期时间。 */
+    bool IsDefaultCastWindupScenario() const
+    { return Scenario == EScenario::FireballWindup || Scenario == EScenario::FrostboltWindup; }
+
+    /** 真实GA激活与复制事实共同断言，防止只调施法条或只改Timer而两端不一致。 */
+    bool BeginDefaultCastWindup()
     {
         UWorld* World = Instance->GetWorld();
-        UClass* AbilityClass = bUsePlaceholder ? Cast<UClass>(FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/GA_DBA_Rat_PlaceholderFrostbolt.GA_DBA_Rat_PlaceholderFrostbolt_C")).ResolveObject()) : AbilityClasses[1];
-        if (!Test->TestNotNull(TEXT("真实冰箭授权类"), AbilityClass)) return false;
+        const bool bFireball = Scenario == EScenario::FireballWindup;
+        const FString Name = FString(TEXT("GA_DBA_Rat_Placeholder")) + (bFireball ? TEXT("Fireball") : TEXT("Frostbolt"));
+        UClass* AbilityClass = bUsePlaceholder ? Cast<UClass>(FSoftObjectPath(
+            FString(TEXT("/DBAGameplay/Abilities/Placeholders/")) + Name + TEXT(".") + Name + TEXT("_C")).ResolveObject()) : AbilityClasses[bFireball ? 0 : 1];
+        if (!Test->TestNotNull(TEXT("真实火球/冰箭授权类"), AbilityClass)) return false;
         Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>()->SetServerPlayerActive(true);
         AbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1));
         const auto* Ability = AbilityClass->GetDefaultObject<UGameplayAbility>();
-        if (!Test->TestNotNull(TEXT("冰箭真实冷却"), Ability->GetCooldownGameplayEffect())) return false;
+        if (!Test->TestNotNull(TEXT("火球/冰箭真实冷却"), Ability->GetCooldownGameplayEffect())) return false;
         WindupCooldownTags = *Ability->GetCooldownTags();
         SpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateRaw(this, &FRealMagicCommand::ObserveProjectile));
-        const bool bAccepted = Test->TestTrue(TEXT("服务器受理冰箭起手"), ASC->TryActivateAbility(AbilityHandle, false));
+        const bool bAccepted = Test->TestTrue(TEXT("服务器受理火球/冰箭起手"), ASC->TryActivateAbility(AbilityHandle, false));
         Test->TestEqual(TEXT("激活当刻未提前发射"), Projectiles.Num(), 0);
         // 独立写明用户要求，不从待测常量反算；复制快照是施法条和动画的唯一事件输入。
         const auto* CastFacts = Pawn->FindComponentByClass<UGamePlatformAbilityCastComponent>();
-        if (Test->TestNotNull(TEXT("冰箭真实复制施法组件"), CastFacts))
-            Test->TestEqual(TEXT("冰箭复制施法时长严格2秒"), CastFacts->GetCastFacts().DurationSeconds, 2.0f);
+        if (Test->TestNotNull(TEXT("火球/冰箭真实复制施法组件"), CastFacts))
+            Test->TestEqual(TEXT("火球/冰箭复制施法时长严格0.5秒"), CastFacts->GetCastFacts().DurationSeconds, 0.5f);
+        if (WindupInterruption == EWindupInterruption::SourceDeath)
+        {
+            // 通过真实Combat扣血至死亡，不伪造bDead；死亡取消与到期前复查都必须禁止首次发射。
+            auto* Combat = Pawn->GetGamePlatformCombatComponent();
+            FGameplayEffectSpec DamageEffect;
+            Combat->ResolveIncomingDamage(*Combat->GetCombatAttributeSet(), DamageEffect, Combat->GetCombatMaxHealth() * 2.f);
+            Test->TestTrue(TEXT("起手中来源真实死亡"), Combat->IsCombatDead());
+        }
+        else if (WindupInterruption == EWindupInterruption::AvatarSwap)
+        {
+            OtherAvatar = World->SpawnActor<AActor>();
+            Test->TestTrue(TEXT("起手中ASC切换真实后继Avatar"), OtherAvatar.IsValid() &&
+                ASC->BindAbilityActorInfo(Pawn.Get(), OtherAvatar.Get()));
+        }
         return bAccepted;
     }
 
     /** 各段由真实Automation帧推进；不篡改GFrameCounter或在同帧重复Tick绕过引擎Timer语义。 */
-    bool CheckFrostboltWindupFrame()
+    bool CheckDefaultCastWindupFrame()
     {
-        if (FlightFrames == 39) Test->TestEqual(TEXT("起手1.95秒仍未发射"), Projectiles.Num(), 0);
-        if (FlightFrames == 41)
+        if (WindupInterruption != EWindupInterruption::None)
         {
-            Test->TestEqual(TEXT("起手2.05秒恰好一枚权威冰箭"), Projectiles.Num(), 1);
+            if (FlightFrames < 12) return false;
+            Test->TestEqual(TEXT("死亡/更换Avatar后越过起手时限仍无晚发弹体"), Projectiles.Num(), 0);
+            const auto* Spec = ASC->FindAbilitySpecFromHandle(AbilityHandle);
+            const auto* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
+            if (Test->TestNotNull(TEXT("中断后仍可观察真实技能实例"), Ability))
+                Test->TestFalse(TEXT("中断起手最终无残留激活"), Ability->IsActive());
+            return true;
+        }
+        if (FlightFrames == 9) Test->TestEqual(TEXT("起手0.45秒仍未发射"), Projectiles.Num(), 0);
+        if (FlightFrames == 11)
+        {
+            Test->TestEqual(TEXT("起手0.55秒恰好一枚权威火球/冰箭"), Projectiles.Num(), 1);
+            if (!Projectiles.IsEmpty()) Test->TestTrue(TEXT("首次释放真实经过权威初始化"), Projectiles[0].Facts.bStarted);
             ASC->RemoveActiveEffectsWithGrantedTags(WindupCooldownTags);
-            Test->TestTrue(TEXT("新一轮冰箭起手受理"), ASC->TryActivateAbility(AbilityHandle, false));
+            Test->TestTrue(TEXT("新一轮火球/冰箭起手受理"), ASC->TryActivateAbility(AbilityHandle, false));
             ASC->CancelAbilityHandle(AbilityHandle);
         }
-        if (FlightFrames == 83)
+        if (FlightFrames == 23)
         {
             Test->TestEqual(TEXT("取消起手没有迟到发射"), Projectiles.Num(), 1);
             ASC->RemoveActiveEffectsWithGrantedTags(WindupCooldownTags);
-            Test->TestTrue(TEXT("换代前冰箭起手受理"), ASC->TryActivateAbility(AbilityHandle, false));
+            Test->TestTrue(TEXT("换代前火球/冰箭起手受理"), ASC->TryActivateAbility(AbilityHandle, false));
             Pawn->GetGamePlatformCombatComponent()->ResetForNewAvatar(2);
         }
-        if (FlightFrames < 125) return false;
+        if (FlightFrames < 35) return false;
         Test->TestEqual(TEXT("来源换代没有迟到发射"), Projectiles.Num(), 1);
         return true;
     }
@@ -746,9 +802,11 @@ private:
             TargetASC->RegisterComponent(); Combat->RegisterComponent(); TargetASC->InitAbilityActorInfo(Target, Target);
             return Target;
         };
-        // 两目标分居前方左右；0.6秒观测期间距首目标仍足够远，避免自然命中掩盖连发选择错误。
-        FrozenTarget = SpawnTarget(FVector(1000, 500, 1000));
-        AlternateTarget = SpawnTarget(FVector(1000, -500, 1000));
+        // 改选回归使用50米范围内的远目标：4000厘米/秒飞行0.6秒仍未自然命中，才能逐枚检查冻结选择。
+        // 其他场景保留原近目标，以继续覆盖取消、销毁、治疗与首段转弯。
+        const float SideDistance = Scenario == EScenario::TargetSelectionSwitch ? 4500.f : 500.f;
+        FrozenTarget = SpawnTarget(FVector(1000, SideDistance, 1000));
+        AlternateTarget = SpawnTarget(FVector(1000, -SideDistance, 1000));
         if (!Test->TestTrue(TEXT("两名真实同世界战斗目标"), FrozenTarget.IsValid() && AlternateTarget.IsValid())) return false;
         auto* Combat = Pawn->GetGamePlatformCombatComponent();
         auto* TargetCombat = FrozenTarget->FindComponentByClass<UGamePlatformCombatComponent>();
@@ -807,7 +865,7 @@ private:
                 AlternateTarget.Get(), Combat->GetCombatAvatarGeneration(), NextCombat->GetCombatAvatarGeneration()))) return false;
             int32 Generation = 0;
             return Test->TestTrue(TEXT("服务器当前选择确已变为另一目标"),
-                Combat->GetSelectedProjectileTarget(2000.f, Generation) == AlternateTarget.Get() && Generation == 1);
+                Combat->GetSelectedProjectileTarget(5000.f, Generation) == AlternateTarget.Get() && Generation == 1);
         }
         if (Scenario == EScenario::TargetDestroyedGC)
         {
@@ -1015,6 +1073,7 @@ private:
     FAutomationTestBase* Test;       // Automation拥有，潜伏命令期间有效，不持久化或跨线程访问。
     EScenario Scenario;              // 本次用例唯一行为，不能在失败后退回另一种场景。
     bool bUsePlaceholder = false;     // 只选择已保存的真实另一执行器，不修改生成类或运行时CDO。
+    EWindupInterruption WindupInterruption = EWindupInterruption::None; // 起手完成前的真实失效入口。
     double StartedSeconds;           // 墙钟秒，用于真实资源/初始化超时。
     TStrongObjectPtr<UGameInstance> Instance;
     TStrongObjectPtr<ULocalPlayer> LocalInputPlayer; // 仅输入回归拥有；与Controller同一夹具销毁，不触发身份认证。
@@ -1029,7 +1088,7 @@ private:
     UClass* CostClass = nullptr;
     UClass* CooldownClass = nullptr;
     FGameplayAbilitySpecHandle AbilityHandle;
-    FGameplayTagContainer WindupCooldownTags; // 冰箭场景借用的真实冷却标签值，跨潜伏帧不持有Ability/CDO裸引用。
+    FGameplayTagContainer WindupCooldownTags; // 起手场景借用的真实冷却标签值，跨潜伏帧不持有Ability/CDO裸引用。
     FDelegateHandle SpawnHandle, CommitHandle, EffectHandle;
     TArray<FObservedProjectile> Projectiles;
     float InitialMomentum = 0;         // 真实ASC起始属性值；所有法术的费用期望均为零。
@@ -1204,6 +1263,25 @@ bool FDivineBeastsPlaceholderPrimaryHealingTest::RunTest(const FString&)
         DivineBeastsDevelopmentMagicTests::EScenario::Healing, true)); return true;
 }
 
+// 两条执行器分别覆盖火球：过去仅发布0.7秒反馈且立即发射，不能由冰箭通过来代替。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentFireballWindupTest,
+    "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.FireballWindup",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsDevelopmentFireballWindupTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::FireballWindup)); return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlaceholderFireballWindupTest,
+    "DivineBeasts.Abilities.Placeholder.ServerGAS.FireballWindup",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlaceholderFireballWindupTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::FireballWindup, true)); return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentFrostboltWindupTest,
     "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.FrostboltWindup",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -1220,6 +1298,31 @@ bool FDivineBeastsPlaceholderFrostboltWindupTest::RunTest(const FString&)
 {
     ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
         DivineBeastsDevelopmentMagicTests::EScenario::FrostboltWindup, true)); return true;
+}
+
+// 单独夹具覆盖火/冰、开发/正式两条链的死亡与Avatar切换，不用测试内复活来恢复施法资格。
+IMPLEMENT_COMPLEX_AUTOMATION_TEST(FDivineBeastsDefaultMagicWindupInterruptionTest,
+    "DivineBeasts.Abilities.DefaultMagic.ServerGAS.WindupInterruption",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+void FDivineBeastsDefaultMagicWindupInterruptionTest::GetTests(
+    TArray<FString>& OutBeautifiedNames, TArray<FString>& OutTestCommands) const
+{
+    for (const TCHAR* Family : {TEXT("Development"), TEXT("Placeholder")})
+        for (const TCHAR* Spell : {TEXT("Fireball"), TEXT("Frostbolt")})
+            for (const TCHAR* Reason : {TEXT("SourceDeath"), TEXT("AvatarSwap")})
+            {
+                const FString Case = FString(Family) + TEXT(".") + Spell + TEXT(".") + Reason;
+                OutBeautifiedNames.Add(Case); OutTestCommands.Add(Case);
+            }
+}
+bool FDivineBeastsDefaultMagicWindupInterruptionTest::RunTest(const FString& Parameters)
+{
+    using namespace DivineBeastsDevelopmentMagicTests;
+    const EScenario Scenario = Parameters.Contains(TEXT("Fireball")) ? EScenario::FireballWindup : EScenario::FrostboltWindup;
+    const EWindupInterruption Interruption = Parameters.EndsWith(TEXT("SourceDeath")) ?
+        EWindupInterruption::SourceDeath : EWindupInterruption::AvatarSwap;
+    ADD_LATENT_AUTOMATION_COMMAND(FRealMagicCommand(this, Scenario,
+        Parameters.StartsWith(TEXT("Placeholder")), Interruption)); return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlaceholderTargetRangeTest,

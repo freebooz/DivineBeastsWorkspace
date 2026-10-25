@@ -15,6 +15,7 @@
   "Plugins": [
     {"Name":"GamePlatformCore","Enabled":true},
     {"Name":"GamePlatformData","Enabled":true},
+    {"Name":"GamePlatformGameplay","Enabled":true,"TargetAllowList":["Client","Editor"]},
     {"Name":"GamePlatformSurface","Enabled":true,"TargetAllowList":["Client","Editor"]},
     {"Name":"GamePlatformPresentation","Enabled":true,"TargetAllowList":["Client","Editor"]}
   ]

@@ -64,6 +64,11 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|UI|Combat")
     TSubclassOf<UGamePlatformFeedbackWidget> CombatFloatingTextClass;
 
+    /** 本地受控玩家发生已确认生命损伤时调用；比例为本次扣血/当前最大生命的[0,1]值。
+     * 仅通知已由Monolith创建的作者界面执行红色边缘动画，不负责伤害或重复生成Widget。 */
+    UFUNCTION(BlueprintImplementableEvent, Category="DivineBeasts|UI|Combat", meta=(DisplayName="本地玩家受击红色屏幕反馈"))
+    void BP_OnLocalPlayerDamaged(float DamageFraction);
+
 private:
     UPROPERTY(Transient) TObjectPtr<UDivineBeastsWorldHealthBarPresenter> WorldHealthBars;
     TWeakObjectPtr<APlayerController> WorldHealthController;
@@ -75,6 +80,10 @@ private:
     void BindWorldCombatFeedback(APawn* DisplayPawn);
     void UnbindWorldCombatFeedback();
     void HandleConfirmedWorldCombatFeedback(const FGamePlatformCombatEvent& Event);
+    /** 校验本地目标、权威受击事件和生命伤害后返回合法显示强度；不以护盾吸收或切换Pawn初始化冒充扣血。 */
+    static bool TryBuildLocalDamageFeedback(const FGamePlatformCombatEvent& Event,
+        const AActor* LocalPawn, float MaxHealth, float& OutDamageFraction);
+    friend class FDivineBeastsLocalDamageScreenFeedbackTest;
     TWeakObjectPtr<UGamePlatformCombatFeedbackWorldSubsystem> BoundCombatFeedbackBus;
     FDelegateHandle CombatFeedbackHandle;
     /** 公共世界四种HUD的实际选择与单一模型；根布局拥有页面代次，子HUD仅订阅显示。 */

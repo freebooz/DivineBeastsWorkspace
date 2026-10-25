@@ -1,0 +1,69 @@
+{
+  "source": "E:\\work\\2026\\DivineBeastsWorkspace\\Game\\Plugins\\DivineBeasts\\ContentPacks\\Presentation\\DBAPresentationPack_Core\\SourceArt\\VFX\\PalmElementGather\\Review\\V1",
+  "createdUTC": "2026-10-24T15:16:06.079811+00:00",
+  "assets": [
+    {
+      "file": "T_DBA_PalmIce_MistSoft_Review.png",
+      "width": 512,
+      "height": 512,
+      "frames": 1,
+      "rgba": true,
+      "bytes": 90074,
+      "sha256": "51d7609d4bd546c4ffe4ef8e8b6f74a65b4991c7707825bbd09baad9332c3f84",
+      "kind": "mist"
+    },
+    {
+      "file": "T_DBA_PalmIce_SpiralFlow_Review.png",
+      "width": 512,
+      "height": 512,
+      "frames": 1,
+      "rgba": true,
+      "bytes": 108113,
+      "sha256": "e6c238e8b81f7c79c35fc23c5f3d266578d5a6bf77efa95b8d0e5843e41ce578",
+      "kind": "flow"
+    },
+    {
+      "file": "T_DBA_PalmIce_Core_Review.png",
+      "width": 512,
+      "height": 512,
+      "frames": 1,
+      "rgba": true,
+      "bytes": 72373,
+      "sha256": "8e0e5de0f28263cff6a29375f16d6ca7614b414e09477acdef3a7aca8e8d3284",
+      "kind": "core"
+    },
+    {
+      "file": "T_DBA_PalmIce_CrystalSeed_Review.png",
+      "width": 512,
+      "height": 512,
+      "frames": 1,
+      "rgba": true,
+      "bytes": 65562,
+      "sha256": "5433c5f5883bae8f188f7d9fd44f76332ad8773b17bdcfd5a89d9d68f608dc9d",
+      "kind": "crystal"
+    },
+    {
+      "file": "T_DBA_PalmIce_MistFlipbook_4x4_Review.png",
+      "width": 1024,
+      "height": 1024,
+      "frames": 16,
+      "rgba": true,
+      "bytes": 518362,
+      "sha256": "c998d62d702bf8323401567c3dc5b08163a29bfc3be6b36fb0f68d44bf8120de",
+      "kind": "mist"
+    },
+    {
+      "file": "T_DBA_PalmIce_SpiralFlipbook_4x4_Review.png",
+      "width": 1024,
+      "height": 1024,
+      "frames": 16,
+      "rgba": true,
+      "bytes": 568891,
+      "sha256": "944c7469f0b7224090e782e6e93fdde34e699bbb9172b676cc38cda44ff64484",
+      "kind": "flow"
+    }
+  ],
+  "manualApproved": false,
+  "actualNiagaraBound": false,
+  "continuity": "analytic phase 0..2pi across 16 tiles"
+}

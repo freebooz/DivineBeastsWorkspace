@@ -12,8 +12,8 @@ enum class EDivineBeastsPlaceholderAbilityMode : uint8
 {
     Primary,       // 普通攻击：权威前向单体伤害
     Passive,       // 被动：暂不实现，禁止主动释放
-    Fireball,      // 火焰弹：单枚可选目标追踪弹体
-    Frostbolt,     // 寒冰箭：单枚可选目标追踪弹体
+    Fireball,      // 火焰弹：默认0.5秒起手后释放单枚可选目标追踪弹体
+    Frostbolt,     // 寒冰箭：默认0.5秒起手后释放单枚可选目标追踪弹体
     ArcaneMissiles, // 奥术飞弹：三枚螺旋连射弹体
     Healing        // 治疗：枚举值5，保留Primary及历史资产枚举值不迁号；输入由授权集决定。
 };
@@ -38,7 +38,7 @@ public:
     EDivineBeastsPlaceholderAbilityMode PlaceholderMode =
         EDivineBeastsPlaceholderAbilityMode::Passive;
 
-    /** 客户端仅用于展示，投射物实际运动在服务器生成。 */
+    /** 服务器恒速默认4000、允许3000..5000厘米/秒，客户端仅展示；射程与跟踪仍由平台权威弹体执行。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder")
     FGamePlatformCombatProjectileMotion ProjectileMotion;
 
@@ -95,5 +95,6 @@ private:
     int32 ReleasedShots = 0;
     FTimerHandle BurstTimer;
 
+    /** 起手/连发同一个Timer调用；释放前复核当前Avatar、来源存活/代次及世界，取消不产生迟到弹体。 */
     void ReleaseNextProjectile();
 };

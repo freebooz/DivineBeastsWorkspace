@@ -15,7 +15,7 @@ public:
     /** 法术不消耗气势；GAS仍执行原有资格、冷却及Commit回调，不应用旧资产中的成本GE。 */
     virtual UGameplayEffect* GetCostGameplayEffect() const override;
     virtual bool UsesDefaultSpellEnergy() const override { return true; }
-    /** 读取已预热真实Definition，合法后只Commit一次；失败不制造弹体或成功日志。 */
+    /** 读取已预热真实Definition，合法后只Commit一次；火球/冰箭0.5秒起手结束才释放，失败不制造弹体。 */
     virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
         FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
     /** 终态前清自有连发定时器及源强引用；已发射弹体不依赖技能对象继续存活，来源代次由平台核对。 */
@@ -34,6 +34,6 @@ private:
     FTimerHandle BurstTimer;
     /** 每次激活唯一令牌；Commit/Spawn同步回调取消并重新激活后，旧调用不得污染后继施法。 */
     FGuid CastActivationToken;
-    /** 游戏线程连发；每枚重新核对激活/权威/来源存活，延期回调不会继承下一次施法资格。 */
+    /** 游戏线程首次/连发释放；每枚复查当前Avatar、权威、来源存活/代次和世界，延期回调不继承后继资格。 */
     void ReleaseNextProjectile();
 };

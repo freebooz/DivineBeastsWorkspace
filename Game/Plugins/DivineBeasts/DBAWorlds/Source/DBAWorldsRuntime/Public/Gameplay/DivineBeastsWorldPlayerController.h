@@ -62,6 +62,7 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 private:
     friend class FDivineBeastsWorldTargetSelectionTest; // 隔离回归使用真实选择入口，不新增测试运行接口。
+    friend class FDivineBeastsWorldTabTargetCycleTest;
     /** 最终镜头缓存只用于抑制相同视图事件，不作为权威角色姿态或网络同步源。 */
     FVector LastNotifiedCameraLocation = FVector::ZeroVector;
     FRotator LastNotifiedCameraRotation = FRotator::ZeroRotator;
@@ -94,6 +95,8 @@ private:
     float PointerTravelPixels = 0.f;
     /** 游戏线程可见射线命中；忽略自身，不透过遮挡或界面，不扫描世界Actor。 */
     AActor* FindPointerTarget() const;
+    /** TAB按次查询100米内可见的全部可选单位；按距离稳定循环，复用鼠标选择通知与服务器资格校验。 */
+    void RequestNextWorldTarget();
     void SetSelectedWorldTarget(AActor* Target);
     /** 必须由目标EndPlay撤销，不能依赖Widget逐帧检查无效弱指针。 */
     UFUNCTION()

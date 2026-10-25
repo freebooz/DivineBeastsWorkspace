@@ -1,9 +1,9 @@
 #include "Screens/Inventory/DivineBeastsInventoryScreen.h"
 #include "Screens/Inventory/DivineBeastsInventoryPresentationCatalog.h"
+#include "Screens/Inventory/DivineBeastsInventoryCellPresenter.h"
 
 #include "Engine/LocalPlayer.h"
 #include "Components/Button.h"
-#include "Components/ButtonSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Engine/StreamableManager.h"
@@ -583,24 +583,6 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
             Label->SetText(Value);
         }
     };
-    // 已有真实图标时只在格底显示数量；缺少或未加载图标时恢复完整中文名称。
-    // 仅修改真实ButtonSlot（按钮槽）布局，不创建额外Widget或抢占按钮鼠标输入。
-    const auto SetCellText = [this](const FString& WidgetName, const FString& TextValue,
-                                   bool bIconReady, bool bQuickbar)
-    {
-        if (UTextBlock* Label = Cast<UTextBlock>(GetWidgetFromName(FName(*WidgetName))))
-        {
-            Label->SetText(FText::FromString(TextValue));
-            if (UButtonSlot* ButtonSlot = Cast<UButtonSlot>(Label->Slot))
-            {
-                ButtonSlot->SetHorizontalAlignment(HAlign_Center);
-                ButtonSlot->SetVerticalAlignment(bIconReady ? VAlign_Bottom : VAlign_Center);
-                ButtonSlot->SetPadding(bIconReady
-                    ? FMargin(0.0f, bQuickbar ? 35.0f : 48.0f, 0.0f, 0.0f)
-                    : FMargin(0.0f));
-            }
-        }
-    };
     const auto SetButtonEnabled = [this](const TCHAR* Name, bool bEnabled)
     {
         if (UButton* Button = Cast<UButton>(GetWidgetFromName(Name)))
@@ -640,37 +622,10 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
         const bool bIconReady = RenderInventoryIcon(
             FString::Printf(TEXT("SlotIcon_%d"), Index),
             bOccupied ? ProjectedSlot->Item.ItemDefinitionId : NAME_None);
-        FString LabelText;
-        if (!ProjectedSlot) { LabelText = TEXT(""); }
-        else if (!bOccupied)
-        {
-            LabelText = FString::Printf(TEXT("%02d"), ProjectedSlot->SlotIndex + 1);
-        }
-        else
-        {
-            // 图标目录尚未完成时仅展示权威物品定义短标识，完整标识放入工具提示。
-            const FString DefinitionName = FDivineBeastsInventoryPresentationCatalog::Find(
-                ProjectedSlot->Item.ItemDefinitionId).DisplayName.ToString();
-            LabelText = bIconReady
-                ? FString::Printf(TEXT("×%d"), ProjectedSlot->Item.Quantity)
-                : DefinitionName.Left(7) + FString::Printf(TEXT("\n×%d"), ProjectedSlot->Item.Quantity);
-            if (ProjectedSlot->Item.bPending) { LabelText += TEXT("…"); }
-        }
-        SetCellText(FString::Printf(TEXT("SlotText_%d"), Index),
-            LabelText, bIconReady, false);
-        const FString ButtonName = FString::Printf(TEXT("SlotButton_%d"), Index);
-        if (UButton* Button = Cast<UButton>(GetWidgetFromName(FName(*ButtonName))))
-        {
-            Button->SetIsEnabled(ProjectedSlot && bReady);
-            Button->SetBackgroundColor(
-                bOccupied && ProjectedSlot->Item.ItemInstanceId == SelectedItemInstanceId
-                ? FLinearColor(0.34f, 0.55f, 0.40f, 1.0f)
-                : FLinearColor(0.12f, 0.24f, 0.22f, 1.0f));
-            Button->SetToolTipText(
-                bOccupied
-                ? FDivineBeastsInventoryPresentationCatalog::Find(ProjectedSlot->Item.ItemDefinitionId).DisplayName
-                : LOCTEXT("InventoryEmptySlot", "空背包格"));
-        }
+        const auto Cell = FDivineBeastsInventoryCellPresenter::MakeInventoryCell(
+            ProjectedSlot, bIconReady, bReady, SelectedItemInstanceId);
+        FDivineBeastsInventoryCellPresenter::ApplyCell(
+            *this, Index, false, bIconReady, Cell);
     }
 
     for (int32 Index = 0; Index < 12; ++Index)
@@ -680,26 +635,10 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
         const bool bQuickIconReady = RenderInventoryIcon(
             FString::Printf(TEXT("QuickIcon_%d"), Index),
             Quick && Quick->bAssigned ? Quick->Item.ItemDefinitionId : NAME_None);
-        FString LabelText = FString::FromInt(Index + 1);
-        if (Quick && Quick->bAssigned)
-        {
-            LabelText = bQuickIconReady
-                ? FString::Printf(TEXT("×%d"), Quick->Item.Quantity)
-                : FDivineBeastsInventoryPresentationCatalog::Find(
-                    Quick->Item.ItemDefinitionId).DisplayName.ToString().Left(7) +
-                    FString::Printf(TEXT("\n×%d"), Quick->Item.Quantity);
-        }
-        if (Quick && Quick->bPending) { LabelText += TEXT("…"); }
-        SetCellText(FString::Printf(TEXT("QuickText_%d"), Index),
-            LabelText, bQuickIconReady, true);
-        const FString ButtonName = FString::Printf(TEXT("QuickButton_%d"), Index);
-        if (UButton* Button = Cast<UButton>(GetWidgetFromName(FName(*ButtonName))))
-        {
-            Button->SetIsEnabled(bReady);
-            Button->SetBackgroundColor(Index == SelectedQuickbarIndex
-                ? FLinearColor(0.38f, 0.48f, 0.28f, 1.0f)
-                : FLinearColor(0.14f, 0.24f, 0.23f, 1.0f));
-        }
+        const auto Cell = FDivineBeastsInventoryCellPresenter::MakeQuickbarCell(
+            Quick, Index, bQuickIconReady, bReady, SelectedQuickbarIndex);
+        FDivineBeastsInventoryCellPresenter::ApplyCell(
+            *this, Index, true, bQuickIconReady, Cell);
     }
 
     const FGamePlatformInventoryItemInstance* Selected = IsValid(Service) &&

@@ -64,6 +64,10 @@ private:
     UPROPERTY(Transient)
     TWeakObjectPtr<AGamePlatformWeatherReplicator> Replicator;
     FGamePlatformWeatherSnapshot CurrentSnapshot;
+    // 首次发布前捕获地图作者值，避免PIE客户端投影或异步初始预设抹掉配置。
+    TOptional<FGamePlatformWeatherState> InitialSceneWind;
+    bool bSceneWindCaptured = false;
+    bool bInitialPresetPending = false;
     FGamePlatformWeatherSnapshotChanged SnapshotChanged;
     TArray<FGamePlatformWeatherScheduleEntry> Schedule;
     FRandomStream Random;

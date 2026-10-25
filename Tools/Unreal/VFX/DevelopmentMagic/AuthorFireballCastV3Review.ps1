@@ -72,6 +72,8 @@ Particles.SpriteRotation=angle;
 #endif
 '@
 Ng 'create_module_from_hlsl' @{name='DBAFireballCastV3Review';save_path=$mod;hlsl=$hlsl;inputs=@(@{name='Age';type='float'},@{name='Index';type='int'},@{name='Mode';type='int'});outputs=@();description='SSLM火球P1双掌火焰、旋流与中心汇聚'}|Out-Null
+# 与冰箭作者入口一致：参数映射必须由调用栈传入，隐藏的可选InputMap会导致输出引脚编译失败。
+Ed "import unreal`na=unreal.load_asset('$mod')`nnodes=[n for n in unreal.ObjectIterator(unreal.NiagaraNodeInput) if n.get_path_name().startswith(a.get_path_name()+':')]`nassert len(nodes)==1`no=nodes[0].get_editor_property('exposure_options')`no.set_editor_property('exposed',True)`no.set_editor_property('required',True)`no.set_editor_property('hidden',False)`nnodes[0].set_editor_property('exposure_options',o)`nassert unreal.EditorAssetLibrary.save_loaded_asset(a,False)"|Out-Null
 $spec=@(@{name='Palms';mode=0;count=2},@{name='PalmOrbits';mode=1;count=24},@{name='ConvergeStreams';mode=2;count=18},@{name='ChargeCore';mode=3;count=1})
 $emitters=@()
 foreach($e in $spec){

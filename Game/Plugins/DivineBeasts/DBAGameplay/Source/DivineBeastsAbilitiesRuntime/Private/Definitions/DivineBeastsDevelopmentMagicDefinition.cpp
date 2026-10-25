@@ -1,6 +1,15 @@
 // 项目开发魔法静态验证；父类身份、英雄与数值表的所有权保持不变，视觉由第三层内容包拥有。
 #include "Definitions/DivineBeastsDevelopmentMagicDefinition.h"
 #include "Development/DivineBeastsDevelopmentAbilityPolicy.h"
+UDivineBeastsDevelopmentMagicDefinition::UDivineBeastsDevelopmentMagicDefinition()
+{
+    ProjectileMotion.SpeedCmPerSecond = DefaultProjectileSpeedCmPerSecond;
+}
+bool UDivineBeastsDevelopmentMagicDefinition::IsProjectileSpeedSupported(float SpeedCmPerSecond)
+{
+    return FMath::IsFinite(SpeedCmPerSecond) && SpeedCmPerSecond >= MinProjectileSpeedCmPerSecond &&
+        SpeedCmPerSecond <= MaxProjectileSpeedCmPerSecond;
+}
 bool UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess()
 {
     return DivineBeasts::DevelopmentAbilities::IsEnabledForCurrentProcess();
@@ -9,7 +18,8 @@ FGamePlatformResult UDivineBeastsDevelopmentMagicDefinition::ValidateDefinition(
 {
     const auto Parent = Super::ValidateDefinition();
     if (!Parent.IsSuccess()) return Parent;
-    if (GetPresentationStyleId().IsNone() || !ProjectileMotion.IsValid() || ProjectileCount < 1 || ProjectileCount > 3 ||
+    if (GetPresentationStyleId().IsNone() || !ProjectileMotion.IsValid() ||
+        !IsProjectileSpeedSupported(ProjectileMotion.SpeedCmPerSecond) || ProjectileCount < 1 || ProjectileCount > 3 ||
         !FMath::IsFinite(ProjectileIntervalSeconds) ||
         (ProjectileCount == 1 ? ProjectileIntervalSeconds != 0 : ProjectileIntervalSeconds < 0.05f || ProjectileIntervalSeconds > 1.0f))
         return FGamePlatformResult::Failure(TEXT("DevelopmentMagicInvalid"), TEXT("开发魔法类型、运动参数或有界连发间隔不合法。"));

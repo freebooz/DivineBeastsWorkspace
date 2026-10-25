@@ -14,14 +14,14 @@ from datetime import datetime, timezone
 WORKSPACE = Path(__file__).resolve().parents[3]
 ROOT = "/Game/Development/DivineBeasts/Abilities"
 MAGIC = ROOT + "/MagicTests"
-# 2026-10-24快速恒速：仅调整飞行，50米射程、施法、伤害、冷却及连发保持既定合同。
+# 恒速、50米射程、伤害/冷却及连发合同不变；2026-10-25火球/冰箭默认0.5秒起手由原生共享常量拥有。
 SPELLS = {
     "Fireball": {"Slot": "Active01", "NameZh": "火焰弹（开发测试）", "Damage": 40, "Cost": 0, "Cooldown": 2,
-                 "Speed": 6000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
+                 "Speed": 4000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
     "Frostbolt": {"Slot": "Active02", "NameZh": "寒冰箭（开发测试）", "Damage": 30, "Cost": 0, "Cooldown": 1.5,
-                  "Speed": 8000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
+                  "Speed": 4000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
     "ArcaneMissiles": {"Slot": "Ultimate", "NameZh": "螺旋奥术飞弹（开发测试）", "Damage": 12, "Cost": 0, "Cooldown": 3,
-                       "Speed": 7000, "Radius": 18, "Turns": 3, "Count": 3, "Interval": 0.2},
+                       "Speed": 4000, "Radius": 18, "Turns": 3, "Count": 3, "Interval": 0.2},
 }
 
 
@@ -263,7 +263,8 @@ def author():
             grants[index] = grant
             dependencies = [d for d in dependencies if str(d.get_editor_property("PrimaryAssetName")) not in (old_id, identifier)] + [primary(identifier)]
             item = unreal.DivineBeastsAbilityUIEntry(); item.set_editor_property("AbilityId", identifier); item.set_editor_property("DisplayName", unreal.Text(data["NameZh"]))
-            item.set_editor_property("Description", unreal.Text("开发伤害测试：每枚基础法术伤害" + str(data["Damage"]) + "，不消耗气势" + "，冷却" + str(data["Cooldown"]) + "秒。" + ("三枚实际螺旋飞行，间隔0.2秒；取消停止余弹。" if data["Count"] == 3 else "服务器直线投射；未实现燃烧、冰冻或减速。") + "后续替换正式技能。"))
+            cast_description = "默认施法0.5秒，服务器起手完成后释放。" if name in ("Fireball", "Frostbolt") else ""
+            item.set_editor_property("Description", unreal.Text("开发伤害测试：每枚基础法术伤害" + str(data["Damage"]) + "，不消耗气势" + "，冷却" + str(data["Cooldown"]) + "秒。" + cast_description + ("三枚实际螺旋飞行，间隔0.2秒；取消停止余弹。" if data["Count"] == 3 else "服务器权威投射；未实现燃烧、冰冻或减速。") + "后续替换正式技能。"))
             item.set_editor_property("Icon", unreal.load_asset("/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_Dev" + name)); ui[index] = item
         ability_set.set_editor_property("Abilities", grants); ability_set.set_editor_property("RequiredDefinitions", dependencies)
         profile.set_editor_property("Entries", ui); save(ability_set); save(profile)

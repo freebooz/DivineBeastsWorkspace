@@ -52,6 +52,8 @@ public:
     AGamePlatformAIController();
 
     virtual void OnPossess(APawn* InPawn) override;
+    /** 当前原生导航请求成功完成时，立即重评攻击条件；仍须遵守可见性、冷却和服务器伤害资格。 */
+    virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
     virtual void OnUnPossess() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -78,6 +80,13 @@ protected:
     /** 无行为树的轻量服务器决策路径：只对平台已校验的目标回调；默认拒绝。
      * 子类必须独立完成攻击碰撞、距离、安全区、伤害上下文与身份代次的二次校验。 */
     virtual bool TryExecuteNativeAttack(AActor& ValidatedTarget) { return false; }
+
+    /** 选定目标后由具体玩法返回基础追击速度，空值表示使用现有怪物配置；不采集当前短时Buff值。 */
+    virtual TOptional<float> ResolveCombatTargetBaseWalkSpeed(const AActor& ValidatedTarget) const
+    {
+        (void)ValidatedTarget;
+        return {};
+    }
 
 private:
     // 私有纯规则只投影当前Pawn/World事实；友元仅供模块内部UE回归，不开放玩法调用入口。

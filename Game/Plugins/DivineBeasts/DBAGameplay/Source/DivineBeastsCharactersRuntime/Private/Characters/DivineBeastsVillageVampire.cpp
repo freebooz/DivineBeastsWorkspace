@@ -7,5 +7,6 @@
 ADivineBeastsVillageVampire::ADivineBeastsVillageVampire()
 {
     GetCapsuleComponent()->InitCapsuleSize(48.0f, 98.0f);
-    GetCharacterMovement()->MaxWalkSpeed = 320.0f;
+    // 人型怪物基础移动速度与玩家构造默认值一致；正式追击仍需核对HeroDefinition中的真实基础速度。
+    GetCharacterMovement()->MaxWalkSpeed = 450.0f;
 }

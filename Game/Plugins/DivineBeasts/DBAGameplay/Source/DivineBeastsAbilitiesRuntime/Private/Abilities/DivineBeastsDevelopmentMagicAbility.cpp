@@ -59,18 +59,21 @@ void UDivineBeastsDevelopmentMagicAbility::ActivateAbility(FGameplayAbilitySpecH
     Motion = Definition->ProjectileMotion; StyleId = Definition->GetPresentationStyleId();
     RemainingProjectiles = Definition->ProjectileCount; ReleasedProjectiles = 0;
     IntervalSeconds = Definition->ProjectileIntervalSeconds;
-    // 冰箭具有2秒权威起手窗口；同一时长复制至施法条/动画，可选表现失败不改变结算。
+    // 火球/冰箭共用0.5秒权威起手；奥术保留原首发及连发时序，不把反馈窗口误当作服务器延时。
+    const float CastDurationSeconds =
+        Definition->MagicKind == EDivineBeastsDevelopmentMagicKind::Fireball ||
+        Definition->MagicKind == EDivineBeastsDevelopmentMagicKind::Frostbolt ?
+            UDivineBeastsDevelopmentMagicDefinition::DefaultCastDurationSeconds : 0.0f;
     if (auto* CastFacts=Avatar->FindComponentByClass<UGamePlatformAbilityCastComponent>())
         CastFacts->PublishConfirmedCast(ActivationToken,Balance.AbilityId,StyleId,SourceGeneration,
-            Definition->MagicKind == EDivineBeastsDevelopmentMagicKind::Frostbolt ?
-                UDivineBeastsDevelopmentMagicDefinition::FrostboltCastDurationSeconds : (RemainingProjectiles>1 ? 1.0f : 0.7f));
+            CastDurationSeconds > 0.0f ? CastDurationSeconds : (RemainingProjectiles>1 ? 1.0f : 0.7f));
     // 发布委托可能同步取消并重新激活；旧发布栈不得释放后继激活的弹体。
     if (CastActivationToken!=ActivationToken || !IsActive()) return;
-    if (Definition->MagicKind == EDivineBeastsDevelopmentMagicKind::Frostbolt)
+    if (CastDurationSeconds > 0.0f)
     {
         CastWorld->GetTimerManager().SetTimer(BurstTimer, FTimerDelegate::CreateWeakLambda(this, [this, ActivationToken]()
             { if (CastActivationToken == ActivationToken) ReleaseNextProjectile(); }),
-            UDivineBeastsDevelopmentMagicDefinition::FrostboltCastDurationSeconds, false);
+            CastDurationSeconds, false);
         return;
     }
     ReleaseNextProjectile();
@@ -82,7 +85,8 @@ void UDivineBeastsDevelopmentMagicAbility::ReleaseNextProjectile()
     AActor* Source = CastSpec.Source.Get();
     auto* Combat = IsValid(Source) ? Source->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
     UWorld* World = Source ? Source->GetWorld() : nullptr;
-    if (!IsActive() || !IsValid(Source) || !Source->HasAuthority() || !World || World->bIsTearingDown ||
+    if (!IsActive() || !IsValid(Source) || GetAvatarActorFromActorInfo()!=Source ||
+        !Source->HasAuthority() || !World || World->bIsTearingDown ||
         !Combat || Combat->IsCombatDead() || Combat->GetCombatAvatarGeneration() != CastSpec.SourceAvatarGeneration || RemainingProjectiles <= 0)
     { EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true); return; }
     AActor* Target=FrozenProjectileTarget.Get();

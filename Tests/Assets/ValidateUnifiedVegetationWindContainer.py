@@ -15,7 +15,7 @@ def inventory(path):
     """拒绝空文件/损坏头/非正尺寸，保留实际包数据，不把Shader或PackageStore元数据冒充资产。"""
     path = pathlib.Path(path)
     with path.open(encoding='utf-8-sig', newline='') as source:
-        reader = csv.DictReader(source)
+        reader = csv.DictReader(source, skipinitialspace=True)
         if not {'Filename', 'ChunkType', 'Size'}.issubset(reader.fieldnames or []):
             raise ValueError('IoStore清单缺少必要字段')
         rows = list(reader)
@@ -50,7 +50,15 @@ def inspect(client_csv, server_csv, cold_report, bindings_report):
         raise ValueError('天气激活配置尚未完成')
     required = {contract.GLOBAL_FUNCTION, contract.GENERIC_FUNCTION, contract.ST9_FUNCTION,
                 contract.ST9_MASTER, '/GamePlatformSurface/ParameterCollections/MPC_GP_SurfaceGlobal'}
-    required.update(p.split('.')[0] for p in bindings['materials'] + bindings['prototype_masters'])
+    authored = {p.split('.')[0] for p in bindings['materials']}
+    runtime = {p.split('.')[0] for p in cold.get('runtime_materials', bindings['materials'])}
+    if 'runtime_materials' in cold and (not runtime or not runtime.issubset(authored)):
+        raise ValueError('原生运行材质清单为空或包含未审核材质')
+    author_only = authored - runtime
+    if any(not p.startswith('/DBAFoliagePack_Core/Foliage/Materials/MI_DBA_Foliage_Prototype_') for p in author_only):
+        raise ValueError('只能裁剪原生确认未引用的植物库默认MI')
+    required.update(runtime)
+    required.update(p.split('.')[0] for p in bindings['prototype_masters'])
     missing = sorted(p for p in required if not any(name.endswith('/' + suffix(p)) for name in client))
     review_leaks = sorted(name for name in client if '/DBAWorldPack_Village/Content/Development/Wind/' in name)
     server_leaks = sorted(name for name in server if '/GamePlatformSurface/Content/' in name or
@@ -63,6 +71,7 @@ def inspect(client_csv, server_csv, cold_report, bindings_report):
             'client_missing': missing, 'client_review_leaks': review_leaks, 'server_visual_leaks': server_leaks,
             'server_missing': server_missing,
             'required_package_count': len(required), 'input_sha256': evidence,
+            'author_only_library_materials': sorted(author_only),
             'network_verified': False, 'gpu_verified': False, 'manual_visual_accepted': False}
 
 

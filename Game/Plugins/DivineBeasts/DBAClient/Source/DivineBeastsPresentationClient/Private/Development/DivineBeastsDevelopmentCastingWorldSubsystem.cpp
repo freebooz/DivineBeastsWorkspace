@@ -228,9 +228,9 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
             if(Instance) PreviousMontageInstanceIds.Add(Instance->GetInstanceID());
         TWeakObjectPtr<UAnimMontage> WeakMontage(Montage);
         // 保持false作用域，不修改Skeleton/Group；有效起始偏移只播放当前剩余阶段。
-        // 冰箭动作映射至服务器复制的完整施法窗口；迟到事件也按同一比例进入剩余动作，避免2秒条配0.7秒动作。
+        // 火球/冰箭动作映射至服务器复制的完整施法窗口；默认0.5秒和迟到事件都由同一比例进入剩余动作。
         const bool bImportedHumanoidCast = MontagePathForMesh(Name, Mesh->GetSkeletalMeshAsset()) != MontagePath(Name);
-        const float PlayRate=(bImportedHumanoidCast || Name==TEXT("Frostbolt"))
+        const float PlayRate=(bImportedHumanoidCast || Name==TEXT("Frostbolt") || Name==TEXT("Fireball"))
             ? Montage->GetPlayLength()/Facts.DurationSeconds : 1.0f;
         const float PlayedLength=Anim->Montage_Play(Montage,PlayRate,EMontagePlayReturnType::MontageLength,static_cast<float>(Elapsed)*PlayRate,false);
         // Started可能取消、换Avatar、销毁Actor或扩容Bindings；绝不跨此外调保存TMap元素指针。

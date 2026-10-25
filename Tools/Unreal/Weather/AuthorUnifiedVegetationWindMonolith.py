@@ -80,7 +80,10 @@ def function_input(asset, name, vector=False, default=0.):
     result = node(asset, u.MaterialExpressionFunctionInput)
     result.set_editor_property('input_name', name)
     result.set_editor_property('input_type', u.FunctionInputType.FUNCTION_INPUT_VECTOR3 if vector else u.FunctionInputType.FUNCTION_INPUT_SCALAR)
-    result.set_editor_property('preview_value', u.Vector4(default, 0, 0, 0))
+    # UE5.8此字段是Vector4f，不能传LWC double Vector4；保留引擎返回的实际结构类型。
+    preview = result.get_editor_property('preview_value')
+    preview.import_text('(X=%.9g,Y=0,Z=0,W=0)' % float(default))
+    result.set_editor_property('preview_value', preview)
     result.set_editor_property('use_preview_value_as_default', True)
     return result
 
@@ -97,6 +100,12 @@ def acquire(path, source=None, material=False):
     if existing:
         version = u.EditorAssetLibrary.get_metadata_tag(existing, 'UnifiedWindVersion')
         state = u.EditorAssetLibrary.get_metadata_tag(existing, 'UnifiedWindState')
+        if (version == contract.VERSION and state == 'Building' and not source and
+                existing.get_path_name() in OWNED and isinstance(existing, u.MaterialFunction)):
+            # 仅恢复本进程明确新建、尚未完整组图的函数；不清空他人或已完成资产。
+            for expression in expressions(existing):
+                LIB.delete_material_expression_in_function(existing, expression)
+            return existing, True
         if version != contract.VERSION or state != 'GraphAuthored':
             raise RuntimeError('目标已存在且未通过本轮完整制作: ' + path)
         OWNED.add(existing.get_path_name())
@@ -160,9 +169,16 @@ def backup(asset_path):
     current_hash = hashlib.sha256(source.read_bytes()).hexdigest()
     if hashlib.sha256(target.read_bytes()).hexdigest() != current_hash:
         # 后续人工编辑产生了更新版本时另留当前回退点，不覆盖首份或用首份回退人工更新。
-        latest = EVIDENCE / 'BeforeLatest' / current_hash / source.relative_to(ROOT)
+        # 不把64位哈希再叠加完整插件目录，避免Windows 260字符限制。
+        latest = EVIDENCE / 'Versions' / current_hash[:16] / source.name
         if not latest.exists():
             latest.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(source, latest)
+        elif hashlib.sha256(latest.read_bytes()).hexdigest() != current_hash:
+            raise RuntimeError('短备份键发生冲突，拒绝覆盖')
+        index_path = EVIDENCE / 'VersionBackups.json'
+        index = json.loads(index_path.read_text(encoding='utf-8')) if index_path.exists() else {}
+        index[str(source.relative_to(ROOT)) + ':' + current_hash] = str(latest.relative_to(EVIDENCE))
+        write('VersionBackups.json', index)
     return current_hash
 
 
@@ -274,10 +290,12 @@ def author_platform():
                 'AmplitudeCm': (function_input(generic_function, 'AmplitudeCm', default=12.), ''),
                 'MaxDistanceCm': (function_input(generic_function, 'MaxDistanceCm'), ''),
                 'DirectionWS': (state, 'DirectionWS'), 'Strength': (state, 'Strength'), 'Phase': (state, 'Phase')}
+        args['TimeSeconds'] = (state, 'ServerTimeSeconds')
         distance = node(generic_function, u.MaterialExpressionDistance)
         position = node(generic_function, u.MaterialExpressionWorldPosition)
         position.set_editor_property('world_position_shader_offset', u.WorldPositionIncludedOffsets.WPT_EXCLUDE_ALL_SHADER_OFFSETS)
         camera = node(generic_function, u.MaterialExpressionCameraPositionWS)
+        args['PositionWS'] = (position, 'XYZ')
         wire(position, distance, 'A', 'XYZ'); wire(camera, distance, 'B')
         args['DistanceCm'] = (distance, '')
         result = custom(generic_function, contract.GENERIC_WPO_HLSL, args, u.CustomMaterialOutputType.CMOT_FLOAT3)
@@ -332,9 +350,11 @@ def author_st9():
         normal = next(e for e in original if isinstance(e, u.MaterialExpressionFunctionOutput)
                       and str(e.get_editor_property('output_name')) == 'NormalOffset')
         normal_source = LIB.get_inputs_for_material_function_expression(wind, normal)[0]
-        normal_scale = node(wind, u.MaterialExpressionMultiply)
-        wire(normal_source, normal_scale, 'A'); wire(state, normal_scale, 'B', 'Strength'); wire(normal_scale, normal)
+        normal_scale = custom(wind, 'return all(isfinite(Offset))?Offset*Strength:float3(0,0,0);',
+                              {'Offset': (normal_source, ''), 'Strength': (state, 'Strength')}, u.CustomMaterialOutputType.CMOT_FLOAT3)
+        wire(normal_scale, normal)
         complete(wind)
+    ensure_st9_world_scale(wind)
     master, create = acquire(contract.ST9_MASTER, '/SpeedTreeImporter/SpeedTree9/SpeedTreeMaster', True)
     if create:
         native_calls = [e for e in expressions(master) if isinstance(e, u.MaterialExpressionMaterialFunctionCall)
@@ -349,6 +369,22 @@ def author_st9():
         complete(master)
     write('ST9GraphAuthored.json', {'assets': [contract.ST9_FUNCTION, contract.ST9_MASTER],
                                    'engine_motion_reused': True, 'saved': False, 'visual_verified': False})
+
+
+def ensure_st9_world_scale(wind):
+    """原生ST9末端按XYZ缩放世界位移，改为同一标量，避免非均匀缩放旋转世界风向。"""
+    if u.EditorAssetLibrary.get_metadata_tag(wind, 'UnifiedWindUniformScale') == '1':
+        return
+    multiply = next(e for e in expressions(wind) if e.get_name() == 'MaterialExpressionMultiply_1')
+    inputs = LIB.get_inputs_for_material_function_expression(wind, multiply)
+    source = inputs[1]
+    if not isinstance(source, u.MaterialExpressionMaterialFunctionCall) or 'ObjectScale.ObjectScale' not in str(source.get_editor_property('material_function')):
+        raise RuntimeError('ST9末端缩放拓扑变化，需审查')
+    uniform = custom(wind, 'return (abs(Scale.x)+abs(Scale.y)+abs(Scale.z))/3.0;',
+                     {'Scale': (source, 'Scale XYZ')}, u.CustomMaterialOutputType.CMOT_FLOAT1)
+    wire(uniform, multiply, 'B')
+    u.EditorAssetLibrary.set_metadata_tag(wind, 'UnifiedWindUniformScale', '1')
+    complete(wind)
 
 
 def bind_village():
@@ -366,6 +402,13 @@ def bind_village():
         raise RuntimeError('必须先完成ST9及平台样板')
     material_paths = {p for a in scene['actors'] for c in a['components'] if contract.is_plant_mesh(c['mesh'])
                       for p in c['materials'] if p}
+    # 植物库默认MI也必须接风，防止后续PCG再生成或新实例回到旧的无风母材质。
+    material_paths.update(path for path in u.EditorAssetLibrary.list_assets('/DBAFoliagePack_Core/Foliage/Materials', recursive=False)
+                          if '/MI_DBA_Foliage_Prototype_' in path)
+    prototype_master_path = '/DBAFoliagePack_Core/Foliage/Materials/M_DBA_Foliage_PrototypeTree'
+    prototype_master = u.load_asset(prototype_master_path)
+    if not isinstance(prototype_master, u.Material):
+        raise RuntimeError('缺少已存在的共享原型树母材质')
     changes = []
     prototype_parents = set()
     for path in sorted(material_paths):
@@ -373,22 +416,36 @@ def bind_village():
         if not isinstance(material, u.MaterialInstanceConstant):
             raise RuntimeError('植物材质不是可审阅的MIC: ' + path)
         backup(path)
-        if path.startswith('/DBAFoliagePack_Core/Foliage/'):
+        old_parent = material.get_editor_property('parent')
+        old_parent_path = old_parent.get_path_name().split('.')[0] if old_parent else ''
+        if old_parent_path in ('/SpeedTreeImporter/SpeedTree9/SpeedTreeMaster', contract.ST9_MASTER):
             LIB.set_material_instance_parent(material, master)
             response = contract.FERN_RESPONSE if '/Grass/' in path else contract.TREE_RESPONSE
+            available = {str(n) for n in LIB.get_scalar_parameter_names(master)}
             for name, value in response.items():
-                if not LIB.set_material_instance_scalar_parameter_value(material, name, value):
+                if name not in available:
                     raise RuntimeError('ST9参数不存在: ' + name)
+                # 锁定UE5.8实现写入成功仍恒返回false（bResult未赋值）；必须实际读回验收。
+                LIB.set_material_instance_scalar_parameter_value(material, name, value)
+                actual = LIB.get_material_instance_scalar_parameter_value(material, name)
+                if abs(actual - value) > .0001:
+                    raise RuntimeError('ST9参数读回不符: ' + name)
         else:
-            parent = material.get_editor_property('parent')
-            if not isinstance(parent, u.Material):
-                raise RuntimeError('原型树材质父链变化，需检查: ' + path)
-            prototype_parents.add(parent.get_path_name())
+            if old_parent_path not in (prototype_master_path, '/DBAWorldPack_Village/PCG/HillsideForest/Materials/M_DBA_Review_TreeSimple'):
+                raise RuntimeError('未审核的植物父链，拒绝自动改接: ' + old_parent_path)
+            LIB.set_material_instance_parent(material, prototype_master)
+            prototype_parents.add(prototype_master.get_path_name())
         OWNED.add(path); changes.append(path)
     for path in sorted(prototype_parents):
         material = u.load_asset(path); backup(path)
-        if LIB.get_material_property_input_node(material, u.MaterialProperty.MP_WORLD_POSITION_OFFSET):
-            raise RuntimeError('原型树已有WPO，禁止覆盖: ' + path)
+        material.set_editor_property('max_world_position_offset_displacement', 40.)
+        existing_wpo = LIB.get_material_property_input_node(material, u.MaterialProperty.MP_WORLD_POSITION_OFFSET)
+        if existing_wpo:
+            if not isinstance(existing_wpo, u.MaterialExpressionMaterialFunctionCall) or existing_wpo.get_editor_property('material_function') != generic:
+                raise RuntimeError('原型树已有其他WPO，禁止覆盖: ' + path)
+            OWNED.add(path)
+            complete(material)
+            continue
         function = call(material, generic)
         position = node(material, u.MaterialExpressionPreSkinnedPosition)
         pin = next(p for p in LIB.get_material_expression_input_names(function) if p.split(' ')[0] == 'PositionLS')
@@ -418,7 +475,8 @@ def configure_weather_presets():
         state.set_editor_property('wind_gust_strength', .2)
         state.set_editor_property('wind_gust_frequency_hz', .1)
         if name == 'Clear':
-            state.set_editor_property('wind_intensity', .25)
+            # 用户选择仅增强新手村运行时晴天风力；不依赖地图风源。
+            state.set_editor_property('wind_intensity', .70)
         weather.set_editor_property('state', state); definition.set_editor_property('weather', weather)
         OWNED.add(definition.get_path_name()); changed.append(path)
     return changed
@@ -441,6 +499,21 @@ def author_review():
         raise RuntimeError('原生审核地图创建失败')
     world = u.get_editor_subsystem(u.UnrealEditorSubsystem).get_editor_world()
     actors = []
+    subsystem = u.get_editor_subsystem(u.EditorActorSubsystem)
+    light = subsystem.spawn_actor_from_class(u.DirectionalLight, u.Vector(0, 0, 2000), u.Rotator(pitch=-45, yaw=35))
+    if not light:
+        raise RuntimeError('审核灯光创建失败')
+    light.set_actor_label('WindReview_KeyLight')
+    light.get_component_by_class(u.LightComponent).set_editor_property('intensity', 8.)
+    ground = subsystem.spawn_actor_from_object(u.load_asset('/Engine/BasicShapes/Plane'), u.Vector(2500, 2000, -5))
+    if not ground:
+        raise RuntimeError('审核地面创建失败')
+    ground.set_actor_label('WindReview_Ground'); ground.set_actor_scale3d(u.Vector(150, 150, 1))
+    camera = subsystem.spawn_actor_from_class(u.CameraActor, u.Vector(3500, -5000, 2600), u.Rotator(pitch=-20, yaw=90))
+    if not camera:
+        raise RuntimeError('审核相机创建失败')
+    camera.set_actor_label('WindReview_FixedCamera')
+    actors.extend([light.get_path_name(), ground.get_path_name(), camera.get_path_name()])
     for row, path in enumerate(meshes):
         mesh = u.load_asset(path); transforms = []
         for column, yaw in enumerate((0, 90, 180, 270)):
@@ -451,7 +524,7 @@ def author_review():
             actor.set_actor_label('WindReview_Static_' + str(row) + '_' + str(yaw))
             actors.append(actor.get_path_name())
             transforms.append(u.Transform(location=u.Vector(location.x, location.y + 900., 0.),
-                                           rotation=u.Rotator(yaw=yaw).quaternion(), scale=u.Vector(1., .8, 1.2)))
+                                           rotation=u.Rotator(yaw=yaw), scale=u.Vector(1., .8, 1.2)))
         actor = u.GamePlatformSurfaceMaterialAuthoringLibrary.spawn_instanced_wind_review_actor(world, mesh, transforms)
         if not actor:
             raise RuntimeError('HISM审核夹具生成失败')
@@ -459,6 +532,26 @@ def author_review():
     if not u.EditorLoadingAndSavingUtils.save_map(world, contract.REVIEW_MAP):
         raise RuntimeError('审核地图保存失败')
     write('ReviewFixture.json', {'map': contract.REVIEW_MAP, 'actors': actors, 'native_visual_verified': False})
+
+
+def preview_editor_wind():
+    """将同一已保存天气定义投影到当前Editor世界做只读美术预览；不保存MPC默认/地图，不触及PIE权威。"""
+    require_idle()
+    world = u.get_editor_subsystem(u.UnrealEditorSubsystem).get_editor_world()
+    if not world or world.get_path_name().split('.')[0] != FORMAL:
+        raise RuntimeError('只在正式新手村Editor世界预览风')
+    definition = u.load_asset('/DBAWorldPack_Village/Weather/Definitions/DA_DBA_Weather_Clear')
+    state = definition.get_editor_property('weather').get_editor_property('state')
+    endpoint = u.LinearColor(state.get_editor_property('wind_yaw_degrees'),
+                             round(state.get_editor_property('wind_intensity') * 255.) / 255.,
+                             state.get_editor_property('wind_gust_strength'), state.get_editor_property('wind_gust_frequency_hz'))
+    collection = u.load_asset(MPC)
+    u.MaterialLibrary.set_vector_parameter_value(world, collection, 'GlobalWindFrom', endpoint)
+    u.MaterialLibrary.set_vector_parameter_value(world, collection, 'GlobalWindTo', endpoint)
+    u.MaterialLibrary.set_vector_parameter_value(world, collection, 'GlobalWindTiming', u.LinearColor(0, 0, 0, 0))
+    u.MaterialLibrary.set_scalar_parameter_value(world, collection, 'GlobalWindSeed', 2026.)
+    write('EditorPreview.json', {'world': world.get_path_name(), 'source': definition.get_path_name(),
+                                 'saved_defaults_modified': False, 'runtime_authority_modified': False})
 
 
 def save_owned():

@@ -16,6 +16,12 @@ bool UGamePlatformSurfaceMaterialAuthoringLibrary::ConnectDisplacement(UMaterial
         UMaterialEditingLibrary::ConnectMaterialProperty(Expression, FString(), MP_Displacement);
 }
 
+float UGamePlatformSurfaceMaterialAuthoringLibrary::GetEffectiveMaterialWPOBound(UMaterialInterface* Material)
+{
+    check(IsInGameThread());
+    return IsValid(Material) ? Material->GetMaxWorldPositionOffsetDisplacement() : -1.f;
+}
+
 TArray<UMaterialExpression*> UGamePlatformSurfaceMaterialAuthoringLibrary::GetMaterialExpressions(UObject* Asset)
 {
     check(IsInGameThread());

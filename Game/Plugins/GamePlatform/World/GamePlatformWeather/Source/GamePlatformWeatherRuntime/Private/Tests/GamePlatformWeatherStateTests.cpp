@@ -7,6 +7,35 @@
 #include "TimerManager.h"
 #include <limits> // 标准C++产生NaN测试输入；UE的TNumericLimits未定义QuietNaN。
 
+/** UE Timer先把Pending条目转Active且同帧只推进一次；跨真实帧边界验证计划。 */
+class FGamePlatformWeatherScheduleTimerCommand final : public IAutomationLatentCommand
+{
+public:
+    FGamePlatformWeatherScheduleTimerCommand(FAutomationTestBase* InTest, UWorld* InWorld)
+        : Test(InTest), World(InWorld) {}
+    virtual bool Update() override
+    {
+        if (!bPrimed)
+        {
+            World->GetTimerManager().Tick(0.f);
+            PrimedFrame = GFrameCounter; bPrimed = true;
+            return false;
+        }
+        if (GFrameCounter == PrimedFrame) return false;
+        World->GetTimerManager().Tick(1.2f);
+        auto* Service = World->GetSubsystem<UGamePlatformWeatherWorldSubsystem>();
+        Test->TestTrue(TEXT("旧调度不得覆盖新一代1秒Timer"), Service && Service->GetCurrentSnapshot().Revision >= 4);
+        if (Service) Service->StopSchedule();
+        World->DestroyWorld(false);
+        return true;
+    }
+private:
+    FAutomationTestBase* Test;
+    UWorld* World; // CreateWorld默认加Root，命令终态显式DestroyWorld，不跨世界复用。
+    uint64 PrimedFrame = 0;
+    bool bPrimed = false;
+};
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformWeatherValuesTest,
     "GamePlatform.Weather.Runtime.QuantizationAndTransition",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -109,13 +138,9 @@ bool FGamePlatformWeatherScheduleReentryTest::RunTest(const FString&)
     TestEqual(TEXT("新天气类型已生效"),
               Service->GetCurrentSnapshot().To.Type, EGamePlatformWeatherType::HeavySnow);
 
-    // 新计划只等待1秒；若旧发布栈覆盖同一TimerHandle为15秒，此处不会生成Revision=4。
-    World->GetTimerManager().Tick(1.2f);
-    TestTrue(TEXT("旧调度不得覆盖新一代1秒Timer"), Service->GetCurrentSnapshot().Revision >= 4);
-
     Service->RemoveSnapshotHandler(Handler);
-    Service->StopSchedule();
-    World->DestroyWorld(false);
+    // 不把首次Tick的Pending激活误当作已经过去1.2秒；不手动修改引擎全局帧计数。
+    ADD_LATENT_AUTOMATION_COMMAND(FGamePlatformWeatherScheduleTimerCommand(this, World));
     return true;
 }
 #endif

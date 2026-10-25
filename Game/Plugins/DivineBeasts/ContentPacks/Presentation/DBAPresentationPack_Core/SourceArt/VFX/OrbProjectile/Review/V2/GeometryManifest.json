@@ -1,0 +1,18 @@
+{
+  "units": "cm",
+  "manualAccepted": false,
+  "assets": [
+    {
+      "name": "SM_DBA_FireCore_V2.obj",
+      "vertices": 642,
+      "triangles": 1280,
+      "sha256": "738af6d5037f5db92edd9102aca3e2c35d64438dce474a235be2230bea373197"
+    },
+    {
+      "name": "SM_DBA_IceCrystal_V2.obj",
+      "vertices": 42,
+      "triangles": 80,
+      "sha256": "11a979b6b0f7c2f393a4a1f0828da0b9521d1b277e34b1419d7326ec3c421918"
+    }
+  ]
+}

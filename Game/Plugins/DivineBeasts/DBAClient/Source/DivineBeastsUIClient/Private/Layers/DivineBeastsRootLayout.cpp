@@ -691,8 +691,7 @@ void UDivineBeastsRootLayout::BindWorldCombatFeedback(APawn* DisplayPawn)
     const bool bWorldReady = World && !World->bIsTearingDown &&
         World->GetNetMode() != NM_DedicatedServer &&
         IsValid(Cast<ADivineBeastsWorldPlayerController>(GetOwningPlayer())) &&
-        IsValid(GetOwningLocalPlayer()) && CombatFloatingTextClass &&
-        !CombatFloatingTextClass->HasAnyClassFlags(CLASS_Abstract);
+        IsValid(GetOwningLocalPlayer()); // 红屏与飘字独立：未配置飘字控件也必须接收受击事件。
     auto* Bus = bWorldReady ? World->GetSubsystem<UGamePlatformCombatFeedbackWorldSubsystem>() : nullptr;
     if (BoundCombatFeedbackBus.Get() == Bus) return;
     UnbindWorldCombatFeedback();
@@ -704,6 +703,19 @@ void UDivineBeastsRootLayout::BindWorldCombatFeedback(APawn* DisplayPawn)
     }
 }
 
+bool UDivineBeastsRootLayout::TryBuildLocalDamageFeedback(
+    const FGamePlatformCombatEvent& Event, const AActor* LocalPawn, float MaxHealth, float& OutDamageFraction)
+{
+    OutDamageFraction = 0.0f;
+    if (!IsValid(LocalPawn) || Event.TargetActor.Get() != LocalPawn || !Event.EventId.IsValid() ||
+        Event.EventType != EGamePlatformCombatEventType::Damage ||
+        !FMath::IsFinite(Event.AppliedToHealth) || Event.AppliedToHealth <= 0.0f ||
+        !FMath::IsFinite(MaxHealth) || MaxHealth <= 0.0f) return false;
+    // 强度使用本地可信最大生命进行归一化，客户端只作视觉提示，绝不回写Gameplay。
+    OutDamageFraction = FMath::Clamp(Event.AppliedToHealth / MaxHealth, 0.0f, 1.0f);
+    return OutDamageFraction > 0.0f;
+}
+
 void UDivineBeastsRootLayout::HandleConfirmedWorldCombatFeedback(const FGamePlatformCombatEvent& Event)
 {
     ULocalPlayer* Player = GetOwningLocalPlayer();
@@ -711,8 +723,20 @@ void UDivineBeastsRootLayout::HandleConfirmedWorldCombatFeedback(const FGamePlat
     AActor* Target = Event.TargetActor;
     if (!IsInGameThread() || !Player || !World || World->bIsTearingDown ||
         Player->GetWorld() != World || !BoundCombatFeedbackBus.IsValid() ||
-        !CombatFloatingTextClass || !Event.EventId.IsValid() ||
-        !IsValid(Target) || Target->GetWorld() != World || Target->IsActorBeingDestroyed()) return;
+        !Event.EventId.IsValid() || !IsValid(Target) ||
+        Target->GetWorld() != World || Target->IsActorBeingDestroyed()) return;
+
+    // 单一权威网络事实仅影响自己的本地视口；远端玩家受击与仅护盾吸收均不得触发红屏。
+    if (Target == GetOwningPlayerPawn())
+    {
+        const auto* Combat = Target->FindComponentByClass<UGamePlatformCombatComponent>();
+        float DamageFraction = 0.0f;
+        if (IsValid(Combat) && TryBuildLocalDamageFeedback(Event, Target,
+            Combat->GetCombatMaxHealth(), DamageFraction))
+            BP_OnLocalPlayerDamaged(DamageFraction);
+    }
+    // 飘字是独立可选表现，不再决定本地受击视觉通知能否运行。
+    if (!CombatFloatingTextClass || CombatFloatingTextClass->HasAnyClassFlags(CLASS_Abstract)) return;
 
     FVector Origin, Extent;
     Target->GetActorBounds(true, Origin, Extent);

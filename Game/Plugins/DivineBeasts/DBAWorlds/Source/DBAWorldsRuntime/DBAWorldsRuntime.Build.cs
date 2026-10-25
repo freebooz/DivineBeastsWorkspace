@@ -29,6 +29,8 @@ public class DBAWorldsRuntime : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "DivineBeastsCharactersRuntime",
+            // 原生键位及回归直接使用FKey/EKeys，显式链接其InputCore所有者。
+            "InputCore",
             // 世界输入清理仅通过平台公开ASC撤销按住命令；不引入客户端UI、Niagara或网络权威替代。
             "GamePlatformAbilitySystem",
             // 世界点击仅提交平台战斗选中意图，命中/伤害和弹体追踪仍由服务器平台实现。

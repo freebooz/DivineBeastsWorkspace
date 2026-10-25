@@ -9,9 +9,9 @@ import unreal
 
 HEROES = ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar")
 # 2026-10-24性能/观感调速：仅提高恒定轴向速度，保留50米射程、连发和螺旋合同。
-EXPECTED = {"Fireball": (6000.0, 0.0, 0.0, 1, 0.0),
-            "Frostbolt": (8000.0, 0.0, 0.0, 1, 0.0),
-            "ArcaneMissiles": (7000.0, 18.0, 3.0, 3, 0.2)}
+EXPECTED = {"Fireball": (4000.0, 0.0, 0.0, 1, 0.0),
+            "Frostbolt": (4000.0, 0.0, 0.0, 1, 0.0),
+            "ArcaneMissiles": (4000.0, 18.0, 3.0, 3, 0.2)}
 ROOT = "/Game/Development/DivineBeasts/Abilities/MagicTests"
 
 def identifier(value):
@@ -101,6 +101,10 @@ def main():
             errors.append("图标未导入: " + icon)
         for stage in ("Flight", "Impact"):
             path = "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_Dev" + spell + stage
+            # 冰箭已由 RefineIceArrowConceptMonolith 发布专用系统；稳定定义仍保留原逻辑ID。
+            # 独立夹具核对真实软引用与已保存的700厘米边界，不能再要求旧占位系统。
+            if spell == "Frostbolt":
+                path = "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_" + stage
             inspected.append(path)
             system=unreal.load_asset(path)
             if not isinstance(system, unreal.NiagaraSystem):
@@ -108,7 +112,7 @@ def main():
             else:
                 # 独立已批准边界：高速半秒尾迹不能退回仅包住核心的小盒；命中仍保持有限范围。
                 bounds=system.get_editor_property('FixedBounds')
-                extent=950.0 if stage=='Flight' else 250.0
+                extent=700.0 if spell=='Frostbolt' else (950.0 if stage=='Flight' else 250.0)
                 if not bounds.is_valid or any(abs(getattr(bounds.min,axis)+extent)>0.01 or abs(getattr(bounds.max,axis)-extent)>0.01 for axis in ('x','y','z')):
                     errors.append('真实保存GPU包围盒不符: '+path)
             definition=unreal.load_asset('/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_Dev'+spell+stage)

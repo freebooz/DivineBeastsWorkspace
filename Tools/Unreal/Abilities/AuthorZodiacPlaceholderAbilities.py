@@ -27,10 +27,10 @@ SLOTS = (
     ("Primary", "花瓣绽放", "PRIMARY", "SLOT3", 0, 0, 10, 2000, 0, 0, 1, 0),
     ("Passive", "被动技能（占位）", "PASSIVE", "", 0, 0, 0, 0, 0, 0, 1, 0),
     # 2026-10-24用户要求快速飞行：厘米/秒恒速，不增加起飞加速阶段；其它平衡参数沿用原值。
-    ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 5000, 6000, 0, 1, 0),
-    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 5000, 8000, 0, 1, 0),
-    ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 5000, 7000, 18, 3, .2),
-    ("DirectedMissile", "定向飞弹", "ACTIVE", "PRIMARY", 40, 0, 2, 5000, 9000, 0, 1, 0),
+    ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 5000, 4000, 0, 1, 0),
+    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 5000, 4000, 0, 1, 0),
+    ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 5000, 4000, 18, 3, .2),
+    ("DirectedMissile", "定向飞弹", "ACTIVE", "PRIMARY", 40, 0, 2, 5000, 4000, 0, 1, 0),
 )
 MAGIC_SLOTS = ("Fireball", "Frostbolt", "ArcaneMissiles", "DirectedMissile")
 COOLDOWNS = ("Primary",) + MAGIC_SLOTS
@@ -309,6 +309,9 @@ def author():
                     "，法术不消耗气势，冷却" + str(cooldown) +
                     "秒。服务器权威弹体" + ("三连发。" if count == 3 else "单发。") +
                     "未实现减速/燃烧等最终生肖效果，后续直接替换对应技能定义及执行类。")
+                if mode in ("Fireball", "Frostbolt"):
+                    # 时长由原生共享常量拥有；这里只写人工可读说明，不在资产中另建计时字段。
+                    description += "默认施法0.5秒，服务器起手完成后释放。"
             item.set_editor_property("Description", unreal.Text(description))
             icon_path = (icons[(hero, "BasicAttack" if mode == "Primary" else "Passive")]
                          if mode in ("Primary", "Passive") else MAGIC_ICONS[mode])

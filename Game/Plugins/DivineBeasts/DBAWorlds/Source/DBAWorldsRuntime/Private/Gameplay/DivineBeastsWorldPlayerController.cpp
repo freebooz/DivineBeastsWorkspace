@@ -58,6 +58,7 @@ void ADivineBeastsWorldPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
     InputComponent->BindAction(TEXT("DBA.ToggleWorldHealthBars"), IE_Pressed, this, &ThisClass::RequestWorldHealthBarsToggle).bConsumeInput = true;
+    InputComponent->BindAction(TEXT("DBA.CycleWorldTarget"), IE_Pressed, this, &ThisClass::RequestNextWorldTarget).bConsumeInput = true;
     // Controller先于Pawn消费同名原生轴，避免旧Pawn镜头/移动同时执行。UI已消费的按键不会进入GameAndUI后备。
     // 这些轴也被通用Pawn注册，显式消费可保证世界控制器拥有当前语义，同时保留竞技控制器的Pawn默认输入。
     InputComponent->BindAxis(TEXT("DBA.MoveForward"), this, &ThisClass::SetForwardAxis).bConsumeInput = true;

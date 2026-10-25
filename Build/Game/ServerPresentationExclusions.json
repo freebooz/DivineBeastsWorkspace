@@ -461,6 +461,13 @@
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "纯装饰蕨类PCG图和专用放置器；Cooker按独立类剥离生成HISM，权威地形、掩码、道路与导航继续保留。真实Cook须独立验证。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Development/Wind",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/Wind",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "统一植物风原生审核地图/夹具不提供权威碰撞或玩法，禁止进入服务器发布包。"
     }
   ],
   "StageOnlyDirectories": [

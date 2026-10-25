@@ -9,6 +9,9 @@
 /** 当前客户端本世界天气插值结果通知；表现提供者不可用不影响服务器天气事实。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformWeatherVisualChanged, const FGamePlatformWeatherState&);
 class FGamePlatformWeatherAtmosphere;
+class AGameStateBase;
+class AGamePlatformGameStateBase;
+class AWindDirectionalSource;
 
 /** 在天气过渡期间才短期定时更新材质，完成后释放Timer；不复制服务器调度器。 */
 UCLASS()
@@ -39,6 +42,17 @@ public:
     void ConfigureAtmosphere(const FGamePlatformWeatherAtmosphereProfile& Profile);
 
 private:
+    friend class FGamePlatformWeatherWindRefreshReentryTest;
+    friend class FGamePlatformWeatherWindClockTest;
+    friend class FGamePlatformWeatherNativeWindTest;
+    /** 地图源只查找一次；运行参数随后消费天气事件，不扫描植物或新增Tick。 */
+    void BindNativeWindSource();
+    void ApplyNativeWindSource(const FGamePlatformWeatherState& State);
+    /** 真实服务器时钟首次到达/校正时同步两种风投影；拒绝同步重入后的旧代次。 */
+    void ReprojectWindForClock();
+    TWeakObjectPtr<AWindDirectionalSource> NativeWindSource;
+    /** GameState首次出现/替换时更换时钟订阅；旧来源回调不得恢复旧世界风。 */
+    void OnGameStateSet(AGameStateBase* GameState);
     void OnSnapshotReceived(const FGamePlatformWeatherSnapshot& Snapshot);
     void UpdateTransition();
     /** 分离快照首帧与Timer推进；避免首帧用未来目标天气瞬间播放满量雨雪。 */
@@ -58,6 +72,9 @@ private:
     FGamePlatformWeatherState LastVisualState;
     FGamePlatformWeatherVisualChanged VisualChanged;
     FDelegateHandle SourceSnapshotHandle;
+    FDelegateHandle WorldGameStateHandle;
+    FDelegateHandle ServerClockHandle;
+    TWeakObjectPtr<AGamePlatformGameStateBase> ServerClockSource;
     FTimerHandle TransitionTimer;
     TSharedPtr<FGamePlatformWeatherAtmosphere> Atmosphere;
     /** VFX和SFX使用不同请求身份，避免统一表现总线/播放器将两条请求去重成一条。 */

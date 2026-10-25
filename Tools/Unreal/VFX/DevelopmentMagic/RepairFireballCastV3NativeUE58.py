@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """《神兽联盟》火球 V3 P1 的 UE5.8 原生 HLSL 修复，仅修改审核包内一个 NiagaraScript。
 
-依据项目现行冰箭制作经验，UE5.8 CustomHLSL 需要 Index % 形式，裸 Index* 运算未按参数绑定替换。
+UE5.8 CustomHLSL 分词器不将百分号作为分隔符，Index与百分号之间必须留空格。
+生成器默认隐藏InputMap且标记非必需，导致调用方参数流丢失；按既有冰箭合同恢复暴露/必需输入。
 任何无法唯一定位节点、源文本不符、包只读或保存失败都立即停止。
 独立复审不修改 GAS、发射/命中、正式火球、场景或第三方资产。
 """
@@ -62,6 +63,20 @@ try:
         result["status"]="patched"
     else:
         result["status"]="already_matching"
+    inputs=[n for n in unreal.ObjectIterator(unreal.NiagaraNodeInput)
+            if n.get_path_name().startswith(script.get_path_name()+":")]
+    if len(inputs)!=1:raise RuntimeError("审核模块预期只有一个InputMap输入")
+    options=inputs[0].get_editor_property("exposure_options")
+    result["inputMapBefore"]={k:bool(options.get_editor_property(k)) for k in ("exposed","required","hidden")}
+    if result["inputMapBefore"]!={"exposed":True,"required":True,"hidden":False}:
+        options.set_editor_property("exposed",True)
+        options.set_editor_property("required",True)
+        options.set_editor_property("hidden",False)
+        inputs[0].set_editor_property("exposure_options",options)
+        if not unreal.EditorAssetLibrary.save_loaded_asset(script,False):
+            raise RuntimeError("InputMap合同修复保存失败")
+        result["status"]="patched_input_map"
+    result["inputMapAfter"]={k:bool(inputs[0].get_editor_property("exposure_options").get_editor_property(k)) for k in ("exposed","required","hidden")}
     result["binaryAfterSha256"]=hashlib.sha256(BINARY.read_bytes()).hexdigest()
     result["saved"]=True
     result["shaderGpuCompiled"]=False

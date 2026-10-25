@@ -15,6 +15,7 @@ UDivineBeastsPlaceholderGameplayAbility::UDivineBeastsPlaceholderGameplayAbility
 {
     NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+    ProjectileMotion.SpeedCmPerSecond = UDivineBeastsDevelopmentMagicDefinition::DefaultProjectileSpeedCmPerSecond;
 }
 
 UGameplayEffect* UDivineBeastsPlaceholderGameplayAbility::GetCostGameplayEffect() const
@@ -75,6 +76,7 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
         PlaceholderMode != EDivineBeastsPlaceholderAbilityMode::Primary;
     if (bProjectile &&
         (!ProjectileMotion.IsValid() ||
+         !UDivineBeastsDevelopmentMagicDefinition::IsProjectileSpeedSupported(ProjectileMotion.SpeedCmPerSecond) ||
          !FMath::IsNearlyEqual(ProjectileMotion.RangeCm, Balance.CastRangeCm) ||
          ProjectileCount < 1 || ProjectileCount > 3 ||
          ((ProjectileCount == 1 && ProjectileIntervalSeconds != 0.0f) ||
@@ -209,19 +211,23 @@ void UDivineBeastsPlaceholderGameplayAbility::ActivateAbility(
         CastStyle = NAME_None; break;
     }
     if (!PresentationStyleOverride.IsNone()) CastStyle = PresentationStyleOverride;
+    // 火球/冰箭的服务器起手与复制施法条共用同值；定向飞弹、奥术及治疗保留既有时序。
+    const float CastDurationSeconds =
+        PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Fireball ||
+        PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Frostbolt ?
+            UDivineBeastsDevelopmentMagicDefinition::DefaultCastDurationSeconds : 0.0f;
     if (auto* CastFacts = Avatar->FindComponentByClass<UGamePlatformAbilityCastComponent>())
     {
         CastFacts->PublishConfirmedCast(Token, Balance.AbilityId, CastStyle, AvatarGeneration,
-            PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Frostbolt ?
-                UDivineBeastsDevelopmentMagicDefinition::FrostboltCastDurationSeconds : (RemainingShots > 1 ? 1.0f : 0.7f));
+            CastDurationSeconds > 0.0f ? CastDurationSeconds : (RemainingShots > 1 ? 1.0f : 0.7f));
     }
     if (ActivationToken != Token || !IsActive()) return;
-    if (PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Frostbolt)
+    if (CastDurationSeconds > 0.0f)
     {
-        // 冰箭完成用户指定的2秒权威起手再释放；复制施法条与释放共用时长，取消/换代仍统一拒绝。
+        // 复用自有BurstTimer等待首次释放；后续连发仍由ReleaseNextProjectile按原间隔接续。
         World->GetTimerManager().SetTimer(BurstTimer, FTimerDelegate::CreateWeakLambda(this, [this, Token]()
             { if (ActivationToken == Token) ReleaseNextProjectile(); }),
-            UDivineBeastsDevelopmentMagicDefinition::FrostboltCastDurationSeconds, false);
+            CastDurationSeconds, false);
         return;
     }
     ReleaseNextProjectile();
@@ -233,7 +239,8 @@ void UDivineBeastsPlaceholderGameplayAbility::ReleaseNextProjectile()
     AActor* Source = CastSpec.Source.Get();
     UWorld* World = IsValid(Source) ? Source->GetWorld() : nullptr;
     auto* Combat = IsValid(Source) ? Source->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
-    if (!IsActive() || !IsValid(Source) || !Source->HasAuthority() || !World ||
+    if (!IsActive() || !IsValid(Source) || GetAvatarActorFromActorInfo() != Source ||
+        !Source->HasAuthority() || !World ||
         World->bIsTearingDown || !Combat || Combat->IsCombatDead() ||
         Combat->GetCombatAvatarGeneration() != CastSpec.SourceAvatarGeneration ||
         RemainingShots <= 0)

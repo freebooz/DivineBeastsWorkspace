@@ -8,6 +8,8 @@ import json
 import pathlib
 import re
 import sys
+import os
+import tempfile
 import uuid
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
@@ -16,6 +18,37 @@ PROPERTY = 'InitialWeatherPresetIdsByWorld'
 WORLD = '/DBAWorldPack_Village/Maps/L_Village_Start'
 PRESET = 'db.weather.clear@1'
 REVIEW = '/DBAWorldPack_Village/Development/Wind'
+
+
+def commit_updates(root, updates, evidence):
+    """预检全部前像、备份并逐文件原子替换；失败只回退仍与本工具写入相同的文件。"""
+    prepared, written = [], []
+    try:
+        for path, before, after in updates:
+            path.resolve().relative_to(root.resolve())
+            if path.read_bytes() != before:
+                raise RuntimeError('配置发生并发修改，拒绝写入: ' + str(path))
+            backup = evidence / path.relative_to(root); backup.parent.mkdir(parents=True, exist_ok=True)
+            backup.write_bytes(before)
+            descriptor, temporary = tempfile.mkstemp(prefix=path.name + '.wind-', suffix='.tmp', dir=path.parent)
+            with os.fdopen(descriptor, 'wb') as target:
+                target.write(after)
+            prepared.append((path, before, after, pathlib.Path(temporary)))
+        for path, before, after, temporary in prepared:
+            if path.read_bytes() != before:
+                raise RuntimeError('替换前配置被并发修改: ' + str(path))
+            os.replace(temporary, path); written.append((path, before, after))
+    except BaseException:
+        for path, before, after in reversed(written):
+            if path.read_bytes() == after:
+                descriptor, temporary = tempfile.mkstemp(prefix=path.name + '.wind-rollback-', dir=path.parent)
+                with os.fdopen(descriptor, 'wb') as target:
+                    target.write(before)
+                os.replace(temporary, path)
+        raise
+    finally:
+        for _, _, _, temporary in prepared:
+            if temporary.exists(): temporary.unlink()
 
 
 def configure_ini(text):
@@ -82,15 +115,23 @@ def main():
     if args.apply:
         evidence = root / 'Saved/Validation/UnifiedVegetationWind20261024' / str(uuid.uuid4()) / 'ConfigBefore'
         evidence.mkdir(parents=True)
-        for path, old, new in ((ini, before, after), (policy_path, policy_before, policy_after)):
-            target = evidence / path.relative_to(root); target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(old)
-            if path.read_bytes() != old:
-                raise RuntimeError('准备期间配置发生并发修改，拒绝写入')
-        (root / rule['SourceDirectory']).mkdir(parents=True, exist_ok=True)
-        ini.write_bytes(after); policy_path.write_bytes(policy_after)
         sys.path.insert(0, str(root / 'Build/Game'))
-        from ServerPresentationPolicy import load_policy, generate_configs
-        generate_configs(load_policy(policy_path, root), root)
+        from ServerPresentationPolicy import load_policy
+        review_directory = root / rule['SourceDirectory']
+        created_directory = not review_directory.exists()
+        review_directory.mkdir(parents=True, exist_ok=True)
+        try:
+            candidate = evidence / 'CandidatePolicy.json'; candidate.write_bytes(policy_after)
+            # 在任何实际配置写入前，真实校验完整策略及全部派生配置标记/边界。
+            checked = load_policy(candidate, root)
+            plans = checked.planned_configs(root)
+            updates = [(ini, before, after), (policy_path, policy_before, policy_after)]
+            updates.extend((root / path, old, new) for path, (old, new) in plans.items())
+            commit_updates(root, updates, evidence)
+        except BaseException:
+            if created_directory and review_directory.is_dir() and not any(review_directory.iterdir()):
+                review_directory.rmdir()
+            raise
     print(json.dumps({'mode': 'apply' if args.apply else 'preview', 'source_changes': changes,
                       'editor_build_required_after_apply': True, 'native_assets_authored': False}, ensure_ascii=False))
     return 0

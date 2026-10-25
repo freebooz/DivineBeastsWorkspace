@@ -112,6 +112,20 @@ class PolicyBehaviorTests(unittest.TestCase):
             self.assertFalse(self.policy.is_forbidden(
                 "/Game/Development/DivineBeasts/Abilities/DA_Dev.uasset", profile))
 
+    def test_wind_review_leaf_is_stripped_but_formal_village_remains(self):
+        raw = copy.deepcopy(self.raw)
+        raw['CookDirectories'] = [row for row in raw['CookDirectories']
+                                  if row['PackagePath'] != '/DBAWorldPack_Village/Development/Wind']
+        source = 'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/Wind'
+        raw['CookDirectories'].append({'PackagePath': '/DBAWorldPack_Village/Development/Wind',
+            'SourceDirectory': source, 'Profiles': 'AllServers',
+            'Availability': 'Present' if (ROOT / source).is_dir() else 'LegacyAbsent', 'Reason': '独立植物风审核夹具测试'})
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'policy.json'; path.write_text(json.dumps(raw), encoding='utf-8')
+            accepted = self.api.load_policy(path, ROOT)
+        self.assertTrue(accepted.is_forbidden('/DBAWorldPack_Village/Development/Wind/Maps/Review.umap', 'DedicatedServer'))
+        self.assertFalse(accepted.is_forbidden('/DBAWorldPack_Village/Maps/L_Village_Start.umap', 'DedicatedServer'))
+
     def test_wolf_visual_leaf_is_stripped_but_ai_and_map_remain(self):
         """狼的外观不得把客户端动画模块带入专服；AI和真实导航地图必须保留。"""
         for profile in PROFILES:
@@ -121,6 +135,19 @@ class PolicyBehaviorTests(unittest.TestCase):
                 for package in ("/DBAWorldPack_Village/AI/DA_DBA_VillageWolfAI.uasset",
                                 "/DBAWorldPack_Village/Maps/L_Village_Start.umap"):
                     self.assertFalse(self.policy.is_forbidden(package, profile))
+
+    def test_forest_server_parent_remap_preserves_world_assets(self):
+        for profile in PROFILES:
+            engine = (ROOT / f'Game/Config/Custom/{profile}/DefaultEngine.ini').read_text(encoding='utf-8-sig')
+            self.assertIn('[CoreRedirects]', engine)
+            self.assertIn('OldName="/DBAFoliagePack_Core/Foliage/Materials/M_DBA_Foliage_PrototypeTree.M_DBA_Foliage_PrototypeTree"', engine)
+            self.assertIn('NewName="/DBAWorldPack_Village/PCG/HillsideForest/Materials/M_DBA_Review_TreeSimple.M_DBA_Review_TreeSimple"', engine)
+            self.assertNotIn('MatchSubstring=true', engine)
+            for package in ('/DBAWorldPack_Village/PCG/HillsideForest/Materials/MI_DBA_Review_Bark.uasset',
+                            '/DBAWorldPack_Village/PCG/HillsideForest/SM_DBA_Review_WideCrown.uasset',
+                            '/DBAWorldPack_Village/PCG/HillsideForest/DA_DBA_HillsideForest.uasset',
+                            '/DBAWorldPack_Village/Maps/L_Village_Start.umap'):
+                self.assertFalse(self.policy.is_forbidden(package, profile))
 
     def test_unknown_schema_and_unknown_fields_are_rejected(self):
         self.rejected_policy(lambda raw: raw.update(SchemaVersion=99))

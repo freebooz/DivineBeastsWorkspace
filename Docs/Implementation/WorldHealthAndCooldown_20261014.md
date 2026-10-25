@@ -72,3 +72,9 @@ Notification／Feedback的一次性寿命定时器与UIManager的下一帧输入
 独立复审另发现暂停后失焦仍无条件写回捕获/锁。MenuFocusPreservesCapture绑定真实WorldContext、控制器和UGameViewportClient，调用公开Suspend/Flush入口；MenuCapture.RED-Retry-13358754实际1项Fail、4错误。初次MenuCapture.RED-4ec732f7在Editor DLL初始化阶段超时，测试未执行，保留失败过程，不计红测证据。捕获与锁写入现仅在未暂停时执行，保持CommonUI菜单所有权。修复模块3c05e7ec-7ebf-41ce-bd1d-3824c75be1a5通过，最终MouseInput.FinalGREEN-e0fe51c4报告35项全部Success、0错误；1项旧Possession仍有2条警告。最终Client/Server构建221e576e-c6d1-49c9-ae3c-a17846ca70e7真实退出0。复审已确认重要源码问题关闭，剩余人工画面边界不变。
 
 最终完整Editor构建99e216ac-ad01-4a65-88e8-3443af5d11ef成功且Eligible；Client/Server Cook分别为4ea54e30-1f5a-4549-b31e-e6bb7dab7f94和d8e2a8b2-4d96-4a94-b143-0ae7af5b3ee1，Cook/Stage与实际容器门禁均成功。最终专服51524、双客户端36540/6208路径及启动时刻与新包匹配，两个SSLM登录窗口响应且无Fatal。人工登录后才能验证新手村实际鼠标画面、联机施法、血条显示及遮罩视觉；本轮未自动认证。当前结果集中于FinalValidation.json及RuntimeObserved.json。
+
+## 2026-10-24 玩家名称与自身隐藏
+
+其他玩家使用既有世界名称板显示真实生命快照及服务器验证的角色名称。服务器从已选角色资料读取characterName，经既有PlayerState.PlayerName复制；客户端订阅玩家状态替换和名称复制通知，首次读取快照，此后事件更新，退出与换代成对解绑。自身当前Pawn不注册世界名称板，个人HUD保持既有行为；不通过Tick扫描玩家或血量。
+
+世界UI继续采用128项预算；玩家进入时可淘汰最远未选中的开发怪物，避免200只怪物占满预算后看不到其他玩家。原生回归覆盖角色名称、自身排除、迟到PlayerState、名称变更、换Pawn、生命周期清理和玩家预算优先级。打包与实际双客户端显示证据归`Saved/Validation/VFXPlayerRelease20261024/`，原生夹具结果与真实联网画面分别报告。

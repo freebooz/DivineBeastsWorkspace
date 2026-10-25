@@ -1,6 +1,7 @@
 // 项目客户端技能栏：只读授权快照，Profile与图标由当前Loadout世界的Data租约持有。
 // UObject/资源访问仅游戏线程；换英雄、解绑及销毁先撤代次再释放本VM的两份租约，不全局卸载。
 #include "ViewModels/Combat/DivineBeastsAbilityBarViewModel.h"
+#include "ViewModels/Combat/DivineBeastsAbilityBarProjectionDiff.h"
 
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
@@ -789,46 +790,11 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
         NewSlots.Add(MoveTemp(Slot));
     }
 
-    bool bChanged = Slots.Num() != NewSlots.Num();
-    if (!bChanged)
-    {
-        for (int32 Index = 0; Index < Slots.Num(); ++Index)
-        {
-            const FGamePlatformUISlotState& A = Slots[Index];
-            const FGamePlatformUISlotState& B = NewSlots[Index];
-            if (A.SlotId != B.SlotId || A.ContentId != B.ContentId ||
-                A.Icon != B.Icon || A.bEnabled != B.bEnabled ||
-                A.bPending != B.bPending ||
-                !FMath::IsNearlyEqual(A.OverlayProgress, B.OverlayProgress, 0.0001f))
-            {
-                bChanged = true;
-                break;
-            }
-        }
-    }
-    bool bDetailsChanged = SlotDetails.Num() != NewDetails.Num();
-    if (!bDetailsChanged)
-    {
-        for (int32 Index = 0; Index < NewDetails.Num(); ++Index)
-        {
-            const FDivineBeastsAbilitySlotDetails& A = SlotDetails[Index];
-            const FDivineBeastsAbilitySlotDetails& B = NewDetails[Index];
-            if (A.SlotId != B.SlotId || A.AbilityId != B.AbilityId ||
-                A.AbilityLevel != B.AbilityLevel ||
-                !A.DisplayName.EqualTo(B.DisplayName) ||
-                !A.Description.EqualTo(B.Description) ||
-                !A.DisabledReason.EqualTo(B.DisabledReason) ||
-                !FMath::IsNearlyEqual(A.CooldownRemainingSeconds, B.CooldownRemainingSeconds, 0.01f) ||
-                !FMath::IsNearlyEqual(A.CooldownTotalSeconds, B.CooldownTotalSeconds, 0.01f) ||
-                // 同时长冷却被刷新时，剩余秒数与遮罩比例可能看起来相同，
-                // 但新真实GE对应的材质截止时间已变；不发布会让遮罩沿旧时间继续走。
-                !FMath::IsNearlyEqual(A.CooldownEndsAtAppSeconds, B.CooldownEndsAtAppSeconds, 0.01f))
-            {
-                bDetailsChanged = true;
-                break;
-            }
-        }
-    }
+    const bool bChanged = FDivineBeastsAbilityBarProjectionDiff::HasSlotsChanged(
+        Slots, NewSlots);
+    const bool bDetailsChanged = FDivineBeastsAbilityBarProjectionDiff::HasDetailsChanged(
+        SlotDetails, NewDetails);
+
 
     if (bChanged || bDetailsChanged)
     {

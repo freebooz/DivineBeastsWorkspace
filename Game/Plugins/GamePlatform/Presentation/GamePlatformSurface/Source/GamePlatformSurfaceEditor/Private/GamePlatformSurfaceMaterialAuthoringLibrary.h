@@ -3,6 +3,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GamePlatformSurfaceMaterialAuthoringLibrary.generated.h"
 class UMaterial;
+class UMaterialInterface;
 class UMaterialExpression;
 class UStaticMesh;
 class UWorld;
@@ -20,6 +21,9 @@ public:
     /** 游戏线程只读列出母材质/材质函数的真实节点；不创建、保存或编译资产。其他类型返回空数组。 */
     UFUNCTION(BlueprintCallable, Category="Surface|Authoring")
     static TArray<UMaterialExpression*> GetMaterialExpressions(UObject* Asset);
+    /** 只读实际材质实例/父链解析后的WPO位移上限（厘米）；0表示引擎未设限，空对象返回-1。 */
+    UFUNCTION(BlueprintCallable, Category="Surface|Authoring")
+    static float GetEffectiveMaterialWPOBound(UMaterialInterface* Material);
     /** 只读LOD0所有UV通道的有限数/范围/非零数量，供源权重审计；返回JSON，不把通道存在当有效权重。 */
     UFUNCTION(BlueprintCallable, Category="Surface|Authoring")
     static FString GetStaticMeshUVStatistics(UStaticMesh* Mesh);

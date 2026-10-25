@@ -3,6 +3,8 @@
 
 #include "Characters/DivineBeastsVillageWolf.h"
 #include "Characters/DivineBeastsVillageVampire.h"
+#include "Components/DivineBeastsCharacterComponent.h"
+#include "Definitions/DivineBeastsHeroDefinition.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Engine/World.h"
@@ -17,6 +19,21 @@ ADivineBeastsVillageWolfAIController::ADivineBeastsVillageWolfAIController()
     PrimaryActorTick.bCanEverTick = false;
     // SSLM怪物持续追击有效交战目标；由平台按实际累计伤害转移仇恨，不因短时失去感知归家。
     bRetainCombatTarget = true;
+}
+
+TOptional<float> ADivineBeastsVillageWolfAIController::ResolveCombatTargetBaseWalkSpeed(const AActor& ValidatedTarget) const
+{
+    // 只有人型吸血鬼追击真实玩家时覆盖速度；不使普通狼或友好NPC获得额外移动能力。
+    const auto* Humanoid = Cast<ADivineBeastsVillageVampire>(GetPawn());
+    const auto* Player = Cast<APawn>(&ValidatedTarget);
+    if (!HasAuthority() || !IsValid(Humanoid) || !Humanoid->IsWolfAlive() ||
+        !IsValid(Player) || !Player->IsPlayerControlled()) return {};
+    const auto* Identity = ValidatedTarget.FindComponentByClass<UDivineBeastsCharacterComponent>();
+    const auto* Hero = IsValid(Identity) && Identity->IsCharacterReady() ? Identity->GetLoadedDefinition() : nullptr;
+    if (!IsValid(Hero) || !FMath::IsFinite(Hero->Movement.MaxWalkSpeed) ||
+        Hero->Movement.MaxWalkSpeed <= 0.0f) return {};
+    // 可信HeroDefinition是玩家正常移动基础速度的唯一来源，不复制GAS临时减速或冲刺倍率。
+    return Hero->Movement.MaxWalkSpeed;
 }
 
 bool ADivineBeastsVillageWolfAIController::TryExecuteNativeAttack(AActor& ValidatedTarget)
