@@ -2,22 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "Types/GamePlatformInventoryTypes.h"
+#include "Components/GamePlatformSlotWidget.h"
 
 class UUserWidget;
 
-/**
- * FDivineBeastsInventoryCellDisplay（背包单格展示状态）。
- * 一次性由平台只读快照派生，不存储账号、授权或物品实例所有权。
- * 无图标时仍可展示中文名称；图标准备就绪时仅显示数量与操作状态。
- */
-struct FDivineBeastsInventoryCellDisplay
-{
-    FString LabelText;
-    FText ToolTip;
-    FLinearColor BackgroundColor = FLinearColor::Transparent;
-    bool bEnabled = false;
-    bool bHasToolTip = false;
-};
+/** 背包显示采用平台通用槽位值；物品名称与具体颜色由项目展示适配器填充。 */
+using FDivineBeastsInventoryCellDisplay = FGamePlatformUISlotCellPresentation;
 
 /**
  * FDivineBeastsInventoryCellPresenter（背包格展示适配器）。

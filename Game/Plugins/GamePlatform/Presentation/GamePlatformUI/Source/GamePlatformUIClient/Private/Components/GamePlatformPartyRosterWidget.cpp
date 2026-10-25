@@ -1,4 +1,5 @@
 #include "Components/GamePlatformPartyRosterWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 
@@ -43,12 +44,9 @@ bool UGamePlatformPartyRosterWidget::ApplyPartyRoster(
     const FGamePlatformUIPartyRosterState& InState)
 {
     constexpr int32 MaxPartyRows = 32;
-    if (!CurrentScopeId.IsValid() ||
-        InState.SourceScopeId != CurrentScopeId ||
-        InState.Revision < 0 ||
-        InState.Members.Num() > MaxPartyRows ||
-        (State.SourceScopeId == InState.SourceScopeId &&
-         InState.Revision <= State.Revision))
+    if (!FGamePlatformUISnapshotScope::CanAccept(
+            CurrentScopeId, State.Revision, InState.SourceScopeId, InState.Revision) ||
+        InState.Members.Num() > MaxPartyRows)
     {
         return false;
     }

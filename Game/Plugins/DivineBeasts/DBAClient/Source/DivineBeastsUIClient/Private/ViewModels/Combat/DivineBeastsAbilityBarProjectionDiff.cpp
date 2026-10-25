@@ -12,10 +12,8 @@ bool FDivineBeastsAbilityBarProjectionDiff::HasSlotsChanged(
     {
         const FGamePlatformUISlotState& A = Previous[Index];
         const FGamePlatformUISlotState& B = Current[Index];
-        if (A.SlotId != B.SlotId || A.ContentId != B.ContentId ||
-            A.Icon != B.Icon || A.bEnabled != B.bEnabled ||
-            A.bPending != B.bPending ||
-            !FMath::IsNearlyEqual(A.OverlayProgress, B.OverlayProgress, 0.0001f))
+        // 公共槽位基类负责唯一比较合同；项目技能栏不展示数量，保持原事件语义。
+        if (!UGamePlatformSlotWidget::AreSlotStatesEquivalent(A, B, false))
         {
             return true;
         }

@@ -2,9 +2,6 @@
 #include "Screens/Inventory/DivineBeastsInventoryPresentationCatalog.h"
 
 #include "Blueprint/UserWidget.h"
-#include "Components/Button.h"
-#include "Components/ButtonSlot.h"
-#include "Components/TextBlock.h"
 
 FDivineBeastsInventoryCellDisplay
 FDivineBeastsInventoryCellPresenter::MakeInventoryCell(
@@ -83,34 +80,19 @@ void FDivineBeastsInventoryCellPresenter::ApplyCell(
     {
         return;
     }
+    // 命名控件的显示归平台槽位基类；项目仅提供图标几何差异和稳定作者命名。
+    // 不更换既有Widget树与按钮事件，不新增第二套输入或加载执行器。
+    FGamePlatformUISlotCellPresentation Presentation = Cell;
+    Presentation.bLabelAtBottom = bIconReady;
+    Presentation.LabelPadding = bIconReady
+        ? FMargin(0.0f, bQuickbar ? 35.0f : 48.0f, 0.0f, 0.0f)
+        : FMargin(0.0f);
     const FString TextName = bQuickbar
         ? FString::Printf(TEXT("QuickText_%d"), Index)
         : FString::Printf(TEXT("SlotText_%d"), Index);
-    if (UTextBlock* Label = Cast<UTextBlock>(
-        Screen.GetWidgetFromName(FName(*TextName))))
-    {
-        Label->SetText(FText::FromString(Cell.LabelText));
-        if (UButtonSlot* ButtonSlot = Cast<UButtonSlot>(Label->Slot))
-        {
-            ButtonSlot->SetHorizontalAlignment(HAlign_Center);
-            ButtonSlot->SetVerticalAlignment(bIconReady ? VAlign_Bottom : VAlign_Center);
-            ButtonSlot->SetPadding(bIconReady
-                ? FMargin(0.0f, bQuickbar ? 35.0f : 48.0f, 0.0f, 0.0f)
-                : FMargin(0.0f));
-        }
-    }
-
     const FString ButtonName = bQuickbar
         ? FString::Printf(TEXT("QuickButton_%d"), Index)
         : FString::Printf(TEXT("SlotButton_%d"), Index);
-    if (UButton* Button = Cast<UButton>(
-        Screen.GetWidgetFromName(FName(*ButtonName))))
-    {
-        Button->SetIsEnabled(Cell.bEnabled);
-        Button->SetBackgroundColor(Cell.BackgroundColor);
-        if (Cell.bHasToolTip)
-        {
-            Button->SetToolTipText(Cell.ToolTip);
-        }
-    }
+    UGamePlatformSlotWidget::ApplyNamedSlotCellPresentation(
+        Screen, FName(*TextName), FName(*ButtonName), Presentation);
 }
