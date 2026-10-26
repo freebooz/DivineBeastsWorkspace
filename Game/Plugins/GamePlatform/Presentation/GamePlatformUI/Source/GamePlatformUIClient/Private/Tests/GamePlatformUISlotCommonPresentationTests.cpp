@@ -73,6 +73,28 @@ bool FGamePlatformUISnapshotScopeTest::RunTest(const FString&)
         FGamePlatformUISnapshotScope::CanAccept(A, 3, A, 2));
     TestTrue(TEXT("当前来源新版有效"),
         FGamePlatformUISnapshotScope::CanAccept(A, 3, A, 4));
+    // FName来源不使用FGuid：新身份修订可重置，重复及倒退仍拒绝。
+    TestTrue(TEXT("命名资源首次0号修订合法"),
+        FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            NAME_None, -1, TEXT("Map.A"), 0));
+    TestTrue(TEXT("换资源允许重新从0开始"),
+        FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            TEXT("Map.A"), 44, TEXT("Map.B"), 0));
+    TestFalse(TEXT("相同资源拒绝重复修订"),
+        FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            TEXT("Map.A"), 5, TEXT("Map.A"), 5));
+    TestFalse(TEXT("相同资源拒绝旧修订"),
+        FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            TEXT("Map.A"), 5, TEXT("Map.A"), 4));
+    TestTrue(TEXT("相同资源接受新修订"),
+        FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            TEXT("Map.A"), 5, TEXT("Map.A"), 6));
+    TestFalse(TEXT("空资源身份不得发布"),
+        FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            NAME_None, -1, NAME_None, 0));
+    TestFalse(TEXT("负修订不得发布"),
+        FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            NAME_None, -1, TEXT("Map.A"), -1));
     return true;
 }
 

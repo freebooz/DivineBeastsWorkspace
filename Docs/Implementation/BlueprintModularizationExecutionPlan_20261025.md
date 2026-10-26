@@ -70,3 +70,51 @@
 **当前阻断：** 并行 Foundation 构建/烘焙占用引擎锁，后续 Editor（编辑器）模块编译和最新 M3 合并后的 Client 复编译均返回 exit 2/NotExecuted（未执行），不能冒充测试通过；HWebCodex 内的 Monolith 服务注册列表仍为空；此前 UE 命令行补扫因 `DivineBeastsArenaClient` 加载失败终止；当前根布局源码另有并行任务改动。未更改 `.uasset`/`.umap`，未执行 PIE、Cook 或人工签收，也没有 Git 提交/推送。
 
 **后续优先级：** 先排除并行构建锁和编辑器模块装载问题→补最新 Client/Editor 编译及两份新测试原生执行→Monolith 逐资产读取和冷重载→再推进技能槽 UI 资产与根布局重构，最后三世界/竞技/服务器剥离验收。
+
+## 六、M5 公用组件基类优先改造（2026-10-25 同日续行）
+
+本阶段按用户“所有通用功能均考虑设计为公用组件基类”的要求执行，详见 [公共组件优化实施记录](BlueprintPublicComponentContinuation_20261025.md)；长期唯一规范已增补至 [三层类继承与扩展规范](../Architecture/三层类继承与扩展规范.md) 第九章。
+
+- [x] 平台已有 `UGamePlatformComponentWidget`（公共组件）及 `UGamePlatformSlotWidget`（公共槽位基类），选择扩展现有实现，不再新建平行槽位UObject类型。
+- [x] 平台槽位公共化了状态等价、命名控件显示与不持有业务真源的展示值；项目背包 `FDivineBeastsInventoryCellPresenter`（背包展示适配器）和技能栏 `FDivineBeastsAbilityBarProjectionDiff`（技能栏差异比较）都已改为实际消费公共能力。
+- [x] 提炼 `FGamePlatformUISnapshotScope`（通用来源版本规则）并让平台队伍、战斗警告、项目领域视图三个已存在消费者复用。该跨异构继承树纯规则使用值策略，而不是机械创建UObject基类。
+- [x] 新增平台原生测试源码及 `Tests/Architecture/ValidateSharedUIComponentReuse.ps1`（公共组件复用静态门禁）；静态门禁实际14项检查通过；三层公开继承门禁587头文件/1275类型/212继承边检查通过。
+- [x] Client（客户端）模块独立构建：`GamePlatformUIClient` 与 `DivineBeastsUIClient` 均 exit 0，分别保留 Foundation 构建证据。
+- [ ] Editor（编辑器）模块已成功编译受影响平台源码与新增测试，但最终 DLL 被另一运行中的编辑器占用，LNK1104 无法链接，需后续补正式 Editor 构建和原生自动化实际执行。
+- [ ] Monolith 连接、真实 WidgetBlueprint（控件蓝图）继承/控件树/冷重载与界面人工验收未完成，未修改任何 `.uasset`；两份旧技能槽蓝图不擅自合并、重命名或删除。
+- [ ] 角色/战斗、水体/PCG、音频、摄像机、VFX等领域按“已存在公共Component → 可组合策略/接口 → 定义数据”逐域复核；只有有真实复用需求和验收证据才能创建新基类。
+
+本次续行没有执行Git提交/推送，没有强行关闭其他任务编辑器或修改现有服务器权威玩法。
+
+## 七、M6 角色/战斗/世界/特效公共基础复审与逻辑定义ID收敛（2026-10-25，本轮不编译）
+
+详细证据及原生门禁缺口见：[《蓝图及公共能力模块化第二轮审查与优化记录》](BlueprintCommonBaseSecondPass_NoBuild_20261025.md)。
+
+- [x] 只读核查既有 PCG Actor（程序化放置器）、Water Interactor（水体交互）、Cinematic Camera（电影机位）、SFX/VFX（音效/特效）和项目V6技能的基类/组件，确认适宜继续复用原公共组件、数据定义与服务，不增加平行玩家/特效/水体框架。
+- [x] 把 SFX/VFX 重复的逻辑编号→主资产身份构造收敛到 `UGamePlatformPrimaryDataAsset::BuildDefinitionAssetId`（平台主资产公共转换）。保留领域错误码、主资产类型及失败时清空ID。
+- [x] 已完成3个真实消费者接线：`GamePlatformSFXPolicy`（平台音效策略）、`GamePlatformVFXWorldSubsystem`（平台世界特效服务）、`DivineBeastsPresentationClientSubsystem`（项目表现预载协调）。
+- [x] 新增后续可运行的 `GamePlatformDefinitionAssetIdResolutionTests.cpp`（平台身份转换测试源码）；本轮仅写代码、**不编译/不运行测试**。
+- [x] 新增并实际运行 `Tests/Architecture/ReportReusableBlueprintCandidates.ps1`（蓝图离线候选盘点），共136个命名候选：85个WidgetBlueprint（界面控件蓝图）、43个Blueprint（普通蓝图）、6个AnimBlueprint（动画蓝图）、2个ObjectRedirector（重定向器）。静态结果存储于 `Saved/Validation/BlueprintModularization/20261025/ReusableBlueprintCandidates.json`（离线审计报告）。
+- [ ] `ABP_DBA_WorldLocomotion`（世界移动动画蓝图）优先原生复审，离线摘要52节点（51非事件节点），后续核对 AnimLayer（动画层）与真实骨骼共享；没有Monolith完整图信息时不修改。
+- [ ] `DivineBeastsPresentationClientSubsystem`（本地玩家表现协调器）和 `DivineBeastsVillageSnowWorldSubsystem`（新手村雪地表现）应分领域封装协调逻辑及分离开发审查，但本轮不修改事件/委托生命周期。
+- [ ] `DivineBeastsV6GameplayAbility`（V6服务器技能原语）和世界天气定时器仍涉及网络权威行为，未经后续正式验证不修改。
+- [ ] 未执行任何 Client/Editor/Server（客户端/编辑器/专服）编译、UE自动化、PIE、联机、Cook、Monolith编辑器蓝图保存/冷重载。不能宣称新源码已通过构建或蓝图资产已优化。
+
+本轮只修改公共数据身份策略、三个安全消费者、测试源码、离线静态盘点工具和中文实施文档；原有技能资产、地图、视觉资源以及并行任务改动均原样保留。未主动Git提交/推送。
+
+## 七、M7 公共UI修订策略与全量离线蓝图审计（2026-10-26）
+
+本轮实际过程与阻断条件以 [《蓝图模块化状态报告（2026-10-26）》](BlueprintModularizationStatus_20261026.md) 为准。用户的“继续修改，直到完成”要求在既有 **不编译验证** 限制下尽可能完成安全源码重构；以下状态不可与编辑器资产级终验混淆。
+
+- [x] 既有 `FGamePlatformUISnapshotScope`（平台UI作用域快照校验）增加公共命名资源修订方法，与原有GUID来源校验并用。
+- [x] 施法条、目标状态、Buff/Debuff（增减益效果）、小地图、任务、倒计时、槽位栏、交互提示、设置项、悬浮提示的C++代码实际复用公共校验，不改变既有反射类和蓝图资产。
+- [x] `DivineBeastsRootLayout.cpp`（项目根布局）移出 `FDivineBeastsWorldHUDRoute`（世界HUD槽位路由策略），保留常驻世界0、新手村1、教学2、训练3的已有作者顺序；新增未执行的原生测试源码。
+- [x] 背包状态/错误码的项目中文文本映射抽离为 `FDivineBeastsInventoryTextCatalog`（背包本地化信息目录），原LOCTEXT翻译键和两项公开Blueprint接口不变，补充测试源码但不执行。
+- [x] 公共 UI 复用静态门禁扩展至32项，公共数据身份转换静态门禁11项，静态检查实际运行通过。
+- [x] 使用 `Tests/Architecture/ReportAllBlueprintAssetsOffline.ps1`（全类蓝图离线盘点）核对591份已索引蓝图的当前磁盘路径，591份全部存在，类型和详情查询0异常；按命名划分：205 GA、252 GE、85 WBP、43 BP、6 ABP。
+- [x] 使用 `Tests/Architecture/ReportBlueprintOfflineDependencies.ps1`（蓝图离线引用盘点）逐份查询591份已索引蓝图，591份完成、异常0；仅12份出现任何离线索引引用关系，证明引用索引严重不足，**不能对其他579份得出无依赖的判断，更不能自动删除**。
+- [ ] 当前真实 UE5.8 蓝图父类、Widget/AnimGraph（控件/动画图）连线、动态消费者与冷重载未取得 Monolith 实时证据；591份本轮原生父类及图校验为0，**资产级重构和全部工程最终验收不具备可声称完成的条件**。
+- [ ] 本轮严格不编译、不运行UE自动化、不PIE/联机、不Cook，新增C++应在后续允许时按模块顺序进行原生验收，随后执行三世界和服务器资源隔离核查。
+- [ ] 需恢复授权的 Monolith MCP 实时服务后，按真实引用及稳定资产ID逐项审查/改造技能槽、通用移动动画和其它蓝图；不可绕过工具规定修改二进制资源。
+
+本轮没有主动提交或推送，不覆盖并行 VFX 等其他任务资产。

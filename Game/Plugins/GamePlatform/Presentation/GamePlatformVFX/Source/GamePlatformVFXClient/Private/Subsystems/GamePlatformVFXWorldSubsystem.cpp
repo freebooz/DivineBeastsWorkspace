@@ -40,25 +40,9 @@ bool IsSupportedWorldType(const EWorldType::Type WorldType)
 
 bool BuildDefinitionAssetId(const FName DefinitionId, FPrimaryAssetId& OutAssetId)
 {
-    OutAssetId = FPrimaryAssetId();
-
-    FGamePlatformId LogicalId;
-    if (DefinitionId.IsNone() ||
-        !FGamePlatformId::TryParse(DefinitionId.ToString(), LogicalId))
-    {
-        return false;
-    }
-
-    const FString Canonical = LogicalId.ToString();
-    if (Canonical.IsEmpty())
-    {
-        return false;
-    }
-
-    OutAssetId = FPrimaryAssetId(
-        UGamePlatformPrimaryDataAsset::DefinitionAssetType(),
-        FName(*Canonical));
-    return true;
+    // VFX（视觉特效）保留原bool接口与调用方；规范身份统一交由平台Data公共基类。
+    return UGamePlatformPrimaryDataAsset::BuildDefinitionAssetId(
+        DefinitionId, OutAssetId) == EGamePlatformDefinitionIdBuildStatus::Success;
 }
 }
 

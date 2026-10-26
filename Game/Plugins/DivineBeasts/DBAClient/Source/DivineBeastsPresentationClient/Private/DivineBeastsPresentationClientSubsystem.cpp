@@ -522,12 +522,15 @@ FGuid UDivineBeastsPresentationClientSubsystem::BeginLogicalPreload(FName OwnerS
     TSet<FName> Unique;
     for (const FName DefinitionId : DefinitionIds)
     {
-        FGamePlatformId Id;
-        if (!FGamePlatformId::TryParse(DefinitionId.ToString(), Id)) return {};
-        const FName Canonical(*Id.ToString());
+        FPrimaryAssetId ResolvedId;
+        // 预载同时消费VFX/SFX的逻辑定义，统一通过平台Data公共身份转换。
+        // 唯一性仍在本次申请范围内判断，禁止改变主资产ID与资源租约生命周期。
+        if (UGamePlatformPrimaryDataAsset::BuildDefinitionAssetId(
+                DefinitionId, ResolvedId) != EGamePlatformDefinitionIdBuildStatus::Success) return {};
+        const FName Canonical = ResolvedId.PrimaryAssetName;
         if (Unique.Contains(Canonical)) return {};
         Unique.Add(Canonical); Request.DefinitionIds.Add(Canonical);
-        AssetIds.Emplace(UGamePlatformPrimaryDataAsset::DefinitionAssetType(), Canonical);
+        AssetIds.Add(ResolvedId);
     }
     Request.RemainingLoads = AssetIds.Num();
     const FGuid RequestId = Request.RequestId; const int64 Generation = Request.Generation;

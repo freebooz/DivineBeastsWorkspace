@@ -52,11 +52,11 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
     DevelopmentMagicSpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &ThisClass::HandleDevelopmentMagicSpawn));
     DevelopmentMagicPackHandle = ContentPackChanged.AddUObject(this, &ThisClass::HandleDevelopmentMagicPack);
     FDivineBeastsPresentationContentPackFragment Pack;
-    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 4; // 定向飞弹复用施法/命中，飞行有独立定义。
+    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 5; // 1号定向飞弹前摇/飞行独立，命中仍复用火球。
     Pack.LifecycleScope = EGamePlatformPresentationContextScope::World; Pack.bRequiredPreload = true;
     auto& Catalog = Pack.CatalogFragment;
     Catalog.FragmentId = Pack.ContentPackId; Catalog.OwnerScopeId = Pack.ContentPackId;
-    Catalog.Revision = 4; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
+    Catalog.Revision = 5; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
     for (const TCHAR* Name : {TEXT("Fireball"), TEXT("Frostbolt"), TEXT("ArcaneMissiles"),TEXT("Healing"),TEXT("DirectedMissile")})
         for (const TCHAR* Stage : {TEXT("Flight"),TEXT("Impact"),TEXT("Cast"),TEXT("Residue")})
         {
@@ -69,7 +69,7 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
             Entry.ProviderChannel = TEXT("VFX");
             // 目录身份使用DBA短名；已注册语义保留DivineBeasts稳定身份，不能由EntryId拼出不存在的标签。
             Entry.SemanticTag = FGameplayTag::RequestGameplayTag(FName(*(FString(TEXT("Presentation.DivineBeasts.Development.Magic."))+Name+TEXT(".")+Stage)),false);
-            const TCHAR* ResourceName = FCString::Strcmp(Name,TEXT("DirectedMissile"))==0 && FCString::Strcmp(Stage,TEXT("Flight"))!=0 ? TEXT("Fireball") : Name;
+            const TCHAR* ResourceName = FCString::Strcmp(Name,TEXT("DirectedMissile"))==0 && FCString::Strcmp(Stage,TEXT("Impact"))==0 ? TEXT("Fireball") : Name;
             Entry.DefinitionId = FName(*(FString(TEXT("presentation.dba.development.magic.")) + FString(ResourceName).ToLower() +
                 TEXT(".") + FString(Stage).ToLower() + TEXT("@1")));
             Entry.ContextQuery.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();

@@ -230,7 +230,7 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
         // 保持false作用域，不修改Skeleton/Group；有效起始偏移只播放当前剩余阶段。
         // 火球/冰箭动作映射至服务器复制的完整施法窗口；默认0.5秒和迟到事件都由同一比例进入剩余动作。
         const bool bImportedHumanoidCast = MontagePathForMesh(Name, Mesh->GetSkeletalMeshAsset()) != MontagePath(Name);
-        const float PlayRate=(bImportedHumanoidCast || Name==TEXT("Frostbolt") || Name==TEXT("Fireball"))
+        const float PlayRate=(bImportedHumanoidCast || Name==TEXT("Frostbolt") || Name==TEXT("Fireball") || Name==TEXT("DirectedMissile"))
             ? Montage->GetPlayLength()/Facts.DurationSeconds : 1.0f;
         const float PlayedLength=Anim->Montage_Play(Montage,PlayRate,EMontagePlayReturnType::MontageLength,static_cast<float>(Elapsed)*PlayRate,false);
         // Started可能取消、换Avatar、销毁Actor或扩容Bindings；绝不跨此外调保存TMap元素指针。
@@ -256,6 +256,14 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
         Binding->MontageInstanceId=StartedMontageInstanceId;
     }
     else if(Binding->bStartingMontage) return;
+
+    // 数字1仅替换视觉：两个独立掌心请求共享同一施法操作身份，原数字2和冰法阵不变。
+    if(Name==TEXT("DirectedMissile"))
+    {
+        const FGuid PalmOperation=Binding->OperationId; // 值拷贝，不能把TMap成员引用跨Submit/取消回调传递。
+        UpdateDirectedMissilePalms(Component,Facts,PalmOperation,Token);
+        return;
+    }
 
     // 动画去重与VFX受理分离：先前ProviderMissing允许当前窗口重试，已受理/正在提交则不能重复。
     const FGuid Operation=Binding->OperationId;
@@ -310,6 +318,91 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
     Binding=Bindings.Find(WeakComponent); Binding->bSubmittingVFX=false;
     if(Submitted!=EGamePlatformPresentationSubmitResult::Submitted)
     { Binding->VFXRequestId.Invalidate(); Binding->VFXAdapter.Reset(); Binding->VFXWorldGeneration=0; }
+}
+
+void UDivineBeastsDevelopmentCastingWorldSubsystem::UpdateDirectedMissilePalms(
+    UGamePlatformAbilityCastComponent* Component,const FGamePlatformAbilityCastFacts& Facts,
+    const FGuid& OperationId,const FGuid& Token)
+{
+    const auto* Initial=Bindings.Find(Component);
+    if(!Initial || Initial->StyleName!=TEXT("DirectedMissile")) return;
+    const TWeakObjectPtr<UGamePlatformAbilityCastComponent> WeakComponent(Component);
+    const TWeakObjectPtr<UAnimInstance> WeakAnim=Initial->Anim;
+    const TWeakObjectPtr<ACharacter> WeakCharacter(Cast<ACharacter>(Component->GetOwner()));
+    auto* Character=WeakCharacter.Get();
+    auto* Mesh=Character ? Character->GetMesh() : nullptr;
+    if(!Mesh || !IsCastOperationCurrent(Component,Facts,OperationId,Token,WeakAnim.Get())) return;
+    // 只接受该实际骨架确实存在的手掌；不以身体坐标偏移伪装第二只手。
+    FName Sockets[2]={NAME_None,NAME_None};
+    const FName LeftCandidates[]={TEXT("hand_l"),TEXT("mixamorig:LeftHand"),TEXT("LeftHand")};
+    const FName RightCandidates[]={TEXT("hand_r"),TEXT("mixamorig:RightHand"),TEXT("RightHand")};
+    for(const FName Name:LeftCandidates) if(Mesh->DoesSocketExist(Name)) { Sockets[0]=Name; break; }
+    for(const FName Name:RightCandidates) if(Mesh->DoesSocketExist(Name)) { Sockets[1]=Name; break; }
+    if(Sockets[0].IsNone() || Sockets[1].IsNone()) return;
+
+    for(int32 Hand=0;Hand<2;++Hand)
+    {
+        Component=WeakComponent.Get();
+        if(!IsCastOperationCurrent(Component,Facts,OperationId,Token,WeakAnim.Get())) return;
+        auto* Binding=Bindings.Find(Component);
+        if(Binding->Palms[Hand].RequestId.IsValid() || Binding->Palms[Hand].bSubmitting) continue;
+        TWeakObjectPtr<USceneComponent> WeakAnchor=Binding->Palms[Hand].Anchor;
+        if(!WeakAnchor.IsValid())
+        {
+            Character=WeakCharacter.Get();
+            Mesh=Character ? Character->GetMesh() : nullptr;
+            if(!Mesh || !Mesh->DoesSocketExist(Sockets[Hand])) return;
+            auto* Anchor=NewObject<USceneComponent>(Character);
+            Anchor->SetMobility(EComponentMobility::Movable);
+            Anchor->SetupAttachment(Mesh,Sockets[Hand]);
+            Character->AddInstanceComponent(Anchor);
+            Binding->Palms[Hand].Anchor=Anchor; WeakAnchor=Anchor;
+            Anchor->RegisterComponent();
+            // Register/Submit均可能重入并使Bindings搬迁；只能重新取当前操作账本。
+            if(!IsCastOperationCurrent(WeakComponent.Get(),Facts,OperationId,Token,WeakAnim.Get()))
+            { StopCast(WeakComponent.Get(),OperationId); return; }
+            Binding=Bindings.Find(WeakComponent);
+        }
+        if(Binding->Palms[Hand].RequestId.IsValid() || Binding->Palms[Hand].bSubmitting) continue;
+        auto* Anchor=WeakAnchor.Get();
+        auto* Adapter=PlatformPresentation.Get();
+        double Elapsed=0,Remaining=0;
+        if(!Anchor || !Anchor->IsRegistered() || !Adapter ||
+           !GetCastWindow(WeakComponent.Get(),Facts,Elapsed,Remaining)) return;
+        FGamePlatformPresentationRequest Request;
+        Request.RequestId=FGuid::NewGuid(); Request.SemanticTag=CastSemantic(TEXT("DirectedMissile"));
+        Request.SourceId=Facts.AbilityId; Request.ContextId=Facts.PresentationStyleId;
+        Request.SourceLocation=Anchor->GetComponentLocation(); Request.SourceRotation=Anchor->GetComponentRotation();
+        Request.AttachComponent=Anchor;
+        Request.Context.ProjectId=FDivineBeastsProjectCatalog::GetProjectId();
+        Request.Context.AvatarGeneration=Facts.AvatarGeneration;
+        Request.RequestGeneration=Facts.AvatarGeneration; Request.WorldGeneration=Adapter->GetWorldGeneration();
+        Request.Lifetime=EGamePlatformPresentationLifetime::Persistent;
+        Request.FloatParameters.Add(TEXT("User.CastDurationSec"),Facts.DurationSeconds);
+        Request.FloatParameters.Add(TEXT("User.ElapsedAtStartSec"),static_cast<float>(Elapsed));
+        Request.FloatParameters.Add(TEXT("User.HandSideSign"),Hand==0 ? -1.0f : 1.0f);
+        const TWeakObjectPtr<UGamePlatformPresentationClientSubsystem> WeakAdapter(Adapter);
+        Binding->Palms[Hand].RequestId=Request.RequestId;
+        Binding->Palms[Hand].Adapter=Adapter; Binding->Palms[Hand].WorldGeneration=Request.WorldGeneration;
+        Binding->Palms[Hand].bSubmitting=true;
+        const auto Submitted=Adapter->Submit(Request);
+        if(!IsCastOperationCurrent(WeakComponent.Get(),Facts,OperationId,Token,WeakAnim.Get()))
+        {
+            StopCast(WeakComponent.Get(),OperationId);
+            // 提交中被取消时服务尚未受理；返回后只取消本栈的精确请求，绝不继续第二掌。
+            if(Submitted==EGamePlatformPresentationSubmitResult::Submitted)
+                if(auto* CurrentAdapter=WeakAdapter.Get())
+                { Request.PredictionState=EGamePlatformPresentationPredictionState::Cancelled; CurrentAdapter->Submit(Request); }
+            return;
+        }
+        Binding=Bindings.Find(WeakComponent);
+        Binding->Palms[Hand].bSubmitting=false;
+        if(Submitted!=EGamePlatformPresentationSubmitResult::Submitted)
+        {
+            Binding->Palms[Hand].RequestId.Invalidate(); Binding->Palms[Hand].Adapter.Reset();
+            Binding->Palms[Hand].WorldGeneration=0;
+        }
+    }
 }
 
 void UDivineBeastsDevelopmentCastingWorldSubsystem::UpdateCastAudio(
@@ -417,6 +510,7 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::StopCast(UGamePlatformAbilit
     Binding->Anim.Reset(); Binding->Montage.Reset(); Binding->SkeletalMesh.Reset(); Binding->CastAnchor.Reset();
     Binding->VFXAdapter.Reset(); Binding->VFXWorldGeneration=0; Binding->MontageInstanceId=INDEX_NONE;
     Binding->bStartingMontage=false; Binding->bSubmittingVFX=false; Binding->StyleName=NAME_None; Binding->StopTimer.Invalidate();
+    for(auto& Palm:Binding->Palms) Palm=FPalmVFXBinding{};
     ReleaseCastResources(Old);
 }
 void UDivineBeastsDevelopmentCastingWorldSubsystem::ReleaseCastResources(const FBinding& Old)
@@ -438,6 +532,20 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::ReleaseCastResources(const F
             Cancel.Context.ProjectId=FDivineBeastsProjectCatalog::GetProjectId(); Cancel.WorldGeneration=Old.VFXWorldGeneration;
             Adapter->Submit(Cancel);
         }
+    for(const auto& Palm:Old.Palms)
+    {
+        if(Palm.RequestId.IsValid() && !Palm.bSubmitting)
+            if(auto* Adapter=Palm.Adapter.Get())
+            {
+                FGamePlatformPresentationRequest Cancel; Cancel.RequestId=Palm.RequestId;
+                Cancel.SemanticTag=CastSemantic(Old.StyleName);
+                Cancel.Context.ProjectId=FDivineBeastsProjectCatalog::GetProjectId();
+                Cancel.WorldGeneration=Palm.WorldGeneration;
+                Cancel.PredictionState=EGamePlatformPresentationPredictionState::Cancelled;
+                Adapter->Submit(Cancel);
+            }
+        if(Palm.Anchor.IsValid()) Palm.Anchor->DestroyComponent();
+    }
     if(Old.CastAnchor.IsValid()) Old.CastAnchor->DestroyComponent();
 }
 void UDivineBeastsDevelopmentCastingWorldSubsystem::DetachObservers(UGamePlatformAbilityCastComponent* Component,const FBinding& Binding)

@@ -1,12 +1,13 @@
 #include "Components/GamePlatformSlotBarWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 bool UGamePlatformSlotBarWidget::ApplySlotBarState(
     const FGamePlatformUISlotBarState& NewState)
 {
     constexpr int32 MaxSlots = 32;
-    if (NewState.BarId.IsNone() || NewState.Revision < 0 ||
-        NewState.Slots.Num() > MaxSlots ||
-        (State.BarId == NewState.BarId && NewState.Revision <= State.Revision))
+    if (!FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            State.BarId, State.Revision, NewState.BarId, NewState.Revision) ||
+        NewState.Slots.Num() > MaxSlots)
     {
         return false;
     }

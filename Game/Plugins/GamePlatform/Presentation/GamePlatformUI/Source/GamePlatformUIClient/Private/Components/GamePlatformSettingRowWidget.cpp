@@ -1,11 +1,11 @@
 #include "Components/GamePlatformSettingRowWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 bool UGamePlatformSettingRowWidget::ApplySettingRow(
     const FGamePlatformUISettingRowState& InState)
 {
-    if (InState.SettingId.IsNone() || InState.Revision < 0 ||
-        (State.SettingId == InState.SettingId &&
-         InState.Revision <= State.Revision))
+    if (!FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            State.SettingId, State.Revision, InState.SettingId, InState.Revision))
     {
         return false;
     }

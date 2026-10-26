@@ -19,4 +19,15 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformUISnapshotScope final
         return CurrentScopeId.IsValid() && CurrentScopeId == IncomingScopeId &&
             IncomingRevision >= 0 && IncomingRevision > CurrentRevision;
     }
+
+    /** 无显式FGuid作用域的地图、目标清单、倒计时及槽位栏按FName稳定身份去重。
+     * 当前身份更新必须严格递增修订；切换身份允许修订从0开始。
+     * 此处仅审核展示数据的版本，不替代领域授权校验。 */
+    static bool CanAcceptNamedRevision(
+        FName CurrentIdentity, int64 CurrentRevision,
+        FName IncomingIdentity, int64 IncomingRevision)
+    {
+        return !IncomingIdentity.IsNone() && IncomingRevision >= 0 &&
+            (CurrentIdentity != IncomingIdentity || IncomingRevision > CurrentRevision);
+    }
 };

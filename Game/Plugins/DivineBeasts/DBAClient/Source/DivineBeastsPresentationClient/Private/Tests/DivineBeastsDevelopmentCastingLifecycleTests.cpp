@@ -125,7 +125,8 @@ struct FDivineBeastsDevelopmentCastingTestFixture
                     Request.Context.AvatarGeneration <= 0 || Request.RequestGeneration <= 0 ||
                     Request.SourceId != TEXT("test.development.cast@1") ||
                     (Request.SemanticTag.ToString() != TEXT("Presentation.DivineBeasts.Development.Magic.Fireball.Cast") &&
-                     Request.SemanticTag.ToString() != TEXT("Presentation.DivineBeasts.Development.Magic.Frostbolt.Cast"))) return false;
+                     Request.SemanticTag.ToString() != TEXT("Presentation.DivineBeasts.Development.Magic.Frostbolt.Cast") &&
+                     Request.SemanticTag.ToString() != TEXT("Presentation.DivineBeasts.Development.Magic.DirectedMissile.Cast"))) return false;
                 LiveRequests.Add(Request.RequestId); return true;
             }));
         RequestObserver = Platform->OnRequestObserved().AddLambda(
@@ -189,7 +190,7 @@ struct FDivineBeastsDevelopmentCastingTestFixture
         {
             if (!Component || !Component->IsRegistered() || Component->GetClass() != USceneComponent::StaticClass()) continue;
             const bool bHand = Component->GetAttachParent() == Character->GetMesh() &&
-                Component->GetAttachSocketName() == TEXT("hand_r");
+                (Component->GetAttachSocketName() == TEXT("hand_r") || Component->GetAttachSocketName() == TEXT("hand_l"));
             const bool bGround = Component->GetAttachParent() == Character->GetCapsuleComponent() &&
                 Component->GetRelativeLocation().Equals(FVector(0, 0, -Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
             if (bHand || bGround) ++Count;
@@ -227,6 +228,66 @@ struct FDivineBeastsDevelopmentCastingTestFixture
     IMPLEMENT_SIMPLE_AUTOMATION_TEST(ClassName, "DivineBeasts.Presentation.DevelopmentCasting.Regression." Suffix, \
         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter) \
     bool ClassName::RunTest(const FString&)
+
+/** 数字1定向飞弹：从真实施法事实生成左右独立请求，参数来自权威窗口，取消两手都释放。 */
+DBA_CASTING_TEST(FDivineBeastsDirectedMissileDualPalmTest, "DirectedMissileDualPalmLifecycle")
+{
+    FDivineBeastsDevelopmentCastingTestFixture F(*this); if (!F.Initialize()) return false;
+    TMap<FName,FGamePlatformPresentationRequest> Palms;
+    const auto Watch=F.Platform->OnRequestObserved().AddLambda(
+        [&Palms](const FGamePlatformPresentationRequest& Request,EGamePlatformPresentationSubmitResult Result)
+        {
+            if(Result==EGamePlatformPresentationSubmitResult::Submitted &&
+               Request.PredictionState!=EGamePlatformPresentationPredictionState::Cancelled &&
+               Request.SemanticTag.ToString()==TEXT("Presentation.DivineBeasts.Development.Magic.DirectedMissile.Cast") &&
+               Request.AttachComponent.IsValid())
+                Palms.Add(Request.AttachComponent->GetAttachSocketName(),Request);
+        });
+    const FGuid Id=FGuid::NewGuid();
+    TestTrue(TEXT("真实1号前摇事实发布"),F.Cast->PublishConfirmedCast(Id,TEXT("test.development.cast@1"),
+        TEXT("DBA.Development.DirectedMissile"),1,0.5f));
+    TestEqual(TEXT("1号前摇必须提交两只手"),F.LiveRequests.Num(),2);
+    TestEqual(TEXT("两手真实挂点独立"),Palms.Num(),2);
+    TestEqual(TEXT("两个受控锚点"),F.RegisteredAnchorCount(),2);
+    for(const auto& Pair:Palms)
+    {
+        const auto& Request=Pair.Value;
+        TestTrue(TEXT("只接受实际左右手骨骼"),Pair.Key==TEXT("hand_l") || Pair.Key==TEXT("hand_r"));
+        TestEqual(TEXT("使用复制施法窗口"),Request.FloatParameters.FindRef(TEXT("User.CastDurationSec")),0.5f);
+        TestTrue(TEXT("起始时间偏移显式传递"),Request.FloatParameters.Contains(TEXT("User.ElapsedAtStartSec")));
+        TestEqual(TEXT("左右旋向分别配置"),Request.FloatParameters.FindRef(TEXT("User.HandSideSign")),
+            Pair.Key==TEXT("hand_l") ? -1.0f : 1.0f);
+    }
+    F.NotifyContentActive();
+    TestEqual(TEXT("内容就绪重试不重复生成"),F.LiveRequests.Num(),2);
+    TestTrue(TEXT("取消真实1号前摇"),F.Cast->CancelConfirmedCast(Id));
+    TestEqual(TEXT("取消后两手请求全部撤销"),F.LiveRequests.Num(),0);
+    TestEqual(TEXT("取消后两手锚点全部释放"),F.RegisteredAnchorCount(),0);
+    F.Platform->OnRequestObserved().Remove(Watch);
+    return true;
+}
+
+/** 首掌Submit同步取消时不能遗留首掌，也不能继续创建次掌。 */
+DBA_CASTING_TEST(FDivineBeastsDirectedMissilePalmReentryTest, "DirectedMissilePalmSubmitCancellation")
+{
+    FDivineBeastsDevelopmentCastingTestFixture F(*this); if (!F.Initialize()) return false;
+    const FGuid Id=FGuid::NewGuid(); bool bCancelled=false;
+    const auto Watch=F.Platform->OnRequestObserved().AddLambda(
+        [&](const FGamePlatformPresentationRequest& Request,EGamePlatformPresentationSubmitResult Result)
+        {
+            if(!bCancelled && Result==EGamePlatformPresentationSubmitResult::Submitted &&
+               Request.PredictionState!=EGamePlatformPresentationPredictionState::Cancelled &&
+               Request.SemanticTag.ToString()==TEXT("Presentation.DivineBeasts.Development.Magic.DirectedMissile.Cast"))
+            { bCancelled=true; F.Cast->CancelConfirmedCast(Id); }
+        });
+    F.Cast->PublishConfirmedCast(Id,TEXT("test.development.cast@1"),TEXT("DBA.Development.DirectedMissile"),1,0.5f);
+    TestTrue(TEXT("首掌提交内确实同步取消"),bCancelled);
+    TestEqual(TEXT("同步取消不留下任一掌请求"),F.LiveRequests.Num(),0);
+    TestEqual(TEXT("同步取消不留下任一掌锚点"),F.RegisteredAnchorCount(),0);
+    TestEqual(TEXT("取消后不继续提交次掌"),F.Accepted,1);
+    F.Platform->OnRequestObserved().Remove(Watch);
+    return true;
+}
 
 /** 火球/冰箭默认0.5秒事实必须同样铺满真实动作，不能让火球沿用固定原始速率。 */
 DBA_CASTING_TEST(FDivineBeastsCastingHalfSecondSpellsTest, "FireAndFrostHalfSecondMontage")

@@ -1,13 +1,13 @@
 #include "Components/GamePlatformQuestTrackerWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 bool UGamePlatformQuestTrackerWidget::ApplyTrackedObjectives(
     const FGamePlatformUIQuestTrackerState& InState)
 {
     constexpr int32 MaxTrackedObjectives = 16;
-    if (InState.TrackerId.IsNone() || InState.Revision < 0 ||
-        InState.Objectives.Num() > MaxTrackedObjectives ||
-        (State.TrackerId == InState.TrackerId &&
-         InState.Revision <= State.Revision))
+    if (!FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            State.TrackerId, State.Revision, InState.TrackerId, InState.Revision) ||
+        InState.Objectives.Num() > MaxTrackedObjectives)
     {
         return false;
     }

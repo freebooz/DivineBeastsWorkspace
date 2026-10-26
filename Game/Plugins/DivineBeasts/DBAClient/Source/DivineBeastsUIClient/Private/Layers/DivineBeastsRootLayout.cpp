@@ -1,6 +1,7 @@
 // 项目客户端根布局：保存作者组合HUD，按本地控制器/Pawn事件重绑视图；平台Travel仍清理临时世界控件。
 // 只恢复本根布局拥有的既有资产实例，退出解除旧委托与展示来源，不持有玩法权威或轮询世界。
 #include "Layers/DivineBeastsRootLayout.h"
+#include "Layers/DivineBeastsWorldHUDRoute.h"
 
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
@@ -214,11 +215,9 @@ void UDivineBeastsRootLayout::RefreshWorldContextHUDOnce()
     const APawn* Pawn=GetOwningPlayerPawn();
     const bool bWorldVisible=Owner&&State.CurrentStep==TEXT("DBA.Flow.InWorld")&&!State.World.WorldId.IsNone()&&
         IsValid(Pawn)&&Pawn->IsLocallyControlled()&&FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(State.World.ExperienceId,Role)&&
-        (Role==FDivineBeastsProjectCatalog::GetOpenWorldServerRole()||Role==FDivineBeastsProjectCatalog::GetVillageServerRole());
+        FDivineBeastsWorldHUDRoute::IsSupportedWorldRole(Role);
     if(!Switcher||!bWorldVisible){ReleaseWorldContextHUD();if(Switcher)Switcher->SetVisibility(ESlateVisibility::Collapsed);return;}
-    int32 Index=Role==FDivineBeastsProjectCatalog::GetOpenWorldServerRole()?0:1;
-    if(State.World.ExperienceId==FDivineBeastsProjectCatalog::GetVillageTutorialExperience())Index=2;
-    if(State.World.ExperienceId==FDivineBeastsProjectCatalog::GetVillageTrainingExperience())Index=3;
+    const int32 Index=FDivineBeastsWorldHUDRoute::ResolveSwitcherIndex(Role,State.World.ExperienceId);
     auto* Selected=Cast<UDivineBeastsWorldHUDBase>(Switcher->GetWidgetAtIndex(Index));
     if(!Selected){ReleaseWorldContextHUD();Switcher->SetVisibility(ESlateVisibility::Collapsed);return;}
     if(Selected!=ActiveWorldContextHUD.Get())

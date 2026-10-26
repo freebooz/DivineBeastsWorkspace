@@ -31,6 +31,15 @@ public:
 private:
     // Editor原生回归仅构造受控初始状态并观察自有资源；不增加生产入口或改变施法行为。
     friend struct FDivineBeastsDevelopmentCastingTestFixture;
+    /** 单掌纯表现所有权；提交中重入的取消由该Submit栈收尾，不跨回调保留容器引用。 */
+    struct FPalmVFXBinding
+    {
+        FGuid RequestId;
+        TWeakObjectPtr<USceneComponent> Anchor;
+        TWeakObjectPtr<UGamePlatformPresentationClientSubsystem> Adapter;
+        int32 WorldGeneration=0;
+        bool bSubmitting=false;
+    };
     /** 每角色独立动作账本；停止只针对自己实际播放的Montage和Request，不能清别人的动画。 */
     struct FBinding
     {
@@ -44,6 +53,8 @@ private:
         TWeakObjectPtr<UAnimMontage> Montage;
         TWeakObjectPtr<USkeletalMesh> SkeletalMesh;
         TWeakObjectPtr<USceneComponent> CastAnchor;
+        /** 只用于数字1定向飞弹的左右掌；其余技能保留原单锚点/地面表现。 */
+        FPalmVFXBinding Palms[2];
         /** 保存实际请求的作用域和世界代次；Travel后的清理不能借用新世界代次。 */
         TWeakObjectPtr<UGamePlatformPresentationClientSubsystem> VFXAdapter;
         int32 VFXWorldGeneration=0;
@@ -71,6 +82,9 @@ private:
     void ObserveActor(AActor* Actor);
     /** 只接收组件当前值快照；旧广播与已过期窗口不清理或复活后继动作。 */
     void HandleFacts(UGamePlatformAbilityCastComponent* Component,const FGamePlatformAbilityCastFacts& Facts);
+    /** 复用现有请求服务，分别附着真实左右掌，传递只读施法窗口；不生成权威动作。 */
+    void UpdateDirectedMissilePalms(UGamePlatformAbilityCastComponent* Component,
+        const FGamePlatformAbilityCastFacts& Facts,const FGuid& OperationId,const FGuid& Token);
     /** GT只读身份/Combat和服务器时钟，返回有效窗口的已过/剩余秒数；不写权威状态。 */
     bool GetCastWindow(UGamePlatformAbilityCastComponent* Component,const FGamePlatformAbilityCastFacts& Facts,
         double& ElapsedSeconds,double& RemainingSeconds) const;
