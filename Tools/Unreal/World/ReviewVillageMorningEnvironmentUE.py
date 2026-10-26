@@ -13,9 +13,27 @@ import re
 import unreal as u
 
 ROOT = Path(u.Paths.project_dir()).resolve().parent
-OUT = ROOT / 'Saved/Validation/VillageMorningEnvironment20261025'
+# 历史审核原样保留；P5只使用新的隔离目录、证据目录和参数版本。
+LEGACY_OUT = ROOT / 'Saved/Validation/VillageMorningEnvironment20261025'
+P5_OUT = ROOT / 'Saved/Validation/VillageMorningEnvironmentP5_20261026'
 FORMAL = '/DBAWorldPack_Village/Maps/L_Village_Start'
-REVIEW = '/Game/Development/Weather/VillageMorning'
+LEGACY_REVIEW = '/Game/Development/Weather/VillageMorning'
+P5_REVIEW = '/Game/Development/Weather/VillageMorningP5'
+LEGACY_PRESETS = Path(__file__).with_name('VillageMorningPresets.json')
+P5_PRESETS = Path(__file__).with_name('VillageMorningP5Presets.json')
+OUT, REVIEW, PRESET_FILE = LEGACY_OUT, LEGACY_REVIEW, LEGACY_PRESETS
+
+def select_review_scope(scope):
+    """在编辑器调用每一阶段前显式选择审核范围；缺省保持历史V1不变。"""
+    global OUT, REVIEW, PRESET_FILE
+    assert scope in ('legacy', 'p5'), '非法审核范围'
+    if scope == 'p5':
+        OUT, REVIEW, PRESET_FILE = P5_OUT, P5_REVIEW, P5_PRESETS
+    else:
+        OUT, REVIEW, PRESET_FILE = LEGACY_OUT, LEGACY_REVIEW, LEGACY_PRESETS
+    assert PRESET_FILE.is_file(), '所选审核范围参数清单不存在'
+    return {'scope': scope, 'review_map_root': REVIEW, 'evidence_dir': str(OUT), 'presets_file': str(PRESET_FILE)}
+
 ENV = ('DirectionalLight', 'SkyLight', 'SkyAtmosphere', 'VolumetricCloud', 'ExponentialHeightFog', 'LocalFogVolume', 'PostProcessVolume')
 PROPS = {
  'DirectionalLightComponent': ['intensity','light_color','use_temperature','temperature','light_source_angle','cast_shadows','cast_volumetric_shadow','volumetric_scattering_intensity','atmosphere_sun_light','atmosphere_sun_light_index','mobility'],
@@ -105,6 +123,16 @@ def environment():
 
 def audit(name='P0_Baseline.json'):
     w=idle()
+    if REVIEW == P5_REVIEW and name == 'P0_Baseline.json':
+        # P5必须重新从当前正式地图读取基线；绝不能用旧SHA跳过保护。
+        assert w.get_path_name().split('.')[0] == FORMAL, 'P5基线必须从正式地图只读采集'
+        assert not (OUT/name).exists(), 'P5基线证据已存在；不得直接覆盖'
+        pps=[a for a in actors() if isinstance(a,u.PostProcessVolume)]
+        assert len(pps)==1, 'P5要求确认唯一的正式后期处理体积'
+        pp=pps[0].get_editor_property('settings')
+        expected=presets()['shared']['fixed_exposure_bias']
+        assert bool(pp.get_editor_property('override_auto_exposure_bias')), '正式曝光补偿未启用，拒绝跨版本比较'
+        assert abs(pp.get_editor_property('auto_exposure_bias')-expected)<.001, '正式曝光值不符合P5候选；拒绝复用旧基线'
     inventory=[]; plants=[]
     for a in actors():
         center,extent=a.get_actor_bounds(False)
@@ -117,13 +145,15 @@ def audit(name='P0_Baseline.json'):
                 plants.append({'component':c.get_name(),'mesh':m.get_path_name(),'location':xyz(t.translation),'materials':[c.get_material(k).get_path_name() if c.get_material(k) else None for k in range(c.get_num_materials())]})
     cvars={n:u.SystemLibrary.get_console_variable_int_value(n) for n in ['r.DynamicGlobalIlluminationMethod','r.ReflectionMethod','r.GenerateMeshDistanceFields','r.Shadow.Virtual.Enable','r.VolumetricFog','r.VolumetricFog.GridPixelSize','r.VolumetricFog.GridSizeZ','r.LocalFogVolume','r.LocalFogVolume.RenderIntoVolumetricFog','sg.ShadowQuality','r.VSync']}
     ws=w.get_world_settings()
-    report={'world':w.get_path_name(),'engine':u.SystemLibrary.get_engine_version(),'pid':os.getpid(),'formal_sha256':formal_hash(),'environment':environment(),'geometry':geometry(),'inventory':inventory,'instanced_plants':plants,'cvars':cvars,'world_settings':read_props(ws,['default_game_mode','enable_world_partition','enable_world_composition']),'streaming':read_props(w,['streaming_levels','world_partition'])}
+    report={'world':w.get_path_name(),'engine':u.SystemLibrary.get_engine_version(),'pid':os.getpid(),'formal_sha256':formal_hash(),'review_scope':'p5' if REVIEW==P5_REVIEW else 'legacy','environment':environment(),'geometry':geometry(),'inventory':inventory,'instanced_plants':plants,'cvars':cvars,'world_settings':read_props(ws,['default_game_mode','enable_world_partition','enable_world_composition']),'streaming':read_props(w,['streaming_levels','world_partition'])}
     write(name,report)
     print(json.dumps({'saved':str(OUT/name),'actors':len(inventory),'plants':len(plants),'environment':len(report['environment']),'cvars':cvars}))
     return report
 
 def check_formal():
     baseline=json.loads((OUT/'P0_Baseline.json').read_text(encoding='utf-8'))
+    if REVIEW == P5_REVIEW:
+        assert baseline.get('review_scope') == 'p5', 'P5拒绝使用历史旧基线'
     assert formal_hash()==baseline['formal_sha256'], '正式关卡磁盘输入变化；停止并调查'
     return baseline
 
@@ -176,7 +206,7 @@ def srgb(rgb):
     return u.LinearColor(*(lin(c) for c in rgb),1.0)
 
 def presets():
-    return json.loads((Path(__file__).with_name('VillageMorningPresets.json')).read_text(encoding='utf-8'))
+    return json.loads(PRESET_FILE.read_text(encoding='utf-8'))
 
 def spatial_layout():
     """使用真实水体边界、茅屋和桃花树实例确定区域，不将旧固定雾坐标当地形。"""
@@ -259,7 +289,11 @@ def apply_preset(key):
 
 def cold_audit():
     idle(); check_formal(); reports=[]
-    for short,record in [('L_Monolith_EnvironmentCapability','P1_Persisted.json'),('L_Village_Baseline_Overcast','Baseline_Saved.json')]+[('L_'+k,k+'_Saved.json') for k in presets()['presets']]:
+    # P5复用已通过的能力测试，不重复创建能力地图；只验证新基线及三个新候选。
+    entries=[('L_Village_Baseline_Overcast','Baseline_Saved.json')]+[('L_'+k,k+'_Saved.json') for k in presets()['presets']]
+    if REVIEW != P5_REVIEW:
+        entries.insert(0,('L_Monolith_EnvironmentCapability','P1_Persisted.json'))
+    for short,record in entries:
         path=REVIEW+'/Maps/'+short
         assert u.get_editor_subsystem(u.LevelEditorSubsystem).load_level(path)
         saved=json.loads((OUT/record).read_text(encoding='utf-8'))
@@ -269,4 +303,4 @@ def cold_audit():
             assert geometry_equal(geometry(),check_formal()['geometry']), '独立重载场景几何变化'
         reports.append({'map':path,'persisted_equal':True})
     write('ColdReload.json',{'passed':True,'pid':os.getpid(),'maps':reports,'formal_unchanged':True})
-    print('FIVE_MAPS_COLD_RELOAD_PASS')
+    print('FOUR_MAPS_P5_COLD_RELOAD_PASS' if REVIEW==P5_REVIEW else 'FIVE_MAPS_COLD_RELOAD_PASS')
