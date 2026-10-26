@@ -91,6 +91,16 @@ def setup(run,quality='High',view='LakeShore'):
     global CAMERA,RUN
     CAMERA=None; HELD.clear(); RUN=run
     w=game()
+    # P5运行前后都核对真实PIE曝光；避免把旧+2.5EV图误作新正式+1.0EV对照。
+    exposure_bias=None
+    if author.REVIEW == author.P5_REVIEW:
+        volumes=u.GameplayStatics.get_all_actors_of_class(w,u.PostProcessVolume)
+        assert len(volumes)==1, 'P5审核地图中的后期处理体积数量异常'
+        pp=volumes[0].get_editor_property('settings')
+        exposure_bias=pp.get_editor_property('auto_exposure_bias')
+        expected=author.presets()['shared']['fixed_exposure_bias']
+        assert bool(pp.get_editor_property('override_auto_exposure_bias')), 'P5后期曝光补偿未启用'
+        assert abs(exposure_bias-expected)<.001, 'P5曝光补偿与当前正式基线不一致'
     # 显式调用既有平台权威入口，仅对本地PIE世界应用既有Clear定义，保留风.70。
     preset=u.load_asset('/DBAWorldPack_Village/Weather/Definitions/DA_DBA_Weather_Clear')
     HELD.append(preset)
@@ -107,7 +117,7 @@ def setup(run,quality='High',view='LakeShore'):
     camera=set_camera(view)
     landscape=bind_landscape(w)
     viewport=u.WidgetLayoutLibrary.get_viewport_size(w)
-    report={'utc':datetime.now(timezone.utc).isoformat(),'world':w.get_path_name(),'quality':quality,'viewport':[viewport.x,viewport.y],'landscape':landscape,'camera':camera,'clear_preset_applied':True,'runtime_wind_definition':.70,'production_village_assembly_active':False,'formal_merge_approved':False,'tMaxFPS':u.SystemLibrary.get_console_variable_float_value('t.MaxFPS')}
+    report={'utc':datetime.now(timezone.utc).isoformat(),'world':w.get_path_name(),'quality':quality,'viewport':[viewport.x,viewport.y],'landscape':landscape,'camera':camera,'clear_preset_applied':True,'runtime_wind_definition':.70,'production_village_assembly_active':False,'formal_merge_approved':False,'exposure_bias_ev':exposure_bias,'review_scope':'p5' if author.REVIEW==author.P5_REVIEW else 'legacy','tMaxFPS':u.SystemLibrary.get_console_variable_float_value('t.MaxFPS')}
     author.write(run+'_Setup.json',report)
     print('MORNING_PIE_READY '+json.dumps({'run':run,'mids':sum(x['mids'] for x in landscape['binding']),'nanite_slots':sum(x['nanite_slots'] for x in landscape['binding'])}))
 
@@ -130,7 +140,11 @@ def snapshot(suffix):
     mpc=u.load_asset('/GamePlatformSurface/ParameterCollections/MPC_GP_SurfaceGlobal')
     wind=u.MaterialLibrary.get_vector_parameter_value(w,mpc,'GlobalWindTo')
     suns=[{'rotation':a.get_actor_rotation().export_text(),'component':author.read_props(a.get_component_by_class(u.DirectionalLightComponent),author.PROPS['DirectionalLightComponent'])} for a in u.GameplayStatics.get_all_actors_of_class(w,u.DirectionalLight)]
-    author.write(RUN+'_'+suffix+'.json',{'utc':datetime.now(timezone.utc).isoformat(),'world':w.get_path_name(),'fog':rows,'sun':suns,'camera_location':author.xyz(CAMERA.get_actor_location()),'wind':[wind.r,wind.g,wind.b,wind.a],'cvars':{key:u.SystemLibrary.get_console_variable_int_value(key) for key in ['r.VolumetricFog','r.VolumetricFog.GridPixelSize','r.VolumetricFog.GridSizeZ','r.DynamicGlobalIlluminationMethod','r.ReflectionMethod']}})
+    exposure=[a.get_editor_property('settings').get_editor_property('auto_exposure_bias') for a in u.GameplayStatics.get_all_actors_of_class(w,u.PostProcessVolume)]
+    if author.REVIEW == author.P5_REVIEW:
+        assert len(exposure)==1, 'P5运行时后期处理体积数量异常'
+        assert abs(exposure[0]-author.presets()['shared']['fixed_exposure_bias'])<.001, 'P5运行时曝光偏离基线'
+    author.write(RUN+'_'+suffix+'.json',{'utc':datetime.now(timezone.utc).isoformat(),'world':w.get_path_name(),'exposure_bias_ev':exposure,'fog':rows,'sun':suns,'camera_location':author.xyz(CAMERA.get_actor_location()),'wind':[wind.r,wind.g,wind.b,wind.a],'cvars':{key:u.SystemLibrary.get_console_variable_int_value(key) for key in ['r.VolumetricFog','r.VolumetricFog.GridPixelSize','r.VolumetricFog.GridSizeZ','r.DynamicGlobalIlluminationMethod','r.ReflectionMethod']}})
 
 def cleanup():
     global CAMERA,RUN
