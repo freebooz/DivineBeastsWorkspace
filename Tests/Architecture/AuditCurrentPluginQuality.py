@@ -106,7 +106,7 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
     if len(actual) != len(descriptors):
         issues.append("物理插件描述存在重复身份")
     if set(actual) != set(manifest) or set(actual) != set(listed):
-        issues.append("67份真实描述与演示/交付编目的身份集合不一致")
+        issues.append(f"{len(descriptors)}份真实描述与演示/交付编目的身份集合不一致")
     results = []
     module_owners = {}
     edges = {}
@@ -250,7 +250,7 @@ def markdown(report: dict) -> str:
     lines = [
         "# SSLM 全量插件质量与可视化人工验收审查台账",
         "",
-        "> 来源：实际工作树67个插件描述、源码、资源及正式双台账；静态盘点不替代UE编译、蓝图验收、Unreal Insights性能实测或人工签收。",
+        f"> 来源：{report['source']}；静态盘点不替代UE编译、蓝图验收、Unreal Insights性能实测或人工签收。",
         "",
         "## 基线与处理顺序",
         "",
@@ -302,7 +302,7 @@ def main() -> int:
     print(json.dumps(view,ensure_ascii=False,indent=2))
     if report["issues"]:return 1
     if args.require_production:
-        print("SSLM_PLUGIN_PRODUCTION_BLOCKED: 无67插件完整原生+人工性能签收",file=sys.stderr)
+        print(f"SSLM_PLUGIN_PRODUCTION_BLOCKED: 无{report['pluginCount']}插件完整原生+人工性能签收",file=sys.stderr)
         return 2
     return 0
 

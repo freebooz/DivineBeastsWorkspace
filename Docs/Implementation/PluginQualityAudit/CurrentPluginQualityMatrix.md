@@ -1,40 +1,41 @@
 # SSLM 全量插件质量与可视化人工验收审查台账
 
-> 来源：实际工作树67个插件描述、源码、资源及正式双台账；静态盘点不替代UE编译、蓝图验收、Unreal Insights性能实测或人工签收。
+> 来源：GitHub main tracked plugin trees (file counts) plus previous static performance scan and authoritative delivery/demo manifests；静态盘点不替代UE编译、蓝图验收、Unreal Insights性能实测或人工签收。
 
 ## 基线与处理顺序
 
-- 代码插件48、内容包19、声明模块89；已登记演示功能4、场景9，人工签收0。
-- 要求可视化/交互人工验证的插件53，尚无登记操作案例的51。功能总分母未逐项评审，不能计算真实覆盖率。
+- 代码插件48、内容包20、声明模块89；已登记演示功能4、场景9，人工签收0。
+- 要求可视化/交互人工验证的插件54，尚无登记操作案例的52。功能总分母未逐项评审，不能计算真实覆盖率。
 - 有本模块原生测试源码的插件45。没有本地文件不等于项目不存在跨模块自动化测试。
 - 已关联真实诊断图的插件19、不重复的诊断图13张；只是进入地图的观察入口，不计入正式演示案例和人工签收。
 
 | 插件 | 层级/类别 | 模块 | 源码(.cpp) | 原生资产/地图 | 测试源 | 要求人工界面 | 诊断图快捷入口 | 正式演示案例 | 编目审查 | 优先级 |
 |---|---|---:|---:|---:|---:|---|---|---:|---|---|
 | DBAArena | Project/code | 3 | 24 | 6/0 | 8 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
-| DBAClient | Project/code | 6 | 202 | 1/0 | 62 | 是 | 有（待人工检查） | 2 | partial | P2 |
+| DBAClient | Project/code | 6 | 217 | 1/0 | 71 | 是 | 有（待人工检查） | 2 | partial | P2 |
 | DBAContentPack_Common | Project/content_pack | 0 | 0 | 129/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAFoliagePack_Core | Project/content_pack | 0 | 0 | 47/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAFrontEndPack | Project/content_pack | 0 | 0 | 53/2 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAGameplay | Project/code | 3 | 42 | 229/0 | 12 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| DBAGameplay | Project/code | 3 | 50 | 350/0 | 16 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | DBAHeroPack_Boar | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAHeroPack_Dog | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAHeroPack_Dragon | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Dog | Project/content_pack | 0 | 0 | 17/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Dragon | Project/content_pack | 0 | 0 | 18/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAHeroPack_Goat | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAHeroPack_Horse | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAHeroPack_Monkey | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAHeroPack_Ox | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAHeroPack_Rabbit | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAHeroPack_Rat | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAHeroPack_Rooster | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAHeroPack_Snake | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAHeroPack_Tiger | Project/content_pack | 0 | 0 | 9/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAPresentationPack_Core | Project/content_pack | 0 | 0 | 1780/1 | 0 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
-| DBAServer | Project/code | 1 | 12 | 0/0 | 5 | 否 | 无 | 0 | unreviewed | P2 |
-| DBASFXPack_Core | Project/content_pack | 0 | 0 | 105/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Ox | Project/content_pack | 0 | 0 | 18/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Rabbit | Project/content_pack | 0 | 0 | 25/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Rat | Project/content_pack | 0 | 0 | 18/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Rooster | Project/content_pack | 0 | 0 | 26/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Snake | Project/content_pack | 0 | 0 | 18/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAHeroPack_Tiger | Project/content_pack | 0 | 0 | 18/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAPresentationPack_Core | Project/content_pack | 0 | 0 | 1908/5 | 0 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| DBAServer | Project/code | 1 | 13 | 0/0 | 6 | 否 | 无 | 0 | unreviewed | P2 |
+| DBASFXPack_Core | Project/content_pack | 0 | 0 | 107/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAUIPack_Core | Project/content_pack | 0 | 0 | 194/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | DBAWorldPack_MainArena | Project/content_pack | 0 | 0 | 4/1 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAWorldPack_Village | Project/content_pack | 0 | 0 | 204/1 | 0 | 是 | 无 | 0 | unreviewed | P1 |
-| DBAWorlds | Project/code | 1 | 7 | 0/0 | 2 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| DBAWorldPack_Village | Project/content_pack | 0 | 0 | 256/3 | 0 | 是 | 无 | 0 | unreviewed | P1 |
+| DBAWorlds | Project/code | 1 | 9 | 0/0 | 3 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | GamePlatformAbilitySystem | Platform/code | 1 | 11 | 0/0 | 5 | 否 | 无 | 0 | unreviewed | P2 |
 | GamePlatformAI | Platform/code | 2 | 20 | 0/0 | 8 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | GamePlatformAnimation | Platform/code | 2 | 7 | 0/0 | 2 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
@@ -42,10 +43,10 @@
 | GamePlatformArena | Moba/code | 5 | 29 | 0/0 | 7 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | GamePlatformCamera | Platform/code | 1 | 6 | 0/0 | 2 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | GamePlatformCharacter | Platform/code | 1 | 6 | 0/0 | 2 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
-| GamePlatformCombat | Platform/code | 1 | 18 | 0/0 | 6 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformCombat | Platform/code | 1 | 19 | 0/0 | 7 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | GamePlatformCommerceUI | Platform/code | 1 | 8 | 0/0 | 4 | 是 | 无 | 0 | unreviewed | P1 |
 | GamePlatformCore | Platform/code | 1 | 8 | 0/0 | 2 | 否 | 无 | 3 | partial | P2 |
-| GamePlatformData | Platform/code | 2 | 19 | 0/0 | 10 | 否 | 无 | 2 | partial | P2 |
+| GamePlatformData | Platform/code | 2 | 20 | 0/0 | 11 | 否 | 无 | 2 | partial | P2 |
 | GamePlatformDebug | Platform/code | 2 | 7 | 0/0 | 1 | 是 | 无 | 0 | unreviewed | P1 |
 | GamePlatformDeveloperTools | Platform/code | 1 | 15 | 0/0 | 3 | 否 | 无 | 0 | unreviewed | P2 |
 | GamePlatformEntitlement | Platform/code | 2 | 7 | 0/0 | 2 | 否 | 无 | 0 | unreviewed | P2 |
@@ -68,14 +69,14 @@
 | GamePlatformServer | Platform/code | 1 | 15 | 0/0 | 8 | 否 | 无 | 0 | unreviewed | P2 |
 | GamePlatformSession | Platform/code | 1 | 7 | 0/0 | 3 | 否 | 无 | 0 | unreviewed | P2 |
 | GamePlatformSettings | Platform/code | 4 | 23 | 0/0 | 4 | 是 | 无 | 0 | unreviewed | P1 |
-| GamePlatformSFX | Platform/code | 1 | 11 | 0/0 | 4 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
-| GamePlatformSurface | Platform/code | 2 | 23 | 149/0 | 4 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformSFX | Platform/code | 1 | 13 | 0/0 | 5 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformSurface | Platform/code | 2 | 32 | 157/0 | 7 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | GamePlatformTelemetry | Platform/code | 1 | 14 | 0/0 | 4 | 否 | 无 | 0 | unreviewed | P2 |
-| GamePlatformUI | Platform/code | 1 | 56 | 14/0 | 13 | 是 | 无 | 2 | partial | P2 |
-| GamePlatformVFX | Platform/code | 2 | 64 | 52/0 | 21 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformUI | Platform/code | 1 | 58 | 14/0 | 14 | 是 | 无 | 2 | partial | P2 |
+| GamePlatformVFX | Platform/code | 2 | 66 | 53/0 | 22 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | GamePlatformVillage | Platform/code | 3 | 3 | 0/0 | 0 | 是 | 无 | 0 | unreviewed | P1 |
 | GamePlatformWater | Platform/code | 3 | 9 | 0/0 | 1 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
-| GamePlatformWeather | Platform/code | 2 | 9 | 0/0 | 1 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
+| GamePlatformWeather | Platform/code | 2 | 17 | 0/0 | 6 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | GamePlatformWorld | Platform/code | 2 | 16 | 0/0 | 6 | 是 | 有（待人工检查） | 0 | unreviewed | P1 |
 | MobaPresentation | Moba/code | 2 | 13 | 0/0 | 4 | 是 | 无 | 0 | unreviewed | P1 |
 

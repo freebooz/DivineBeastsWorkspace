@@ -24,13 +24,21 @@ class PluginQualityAuditTests(unittest.TestCase):
         cls.delivery=module.load_json(module.DELIVERY)
         cls.report=module.audit(ROOT,cls.demo,cls.delivery)
 
-    def test_67_stable_source_descriptors_and_names(self):
-        self.assertEqual(67,self.report["pluginCount"])
+    def test_68_stable_source_descriptors_and_names(self):
+        self.assertEqual(68,self.report["pluginCount"])
         self.assertEqual(48,self.report["code"])
-        self.assertEqual(19,self.report["content"])
+        self.assertEqual(20,self.report["content"])
         self.assertEqual(89,self.report["modules"])
         self.assertEqual([],self.report["issues"])
-        self.assertEqual(67,len({p["pluginId"] for p in self.report["plugins"]}))
+        self.assertEqual(68,len({p["pluginId"] for p in self.report["plugins"]}))
+
+    def test_foliage_pack_is_included_but_not_falsely_approved(self):
+        foliage = next(p for p in self.report["plugins"] if p["pluginId"] == "DBAFoliagePack_Core")
+        self.assertEqual("content_pack", foliage["kind"])
+        self.assertGreater(foliage["nativeAssets"], 0)
+        self.assertEqual(0, foliage["registeredScenarios"])
+        self.assertTrue(foliage["visualReviewRequired"])
+        self.assertFalse(foliage["humanApproved"])
 
     def test_derived_demo_not_equal_to_human_approval(self):
         report=self.report
@@ -68,7 +76,7 @@ class PluginQualityAuditTests(unittest.TestCase):
         """有地图入口不能当作功能完成；仅允许经过明确许可的两个资源挂载点。"""
         self.assertEqual(19, self.report["diagnosticShortcutPluginCount"])
         self.assertEqual(13, self.report["uniqueApprovedDiagnosticMapCount"])
-        self.assertEqual(51, self.report["visualWithoutOperationalScenario"])
+        self.assertEqual(52, self.report["visualWithoutOperationalScenario"])
         model_path = (ROOT / "Game/Plugins/DivineBeasts/DBAClient/Source/"
                       "DivineBeastsDemoClient/Private/UI/DivineBeastsDemoHubViewModel.cpp")
         model = model_path.read_text(encoding="utf-8-sig")
@@ -92,8 +100,8 @@ class PluginQualityAuditTests(unittest.TestCase):
     def test_markdown_has_one_row_per_real_plugin(self):
         doc=module.markdown(self.report)
         rows=[line for line in doc.splitlines() if line.startswith("| ")]
-        # 标题行+67条插件；Markdown分隔符以|---开头，不计入|+空格匹配。
-        self.assertEqual(67+1,len(rows))
+        # 标题行+68条插件；Markdown分隔符以|---开头，不计入|+空格匹配。
+        self.assertEqual(68+1,len(rows))
         self.assertIn("人工签收0",doc)
         self.assertIn("功能总分母未逐项评审",doc)
 

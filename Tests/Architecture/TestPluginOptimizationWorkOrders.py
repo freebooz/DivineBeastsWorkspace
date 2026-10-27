@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """SSLM插件优化工作单的静态回归。
 
-测试真实67个稳定插件、89个模块与两份派生工作单设计是否一致，阻止空插件、
+测试真实68个稳定插件、89个模块与两份派生工作单设计是否一致，阻止空插件、
 冒充已经操作的案例、虚假人工通过或伪造UE构建证据进入后续执行队列。
 仅检验派生设计与磁盘来源，不启动UE，不生成蓝图或修改编目作者源。
 """
@@ -29,36 +29,39 @@ class PluginOptimizationWorkOrdersTests(unittest.TestCase):
         cls.orders = module.build_workorders(cls.matrix, cls.source_bytes)
         cls.entries = cls.orders["workOrders"]
 
-    def test_67_plugin_identities_remain_complete_without_duplicates(self):
-        self.assertEqual(67, self.orders["totalPluginWorkOrders"])
+    def test_68_plugin_identities_remain_complete_without_duplicates(self):
+        self.assertEqual(68, self.orders["totalPluginWorkOrders"])
         self.assertEqual(48, self.orders["codePluginWorkOrders"])
-        self.assertEqual(19, self.orders["contentPackWorkOrders"])
-        self.assertEqual(67, len({x["pluginId"] for x in self.entries}))
+        self.assertEqual(20, self.orders["contentPackWorkOrders"])
+        self.assertEqual(68, len({x["pluginId"] for x in self.entries}))
         self.assertEqual(set(x["pluginId"] for x in self.matrix["plugins"]),
                          set(x["pluginId"] for x in self.entries))
         self.assertTrue(all((ROOT / x["descriptorPath"]).is_file() for x in self.entries))
 
     def test_current_work_orders_cover_all_eight_stage_policy(self):
         self.assertEqual({"M1": 11, "M2": 9, "M3": 8, "M4": 7,
-                          "M5": 13, "M6": 19}, self.orders["phaseCounts"])
+                          "M5": 13, "M6": 20}, self.orders["phaseCounts"])
         self.assertEqual("M0 核对全部当前身份与功能分母",
                          self.orders["globalPrerequisites"][0])
         self.assertIn("M7", self.orders["finalAcceptance"])
         self.assertEqual(89, sum(item["declaredModuleCount"] for item in self.entries))
 
-    def test_19_content_packs_include_twelve_zodiac_heroes(self):
+    def test_20_content_packs_include_twelve_zodiac_heroes(self):
         packs = [x for x in self.entries if x["pluginKind"] == "content_pack"]
         heroes = [x for x in packs if x["pluginId"].startswith("DBAHeroPack_")]
-        self.assertEqual(19, len(packs))
+        self.assertEqual(20, len(packs))
         self.assertEqual(12, len(heroes))
+        foliage = next(x for x in packs if x["pluginId"] == "DBAFoliagePack_Core")
+        self.assertEqual("M6", foliage["primaryBatch"])
+        self.assertEqual("not_implemented_by_this_plan", foliage["completionStatus"])
         self.assertTrue(all(x["primaryBatch"] == "M6" for x in packs))
         self.assertIn("子鼠", next(x for x in heroes
                                   if x["pluginId"] == "DBAHeroPack_Rat")["firstStepFocus"])
 
     def test_no_fake_manual_approval_or_production_claim(self):
         self.assertEqual(0, self.orders["humanApproved"])
-        self.assertEqual(51, self.orders["formalScenarioGaps"])
-        self.assertEqual(53, self.orders["visualReviewRequired"])
+        self.assertEqual(52, self.orders["formalScenarioGaps"])
+        self.assertEqual(54, self.orders["visualReviewRequired"])
         self.assertEqual(9, self.orders["existingFormalScenarioRegistrations"])
         self.assertTrue(all(x["humanApproval"] == "not_verified" for x in self.entries))
         self.assertTrue(all(x["completionStatus"] == "not_implemented_by_this_plan"
@@ -90,7 +93,7 @@ class PluginOptimizationWorkOrdersTests(unittest.TestCase):
         self.assertIn("正式案例", doc)
         self.assertIn("诊断地图不作为正式可操作功能的完成证据", doc)
         self.assertIn("本工作单状态固定为未实施", doc)
-        self.assertEqual(67, sum(1 for line in doc.splitlines()
+        self.assertEqual(68, sum(1 for line in doc.splitlines()
                                  if line.startswith("| SSLM-PLG-")))
 
     def test_migration_remains_compatible_with_current_plugin_descriptors(self):

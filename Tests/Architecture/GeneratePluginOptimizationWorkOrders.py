@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """SSLM全插件优化工作单生成器 V2。
 
-职责：从当前67项质量派生台账编排M1—M6实施工作单，补充逐插件设计责任、
+职责：从当前真实插件质量台账编排M1—M6实施工作单，补充逐插件设计责任、
 待核查业务能力、原生测试、端侧、人工操作与证据门禁。
 来源：质量派生台账是静态事实；本文件显式规则只是后续整改计划，不是已实现的接口/资产。
 副作用：默认仅摘要；--write仅写Docs/Implementation/PluginQualityAudit中的两份文档；
@@ -95,6 +95,7 @@ HERO_NAMES = {
 
 PACK_GOALS = {
     "DBAContentPack_Common": "公共角色、模型/材质、共享资源与服务器权威依赖审核",
+    "DBAFoliagePack_Core": "项目通用植被/FoliageType与PCG资源、客户端性能、专服纯表现剥离及人工画面验收",
     "DBAFrontEndPack": "登录、英雄选择与创建的真实Widget/场景及客户端权限",
     "DBAUIPack_Core": "项目页面、HUD、主题、事件交互、焦点与真实原生UI质量审核",
     "DBAPresentationPack_Core": "项目VFX目录/定义与真实Niagara/材质消费者、性能和资源许可",
@@ -121,7 +122,7 @@ PHASE_LABELS = {
     "M3": "唯一演示中心与人工审核",
     "M4": "视觉表现与环境",
     "M5": "权威玩法与场景",
-    "M6": "19个内容包逐项交付",
+    "M6": "内容包逐项交付",
 }
 
 VALID_TARGETS = {
@@ -280,9 +281,9 @@ def build_workorders(matrix: dict, matrix_bytes: bytes) -> dict:
 
 def to_markdown(data: dict) -> str:
     lines = [
-        "# SSLM 插件优化设计 V2.0：67个插件实施工作单",
+        f"# SSLM 插件优化设计 V2.0：{data['totalPluginWorkOrders']}个插件实施工作单",
         "",
-        "> 本文由当前真实67插件质量台账自动派生，按照M1—M6分组；每个条目都是未来待执行任务，"
+        f"> 本文由当前真实{data['totalPluginWorkOrders']}插件质量台账自动派生，按照M1—M6分组；每个条目都是未来待执行任务，"
         "不是已实施或人工审核通过。M0对所有插件执行基线检查，M7负责统一生产门禁。",
         "",
         f"- 当前工作单：{data['totalPluginWorkOrders']}；机制插件：{data['codePluginWorkOrders']}；"
