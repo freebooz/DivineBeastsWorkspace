@@ -12,6 +12,16 @@
   ],
   "Plugins": [
     {
+      "Name": "BlueprintAutoLayout",
+      "Enabled": true,
+      "TargetAllowList": ["Editor"]
+    },
+    {
+      "Name": "GlooPrint",
+      "Enabled": true,
+      "TargetAllowList": ["Editor"]
+    },
+    {
       "Name": "GamePlatformCore",
       "Enabled": true
     },
