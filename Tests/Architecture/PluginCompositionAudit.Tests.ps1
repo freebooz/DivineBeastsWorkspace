@@ -171,6 +171,80 @@ Describe '插件按目标装配及非竞技闭包审计' {
         }
     }
 
+    It 'Target.bBuildEditor无花括号单语句只为Editor引入依赖' {
+        $root = Join-Path $TestDrive 'buildEditorSingle'
+        New-CompositionPlugin $root DBATest @(@{Name='GamePlatformReview';Enabled=$true;TargetAllowList=@('Editor')})
+        New-CompositionPlugin $root GamePlatformReview
+        $path = Join-Path $root 'Game/Plugins/GamePlatform/GamePlatformReview/GamePlatformReview.uplugin'
+        $descriptor = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        $descriptor.Modules[0].Type = 'Editor'
+        $descriptor | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $path -Encoding UTF8
+        $rule = Join-Path $root 'Game/Plugins/DivineBeasts/DBATest/Source/DBATest/DBATest.Build.cs'
+        Set-Content -LiteralPath $rule -Encoding UTF8 -Value @'
+if (Target.bBuildEditor)
+    PrivateDependencyModuleNames.AddRange(new[] { "UnrealEd", "GamePlatformReview" });
+PrivateDependencyModuleNames.Add("Core");
+'@
+        foreach ($target in @('Client','Server','Editor')) {
+            $result = Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target $target
+            ($result.Errors -join "`n") | Should BeNullOrEmpty
+            $result.Passed | Should Be $true
+        }
+        New-CompositionPlugin $root GamePlatformUnexpected
+        Add-Content -LiteralPath $rule -Encoding UTF8 -Value 'PrivateDependencyModuleNames.Add("GamePlatformUnexpected");'
+        $result = Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Client
+        $result.Passed | Should Be $false
+        ($result.Errors -join "`n") | Should Match '未声明.*GamePlatformUnexpected'
+    }
+
+    It 'Target.bBuildEditor花括号与否定条件在三目标分别解析' {
+        $root = Join-Path $TestDrive 'buildEditorBraced'
+        New-CompositionPlugin $root DBATest @(
+            @{Name='GamePlatformReview';Enabled=$true;TargetAllowList=@('Editor')},
+            @{Name='GamePlatformClient';Enabled=$true;TargetAllowList=@('Client','Server')}
+        )
+        New-CompositionPlugin $root GamePlatformReview
+        New-CompositionPlugin $root GamePlatformClient
+        $path = Join-Path $root 'Game/Plugins/GamePlatform/GamePlatformReview/GamePlatformReview.uplugin'
+        $descriptor = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        $descriptor.Modules[0].Type = 'Editor'
+        $descriptor | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $path -Encoding UTF8
+        $rule = Join-Path $root 'Game/Plugins/DivineBeasts/DBATest/Source/DBATest/DBATest.Build.cs'
+        Set-Content -LiteralPath $rule -Encoding UTF8 -Value @'
+if (Target.bBuildEditor) {
+    PrivateDependencyModuleNames.AddRange(new[] { "UnrealEd", "GamePlatformReview" });
+}
+if (!Target.bBuildEditor)
+    PrivateDependencyModuleNames.Add("GamePlatformClient");
+'@
+        foreach ($target in @('Client','Server','Editor')) {
+            $result = Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target $target
+            ($result.Errors -join "`n") | Should BeNullOrEmpty
+            $result.Passed | Should Be $true
+        }
+    }
+
+    It '复合bBuildEditor条件及else仍保守报告风险' {
+        $root = Join-Path $TestDrive 'buildEditorUnknown'
+        New-CompositionPlugin $root DBATest
+        New-CompositionPlugin $root GamePlatformReview
+        $path = Join-Path $root 'Game/Plugins/GamePlatform/GamePlatformReview/GamePlatformReview.uplugin'
+        $descriptor = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        $descriptor.Modules[0].Type = 'Editor'
+        $descriptor | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $path -Encoding UTF8
+        $rule = Join-Path $root 'Game/Plugins/DivineBeasts/DBATest/Source/DBATest/DBATest.Build.cs'
+        foreach ($source in @(
+            'if (Target.bBuildEditor || Target.Type == TargetType.Server) { PrivateDependencyModuleNames.Add("GamePlatformReview"); }',
+            'if (Target.bBuildEditor) PrivateDependencyModuleNames.Add("GamePlatformReview"); else PrivateDependencyModuleNames.Add("Core");',
+            '// if (Target.bBuildEditor)' + "`n" + 'PrivateDependencyModuleNames.Add("GamePlatformReview");'
+        )) {
+            Set-Content -LiteralPath $rule -Encoding UTF8 -Value $source
+            $result = Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Client
+            $result.Passed | Should Be $false
+            ($result.Errors -join "`n") | Should Match '未声明.*GamePlatformReview'
+        }
+    }
+
     It '同一插件身份重复声明即使按Target拆分也必须失败' {
         # 目标过滤前检查重复声明，避免Editor/Client间出现相同插件不同启用规则。
         $root = Join-Path $TestDrive 'duplicatePlugin'
