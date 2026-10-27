@@ -1,7 +1,7 @@
 ﻿Set-StrictMode -Version Latest
 
 function Get-CompositionTargetRuleSource {
-    <# 对字面量依赖的只读目标预处理：只求值完整的Target.Type ==/!= TargetType枚举if块。
+    <# 对字面量依赖的只读目标预处理：只求值Target.Type枚举比较及Target.bBuildEditor条件块/单语句。
        不执行C#或UBT；未知表达式/else仍保守保留全部依赖。插值/原始字符串或预处理指令整源保留，
        防止有限词法掩码误吞块外依赖。结构扫描忽略普通注释/字符串中的花括号，
        保持字符位置后仅擦除确定不属于当前目标的块，不按模块名称或期望通过结果做特殊白名单。 #>
@@ -15,19 +15,39 @@ function Get-CompositionTargetRuleSource {
         param($literal) return (' ' * $literal.Length)
     })
     $characters = $Source.ToCharArray()
-    $conditionPattern = '\bif\s*\(\s*Target\.Type\s*(?<operator>==|!=)\s*TargetType\.(?<type>Editor|Client|Server|Game|Program)\s*\)\s*\{'
+    # 精确求值Target.Type比较及Target.bBuildEditor；其它条件、else、未知词法全部保守保留。
+    $conditionPattern = '\bif\s*\(\s*(?:(?<negate>!)?Target\.bBuildEditor|Target\.Type\s*(?<operator>==|!=)\s*TargetType\.(?<type>Editor|Client|Server|Game|Program))\s*\)'
     foreach ($condition in [regex]::Matches($structure, $conditionPattern)) {
-        $open = $condition.Index + $condition.Length - 1
-        $depth = 1; $end = $open + 1
-        while ($end -lt $structure.Length -and $depth -gt 0) {
-            if ($structure[$end] -eq '{') { $depth++ }
-            elseif ($structure[$end] -eq '}') { $depth-- }
-            $end++
+        $start = $condition.Index + $condition.Length
+        while ($start -lt $structure.Length -and [char]::IsWhiteSpace($structure[$start])) { $start++ }
+        if ($start -ge $structure.Length) { continue }
+        $end = -1
+        if ($structure[$start] -eq '{') {
+            $depth = 1; $end = $start + 1
+            while ($end -lt $structure.Length -and $depth -gt 0) {
+                if ($structure[$end] -eq '{') { $depth++ }
+                elseif ($structure[$end] -eq '}') { $depth-- }
+                $end++
+            }
+            if ($depth -ne 0) { continue }
+        } else {
+            # UE Build.cs允许无花括号单语句；仅裁剪紧随条件的直接依赖Add/AddRange。
+            $tail = $structure.Substring($start)
+            if (-not [regex]::IsMatch($tail, '^(?:Public|Private|DynamicallyLoaded)DependencyModuleNames\.Add(?:Range)?\s*\(')) { continue }
+            $semicolon = $structure.IndexOf(';', $start)
+            if ($semicolon -lt 0) { continue }
+            $statement = $structure.Substring($start, $semicolon - $start + 1)
+            if ($statement -notmatch '\)\s*;\s*$') { continue }
+            $end = $semicolon + 1
         }
-        # 非平衡或else语法不属于此限定求值器，仍让原审计发现全部字面量依赖而非猜测。
-        if ($depth -ne 0 -or $structure.Substring($end) -match '^\s*else\b') { continue }
-        $isActive = $Target -eq $condition.Groups['type'].Value
-        if ($condition.Groups['operator'].Value -eq '!=') { $isActive = -not $isActive }
+        if ($structure.Substring($end) -match '^\s*else\b') { continue }
+        if ($condition.Groups['type'].Success) {
+            $isActive = $Target -eq $condition.Groups['type'].Value
+            if ($condition.Groups['operator'].Value -eq '!=') { $isActive = -not $isActive }
+        } else {
+            $isActive = $Target -eq 'Editor'
+            if ($condition.Groups['negate'].Success) { $isActive = -not $isActive }
+        }
         if ($isActive) { continue }
         for ($index = $condition.Index; $index -lt $end; $index++) {
             if ($characters[$index] -ne "`r" -and $characters[$index] -ne "`n") { $characters[$index] = ' ' }
