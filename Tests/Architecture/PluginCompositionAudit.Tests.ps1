@@ -236,7 +236,7 @@ if (!Target.bBuildEditor)
         foreach ($source in @(
             'if (Target.bBuildEditor || Target.Type == TargetType.Server) { PrivateDependencyModuleNames.Add("GamePlatformReview"); }',
             'if (Target.bBuildEditor) PrivateDependencyModuleNames.Add("GamePlatformReview"); else PrivateDependencyModuleNames.Add("Core");',
-            '// if (Target.bBuildEditor)' + "`n" + 'PrivateDependencyModuleNames.Add("GamePlatformReview");'
+            ('// if (Target.bBuildEditor)' + "`n" + 'PrivateDependencyModuleNames.Add("GamePlatformReview");')
         )) {
             Set-Content -LiteralPath $rule -Encoding UTF8 -Value $source
             $result = Test-PluginComposition -WorkspaceRoot $root -RootPlugins DBATest -Target Client
