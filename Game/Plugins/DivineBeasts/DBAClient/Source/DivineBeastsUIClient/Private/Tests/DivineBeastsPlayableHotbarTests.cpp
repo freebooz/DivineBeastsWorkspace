@@ -61,7 +61,17 @@ bool FDivineBeastsPlayableHotbarAssetsTest::RunTest(const FString&)
             if (!TestNotNull(TEXT("服务器技能必须具有同ID的Profile条目"),Entry)) return false;
             TestNotNull(TEXT("实际技能图标可以重载"),Entry->Icon.LoadSynchronous());
             const FString Input=Grant.InputTag.ToString();
-            if (Input.EndsWith(TEXT(".Primary"))) TestEqual(TEXT("数字1保留定向飞弹"),Ability->PresentationStyleOverride,FName(TEXT("DBA.Development.DirectedMissile")));
+            if (Input.EndsWith(TEXT(".Primary")))
+            {
+                TestEqual(TEXT("数字1施放火球"),Ability->PlaceholderMode,EDivineBeastsPlaceholderAbilityMode::Fireball);
+                TestTrue(TEXT("数字1使用火球默认表现"),Ability->PresentationStyleOverride.IsNone());
+            }
+            if (Input.EndsWith(TEXT(".Slot1")))
+            {
+                TestEqual(TEXT("数字2施放冰晶"),Ability->PlaceholderMode,EDivineBeastsPlaceholderAbilityMode::Frostbolt);
+                TestTrue(TEXT("数字2使用冰晶默认表现"),Ability->PresentationStyleOverride.IsNone());
+            }
+            if (Input.EndsWith(TEXT(".Slot2"))) TestEqual(TEXT("数字3保留定向飞弹"),Ability->PresentationStyleOverride,FName(TEXT("DBA.Development.DirectedMissile")));
             if (Input.EndsWith(TEXT(".Slot3"))) TestEqual(TEXT("数字5保留真实治疗"),Ability->PlaceholderMode,EDivineBeastsPlaceholderAbilityMode::Healing);
             TestNotNull(TEXT("映射技能沿用真实GAS冷却"),Ability->GetCooldownGameplayEffect());
         }

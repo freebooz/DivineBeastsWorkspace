@@ -1,0 +1,35 @@
+// SSLM掌心审核CPU运动；所有位置为附着组件局部厘米，组件掌面轴由角色审核配置提供。
+// Layer: 0火核/1火壳/2火舌/3热扰动/4冰核/5冰瓣/6冷雾/7冷扰动。
+// 使用实际施法秒数与迟到偏移，截止时杀死粒子；不得反写Gameplay时序。
+float t=max(0.0,SpellTime+ElapsedAtStartSec);
+float u=saturate(t/max(.01,Duration));
+float attack=saturate(u/.20);attack=attack*attack*(3-2*attack);
+float release=saturate((1-u)/.20);release=release*release*(3-2*release);
+float envelope=attack*release;
+float id=(float)ParticleIndex;
+float seed=frac(sin(id*127.1+19.3)*43758.5453);
+float phase=id*2.094395+Side*t*.4363;
+float3 p=float3(0,0,0);
+float3 s=float3(1,1,1);
+float2 sprite=float2(0,0);
+float yaw=phase;
+float alpha=envelope;
+if(Layer==0){p=float3(0,0,4.4+.3*sin(t*12.566));s=float3(.04,.04,.04);yaw=t;}
+if(Layer==1){s=float3(1.25,1.25,.9)*lerp(.72,1,attack);}
+if(Layer==2){float a=id*2.39996+t*Side;float r=1.5+4*seed;p=float3(cos(a)*r,sin(a)*r,5+15*seed+2*sin(t*4+id));sprite=float2(7+seed*3,12+seed*7);alpha*=.7;}
+if(Layer==3){p=float3(0,0,14);s=float3(.28,.28,.32);alpha*=AirRippleScale;}
+if(Layer==4){p=float3(0,0,8+.25*sin(t*8.16));yaw=t*Side*.2094;s=float3(1.35,1.35,1.35);}
+if(Layer==5){yaw=id*1.047198+Side*t*.1396+(seed-.5)*.20;s=float3(1,1,.68+.16*seed)*lerp(.65,1,attack);}
+if(Layer==6){float a=id*2.39996+Side*t*.4;float cycle=frac(seed+t*1.2);float r=4+5*cycle;p=float3(cos(a)*r,sin(a)*r,2-cycle*2);sprite=float2(14+seed*4,11+seed*4);alpha*=sin(cycle*3.14159265)*.85;}
+if(Layer==7){p=float3(0,0,11);s=float3(.26,.26,.28);alpha*=AirRippleScale;}
+Particles.Position=p*EffectScale;
+Particles.Scale=s*EffectScale;
+Particles.SpriteSize=sprite*EffectScale;
+Particles.MeshOrientation=float4(0,0,sin(yaw*.5),cos(yaw*.5));
+Particles.MeshIndex=(int)fmod(id,3.0);
+Particles.SpriteRotation=id*31+t*12;
+Particles.Color=float4(EffectIntensity,EffectIntensity,EffectIntensity,alpha);
+Particles.DynamicMaterialParameter=float4(t,seed,(float)Layer,envelope);
+Particles.SubImageIndex=0.0;
+// 已有ParticleState读取Lifetime负责原生回收，迟到播放只保留剩余窗口。
+Particles.Lifetime=max(.001,Duration-ElapsedAtStartSec);

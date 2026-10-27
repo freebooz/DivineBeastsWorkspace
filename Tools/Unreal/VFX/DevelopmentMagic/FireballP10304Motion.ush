@@ -1,0 +1,100 @@
+// CPU VectorVM不实现HLSL smoothstep，以下使用显式三次Hermite核保持同样的平滑形态。
+// SSLM P1—03/04审核专用Niagara CPU运动模块，由Monolith创建真实NiagaraScript。
+// 世界位置来自Position类型参数，由调用者每次提交实际掌心及动态中心；没有骨架或世界坐标偏移。
+// Layer 0/1=双股火流，2=03小核心，3=03热扰动，4=04继承核心，5=厚球壳，6=火舌，7=04热扰动。
+float phase=saturate(Phase);
+float t=max(0.0,SpellTime);
+float id=(float)ParticleIndex;
+float scale=max(.01,FlameScale);
+float energy=max(0.0,FlameIntensity);
+float3 pos=CenterWS;
+float2 sprite=float2(0.0,0.0);
+float3 meshScale=float3(.01,.01,.01);
+float4 color=float4(1.0,1.0,1.0,1.0);
+float rotation=0.0;
+float diameter=14.0+54.0*(saturate(((phase)-(0.0))/((1.0)-(0.0)))*saturate(((phase)-(0.0))/((1.0)-(0.0)))*(3.0-2.0*saturate(((phase)-(0.0))/((1.0)-(0.0)))));
+float yaw=t*.24;
+float width=0.0;
+
+if(Layer<2) {
+    // 保持64个有序采样点为同一条Ribbon；首点跟掌心、终点跟动态中心，不生成脱节尾端。
+    float u=saturate(fmod(id,64.0)/63.0);
+    float reach=lerp(.08,1.0,(saturate(((phase)-(0.0))/((.66)-(0.0)))*saturate(((phase)-(0.0))/((.66)-(0.0)))*(3.0-2.0*saturate(((phase)-(0.0))/((.66)-(0.0))))));
+    u*=reach;
+    float side=Layer==0 ? -1.0 : 1.0;
+    float3 start=Layer==0 ? LeftPalmWS : RightPalmWS;
+    float3 delta=CenterWS-start;
+    float lengthCm=max(1.0,length(delta));
+    float3 axis=delta/lengthCm;
+    // VectorVM不支持部分动态分支的向量合流；连续选择参考轴并显式安全归一化。
+    float blend=saturate((abs(axis.z)-.85)*10.0);
+    float3 reference=lerp(float3(0.0,0.0,1.0),float3(0.0,1.0,0.0),blend);
+    float3 basis=cross(axis,reference);
+    basis=basis/sqrt(max(.000001,dot(basis,basis)));
+    float3 other=cross(axis,basis);
+    other=other/sqrt(max(.000001,dot(other,other)));
+    float3 c1=start+delta*.27+basis*(side*lengthCm*.15)+float3(0,0,lengthCm*.13);
+    float3 c2=CenterWS-delta*.24+basis*(side*lengthCm*.11)+float3(0,0,lengthCm*.10);
+    float one=1.0-u;
+    pos=one*one*one*start+3.0*one*one*u*c1+3.0*one*u*u*c2+u*u*u*CenterWS;
+    float spiral=u*8.0+t*5.2+side*1.57;
+    float radius=lengthCm*.095*pow(max(.0,sin(u*3.14159265)),.8)*pow(one,.8)*(1.0-.42*phase);
+    pos+=(basis*cos(spiral)+other*sin(spiral))*radius;
+    // 有限宽Tube Ribbon承担实体曲线；少量序列火焰保留掌边残火及沿途翻卷。
+    width=(4.5+3.0*sin(u*3.14159265))*(1.0-.36*u)*scale*(saturate(((phase)-(0.0))/((.10)-(0.0)))*saturate(((phase)-(0.0))/((.10)-(0.0)))*(3.0-2.0*saturate(((phase)-(0.0))/((.10)-(0.0)))));
+    float tuft=1.0-saturate(fmod(id,8.0));
+    sprite=float2(8.0,14.0)*scale*tuft;
+    sprite=lerp(sprite,float2(13.0,20.0)*scale,1.0-saturate(id));
+    color=float4(1.0,.76,.40,.86*(saturate(((phase)-(0.0))/((.08)-(0.0)))*saturate(((phase)-(0.0))/((.08)-(0.0)))*(3.0-2.0*saturate(((phase)-(0.0))/((.08)-(0.0))))));
+    rotation=side*12.0+sin(t*1.3+u*5.0)*10.0;
+}
+else if(Layer==2) {
+    // 03始终只有10—14cm中央小核心，不使用04的68cm球壳。
+    float d=lerp(10.0,14.0,(saturate(((phase)-(.20))/((1.0)-(.20)))*saturate(((phase)-(.20))/((1.0)-(.20)))*(3.0-2.0*saturate(((phase)-(.20))/((1.0)-(.20))))));
+    meshScale=(d*.01*scale).xxx;
+    color=float4(1.0,1.0,.90,(saturate(((phase)-(.24))/((.67)-(.24)))*saturate(((phase)-(.24))/((.67)-(.24)))*(3.0-2.0*saturate(((phase)-(.24))/((.67)-(.24))))));
+}
+else if(Layer==4) {
+    // 与03结束使用同一世界中心及14cm直径，交接时不重定位，不引入新的权威时间。
+    meshScale=(.14*scale).xxx;
+    color=float4(1.0,1.0,.90,1.0);
+}
+else if(Layer==5) {
+    meshScale=(diameter*.01*scale).xxx;
+    color=float4(1.0,.91,.72,(saturate(((phase)-(0.0))/((.16)-(0.0)))*saturate(((phase)-(0.0))/((.16)-(0.0)))*(3.0-2.0*saturate(((phase)-(0.0))/((.16)-(0.0))))));
+}
+else if(Layer==6) {
+    // 16个低数量外火舌，主体由一个球壳Mesh承担；四档先削减装饰可见性。
+    float z=1.0-2.0*(fmod(id,16.0)+.5)/16.0;
+    float a=id*2.39996323+t*.28;
+    float r=sqrt(max(.0,1.0-z*z));
+    float3 normal=float3(r*cos(a),r*sin(a),z);
+    pos=CenterWS+normal*(diameter*.485*scale);
+    float h=frac(sin(id*12.9898+2.0)*43758.5453);
+    float every4=1.0-saturate(fmod(id,4.0));
+    float every2=1.0-saturate(fmod(id,2.0));
+    float q=(float)Quality;
+    float visible=saturate(q-2.0)+(1.0-saturate(abs(q-2.0)))*(1.0-every4)
+        +(1.0-saturate(abs(q-1.0)))*every2+(1.0-saturate(q))*every4;
+    sprite=float2(11.0+6.0*h,21.0+11.0*h)*scale*(saturate(((phase)-(.08))/((.55)-(.08)))*saturate(((phase)-(.08))/((.55)-(.08)))*(3.0-2.0*saturate(((phase)-(.08))/((.55)-(.08)))))*visible;
+    color=float4(1.0,.39,.12,.75*visible);
+    rotation=a*57.29578+t*20.0;
+}
+else {
+    // 局部热空气，Low关闭、Medium四分之一、High克制、Epic完整；不改变任何权威运动。
+    float q=Quality<1?0.0:Quality<2?.25:Quality<3?.60:1.0;
+    float d=Layer==3?lerp(18.0,44.0,phase):diameter*1.15;
+    sprite=(d*scale).xx;
+    color=float4(1.0,1.0,1.0,q*.35*(saturate(((phase)-(.12))/((.45)-(.12)))*saturate(((phase)-(.12))/((.45)-(.12)))*(3.0-2.0*saturate(((phase)-(.12))/((.45)-(.12))))));
+    rotation=t*8.0;
+}
+Particles.Position=pos;
+Particles.Color=float4(color.rgb*energy,color.a);
+Particles.Scale=meshScale;
+Particles.MeshOrientation=float4(0.0,0.0,sin(yaw*.5),cos(yaw*.5));
+Particles.SpriteSize=sprite;
+Particles.SpriteRotation=rotation;
+Particles.SubImageIndex=16.0*frac(t*.60+id*.137);
+Particles.RibbonWidth=width;
+Particles.RibbonLinkOrder=id;
+Particles.DynamicMaterialParameter=float4(t,phase,(float)Quality,0.0);

@@ -3,7 +3,7 @@
 SSLM十二生肖占位技能原生资产作者：通过UE5.8 Editor Python生成真实资产，不制作文本伪uasset。
 产出：12英雄 × (6份技能定义 + 6份独立GAS蓝图 + 1份授权集 + 1份客户端UIProfile)
      +48兼容成本GE+60冷却GE + 1份72行数值表。
-默认数字1定向飞弹、2火焰弹、3寒冰箭、4奥术飞弹、5治疗，另保留被动；治疗Primary身份不改。
+默认数字1火焰弹、2寒冰箭、3定向飞弹、4奥术飞弹、5治疗，另保留被动；治疗Primary身份不改。
 资产先完整生成/校验，最后才配置Hero.DefaultAbilitySetId；不存在开发技能后门。
 仅在 -SSLMPlaceholderAuthoring 显式许可时执行。不得由普通游戏启动自动执行。
 所有代码、引擎类和资源只属于SSLM项目层；平台机制保持原状。
@@ -27,10 +27,10 @@ SLOTS = (
     ("Primary", "花瓣绽放", "PRIMARY", "SLOT3", 0, 0, 10, 2000, 0, 0, 1, 0),
     ("Passive", "被动技能（占位）", "PASSIVE", "", 0, 0, 0, 0, 0, 0, 1, 0),
     # 2026-10-25用户指定默认30米/秒恒速；其它平衡参数沿用原值。
-    ("Fireball", "火焰弹（占位）", "ACTIVE", "SLOT1", 40, 0, 2, 5000, 3000, 0, 1, 0),
-    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT2", 30, 0, 1.5, 5000, 3000, 0, 1, 0),
+    ("Fireball", "火焰弹（占位）", "ACTIVE", "PRIMARY", 40, 0, 2, 5000, 3000, 0, 1, 0),
+    ("Frostbolt", "寒冰箭（占位）", "ACTIVE", "SLOT1", 30, 0, 1.5, 5000, 3000, 0, 1, 0),
     ("ArcaneMissiles", "奥术飞弹（占位）", "ULTIMATE", "SLOT4", 12, 0, 3, 5000, 3000, 18, 3, .2),
-    ("DirectedMissile", "定向飞弹", "ACTIVE", "PRIMARY", 40, 0, 2, 5000, 3000, 0, 1, 0),
+    ("DirectedMissile", "定向飞弹", "ACTIVE", "SLOT2", 40, 0, 2, 5000, 3000, 0, 1, 0),
 )
 MAGIC_SLOTS = ("Fireball", "Frostbolt", "ArcaneMissiles", "DirectedMissile")
 COOLDOWNS = ("Primary",) + MAGIC_SLOTS
