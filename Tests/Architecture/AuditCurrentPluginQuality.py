@@ -250,7 +250,7 @@ def markdown(report: dict) -> str:
     lines = [
         "# SSLM 全量插件质量与可视化人工验收审查台账",
         "",
-        f"> 来源：实际工作树{report['pluginCount']}个插件描述、源码、资源及正式双台账；静态盘点不替代UE编译、蓝图验收、Unreal Insights性能实测或人工签收。",
+        f"> 来源：{report['source']}；静态盘点不替代UE编译、蓝图验收、Unreal Insights性能实测或人工签收。",
         "",
         "## 基线与处理顺序",
         "",
