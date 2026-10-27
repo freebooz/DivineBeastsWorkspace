@@ -139,7 +139,7 @@ def _reference(identity: str, index: dict, location: str, issues: list) -> dict 
 def _check_plugins(records: list, root: Path, issues: list) -> None:
     """交叉核对描述、模块类别、三层归属与内容注册；不硬编码47/18上限。"""
     actual = {}
-    for folder, layer in (("GamePlatform", "Platform"), ("MobaCommon", "Moba"), ("DivineBeasts", "Project")):
+    for folder, layer in (("GamePlatform", "Platform"), ("MobaCommon", "Moba"), ("DivineBeasts", "Project"), ("ThirdParty", "Project")):
         for path in sorted((root / "Game/Plugins" / folder).rglob("*.uplugin")):
             relative = path.relative_to(root).as_posix()
             safe = _repository_path(root, relative, relative, issues)
@@ -196,6 +196,14 @@ def validate_manifest(document: dict, workspace: Path) -> list[dict]:
     if issues:
         return issues
     _check_plugins(document["plugins"], root, issues)
+    if document.get("manual_page_contract_version") == 1:
+        for plugin in document["plugins"]:
+            expected = "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_" + plugin["plugin_id"]
+            if plugin.get("test_page_asset") != expected:
+                _issue(issues, "manual_page.identity", "plugins." + plugin["plugin_id"], "独立页路径必须精确绑定本插件，禁止跨插件别名、越界路径或缺失页面声明。")
+            origin = "third_party" if plugin["descriptor_path"].startswith("Game/Plugins/ThirdParty/") else "first_party"
+            if plugin.get("source_kind") != origin:
+                _issue(issues, "manual_page.source", "plugins." + plugin["plugin_id"], "插件来源类型与真实描述路径不符。")
     plugins = _index(document["plugins"], "plugin_id", "plugins", [])
     features = _index(document["features"], "feature_id", "features", issues)
     scenarios = _index(document["scenarios"], "scenario_id", "scenarios", issues)

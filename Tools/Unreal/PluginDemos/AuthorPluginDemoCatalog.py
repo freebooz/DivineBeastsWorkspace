@@ -69,9 +69,13 @@ def build_catalog(manifest_path: str) -> dict:
 
     fields = {
         "source_fingerprint": fingerprint,
+        "manual_page_contract_version": document.get("manual_page_contract_version", 0),
         "logical_id": value("GamePlatformId", **{"namespace": "divinebeasts.demo", "name": "catalog", "logical_version": 1}),
         "data_version": value("GamePlatformDataVersion", schema_version=2, content_revision=1),
-        "plugins": [value("DivineBeastsDemoPluginEntry", **p) for p in document["plugins"]],
+        "plugins": [value("DivineBeastsDemoPluginEntry", **{
+            **{k: v for k, v in p.items() if k != "test_page_asset"},
+            **({"test_page_asset": unreal.SoftObjectPath(p["test_page_asset"] + "." + p["test_page_asset"].rsplit("/", 1)[-1])}
+               if p.get("test_page_asset") else {})}) for p in document["plugins"]],
         "features": [], "scenarios": [], "review_cases": [], "legacy_map_routes": []}
     for feature in document["features"]:
         fields["features"].append(value("DivineBeastsDemoFeatureEntry", **{k: feature[k] for k in

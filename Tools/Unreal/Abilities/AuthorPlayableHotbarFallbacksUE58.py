@@ -20,6 +20,18 @@ MODES = {'Slot5':('Primary','治疗恢复'), 'Slot6':('Frostbolt','寒冰箭'), 
 def require(value, message):
     if not value: raise RuntimeError(message)
 
+def synchronize_rule_defaults(source_cdo, destination_cdo):
+    """新建和既有副本都读取原GA规则；仅保留副本自己的Definition/技能身份。
+
+    复制字段而非维护第二份数值常量；模式、连发、表现覆盖、GAS成本/冷却、标签和输入策略
+    必须一起刷新，避免只更新弹速却继续消费旧模式或旧费用。真实编译/保存仍由调用方负责。
+    """
+    for field in ('PlaceholderMode', 'ProjectileMotion', 'PresentationStyleOverride',
+                  'ProjectileCount', 'ProjectileIntervalSeconds', 'PlaceholderCooldownTags',
+                  'CostGameplayEffectClass', 'CooldownGameplayEffectClass', 'AbilityTags',
+                  'ActivationPolicy'):
+        destination_cdo.set_editor_property(field, source_cdo.get_editor_property(field))
+
 def author():
     require(Path(unreal.Paths.get_project_file_path()).resolve() == ROOT/'Game/DivineBeastsArena.uproject', '非正式工程')
     spec=importlib.util.spec_from_file_location('hotbar_asset_helpers',str(ROOT/'Tools/Unreal/Abilities/AuthorZodiacPlaceholderAbilities.py'))
@@ -73,6 +85,9 @@ def author():
     for p in plans:
         definition=unreal.load_asset(p['def_path']) if unreal.EditorAssetLibrary.does_asset_exist(p['def_path']) else unreal.EditorAssetLibrary.duplicate_asset(p['definition'].get_path_name(),p['def_path'])
         definition.set_editor_property('LogicalId',helper.logical(p['identity']))
+        # 英雄归属和技能种类也随原定义同步；副本只拥有自己的稳定ID及数值行索引。
+        for field in ('HeroDefinitionId', 'Kind'):
+            definition.set_editor_property(field, p['definition'].get_editor_property(field))
         definition.set_editor_property('BalanceTable',table)
         definition.set_editor_property('LevelRowNames',[p['row']])
         require(not definition.get_editor_property('bEightSlotDraftOnly') and not definition.get_editor_property('bV6NativeApproved'),'不得修改最终V6签审状态')
@@ -80,9 +95,9 @@ def author():
         bp=unreal.load_asset(p['ga_path']) if unreal.EditorAssetLibrary.does_asset_exist(p['ga_path']) else unreal.EditorAssetLibrary.duplicate_asset(p['bp'].get_path_name(),p['ga_path'])
         cdo=unreal.get_default_object(bp.generated_class())
         cdo.set_editor_property('AbilityDefinitionId',helper.primary(p['identity']))
-        # 既有副本不会继承后来修改的源蓝图默认值；重跑作者工具时同步唯一源的运动合同。
+        # 既有副本不会自动继承源CDO后续修改；完整规则只从同一真实源读取。
         source_cdo=unreal.get_default_object(p['bp'].generated_class())
-        cdo.set_editor_property('ProjectileMotion',source_cdo.get_editor_property('ProjectileMotion'))
+        synchronize_rule_defaults(source_cdo, cdo)
         unreal.BlueprintEditorLibrary.compile_blueprint(bp);helper.save(bp)
         cls=unreal.EditorAssetLibrary.load_blueprint_class(p['ga_path'])
         grants=list(p['set'].get_editor_property('Abilities'))

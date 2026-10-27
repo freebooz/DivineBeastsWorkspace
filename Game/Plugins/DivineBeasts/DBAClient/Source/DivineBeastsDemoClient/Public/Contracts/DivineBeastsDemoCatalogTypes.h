@@ -27,6 +27,12 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoPluginEntry
     /** unreviewed/partial/complete；complete只表示范围审计，不表示功能完成。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
     FName FeatureAuditStatus = TEXT("unreviewed");
+    /** first_party/third_party仅描述来源，不增加第四架构层。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
+    FName SourceKind = TEXT("first_party");
+    /** 本插件独立开发页的软类路径；由唯一作者清单派生，不据此直接同步加载或绕过UIManager。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
+    FSoftObjectPath TestPageAsset;
 };
 
 /** 人工核读实现依据；只定位文件与符号，不能代替实际运行。 */

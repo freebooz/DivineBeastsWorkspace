@@ -16,6 +16,8 @@ public:
     UDivineBeastsDemoCatalogDefinition();
     /** 作者JSON原始字节的SHA256，64位小写十六进制；不是运行二进制指纹。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo") FString SourceFingerprint;
+    /** 0兼容既有目录，1要求每个插件声明精确独立页与来源；不得通过旧版本伪造新页面已接线。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo") int32 ManualPageContractVersion = 0;
     /** 全部真实插件及内容包，禁用者仍可查看，不由资产决定目标启用状态。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo") TArray<FDivineBeastsDemoPluginEntry> Plugins;
     /** 已审计独立功能；空表不表示完成全部功能。 */

@@ -109,6 +109,13 @@
       },
       "minItems": 0,
       "uniqueItems": true
+    },
+    "manual_page_contract_version": {
+      "type": "integer",
+      "enum": [
+        1
+      ],
+      "description": "独立插件页合同版本；启用后每个插件必须声明精确绑定的开发页和来源。"
     }
   },
   "additionalProperties": false,
@@ -157,6 +164,19 @@
             "partial",
             "complete"
           ]
+        },
+        "test_page_asset": {
+          "type": "string",
+          "minLength": 1,
+          "description": "本插件真实独立UMG页面的包路径；存在/编译/运行另行原生核验。"
+        },
+        "source_kind": {
+          "type": "string",
+          "enum": [
+            "first_party",
+            "third_party"
+          ],
+          "description": "来源分类，不是第四架构层。"
         }
       },
       "additionalProperties": false

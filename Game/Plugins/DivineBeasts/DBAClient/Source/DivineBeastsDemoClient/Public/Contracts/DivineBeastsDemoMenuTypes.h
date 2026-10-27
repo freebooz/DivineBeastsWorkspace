@@ -58,6 +58,10 @@ USTRUCT(BlueprintType)
 struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoMenuSnapshot
 {
     GENERATED_BODY()
+    /** None表示中心；固定插件页面不因搜索、筛选或迟到通知改变此身份。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName FixedPluginId;
+    /** 当前选中插件的独立页面已被完整目录登记；不代表资源已加载或能力可执行。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") bool bCanOpenPluginPage = false;
     /** 筛选后可见插件/功能/案例；总数仍单独保存。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") TArray<FDivineBeastsDemoPlugin> Plugins;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") TArray<FDivineBeastsDemoFeatureMenuEntry> Features;

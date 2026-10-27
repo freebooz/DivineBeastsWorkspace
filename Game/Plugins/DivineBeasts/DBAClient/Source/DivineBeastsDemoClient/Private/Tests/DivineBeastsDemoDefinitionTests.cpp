@@ -145,4 +145,32 @@ bool FDivineBeastsDemoDefinitionTest::RunTest(const FString&)
     TestFalse(TEXT("依赖未知插件拒绝"), Catalog->ValidateDefinition().IsSuccess());
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsIndependentPluginPageContractTest,
+    "DivineBeasts.PluginDemos.IndependentPageContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsIndependentPluginPageContractTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UDivineBeastsDemoCatalogDefinition> Catalog(NewObject<UDivineBeastsDemoCatalogDefinition>());
+    PopulateDemoCatalog(*Catalog);
+    TestTrue(TEXT("旧目录未声明独立页时保持兼容"), Catalog->ValidateDefinition().IsSuccess());
+    Catalog->ManualPageContractVersion = 1;
+    TestEqual(TEXT("新合同不能缺少实际页面声明"), Catalog->ValidateDefinition().Code, FName(TEXT("Demo.ManualPageIdentity")));
+    Catalog->Plugins[0].TestPageAsset = FSoftObjectPath(TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformUI.WBP_DBA_PluginTest_GamePlatformUI"));
+    TestTrue(TEXT("独立页精确匹配插件身份"), Catalog->ValidateDefinition().IsSuccess());
+    Catalog->Plugins[0].TestPageAsset = FSoftObjectPath(TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformData.WBP_DBA_PluginTest_GamePlatformData"));
+    TestEqual(TEXT("禁止将另一插件的页面作为本页"), Catalog->ValidateDefinition().Code, FName(TEXT("Demo.ManualPageIdentity")));
+    Catalog->Plugins[0].TestPageAsset = FSoftObjectPath(TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformUI.WBP_DBA_PluginTest_GamePlatformUI"));
+    FDivineBeastsDemoPluginEntry ThirdParty;
+    ThirdParty.PluginId = TEXT("GlooPrint");
+    ThirdParty.DescriptorPath = TEXT("Game/Plugins/ThirdParty/Editor/GlooPrint/GlooPrint.uplugin");
+    ThirdParty.ArchitectureLayer = TEXT("Project");
+    ThirdParty.TestPageAsset = FSoftObjectPath(TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GlooPrint.WBP_DBA_PluginTest_GlooPrint"));
+    Catalog->Plugins.Add(ThirdParty);
+    TestEqual(TEXT("第三方不能冒用一方来源"), Catalog->ValidateDefinition().Code, FName(TEXT("Demo.ManualPageIdentity")));
+    Catalog->Plugins.Last().SourceKind = TEXT("third_party");
+    TestTrue(TEXT("第三方独立页保留既有三层合同"), Catalog->ValidateDefinition().IsSuccess());
+    Catalog->ManualPageContractVersion = 2;
+    TestEqual(TEXT("未知独立页版本明确拒绝"), Catalog->ValidateDefinition().Code, FName(TEXT("Demo.ManualPageVersion")));
+    return true;
+}
 #endif

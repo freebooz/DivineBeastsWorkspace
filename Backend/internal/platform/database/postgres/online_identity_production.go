@@ -207,6 +207,9 @@ func (r *OnlineIdentityRepository) Rotate(ctx context.Context, digest string, n 
 	if err != nil {
 		return identity.StoredSession{}, identityStorageError(err)
 	}
+	if err := ctx.Err(); err != nil {
+		return identity.StoredSession{}, err
+	}
 	if revoked || disabled {
 		return identity.StoredSession{}, identity.ErrInvalidToken
 	}
@@ -214,26 +217,25 @@ func (r *OnlineIdentityRepository) Rotate(ctx context.Context, digest string, n 
 	if err = tx.QueryRow(ctx, `SELECT consumed_at IS NOT NULL FROM online_identity_refresh_credentials WHERE digest=$1`, digest).Scan(&consumed); err != nil {
 		return identity.StoredSession{}, identityStorageError(err)
 	}
-	if consumed || s.RefreshDigest != digest {
+	if err := ctx.Err(); err != nil {
+		return identity.StoredSession{}, err
+	}
+	// 行锁等待也消耗令牌有效期；只追加本调用内的单调耗时。
+	n.Now = n.Now.Add(time.Since(started))
+	if consumed {
+		s.RefreshDigest = ""
+	}
+	fresh, rotationErr := n.Apply(s, digest)
+	if rotationErr != nil {
 		if _, err = tx.Exec(ctx, `UPDATE online_identity_sessions SET revoked = TRUE WHERE session_id=$1`, s.SessionID); err != nil {
 			return identity.StoredSession{}, identityStorageError(err)
 		}
 		if err = tx.Commit(ctx); err != nil {
 			return identity.StoredSession{}, identityStorageError(err)
 		}
-		return identity.StoredSession{}, identity.ErrInvalidToken
+		return identity.StoredSession{}, rotationErr
 	}
-	// 行锁等待也消耗令牌有效期；保留领域时钟作为基准，只追加本调用内的单调耗时。
-	n.Now = n.Now.Add(time.Since(started))
-	if !n.Now.Before(s.RefreshExpiresAt) {
-		return identity.StoredSession{}, identity.ErrTokenExpired
-	}
-	s.AccessDigest = n.AccessDigest
-	s.RefreshDigest = n.RefreshDigest
-	s.AccessExpiresAt = n.Now.Add(n.AccessTTL)
-	if s.AccessExpiresAt.After(s.RefreshExpiresAt) {
-		s.AccessExpiresAt = s.RefreshExpiresAt
-	}
+	s = fresh
 	if _, err = tx.Exec(ctx, `UPDATE online_identity_refresh_credentials SET consumed_at=$2 WHERE digest=$1`, digest, n.Now); err != nil {
 		return identity.StoredSession{}, identityStorageError(err)
 	}

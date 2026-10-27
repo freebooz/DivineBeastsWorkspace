@@ -4,7 +4,11 @@
 
 ## 接入与稳定 API
 
-旧 `NewService(SessionRepository, Clock, TokenGenerator, accessTTL, refreshTTL)`、`LoginGuest` 保留给旧开发装配和测试，不能用于真实密码认证；旧内存/Redis刷新路径不具备本节的持久原子保证。
+`NewService(SessionRepository, Clock, TokenGenerator, accessTTL, refreshTTL)`、`LoginGuest` 保留给开发装配和测试，不能用于真实密码认证。游客和密码入口签发后均进入同一`Service.Refresh`，由仓储锁/事务内的`TokenRotation.Apply`判断当前凭据、绝对刷新截止和Access封顶；不再有滑动续期或Get/Save刷新分支。
+
+现有公开方法及HTTP字段保持不变；游客凭据也采用256位不透明随机值。`SessionRepository`既有方法签名保留，实现同时须提供`SessionRotationRepository`原子轮换/历史退出合同；仓库内Memory与Redis适配均已接入。缺少原子能力的自定义适配器返回`ErrUnavailable`，不能签发无法安全刷新的会话。持久密码仓储仍只接收摘要，不允许回落游客仓储。
+
+并发刷新只有一个请求能消费当前凭据；旧凭据重放须在返回错误前撤销整个会话（包括成功轮换得到的后继Access）。重复Logout可使用历史刷新凭据幂等退出。内存历史随进程结束销毁，Redis和SQL保留摘要历史，不在本次整改添加未经批准的历史清理。Redis兼容仓储旧明文索引不作为新摘要索引回退；当前生产装配未使用该兼容仓储。没有重启或迁移任何现有运行会话。
 
 生产装配使用 `postgres.NewOnlineIdentityRepository(pool *postgres.Pool)`（`productiondeps` 标签）与：
 

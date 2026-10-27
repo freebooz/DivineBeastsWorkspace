@@ -6,7 +6,7 @@ const (
 	GameID                                       = "divinebeasts"
 	ProjectID                                    = "DivineBeastsArena"
 	ContractVersion                              = "2.0.0"
-	GeneratedRevision                            = "b62b6b25a11c115ff8a20c206defa7d9d24171e878b17c76f875740677253b2a"
+	GeneratedRevision                            = "6b8c53decdf9edc1c71a69e33e21d2709c4a137ce042b5bb47a59d3fe79f4b6f"
 	CatalogVersion                               = 1
 	ClientServerMinimumContractVersion           = "2.0.0"
 	ClientServerMaximumExclusiveContractVersion  = "3.0.0"
@@ -68,13 +68,16 @@ var ExperienceServerRoles = map[string]string{
 	"Experience.MainArena.Main":   "GameServer.Role.MainArena",
 }
 
-// ArenaModeContexts（竞技模式对应的权威角色与体验）由Shared ServerCatalog生成。
-type ArenaModeContext struct{ ServerRoleID, ExperienceID string }
+// ArenaModeContexts（竞技模式的角色、体验和单队人数）由Shared ServerCatalog生成。
+type ArenaModeContext struct {
+	ServerRoleID, ExperienceID string
+	TeamSize                   int
+}
 
 var ArenaModeContexts = map[string]ArenaModeContext{
-	"Arena.Mode.Duel1v1": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main"},
-	"Arena.Mode.Team2v2": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main"},
-	"Arena.Mode.Team3v3": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main"},
-	"Arena.Mode.Team4v4": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main"},
-	"Arena.Mode.Team5v5": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main"},
+	"Arena.Mode.Duel1v1": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main", TeamSize: 1},
+	"Arena.Mode.Team2v2": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main", TeamSize: 2},
+	"Arena.Mode.Team3v3": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main", TeamSize: 3},
+	"Arena.Mode.Team4v4": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main", TeamSize: 4},
+	"Arena.Mode.Team5v5": {ServerRoleID: "GameServer.Role.MainArena", ExperienceID: "Experience.MainArena.Main", TeamSize: 5},
 }

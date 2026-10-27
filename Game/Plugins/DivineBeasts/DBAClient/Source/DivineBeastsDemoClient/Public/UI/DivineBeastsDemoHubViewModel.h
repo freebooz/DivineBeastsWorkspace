@@ -13,7 +13,14 @@ class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoHubViewModel : public UDivineB
     GENERATED_BODY()
     /** 回归仅注入只读菜单值夹具，不连接后端、不改变目录或世界权威。 */
     friend class FDivineBeastsDemoKeyboardSelectionTest;
+    friend class FDivineBeastsIndependentPluginPageTest;
 public:
+    /** 固定PluginId由页面默认值/受控路由提供；None为中心，活动已绑定页不允许改写。 */
+    bool ConfigurePluginContext(FName PluginId);
+    /** 只读页面固定身份；搜索与选择不能更改。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|Demo") FName GetFixedPluginId() const { return FixedPluginId; }
+    /** 中心打开选中插件独立页；固定页只允许请求自己的身份，目录再次核验。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo") bool RequestPluginPage(FName PluginId);
     /** 绑定实际GI目录；活动页面立即订阅/抓取一次，空值返回false并清理旧绑定。 */
     bool BindCatalog(UDivineBeastsDemoCatalogSubsystem* InCatalog);
     /** 失活/销毁解绑委托和世界弱引用，不停止其他页面或世界的运行。 */
@@ -51,6 +58,11 @@ private:
     FDelegateHandle CatalogHandle;
     FDelegateHandle RunHandle;
     FDivineBeastsDemoFilter Filter;
+    FName FixedPluginId;
+    /** 重绑与同页重开均递增，已投递委托必须同时核对源和代次。 */
+    uint64 BindingGeneration = 0;
+    bool IsPluginEnabled(FName PluginId) const;
+    bool OwnsFeature(FName FeatureId) const;
     UPROPERTY(Transient) FDivineBeastsDemoMenuSnapshot Snapshot;
     /** 订阅一次/失活撤销；重绑当前World时先解绑旧World。 */
     void Subscribe();

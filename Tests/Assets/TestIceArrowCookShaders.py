@@ -10,11 +10,11 @@ import re
 import tempfile
 import unittest
 
-from ValidateDevelopmentCastingContainer import required_assets, validate
+from ValidateDevelopmentCastingContainer import required_assets, validate, compile_systems
 
 
 ROOT = Path(__file__).resolve().parents[2]
-STAGES = ("Cast", "GroundRune", "Launch", "Flight", "Impact", "FrostResidue")
+STAGES = compile_systems()
 
 
 class IceArrowCookShaderTest(unittest.TestCase):
@@ -36,8 +36,7 @@ class IceArrowCookShaderTest(unittest.TestCase):
                 log = directory / "UATLogs/Cook-Fixture.txt"
                 log.parent.mkdir()
                 lines = ["LogNiagara: Compiling System NiagaraSystem "
-                         f"/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_{stage}."
-                         f"NS_DBA_IceArrow_{stage} took 0.1 sec (time since issued)."
+                         f"{stage}.{stage.rsplit('/', 1)[1]} took 0.1 sec (time since issued)."
                          for stage in STAGES if stage != missing_stage]
                 lines.append(extra)
                 if completed:
@@ -64,7 +63,7 @@ class IceArrowCookShaderTest(unittest.TestCase):
         self.assertFalse(self.check("LogShaderCompilers: Error: Shader compile failed")["Passed"])
 
     def test_missing_stage_evidence_rejected(self):
-        self.assertFalse(self.check(missing_stage="Flight")["Passed"])
+        self.assertFalse(self.check(missing_stage="/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FrostboltFlight")["Passed"])
 
     def test_incomplete_cook_rejected(self):
         self.assertFalse(self.check(completed=False)["Passed"])

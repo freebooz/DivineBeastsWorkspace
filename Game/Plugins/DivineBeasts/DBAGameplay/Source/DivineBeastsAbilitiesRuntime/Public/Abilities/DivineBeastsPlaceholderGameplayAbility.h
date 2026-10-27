@@ -1,9 +1,7 @@
 #pragma once
 
-#include "Abilities/DivineBeastsConfiguredGameplayAbility.h"
-#include "Types/GamePlatformCombatSpec.h"
+#include "Abilities/DivineBeastsCombatGameplayAbility.h"
 #include "Types/GamePlatformCombatProjectileMotion.h"
-#include "TimerManager.h"
 #include "DivineBeastsPlaceholderGameplayAbility.generated.h"
 
 /** EDivineBeastsPlaceholderAbilityMode（临时技能执行类型），后期由正式技能类取代。 */
@@ -19,14 +17,14 @@ enum class EDivineBeastsPlaceholderAbilityMode : uint8
 };
 
 /**
- * 临时生肖技能执行器：只使用项目统一Definition、GAS成本/冷却及平台Combat/Projectile权威结果。
+ * 临时生肖技能数据适配：旧反射身份及字段保留，权威执行统一归CombatGameplayAbility。
  * 这是获得用户明确批准的可替换占位技能，不依赖开发技能开关，不冒充十二生肖最终技能设计。
  * 行为类型由各英雄自己的蓝图CDO配置；各英雄独立AbilityId，不在这里推导生肖数值。
  * 无Niagara或UI依赖；客户端只显示服务器复制的Cast和Projectile事实。
  */
 UCLASS(Blueprintable)
 class DIVINEBEASTSABILITIESRUNTIME_API UDivineBeastsPlaceholderGameplayAbility
-    : public UDivineBeastsConfiguredGameplayAbility
+    : public UDivineBeastsCombatGameplayAbility
 {
     GENERATED_BODY()
 
@@ -61,16 +59,6 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SSLM|Placeholder")
     FGameplayTagContainer PlaceholderCooldownTags;
 
-    virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-        const FGameplayAbilityActorInfo* ActorInfo,
-        const FGameplayAbilityActivationInfo ActivationInfo,
-        const FGameplayEventData* TriggerEventData) override;
-
-    virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,
-        const FGameplayAbilityActorInfo* ActorInfo,
-        const FGameplayAbilityActivationInfo ActivationInfo,
-        bool bReplicateEndAbility, bool bWasCancelled) override;
-
     /** 三类占位法术及治疗使用默认能量GE，继续排除旧气势成本；普通攻击保持原配置。 */
     virtual UGameplayEffect* GetCostGameplayEffect() const override;
     virtual bool UsesDefaultSpellEnergy() const override
@@ -82,19 +70,8 @@ public:
 
     virtual const FGameplayTagContainer* GetCooldownTags() const override;
 
-private:
-    /** 本次激活的所有权代次，取消、死亡和重新激活时拒绝迟到弹体。 */
-    FGuid ActivationToken;
-    /** 激活拥有来源强引用；由GC跟踪，终态统一释放。 */
-    UPROPERTY(Transient) FGamePlatformCombatSpec CastSpec;
-    /** 跨连发仅保存弱身份；最初无目标与原锁定目标销毁必须区分，失效不能降级直线。 */
-    TWeakObjectPtr<AActor> FrozenProjectileTarget;
-    bool bHadFrozenTarget = false;
-    FName CastStyle = NAME_None;
-    int32 RemainingShots = 0;
-    int32 ReleasedShots = 0;
-    FTimerHandle BurstTimer;
-
-    /** 起手/连发同一个Timer调用；释放前复核当前Avatar、来源存活/代次及世界，取消不产生迟到弹体。 */
-    void ReleaseNextProjectile();
+protected:
+    /** 旧蓝图反射身份/属性保留，只把CDO配置映射为唯一执行器的只读参数。 */
+    virtual bool TryBuildCombatExecution(const FDivineBeastsAbilityBalanceRow& Balance,
+        FDivineBeastsCombatExecutionParameters& OutExecution, FString& OutError) const override;
 };

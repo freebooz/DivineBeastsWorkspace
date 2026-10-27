@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "owner": "Tools/Unreal/VFX/SpellProjectiles/AuthorSpellPresentationUE58.py",
+  "description": "SSLM current spell presentation; stable serialized definitions and logical IDs retained. source_system is migration provenance, never runtime fallback.",
+  "bindings": [
+    {
+      "spell": "Fireball",
+      "stage": "Cast",
+      "definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Definitions/DA_DBA_VFX_DevFireballCast",
+      "logical_id": "presentation.dba.development.magic.fireball.cast@1",
+      "source_system": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NS_DBA_FirePalmCast_V3_ConceptReview",
+      "system": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FireballCast",
+      "require_cast_parameters": true,
+      "fixed_extent": null
+    },
+    {
+      "spell": "Fireball",
+      "stage": "Flight",
+      "definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_DevFireballFlight",
+      "logical_id": "presentation.dba.development.magic.fireball.flight@1",
+      "source_system": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/CastFlight/Niagara/NS_DBA_FireOrbFlight_V3",
+      "system": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FireballFlight",
+      "require_cast_parameters": false,
+      "fixed_extent": null
+    },
+    {
+      "spell": "Fireball",
+      "stage": "Impact",
+      "definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_DevFireballImpact",
+      "logical_id": "presentation.dba.development.magic.fireball.impact@1",
+      "source_system": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevFireballImpact",
+      "system": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FireballImpact",
+      "require_cast_parameters": false,
+      "fixed_extent": 250
+    },
+    {
+      "spell": "Frostbolt",
+      "stage": "Cast",
+      "definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Definitions/DA_DBA_VFX_DevFrostboltCast",
+      "logical_id": "presentation.dba.development.magic.frostbolt.cast@1",
+      "source_system": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NS_DBA_IcePalmCast_V3_ConceptReview",
+      "system": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FrostboltCast",
+      "require_cast_parameters": true,
+      "fixed_extent": null
+    },
+    {
+      "spell": "Frostbolt",
+      "stage": "Flight",
+      "definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_DevFrostboltFlight",
+      "logical_id": "presentation.dba.development.magic.frostbolt.flight@1",
+      "source_system": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/CastFlight/Niagara/NS_DBA_IceCrystalFlight_V3",
+      "system": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FrostboltFlight",
+      "require_cast_parameters": false,
+      "fixed_extent": null
+    },
+    {
+      "spell": "Frostbolt",
+      "stage": "Impact",
+      "definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_DevFrostboltImpact",
+      "logical_id": "presentation.dba.development.magic.frostbolt.impact@1",
+      "source_system": "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_Impact",
+      "system": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FrostboltImpact",
+      "require_cast_parameters": false,
+      "fixed_extent": 700
+    },
+    {
+      "spell": "ArcaneMissiles",
+      "stage": "Cast",
+      "definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Definitions/DA_DBA_VFX_DevArcaneMissilesCast",
+      "logical_id": "presentation.dba.development.magic.arcanemissiles.cast@1",
+      "source_system": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Niagara/NS_DBA_DevArcaneMissilesCast",
+      "system": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_ArcaneMissilesCast",
+      "require_cast_parameters": true,
+      "fixed_extent": 150
+    },
+    {
+      "spell": "ArcaneMissiles",
+      "stage": "Flight",
+      "definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_DevArcaneMissilesFlight",
+      "logical_id": "presentation.dba.development.magic.arcanemissiles.flight@1",
+      "source_system": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevArcaneMissilesFlight",
+      "system": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_ArcaneMissilesFlight",
+      "require_cast_parameters": false,
+      "fixed_extent": 950
+    },
+    {
+      "spell": "ArcaneMissiles",
+      "stage": "Impact",
+      "definition": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_DevArcaneMissilesImpact",
+      "logical_id": "presentation.dba.development.magic.arcanemissiles.impact@1",
+      "source_system": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevArcaneMissilesImpact",
+      "system": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_ArcaneMissilesImpact",
+      "require_cast_parameters": false,
+      "fixed_extent": 250
+    }
+  ],
+  "cast_parameters": {
+    "User.CastDurationSec": [
+      0.001,
+      600.0
+    ],
+    "User.ElapsedAtStartSec": [
+      0.0,
+      600.0
+    ],
+    "User.HandSideSign": [
+      -1.0,
+      1.0
+    ]
+  },
+  "auxiliary_systems": [
+    "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_GroundRune",
+    "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_Launch",
+    "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_FrostResidue",
+    "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_Nature_PetalBloom_Aura",
+    "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Medium",
+    "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Low"
+  ],
+  "auxiliary_definitions": [
+    "/DBAPresentationPack_Core/VFX/IceArrow/Definitions/DA_DBA_VFX_DevFrostboltResidue",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom"
+  ],
+  "resources": [
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_CrackMask",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_CrystalShard",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_FrostMist",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_FrozenGround",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_IceFlake",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_IceNormal",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_IceORM",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_ImpactFlash",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_RuneInner",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_RuneOuter",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_TrailStrip",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Textures/T_DBA_IceArrow_GroundRuneReference",
+      "unreal_class": "Texture2D",
+      "srgb": true
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Meshes/SM_DBA_IceArrow_CrystalLance",
+      "unreal_class": "StaticMesh"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Meshes/SM_DBA_IceArrow_CrystalShard",
+      "unreal_class": "StaticMesh"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Meshes/SM_DBA_IceArrow_IceCrown",
+      "unreal_class": "StaticMesh"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Meshes/SM_DBA_IceArrow_TrailRibbon",
+      "unreal_class": "StaticMesh"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/M_DBA_IceArrow_Crystal",
+      "unreal_class": "Material"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/M_DBA_IceArrow_Luminous",
+      "unreal_class": "Material"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/M_DBA_IceArrow_Mist",
+      "unreal_class": "Material"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/M_DBA_IceArrow_Trail",
+      "unreal_class": "Material"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/M_DBA_IceArrow_RuneColor",
+      "unreal_class": "Material"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_Crystal",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_CrystalSprite",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_FrozenGround",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_GroundInner",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_GroundOuter",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_ImpactCrystal",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_ImpactFlash",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_Mist",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_Snow",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_Trail",
+      "unreal_class": "MaterialInstanceConstant"
+    }
+  ],
+  "editor_resources": [
+    {
+      "path": "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NM_DBA_IceArrowMotion",
+      "unreal_class": "NiagaraScript"
+    }
+  ],
+  "retired_systems": [
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Niagara/NS_DBA_DevFireballCast",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevFireballFlight",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevFireballImpact",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Niagara/NS_DBA_DevFrostboltCast",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevFrostboltFlight",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevFrostboltImpact",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Niagara/NS_DBA_DevArcaneMissilesCast",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevArcaneMissilesFlight",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara/NS_DBA_DevArcaneMissilesImpact",
+    "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_Cast",
+    "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_Flight",
+    "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_Impact"
+  ],
+  "cook_label": "/DBAPresentationPack_Core/VFX/SpellProjectiles/DA_DBA_SpellPresentationCook",
+  "cook_directories": [
+    "/DBAPresentationPack_Core/VFX/SpellProjectiles",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Definitions",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Definitions",
+    "/DBAPresentationPack_Core/VFX/IceArrow/Definitions"
+  ],
+  "retired_directories": [
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Niagara",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Niagara",
+    "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review"
+  ],
+  "label_scan": {
+    "default_entry": "(PrimaryAssetType=\"PrimaryAssetLabel\",AssetBaseClass=/Script/Engine.PrimaryAssetLabel,bHasBlueprintClasses=False,bIsEditorOnly=True,Directories=((Path=\"/Game\")),SpecificAssets=,Rules=(Priority=-1,ChunkId=-1,bApplyRecursively=True,CookRule=Unknown))",
+    "directories": [
+      "/Game"
+    ]
+  }
+}

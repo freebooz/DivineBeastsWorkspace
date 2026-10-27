@@ -1,12 +1,11 @@
 // 项目开发GAS施法适配：继承平台技能资格/成本/冷却链，只生成通用平台投射物，不播放表现。
 #pragma once
 #include "Abilities/DivineBeastsDevelopmentGameplayAbility.h"
-#include "Types/GamePlatformCombatSpec.h"
-#include "Types/GamePlatformCombatProjectileMotion.h"
-#include "TimerManager.h"
 #include "DivineBeastsDevelopmentMagicAbility.generated.h"
 
-/** 临时火焰/冰箭/奥术共用的服务器执行器；非Shipping/Test且配置/命令行显式启用。 */
+/** 已序列化开发魔法兼容入口：保留类路径、开发基类及蓝图身份，只读取Definition并委托唯一战斗执行。
+ * 非Shipping/Test且配置/命令行显式启用；不能借公共基类跳过开发资格。
+ */
 UCLASS(Blueprintable)
 class DIVINEBEASTSABILITIESRUNTIME_API UDivineBeastsDevelopmentMagicAbility : public UDivineBeastsDevelopmentGameplayAbility
 {
@@ -18,22 +17,8 @@ public:
     /** 读取已预热真实Definition，合法后只Commit一次；火球/冰箭0.5秒起手结束才释放，失败不制造弹体。 */
     virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
         FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-    /** 终态前清自有连发定时器及源强引用；已发射弹体不依赖技能对象继续存活，来源代次由平台核对。 */
-    virtual void EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-        FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-private:
-    /** 仅当前GAS激活拥有，下一次激活先清；绝不从客户端RPC填充。 */
-    UPROPERTY(Transient) FGamePlatformCombatSpec CastSpec;
-    /** 跨连发仅保存弱身份；最初无目标与原锁定目标销毁必须区分，失效不能降级直线。 */
-    TWeakObjectPtr<AActor> FrozenProjectileTarget;
-    bool bHadFrozenTarget = false;
-    FGamePlatformCombatProjectileMotion Motion;
-    FName StyleId = NAME_None;
-    int32 RemainingProjectiles = 0, ReleasedProjectiles = 0;
-    float IntervalSeconds = 0;
-    FTimerHandle BurstTimer;
-    /** 每次激活唯一令牌；Commit/Spawn同步回调取消并重新激活后，旧调用不得污染后继施法。 */
-    FGuid CastActivationToken;
-    /** 游戏线程首次/连发释放；每枚复查当前Avatar、权威、来源存活/代次和世界，延期回调不继承后继资格。 */
-    void ReleaseNextProjectile();
+protected:
+    /** 读取预热Definition形成数据快照，失败不Commit，不拥有Timer/目标/生成状态。 */
+    virtual bool TryBuildCombatExecution(const FDivineBeastsAbilityBalanceRow& Balance,
+        FDivineBeastsCombatExecutionParameters& OutExecution, FString& OutError) const override;
 };

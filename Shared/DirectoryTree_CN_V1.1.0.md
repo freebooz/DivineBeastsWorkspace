@@ -7,6 +7,10 @@
 
 ## 目录结构与职责
 
+### 竞技模式人数唯一真源（2026-10-27）
+
+不新增、删除或重命名正式路径。既有`Contracts/Games/DivineBeasts/Schemas/server-catalog.schema.json`的`x-arena-mode-context-map[].teamSize`拥有模式单队人数；既有Backend契约生成器同步派生Go/C++绑定，匹配、分服与Assignment校验消费同一来源。生成规则和命令见`Docs/Codegen.md`，禁止手改生成物或另建手工人数表。
+
 ```text
 Shared/                                                             # UE与Go跨语言共享契约层；禁止保存UE Gameplay或Go业务实现
 ├── Contracts/                                                      # 跨语言Contract（契约）唯一真源

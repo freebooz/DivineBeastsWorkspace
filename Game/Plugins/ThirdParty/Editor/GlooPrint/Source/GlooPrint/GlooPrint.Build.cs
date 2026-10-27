@@ -10,7 +10,8 @@ public class GlooPrint : ModuleRules
         PrivateDependencyModuleNames.AddRange(new[]
         {
             "Core", "CoreUObject", "Engine", "Slate", "SlateCore", "RenderCore",
-            "GraphEditor", "BlueprintGraph", "UnrealEd", "InputCore", "Settings", "MaterialEditor", "ToolMenus"
+            "GraphEditor", "BlueprintGraph", "UnrealEd", "InputCore", "Settings", "MaterialEditor", "ToolMenus",
+            "AssetRegistry", "Projects", "Json"
         });
         if (Target.bBuildDeveloperTools)
         {

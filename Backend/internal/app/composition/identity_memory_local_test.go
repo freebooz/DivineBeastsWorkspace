@@ -9,11 +9,77 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"divinebeasts/backend/internal/modules/identity"
 )
+
+type localRotationWaitContext struct {
+	context.Context
+	checked chan struct{}
+	once    sync.Once
+}
+
+func (c *localRotationWaitContext) Err() error {
+	err := c.Context.Err()
+	c.once.Do(func() { close(c.checked) })
+	return err
+}
+
+// 在仓储边界保留真实账号/会话初始化；固定领域时间不能被系统日期替换。
+func TestLocalIdentityRotationWaitHonorsDeadlineAndCancellation(t *testing.T) {
+	for _, canceled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("canceled=%t", canceled), func(t *testing.T) {
+			repo := newLocalIdentityPersistentRepository()
+			now := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+			lifetime := 30 * time.Millisecond
+			if canceled {
+				lifetime = time.Hour
+			}
+			if _, err := repo.EnsureAccount(context.Background(), identity.Account{GameID: "game", AccountName: "wait-account", PlayerID: "player"}); err != nil {
+				t.Fatal(err)
+			}
+			original := identity.StoredSession{Session: identity.Session{GameID: "game", PlayerID: "player", SessionID: "wait-session", AccessExpiresAt: now.Add(lifetime), RefreshExpiresAt: now.Add(lifetime)}, AccessDigest: "old-access", RefreshDigest: "old-refresh"}
+			if err := repo.CreateSession(context.Background(), original); err != nil {
+				t.Fatal(err)
+			}
+			base, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			ctx := &localRotationWaitContext{Context: base, checked: make(chan struct{})}
+			n := identity.TokenRotation{Now: now, AccessTTL: time.Minute, AccessDigest: "new-access", RefreshDigest: "new-refresh"}
+			repo.mu.Lock()
+			result := make(chan error, 1)
+			go func() { _, err := repo.Rotate(ctx, original.RefreshDigest, n); result <- err }()
+			<-ctx.checked
+			if canceled {
+				cancel()
+			} else {
+				time.Sleep(60 * time.Millisecond)
+			}
+			repo.mu.Unlock()
+			want := identity.ErrTokenExpired
+			if canceled {
+				want = context.Canceled
+			}
+			if err := <-result; !errors.Is(err, want) {
+				t.Fatalf("等待后必须复核领域截止及取消: got=%v want=%v", err, want)
+			}
+			if _, err := repo.Authenticate(context.Background(), n.AccessDigest, now); err == nil {
+				t.Fatal("失败不得签发后继Access")
+			}
+			if canceled {
+				if _, err := repo.Authenticate(context.Background(), original.AccessDigest, now); err != nil {
+					t.Fatalf("取消不能撤销原会话: %v", err)
+				}
+				if _, err := repo.Rotate(context.Background(), original.RefreshDigest, n); err != nil {
+					t.Fatalf("取消不能消费原凭据: %v", err)
+				}
+			}
+		})
+	}
+}
 
 // 本地批量账号初始化回归：仅验证!productiondeps装配，测试口令不进入生产配置。
 // 十个独立账号必须通过正式bcrypt密码登录，错误密码拒绝；配置错误须在播种前失败。

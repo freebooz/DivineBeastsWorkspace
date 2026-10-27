@@ -24,13 +24,15 @@ go run ./internal/tools/contractcodegen -workspace-root=.. -check
 
 - `ContractVersion`（契约版本）；
 - 项目`GameId / ProjectId`（游戏/项目身份）、`CatalogVersion`（目录版本）和由固定Shared输入计算的`GeneratedRevision`（生成修订号）；
-- `ServerRole / Experience / ArenaMode`（服务器角色/体验/竞技模式）、由ServerCatalog单一映射生成的角色—体验关系，以及每种竞技模式对应的权威角色与体验；
+- `ServerRole / Experience / ArenaMode`（服务器角色/体验/竞技模式）、由ServerCatalog单一映射生成的角色—体验关系，以及每种竞技模式对应的权威角色、体验与`TeamSize`单队人数；匹配、分服及Assignment校验共同读取该人数来源，不再各自维护手工容量表；
 - `compatibility-matrix.json`（兼容矩阵）中的闭区间上界转成运行时半开区间；当前`1.4.x`生成`1.5.0`上界，超出或不连续区间不能静默放宽；
 - OpenAPI OperationId（操作编号）及 HTTP Method/Path（方法/路径）路由表；
 - Proto Service/RPC（服务/RPC）注册表；
 - `Shared/Generated/Cpp/UEConsumerModules.generated.json` UE消费者模块映射。
 
 神兽联盟项目身份与竞技上下文映射位于`Shared/Contracts/Games/DivineBeasts/Schemas/server-catalog.schema.json`的`x-project-identity`、`x-catalog-version`、`x-role-experience-map`和`x-arena-mode-context-map`扩展；生成修订号对四份项目Schema、`Shared/Docs/contract-version.json`及兼容矩阵六个输入按规范相对路径排序后计算SHA-256。Go与C++消费同一批输出，禁止另维护手写身份表或项目专用生成脚本。
+
+`x-arena-mode-context-map[].teamSize`是模式单队人数唯一真源。生成器拒绝遗漏或超出1至5的人数，并原样输出到Go/C++绑定；不能从模式名称或历史枚举整数推算人数。修改后运行同一生成入口及`-check`；总人数由两个队伍的单队人数派生。
 
 生成器在计算`GeneratedRevision`和执行`-check`时统一将文本的Windows CRLF换行视为Unix LF，保证同一提交在Windows、Linux及容器挂载环境中得到相同结果；该兼容仅忽略换行编码差异，字段、空白和其他真实内容变化仍会使校验失败。
 

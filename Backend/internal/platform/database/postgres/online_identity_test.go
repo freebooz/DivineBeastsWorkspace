@@ -172,3 +172,17 @@ func TestOnlineIdentityExpiryIncludesDatabaseWait(t *testing.T) {
 		})
 	}
 }
+
+// 驱动替身在锁查询完成时取消，防止锁后继续消费刷新凭据；不冒充真实数据库证明。
+func TestOnlineIdentityRotationCancellationAfterLockDoesNotConsume(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	now := time.Now()
+	row := lockedSessionRow(now, false, false)
+	tx := &identityTxDouble{rows: []identityRow{func(d ...any) error { err := row(d...); cancel(); return err }, func(d ...any) error { *d[0].(*bool) = false; return nil }}}
+	r := &OnlineIdentityRepository{db: identityPoolDouble{tx}}
+	_, err := r.Rotate(ctx, strings.Repeat("b", 64), identity.TokenRotation{Now: now, AccessTTL: time.Minute, AccessDigest: strings.Repeat("c", 64), RefreshDigest: strings.Repeat("d", 64)})
+	if !errors.Is(err, context.Canceled) || tx.committed || len(tx.execSQL) != 0 {
+		t.Fatalf("锁等待中取消不得消费或提交: err=%v committed=%t writes=%d", err, tx.committed, len(tx.execSQL))
+	}
+}

@@ -49,6 +49,24 @@ type TokenRotation struct {
 	AccessTTL     time.Duration // 新访问期限，上限为会话刷新截止时间。
 }
 
+// Apply（统一轮换规则）由仓储在原子锁/事务内调用；不修改输入、不执行IO。
+// 两种登录均保持登录时绝对截止；当前凭据只能消费一次，Access有效期不得越过截止。
+func (n TokenRotation) Apply(record StoredSession, presentedDigest string) (StoredSession, error) {
+	if record.RefreshDigest != presentedDigest {
+		return StoredSession{}, ErrInvalidToken
+	}
+	if !n.Now.Before(record.RefreshExpiresAt) {
+		return StoredSession{}, ErrTokenExpired
+	}
+	record.AccessDigest, record.RefreshDigest = n.AccessDigest, n.RefreshDigest
+	record.AccessExpiresAt = n.Now.Add(n.AccessTTL)
+	if record.AccessExpiresAt.After(record.RefreshExpiresAt) {
+		record.AccessExpiresAt = record.RefreshExpiresAt
+	}
+	record.AccessToken, record.RefreshToken = "", ""
+	return record, nil
+}
+
 // PersistentRepository 是账户/认证会话的唯一持久化边界；实现必须并发安全且尊重ctx取消。
 // 所有方法仅接收摘要，不存原始token，不写 player_profiles。
 type PersistentRepository interface {
@@ -76,7 +94,7 @@ func NewPersistentService(repo PersistentRepository, clock Clock, accessTTL, ref
 	if err != nil {
 		return nil, ErrUnavailable
 	}
-	return &Service{persistent: repo, clock: clock, accessTTL: accessTTL, refreshTTL: refreshTTL, dummyHash: hash}, nil
+	return &Service{persistent: repo, rotation: repo, clock: clock, accessTTL: accessTTL, refreshTTL: refreshTTL, dummyHash: hash}, nil
 }
 
 // EnsureAccount 仅供受控初始化工具调用；相同游戏/账户/密码幂等，不同密码或禁用账户返回冲突。
@@ -165,26 +183,6 @@ func (s *Service) LoginPassword(ctx context.Context, gameID, accountName, passwo
 	return record.Session, nil
 }
 
-func (s *Service) refreshPersistent(ctx context.Context, token string) (Session, error) {
-	if err := ctx.Err(); err != nil {
-		return Session{}, err
-	}
-	if !validToken(token) {
-		return Session{}, ErrInvalidToken
-	}
-	access, refresh, err := tokenPair()
-	if err != nil {
-		return Session{}, err
-	}
-	record, err := s.persistent.Rotate(ctx, tokenDigest(token), TokenRotation{AccessDigest: tokenDigest(access), RefreshDigest: tokenDigest(refresh), Now: s.clock.Now().UTC(), AccessTTL: s.accessTTL})
-	if err != nil {
-		return Session{}, safeStorageError(err)
-	}
-	record.AccessToken = access
-	record.RefreshToken = refresh
-	return record.Session, nil
-}
-
 func (s *Service) authenticatePersistent(ctx context.Context, token string) (Session, error) {
 	if err := ctx.Err(); err != nil {
 		return Session{}, err
@@ -202,25 +200,18 @@ func (s *Service) authenticatePersistent(ctx context.Context, token string) (Ses
 }
 
 // Logout 通过当前或已消费刷新凭据撤销整个会话，数据库提交后才成功。
-// 生产仓储须保留历史摘要以支持重复退出；旧开发路径只支持当前刷新凭据，不宣称同等持久保证。
+// 两种登录入口均使用同一摘要仓储合同，持久性由具体适配器保证。
 func (s *Service) Logout(ctx context.Context, refreshToken string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if s.persistent != nil {
-		if !validToken(refreshToken) {
-			return ErrInvalidToken
-		}
-		return safeStorageError(s.persistent.Logout(ctx, tokenDigest(refreshToken)))
-	}
-	if refreshToken == "" {
+	if !validToken(refreshToken) {
 		return ErrInvalidToken
 	}
-	session, err := s.repo.GetByRefreshToken(ctx, refreshToken)
-	if err != nil {
-		return ErrInvalidToken
+	if s.rotation == nil {
+		return ErrUnavailable
 	}
-	return s.repo.Revoke(ctx, session.SessionID)
+	return safeStorageError(s.rotation.Logout(ctx, tokenDigest(refreshToken)))
 }
 
 func validAccountKey(gameID, accountName string) bool {

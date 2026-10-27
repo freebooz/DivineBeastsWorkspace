@@ -113,6 +113,8 @@ bool IsParameterValid(const FDivineBeastsDemoParameterDefinition& Parameter)
 
 FGamePlatformResult ValidateCatalog(const UDivineBeastsDemoCatalogDefinition& Catalog)
 {
+    if (Catalog.ManualPageContractVersion < 0 || Catalog.ManualPageContractVersion > 1)
+        return Reject(TEXT("Demo.ManualPageVersion"), TEXT("独立人工页合同版本不受支持。"));
     if (Catalog.Plugins.IsEmpty()) return Reject(TEXT("Demo.EmptyPlugins"), TEXT("目录必须登记真实插件，空目录不能激活。"));
     if (Catalog.SourceFingerprint.Len() != 64) return Reject(TEXT("Demo.InvalidFingerprint"), TEXT("目录缺少64位作者源SHA256。"));
     for (TCHAR C : Catalog.SourceFingerprint)
@@ -142,6 +144,13 @@ FGamePlatformResult ValidateCatalog(const UDivineBeastsDemoCatalogDefinition& Ca
             !IsOneOf(Plugin.FeatureAuditStatus, {TEXT("unreviewed"), TEXT("partial"), TEXT("complete")}) ||
             (Plugin.PluginKind == TEXT("content_pack") && Plugin.ArchitectureLayer != TEXT("Project")))
             return Reject(TEXT("Demo.InvalidPlugin"), TEXT("插件字段或三层归属不合法。"));
+        if (Catalog.ManualPageContractVersion == 1)
+        {
+            const FString ExpectedPackage = TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_") + Plugin.PluginId.ToString();
+            const FName ExpectedSource = Plugin.DescriptorPath.StartsWith(TEXT("Game/Plugins/ThirdParty/")) ? FName(TEXT("third_party")) : FName(TEXT("first_party"));
+            if (Plugin.TestPageAsset.GetLongPackageName() != ExpectedPackage || Plugin.SourceKind != ExpectedSource)
+                return Reject(TEXT("Demo.ManualPageIdentity"), TEXT("独立页与插件身份/来源不一致，禁止跨插件页面别名。"));
+        }
     }
     for (const auto& Feature : Catalog.Features)
     {

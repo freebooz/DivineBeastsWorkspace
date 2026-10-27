@@ -171,10 +171,6 @@ try {
         }
         foreach($spell in @('Fireball','Frostbolt','ArcaneMissiles')) {
             $required += "DBAUIPack_Core/Content/UI/Abilities/MagicTests/T_DBA_Dev$spell.uasset"
-            foreach($stage in @('Flight','Impact')) {
-                $required += "DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Niagara/NS_DBA_Dev${spell}$stage.uasset"
-                $required += "DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_Dev${spell}$stage.uasset"
-            }
         }
     }
     if($DevelopmentArena){
@@ -218,16 +214,34 @@ try {
     $audioRequired = @($audioRequired | Sort-Object -Unique)
     $required += $audioRequired
 
+    # 当前VFX与退休包均从唯一合同派生；正式/开发客户端不能各自维护版本列表。
+    $spellManifest = Get-Content -LiteralPath (Join-Path $workspaceRoot 'Tools/Unreal/VFX/SpellProjectiles/PresentationManifest.json') -Raw -Encoding utf8 | ConvertFrom-Json
+    function Convert-SpellPackageToContainerSuffix([string]$Package) {
+        $parts = $Package.TrimStart('/').Split('/',2)
+        return "$($parts[0])/Content/$($parts[1]).uasset"
+    }
+    $spellPackages = @($spellManifest.bindings | ForEach-Object { $_.definition; $_.system }) +
+        @($spellManifest.resources | ForEach-Object { $_.path }) +
+        @($spellManifest.auxiliary_systems) + @($spellManifest.auxiliary_definitions)
+    $required += @($spellPackages | Sort-Object -Unique | ForEach-Object { Convert-SpellPackageToContainerSuffix $_ })
+    $forbiddenSuffixes = @(@($spellManifest.bindings | ForEach-Object { $_.source_system }) + @($spellManifest.retired_systems) |
+        Sort-Object -Unique | ForEach-Object { Convert-SpellPackageToContainerSuffix $_ })
+    $forbidden = @($forbiddenSuffixes | Where-Object {
+        $suffix = '/' + $_
+        @($rows | Where-Object { $_.Filename.Replace('\','/').EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase) -and
+            $_.ChunkType -eq 'ExportBundleData' -and $_.Platform -eq 'WindowsClient' -and [long]$_.Size -gt 0 }).Count -gt 0
+    })
+
     # 软路径在C++目录中构造，地图引用扫描不能发现；要求实际导出数据而非配置或仅包名。
     $missing = @($required | Where-Object {
         $suffix = '/' + $_
         @($rows | Where-Object { $_.Filename.Replace('\','/').EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase) -and
             $_.ChunkType -eq 'ExportBundleData' -and $_.Platform -eq 'WindowsClient' -and [long]$_.Size -gt 0 }).Count -eq 0
     })
-    $report = [ordered]@{ Passed=($missing.Count -eq 0); RequiredCount=$required.Count; AudioRequiredCount=$audioRequired.Count; Missing=$missing; ContainerCsv=[IO.Path]::GetFullPath($ContainerCsv) }
+    $report = [ordered]@{ Passed=($missing.Count -eq 0 -and $forbidden.Count -eq 0); RequiredCount=$required.Count; AudioRequiredCount=$audioRequired.Count; Missing=$missing; Forbidden=$forbidden; ContainerCsv=[IO.Path]::GetFullPath($ContainerCsv) }
     $json = $report | ConvertTo-Json -Depth 5
     if ($ReportPath) { $json | Set-Content -LiteralPath $ReportPath -Encoding utf8 }
     $json
-    if ($missing.Count -gt 0) { exit 1 }
+    if ($missing.Count -gt 0 -or $forbidden.Count -gt 0) { exit 1 }
     exit 0
 } catch { Write-Error $_; exit 1 }

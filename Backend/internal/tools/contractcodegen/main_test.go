@@ -139,7 +139,26 @@ func TestArenaModeMappingsRequireCompleteAndConsistentCoverage(t *testing.T) {
 		validateArenaModeMappings(catalog.arenaModes, catalog.experiences, catalog.serverRoles, catalog.experienceMappings, mappings)
 	}
 	assertPanics("缺失竞技模式", nil)
-	assertPanics("角色体验错配", []arenaModeMapping{{ArenaMode: "Arena.Mode.Duel1v1", ServerRole: "GameServer.Role.MainArena", Experience: "Experience.Lobby.Main"}})
+	assertPanics("角色体验错配", []arenaModeMapping{{ArenaMode: "Arena.Mode.Duel1v1", ServerRole: "GameServer.Role.MainArena", Experience: "Experience.Lobby.Main", TeamSize: 1}})
+	invalidSize := append([]arenaModeMapping(nil), catalog.arenaModeMappings...)
+	invalidSize[0].TeamSize = 0
+	assertPanics("遗漏人数", invalidSize)
+	invalidSize[0].TeamSize = 6
+	assertPanics("人数越界", invalidSize)
+}
+
+// 生成绑定必须携带模式人数，供匹配和分服共同读取；不能各自手工维护容量表。
+func TestArenaModeBindingsIncludeCapacity(t *testing.T) {
+	catalog := testDivineBeastsCatalog()
+	catalog.arenaModeMappings[0].TeamSize = 4
+	for name, output := range map[string][]byte{"Go": generateDivineBeastsGo(catalog), "Cpp": generateDivineBeastsCpp(catalog)} {
+		if !strings.Contains(string(output), "TeamSize") {
+			t.Errorf("%s绑定缺少唯一模式人数", name)
+		}
+	}
+	if !strings.Contains(string(generateDivineBeastsGo(catalog)), "TeamSize: 4") || !strings.Contains(string(generateDivineBeastsCpp(catalog)), `"Experience.MainArena.Main", 4}`) {
+		t.Fatal("生成器必须保留真源人数，不能由模式ID推算")
+	}
 }
 
 func testDivineBeastsCatalog() divineBeastsCatalog {
@@ -154,7 +173,7 @@ func testDivineBeastsCatalog() divineBeastsCatalog {
 			{ServerRole: "GameServer.Role.OpenWorld", Experiences: []string{"Experience.OpenWorld.Hub", "Experience.Lobby.Main"}},
 			{ServerRole: "GameServer.Role.MainArena", Experiences: []string{"Experience.MainArena.Main"}},
 		},
-		arenaModeMappings:          []arenaModeMapping{{ArenaMode: "Arena.Mode.Duel1v1", ServerRole: "GameServer.Role.MainArena", Experience: "Experience.MainArena.Main"}},
+		arenaModeMappings:          []arenaModeMapping{{ArenaMode: "Arena.Mode.Duel1v1", ServerRole: "GameServer.Role.MainArena", Experience: "Experience.MainArena.Main", TeamSize: 1}},
 		clientServerCompatibility:  contractCompatibility{MinimumInclusive: "2.0.0", MaximumExclusive: "3.0.0"},
 		serverBackendCompatibility: contractCompatibility{MinimumInclusive: "2.0.0", MaximumExclusive: "3.0.0"},
 	}

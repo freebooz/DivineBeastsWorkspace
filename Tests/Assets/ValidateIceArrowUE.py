@@ -9,6 +9,9 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import unreal
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "Tools/Unreal/VFX/SpellProjectiles"))
+from SpellPresentationContract import binding
 
 ROOT = "/DBAPresentationPack_Core/VFX/IceArrow"
 OLD = "/DBAPresentationPack_Core/VFX/DevelopmentMagic"
@@ -62,7 +65,7 @@ def verify() -> None:
                     unreal.MaterialInstanceConstant, "material_instances")
 
     for name in ("Cast", "GroundRune", "Launch", "Flight", "Impact", "FrostResidue"):
-        check_asset(ROOT + "/Niagara/NS_DBA_IceArrow_" + name,
+        check_asset(binding("Frostbolt", name)["system"] if name in ("Cast", "Flight", "Impact") else ROOT + "/Niagara/NS_DBA_IceArrow_" + name,
                     unreal.NiagaraSystem, "niagara_systems")
 
     check_asset(ROOT + "/Niagara/NM_DBA_IceArrowMotion",
@@ -90,7 +93,7 @@ def verify() -> None:
     for stage, dir_name in (("Cast", "Casting/Definitions"),
                             ("Flight", "Definitions"), ("Impact", "Definitions")):
         base = OLD + "/" + dir_name + "/DA_DBA_VFX_DevFrostbolt" + stage
-        system = ROOT + "/Niagara/NS_DBA_IceArrow_" + stage
+        system = binding("Frostbolt", stage)["system"]
         expected_type = (unreal.GamePlatformVFXInstantDefinition if stage == "Impact"
                          else unreal.GamePlatformVFXAttachedDefinition)
         verify_definition(stage, base, system, expected_type)
@@ -113,6 +116,8 @@ def verify() -> None:
         if counts[key] != expected:
             errors.append(key + " 数量不足或错误：" + str(counts[key]) + "/" + str(expected))
 
+    from ValidateSpellPresentationUE58 import validate as validate_current_presentation
+    errors.extend(validate_current_presentation(raise_on_error=False)['Errors'])
     result = {"Status": "PASS" if not errors else "FAIL", "Counts": counts,
               "ExpectedCounts": expected_counts, "DefinitionIds": sorted(seen_ids),
               "Errors": errors, "ShaderCompileVerified": False, "GPUVisualVerified": False,

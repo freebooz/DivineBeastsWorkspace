@@ -8,6 +8,10 @@
 
 ## 目录结构与职责
 
+### 身份与竞技定义收敛（2026-10-27）
+
+不新增、删除或重命名正式路径。`internal/modules/identity/service.go`保留公开游客入口和唯一Refresh执行，`password_service.go`提供共享`TokenRotation.Apply`规则；内存、Redis及PostgreSQL仓储在原子锁/事务内执行同一规则并保留历史摘要退出能力。`internal/tools/contractcodegen/main.go`从Shared既有ServerCatalog的`teamSize`生成Go/C++模式人数；`internal/modules/matchmaking/matchmaking.go`和`internal/contracts/gameserver/types.go`共同读取该绑定，不再保留两张容量表。回归位于既有`service_test.go`、`matchmaking_test.go`和生成器`main_test.go`。不改变五个部署服务和HTTP/公开Service方法签名。
+
 ### Session部分内核增量（2026-09-21）
 
 `internal/platform/database/postgresadmission/store.go`为数据库边界适配，`store_integration_test.go`为显式`sessionintegration`标签下的隔离真实PostgreSQL测试。唯一SQL真源为`migrations/000003_session_admission.sql`，包含授权快照、实例、预留、绑定及原子函数。没有新增第六服务或对外路由；尚未接入真实Online/UE服务器链，不构成生产准入完成。验证入口在工作空间`Tests/Integration/Session/TestSessionBackend.ps1`，只创建和清理自己的临时数据库容器。并行Online迁移由其原任务维护，不在本增量重写。

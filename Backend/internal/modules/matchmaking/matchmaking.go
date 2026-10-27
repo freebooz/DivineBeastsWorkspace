@@ -4,6 +4,8 @@ package matchmaking
 import (
 	"errors"
 	"time"
+
+	"divinebeasts/backend/internal/contracts/gameserver"
 )
 
 // ArenaMode（竞技模式）定义每队人数、总人数及组队策略。
@@ -16,16 +18,15 @@ type ArenaMode struct {
 	AllowFill         bool   // AllowFill（是否允许系统补人）。
 }
 
-var arenaModes = map[string]ArenaMode{
-	"Arena.Mode.Duel1v1": {ID: "Arena.Mode.Duel1v1", TeamSize: 1, TotalPlayers: 2, AllowSoloQueue: true, AllowPartialParty: false, AllowFill: false},
-	"Arena.Mode.Team2v2": {ID: "Arena.Mode.Team2v2", TeamSize: 2, TotalPlayers: 4, AllowSoloQueue: true, AllowPartialParty: true, AllowFill: true},
-	"Arena.Mode.Team3v3": {ID: "Arena.Mode.Team3v3", TeamSize: 3, TotalPlayers: 6, AllowSoloQueue: true, AllowPartialParty: true, AllowFill: true},
-	"Arena.Mode.Team4v4": {ID: "Arena.Mode.Team4v4", TeamSize: 4, TotalPlayers: 8, AllowSoloQueue: true, AllowPartialParty: true, AllowFill: true},
-	"Arena.Mode.Team5v5": {ID: "Arena.Mode.Team5v5", TeamSize: 5, TotalPlayers: 10, AllowSoloQueue: true, AllowPartialParty: true, AllowFill: true},
-}
-
 // ArenaModeByID（按ID获取竞技模式）返回统一1v1~5v5配置。
-func ArenaModeByID(id string) (ArenaMode, bool) { mode, ok := arenaModes[id]; return mode, ok }
+// 人数仅消费Shared生成绑定；组队策略由单队容量派生，禁止第二张手工人数表。
+func ArenaModeByID(id string) (ArenaMode, bool) {
+	size, ok := gameserver.TeamSizeForArenaMode(id)
+	if !ok {
+		return ArenaMode{}, false
+	}
+	return ArenaMode{ID: id, TeamSize: size, TotalPlayers: size * 2, AllowSoloQueue: true, AllowPartialParty: size > 1, AllowFill: size > 1}, true
+}
 
 // CreateTicketRequest（创建匹配票据请求）只接受客户端可声明的数据，不包含MMR、处罚等Backend权威字段。
 type CreateTicketRequest struct {

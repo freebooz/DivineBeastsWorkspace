@@ -14,4 +14,12 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsPluginDemoMode final
         bool bExplicitOptIn, bool bConflictingDevelopmentMode, const FString& RequestedEntryMap);
     /** 只读运行时启动参数检测，需-DBAPluginDemo和-DBAPluginDemoMap双重确认。 */
     static bool IsEnabled();
+    /** 真实uplugin名称的词法检查；目录存在性仍由Catalog核验，拒绝路径/空名。 */
+    static bool IsValidPluginIdText(const FString& PluginId);
+    /** 独立页直达只允许完整开发资格和精确Hub入口，不扩展镜头审核地图资格。 */
+    static bool IsAllowedPluginTestArguments(bool bDevelopment, bool bInteractiveClient,
+        bool bExplicitOptIn, bool bConflictingDevelopmentMode, const FString& RequestedEntryMap,
+        const FString& PluginId);
+    /** 只读DBAPluginTest启动意图；无参数/非法/缺资格返回None，未知插件由目录拒绝。 */
+    static FName GetRequestedPluginTest();
 };

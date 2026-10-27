@@ -2,6 +2,7 @@
 #include "UI/DivineBeastsDemoHubViewModel.h"
 #include "Demo/DivineBeastsDemoWorldSubsystem.h"
 #include "Engine/World.h"
+#include "Development/DivineBeastsPluginDemoMode.h"
 
 namespace
 {
@@ -62,43 +63,76 @@ bool UDivineBeastsDemoHubViewModel::BindCatalog(UDivineBeastsDemoCatalogSubsyste
     if (IsPageActive()) Subscribe();
     RebuildSnapshot(); return InCatalog != nullptr;
 }
+bool UDivineBeastsDemoHubViewModel::ConfigurePluginContext(FName Id)
+{
+    if (!Id.IsNone() && !FDivineBeastsPluginDemoMode::IsValidPluginIdText(Id.ToString())) return false;
+    if (Id != FixedPluginId && IsPageActive() && Catalog.IsValid()) return false;
+    if (Id != FixedPluginId) { FixedPluginId = Id; Filter = {}; Snapshot = {}; }
+    return true;
+}
+bool UDivineBeastsDemoHubViewModel::IsPluginEnabled(FName Id) const
+{
+    return Catalog.IsValid() && Catalog->GetPlugins().ContainsByPredicate([Id](const auto& Plugin)
+        { return Plugin.PluginId == Id && Plugin.bEnabled; });
+}
+bool UDivineBeastsDemoHubViewModel::OwnsFeature(FName Id) const
+{
+    return FixedPluginId.IsNone() || (Catalog.IsValid() && Catalog->GetFeatures(FixedPluginId).ContainsByPredicate(
+        [Id](const auto& Feature) { return Feature.FeatureId == Id; }));
+}
+bool UDivineBeastsDemoHubViewModel::RequestPluginPage(FName Id)
+{
+    return IsPageActive() && Catalog.IsValid() && (FixedPluginId.IsNone() || FixedPluginId == Id) &&
+        Snapshot.Plugins.ContainsByPredicate([Id](const auto& Plugin) { return Plugin.PluginId == Id; }) && Catalog->OpenPluginPage(Id);
+}
 void UDivineBeastsDemoHubViewModel::DetachSubscriptions()
 {
+    ++BindingGeneration;
     if (auto* Source = Catalog.Get()) Source->OnCatalogChanged.Remove(CatalogHandle);
     if (auto* World = BoundWorld.Get()) World->OnRunChanged.Remove(RunHandle);
     CatalogHandle.Reset(); RunHandle.Reset(); BoundWorld.Reset();
 }
-void UDivineBeastsDemoHubViewModel::UnbindCatalog() { DetachSubscriptions(); Catalog.Reset(); Snapshot = {}; }
+void UDivineBeastsDemoHubViewModel::UnbindCatalog() { DetachSubscriptions(); Catalog.Reset(); Snapshot = {}; Filter = {}; }
 void UDivineBeastsDemoHubViewModel::Subscribe()
 {
     if (!IsPageActive() || !Catalog.IsValid()) return;
-    if (!CatalogHandle.IsValid()) CatalogHandle = Catalog->OnCatalogChanged.AddUObject(this, &ThisClass::RebuildSnapshot);
+    const uint64 Generation = BindingGeneration;
+    const int32 Page = GetPageGeneration();
+    const TWeakObjectPtr<UDivineBeastsDemoCatalogSubsystem> Source = Catalog;
+    if (!CatalogHandle.IsValid()) CatalogHandle = Catalog->OnCatalogChanged.AddWeakLambda(this, [this, Source, Generation, Page]()
+    { if (IsPageActive() && Catalog == Source && BindingGeneration == Generation && GetPageGeneration() == Page) RebuildSnapshot(); });
     auto* World = Catalog->GetWorld() ? Catalog->GetWorld()->GetSubsystem<UDivineBeastsDemoWorldSubsystem>() : nullptr;
     if (World == BoundWorld.Get()) return;
     if (auto* Previous = BoundWorld.Get()) Previous->OnRunChanged.Remove(RunHandle);
     BoundWorld = World; RunHandle.Reset();
-    if (World) RunHandle = World->OnRunChanged.AddUObject(this, &ThisClass::OnRunSnapshotChanged);
+    const TWeakObjectPtr<UDivineBeastsDemoWorldSubsystem> WorldSource = World;
+    if (World) RunHandle = World->OnRunChanged.AddWeakLambda(this, [this, WorldSource, Generation, Page](const auto& Run)
+    { if (IsPageActive() && BoundWorld == WorldSource && BindingGeneration == Generation && GetPageGeneration() == Page) OnRunSnapshotChanged(Run); });
 }
-void UDivineBeastsDemoHubViewModel::OnPageBegan() { Subscribe(); RebuildSnapshot(); }
-void UDivineBeastsDemoHubViewModel::OnPageEnded() { DetachSubscriptions(); }
+void UDivineBeastsDemoHubViewModel::OnPageBegan() { DetachSubscriptions(); Subscribe(); RebuildSnapshot(); }
+void UDivineBeastsDemoHubViewModel::OnPageEnded() { DetachSubscriptions(); Snapshot = {}; Filter = {}; }
 void UDivineBeastsDemoHubViewModel::BeginDestroy() { UnbindCatalog(); Super::BeginDestroy(); }
 void UDivineBeastsDemoHubViewModel::OnRunSnapshotChanged(const FDivineBeastsDemoRunSnapshot&)
 { if (IsPageActive()) RebuildSnapshot(); }
 void UDivineBeastsDemoHubViewModel::SetFilter(const FDivineBeastsDemoFilter& InFilter)
-{ Filter = InFilter; RebuildSnapshot(); }
+{ if (IsPageActive()) { Filter = InFilter; RebuildSnapshot(); } }
 bool UDivineBeastsDemoHubViewModel::SelectPlugin(FName Id)
 {
+    if (!IsPageActive() || (!FixedPluginId.IsNone() && Id != FixedPluginId)) return false;
     if (!Snapshot.Plugins.ContainsByPredicate([Id](const auto& Item) { return Item.PluginId == Id; })) return false;
     Snapshot.SelectedPluginId = Id; Snapshot.SelectedFeatureId = NAME_None; Snapshot.SelectedScenarioId = NAME_None;
     RebuildSnapshot(); return true;
 }
 bool UDivineBeastsDemoHubViewModel::SelectFeature(FName Id)
 {
+    if (!IsPageActive() || (!FixedPluginId.IsNone() && !Snapshot.Features.ContainsByPredicate([this, Id](const auto& Row)
+        { return Row.Feature.FeatureId == Id && Row.Feature.PluginId == FixedPluginId; }))) return false;
     if (!Snapshot.Features.ContainsByPredicate([Id](const auto& Item) { return Item.Feature.FeatureId == Id; })) return false;
     Snapshot.SelectedFeatureId = Id; Snapshot.SelectedScenarioId = NAME_None; RebuildSnapshot(); return true;
 }
 bool UDivineBeastsDemoHubViewModel::SelectScenario(FName Id)
 {
+    if (!IsPageActive()) return false;
     if (!Snapshot.Scenarios.ContainsByPredicate([Id](const auto& Item) { return Item.Scenario.ScenarioId == Id; })) return false;
     Snapshot.SelectedScenarioId = Id; RebuildSnapshot(); return true;
 }
@@ -111,22 +145,29 @@ bool UDivineBeastsDemoHubViewModel::RequestScenario(FName Id)
     {
         return Item.Scenario.ScenarioId == Id;
     });
-    if (!Selected || !Selected->Preflight.bCanStart) return false;
+    if (!Selected || !Selected->Preflight.bCanStart || !IsPluginEnabled(Snapshot.SelectedPluginId) ||
+        (!FixedPluginId.IsNone() && Snapshot.SelectedPluginId != FixedPluginId)) return false;
     if (Selected->Scenario.TemplateId == TEXT("DiagnosticMap"))
     {
         return Catalog->OpenScenario(Id);
     }
-    return Catalog->PreflightScenario(Id).bCanStart && Catalog->OpenScenario(Id);
+    return OwnsFeature(Selected->Scenario.FeatureId) && Catalog->PreflightScenario(Id).bCanStart && Catalog->OpenScenario(Id);
 }
 bool UDivineBeastsDemoHubViewModel::RequestOperation(FName Operation, const TArray<FDivineBeastsDemoParameterValue>& Values)
-{ return IsPageActive() && BoundWorld.IsValid() && BoundWorld->RequestScenarioOperation(Operation, Values); }
+{
+    return IsPageActive() && BoundWorld.IsValid() && IsPluginEnabled(Snapshot.SelectedPluginId) &&
+        (FixedPluginId.IsNone() || Snapshot.SelectedPluginId == FixedPluginId) &&
+        OwnsFeature(BoundWorld->GetRunSnapshot().FeatureId) && BoundWorld->RequestScenarioOperation(Operation, Values);
+}
 void UDivineBeastsDemoHubViewModel::RequestRefresh() { if (IsPageActive() && Catalog.IsValid()) Catalog->RefreshCatalog(); }
 bool UDivineBeastsDemoHubViewModel::RequestReturn() { return IsPageActive() && Catalog.IsValid() && Catalog->ReturnToHub(); }
-UUserWidget* UDivineBeastsDemoHubViewModel::GetSampleWidget() const { return BoundWorld.IsValid() ? BoundWorld->GetSampleWidget() : nullptr; }
+UUserWidget* UDivineBeastsDemoHubViewModel::GetSampleWidget() const
+{ return IsPageActive() && BoundWorld.IsValid() && OwnsFeature(BoundWorld->GetRunSnapshot().FeatureId) ? BoundWorld->GetSampleWidget() : nullptr; }
 FString UDivineBeastsDemoHubViewModel::RequestEvidence(FString& OutError)
 {
     FString Path;
-    if (!IsPageActive() || !BoundWorld.IsValid()) { OutError = TEXT("页面失活或无实际世界运行。"); return Path; }
+    if (!IsPageActive() || !BoundWorld.IsValid() || !OwnsFeature(BoundWorld->GetRunSnapshot().FeatureId))
+    { OutError = TEXT("页面失活、无实际世界运行或运行不属于当前固定插件。"); return Path; }
     BoundWorld->WriteCurrentEvidence(Path, OutError); return Path;
 }
 
@@ -136,8 +177,10 @@ void UDivineBeastsDemoHubViewModel::RebuildSnapshot()
     if (IsPageActive()) Subscribe();
     const FName PreviousPlugin = Snapshot.SelectedPluginId, PreviousFeature = Snapshot.SelectedFeatureId, PreviousScenario = Snapshot.SelectedScenarioId;
     Snapshot = {};
+    Snapshot.FixedPluginId = FixedPluginId;
     if (!Catalog.IsValid()) { Snapshot.Details = FText::FromString(TEXT("目录服务不可用。")); MarkStateChanged(); return; }
     Snapshot.Run = BoundWorld.IsValid() ? BoundWorld->GetRunSnapshot() : FDivineBeastsDemoRunSnapshot();
+    if (!OwnsFeature(Snapshot.Run.FeatureId)) Snapshot.Run = {};
     Snapshot.CatalogResult = Catalog->GetCatalogResult(); Snapshot.SourceFingerprint = Catalog->GetSourceFingerprint();
     const auto AllPlugins = Catalog->GetPlugins(); Snapshot.TotalPlugins = AllPlugins.Num();
     const FString Query = Filter.SearchText.TrimStartAndEnd();
@@ -151,6 +194,11 @@ void UDivineBeastsDemoHubViewModel::RebuildSnapshot()
             if (Feature.IntegrationStatus == TEXT("wired") || Feature.IntegrationStatus == TEXT("launchable")) ++Snapshot.WiredFeatures;
             bFeatureMatches |= FeatureMatchesText(Feature, Query);
         }
+        if (!FixedPluginId.IsNone())
+        {
+            if (Plugin.PluginId == FixedPluginId) Snapshot.Plugins.Add(Plugin);
+            continue;
+        }
         const FName Kind = Plugin.Layer == EDivineBeastsDemoLayer::Content ? FName(TEXT("content_pack")) : FName(TEXT("code"));
         if ((!Filter.Layer.IsNone() && Filter.Layer != PluginLayer(Plugin)) || (!Filter.PluginKind.IsNone() && Filter.PluginKind != Kind)) continue;
         if (!Query.IsEmpty() &&
@@ -162,6 +210,8 @@ void UDivineBeastsDemoHubViewModel::RebuildSnapshot()
     Snapshot.bHasKnownDenominator = Snapshot.UnreviewedPlugins == 0 && Snapshot.KnownFeatures > 0;
     Snapshot.SelectedPluginId = Snapshot.Plugins.ContainsByPredicate([PreviousPlugin](const auto& P) { return P.PluginId == PreviousPlugin; })
         ? PreviousPlugin : (Snapshot.Plugins.IsEmpty() ? NAME_None : Snapshot.Plugins[0].PluginId);
+    FSoftObjectPath PluginPage;
+    Snapshot.bCanOpenPluginPage = Catalog->FindPluginPageAsset(Snapshot.SelectedPluginId, PluginPage);
     for (const auto& Feature : Catalog->GetFeatures(Snapshot.SelectedPluginId))
     {
         if (!FeatureMatchesText(Feature, Query))

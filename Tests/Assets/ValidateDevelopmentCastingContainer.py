@@ -13,44 +13,30 @@ from pathlib import Path
 import re
 
 
-ICE_ARROW_STAGES = ('Cast', 'GroundRune', 'Launch', 'Flight', 'Impact', 'FrostResidue')
+import sys
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'Tools/Unreal/VFX/SpellProjectiles'))
+from SpellPresentationContract import (compile_systems, container_asset, container_required_assets,
+                                       forbidden_systems)
 
 
 def required_assets():
-    """稳定软引用闭包；新增/改名必须同时调整目录合同与人工审核说明。"""
-    result = []
-    common = 'DBAContentPack_Common/Content'
-    vfx = 'DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Casting'
+    """当前法术唯一合同+独立动画合同；不维护第二份历史VFX正确版本列表。"""
+    result = container_required_assets()
+    common = 'DBAContentPack_Common/Content/Mannequins/DBA/Animations/DevelopmentCasting'
     for spell in ('Fireball', 'Frostbolt', 'ArcaneMissiles'):
         for kind in ('AS', 'AM'):
-            result.append(f'{common}/Mannequins/DBA/Animations/DevelopmentCasting/{kind}_DBA_Dev{spell}Cast.uasset')
-        result.extend([f'{vfx}/Niagara/NS_DBA_Dev{spell}Cast.uasset',
-                       f'{vfx}/Definitions/DA_DBA_VFX_Dev{spell}Cast.uasset'])
-
-    # 新冰箭通过稳定Frostbolt定义软引用进入；逐项核对最终容器，旧Cook有原NS也不能放行。
-    ice = 'DBAPresentationPack_Core/Content/VFX/IceArrow'
-    for stage in ('Cast', 'GroundRune', 'Launch', 'Flight', 'Impact', 'FrostResidue'):
-        result.append(f'{ice}/Niagara/NS_DBA_IceArrow_{stage}.uasset')
-    for name in ('CrackMask', 'CrystalShard', 'FrostMist', 'FrozenGround', 'IceFlake',
-                 'IceNormal', 'IceORM', 'ImpactFlash', 'RuneInner', 'RuneOuter', 'TrailStrip', 'GroundRuneReference'):
-        result.append(f'{ice}/Textures/T_DBA_IceArrow_{name}.uasset')
-    for name in ('CrystalLance', 'CrystalShard', 'IceCrown', 'TrailRibbon'):
-        result.append(f'{ice}/Meshes/SM_DBA_IceArrow_{name}.uasset')
-    for name in ('Crystal', 'Luminous', 'Mist', 'Trail', 'RuneColor'):
-        result.append(f'{ice}/Materials/M_DBA_IceArrow_{name}.uasset')
-    for name in ('Crystal', 'CrystalSprite', 'FrozenGround', 'GroundInner', 'GroundOuter',
-                 'ImpactCrystal', 'ImpactFlash', 'Mist', 'Snow', 'Trail'):
-        result.append(f'{ice}/Materials/MI_DBA_IceArrow_{name}.uasset')
-    result.append(f'{ice}/Definitions/DA_DBA_VFX_DevFrostboltResidue.uasset')
-    # 1号治疗必须发布真实迁移的花瓣绽放及稳定治疗定义，拒绝退回树叶原型。
-    # 重导后治疗定义持有三档原生系统；必须核对新闭包，旧库NS存在不能证明新效果已发布。
-    healing = 'DBAPresentationPack_Core/Content/VFX/HealingBloom'
-    result.extend([f'{healing}/07_Status/NS_Nature_PetalBloom_Aura.uasset',
-                   f'{healing}/07_Status/NS_DBA_HealingBloom_Medium.uasset',
-                   f'{healing}/07_Status/NS_DBA_HealingBloom_Low.uasset',
-                   'DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_HealingPetalBloom.uasset'])
-    # NM_DBA_IceArrowMotion是已编译系统的EditorOnly制作脚本，不要求其源脚本独立进入发布包。
+            result.append(f'{common}/{kind}_DBA_Dev{spell}Cast.uasset')
     return result
+
+
+def validate_exports(exports):
+    """明确拒绝旧系统包；完整新闭包也不能掩盖旧包同时发布。"""
+    required = required_assets()
+    missing = [path for path in required if not any(name.endswith('/' + path.lower()) for name in exports)]
+    forbidden = [container_asset(path) for path in forbidden_systems()
+                 if any(name.endswith('/' + container_asset(path).lower()) for name in exports)]
+    return {'RequiredCount': len(required), 'Missing': missing, 'Forbidden': forbidden}
 
 
 def validate_cook_shaders(csv_path, cook_log_path=None):
@@ -70,7 +56,7 @@ def validate_cook_shaders(csv_path, cook_log_path=None):
         errors.append('Cook日志不属于当前容器的UATLogs或文件不存在')
     result = {'Passed': False, 'CookLog': str(log_path) if log_path else None,
               'Errors': errors, 'ShaderDiagnostics': [], 'CompiledStages': [],
-              'MissingStages': list(ICE_ARROW_STAGES), 'CookCompleted': False}
+              'MissingStages': compile_systems(), 'CookCompleted': False}
     if errors:
         return result
     raw = log_path.read_bytes()
@@ -79,9 +65,7 @@ def validate_cook_shaders(csv_path, cook_log_path=None):
     # 编译条目需来自Niagara实际系统编译输出，路径库存或diagnostics JSON均不能冒充。
     compiled = set()
     compiled_pattern = re.compile(
-        r'LogNiagara:\s+Compiling System NiagaraSystem '
-        r'/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NS_DBA_IceArrow_'
-        r'([A-Za-z]+)\.NS_DBA_IceArrow_\1 took ')
+        r'LogNiagara:\s+Compiling System NiagaraSystem (/[A-Za-z0-9_/]+)\.[A-Za-z0-9_]+ took ')
     shader_diagnostics = re.compile(
         r'LogNiagara:\s+(?:Warning:|Error:|Display: There were issues for compilation)|'
         r'LogShaderCompilers?:\s+(?:Warning:|Error:)|'
@@ -93,13 +77,13 @@ def validate_cook_shaders(csv_path, cook_log_path=None):
             compiled.add(match.group(1))
         if shader_diagnostics.search(line):
             result['ShaderDiagnostics'].append({'Line': number, 'Message': line})
-    result['CompiledStages'] = [stage for stage in ICE_ARROW_STAGES if stage in compiled]
-    result['MissingStages'] = [stage for stage in ICE_ARROW_STAGES if stage not in compiled]
+    result['CompiledStages'] = [stage for stage in compile_systems() if stage in compiled]
+    result['MissingStages'] = [stage for stage in compile_systems() if stage not in compiled]
     # 总结的0 error不够；必须同时看到所有包完成，避免截断/中止日志被放行。
     result['CookCompleted'] = any('Packages Remain 0 Total ' in line for line in lines) and any(
         re.search(r'LogInit:\s+Display: Success - 0 error\(s\)', line) for line in lines)
     if result['MissingStages']:
-        errors.append('缺少实际冰箭系统编译证据：' + ','.join(result['MissingStages']))
+        errors.append('缺少实际当前法术系统编译证据：' + ','.join(result['MissingStages']))
     if not result['CookCompleted']:
         errors.append('Cook日志没有完整包完成及成功终态证据')
     if result['ShaderDiagnostics']:
@@ -116,12 +100,11 @@ def validate(csv_path, cook_log_path=None):
         raise ValueError('不是非空引擎IoStore CSV')
     exports = {row['Filename'].replace('\\', '/').lower() for row in rows
                if row['ChunkType'] == 'ExportBundleData' and row['Platform'] == 'WindowsClient' and int(row['Size']) > 0}
-    required = required_assets()
-    missing = [path for path in required if not any(name.endswith('/' + path.lower()) for name in exports)]
+    checked = validate_exports(exports)
     shaders = validate_cook_shaders(csv_path, cook_log_path)
-    return {'Passed': not missing and shaders['Passed'], 'RequiredCount': len(required), 'Missing': missing,
-            'ContainerCsv': str(csv_path.resolve()), 'CookShaders': shaders,
-            'NetworkAccepted': False, 'ManualVisualAccepted': False}
+    return dict(checked, Passed=not checked['Missing'] and not checked['Forbidden'] and shaders['Passed'],
+                ContainerCsv=str(csv_path.resolve()), CookShaders=shaders,
+                NetworkAccepted=False, ManualVisualAccepted=False)
 
 
 def main():
