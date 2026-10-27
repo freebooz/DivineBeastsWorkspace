@@ -83,7 +83,7 @@ private:
     /** 只接收组件当前值快照；旧广播与已过期窗口不清理或复活后继动作。 */
     void HandleFacts(UGamePlatformAbilityCastComponent* Component,const FGamePlatformAbilityCastFacts& Facts);
     /** 复用现有请求服务，分别附着真实左右掌，传递只读施法窗口；不生成权威动作。 */
-    void UpdateDirectedMissilePalms(UGamePlatformAbilityCastComponent* Component,
+    void UpdateSpellPalms(UGamePlatformAbilityCastComponent* Component,
         const FGamePlatformAbilityCastFacts& Facts,const FGuid& OperationId,const FGuid& Token);
     /** GT只读身份/Combat和服务器时钟，返回有效窗口的已过/剩余秒数；不写权威状态。 */
     bool GetCastWindow(UGamePlatformAbilityCastComponent* Component,const FGamePlatformAbilityCastFacts& Facts,

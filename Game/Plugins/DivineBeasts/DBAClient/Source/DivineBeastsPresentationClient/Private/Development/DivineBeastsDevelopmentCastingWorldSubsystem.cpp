@@ -21,6 +21,7 @@
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/GameStateBase.h"
+#include "Math/RotationMatrix.h"
 
 namespace
 {
@@ -54,6 +55,31 @@ FSoftObjectPath MontagePathForMesh(FName Name, const USkeletalMesh* Mesh)
 }
 FGameplayTag CastSemantic(FName Name)
 { return FGameplayTag::RequestGameplayTag(FName(*(TEXT("Presentation.DivineBeasts.Development.Magic.")+Name.ToString()+TEXT(".Cast"))),false); }
+/** 从实际指根构造掌面局部坐标；挂点随后由骨骼驱动，无逐帧业务轮询或固定世界坐标。 */
+FTransform PalmLocalTransform(const USkeletalMeshComponent* Mesh,FName HandSocket,bool bLeft)
+{
+    const FString Side=bLeft ? TEXT("Left") : TEXT("Right");
+    const FString Suffix=bLeft ? TEXT("_l") : TEXT("_r");
+    const FName Fingers[3][3]={
+        {FName(*(TEXT("middle_01")+Suffix)),FName(*(TEXT("index_01")+Suffix)),FName(*(TEXT("pinky_01")+Suffix))},
+        {FName(*(TEXT("mixamorig:")+Side+TEXT("HandMiddle1"))),FName(*(TEXT("mixamorig:")+Side+TEXT("HandIndex1"))),FName(*(TEXT("mixamorig:")+Side+TEXT("HandPinky1")))},
+        {FName(*(Side+TEXT("HandMiddle1"))),FName(*(Side+TEXT("HandIndex1"))),FName(*(Side+TEXT("HandPinky1")))}
+    };
+    const FTransform Hand=Mesh->GetSocketTransform(HandSocket);
+    for(const auto& Set:Fingers)
+    {
+        if(!Mesh->DoesSocketExist(Set[0]) || !Mesh->DoesSocketExist(Set[1]) || !Mesh->DoesSocketExist(Set[2])) continue;
+        // 在手骨局部空间计算，角色朝向和整体缩放不会改变掌面合同。
+        const FVector Middle=Hand.InverseTransformPosition(Mesh->GetSocketLocation(Set[0]));
+        const FVector Across=Hand.InverseTransformVector(Mesh->GetSocketLocation(Set[2])-Mesh->GetSocketLocation(Set[1]));
+        const FVector Forward=Middle.GetSafeNormal();
+        const FVector Normal=FVector::CrossProduct(Forward,Across).GetSafeNormal()*(bLeft ? 1.0 : -1.0);
+        if(Forward.IsNearlyZero() || Normal.IsNearlyZero()) continue;
+        return FTransform(FRotationMatrix::MakeFromXZ(Forward,Normal).ToQuat(),Middle*0.5+Normal*1.2);
+    }
+    // 无指骨时仍依附真实手骨，不猜测英雄专用偏移。
+    return FTransform::Identity;
+}
 /** 组件广播传值后允许同步发布后继；必须比较完整当前快照，而非仅凭旧通知的Active标记清理。 */
 bool SameCastFacts(const FGamePlatformAbilityCastFacts& A,const FGamePlatformAbilityCastFacts& B)
 {
@@ -257,11 +283,11 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
     }
     else if(Binding->bStartingMontage) return;
 
-    // 数字1仅替换视觉：两个独立掌心请求共享同一施法操作身份，原数字2和冰法阵不变。
-    if(Name==TEXT("DirectedMissile"))
+    // 火法/冰法V3复用既有双掌生命周期；三个技能的语义与资源仍各自独立。
+    if(Name==TEXT("DirectedMissile") || Name==TEXT("Fireball") || Name==TEXT("Frostbolt"))
     {
         const FGuid PalmOperation=Binding->OperationId; // 值拷贝，不能把TMap成员引用跨Submit/取消回调传递。
-        UpdateDirectedMissilePalms(Component,Facts,PalmOperation,Token);
+        UpdateSpellPalms(Component,Facts,PalmOperation,Token);
         return;
     }
 
@@ -276,15 +302,7 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
         Character=WeakCharacter.Get(); Mesh=Character->GetMesh();
         auto* Anchor=NewObject<USceneComponent>(Character);
         Anchor->SetMobility(EComponentMobility::Movable);
-        if (Name == TEXT("Frostbolt"))
-        {
-            // 冰箭地面符文与冰晶升腾采用脚底为局部原点；右手挂点会让法阵悬空。
-            auto* Capsule = Character->GetCapsuleComponent();
-            if (!Capsule) return;
-            Anchor->SetupAttachment(Capsule);
-            Anchor->SetRelativeLocation(FVector(0,0,-Capsule->GetScaledCapsuleHalfHeight()));
-        }
-        else Anchor->SetupAttachment(Mesh,TEXT("hand_r"));
+        Anchor->SetupAttachment(Mesh,TEXT("hand_r"));
         Character->AddInstanceComponent(Anchor);
         Binding->CastAnchor=Anchor; WeakAnchor=Anchor; // Register之前先交付所有权，重入结束能清自己的锚点。
         Anchor->RegisterComponent();
@@ -320,12 +338,14 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::HandleFacts(UGamePlatformAbi
     { Binding->VFXRequestId.Invalidate(); Binding->VFXAdapter.Reset(); Binding->VFXWorldGeneration=0; }
 }
 
-void UDivineBeastsDevelopmentCastingWorldSubsystem::UpdateDirectedMissilePalms(
+void UDivineBeastsDevelopmentCastingWorldSubsystem::UpdateSpellPalms(
     UGamePlatformAbilityCastComponent* Component,const FGamePlatformAbilityCastFacts& Facts,
     const FGuid& OperationId,const FGuid& Token)
 {
     const auto* Initial=Bindings.Find(Component);
-    if(!Initial || Initial->StyleName!=TEXT("DirectedMissile")) return;
+    if(!Initial) return;
+    const FName StyleName=Initial->StyleName;
+    if(StyleName!=TEXT("DirectedMissile") && StyleName!=TEXT("Fireball") && StyleName!=TEXT("Frostbolt")) return;
     const TWeakObjectPtr<UGamePlatformAbilityCastComponent> WeakComponent(Component);
     const TWeakObjectPtr<UAnimInstance> WeakAnim=Initial->Anim;
     const TWeakObjectPtr<ACharacter> WeakCharacter(Cast<ACharacter>(Component->GetOwner()));
@@ -355,6 +375,8 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::UpdateDirectedMissilePalms(
             auto* Anchor=NewObject<USceneComponent>(Character);
             Anchor->SetMobility(EComponentMobility::Movable);
             Anchor->SetupAttachment(Mesh,Sockets[Hand]);
+            if(StyleName!=TEXT("DirectedMissile"))
+                Anchor->SetRelativeTransform(PalmLocalTransform(Mesh,Sockets[Hand],Hand==0));
             Character->AddInstanceComponent(Anchor);
             Binding->Palms[Hand].Anchor=Anchor; WeakAnchor=Anchor;
             Anchor->RegisterComponent();
@@ -370,7 +392,7 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::UpdateDirectedMissilePalms(
         if(!Anchor || !Anchor->IsRegistered() || !Adapter ||
            !GetCastWindow(WeakComponent.Get(),Facts,Elapsed,Remaining)) return;
         FGamePlatformPresentationRequest Request;
-        Request.RequestId=FGuid::NewGuid(); Request.SemanticTag=CastSemantic(TEXT("DirectedMissile"));
+        Request.RequestId=FGuid::NewGuid(); Request.SemanticTag=CastSemantic(StyleName);
         Request.SourceId=Facts.AbilityId; Request.ContextId=Facts.PresentationStyleId;
         Request.SourceLocation=Anchor->GetComponentLocation(); Request.SourceRotation=Anchor->GetComponentRotation();
         Request.AttachComponent=Anchor;

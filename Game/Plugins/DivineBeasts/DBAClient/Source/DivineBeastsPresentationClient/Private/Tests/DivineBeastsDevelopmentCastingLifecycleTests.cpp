@@ -267,6 +267,67 @@ DBA_CASTING_TEST(FDivineBeastsDirectedMissileDualPalmTest, "DirectedMissileDualP
     return true;
 }
 
+/** 火冰V3都必须消费真实施法窗口，投影为两只手；不再落入单手或脚底法阵分支。 */
+DBA_CASTING_TEST(FDivineBeastsFireIceV3DualPalmTest, "FireIceV3DualPalmLifecycle")
+{
+    for (const bool bFrost : {false, true})
+    {
+        FDivineBeastsDevelopmentCastingTestFixture F(*this); if (!F.Initialize()) return false;
+        TMap<FName,FGamePlatformPresentationRequest> Palms;
+        const FString Semantic=bFrost ? TEXT("Presentation.DivineBeasts.Development.Magic.Frostbolt.Cast")
+            : TEXT("Presentation.DivineBeasts.Development.Magic.Fireball.Cast");
+        const auto Watch=F.Platform->OnRequestObserved().AddLambda(
+            [&Palms,Semantic](const FGamePlatformPresentationRequest& R,EGamePlatformPresentationSubmitResult Result)
+            {
+                if(Result==EGamePlatformPresentationSubmitResult::Submitted &&
+                   R.PredictionState!=EGamePlatformPresentationPredictionState::Cancelled &&
+                   R.SemanticTag.ToString()==Semantic && R.AttachComponent.IsValid())
+                    Palms.Add(R.AttachComponent->GetAttachSocketName(),R);
+            });
+        const FGuid Id=FGuid::NewGuid();
+        TestTrue(TEXT("火冰真实施法事实发布"),F.Publish(Id,bFrost,1,.5f));
+        TestEqual(TEXT("火冰V3分别有两只掌心"),F.LiveRequests.Num(),2);
+        TestTrue(TEXT("存在真实左手及右手"),Palms.Contains(TEXT("hand_l")) && Palms.Contains(TEXT("hand_r")));
+        for(const auto& Pair:Palms)
+        {
+            TestEqual(TEXT("时长来自复制窗口"),Pair.Value.FloatParameters.FindRef(TEXT("User.CastDurationSec")),.5f);
+            TestTrue(TEXT("显式传递迟到偏移"),Pair.Value.FloatParameters.Contains(TEXT("User.ElapsedAtStartSec")));
+            TestEqual(TEXT("两手旋向独立"),Pair.Value.FloatParameters.FindRef(TEXT("User.HandSideSign")),
+                Pair.Key==TEXT("hand_l") ? -1.f : 1.f);
+            TestTrue(TEXT("掌心锚点具有实际掌面位移"),!Pair.Value.AttachComponent->GetRelativeLocation().IsNearlyZero());
+        }
+        F.NotifyContentActive();TestEqual(TEXT("重复就绪仍只有两掌"),F.LiveRequests.Num(),2);
+        F.Cast->CancelConfirmedCast(Id);TestEqual(TEXT("取消清除两掌请求"),F.LiveRequests.Num(),0);
+        TestEqual(TEXT("取消清除两掌挂点"),F.RegisteredAnchorCount(),0);
+        F.Platform->OnRequestObserved().Remove(Watch);
+    }
+    return true;
+}
+
+/** 火冰首掌提交时同步取消，不得继续提交第二掌或遗留第一掌。 */
+DBA_CASTING_TEST(FDivineBeastsFireIceV3PalmCancelTest, "FireIceV3PalmSubmitCancellation")
+{
+    for(const bool bFrost:{false,true})
+    {
+        FDivineBeastsDevelopmentCastingTestFixture F(*this);if(!F.Initialize())return false;
+        const FGuid Id=FGuid::NewGuid();bool bCancelled=false;
+        const auto Watch=F.Platform->OnRequestObserved().AddLambda(
+            [&](const FGamePlatformPresentationRequest& R,EGamePlatformPresentationSubmitResult Result)
+            {
+                if(!bCancelled && Result==EGamePlatformPresentationSubmitResult::Submitted &&
+                   R.PredictionState!=EGamePlatformPresentationPredictionState::Cancelled &&
+                   R.SemanticTag.ToString().StartsWith(TEXT("Presentation.DivineBeasts.Development.Magic.")))
+                {bCancelled=true;F.Cast->CancelConfirmedCast(Id);}
+            });
+        F.Publish(Id,bFrost,1,.5f);TestTrue(TEXT("提交内确实取消"),bCancelled);
+        TestEqual(TEXT("不继续提交次掌"),F.Accepted,1);
+        TestEqual(TEXT("无残留掌心请求"),F.LiveRequests.Num(),0);
+        TestEqual(TEXT("无残留掌心锚点"),F.RegisteredAnchorCount(),0);
+        F.Platform->OnRequestObserved().Remove(Watch);
+    }
+    return true;
+}
+
 /** 首掌Submit同步取消时不能遗留首掌，也不能继续创建次掌。 */
 DBA_CASTING_TEST(FDivineBeastsDirectedMissilePalmReentryTest, "DirectedMissilePalmSubmitCancellation")
 {
@@ -345,9 +406,9 @@ DBA_CASTING_TEST(FDivineBeastsCastingStartedSuccessorTest, "StartedSuccessorReta
     const FGuid First = FGuid::NewGuid(), Next = FGuid::NewGuid(); bool bNextAccepted = false;
     F.Observer->StartedAction = [&](UAnimMontage*) { bNextAccepted = F.Publish(Next, true); };
     TestTrue(TEXT("前继确认发布"), F.Publish(First)); TestTrue(TEXT("启动通知内真实发布后继"), bNextAccepted);
-    TestEqual(TEXT("只后继提交一次有效VFX"), F.Accepted, 1);
+    TestEqual(TEXT("只后继提交双掌有效VFX"), F.Accepted, 2);
     TestEqual(TEXT("账本属于后继"), F.OwnedActivation(), Next);
-    TestEqual(TEXT("后继只持有一个技能挂点，冰箭遵循脚底法阵合同"), F.RegisteredAnchorCount(), 1);
+    TestEqual(TEXT("后继持有真实双掌挂点"), F.RegisteredAnchorCount(), 2);
     TestTrue(TEXT("真实撤销后继"), F.Cast->CancelConfirmedCast(Next));
     TestEqual(TEXT("撤销必须命中后继真实RequestId"), F.LiveRequests.Num(), 0);
     TestEqual(TEXT("后继撤销后锚点全部释放"), F.RegisteredAnchorCount(), 0);
@@ -363,9 +424,9 @@ DBA_CASTING_TEST(FDivineBeastsCastingLateContentTest, "ContentActivationRetriesV
     TestTrue(TEXT("内容未就绪仍运行可选独立动画"), F.Character->GetMesh()->GetAnimInstance()->Montage_IsPlaying(F.FireMontage.Get()));
     const int32 Before = F.Observer->StartedNotifications;
     F.bProviderReady = true; F.NotifyContentActive(); F.NotifyContentActive();
-    TestEqual(TEXT("就绪和重复就绪只受理一次VFX"), F.Accepted, 1);
+    TestEqual(TEXT("就绪和重复就绪只受理两掌VFX"), F.Accepted, 2);
     TestEqual(TEXT("VFX重试不重播动画"), F.Observer->StartedNotifications, Before);
-    TestEqual(TEXT("重复就绪只有一个活跃Request"), F.LiveRequests.Num(), 1);
+    TestEqual(TEXT("重复就绪只有两掌活跃Request"), F.LiveRequests.Num(), 2);
     return true;
 }
 
@@ -377,7 +438,7 @@ DBA_CASTING_TEST(FDivineBeastsCastingLateAnimationTest, "AnimationInitialization
     TestEqual(TEXT("动画未就绪不提交起手"), F.Accepted, 0);
     if (!F.InstallAnimation()) return false;
     TestTrue(TEXT("实际OnAnimInitialized后立即运行当前施法"), F.Character->GetMesh()->GetAnimInstance()->Montage_IsPlaying(F.FireMontage.Get()));
-    TestEqual(TEXT("动画就绪后当前窗口提交一次起手"), F.Accepted, 1);
+    TestEqual(TEXT("动画就绪后当前窗口提交两掌起手"), F.Accepted, 2);
     return true;
 }
 
@@ -391,7 +452,7 @@ DBA_CASTING_TEST(FDivineBeastsCastingLateIdentityTest, "IdentityGenerationRetrie
     F.Identity->OnIdentityChanged().Broadcast();
     TestEqual(TEXT("夹具保持真实Combat副本仍为旧代次1"), F.Combat->GetCombatAvatarGeneration(), 1);
     TestTrue(TEXT("同代角色身份到达后当前施法恢复"), F.Character->GetMesh()->GetAnimInstance()->Montage_IsPlaying(F.FireMontage.Get()));
-    TestEqual(TEXT("权威Avatar接收合同就绪后补一次起手"), F.Accepted, 1);
+    TestEqual(TEXT("权威Avatar接收合同就绪后补双掌起手"), F.Accepted, 2);
     return true;
 }
 
@@ -410,7 +471,7 @@ DBA_CASTING_TEST(FDivineBeastsCastingOldCancellationTest, "NestedCancellationCan
     TestEqual(TEXT("组件最新事实属于B"), F.Cast->GetCastFacts().ActivationId, Next);
     TestEqual(TEXT("旧取消快照不能清除B账本"), F.OwnedActivation(), Next);
     TestTrue(TEXT("后继Montage仍运行"), F.Character->GetMesh()->GetAnimInstance()->Montage_IsPlaying(F.FrostMontage.Get()));
-    TestEqual(TEXT("后继起手仍只有一个活跃Request"), F.LiveRequests.Num(), 1);
+    TestEqual(TEXT("后继起手仍只有两掌活跃Request"), F.LiveRequests.Num(), 2);
     return true;
 }
 
@@ -509,7 +570,7 @@ bool FDivineBeastsCastingMapGrowthReentryTest::RunTest(const FString&)
     TestTrue(TEXT("真实发布窗口"), F.Publish(FGuid::NewGuid()));
     TestTrue(TEXT("夹具确实使实际账本地址搬迁"), bMoved);
     TestTrue(TEXT("搬迁后自有StopTimer必须在当前账本"), F.HasOwnedStopTimer());
-    TestEqual(TEXT("搬迁后锚点只创建一次"), F.RegisteredAnchorCount(), 1);
+    TestEqual(TEXT("搬迁后两掌锚点各创建一次"), F.RegisteredAnchorCount(), 2);
     TestTrue(TEXT("撤销当前动作"), F.Cast->CancelConfirmedCast(F.Cast->GetCastFacts().ActivationId));
     TestEqual(TEXT("当前账本必须仍拥有可清理锚点"), F.RegisteredAnchorCount(), 0);
     return true;
