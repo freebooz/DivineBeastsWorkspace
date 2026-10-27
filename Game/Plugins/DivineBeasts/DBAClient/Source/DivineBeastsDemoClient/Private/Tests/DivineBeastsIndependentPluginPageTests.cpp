@@ -32,6 +32,9 @@ bool FDivineBeastsIndependentPluginPageTest::RunTest(const FString&)
     Model->Snapshot.Features.AddDefaulted_GetRef().Feature.FeatureId = TEXT("UI.Foreign");
     Model->Snapshot.Features.Last().Feature.PluginId = TEXT("GamePlatformUI");
     TestFalse(TEXT("旧值项不能跨PluginId选择功能"), Model->SelectFeature(TEXT("UI.Foreign")));
+    Model->Snapshot.Scenarios.AddDefaulted_GetRef().Scenario.ScenarioId = TEXT("UI.Foreign.Normal");
+    Model->Snapshot.Scenarios.Last().Scenario.FeatureId = TEXT("UI.Foreign");
+    TestFalse(TEXT("关联案例不能越过固定插件执行归属"), Model->SelectScenario(TEXT("UI.Foreign.Normal")));
     const auto OldNotification = Catalog->OnCatalogChanged;
     Model->EndPage();
     const int32 InactiveRevision = Model->GetRevision();
@@ -56,12 +59,22 @@ bool FDivineBeastsIndependentPluginPageTest::RunTest(const FString&)
         EGamePlatformUIInputMode::GameAndUI, EGamePlatformUIPausePolicy::Never);
     Page->DemoModel = Model.Get();
     TStrongObjectPtr<UDivineBeastsDemoHubViewModel> Replacement(NewObject<UDivineBeastsDemoHubViewModel>());
-    Page->SetViewModel(Replacement.Get());
+    Page->InitializeActivatableViewModel(Replacement.Get());
     Page->OnViewModelStateChanged(0, Model->GetPageGeneration());
     TestFalse(TEXT("换VM后旧模型不得恢复命令源"), Page->DemoModel == Model.Get());
 
     TStrongObjectPtr<UWorld> World(NewObject<UWorld>());
     World->SetGameInstance(Instance.Get());
+    TStrongObjectPtr<UDivineBeastsDemoWorldSubsystem> Context(NewObject<UDivineBeastsDemoWorldSubsystem>(World.Get()));
+    Context->SourceWorld = World.Get(); Context->OverlayGeneration = 4;
+    Context->LastFeedback = FText::FromString(TEXT("当前页状态"));
+    Context->OnScenarioOverlayReady(3, {}, FGamePlatformResult::Failure(TEXT("Old.Load"), TEXT("迟到失败")));
+    TestEqual(TEXT("旧资源回调不能覆盖新页结果"), Context->GetLastFeedback().ToString(), FString(TEXT("当前页状态")));
+    Context->PendingScreenRequestId = FGuid::NewGuid();
+    Context->OnDemoScreenOpened(FGuid::NewGuid(), TEXT("DivineBeasts.Demo.Hub"), Page.Get());
+    TestFalse(TEXT("旧请求GUID不能接管新活动页"), Context->ActiveScreen.IsValid());
+    TestFalse(TEXT("页面清理中拒绝重入释放"), (Context->bReleasingDemoOverlay = true, Context->ReleaseDemoOverlay()));
+    Context->bReleasingDemoOverlay = false;
     Catalog->PendingPluginPageId = TEXT("GamePlatformUI");
     Catalog->bPendingPluginPage = true;
     FDivineBeastsDemoRunSnapshot Failure;

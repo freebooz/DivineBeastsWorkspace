@@ -181,8 +181,10 @@ void UDivineBeastsDemoWorldSubsystem::OnOverlayAssetReady(
     if (auto* Catalog = Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>()) Catalog->StartPendingScenario(*World);
 }
 
-void UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
+bool UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
 {
+    if (bReleasingDemoOverlay) return false;
+    TGuardValue<bool> Releasing(bReleasingDemoOverlay, true);
     ++OverlayGeneration;
     if (auto* Manager = DemoUIManager.Get())
     {
@@ -193,7 +195,9 @@ void UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
         if (bRegisteredDemoScreen) Manager->UnregisterScreenDefinition(TEXT("DivineBeasts.Demo.Hub"));
     }
     DemoUIManager.Reset(); ActiveScreen.Reset(); PendingScreenRequestId.Invalidate(); bRegisteredDemoScreen = false;
+    PageScreenDefinition = nullptr;
     OpeningScreenModel.Reset(); SynchronouslyOpenedScreenRequestId.Invalidate();
+    bOpeningScreen = false; bSynchronousScreenFailure = false;
     if (UDivineBeastsDemoHubWidget* Widget = ActiveWidget.Get())
     {
         Widget->RemoveFromParent();
@@ -214,10 +218,14 @@ void UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
         UGameInstance* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
         if (IGamePlatformDataService* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr)
         {
-            Data->ReleaseResources(Lease);
+            const auto Released = Data->ReleaseResources(Lease);
+            if (!Released.IsSuccess())
+            { LastFeedback = FText::FromString(TEXT("开发页资源撤销失败，保留原租约并阻止新页面：") + Released.Message); return false; }
         }
+        else { LastFeedback = FText::FromString(TEXT("中央Data服务不可用，开发页租约未确认清理。")); return false; }
     }
     UILease = {};
+    return true;
 }
 
 

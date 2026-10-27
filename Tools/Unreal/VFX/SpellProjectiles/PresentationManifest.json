@@ -295,5 +295,37 @@
     "directories": [
       "/Game"
     ]
-  }
+  },
+  "retired_authors": [
+    {
+      "path": "Tools/Unreal/VFX/DevelopmentMagic/AuthorDevelopmentMagicVFXMonolith.py",
+      "mode": "all"
+    },
+    {
+      "path": "Tools/Unreal/VFX/DevelopmentMagic/AuthorDevelopmentCastVFXMonolith.py",
+      "mode": "all"
+    },
+    {
+      "path": "Tools/Unreal/VFX/DevelopmentMagic/BindFireIceV3PresentationUE58.py",
+      "mode": "all"
+    },
+    {
+      "path": "Tools/Unreal/VFX/DevelopmentMagic/RefineIceArrowGroundCastMonolith.py",
+      "mode": "all"
+    },
+    {
+      "path": "Tools/Unreal/VFX/DevelopmentMagic/AuthorIceArrowNiagara.py",
+      "mode": "stages",
+      "retired_stages": [
+        "Cast",
+        "Flight",
+        "Impact"
+      ],
+      "allowed_stages": [
+        "GroundRune",
+        "Launch",
+        "FrostResidue"
+      ]
+    }
+  ]
 }

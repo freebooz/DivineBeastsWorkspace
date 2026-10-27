@@ -30,6 +30,7 @@ void UDivineBeastsDemoHubScreen::NativeOnInitialized()
     if (FeatureList) FeatureList->OnItemSelectionChanged().AddUObject(this, &ThisClass::OnFeatureSelectionChanged);
     if (ScenarioList) ScenarioList->OnItemSelectionChanged().AddUObject(this, &ThisClass::OnScenarioSelectionChanged);
     if (RefreshButton) RefreshButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnRefreshClicked);
+    if (OpenPluginPageButton) OpenPluginPageButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnOpenPluginPageClicked);
     if (LaunchScenarioButton) LaunchScenarioButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnLaunchClicked);
     if (ExecuteScenarioButton) ExecuteScenarioButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnExecuteClicked);
     if (PauseScenarioButton) PauseScenarioButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnPauseClicked);
@@ -61,6 +62,12 @@ void UDivineBeastsDemoHubScreen::RefreshInitialState()
     // 保活本次模型并冻结页代次，返回后只更新原绑定；两个空指针相等不能代表绑定仍有效。
     const TStrongObjectPtr<UDivineBeastsDemoHubViewModel> SelectedModel(DemoModel);
     const int32 SelectedPageGeneration = SelectedModel->GetPageGeneration();
+    if (!SelectedModel->ConfigurePluginContext(FixedPluginId))
+    {
+        DetachViewModel();
+        if (OperationStatusText) OperationStatusText->SetText(FText::FromString(TEXT("页面固定插件与当前模型不一致，拒绝绑定。")));
+        return;
+    }
     auto* Instance = GetGameInstance();
     SelectedModel->BindCatalog(Instance ? Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>() : nullptr);
     if (IsActivated() && DemoModel && DemoModel == SelectedModel.Get() &&
@@ -79,6 +86,7 @@ void UDivineBeastsDemoHubScreen::DetachViewModel()
     };
     // 先撤销本宿主的命令资格与值缓存；移除样板/列表会同步进入Slate或蓝图，不能清掉重入的新模型。
     DemoModel = nullptr;
+    Filter = {};
     MenuItems.Reset(); ParameterItems.Reset(); PendingEditorReports.Reset(); ParametersForScenario = NAME_None;
     for (const TCHAR* Name:{TEXT("DemoDetailPage"),TEXT("DemoControlsPage"),TEXT("DemoReportPage")})
     {
@@ -93,7 +101,7 @@ void UDivineBeastsDemoHubScreen::DetachViewModel()
     }
     if (!StillOwnsCleanup()) return;
     for (UButton* Button : {RefreshButton.Get(), LaunchScenarioButton.Get(), ExecuteScenarioButton.Get(),
-        PauseScenarioButton.Get(), ResumeScenarioButton.Get(), StopScenarioButton.Get(), ResetDemoButton.Get(), EvidenceButton.Get()})
+        PauseScenarioButton.Get(), ResumeScenarioButton.Get(), StopScenarioButton.Get(), ResetDemoButton.Get(), EvidenceButton.Get(), OpenPluginPageButton.Get()})
         if (Button) Button->SetIsEnabled(false);
     if (PluginSearchInput) PluginSearchInput->SetIsEnabled(false);
     if (LayerFilterCombo) LayerFilterCombo->SetIsEnabled(false);
@@ -109,8 +117,10 @@ bool UDivineBeastsDemoHubScreen::NativeOnHandleBackAction()
 void UDivineBeastsDemoHubScreen::OnViewModelStateChanged(int32, int32 PageGeneration)
 {
     // 平台先核验可见代次；此处还核验实际模型，不能向已经EndPage的旧模型发送命令。
-    DemoModel = Cast<UDivineBeastsDemoHubViewModel>(GetViewModel());
-    if (DemoModel && DemoModel->IsPageActive() && DemoModel->GetPageGeneration() == PageGeneration) ApplySnapshot();
+    auto* Current = Cast<UDivineBeastsDemoHubViewModel>(GetViewModel());
+    if (Current != DemoModel) { DetachViewModel(); return; }
+    if (Current && Current == DemoModel && Current->GetFixedPluginId() == FixedPluginId &&
+        Current->IsPageActive() && Current->GetPageGeneration() == PageGeneration) ApplySnapshot();
 }
 void UDivineBeastsDemoHubScreen::OnSearchChanged(const FText& Text)
 { if (!bSynchronizing && DemoModel) { Filter.SearchText = Text.ToString(); DemoModel->SetFilter(Filter); } }
@@ -164,6 +174,9 @@ void UDivineBeastsDemoHubScreen::ApplySnapshot()
         if (!IsCurrent()) return;
     }
     const auto Snapshot = SelectedModel->GetMenuSnapshot();
+    if (OpenPluginPageButton) OpenPluginPageButton->SetIsEnabled(FixedPluginId.IsNone() && Snapshot.bCanOpenPluginPage);
+    if (PluginList) PluginList->SetIsEnabled(FixedPluginId.IsNone());
+    if (LayerFilterCombo) LayerFilterCombo->SetIsEnabled(FixedPluginId.IsNone());
     // 搜索框每次改变都会触发菜单快照。复用上一快照中稳定ID相同的虚拟化列表项，
     // 避免67个插件逐键重复NewObject/GC；失活时DetachViewModel清空本页对象。
     TArray<TObjectPtr<UDivineBeastsDemoMenuItem>> ReusableItems = MoveTemp(MenuItems);
@@ -283,6 +296,11 @@ void UDivineBeastsDemoHubScreen::SubmitOperation(FName Operation)
     if (!DemoModel->RequestOperation(Operation, Values) && OperationStatusText) OperationStatusText->SetText(FText::FromString(TEXT("命令未受理：检查案例、能力、参数或忙碌状态。")));
 }
 void UDivineBeastsDemoHubScreen::OnRefreshClicked() { if (DemoModel) DemoModel->RequestRefresh(); }
+void UDivineBeastsDemoHubScreen::OnOpenPluginPageClicked()
+{
+    if (DemoModel && FixedPluginId.IsNone() && !DemoModel->RequestPluginPage(DemoModel->GetMenuSnapshot().SelectedPluginId) && OperationStatusText)
+        OperationStatusText->SetText(FText::FromString(TEXT("独立插件页请求未受理；检查目录、开发资格与运行清理结果。")));
+}
 void UDivineBeastsDemoHubScreen::OnLaunchClicked() { if (DemoModel) DemoModel->RequestScenario(DemoModel->GetMenuSnapshot().SelectedScenarioId); }
 void UDivineBeastsDemoHubScreen::OnExecuteClicked() { SubmitOperation(TEXT("Execute")); }
 void UDivineBeastsDemoHubScreen::OnPauseClicked() { SubmitOperation(TEXT("Pause")); }

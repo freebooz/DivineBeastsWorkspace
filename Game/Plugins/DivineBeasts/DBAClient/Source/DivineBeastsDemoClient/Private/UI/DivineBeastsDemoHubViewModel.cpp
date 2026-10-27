@@ -133,6 +133,8 @@ bool UDivineBeastsDemoHubViewModel::SelectFeature(FName Id)
 bool UDivineBeastsDemoHubViewModel::SelectScenario(FName Id)
 {
     if (!IsPageActive()) return false;
+    if (!FixedPluginId.IsNone() && !Snapshot.Scenarios.ContainsByPredicate([this, Id](const auto& Row)
+        { return Row.Scenario.ScenarioId == Id && OwnsFeature(Row.Scenario.FeatureId); })) return false;
     if (!Snapshot.Scenarios.ContainsByPredicate([Id](const auto& Item) { return Item.Scenario.ScenarioId == Id; })) return false;
     Snapshot.SelectedScenarioId = Id; RebuildSnapshot(); return true;
 }
@@ -149,6 +151,7 @@ bool UDivineBeastsDemoHubViewModel::RequestScenario(FName Id)
         (!FixedPluginId.IsNone() && Snapshot.SelectedPluginId != FixedPluginId)) return false;
     if (Selected->Scenario.TemplateId == TEXT("DiagnosticMap"))
     {
+        if (!FixedPluginId.IsNone() && FixedPluginId != TEXT("GamePlatformDeveloperTools")) return false;
         return Catalog->OpenScenario(Id);
     }
     return OwnsFeature(Selected->Scenario.FeatureId) && Catalog->PreflightScenario(Id).bCanStart && Catalog->OpenScenario(Id);
@@ -236,6 +239,7 @@ void UDivineBeastsDemoHubViewModel::RebuildSnapshot()
         ? PreviousFeature : (Snapshot.Features.IsEmpty() ? NAME_None : Snapshot.Features[0].Feature.FeatureId);
     for (const auto& Scenario : Catalog->GetFeatureScenarios(Snapshot.SelectedFeatureId))
     {
+        if (!OwnsFeature(Scenario.FeatureId)) continue;
         if (!Filter.RunMode.IsNone() && Filter.RunMode != Scenario.RunMode) continue;
         FDivineBeastsDemoScenarioMenuEntry Row; Row.Scenario = Scenario; Row.Preflight = Catalog->PreflightScenario(Scenario.ScenarioId);
         Snapshot.Scenarios.Add(MoveTemp(Row));
@@ -250,6 +254,7 @@ void UDivineBeastsDemoHubViewModel::RebuildSnapshot()
             return Item.PluginId == DiagnosticPluginId;
         });
     if (SelectedDiagnosticPlugin && Snapshot.SelectedFeatureId.IsNone() &&
+        (FixedPluginId.IsNone() || FixedPluginId == TEXT("GamePlatformDeveloperTools")) &&
         (SelectedDiagnosticPlugin->bEnabled ||
             SelectedDiagnosticPlugin->PluginId == TEXT("GamePlatformDeveloperTools")) &&
         (Filter.RunMode.IsNone() || Filter.RunMode == TEXT("editor")))

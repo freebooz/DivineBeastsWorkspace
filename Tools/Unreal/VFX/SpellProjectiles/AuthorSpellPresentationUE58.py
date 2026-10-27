@@ -13,7 +13,7 @@ import unreal as u
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from SpellPresentationContract import ROOT, load_manifest, required_packages
+from SpellPresentationContract import ROOT, load_manifest, required_packages, inspect_migration_source_candidates
 
 OUT = ROOT / 'Saved/Validation/SingleImplementationConvergence20261027/SpellPresentation'
 
@@ -31,6 +31,7 @@ def migrate():
     options = u.AssetRegistryDependencyOptions(include_soft_package_references=True, include_hard_package_references=True)
     queue = [r['system'] if u.load_asset(r['system']) else r['source_system'] for r in data['bindings']]
     visited, dependencies = set(), []
+    registry_candidates = set(queue)
     while queue:
         package = queue.pop()
         if package in visited:
@@ -38,6 +39,7 @@ def migrate():
         visited.add(package)
         for value in registry.get_dependencies(package, options):
             path = str(value)
+            registry_candidates.add(path)
             if path.startswith('/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/'):
                 dependencies.append(path)
                 queue.append(path)
@@ -67,12 +69,14 @@ def migrate():
         directory, name = row['system'].rsplit('/', 1)
         planned.append(u.AssetRenameData(asset=source, new_package_path=directory, new_name=name))
         mapping.append({'source': row['source_system'], 'target': row['system'], 'class': 'NiagaraSystem'})
-    # 原系统、稳定Definition与实际直接反向引用先备份，再进入原生rename。
+    # 此Package查询与已读引擎AssetRenameManager的RegistryPackage/NoRequirements匹配；
+    # 它预测普通源/引用保存集，不等于截获rename内部全部保存。先补本地化/外部源候选预检。
     backup_packages = {v['source'] for v in mapping} | {r['definition'] for r in data['bindings']}
     referencers = {v['source']: [str(p) for p in registry.get_referencers(v['source'], options)] for v in mapping}
     backup_packages.update(p for values in referencers.values() for p in values)
     mounts = {p.stem: p.parent / 'Content' for p in (ROOT / 'Game/Plugins').rglob('*.uplugin')}
     mounts['Game'] = ROOT / 'Game/Content'
+    candidate_preflight = inspect_migration_source_candidates([v['source'] for v in mapping], mounts, registry_candidates | backup_packages)
     for path in sorted(backup_packages):
         mount, relative = path.lstrip('/').split('/', 1)
         assert mount in mounts, '反向引用挂载点未知: ' + path
@@ -85,7 +89,8 @@ def migrate():
         if not backup.exists():
             shutil.copy2(source_file, backup)
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / 'NativeMigrationPlan.json').write_text(json.dumps({'Mapping': mapping, 'Referencers': referencers}, ensure_ascii=False, indent=2), 'utf-8')
+    (OUT / 'NativeMigrationPlan.json').write_text(json.dumps({'Mapping': mapping, 'Referencers': referencers, 'SourceCandidatePreflight': candidate_preflight,
+                'SaveBoundary': 'rename_assets saves internally before returning; predicted backup set plus post-call residual dirty diagnostics'}, ensure_ascii=False, indent=2), 'utf-8')
     if planned:
         assert u.AssetToolsHelpers.get_asset_tools().rename_assets(planned), '原生rename失败，停止后续发布'
     # 保存实际规范对象；保留旧路径引擎redirector以供既有引用追踪，禁止生成第二套真实系统。
@@ -95,7 +100,8 @@ def migrate():
         assert u.EditorAssetLibrary.save_loaded_asset(system, False), row['system']
     for row in mapping:
         assert u.EditorAssetLibrary.save_asset(row['target'], False), row['target']
-    # 只保存计划内的迁移目标/已备份反向引用，不扩大为全编辑器地图或内容保存。
+    # rename_assets返回前已经可能保存源/目标/引用。这里仅检查调用后残留dirty并窄保存；
+    # 不是阻止或回滚引擎内部保存的前置门禁，不能以此宣称没有其它包曾被引擎保存。
     permitted = backup_packages | {v['target'] for v in mapping}
     dirty = list(u.EditorLoadingAndSavingUtils.get_dirty_content_packages()) + list(u.EditorLoadingAndSavingUtils.get_dirty_map_packages())
     unexpected = [p.get_name() for p in dirty if p.get_name() not in permitted]

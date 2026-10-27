@@ -12,6 +12,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Development/DivineBeastsPluginDemoMode.h"
 
 namespace
 {
@@ -20,22 +21,59 @@ const FSoftObjectPath DemoRoot(TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/
 const FSoftObjectPath DemoScreenDefinition(TEXT("/DBAUIPack_Core/Development/PluginDemos/Definitions/DA_DBA_PluginDemoHubScreen.DA_DBA_PluginDemoHubScreen"));
 const FName DemoScreenId(TEXT("DivineBeasts.Demo.Hub"));
 }
-void UDivineBeastsDemoWorldSubsystem::RequestScenarioOverlay(UWorld& World)
+bool UDivineBeastsDemoWorldSubsystem::RequestPluginPage(FName Id)
 {
-    if (bOverlayClosing || OverlayGeneration == MAX_uint64) return;
-    ReleaseDemoOverlay(); const uint64 Generation = OverlayGeneration;
+    auto* World = GetWorld();
+    if (!World || World != SourceWorld.Get() || World->bIsTearingDown || bOverlayClosing ||
+        !FDivineBeastsPluginDemoMode::IsEnabled() || HasActiveScenario() || bReleasingDemoOverlay) return false;
+    const auto Cleanup = GetRunSnapshot().CleanupResult;
+    if (Cleanup.Status != EGamePlatformResultStatus::NotExecuted && !Cleanup.IsSuccess())
+    { LastFeedback = FText::FromString(TEXT("当前运行清理失败，保留当前页诊断。")); return false; }
+    auto* Instance = World->GetGameInstance();
+    auto* Catalog = Instance ? Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>() : nullptr;
+    FSoftObjectPath Widget;
+    if (!Id.IsNone() && (!Catalog || !Catalog->FindPluginPageAsset(Id, Widget)))
+    { LastFeedback = FText::FromString(TEXT("目录没有该插件的合法独立页，禁止猜测或跨插件回退。")); return false; }
+    PagePluginId = Id; PageWidgetAsset = Widget; bPageRouteInitialized = true;
+    return RequestScenarioOverlay(*World);
+}
+bool UDivineBeastsDemoWorldSubsystem::RequestScenarioOverlay(UWorld& World)
+{
+    if (bOverlayClosing || OverlayGeneration == MAX_uint64) return false;
+    if (!ReleaseDemoOverlay()) return false;
+    const uint64 Generation = OverlayGeneration;
     auto* Instance = World.GetGameInstance(); auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
-    if (!Data) { LastFeedback = FText::FromString(TEXT("新案例页面缺中央Data服务。")); return; }
+    if (!Data) { LastFeedback = FText::FromString(TEXT("新案例页面缺中央Data服务。")); return false; }
+    // 新世界沿用目录持有的页面身份；运行仍由本World唯一状态机接管，UI不重放Prepare。
+    if (!bPageRouteInitialized)
+    {
+        bPageRouteInitialized = true;
+        auto* Catalog = Instance->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>();
+        if (Catalog && !Catalog->GetPluginPageContext().IsNone())
+        {
+            FSoftObjectPath Widget;
+            if (!Catalog->FindPluginPageAsset(Catalog->GetPluginPageContext(), Widget))
+            { LastFeedback = FText::FromString(TEXT("旅行后固定插件页未就绪，不回退到其他插件。")); return false; }
+            PagePluginId = Catalog->GetPluginPageContext(); PageWidgetAsset = Widget;
+        }
+    }
     TWeakObjectPtr<UDivineBeastsDemoWorldSubsystem> WeakThis(this); FGamePlatformResult Accepted;
-    UILease = Data->AcquireResources({DemoRoot, DemoScreenDefinition}, EGamePlatformDataLifetime::World, this,
+    TArray<FSoftObjectPath> Resources{DemoRoot, DemoScreenDefinition};
+    if (!PageWidgetAsset.IsNull()) Resources.Add(PageWidgetAsset);
+    UILease = Data->AcquireResources(Resources, EGamePlatformDataLifetime::World, this,
         [WeakThis, Generation](const auto& Lease, const auto& Result)
         { if (auto* Self = WeakThis.Get()) Self->OnScenarioOverlayReady(Generation, Lease, Result); }, Accepted);
     if (!Accepted.IsSuccess()) LastFeedback = FText::FromString(TEXT("新页面资源请求拒绝：") + Accepted.Message);
+    return Accepted.IsSuccess() && UILease.IsValid();
 }
 void UDivineBeastsDemoWorldSubsystem::OnScenarioOverlayReady(uint64 Generation, const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result)
 {
     auto* World = GetWorld();
-    if (bOverlayClosing || Generation != OverlayGeneration || !World || World->bIsTearingDown || World != SourceWorld.Get()) return;
+    if (bOverlayClosing || Generation != OverlayGeneration || !World || World->bIsTearingDown || World != SourceWorld.Get())
+    {
+        // ReleaseDemoOverlay已撤销原租约；旧回调不得释放新代次或重新接管页面。
+        return;
+    }
     if (!Result.IsSuccess() || !Lease.IsValid() || Lease.ScopeId != UILease.ScopeId || Lease.LeaseId != UILease.LeaseId ||
         Lease.Generation != UILease.Generation || Lease.IssuerProof != UILease.IssuerProof || Lease.DefinitionId != UILease.DefinitionId ||
         Lease.Bundles != UILease.Bundles || Lease.ResourcePaths != UILease.ResourcePaths)
@@ -48,6 +86,25 @@ void UDivineBeastsDemoWorldSubsystem::OnScenarioOverlayReady(uint64 Generation, 
     if (!Root || !Root->IsChildOf(UGamePlatformUILayerStack::StaticClass()) || Root->HasAnyClassFlags(CLASS_Abstract) || !Manager ||
         !Definition || Definition->ScreenId != DemoScreenId || !Definition->ValidateDefinition(Error))
     { LastFeedback = FText::FromString(TEXT("新RootLayout/ScreenDefinition/本地玩家不完整：") + Error.ToString()); return; }
+    // 蓝图固定PluginId与Catalog软类必须一致；不能让一个合法类显示/执行另一个插件。
+    UClass* WidgetClass = PageWidgetAsset.IsNull() ? Definition->WidgetClass.Get() : Cast<UClass>(PageWidgetAsset.ResolveObject());
+    if (!WidgetClass && PageWidgetAsset.IsNull()) WidgetClass = Cast<UClass>(Definition->WidgetClass.ToSoftObjectPath().ResolveObject());
+    const auto* Defaults = WidgetClass && WidgetClass->IsChildOf(UDivineBeastsDemoHubScreen::StaticClass()) &&
+        !WidgetClass->HasAnyClassFlags(CLASS_Abstract) ? Cast<UDivineBeastsDemoHubScreen>(WidgetClass->GetDefaultObject()) : nullptr;
+    if ((!PagePluginId.IsNone() && (!Defaults || Defaults->GetFixedPluginId() != PagePluginId)) ||
+        (Defaults && Defaults->GetFixedPluginId() != PagePluginId))
+    { LastFeedback = FText::FromString(TEXT("独立页父类或固定插件身份与目录不一致。")); return; }
+    if (!PagePluginId.IsNone())
+    {
+        PageScreenDefinition = DuplicateObject<UGamePlatformUIScreenDefinition>(Definition, this);
+        PageScreenDefinition->WidgetClass = TSoftClassPtr<UGamePlatformUIScreen>(PageWidgetAsset);
+        // 禁止平台变体或默认回退把已核验的固定页换为另一插件。
+        PageScreenDefinition->PlatformWidgetVariants.Reset();
+        PageScreenDefinition->bSurvivesTravel = false;
+        Definition = PageScreenDefinition;
+        if (!Definition->ValidateDefinition(Error))
+        { LastFeedback = Error; return; }
+    }
     if (Manager->GetRootLayout() && Manager->GetRootLayout()->GetClass() != Root)
     { LastFeedback = FText::FromString(TEXT("本地玩家已有另一根布局，开发页不接管正式界面所有权。")); return; }
     if (!Manager->GetRootLayout() && !Manager->InstallRootLayoutClass(Root))
@@ -60,10 +117,14 @@ void UDivineBeastsDemoWorldSubsystem::OnScenarioOverlayReady(uint64 Generation, 
     Manager->OnScreenOpened.AddUniqueDynamic(this, &ThisClass::OnDemoScreenOpened);
     Manager->OnScreenOpenFailed.AddUniqueDynamic(this, &ThisClass::OnDemoScreenFailed);
     const TStrongObjectPtr<UDivineBeastsDemoHubViewModel> Model(NewObject<UDivineBeastsDemoHubViewModel>(this));
+    if (!Model->ConfigurePluginContext(PagePluginId))
+    { LastFeedback = FText::FromString(TEXT("固定插件上下文配置失败。")); return; }
     Model->BindCatalog(World->GetGameInstance()->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>());
     bOpeningScreen = true; bSynchronousScreenFailure = false; OpeningScreenModel=Model.Get();
     SynchronouslyOpenedScreenRequestId.Invalidate();
     const auto Request = Manager->OpenScreenAsync(DemoScreenId, Model.Get());
+    if (bOverlayClosing || Generation != OverlayGeneration)
+    { if (Request.RequestId.IsValid()) Manager->CancelOpen(Request.RequestId); return; }
     bOpeningScreen = false;
     OpeningScreenModel.Reset();
     if (!bSynchronousScreenFailure && !bOverlayClosing && Generation == OverlayGeneration)
@@ -81,7 +142,9 @@ void UDivineBeastsDemoWorldSubsystem::OnDemoScreenOpened(FGuid RequestId, FName 
     }
     else if(RequestId!=PendingScreenRequestId)return;
     PendingScreenRequestId.Invalidate();
-    if (!Cast<UDivineBeastsDemoHubScreen>(Screen))
+    const auto* Page = Cast<UDivineBeastsDemoHubScreen>(Screen);
+    const auto* Model = Screen ? Cast<UDivineBeastsDemoHubViewModel>(Screen->GetViewModel()) : nullptr;
+    if (!Page || !Model || Page->GetFixedPluginId() != PagePluginId || Model->GetFixedPluginId() != PagePluginId)
     { LastFeedback = FText::FromString(TEXT("Monolith新页面父类不匹配。")); if (auto* Manager = DemoUIManager.Get()) Manager->CloseScreen(Screen); return; }
     ActiveScreen = Screen; LastFeedback = FText::FromString(TEXT("开发目录页面已入平台层栈，未进行人工核验。"));
     if(auto* World=GetWorld())if(auto* Instance=World->GetGameInstance())

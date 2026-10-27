@@ -43,6 +43,7 @@ bool ResolveLayer(const FString& Relative, EDivineBeastsDemoLayer& Out)
     if (Relative.StartsWith(TEXT("DivineBeasts/"))) { Out = EDivineBeastsDemoLayer::Project; return true; }
     if (Relative.StartsWith(TEXT("MobaCommon/"))) { Out = EDivineBeastsDemoLayer::Moba; return true; }
     if (Relative.StartsWith(TEXT("GamePlatform/"))) { Out = EDivineBeastsDemoLayer::Platform; return true; }
+    if (Relative.StartsWith(TEXT("ThirdParty/Editor/"))) { Out = EDivineBeastsDemoLayer::Project; return true; }
     return false;
 }
 /** 完整签发身份比较，不只比较可复用槽位；回调RequestState可由Loading转终态。 */
@@ -95,6 +96,7 @@ void UDivineBeastsDemoCatalogSubsystem::Deinitialize()
         }
     }
     PrivateState.Reset(); Plugins.Reset(); Scenarios.Reset(); LastOperationMessage = FText::GetEmpty();
+    PendingPluginPageId = NAME_None; PluginPageContext = NAME_None; bPendingPluginPage = false; bDirectPluginRouteConsumed = false;
     Super::Deinitialize();
 }
 void UDivineBeastsDemoCatalogSubsystem::RefreshCatalog()
@@ -130,6 +132,7 @@ void UDivineBeastsDemoCatalogSubsystem::RefreshCatalog()
         FDivineBeastsDemoPlugin Item;
         Item.PluginId = Id; Item.DisplayName = FText::FromString(Plugin->GetDescriptor().FriendlyName);
         Item.Description = Plugin->GetDescriptor().Description; Item.Layer = Layer; Item.bEnabled = Plugin->IsEnabled();
+        Item.SourceKind = Directory.RightChop(Prefix.Len()).StartsWith(TEXT("ThirdParty/")) ? TEXT("third_party") : TEXT("first_party");
         FoundPlugins.Add(MoveTemp(Item));
     }
     FoundPlugins.Sort([](const auto& A, const auto& B) { return A.PluginId.ToString() < B.PluginId.ToString(); });
@@ -230,6 +233,17 @@ void UDivineBeastsDemoCatalogSubsystem::OnCatalogDefinitionReady(uint64 Generati
         ? TEXT("完整功能目录已发布；各案例仍需独立预检和实际运行。") : Published.Message);
     RebuildScenarioProjection();
     OnCatalogChanged.Broadcast();
+    // 目录完整就绪事件才消费直达意图；与中心按钮使用相同目录/WorldUI路径，无轮询和旁路。
+    if (Published.IsSuccess() && !bDirectPluginRouteConsumed)
+    {
+        FString RouteError;
+        const FName Requested = FDivineBeastsPluginDemoMode::GetRequestedPluginTest(&RouteError);
+        if (!RouteError.IsEmpty())
+        { bDirectPluginRouteConsumed = true; LastOperationMessage = FText::FromString(RouteError); OnCatalogChanged.Broadcast(); }
+        if (!Requested.IsNone() && GetWorld() && UWorld::RemovePIEPrefix(GetWorld()->GetOutermost()->GetName()) ==
+            FDivineBeastsPluginDemoMode::GetHubMapPackage())
+        { bDirectPluginRouteConsumed = true; OpenPluginPage(Requested); }
+    }
 }
 void UDivineBeastsDemoCatalogSubsystem::RebuildScenarioProjection()
 {
@@ -291,6 +305,42 @@ FString UDivineBeastsDemoCatalogSubsystem::GetSourceFingerprint() const
 {
     return PrivateState ? PrivateState->Snapshot.GetSourceFingerprint() : FString();
 }
+bool UDivineBeastsDemoCatalogSubsystem::FindPluginPageAsset(FName Id, FSoftObjectPath& Out) const
+{
+    Out.Reset();
+    if (!PrivateState || PrivateState->bClosing || !PrivateState->Snapshot.IsPublished() ||
+        !Plugins.ContainsByPredicate([Id](const auto& Plugin) { return Plugin.PluginId == Id; })) return false;
+    auto* Instance = GetGameInstance();
+    auto* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
+    const auto* Definition = Data ? Cast<UDivineBeastsDemoCatalogDefinition>(Data->GetLoadedDefinition(PrivateState->ActiveLease)) : nullptr;
+    if (!Definition || Definition->ManualPageContractVersion != 1) return false;
+    const auto* Plugin = Definition->Plugins.FindByPredicate([Id](const auto& Entry) { return Entry.PluginId == Id; });
+    if (!Plugin || Plugin->TestPageAsset.IsNull()) return false;
+    Out = Plugin->TestPageAsset;
+    return true;
+}
+bool UDivineBeastsDemoCatalogSubsystem::OpenPluginPage(FName Id)
+{
+    FSoftObjectPath Page;
+    auto* World = GetWorld();
+    if (!PrivateState || !World || World->bIsTearingDown || !FDivineBeastsPluginDemoMode::IsEnabled() ||
+        !FindPluginPageAsset(Id, Page))
+    { LastOperationMessage = FText::FromString(TEXT("插件独立页未登记、目录尚未就绪或开发资格无效。")); return false; }
+    auto* Runner = World->GetSubsystem<UDivineBeastsDemoWorldSubsystem>();
+    if (!Runner) { LastOperationMessage = FText::FromString(TEXT("插件页缺少当前World演示服务。")); return false; }
+    if (!Runner->HasActiveScenario() && Runner->GetRunSnapshot().CleanupResult.Status != EGamePlatformResultStatus::NotExecuted &&
+        !Runner->GetRunSnapshot().CleanupResult.IsSuccess())
+    { LastOperationMessage = FText::FromString(TEXT("当前运行清理失败，禁止切换插件页。")); return false; }
+    PendingPluginPageId = Id; bPendingPluginPage = true;
+    PrivateState->PendingMap = NAME_None; PrivateState->PendingScenarioId = NAME_None;
+    if (Runner->HasActiveScenario())
+    {
+        const bool Accepted = Runner->RequestScenarioStop(FGamePlatformResult::Cancelled(TEXT("打开独立插件页前先清理当前运行。")));
+        if (!Accepted) { bPendingPluginPage = false; PendingPluginPageId = NAME_None; }
+        return Accepted;
+    }
+    return ContinuePendingNavigation();
+}
 FDivineBeastsDemoPreflightResult UDivineBeastsDemoCatalogSubsystem::PreflightScenario(FName ScenarioId) const
 {
     FDivineBeastsDemoPreflightResult Out;
@@ -308,6 +358,13 @@ FDivineBeastsDemoPreflightResult UDivineBeastsDemoCatalogSubsystem::PreflightSce
     const FName Target(TEXT("Game"));
 #endif
     if (!Scenario.Targets.Contains(Target)) Block(Out, TEXT("Demo.TargetNotAllowed"), TEXT("当前目标不在案例允许列表。"));
+    if (PrivateState)
+    {
+        const auto* Feature = PrivateState->Snapshot.GetAllFeatures().FindByPredicate([&Scenario](const auto& Entry)
+            { return Entry.FeatureId == Scenario.FeatureId; });
+        const auto* Owner = Feature ? Plugins.FindByPredicate([Feature](const auto& Plugin) { return Plugin.PluginId == Feature->PluginId; }) : nullptr;
+        if (!Owner || !Owner->bEnabled) Block(Out, TEXT("Demo.OwnerPluginDisabled"), TEXT("案例所属插件未启用，范围可查看但不能执行。"));
+    }
     for (FName Required : Scenario.RequiredPlugins)
     {
         const auto* Plugin = Plugins.FindByPredicate([Required](const auto& Item) { return Item.PluginId == Required; });
@@ -330,6 +387,7 @@ FDivineBeastsDemoPreflightResult UDivineBeastsDemoCatalogSubsystem::PreflightSce
 bool UDivineBeastsDemoCatalogSubsystem::OpenScenario(FName InputId)
 {
     if (!PrivateState || !FDivineBeastsPluginDemoMode::IsEnabled() || !GetWorld()) return false;
+    bPendingPluginPage = false; PendingPluginPageId = NAME_None;
     FName Resolved;
     const auto Resolution = PrivateState->Snapshot.ResolveIdentity(InputId, Resolved);
     const auto* Item = Resolution.IsSuccess() ? Scenarios.FindByPredicate([Resolved](const auto& Row) { return Row.ScenarioId == Resolved; }) : nullptr;
@@ -358,7 +416,18 @@ bool UDivineBeastsDemoCatalogSubsystem::ReturnToHub()
     if (!FPackageName::DoesPackageExist(Map))
     { LastOperationMessage = FText::FromString(TEXT("总览地图资产缺失。")); return false; }
     if (!PrivateState) return false;
+    // Hub内返回中心只更换本地页面，不重载世界、不重放案例初始化。
+    if (UWorld::RemovePIEPrefix(GetWorld()->GetOutermost()->GetName()) == Map)
+    {
+        bPendingPluginPage = true; PendingPluginPageId = NAME_None;
+        PrivateState->PendingMap = NAME_None; PrivateState->PendingScenarioId = NAME_None;
+        if (auto* Runner = GetWorld()->GetSubsystem<UDivineBeastsDemoWorldSubsystem>(); Runner && Runner->HasActiveScenario())
+            return Runner->RequestScenarioStop(FGamePlatformResult::Cancelled(TEXT("返回中心前清理当前运行。")));
+        return ContinuePendingNavigation();
+    }
+    bPendingPluginPage = false; PendingPluginPageId = NAME_None;
     PrivateState->PendingScenarioId = NAME_None; PrivateState->PendingMap = FName(*Map);
+    PluginPageContext = NAME_None;
     if (auto* Runner = GetWorld()->GetSubsystem<UDivineBeastsDemoWorldSubsystem>(); Runner && Runner->HasActiveScenario())
         return Runner->RequestScenarioStop(FGamePlatformResult::Cancelled(TEXT("返回总览，先清理本案例。")));
     return ContinuePendingNavigation();
@@ -393,6 +462,16 @@ TUniquePtr<IDivineBeastsDemoScenarioAdapter> UDivineBeastsDemoCatalogSubsystem::
 FName UDivineBeastsDemoCatalogSubsystem::GetPendingScenarioId() const { return PrivateState ? PrivateState->PendingScenarioId : NAME_None; }
 bool UDivineBeastsDemoCatalogSubsystem::ContinuePendingNavigation()
 {
+    if (bPendingPluginPage && GetWorld())
+    {
+        const FName Id = PendingPluginPageId;
+        bPendingPluginPage = false; PendingPluginPageId = NAME_None;
+        auto* Runner = GetWorld()->GetSubsystem<UDivineBeastsDemoWorldSubsystem>();
+        const bool Accepted = Runner && Runner->RequestPluginPage(Id);
+        if (Accepted) PluginPageContext = Id;
+        LastOperationMessage = FText::FromString(Accepted ? TEXT("独立页资源请求已受理，页面打开和人工验收尚待确认。") : TEXT("当前World拒绝独立页请求；请检查页面资源及清理状态。"));
+        return Accepted;
+    }
     if (!PrivateState || !GetWorld() || PrivateState->PendingMap.IsNone()) return false;
     const FName Map = PrivateState->PendingMap;
     const FName Current(*UWorld::RemovePIEPrefix(GetWorld()->GetOutermost()->GetName()));
@@ -416,12 +495,14 @@ void UDivineBeastsDemoCatalogSubsystem::StartPendingScenario(UWorld& World)
 }
 void UDivineBeastsDemoCatalogSubsystem::OnScenarioStopped(UWorld& World, const FDivineBeastsDemoRunSnapshot& Snapshot)
 {
-    if (!PrivateState || World.GetGameInstance() != GetGameInstance()) return;
+    if (World.GetGameInstance() != GetGameInstance()) return;
     if (auto* Runner = World.GetSubsystem<UDivineBeastsDemoWorldSubsystem>(); Runner && Runner->HasActiveScenario()) return;
     if (!Snapshot.CleanupResult.IsSuccess())
     {
-        PrivateState->PendingMap = NAME_None; PrivateState->PendingScenarioId = NAME_None;
+        bPendingPluginPage = false; PendingPluginPageId = NAME_None;
+        if (PrivateState) { PrivateState->PendingMap = NAME_None; PrivateState->PendingScenarioId = NAME_None; }
         LastOperationMessage = FText::FromString(Snapshot.CleanupResult.Message); OnCatalogChanged.Broadcast(); return;
     }
+    if (!PrivateState) return;
     ContinuePendingNavigation();
 }

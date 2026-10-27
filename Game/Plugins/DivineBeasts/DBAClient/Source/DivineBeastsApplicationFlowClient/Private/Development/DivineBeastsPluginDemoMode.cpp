@@ -59,8 +59,9 @@ bool FDivineBeastsPluginDemoMode::IsAllowedPluginTestArguments(bool bDevelopment
     return IsAllowedArguments(bDevelopment, bInteractiveClient, bExplicitOptIn, bConflictingDevelopmentMode, Map)
         && Map.Equals(GetHubMapPackage(), ESearchCase::CaseSensitive) && IsValidPluginIdText(Id);
 }
-FName FDivineBeastsPluginDemoMode::GetRequestedPluginTest()
+FName FDivineBeastsPluginDemoMode::GetRequestedPluginTest(FString* OutError)
 {
+    if (OutError) OutError->Reset();
 #if UE_BUILD_SHIPPING || UE_BUILD_TEST
     return NAME_None;
 #else
@@ -69,7 +70,8 @@ FName FDivineBeastsPluginDemoMode::GetRequestedPluginTest()
     if (!FParse::Value(Args, TEXT("DBAPluginTest="), Id)) return NAME_None;
     const bool bOptIn = FParse::Param(Args, TEXT("DBAPluginDemo")) && FParse::Value(Args, TEXT("DBAPluginDemoMap="), Map);
     const bool bConflict = FParse::Param(Args, TEXT("FoundationStandalone")) || FParse::Param(Args, TEXT("FoundationOnlineIntegration"));
-    return IsAllowedPluginTestArguments(true, !IsRunningDedicatedServer() && !IsRunningCommandlet(), bOptIn, bConflict, Map, Id)
-        ? FName(*Id) : NAME_None;
+    if (IsAllowedPluginTestArguments(true, !IsRunningDedicatedServer() && !IsRunningCommandlet(), bOptIn, bConflict, Map, Id)) return FName(*Id);
+    if (OutError) *OutError = TEXT("DBAPluginTest要求合法PluginId、显式DBAPluginDemo和精确Hub地图资格。");
+    return NAME_None;
 #endif
 }

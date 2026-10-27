@@ -16,7 +16,15 @@ class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoHubScreen : public UGamePlatfo
     GENERATED_BODY()
     /** 只允许原生回归检查真实选择委托；不增加运行时测试入口或可视控件树。 */
     friend class FDivineBeastsDemoKeyboardSelectionTest;
+    friend class FDivineBeastsIndependentPluginPageTest;
+public:
+    /** 读取Monolith蓝图默认上下文，WorldUI据此核对软类与插件身份，不改写类默认对象。 */
+    FName GetFixedPluginId() const { return FixedPluginId; }
 protected:
+    /** None为总览；70个Monolith独立页面按其真实PluginId设置，仅默认值可编辑。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo") FName FixedPluginId;
+    /** 中心显式打开选中插件独立页，依然走目录/Data/UIManager唯一链路。 */
+    UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<class UButton> OpenPluginPageButton;
     virtual void NativeOnInitialized() override;
     /** 使用平台受激活/页面代次保护的钩子，活动中换VM也会重新绑定当前模型。 */
     virtual void BindUIEvents() override;
@@ -82,6 +90,7 @@ private:
     UFUNCTION() void OnSearchChanged(const FText& Text);
     UFUNCTION() void OnLayerChanged(FString Option, ESelectInfo::Type SelectionType);
     UFUNCTION() void OnRefreshClicked();
+    UFUNCTION() void OnOpenPluginPageClicked();
     UFUNCTION() void OnLaunchClicked();
     UFUNCTION() void OnExecuteClicked();
     UFUNCTION() void OnPauseClicked();

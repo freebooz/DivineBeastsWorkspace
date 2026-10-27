@@ -39,6 +39,8 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoPlugin
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 DiscoveredMapCount = 0;
     /** 作者范围审计状态；未加载完整定义时unreviewed，不表示功能已经实现。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName FeatureAuditStatus = TEXT("unreviewed");
+    /** 来源独立于三层归属；第三方Editor工具不会成为第四架构层。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName SourceKind = TEXT("first_party");
 };
 
 /** 从实际开发地图发现的演示候选，未完成视觉验收不能标记“通过”。 */
@@ -75,6 +77,7 @@ UCLASS()
 class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoCatalogSubsystem final : public UGameInstanceSubsystem
 {
     GENERATED_BODY()
+    friend class FDivineBeastsIndependentPluginPageTest;
 public:
     virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -110,6 +113,12 @@ public:
     TArray<FDivineBeastsDemoReviewCaseDefinition> GetReviewCases() const;
     /** 当前完整目录作者源指纹，不冒充实际加载模块指纹。 */
     FString GetSourceFingerprint() const;
+    /** 完整已发布目录中的独立页软类路径；仅查询，不执行同步加载；禁用插件仍可查看。 */
+    bool FindPluginPageAsset(FName PluginId, FSoftObjectPath& OutPageAsset) const;
+    /** 同一受控路由服务于中心按钮和DBAPluginTest；先结束当前运行，清理失败拒绝切页。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo") bool OpenPluginPage(FName PluginId);
+    /** 旅行后仍沿用请求页的固定上下文；None表示中心，不拥有世界运行或页面租约。 */
+    FName GetPluginPageContext() const { return PluginPageContext; }
     /** 事件所有者为本游戏实例；调用者持委托句柄并在失活/退出解绑。 */
     FDivineBeastsDemoCatalogChanged OnCatalogChanged;
     /** 游戏线程开发组合根注册真实工厂；重复/关闭返回无效完整句柄。 */
@@ -141,6 +150,11 @@ public:
     FText GetLastOperationMessage() const { return LastOperationMessage; }
 
 private:
+    /** 清理等待中的页面意图；None在bPendingPluginPage为true时表示中心。 */
+    FName PendingPluginPageId;
+    FName PluginPageContext;
+    bool bPendingPluginPage = false;
+    bool bDirectPluginRouteConsumed = false;
     /** 私有快照、Data完整租约和请求代次；无进程全局缓存。 */
     TSharedPtr<FDivineBeastsDemoCatalogPrivateState> PrivateState;
     /** 在完整Data回调中验证候选后发布；旧代次只撤销自己的租约。 */

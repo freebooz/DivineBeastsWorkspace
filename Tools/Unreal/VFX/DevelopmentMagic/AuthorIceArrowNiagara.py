@@ -3,11 +3,14 @@
 """SSLM冰箭分阶段Niagara作者：只复用既有Monolith协议和平台VFX播放器。
 先确认本任务编辑器和母材质，再创建共享GPU外观模块及独立系统。每一步保存请求/响应，
 失败立即停止，不删除/重建已存在的系统。所有运动仅为外观，不写服务器碰撞、伤害或控制。
---system选择单阶段；省略时按Cast→GroundRune→Launch→Flight→Impact→FrostResidue执行。
+仅允许显式选择仍独有的辅助阶段；退休阶段及包含退休阶段的默认批次在任何连接/写入前拒绝。
 """
 from pathlib import Path
 import argparse, importlib.util, json
+import sys
 ROOT=Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT/'Tools/Unreal/VFX/SpellProjectiles'))
+from SpellPresentationContract import guard_authoring
 DEST='/DBAPresentationPack_Core/VFX/IceArrow'
 MODULE=DEST+'/Niagara/NM_DBA_IceArrowMotion'
 HLSL=r'''#if GPU_SIMULATION
@@ -79,6 +82,7 @@ def ensure_module(p):
 
 def author_one(p,stage):
     """先真实创建发射器，再绑定材质/网格和寿命，GPU包围盒有限，编译后保存。"""
+    guard_authoring(__file__, [stage])
     path=DEST+'/Niagara/NS_DBA_IceArrow_'+stage
     p.editor_python("import unreal\nassert not unreal.EditorAssetLibrary.does_asset_exist('"+path+"'),'阶段资产已存在，拒绝盲目重建'")
     emitters=[]
@@ -116,6 +120,7 @@ def main():
     """默认只展示阶段；--apply才调用已拥有的编辑器进行真实资产制作。"""
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--apply',action='store_true');parser.add_argument('--system',choices=tuple(SYSTEMS));args=parser.parse_args()
     stages=[args.system] if args.system else list(SYSTEMS)
+    guard_authoring(__file__, stages)
     if not args.apply:print(json.dumps({'stages':stages,'write':False}));return
     p=protocol();ensure_module(p)
     for stage in stages:author_one(p,stage)

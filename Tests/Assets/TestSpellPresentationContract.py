@@ -24,12 +24,14 @@ class SpellPresentationContractTest(unittest.TestCase):
             self.assertEqual('presentation.dba.development.magic.' + row['spell'].lower() + '.' + row['stage'].lower() + '@1', row['logical_id'])
 
     def test_retired_authors_fail_without_unreal_or_mutation(self):
-        for name in ('AuthorDevelopmentMagicVFXMonolith.py', 'AuthorDevelopmentCastVFXMonolith.py', 'BindFireIceV3PresentationUE58.py'):
-            entry = ROOT / 'Tools/Unreal/VFX/DevelopmentMagic' / name
+        for row in json.loads(CONTRACT.read_text('utf-8'))['retired_authors']:
+            if row['mode'] != 'all':
+                continue
+            entry = ROOT / row['path']
             # 先以静态断言阻止旧活动作者执行，RED阶段也不能连接或改动编辑器。
             self.assertIn('RETIRED_ENTRY_POINT', entry.read_text('utf-8'))
             result = subprocess.run([sys.executable, '-B', str(entry), '--apply'], capture_output=True, text=True)
-            self.assertNotEqual(0, result.returncode, name)
+            self.assertNotEqual(0, result.returncode, row['path'])
             self.assertIn('RETIRED_ENTRY_POINT', result.stderr + result.stdout)
             self.assertNotIn('ModuleNotFoundError', result.stderr)
 

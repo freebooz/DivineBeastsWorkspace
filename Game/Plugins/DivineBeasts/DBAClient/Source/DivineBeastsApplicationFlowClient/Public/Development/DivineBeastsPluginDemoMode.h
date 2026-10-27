@@ -21,5 +21,5 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsPluginDemoMode final
         bool bExplicitOptIn, bool bConflictingDevelopmentMode, const FString& RequestedEntryMap,
         const FString& PluginId);
     /** 只读DBAPluginTest启动意图；无参数/非法/缺资格返回None，未知插件由目录拒绝。 */
-    static FName GetRequestedPluginTest();
+    static FName GetRequestedPluginTest(FString* OutError = nullptr);
 };

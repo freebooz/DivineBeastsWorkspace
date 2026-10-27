@@ -28,7 +28,10 @@ class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoWorldSubsystem final : public 
     GENERATED_BODY()
     /** 回归验证平台同步打开回调的真实所有权，不向生产暴露测试入口。 */
     friend class FDivineBeastsDemoSynchronousScreenTest;
+    friend class FDivineBeastsIndependentPluginPageTest;
 public:
+    /** 切换唯一演示页面，None返回中心；仅Catalog在运行清理成功后调用，不新建执行器。 */
+    bool RequestPluginPage(FName PluginId);
     virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
     virtual void Deinitialize() override;
@@ -134,6 +137,12 @@ private:
 
     /** GamePlatformData（平台数据）颁发的普通资源租约，退出只释放本世界所持身份。 */
     FGamePlatformDataLease UILease;
+    /** 当前UI路由值；Widget软类仅从完整Catalog取得，永不按输入拼接加载路径。 */
+    FName PagePluginId;
+    FSoftObjectPath PageWidgetAsset;
+    bool bPageRouteInitialized = false;
+    /** 副本注册到既有UIManager，保持Hub定义策略并替换单个WidgetClass。 */
+    UPROPERTY(Transient) TObjectPtr<class UGamePlatformUIScreenDefinition> PageScreenDefinition;
     TWeakObjectPtr<UDivineBeastsDemoHubWidget> ActiveWidget;
     /** 新页面由LocalPlayer平台层栈拥有，不以旧HubWidget强转，不直接AddToViewport。 */
     TWeakObjectPtr<class UGamePlatformUIManagerSubsystem> DemoUIManager;
@@ -147,6 +156,8 @@ private:
     FGuid SynchronouslyOpenedScreenRequestId;
     bool bSynchronousScreenFailure = false;
     bool bOverlayClosing = false;
+    /** 同步关闭回调期间禁止重入另一个页面请求，避免旧清理撤销新页租约。 */
+    bool bReleasingDemoOverlay = false;
     /** 只在本世界演示UI存在期间接管输入；释放时恢复默认游戏输入和原鼠标显示状态。 */
     TWeakObjectPtr<APlayerController> DemoInputController;
     bool bOriginalMouseCursorVisible = false;
@@ -177,9 +188,9 @@ private:
     void RequestDemoOverlay(UWorld& World);
     void OnOverlayAssetReady(FSoftObjectPath WidgetClassPath, const FGamePlatformDataLease& Lease,
         bool bSucceeded);
-    void ReleaseDemoOverlay();
+    bool ReleaseDemoOverlay();
     /** 新目录页面加载RootLayout/ScreenDefinition的中央租约，仅在开发世界装配。 */
-    void RequestScenarioOverlay(UWorld& World);
+    bool RequestScenarioOverlay(UWorld& World);
     void OnScenarioOverlayReady(uint64 Generation, const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
     /** 平台打开请求按请求GUID核验；同步失败单独记录，防止受理返回值覆盖终态。 */
     UFUNCTION() void OnDemoScreenOpened(FGuid RequestId, FName ScreenId, UGamePlatformUIScreen* Screen);
