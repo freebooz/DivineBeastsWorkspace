@@ -87,7 +87,7 @@ public:explicit FEditorAdapterLifecycle(FAutomationTestBase& Test):T(&Test){Feat
   if(!Widget.IsValid()){
    auto* Class=LoadClass<UUserWidget>(nullptr,TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C"));
    if(!Class){T->AddError(TEXT("缺已由Monolith制作的原生ContextSample；不以原生替代树跳过。"));return true;}
-   Widget.Reset(CreateWidget<UUserWidget>(LP,Class));if(!Widget.IsValid()){T->AddError(TEXT("真实LP样板创建失败"));return true;}
+   Widget.Reset(CreateWidget<UUserWidget>(LP->GetPlayerController(W),Class));if(!Widget.IsValid()){T->AddError(TEXT("真实LP样板创建失败"));return true;}
   }
   if(Index==Features.Num()){Widget.Reset();return true;}
   if(Stage==0){
@@ -174,6 +174,8 @@ public:explicit FTwoPIEResourceCheck(FAutomationTestBase& In):T(&In){}
 class FEditorStopAndExit final:public IAutomationLatentCommand {
  FAutomationTestBase* T;double Deadline=FPlatformTime::Seconds()+60;int32 Stage=0,Observations=0,FrozenObservations=0;
  bool Trigger=false,StoppedInside=false;TStrongObjectPtr<UUserWidget> Widget;TStrongObjectPtr<UDivineBeastsDemoManualHostSubsystem> Host;
+ TWeakObjectPtr<UWorld> ExitedWorld;TWeakObjectPtr<UGameInstance> ExitedGI;
+ TWeakObjectPtr<UUserWidget> ExitedWidget;TWeakObjectPtr<UDivineBeastsDemoManualHostSubsystem> ExitedHost;
  TUniquePtr<IDivineBeastsDemoScenarioAdapter> Adapter;FDivineBeastsDemoScenarioContext C;TArray<FDivineBeastsDemoParameterValue> Values;
  FGamePlatformResult Call(FName Op){FGamePlatformResult R=FGamePlatformResult::Failure(TEXT("Test.MissingCompletion"),TEXT("缺完成"));Adapter->Execute(Op,Values,[&](const auto&,const auto& V){R=V;});return R;}
  bool Prepare(UWorld& W,FName Feature){
@@ -186,15 +188,27 @@ public:explicit FEditorStopAndExit(FAutomationTestBase& In):T(&In){}
   if(FPlatformTime::Seconds()>Deadline){T->AddError(TEXT("Stop/World退出未收敛；禁止记成功。"));return true;}
   UWorld* W=GEditor?GEditor->PlayWorld:nullptr;
   if(Stage<4&&(!W||!W->HasBegunPlay()))return false;
-  if(Stage==0){auto* GI=W->GetGameInstance();auto* LP=GI?GI->GetFirstGamePlayer():nullptr;if(!LP)return false;auto* Class=LoadClass<UUserWidget>(nullptr,TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C"));if(!Class){T->AddError(TEXT("缺Monolith真实样板"));return true;}Widget.Reset(CreateWidget<UUserWidget>(LP,Class));Host.Reset(GI->GetSubsystem<UDivineBeastsDemoManualHostSubsystem>());
+  if(Stage==0){auto* GI=W->GetGameInstance();auto* LP=GI?GI->GetFirstGamePlayer():nullptr;if(!LP)return false;auto* Class=LoadClass<UUserWidget>(nullptr,TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C"));if(!Class){T->AddError(TEXT("缺Monolith真实样板"));return true;}Widget.Reset(CreateWidget<UUserWidget>(LP->GetPlayerController(W),Class));Host.Reset(GI->GetSubsystem<UDivineBeastsDemoManualHostSubsystem>());
    if(!Widget.IsValid()||!Host.IsValid()||!Prepare(*W,TEXT("BlueprintAutoLayout.selected"))){T->AddError(TEXT("真实PIE准备失败"));return true;}
    T->TestTrue(TEXT("创建实际图样板"),Call(TEXT("CreateGraph")).IsSuccess());Stage=1;return false;}
   if(Stage==1){Trigger=true;const auto R=Call(TEXT("SelectAnchors"));T->TestTrue(TEXT("真实同步选择事件触发Stop"),StoppedInside);T->TestFalse(TEXT("旧同步栈不发布成功"),R.IsSuccess());FrozenObservations=Observations;
    T->TestFalse(TEXT("未清理旧租约禁止后继接管"),Host->AcquireEditorFixture({FGuid::NewGuid(),FGuid::NewGuid(),2},*W,TEXT("GlooPrint.format")).IsSuccess());Stage=2;return false;}
   if(Stage==2){FGamePlatformResult R;Adapter->Stop([&](const auto&,const auto& V){R=V;});if(!R.IsSuccess())return false;T->TestEqual(TEXT("失活期间无旧UI通知"),Observations,FrozenObservations);Adapter.Reset();
    if(!Prepare(*W,TEXT("GlooPrint.format"))){T->AddError(TEXT("原租约释放后不能重进"));return true;}T->TestTrue(TEXT("后继Run独立图"),Call(TEXT("CreateGraph")).IsSuccess());Stage=3;return false;}
-  if(Stage==3){T->TestTrue(TEXT("真实Gloo任务受理"),Call(TEXT("QueueFormat")).IsSuccess());T->TestTrue(TEXT("取消只针对本Request"),Call(TEXT("CancelFormat")).IsSuccess());FrozenObservations=Observations;GEditor->RequestEndPlayMap();Stage=4;return false;}
-  if(Stage==4){if(W)return false;FGamePlatformResult R;Adapter->Stop([&](const auto&,const auto& V){R=V;});if(!R.IsSuccess())return false;T->TestEqual(TEXT("World退出/迟到终态不能恢复UI"),Observations,FrozenObservations);T->TestFalse(TEXT("旧Run世界退出后不可执行"),Call(TEXT("Snapshot")).IsSuccess());
+  if(Stage==3){T->TestTrue(TEXT("真实Gloo任务受理"),Call(TEXT("QueueFormat")).IsSuccess());T->TestTrue(TEXT("取消只针对本Request"),Call(TEXT("CancelFormat")).IsSuccess());FrozenObservations=Observations;
+   ExitedWorld=W;ExitedGI=W->GetGameInstance();ExitedWidget=Widget.Get();ExitedHost=Host.Get();
+   T->TestTrue(TEXT("退出前四个弱观察均指向本次真实PIE对象"),ExitedWorld.IsValid()&&ExitedGI.IsValid()&&ExitedWidget.IsValid()&&ExitedHost.IsValid());
+   // EndPlayMap会在下一次latent Update前执行GC；测试不得强持Outer属于退役GI的对象。
+   // Adapter保留到退出后，继续由真实OnWorldCleanup清理，再验证迟到Stop和冻结观察。
+   Widget.Reset();Host.Reset();
+   GEditor->RequestEndPlayMap();Stage=4;return false;}
+  if(Stage==4){if(W)return false;
+   // 按对象索引/序号检查实际回收；不能仅因Garbage/Unreachable标志失效就算GC通过。
+   T->TestFalse(TEXT("EndPIE已回收原World"),ExitedWorld.IsValid(true,true));
+   T->TestFalse(TEXT("EndPIE已回收原GameInstance"),ExitedGI.IsValid(true,true));
+   T->TestFalse(TEXT("EndPIE已回收原样板Widget"),ExitedWidget.IsValid(true,true));
+   T->TestFalse(TEXT("EndPIE已回收原ManualHost"),ExitedHost.IsValid(true,true));
+   FGamePlatformResult R;Adapter->Stop([&](const auto&,const auto& V){R=V;});if(!R.IsSuccess())return false;T->TestEqual(TEXT("World退出/迟到终态不能恢复UI"),Observations,FrozenObservations);T->TestFalse(TEXT("旧Run世界退出后不可执行"),Call(TEXT("Snapshot")).IsSuccess());
    auto* Resources=IGamePlatformEditorResources::Get();auto* EW=GEditor->GetEditorWorldContext().World();FGamePlatformEditorResourceLease Lease;FString Error;
    if(Resources&&EW){T->TestTrue(TEXT("退出后原Editor资源确实释放"),Resources->Acquire(*GEditor,*EW,FGuid::NewGuid(),FGuid::NewGuid(),1,Lease,Error));if(Lease.IsValid())T->TestTrue(TEXT("检查租约精确释放"),Resources->Release(Lease,Error));}else T->AddError(TEXT("缺真实Editor资源上下文"));Adapter.Reset();Widget.Reset();Host.Reset();return true;}
   return false;
