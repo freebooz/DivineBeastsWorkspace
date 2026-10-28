@@ -19,6 +19,8 @@ param(
     [switch]$ManualFixture,
     # 显式选择真实Hub世界服务，不连接生产后端；完整离线夹具门禁仍强制。
     [switch]$ManualWorldHost,
+    # 使用唯一Gameplay开发GameMode，要求隔离夹具并显式初始化真实离线Experience。
+    [switch]$ManualGameplayHost,
     [ValidateRange(960,3840)][int]$WindowWidth=1920,
     [ValidateRange(540,2160)][int]$WindowHeight=1080,
     [guid]$RunId=[guid]::NewGuid()
@@ -52,9 +54,13 @@ Set-StrictMode -Version Latest
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'FoundationBuildEvidence.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'PluginDemoEvidence.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'PluginDemoValidation.psm1') -Force
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $project=Join-Path $workspace 'Game/DivineBeastsArena.uproject'
 $map='/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub'
+if($ManualGameplayHost){$ManualWorldHost=$true}
+if($ManualWorldHost -and -not $ManualFixture){throw '开发世界/Gameplay宿主要求ManualFixture隔离UserDir。'}
+$startupURL=if($ManualGameplayHost){Get-PluginDemoMapURL GameplayHost}else{$map}
 $mapFile=Join-Path $workspace 'Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoHub.umap'
 # 演示门户必须同时拥有真实UE地图与Monolith制作的Widget蓝图，禁止启动无交互空白关卡。
 $uiRoot=Join-Path $workspace 'Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/Development/PluginDemos'
@@ -81,7 +87,7 @@ if ($Target -eq 'EditorGame') {
     $requiredModules=@(Get-PluginDemoRuntimeModuleNames)
     $buildProof=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules $requiredModules
     $exe=Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor.exe'
-    $args=@($project,$map,'-game')
+    $args=@($project,$startupURL,'-game')
 } else {
     # Editor证据不能证明另一个Client可执行文件；在有Client产物绑定门禁前明确拒绝，禁止偷用旧exe。
     throw 'Client发布产物绑定证据尚未实现；当前仅允许匹配完整Editor证据的EditorGame，不自动构建。'
@@ -114,7 +120,8 @@ $log=Join-Path $dir 'PluginDemo.log'
 $args+=@('-DBAPluginDemo',"-DBAPluginDemoMap=$map","-DBAPluginDemoLaunchId=$($RunId.ToString('D'))","-DBAPluginDemoContentFingerprint=$($content.SHA256)",'-windowed',"-ResX=$WindowWidth", "-ResY=$WindowHeight",'-nosplash','-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',"-abslog=$log")
 $args+=@($independentPage.Arguments)
 if($fixture){$args+=@($fixture.Arguments)}
-if($ManualWorldHost){$args+=@('-FoundationWorld','-DBAManualWorldHost')}
+if($ManualGameplayHost){$args+=@(Get-PluginDemoHostFlags GameplayHost)}
+elseif($ManualWorldHost){$args+=@(Get-PluginDemoHostFlags WorldHostLive)}
 $info=[Diagnostics.ProcessStartInfo]::new()
 $info.FileName=$exe
 $info.WorkingDirectory=Split-Path $exe
@@ -127,7 +134,7 @@ foreach($key in @('DBA_DEV_LOGIN_SECRET','DBA_DEV_TEST_LOGIN_ACCOUNTS_JSON','DIV
 $process=[Diagnostics.Process]::Start($info)
 if (-not $process) { throw '启动插件演示子进程失败。' }
 $started=$process.StartTime.ToUniversalTime()
-$record=[ordered]@{SchemaVersion=1;Kind='PluginDemoControlledLaunch';RunId=$RunId.ToString('D');Mode='DBAPluginDemo';Target=$Target;PluginId=$independentPage.PluginId;ManualFixture=[bool]$ManualFixture;ManualWorldHost=[bool]$ManualWorldHost;ExpectedNativeSavedRoot=$nativeSavedRoot;PID=$process.Id;Map=$map;EngineOrClientExe=$exe;Log=$log;StartedUtc=$started.ToString('o');Arguments=$args;BuildEvidence=$buildProof;ManifestSHA256=$manifest.SHA256;ContentSHA256=$content.SHA256;ContentSnapshot=$contentFile;HumanReview='Deferred'}
+$record=[ordered]@{SchemaVersion=1;Kind='PluginDemoControlledLaunch';RunId=$RunId.ToString('D');Mode='DBAPluginDemo';Target=$Target;PluginId=$independentPage.PluginId;ManualFixture=[bool]$ManualFixture;ManualWorldHost=[bool]$ManualWorldHost;ManualGameplayHost=[bool]$ManualGameplayHost;StartupURL=$startupURL;ExpectedNativeSavedRoot=$nativeSavedRoot;PID=$process.Id;Map=$map;EngineOrClientExe=$exe;Log=$log;StartedUtc=$started.ToString('o');Arguments=$args;BuildEvidence=$buildProof;ManifestSHA256=$manifest.SHA256;ContentSHA256=$content.SHA256;ContentSnapshot=$contentFile;HumanReview='Deferred'}
 try {
     $null=Save-PluginDemoEvidenceJson -Root $originRoot -Relative 'Launch.json' -Value $record
     $null=Save-PluginDemoEvidenceJson -Root $dir -Relative 'Launch.json' -Value $record

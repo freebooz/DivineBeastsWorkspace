@@ -1,7 +1,7 @@
 #include "Scenarios/DivineBeastsDemoWorldScenarios.h"
 namespace DivineBeasts::Demo {
 struct FWorldSignature { FName Feature; TArray<FName> Names; TArray<EDivineBeastsDemoParameterType> Types; TArray<FName> Operations; };
-static TArray<FWorldSignature> Signatures() { return {
+static TArray<FWorldSignature> WorldManualSignatures() { return {
     {TEXT("GamePlatformWorld.readiness"),{TEXT("ContributorResult")},{EDivineBeastsDemoParameterType::Integer},{TEXT("Snapshot"),TEXT("AddContributor"),TEXT("SetContributor"),TEXT("RemoveContributor"),TEXT("Stop")}},
     {TEXT("GamePlatformWorld.regions"),{TEXT("RegionId"),TEXT("DefinitionId"),TEXT("DefinitionVersion"),TEXT("X"),TEXT("Y")},{EDivineBeastsDemoParameterType::Identifier,EDivineBeastsDemoParameterType::Identifier,EDivineBeastsDemoParameterType::Integer,EDivineBeastsDemoParameterType::Number,EDivineBeastsDemoParameterType::Number},{TEXT("RegisterRegion"),TEXT("QueryRegion"),TEXT("MoveObserver"),TEXT("RemoveRegion"),TEXT("Stop")}},
     {TEXT("GamePlatformWorld.streaming"),{TEXT("Level"),TEXT("Activated"),TEXT("Timeout")},{EDivineBeastsDemoParameterType::AssetPath,EDivineBeastsDemoParameterType::Boolean,EDivineBeastsDemoParameterType::Number},{TEXT("RequestStreaming"),TEXT("Snapshot"),TEXT("CancelStreaming"),TEXT("Stop")}},
@@ -29,10 +29,10 @@ static TArray<FWorldSignature> Signatures() { return {
     {TEXT("GamePlatformDeveloperTools.human_review"),{TEXT("ReviewCase")},{EDivineBeastsDemoParameterType::AssetPath},{TEXT("CreatePending"),TEXT("ValidateEvidence"),TEXT("Snapshot"),TEXT("Stop")}},
     {TEXT("GamePlatformDeveloperTools.performance"),{TEXT("Profile"),TEXT("Duration"),TEXT("Players")},{EDivineBeastsDemoParameterType::AssetPath,EDivineBeastsDemoParameterType::Number,EDivineBeastsDemoParameterType::Integer},{TEXT("ValidateProfile"),TEXT("ExecuteRegistered"),TEXT("RunProfile"),TEXT("WriteResult"),TEXT("CompareBaseline"),TEXT("Stop")}},
 }; }
-TArray<FName> WorldManualFeatures(){TArray<FName> R;for(const auto& S:Signatures())R.Add(S.Feature);return R;}
-TArray<FName> WorldManualOperations(FName F){for(const auto& S:Signatures())if(S.Feature==F)return S.Operations;return {};}
+TArray<FName> WorldManualFeatures(){TArray<FName> R;for(const auto& S:WorldManualSignatures())R.Add(S.Feature);return R;}
+TArray<FName> WorldManualOperations(FName F){for(const auto& S:WorldManualSignatures())if(S.Feature==F)return S.Operations;return {};}
 bool ValidateWorldManualContract(const FDivineBeastsDemoScenarioDefinition& D){
- for(const auto& S:Signatures())if(S.Feature==D.FeatureId){
+ for(const auto& S:WorldManualSignatures())if(S.Feature==D.FeatureId){
   if(D.AdapterId!=FName(*(TEXT("PlatformWorld.")+S.Feature.ToString()))||D.ScenarioId!=FName(*(S.Feature.ToString()+TEXT(".Manual")))||D.Parameters.Num()!=S.Names.Num()||D.Operations.Num()!=S.Operations.Num())return false;
   for(int32 I=0;I<S.Names.Num();++I)if(D.Parameters[I].ParameterId!=S.Names[I]||D.Parameters[I].DefaultValue.Type!=S.Types[I])return false;
   TSet<FName> Seen;for(auto O:D.Operations){if(!S.Operations.Contains(O)||Seen.Contains(O))return false;Seen.Add(O);}return true;

@@ -8,7 +8,7 @@ VerifyOnly只核验二进制门禁、不创建UE进程。Execute使用Foundation
 退出0仅表示指定测试组实际成功，1校验/运行失败，2未执行；不代表画面、Cook或人工核验。
 #>
 param([switch]$Execute,[switch]$VerifyOnly,[string]$EngineRoot,[string]$BuildResultPath,
-    [ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive')][string]$Suite='Demo',[string]$ReportPath,
+    [ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')][string]$Suite='Demo',[string]$ReportPath,
     [guid]$RunId=[guid]::NewGuid(),[ValidateRange(1,86400)][int]$TimeoutSeconds=900)
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -40,17 +40,17 @@ try {
             '-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',"-FoundationRunId=$($context.RunId)",
             "-abslog=$(Join-Path $directory 'Unreal.log')",("-ExecCmds=Automation RunTests "+(Get-PluginDemoAutomationFilter $Suite)),
             '-TestExit=Automation Test Queue Empty',"-ReportExportPath=$automation")
-        if ($Suite -in @('PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHashLive')) {
+        if ($Suite -in @('PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHashLive','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')) {
             # 真正-game/Standalone进程，测试按ClientContext注册并通过真实Data请求建立非空主题基线。
             $editor=Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor.exe'
             Assert-FoundationFile $editor
             $arguments=@($arguments | Where-Object { $_ -cne '-nullrhi' })
-            $arguments=@($arguments[0],'/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub','-game')+@($arguments | Select-Object -Skip 1)
+            $arguments=@($arguments[0],(Get-PluginDemoMapURL $Suite),'-game')+@($arguments | Select-Object -Skip 1)
             $arguments+=@('-RenderOffscreen','-windowed','-ResX=1280','-ResY=720')
             $arguments+=(Get-PluginDemoNativeFlag $Suite)
             $details.ExecutionHost='EditorGameStandaloneClientContext'
         }
-        if ($Suite -in @('Demo','PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive')) {
+        if ($Suite -in @('Demo','PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')) {
             # 真实GI服务回归与人工页共用显式离线夹具门禁，写入本次工程内独立用户目录。
             $fixtureRoot=Join-Path $workspace "Saved/Validation/PluginManualUI20261027/Hosts/$($context.RunId)"
             $null=New-Item -ItemType Directory -Path $fixtureRoot -Force
@@ -58,9 +58,14 @@ try {
                 '-GamePlatformManualFixture',"-UserDir=$fixtureRoot")
             $details.ManualFixtureRoot=$fixtureRoot
         }
-        if($Suite -eq 'WorldHostLive'){$arguments+=@('-FoundationWorld','-DBAManualWorldHost')}
+        $arguments+=@(Get-PluginDemoHostFlags $Suite)
         $result=Invoke-FoundationProcess -FilePath $editor -Arguments $arguments -WorkingDirectory (Split-Path $editor) -OutputDirectory $directory -TimeoutSeconds $TimeoutSeconds
         $details.UEExecuted=$true; $details.Suites=@(@{Name=$Suite;Result=$result;Evidence=$directory})
+        $engineLog=Join-Path $directory 'Unreal.log';Assert-FoundationFile $engineLog
+        $engineLogHash=(Get-FileHash -LiteralPath $engineLog -Algorithm SHA256).Hash
+        $details.EngineLogLines=Assert-PluginDemoNoEngineFailure -Lines @(Get-Content -LiteralPath $engineLog)
+        if($engineLogHash -cne (Get-FileHash -LiteralPath $engineLog -Algorithm SHA256).Hash){throw '运行结束后的引擎日志在读取期间变化。'}
+        $details.EngineLogSHA256=$engineLogHash
         # 即使工具退出0仍核对本次完整身份，缺任一项拒绝；结束后再次检查真实源和DLL。
         $index=Join-Path $automation 'index.json'; Assert-FoundationFile $index
         $parsed=Get-Content -LiteralPath $index -Raw | ConvertFrom-Json
@@ -68,7 +73,7 @@ try {
         $count=Assert-PluginDemoRunResult -ProcessResult $result -Cases @($parsed.tests) -Before $before -After $after -Suite $Suite
         $details.ValidatedTests=$count; $details.BuildEvidenceAfter=$after
         $details.AutomationReportSHA256=(Get-FileHash -LiteralPath $index -Algorithm SHA256).Hash
-        $code=0; $message=if($Suite -in @('PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHashLive')){'本组真实Standalone ClientContext原生测试及前后二进制门禁通过；非打包Client，未验收视听。'}else{'本组原生测试及前后二进制门禁通过；NullRHI不证明视觉，未做人工核验。'}
+        $code=0; $message=if($Suite -in @('PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHashLive','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')){'本组真实Standalone ClientContext原生测试及前后二进制门禁通过；非打包Client，未验收视听。'}else{'本组原生测试及前后二进制门禁通过；NullRHI不证明视觉，未做人工核验。'}
     }
 } catch [IO.FileNotFoundException] {
     # 前置缺失才是未执行；UE实际启动后的缺报告（包括崩溃）必须保留失败语义。
