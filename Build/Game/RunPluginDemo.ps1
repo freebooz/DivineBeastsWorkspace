@@ -88,7 +88,7 @@ if (-not (Test-Path -LiteralPath $mapFile -PathType Leaf)) {
 if (-not (Test-Path -LiteralPath $hubWidgetFile -PathType Leaf)) {
     throw "开发总览界面尚未通过Monolith制作，拒绝启动无交互演示：$hubWidgetFile"
 }
-foreach ($relative in @('UI/WBP_DBA_PluginDemoRoot.uasset','UI/WBP_DBA_PluginDemoMenuRow.uasset','UI/WBP_DBA_PluginDemoParameterRow.uasset','Definitions/DA_DBA_PluginDemoCatalog.uasset','Definitions/DA_DBA_PluginDemoHubScreen.uasset')) {
+foreach ($relative in @('UI/WBP_DBA_PluginDemoRoot.uasset','UI/WBP_DBA_PluginDemoMenuRow.uasset','UI/WBP_DBA_PluginDemoParameterRow.uasset','UI/WBP_DBA_PluginPortal.uasset','UI/WBP_DBA_PluginPortalCard.uasset','Definitions/DA_DBA_PluginDemoCatalog.uasset','Definitions/DA_DBA_PluginDemoHubScreen.uasset')) {
     Assert-FoundationFile (Join-Path $uiRoot $relative)
 }
 $authorDocument=Get-Content -LiteralPath (Join-Path $workspace 'Docs/Implementation/PluginDemos/PluginDemoManifest.json') -Raw | ConvertFrom-Json

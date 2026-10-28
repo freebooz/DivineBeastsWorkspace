@@ -17,8 +17,12 @@ function Resolve-PluginDemoEvidencePath {
     }
     $full=[IO.Path]::GetFullPath($Path)
     if (-not $full.StartsWith($base+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw '证据路径越过固定根。' }
-    for ($cursor=$full; -not [string]::IsNullOrEmpty($cursor); $cursor=Split-Path $cursor -Parent) {
-        if ((Test-Path -LiteralPath $cursor) -and ((Get-Item -LiteralPath $cursor -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw '证据路径包含junction/符号链接。' }
+    for ($cursor=$full; -not [string]::IsNullOrEmpty($cursor); $cursor=[IO.Path]::GetDirectoryName($cursor)) {
+        # 仍逐级校验每个现有祖先；直接使用.NET避免每一级都运行两个PowerShell provider命令。
+        try { $attributes=[IO.File]::GetAttributes($cursor) }
+        catch [IO.FileNotFoundException] { continue }
+        catch [IO.DirectoryNotFoundException] { continue }
+        if ($attributes -band [IO.FileAttributes]::ReparsePoint) { throw '证据路径包含junction/符号链接。' }
     }
     $full
 }

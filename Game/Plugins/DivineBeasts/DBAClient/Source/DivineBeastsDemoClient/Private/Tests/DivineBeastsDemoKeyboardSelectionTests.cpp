@@ -21,6 +21,8 @@ bool FDivineBeastsDemoKeyboardSelectionTest::RunTest(const FString&)
     Page->InitializeScreen(TEXT("DivineBeasts.Demo.Hub"), Model.Get(), TEXT("PluginSearchInput"),
         EGamePlatformUIInputMode::GameAndUI, EGamePlatformUIPausePolicy::Never);
     Page->NativeOnInitialized();
+    TestTrue(TEXT("门户插件项激活必须接入页面打开回调"), Page->PluginList->OnItemClicked().IsBoundToObject(Page.Get()));
+    TestFalse(TEXT("功能项点击不绑定门户插件打开回调"), Page->FeatureList->OnItemClicked().IsBoundToObject(Page.Get()));
     Page->DemoModel = Model.Get();
     Model->BeginPage();
     const auto SeedValues = [&Model]()

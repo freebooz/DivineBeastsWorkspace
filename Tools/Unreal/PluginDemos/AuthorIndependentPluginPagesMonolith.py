@@ -21,6 +21,7 @@ WORKSPACE = Path(__file__).resolve().parents[3]
 AUTHOR = WORKSPACE / 'Docs/Implementation/PluginDemos/PluginDemoManifest.json'
 ASSET_ROOT = '/DBAUIPack_Core/Development/PluginDemos'
 HUB = ASSET_ROOT + '/UI/WBP_DBA_PluginDemoHub'
+PORTAL = ASSET_ROOT + '/UI/WBP_DBA_PluginPortal'
 HUB_DEFINITION = ASSET_ROOT + '/Definitions/DA_DBA_PluginDemoHubScreen'
 EVIDENCE = WORKSPACE / 'Saved/Validation/PluginManualUI20261027'
 
@@ -124,8 +125,8 @@ def read_page(unreal, page: dict) -> dict:
     if str(definition.get_editor_property('screen_id')) != 'DivineBeasts.Demo.Hub':
         raise RuntimeError('canonical screen template identity mismatch')
     widget_class = definition.get_editor_property('widget_class')
-    expected_hub_class = HUB + '.' + HUB.rsplit('/', 1)[-1] + '_C'
-    if widget_class is None or widget_class.get_path_name() != expected_hub_class:
+    expected_portal_class = PORTAL + '.' + PORTAL.rsplit('/', 1)[-1] + '_C'
+    if widget_class is None or widget_class.get_path_name() != expected_portal_class:
         raise RuntimeError('canonical screen template class mismatch')
     return {**page, 'compiled': True, 'saved': True, 'fixed_plugin_id': fixed,
             'tree_audit': 'requires_direct_monolith_ui_get_widget_tree'}

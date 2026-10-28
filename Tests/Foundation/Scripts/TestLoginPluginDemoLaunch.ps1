@@ -60,6 +60,8 @@ $runner=Get-Content -LiteralPath (Join-Path $root 'Build/Game/LaunchPluginDemoFr
 foreach($required in @('RunPluginDemo.ps1','-Start','-EngineRoot','-BuildResultPath $BuildResultPath','WaitForExit','status.txt','Failed')) {
     if(!$runner.Contains($required)){throw "启动器缺少合同：$required"}; $passed++
 }
+if($runner -notmatch '(?s)RunPluginDemo\.ps1.*?-Start\s+-Target\s+EditorGame\s+-ManualFixture\b'){throw '登录入口必须为测试门户显式启用本次独立夹具'}
+$passed++
 if($runner -match 'BuildFoundation|UnrealBuildTool|FCommandLine::Append'){throw '按钮不得自动构建或修改父进程模式'}
 # 真正执行隔离脚本的失败路径：不存在引擎不得启动UE，须留下可读失败结果并传播非零。
 $runId=[guid]::NewGuid()

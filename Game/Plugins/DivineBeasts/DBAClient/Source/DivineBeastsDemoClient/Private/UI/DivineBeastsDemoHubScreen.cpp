@@ -29,6 +29,7 @@ void UDivineBeastsDemoHubScreen::NativeOnInitialized()
     }
     // 键盘/手柄导航只保证选择事件，不能依赖鼠标Clicked；鼠标也走同一路径，避免一次选择提交两次。
     if (PluginList) PluginList->OnItemSelectionChanged().AddUObject(this, &ThisClass::OnPluginSelectionChanged);
+    if (PluginList) PluginList->OnItemClicked().AddUObject(this, &ThisClass::OnPluginItemActivated);
     if (FeatureList) FeatureList->OnItemSelectionChanged().AddUObject(this, &ThisClass::OnFeatureSelectionChanged);
     if (ScenarioList) ScenarioList->OnItemSelectionChanged().AddUObject(this, &ThisClass::OnScenarioSelectionChanged);
     if (RefreshButton) RefreshButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnRefreshClicked);
@@ -148,6 +149,16 @@ void UDivineBeastsDemoHubScreen::OnPluginSelectionChanged(UObject* Object)
 {
     if (!bSynchronizing && DemoModel && DemoModel == GetViewModel() && DemoModel->IsPageActive())
         if (auto* Item = Cast<UDivineBeastsDemoMenuItem>(Object)) DemoModel->SelectPlugin(Item->Identity);
+}
+void UDivineBeastsDemoHubScreen::OnPluginItemActivated(UObject* Object)
+{
+    if (bSynchronizing || !FixedPluginId.IsNone() || !DemoModel || DemoModel != GetViewModel() || !DemoModel->IsPageActive()) return;
+    const auto* Item = Cast<UDivineBeastsDemoMenuItem>(Object);
+    if (!Item || Item->Identity.IsNone()) return;
+    // 只传稳定身份；目录重新核验可见性、页面登记及清理，回调可同步销毁本页。
+    const FName PluginId = Item->Identity;
+    const TStrongObjectPtr<UDivineBeastsDemoHubViewModel> SelectedModel(DemoModel);
+    SelectedModel->RequestPluginPage(PluginId);
 }
 void UDivineBeastsDemoHubScreen::OnFeatureSelectionChanged(UObject* Object)
 {

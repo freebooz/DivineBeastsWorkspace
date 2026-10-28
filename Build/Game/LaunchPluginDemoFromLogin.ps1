@@ -21,6 +21,25 @@ function Write-LaunchStatus([string]$Status){
     [IO.File]::WriteAllText($temp,$Status,[Text.UTF8Encoding]::new($false))
     [IO.File]::Move($temp,(Join-Path $directory 'status.txt'),$true)
 }
+function Test-PluginDemoChildIdentity {
+    param([Diagnostics.Process]$Process,[object]$RecordedStart)
+    try {
+        # 先绑定并保留内核句柄，再读启动时间，避免退出与PID复用时校验/等待指向不同进程。
+        if($Process.Handle -eq [IntPtr]::Zero){return $false}
+        # ConvertFrom-Json 会把 ISO 时间直接转成 DateTime；再次 Parse 会丢失小数精度和时区。
+        $recorded=[datetime]$RecordedStart
+        return -not $Process.HasExited -and $Process.StartTime.ToUniversalTime().Ticks -eq $recorded.ToUniversalTime().Ticks
+    } catch { return $false }
+}
+function Wait-PluginDemoChildExit {
+    param([Diagnostics.Process]$Process)
+    # 必须在退出之前取得并保留真实进程句柄；仅按PID重新附着后等待，退出码可能不可读取。
+    if($Process.Handle -eq [IntPtr]::Zero){throw '无法取得门户进程句柄'}
+    $Process.WaitForExit()
+    $code=$Process.ExitCode
+    if($null -eq $code){throw '无法读取门户进程退出码'}
+    return [int]$code
+}
 Write-LaunchStatus 'Preparing'
 try {
     # 桥不继承生产环境凭据到演示进程；OS运行必需环境保留，其余显式移除。
@@ -28,15 +47,16 @@ try {
     foreach($entry in @(Get-ChildItem Env:)){if($entry.Name -notin $allow){[Environment]::SetEnvironmentVariable($entry.Name,$null,'Process')}}
     # 返回JSON及详细异常只进入本次磁盘证据；UI只显示固定脱敏提示及RunId。
     # 显式指定已完成的完整构建证据；不自动选择可能属于旧源码的“最新”记录。
-    $output=& (Join-Path $PSScriptRoot 'RunPluginDemo.ps1') -Start -Target EditorGame -EngineRoot $EngineRoot -RunId $RunId -BuildResultPath $BuildResultPath
+    $output=& (Join-Path $PSScriptRoot 'RunPluginDemo.ps1') -Start -Target EditorGame -ManualFixture -EngineRoot $EngineRoot -RunId $RunId -BuildResultPath $BuildResultPath
     $output | Set-Content -LiteralPath (Join-Path $directory 'launcher-output.log') -Encoding utf8
     $recordPath=Join-Path $root "Saved/Validation/PluginDemos/Launch/$RunId/Launch.json"
     $record=Get-Content -LiteralPath $recordPath -Raw | ConvertFrom-Json
     $child=[Diagnostics.Process]::GetProcessById([int]$record.PID)
-    if($child.HasExited -or $child.StartTime.ToUniversalTime().Ticks -ne ([DateTime]::Parse($record.StartedUtc)).ToUniversalTime().Ticks){throw '子进程身份失效'}
-    Write-LaunchStatus 'Started'
-    $child.WaitForExit()
-    $code=$child.ExitCode; $child.Dispose()
+    try {
+        if(-not (Test-PluginDemoChildIdentity -Process $child -RecordedStart $record.StartedUtc)){throw '子进程身份失效'}
+        Write-LaunchStatus 'Started'
+        $code=Wait-PluginDemoChildExit -Process $child
+    } finally { $child.Dispose() }
     if($code -ne 0){throw "演示子进程退出码：$code"}
     Write-LaunchStatus 'Exited'
     exit 0

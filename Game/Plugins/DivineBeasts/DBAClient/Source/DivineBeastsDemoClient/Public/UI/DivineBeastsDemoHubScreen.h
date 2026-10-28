@@ -106,6 +106,8 @@ private:
     UFUNCTION() void ShowReportPanel();
     /** 鼠标/键盘/手柄共用选择变化；刷新中、旧VM或失活模型不提交选择命令。 */
     void OnPluginSelectionChanged(UObject* Item);
+    /** 门户项激活才打开固定身份页面；导航选择本身不会触发打开。 */
+    void OnPluginItemActivated(UObject* Item);
     void OnFeatureSelectionChanged(UObject* Item);
     void OnScenarioSelectionChanged(UObject* Item);
     void ApplySnapshot();
