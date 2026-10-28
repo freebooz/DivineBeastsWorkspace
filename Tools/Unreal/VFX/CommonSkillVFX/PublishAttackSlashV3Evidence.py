@@ -72,7 +72,7 @@ def main():
     air=json.loads((OUT/'AirWaveVerification.json').read_text(encoding='utf8'));assert air['passed'] and air['controlIdentical']
     for f in air['frames']:assert sha(Path(f['file']))==f['sha256'],'空气波动对照帧已变动'
     guide=json.loads((SOURCE/'ReferenceGuide.json').read_text(encoding='utf8'))
-    manifest=dict(tool='built-in image_gen',referenceRole='visual style reference only',referenceFile='Reference_凝锋.png',referenceSHA256=sha(SOURCE/'Reference_凝锋.png'),textureFile='T_DBA_SlashV3_Energy_Color.png',textureSHA256=sha(SOURCE/'T_DBA_SlashV3_Energy_Color.png'),sourceRGBA=[2172,724],nativeSRGB=True,nativeCompression='BC7',nativeBuiltSize=[2048,512],promptFile='EnergyTexturePrompt.txt',sourcePixelEditing=False,nativeScreenshotsAreGeneratedArt=False,manualAccepted=False)
+    manifest=dict(tool='built-in image_gen',referenceRole='visual style reference only',referenceFile='Reference_DBA_AttackSlash_CondensedBlade.png',referenceSHA256=sha(SOURCE/'Reference_DBA_AttackSlash_CondensedBlade.png'),textureFile='T_DBA_SlashV3_Energy_Color.png',textureSHA256=sha(SOURCE/'T_DBA_SlashV3_Energy_Color.png'),sourceRGBA=[2172,724],nativeSRGB=True,nativeCompression='BC7',nativeBuiltSize=[2048,512],promptFile='EnergyTexturePrompt.txt',sourcePixelEditing=False,nativeScreenshotsAreGeneratedArt=False,manualAccepted=False)
     (SOURCE/'EnergyTextureManifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf8')
     files=[dict(file=str(p.relative_to(ROOT)).replace('\\','/'),bytes=p.stat().st_size,sha256=sha(p)) for p in sorted(CONTENT.rglob('*')) if p.suffix in ('.uasset','.umap')]
     assert cold['packagesUnchangedDuringValidation'] and cold['nativePackageSHA256']=={f['file']:f['sha256'] for f in files},'原生包不是最后一次通过冷验证的字节版本'

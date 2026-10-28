@@ -1,7 +1,7 @@
 {
   "tool": "built-in image_gen",
   "referenceRole": "visual style reference only",
-  "referenceFile": "Reference_凝锋.png",
+  "referenceFile": "Reference_DBA_AttackSlash_CondensedBlade.png",
   "referenceSHA256": "a9e0e6b006ea1ea55e73bccf19f677e0d61418e967e69952c22b22d038d907ab",
   "textureFile": "T_DBA_SlashV3_Energy_Color.png",
   "textureSHA256": "40ed5600d11917a7faeaf46d90b80267bc4a755f8445b66db57ce8b608d4086e",

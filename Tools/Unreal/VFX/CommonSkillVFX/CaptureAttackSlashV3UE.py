@@ -73,7 +73,7 @@ class SlashV3Review:
         if self.handle:raise RuntimeError('已有有限采样回调，拒绝重入')
         assert unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()==self.world
         self.out=ROOT/'Saved/Validation/CommonSkillVFX/AttackSlashV3/RenderRuns'/datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ');self.out.mkdir(parents=True)
-        self.report=dict(status='running',manualAccepted=False,renderer='UE5.8 native SceneCapture FinalColorLDR',resolution=[1536,1024],camera=self.guide['camera'],lookAt=self.guide['lookAt'],fov=self.guide['fov'],reference='Reference_凝锋.png',performanceMeasured=False,frames=[])
+        self.report=dict(status='running',manualAccepted=False,renderer='UE5.8 native SceneCapture FinalColorLDR',resolution=[1536,1024],camera=self.guide['camera'],lookAt=self.guide['lookAt'],fov=self.guide['fov'],reference='Reference_DBA_AttackSlash_CondensedBlade.png',performanceMeasured=False,frames=[])
         self.component.reinitialize_system();self.component.set_force_solo(True);self.component.set_component_tick_enabled(False)
         self.jobs=list(sample_steps) if sample_steps is not None else list(range(2,67,2)) if clip else [9,23,37,58]
         assert self.jobs and self.jobs==sorted(set(self.jobs)) and all(0<step<=120 for step in self.jobs)

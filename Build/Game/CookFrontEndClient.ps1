@@ -95,9 +95,9 @@ try {
     $details.SkipDebugSymbols = [bool]$SkipDebugSymbols
     if ($CustomConfig -eq 'VillageDevelopmentClient') {
         # Cook的CustomConfig不决定Stage：Stage仍按目标收据过滤Config/Custom目录。
-        # UAT顶层CustomConfig又会被UBT配置缓存读取，影响其他Stage层，因此只精确白名单这两份开发INI。
-        # DefaultGame含开关、十二集合映射和客户端UIProfile扫描；GameplayTags含36个独立冷却标签。
-        $developmentConfigFiles = @('DefaultGame.ini','DefaultGameplayTags.ini')
+        # UAT顶层CustomConfig又会被UBT配置缓存读取，影响其他Stage层，因此只精确白名单开发INI。
+        # DefaultEngine提供客户端Landscape Grass运行时草图开关；其余文件为技能与标签合同。
+        $developmentConfigFiles = @('DefaultGame.ini','DefaultGameplayTags.ini','DefaultEngine.ini')
         $details.StagedDevelopmentConfigFiles = @()
         foreach ($configFile in $developmentConfigFiles) {
             Assert-FoundationFile (Join-Path $context.Workspace "Game/Config/Custom/$CustomConfig/$configFile")

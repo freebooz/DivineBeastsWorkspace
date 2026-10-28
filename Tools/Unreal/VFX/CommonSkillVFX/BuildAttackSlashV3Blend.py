@@ -124,7 +124,7 @@ for p,coords,slot in zip(data.polygons,uvs,slots):
     p.material_index=slot;p.use_smooth=True
     for index,uv in zip(p.loop_indices,coords):layer.data[index].uv=uv
 obj.select_set(True);bpy.context.view_layer.objects.active=obj
-obj['Reference']='Reference_凝锋.png';obj['ManualAccepted']=False
+obj['Reference']='Reference_DBA_AttackSlash_CondensedBlade.png';obj['ManualAccepted']=False
 bpy.ops.export_scene.fbx(filepath=str(OUT/'SM_DBA_AttackSlash_V3.fbx'),use_selection=True,object_types={'MESH'},apply_unit_scale=True,axis_forward='-Y',axis_up='Z',mesh_smooth_type='FACE',add_leaf_bones=False,bake_anim=False)
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'AttackSlashV3.blend'))
 guide=dict(resolution=[1536,1024],camera=list(CAM),lookAt=list(LOOK),fov=60,effectOrigin=list(ORIGIN),outerPixels=OUTER,innerPixels=INNER,depthCm=DEPTH,filamentHalfWidthMaxCm=.35,vertices=len(verts),triangles=len(faces),materialSlots=4,styleRevision='broad_flame_air_02',broadFlameFoldCount=3,lowEmbeddedStrands=2,contactStrands=0,airWaveEnvelope=True,manualAccepted=False)
