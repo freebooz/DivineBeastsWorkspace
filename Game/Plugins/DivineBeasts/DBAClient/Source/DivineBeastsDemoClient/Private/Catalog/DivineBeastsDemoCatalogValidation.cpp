@@ -16,6 +16,20 @@ bool IsStableIdentityText(const FString& Text)
         if (!IsLetter(C) && !(C >= TEXT('0') && C <= TEXT('9')) && C != TEXT('_') && C != TEXT('.') && C != TEXT('-')) return false;
     return true;
 }
+bool IsStableAssetPathText(const FString& Text)
+{
+    if (Text.IsEmpty() || Text.Len() >= 1024 || !Text.StartsWith(TEXT("/")) || Text.StartsWith(TEXT("/Content/")) || Text.Contains(TEXT("//"))) return false;
+    int32 Dots = 0;
+    for (TCHAR C : Text)
+    {
+        if (C == TEXT('.')) { ++Dots; continue; }
+        if (C != TEXT('/') && C != TEXT('_') && !(C >= TEXT('0') && C <= TEXT('9')) &&
+            !(C >= TEXT('A') && C <= TEXT('Z')) && !(C >= TEXT('a') && C <= TEXT('z'))) return false;
+    }
+    if (Dots != 1) return false;
+    FString Package, Object; Text.Split(TEXT("."), &Package, &Object);
+    return !Object.IsEmpty() && !Object.Contains(TEXT("/")) && FPackageName::IsValidLongPackageName(Package);
+}
 namespace
 {
 /** 稳定身份限制为ASCII标识，避免路径、空白或脚本文本混入命令身份。 */
@@ -102,6 +116,7 @@ bool IsParameterValid(const FDivineBeastsDemoParameterDefinition& Parameter)
     const auto& Value = Parameter.DefaultValue;
     if (Value.Type == EDivineBeastsDemoParameterType::Boolean) return true;
     if (Value.Type == EDivineBeastsDemoParameterType::Identifier) return IsIdentity(Value.IdentifierValue);
+    if (Value.Type == EDivineBeastsDemoParameterType::AssetPath) return IsStableAssetPathText(Value.AssetPathValue.ToString());
     if (Value.Type != EDivineBeastsDemoParameterType::Integer && Value.Type != EDivineBeastsDemoParameterType::Number) return false;
     constexpr int64 MaximumExactInteger = 9007199254740991LL;
     if (Value.Type == EDivineBeastsDemoParameterType::Integer && (Value.IntegerValue < -MaximumExactInteger || Value.IntegerValue > MaximumExactInteger)) return false;
@@ -148,7 +163,7 @@ FGamePlatformResult ValidateCatalog(const UDivineBeastsDemoCatalogDefinition& Ca
         {
             const FString ExpectedPackage = TEXT("/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_") + Plugin.PluginId.ToString();
             const FName ExpectedSource = Plugin.DescriptorPath.StartsWith(TEXT("Game/Plugins/ThirdParty/")) ? FName(TEXT("third_party")) : FName(TEXT("first_party"));
-            if (Plugin.TestPageAsset.GetLongPackageName() != ExpectedPackage || Plugin.SourceKind != ExpectedSource)
+            if (Plugin.TestPageAsset.ToString() != ExpectedPackage + TEXT(".") + FPackageName::GetShortName(ExpectedPackage) + TEXT("_C") || Plugin.SourceKind != ExpectedSource)
                 return Reject(TEXT("Demo.ManualPageIdentity"), TEXT("独立页与插件身份/来源不一致，禁止跨插件页面别名。"));
         }
     }
@@ -191,10 +206,17 @@ FGamePlatformResult ValidateCatalog(const UDivineBeastsDemoCatalogDefinition& Ca
             if (!IsOneOf(Target, {TEXT("Game"), TEXT("Client"), TEXT("Editor")}) || (Scenario.RunMode == TEXT("editor") && Target != TEXT("Editor")))
                 return Reject(TEXT("Demo.InvalidTarget"), TEXT("案例声明了不允许的启动目标。"));
         }
+        for (const auto& Label : Scenario.OperationLabels)
+        {
+            const FString Text = Label.Value.ToString();
+            if (!Scenario.Operations.Contains(Label.Key) || Text.TrimStartAndEnd().IsEmpty() || Text.Len() > 80)
+                return Reject(TEXT("Demo.InvalidOperationLabels"), TEXT("操作标签必须属于已声明操作、非空且不超过80字符。"));
+        }
         for (FName Operation : Scenario.Operations)
         {
-            if (!IsOneOf(Operation, {TEXT("Execute"), TEXT("Pause"), TEXT("Resume"), TEXT("Stop"), TEXT("Reset")}))
-                return Reject(TEXT("Demo.InvalidOperation"), TEXT("案例声明了未知操作。"));
+            if (!IsIdentity(Operation)) return Reject(TEXT("Demo.InvalidOperation"), TEXT("操作身份不合法。"));
+            if (!IsOneOf(Operation, {TEXT("Execute"), TEXT("Pause"), TEXT("Resume"), TEXT("Stop"), TEXT("Reset")}) && !Scenario.OperationLabels.Contains(Operation))
+                return Reject(TEXT("Demo.MissingOperationLabel"), TEXT("具名操作缺少中文标签；执行仍需适配编译白名单。"));
         }
         for (FName PluginId : Scenario.RequiredPlugins)
             if (!Plugins.Contains(PluginId)) return Reject(TEXT("Demo.MissingReference"), TEXT("案例依赖未登记插件。"));

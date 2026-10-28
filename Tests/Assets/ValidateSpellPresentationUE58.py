@@ -64,7 +64,7 @@ def validate(report_path=None, raise_on_error=True):
         expected = set(required_packages(data)) - {data['cook_label']}
         if actual != expected:
             errors.append('Cook标签种子与合同不一致')
-        if label.get_editor_property('rules').cook_rule != u.PrimaryAssetCookRule.ALWAYS_COOK:
+        if label.get_editor_property('rules').get_editor_property('CookRule') != u.PrimaryAssetCookRule.ALWAYS_COOK:
             errors.append('Cook标签未设AlwaysCook')
         if label.get_editor_property('is_runtime_label') or label.get_editor_property('label_assets_in_my_directory'):
             errors.append('Cook标签须只显式收集且自身不进入运行包')

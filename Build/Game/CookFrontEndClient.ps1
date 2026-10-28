@@ -17,8 +17,10 @@ param([string]$EngineRoot, [switch]$Cook,
     [switch]$SkipDebugSymbols=$true,
     # Zen服务实际不可用时显式回退原生文件Cook输出；不关闭IoStore、DDC或现有发布门禁。
     [switch]$SkipZenStore,
+    # 仅在需要同次Cook逐系统编译证据时显式启用；不清理DDC或改运行配置。
+    [switch]$ForceNiagaraCompileOnLoad,
     # 文件Cook遇到深层资产名超过260字符时，显式使用独占短输出目录；不改变资产身份或跳过检查。
-    [ValidatePattern('^[A-Za-z]:[\\/]SSLM-Cook[\\/][a-fA-F0-9]{8,32}$')][string]$ShortCookRoot,
+    [string]$ShortCookRoot,
     # 必须匹配当前公共UI与原图的真实RHI颜色报告；资源变化后旧报告拒绝发布。
     [string]$UIColorRHIReport,
     # 默认发行前端保持开发资源隔离；候选技能必须显式选择用户批准的开发客户端配置。
@@ -52,10 +54,15 @@ try {
         # UAT要求最终目录仍以平台名结尾，否则Stage会再追加一层WindowsClient。
         $cookDirectory=Join-Path $context.Workspace ('Saved/C/'+$RunId.ToString('N').Substring(0,8)+'/WindowsClient')
         if($ShortCookRoot){
+            if(-not [IO.Path]::IsPathRooted($ShortCookRoot)){throw '短Cook目录必须是当前工程内的绝对路径。'}
             $shortRoot=[IO.Path]::GetFullPath($ShortCookRoot)
+            $workspaceBoundary=[IO.Path]::GetFullPath($context.Workspace).TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar
+            if(-not $shortRoot.StartsWith($workspaceBoundary,[StringComparison]::OrdinalIgnoreCase)){throw '短Cook目录必须位于当前工程内，禁止工程外烘焙副本。'}
             $shortParent=Split-Path -Parent $shortRoot
-            if(Test-Path -LiteralPath $shortParent){
-                if((Get-Item -LiteralPath $shortParent).Attributes -band [IO.FileAttributes]::ReparsePoint){throw '短Cook父目录不得为重解析点。'}
+            $shortAncestor=$shortParent
+            while($shortAncestor -and ($shortAncestor.StartsWith($workspaceBoundary,[StringComparison]::OrdinalIgnoreCase) -or $shortAncestor -ieq $context.Workspace)){
+                if((Test-Path -LiteralPath $shortAncestor) -and ((Get-Item -LiteralPath $shortAncestor).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw '短Cook祖先目录不得为重解析点。'}
+                $shortAncestor=Split-Path -Parent $shortAncestor
             }
             if(Test-Path -LiteralPath $shortRoot){throw '短Cook目录已经存在，拒绝覆盖。'}
             $null=New-Item -ItemType Directory -Path $shortRoot -Force
@@ -73,6 +80,12 @@ try {
     $details.Maps=$maps
     $cookOptions="-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback"
     if ($SkipZenStore) { $cookOptions += ' -SkipZenStore' }
+    if ($ForceNiagaraCompileOnLoad) { $cookOptions += ' -ForceDPCVars=fx.ForceCompileOnLoad=1' }
+    $details.ForceNiagaraCompileOnLoad=[bool]$ForceNiagaraCompileOnLoad
+    # 复用工程已有DDC；UE5.8编辑器设置可覆盖环境/命令行，三处限定同一工程内目录。
+    $cookLocalCacheDirectory=Join-Path $context.Workspace 'Game/DerivedDataCache'
+    $cookOptions+=(' -LocalDataCachePath="'+$cookLocalCacheDirectory+'" -ini:EditorSettings:/Script/UnrealEd.EditorSettings:LocalDerivedDataCache=(Path="'+$cookLocalCacheDirectory+'")')
+    $details.LocalDataCacheDirectory=$cookLocalCacheDirectory
     $arguments=@($tool.Dll,'BuildCookRun',"-project=$($context.Project)",'-target=DivineBeastsArenaClient',
         '-nop4','-unattended','-utf8output','-cook','-stage','-pak','-skipbuild','-skipbuildeditor','-platform=Win64',
         '-clientconfig=Development','-client','-ddc=NoZenLocalFallback',
@@ -98,6 +111,14 @@ try {
     }
     $tool.Environment.uebp_LogFolder=Join-Path $context.Directory 'UATLogs'
     $tool.Environment.uebp_EngineSavedFolder=Join-Path $context.Directory 'EngineSaved'
+    # UAT及其Cook子进程的临时文件同样留在当前工程；短目录避免Shader工作路径再次超长。
+    $cookTemporaryDirectory=Join-Path $context.Workspace ('Saved/T/'+$RunId.ToString('N').Substring(0,8))
+    if(Test-Path -LiteralPath $cookTemporaryDirectory){throw '本次Cook临时目录已存在，拒绝复用。'}
+    $null=New-Item -ItemType Directory -Path $cookTemporaryDirectory -Force
+    $tool.Environment.TEMP=$cookTemporaryDirectory
+    $tool.Environment.TMP=$cookTemporaryDirectory
+    $tool.Environment['UE-LocalDataCachePath']=$cookLocalCacheDirectory
+    $details.TemporaryDirectory=$cookTemporaryDirectory
     $result=Invoke-FoundationProcess -FilePath $tool.Executable -Arguments $arguments -WorkingDirectory (Split-Path $tool.Dll) -OutputDirectory $context.Directory -TimeoutSeconds $TimeoutSeconds -Environment $tool.Environment
     $details.Result=$result; $code=$result.ExitCode
     if ($code -eq 0) {

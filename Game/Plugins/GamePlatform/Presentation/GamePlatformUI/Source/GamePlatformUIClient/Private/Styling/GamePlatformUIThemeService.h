@@ -25,6 +25,8 @@ public:
     bool CancelThemeRequest(const FGuid& RequestId);
     FPrimaryAssetId GetCurrentThemeId() const;
     int64 GetRevision() const { return Revision; }
+    FGamePlatformUIThemeSnapshot GetSnapshot() const;
+    FGamePlatformResult RestoreSnapshot(const FGamePlatformUIThemeSnapshot& Snapshot,int64 ExpectedRevision,FGuid& OutRequest);
     UClass* ResolveStyle(EGamePlatformUIStyleKind Kind, FName Key, bool bFallback, FText& Error) const;
 private:
     IGamePlatformDataService* GetDataService() const;
@@ -41,6 +43,7 @@ private:
     FPrimaryAssetId PendingThemeId;
     FGamePlatformUIThemeContext PendingContext;
     FGamePlatformUIThemeContext ActiveContext;
+    FGuid SnapshotScope;
     /** 强引用当前只读主题对象；真正资源生命期仍以Data租约为准。 */
     UPROPERTY(Transient) TObjectPtr<UGamePlatformUIThemeDefinition> ActiveDefinition = nullptr;
     int64 Revision = 0;

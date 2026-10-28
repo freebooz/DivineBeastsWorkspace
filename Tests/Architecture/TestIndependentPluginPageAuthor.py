@@ -24,7 +24,7 @@ class IndependentPageAuthorTests(unittest.TestCase):
         for page in plan:
             self.assertEqual(page['plugin_id'], page['fixed_plugin_id'])
             self.assertTrue(page['widget_class'].endswith('_' + page['plugin_id'] + '_C'))
-        self.assertEqual(len(plan), len({p['definition'] for p in plan}))
+        self.assertEqual({self.tool.HUB_DEFINITION}, {p['definition_template'] for p in plan})
 
     def test_alias_rejected_before_engine_import_or_write(self):
         document = copy.deepcopy(self.document)
@@ -49,6 +49,12 @@ class IndependentPageAuthorTests(unittest.TestCase):
         self.assertEqual('not_run', result['cold_reload'])
         self.assertEqual('not_run', result['runtime'])
         self.assertEqual('pending', result['human_review'])
+
+    def test_cold_reload_requires_process_started_after_saved_assets(self):
+        self.assertFalse(self.tool.is_cold_reload(10, 200.0, 10, 250.0))
+        self.assertFalse(self.tool.is_cold_reload(10, 200.0, 11, 199.0))
+        self.assertFalse(self.tool.is_cold_reload(10, 200.0, 11, 200.0))
+        self.assertTrue(self.tool.is_cold_reload(10, 200.0, 11, 201.0))
 
 
 if __name__ == '__main__':

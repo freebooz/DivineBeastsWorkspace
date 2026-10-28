@@ -9,6 +9,7 @@
 退出0仅表示发布机器待审索引，1失败，2未执行；不代表完整插件覆盖、当前人工通过或部署可用。
 #>
 param([switch]$Publish,[string]$EngineRoot,[string]$BuildResultPath,[string]$DemoResultPath,[string]$ReviewResultPath,
+    [string]$NativeSavedRoot='Game/Saved',
     [Parameter(Mandatory)][guid]$RunId,[Parameter(Mandatory)][string]$RawIndexPath)
 $ErrorActionPreference='Stop'; Set-StrictMode -Version Latest
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
@@ -19,7 +20,8 @@ try {
     if (-not $Publish) { throw [IO.FileNotFoundException]::new('未指定Publish；不读取产物或写验证索引。') }
     if ($RunId -eq [guid]::Empty) { throw '运行身份不能为零GUID。' }
     $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-    $root=Join-Path $workspace "Game/Saved/GamePlatformValidation/$($RunId.ToString('D'))/Review"
+    $savedRoot=Resolve-PluginDemoEvidencePath -Root $workspace -Path $NativeSavedRoot
+    $root=Join-Path $savedRoot "GamePlatformValidation/$($RunId.ToString('D'))/Review"
     $engine=Get-FoundationEngine $EngineRoot
     # 当前完整Editor/Review证明须含审核模块，但-game运行观察不可强制Editor模块已加载。
     $modules=@(Get-PluginDemoRuntimeModuleNames)+@('GamePlatformDeveloperTools')
@@ -27,10 +29,17 @@ try {
     $rawRead=Read-PluginDemoEvidenceJson $root $RawIndexPath; $raw=$rawRead.Value
     if ($raw.run_id -cne $RunId.ToString('D')) { throw '原始索引不属于请求的运行。' }
     $launchId=[guid]::ParseExact([string]$raw.runtime_origin.launch_id,'D')
-    $launchRoot=Join-Path $workspace "Game/Saved/GamePlatformValidation/Launches/$($launchId.ToString('D'))"
+    $launchRoot=Join-Path $savedRoot "GamePlatformValidation/Launches/$($launchId.ToString('D'))"
     $launchRead=Read-PluginDemoEvidenceJson $launchRoot 'Launch.json'; $launch=$launchRead.Value
     if ($launch.SchemaVersion -ne 1 -or $launch.Kind -cne 'PluginDemoControlledLaunch' -or $launch.Target -cne 'EditorGame' -or
         $launch.EngineOrClientExe -ine (Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor.exe')) { throw '来源不是本工程受控EditorGame启动。' }
+    if($savedRoot -ine (Join-Path $workspace 'Game/Saved')) {
+        $expectedUserDir=Join-Path $workspace ('Saved/Validation/PluginManualUI20261027/Hosts/'+$launchId.ToString('D'))
+        if($savedRoot -ine (Join-Path $expectedUserDir 'Saved') -or $launch.ManualFixture -isnot [bool] -or !$launch.ManualFixture -or
+            $launch.ExpectedNativeSavedRoot -ine $savedRoot -or '-GamePlatformManualFixture' -cnotin $launch.Arguments -or ('-UserDir='+$expectedUserDir) -cnotin $launch.Arguments) {
+            throw '隔离保存目录与实际受控宿主身份/参数不一致。'
+        }
+    }
     foreach($argument in @('-DBAPluginDemo',"-DBAPluginDemoLaunchId=$($launchId.ToString('D'))","-DBAPluginDemoContentFingerprint=$($launch.ContentSHA256)",'-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor')) {
         if ($argument -cnotin $launch.Arguments) { throw '来源启动记录缺隔离/版本参数。' }
     }

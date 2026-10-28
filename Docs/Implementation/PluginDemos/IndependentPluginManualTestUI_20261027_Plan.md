@@ -91,7 +91,9 @@ Interfaces: 以ProjectContent.Inventory.json中9个代码/第三方插件的70�
 
 Files: 新增`Tools/Unreal/PluginDemos/AuthorIndependentPluginPagesMonolith.py`及对应只读核验器；复用既有Monolith recipes与DBAUIPack_Core开发目录/GenerationManifest。
 
-Interfaces: 输入唯一manifest的70个PluginId和页面路径；输出70份真实`WBP_DBA_PluginTest_<PluginId>`及对应UIScreenDefinition，复用现有Native Screen、共享子页/参数行和玉石主题。
+Interfaces: 输入唯一manifest的70个PluginId和页面路径；输出70份真实`WBP_DBA_PluginTest_<PluginId>`，复用现有Hub UIScreenDefinition合同，由既有WorldUI生成本次页面的瞬态定义，复用Native Screen、共享子页/参数行和玉石主题。
+
+实施裁定：设计要求每插件独立可寻址UMG，并复用既有页面定义合同；T02已通过瞬态定义替换固定Widget类。取消原计划70份无人消费的持久化定义，避免额外资产和第二套身份登记；不改变70独立页、固定插件、唯一Data/UIManager路由及真实功能接线的验收要求。
 
 - [ ] 先核对Editor工程、模块版本、Monolith UI schema和目标包脏状态；备份已有目标，不覆盖其他脏包。
 - [ ] 制作70个可操作页面并接入中心/直接入口，固定插件上下文、功能菜单、参数、样板、诊断与报告。

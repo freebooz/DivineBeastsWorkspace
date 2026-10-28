@@ -9,6 +9,8 @@
 #include "Components/NamedSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
+#include "Components/Border.h"
+#include "Components/VerticalBoxSlot.h"
 #include "Components/EditableTextBox.h"
 #include "Components/ComboBoxString.h"
 #include "Components/WidgetSwitcher.h"
@@ -31,6 +33,8 @@ void UDivineBeastsDemoHubScreen::NativeOnInitialized()
     if (ScenarioList) ScenarioList->OnItemSelectionChanged().AddUObject(this, &ThisClass::OnScenarioSelectionChanged);
     if (RefreshButton) RefreshButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnRefreshClicked);
     if (OpenPluginPageButton) OpenPluginPageButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnOpenPluginPageClicked);
+    if (auto* Button=Cast<UButton>(GetWidgetFromName(TEXT("WorldObservationButton"))))
+        Button->OnClicked.AddUniqueDynamic(this,&ThisClass::ToggleWorldObservation);
     if (LaunchScenarioButton) LaunchScenarioButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnLaunchClicked);
     if (ExecuteScenarioButton) ExecuteScenarioButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnExecuteClicked);
     if (PauseScenarioButton) PauseScenarioButton->OnClicked.AddUniqueDynamic(this, &ThisClass::OnPauseClicked);
@@ -84,6 +88,8 @@ void UDivineBeastsDemoHubScreen::DetachViewModel()
         return GetViewModel() == Selected.Get() && IsActivated() == bWasActivated &&
             (!Selected.IsValid() || Selected->GetPageGeneration() == Generation);
     };
+    SetWorldObservation(false);
+    if (!StillOwnsCleanup()) return;
     // 先撤销本宿主的命令资格与值缓存；移除样板/列表会同步进入Slate或蓝图，不能清掉重入的新模型。
     DemoModel = nullptr;
     Filter = {};
@@ -275,7 +281,9 @@ void UDivineBeastsDemoHubScreen::ApplySnapshot()
     if (CoverageText) CoverageText->SetText(FText::FromString(FString::Printf(TEXT("插件%d；待审计%d；已登记功能%d；已接线%d；当前人工通过%d%s"),
         Snapshot.TotalPlugins, Snapshot.UnreviewedPlugins, Snapshot.KnownFeatures, Snapshot.WiredFeatures, Snapshot.HumanApprovedFeatures,
         Snapshot.bHasKnownDenominator ? TEXT("") : TEXT("；功能分母未知"))));
-    if (OperationStatusText) OperationStatusText->SetText(FText::FromString(Snapshot.Run.TerminalResult.Status != EGamePlatformResultStatus::NotExecuted
+    if (OperationStatusText && Snapshot.PageNavigationResult.Status != EGamePlatformResultStatus::NotExecuted &&
+        !Snapshot.PageNavigationResult.IsSuccess()) OperationStatusText->SetText(FText::FromString(Snapshot.PageNavigationResult.Message));
+    else if (OperationStatusText) OperationStatusText->SetText(FText::FromString(Snapshot.Run.TerminalResult.Status != EGamePlatformResultStatus::NotExecuted
         ? Snapshot.Run.TerminalResult.Message : (Snapshot.Run.OperationResult.Status != EGamePlatformResultStatus::NotExecuted ? Snapshot.Run.OperationResult.Message : Snapshot.CatalogResult.Message)));
     if (LaunchScenarioButton) LaunchScenarioButton->SetIsEnabled(Selected && Selected->Preflight.bCanStart && Snapshot.Run.State != EDivineBeastsDemoRunState::Stopping);
     const bool bCanOperate = Selected && Selected->Scenario.ScenarioId == Snapshot.Run.ScenarioId && Snapshot.Run.State == EDivineBeastsDemoRunState::Running && !Snapshot.Run.bOperationPending;
@@ -283,7 +291,7 @@ void UDivineBeastsDemoHubScreen::ApplySnapshot()
     if (PauseScenarioButton) PauseScenarioButton->SetIsEnabled(bCanOperate && Selected->Scenario.Operations.Contains(TEXT("Pause")));
     if (ResumeScenarioButton) ResumeScenarioButton->SetIsEnabled(bCanOperate && Selected->Scenario.Operations.Contains(TEXT("Resume")));
     if (ResetDemoButton) ResetDemoButton->SetIsEnabled(bCanOperate && Selected->Scenario.Operations.Contains(TEXT("Reset")));
-    if (StopScenarioButton) StopScenarioButton->SetIsEnabled(Snapshot.Run.State == EDivineBeastsDemoRunState::Preparing || Snapshot.Run.State == EDivineBeastsDemoRunState::Running);
+    if (StopScenarioButton) StopScenarioButton->SetIsEnabled(Snapshot.Run.State == EDivineBeastsDemoRunState::Preparing || Snapshot.Run.State == EDivineBeastsDemoRunState::Running || (Snapshot.Run.bCleanupPending && Snapshot.Run.State != EDivineBeastsDemoRunState::Stopping));
     if (SampleWidgetSlot && SampleWidgetSlot->GetContent() != SelectedModel->GetSampleWidget()) SampleWidgetSlot->SetContent(SelectedModel->GetSampleWidget());
     if (IsCurrent()) BP_OnMenuSnapshotChanged(Snapshot);
 }
@@ -298,8 +306,17 @@ void UDivineBeastsDemoHubScreen::SubmitOperation(FName Operation)
 void UDivineBeastsDemoHubScreen::OnRefreshClicked() { if (DemoModel) DemoModel->RequestRefresh(); }
 void UDivineBeastsDemoHubScreen::OnOpenPluginPageClicked()
 {
-    if (DemoModel && FixedPluginId.IsNone() && !DemoModel->RequestPluginPage(DemoModel->GetMenuSnapshot().SelectedPluginId) && OperationStatusText)
-        OperationStatusText->SetText(FText::FromString(TEXT("独立插件页请求未受理；检查目录、开发资格与运行清理结果。")));
+    if (!DemoModel || !FixedPluginId.IsNone()) return;
+    const TStrongObjectPtr<UDivineBeastsDemoHubViewModel> Selected(DemoModel);
+    const int32 Generation = Selected->GetPageGeneration();
+    const bool Accepted = Selected->RequestPluginPage(Selected->GetMenuSnapshot().SelectedPluginId);
+    if (!Accepted && OperationStatusText && IsActivated() && DemoModel == Selected.Get() &&
+        GetViewModel() == Selected.Get() && Selected->IsPageActive() && Selected->GetPageGeneration() == Generation)
+    {
+        const auto Result = Selected->GetMenuSnapshot().PageNavigationResult;
+        OperationStatusText->SetText(FText::FromString(Result.Message.IsEmpty()
+            ? TEXT("独立插件页请求未受理；检查目录、开发资格与运行清理结果。") : Result.Message));
+    }
 }
 void UDivineBeastsDemoHubScreen::OnLaunchClicked() { if (DemoModel) DemoModel->RequestScenario(DemoModel->GetMenuSnapshot().SelectedScenarioId); }
 void UDivineBeastsDemoHubScreen::OnExecuteClicked() { SubmitOperation(TEXT("Execute")); }
@@ -330,3 +347,62 @@ void UDivineBeastsDemoHubScreen::ShowControlsPanel()
 { if(IsActivated())if(auto* Switcher=Cast<UWidgetSwitcher>(GetWidgetFromName(TEXT("DemoPageSwitcher")))) Switcher->SetActiveWidgetIndex(1); }
 void UDivineBeastsDemoHubScreen::ShowReportPanel()
 { if(IsActivated())if(auto* Switcher=Cast<UWidgetSwitcher>(GetWidgetFromName(TEXT("DemoPageSwitcher")))) Switcher->SetActiveWidgetIndex(2); }
+
+void UDivineBeastsDemoHubScreen::ToggleWorldObservation()
+{
+    // 同步布局通知内不受理再次进入；退出由SetWorldObservation(false)合并，不能递归抢占快照。
+    if (bApplyingObservationLayout) return;
+    if (!bWorldObservation && (!IsActivated() || !DemoModel || !DemoModel->IsPageActive())) return;
+    SetWorldObservation(!bWorldObservation);
+    if (bWorldObservation) ShowControlsPanel();
+}
+
+void UDivineBeastsDemoHubScreen::SetWorldObservation(bool bEnabled)
+{
+    if (bApplyingObservationLayout)
+    {
+        if (!bEnabled) bObservationExitRequested = true;
+        return;
+    }
+    if (bEnabled == bWorldObservation) return;
+    const TStrongObjectPtr<UDivineBeastsDemoHubScreen> KeepAlive(this);
+    TGuardValue<bool> Applying(bApplyingObservationLayout,true);
+    bObservationExitRequested = false;
+    auto* Background=Cast<UBorder>(GetWidgetFromName(TEXT("DemoBackground")));
+    UWidget* Body=GetWidgetFromName(TEXT("BodyScroll"));
+    auto* BodySlot=Body ? Cast<UVerticalBoxSlot>(Body->Slot) : nullptr;
+    if (bEnabled)
+    {
+        // 在任何SetVisibility同步FieldNotify之前完整捕获；退出通知可恢复整个基线。
+        ObservationHiddenWidgets.Reset();
+        for (const TCHAR* Name : {TEXT("PluginsBounds"),TEXT("FeaturesBounds"),TEXT("SearchBar"),TEXT("CoverageText")})
+        {
+            if (UWidget* Widget=GetWidgetFromName(Name))
+            {
+                ObservationHiddenWidgets.Add(Widget,Widget->GetVisibility());
+            }
+        }
+        if (Background) ObservationBackgroundColor=Background->GetBrushColor();
+        if (BodySlot) ObservationBodyAlignment=uint8(BodySlot->GetHorizontalAlignment());
+        bWorldObservation = true;
+        for (const auto& Entry : ObservationHiddenWidgets)
+        {
+            if (Entry.Key.IsValid()) Entry.Key->SetVisibility(ESlateVisibility::Collapsed);
+            if (bObservationExitRequested) break;
+        }
+        // Controls/Detail/Report沿用真实UMG自身的不透明底板；右侧保留世界原生渲染。
+        if (!bObservationExitRequested && Background) Background->SetBrushColor(FLinearColor(0.02f,0.04f,0.035f,0.12f));
+        if (!bObservationExitRequested && BodySlot) BodySlot->SetHorizontalAlignment(HAlign_Left);
+    }
+    if (!bEnabled || bObservationExitRequested)
+    {
+        // 清理优先于同步通知内的再次进入；本次串行恢复完成后，下一次显式点击才可重新进入。
+        bWorldObservation = false;
+        auto Hidden=MoveTemp(ObservationHiddenWidgets);
+        for (const auto& Entry : Hidden) if (Entry.Key.IsValid()) Entry.Key->SetVisibility(Entry.Value);
+        if (Background) Background->SetBrushColor(ObservationBackgroundColor);
+        if (BodySlot) BodySlot->SetHorizontalAlignment(EHorizontalAlignment(ObservationBodyAlignment));
+    }
+    if (auto* Label=Cast<UTextBlock>(GetWidgetFromName(TEXT("WorldObservationButtonLabel"))))
+        Label->SetText(FText::FromString(bWorldObservation ? TEXT("返回完整目录") : TEXT("观察实际世界")));
+}

@@ -11,6 +11,7 @@ void UGamePlatformUIThemeService::Initialize(UGamePlatformUIManagerSubsystem* In
 {
     check(IsInGameThread());
     Owner = InOwner;
+    SnapshotScope=FGuid::NewGuid();
     ULocalPlayer* Player = InOwner ? InOwner->GetLocalPlayer() : nullptr;
     DataInstance = Player ? Player->GetGameInstance() : nullptr;
 }
@@ -160,6 +161,28 @@ void UGamePlatformUIThemeService::HandleLoaded(FGuid RequestId,
 FPrimaryAssetId UGamePlatformUIThemeService::GetCurrentThemeId() const
 {
     return ActiveDefinition ? ActiveDefinition->GetPrimaryAssetId() : FPrimaryAssetId();
+}
+
+FGamePlatformUIThemeSnapshot UGamePlatformUIThemeService::GetSnapshot() const
+{
+    check(IsInGameThread());FGamePlatformUIThemeSnapshot S;
+    if(RequestState.bClosed)return S;S.ScopeId=SnapshotScope;S.ThemeId=GetCurrentThemeId();S.Context=ActiveContext;S.Revision=Revision;S.bRequestPending=RequestState.RequestId.IsValid();return S;
+}
+FGamePlatformResult UGamePlatformUIThemeService::RestoreSnapshot(const FGamePlatformUIThemeSnapshot& S,int64 ExpectedRevision,FGuid& OutRequest)
+{
+    check(IsInGameThread());OutRequest.Invalidate();
+    if(RequestState.bClosed||bPublishing||!Owner.IsValid()||S.ScopeId!=SnapshotScope||!S.ScopeId.IsValid()||
+        Revision!=ExpectedRevision||RequestState.RequestId.IsValid()||!S.Context.IsValid()||Revision==MAX_int64)
+        return FGamePlatformResult::Failure(TEXT("UI.Theme.RestoreConflict"),TEXT("主题来源、修订或请求已变化，拒绝覆盖其他调用者状态。"));
+    if(S.ThemeId.IsValid())
+    {
+        OutRequest=RequestThemeAsync(S.ThemeId,S.Context);
+        return OutRequest.IsValid()?FGamePlatformResult::Success():FGamePlatformResult::Failure(TEXT("UI.Theme.RestoreRejected"),TEXT("原主题重新加载请求未被接纳。"));
+    }
+    const TStrongObjectPtr<UGamePlatformUIThemeService> Keep(this);
+    const auto Old=ActiveLease;ActiveLease={};ActiveDefinition=nullptr;ActiveContext={};++Revision;
+    {TGuardValue<bool> PublishingGuard(bPublishing,true);if(auto* Manager=Owner.Get())Manager->OnThemeChanged.Broadcast(Revision);}
+    ReleaseLease(Old);return FGamePlatformResult::Success();
 }
 
 UClass* UGamePlatformUIThemeService::ResolveStyle(

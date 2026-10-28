@@ -96,7 +96,7 @@ class SpellPresentationContractTest(unittest.TestCase):
             objects[row['definition']] = cls(row['definition'], logical_id=SimpleNamespace(namespace=namespace, name=name, logical_version=int(version)),
                 niagara_system=system, quality_variants=[], platform_variants=[], parameter_schema=SimpleNamespace(rules=rules))
         objects[data['cook_label']] = classes['PrimaryAssetLabel'](data['cook_label'],
-            explicit_assets=[objects[p] for p in required_packages() if p != data['cook_label']], rules=SimpleNamespace(cook_rule='ALWAYS_COOK'), is_runtime_label=False, label_assets_in_my_directory=False)
+            explicit_assets=[objects[p] for p in required_packages() if p != data['cook_label']], rules=Asset('rules', CookRule='ALWAYS_COOK'), is_runtime_label=False, label_assets_in_my_directory=False)
         stub = SimpleNamespace(**classes, load_asset=objects.get,
             Paths=SimpleNamespace(get_project_file_path=lambda: str(ROOT / 'Game/DivineBeastsArena.uproject')),
             SystemLibrary=SimpleNamespace(get_engine_version=lambda: '5.8.0'),

@@ -47,6 +47,8 @@ struct FGamePlatformWorldReadinessSnapshot
     bool bDefinitionLoaded = false; // 真实Data租约可读。
     bool bMapIdentityMatched = false; // 定义软引用包与真实包相同。
     bool bSessionContextMatched = false; // 真Session匹配或显式离线开发例外。
+    bool bRegionDefinitionsLoaded = false; // 所有声明Region定义已由本World租约加载，独立于Provider登记。
+    int32 RegisteredRegionProviders = 0; // 当前有效Provider数量，仅供只读诊断。
     bool bRequiredRegionsRegistered = false; // 必需定义对应的弱Provider均活着。
     bool bRequiredStreamingReady = false; // 必需流送请求的真实底层状态。
     bool bWorldNotTearingDown = false; // 未进入关闭。

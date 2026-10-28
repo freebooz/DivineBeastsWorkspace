@@ -26,12 +26,26 @@ public class DivineBeastsDemoClient : ModuleRules
             // 仅本开发演示使用既有平台电影摄像机，允许客户端私有光学控制与键盘交互。
             "GamePlatformCameraClient", "CinematicCamera", "InputCore",
             // 私有ListView桥实例化STableViewBase模板，头可见不能替代实际Slate链接依赖。
-            "Slate"
+            "Slate",
+            // 独立人工页调用平台现有服务；均为开发模块私有依赖，不公开上层适配类型。
+            "GamePlatformApplicationFlow", "GamePlatformInputClient", "GamePlatformLoading",
+            "GamePlatformSaveClient", "GamePlatformSettingsRuntime", "GamePlatformSettingsClient",
+            "GamePlatformOnline", "GamePlatformOnlineClient", "GamePlatformSession",
+            "GamePlatformCommerceUIClient", "GamePlatformEntitlement", "GamePlatformEntitlementClient",
+            "GamePlatformEquipment", "GamePlatformEquipmentClient", "GamePlatformInventoryClient",
+            "GamePlatformLiveOpsClient", "GamePlatformProgression", "GamePlatformProgressionClient",
+            "EnhancedInput", "GameplayTags", "GamePlatformDebug",
+            "GamePlatformPresentationCore", "GamePlatformPresentationClient", "GamePlatformSFXClient",
+            "GamePlatformSurfaceClient", "PhysicsCore",
+            "GamePlatformWorld", "GamePlatformWeatherClient", "GamePlatformWaterRuntime", "GamePlatformWaterClient",
+            "GamePlatformPCG", "GamePlatformNavigation", "GamePlatformInteraction", "GamePlatformTelemetry", "PCG",
+            "GamePlatformGameplay", "GamePlatformCharacter", "GamePlatformAbilitySystem", "GamePlatformCombat", "GamePlatformAnimationClient", "GamePlatformAI", "GamePlatformQuest", "GamePlatformQuestClient", "GameplayAbilities", "DivineBeastsCharactersRuntime"
         });
         if (Target.Type == TargetType.Editor)
         {
             // 仅Editor私有桥生成待审对象；Client公共头不含Editor/Review类型，更不执行人工决定。
-            PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformDeveloperTools", "UnrealEd" });
+            PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformDeveloperTools", "UnrealEd",
+                "GamePlatformServer", "GamePlatformEquipmentServer", "GamePlatformSurfaceEditor", "GamePlatformPCGEditor", "GamePlatformNavigationServer", "NavigationSystem", "AIModule", "GamePlatformAIServer", "GamePlatformQuestServer" });
         }
         if (Target.bWithLiveCoding)
         {

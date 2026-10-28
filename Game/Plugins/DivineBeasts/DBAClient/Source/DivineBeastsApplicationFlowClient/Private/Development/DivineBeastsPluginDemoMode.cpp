@@ -42,6 +42,25 @@ bool FDivineBeastsPluginDemoMode::IsEnabled()
 #endif
 }
 
+bool FDivineBeastsPluginDemoMode::IsAllowedHubPageArguments(bool bDevelopment, bool bInteractiveClient,
+    bool bExplicitOptIn, bool bConflictingDevelopmentMode, const FString& Map)
+{
+    return IsAllowedArguments(bDevelopment, bInteractiveClient, bExplicitOptIn, bConflictingDevelopmentMode, Map)
+        && Map.Equals(GetHubMapPackage(), ESearchCase::CaseSensitive);
+}
+bool FDivineBeastsPluginDemoMode::IsHubPageEnabled()
+{
+#if UE_BUILD_SHIPPING || UE_BUILD_TEST
+    return false;
+#else
+    const TCHAR* Args = FCommandLine::Get();
+    FString Map;
+    const bool bOptIn = FParse::Param(Args, TEXT("DBAPluginDemo")) && FParse::Value(Args, TEXT("DBAPluginDemoMap="), Map);
+    const bool bConflict = FParse::Param(Args, TEXT("FoundationStandalone")) || FParse::Param(Args, TEXT("FoundationOnlineIntegration"));
+    return IsAllowedHubPageArguments(true, !IsRunningDedicatedServer() && !IsRunningCommandlet(), bOptIn, bConflict, Map);
+#endif
+}
+
 bool FDivineBeastsPluginDemoMode::IsValidPluginIdText(const FString& Id)
 {
     if (Id.IsEmpty() || Id.Len() >= NAME_SIZE || Id.Equals(TEXT("None"), ESearchCase::IgnoreCase)) return false;
@@ -56,8 +75,8 @@ bool FDivineBeastsPluginDemoMode::IsValidPluginIdText(const FString& Id)
 bool FDivineBeastsPluginDemoMode::IsAllowedPluginTestArguments(bool bDevelopment, bool bInteractiveClient,
     bool bExplicitOptIn, bool bConflictingDevelopmentMode, const FString& Map, const FString& Id)
 {
-    return IsAllowedArguments(bDevelopment, bInteractiveClient, bExplicitOptIn, bConflictingDevelopmentMode, Map)
-        && Map.Equals(GetHubMapPackage(), ESearchCase::CaseSensitive) && IsValidPluginIdText(Id);
+    return IsAllowedHubPageArguments(bDevelopment, bInteractiveClient, bExplicitOptIn, bConflictingDevelopmentMode, Map)
+        && IsValidPluginIdText(Id);
 }
 FName FDivineBeastsPluginDemoMode::GetRequestedPluginTest(FString* OutError)
 {

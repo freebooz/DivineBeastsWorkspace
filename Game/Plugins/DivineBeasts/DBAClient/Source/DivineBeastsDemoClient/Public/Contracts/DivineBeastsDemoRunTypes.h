@@ -59,6 +59,10 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoScenarioContext
     double PrepareDeadlineSeconds = 0.0;
     /** UI样板控件弱引用；只允许由Monolith制作且已真实加载的指定对象。 */
     TWeakObjectPtr<UObject> SampleWidget;
+    /** 首次快照及后续服务事件的只读脱敏说明，最多4096字符；不改变命令资格/受理/终态。
+     * 适配按Token原样回传，World检查世界/代次/活动状态后通知UI；不得用轮询驱动。
+     */
+    TFunction<void(const FDivineBeastsDemoRunToken&, const FString&)> PublishObservation;
 };
 
 /** 每次操作最多完成一次，游戏线程回调；失败/取消保持真实结果，不自动签收。 */
@@ -83,10 +87,18 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoRunSnapshot
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FGamePlatformResult OperationResult;
     /** 停止/取消清理的真实结果，未清理为NotExecuted。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FGamePlatformResult CleanupResult;
+    /** 清理尚未成功确认时继续拥有本次实例/资源；失败可显式重试，不能覆盖新运行。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") bool bCleanupPending = false;
+    /** 本Run清理尝试序号；用于诊断，不代表清理完成。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 CleanupAttempt = 0;
     /** 清理完成后的生命周期终态，清理失败时Failed；仍保留原始OperationResult。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FGamePlatformResult TerminalResult;
     /** 真正完成的用户操作数量；只完成Prepare或立即Stop不能冒充功能已执行。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int64 CompletedOperations = 0;
+    /** 本运行最后一次只读服务事件序号；不是操作完成数。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") int32 ObservationRevision = 0;
+    /** 最后服务观察，不代表当前授权或最终结果；新运行清空。禁止包含凭据/响应原文。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FString ObservationText;
 };
 
 /** 待审运行证据输入；只含版本/原始结果/合同，不含审核人或人工通过字段。 */

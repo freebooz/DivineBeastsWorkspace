@@ -53,6 +53,11 @@ bool FGamePlatformReviewEvidenceTest::RunTest(const FString&)
     TestFalse(TEXT("仅准备/停止零操作不能冒充执行"), GamePlatform::Review::IsRunStateCompleted(State, RunId, TEXT("Main.Scenario"), TEXT("Main.Feature")));
     State->SetNumberField(TEXT("completed_operations"), 1);
     TestFalse(TEXT("其他Run状态拒绝"), GamePlatform::Review::IsRunStateCompleted(State, FGuid::NewGuid().ToString(), TEXT("Main.Scenario"), TEXT("Main.Feature")));
+    auto* HashCase = NewObject<UGamePlatformReviewCase>();
+    HashCase->CaseId = TEXT("sha256.case"); HashCase->CaseVersion = 1; HashCase->FeatureId = TEXT("sha256.feature");
+    HashCase->ScenarioId = TEXT("sha256.scenario"); HashCase->Category = TEXT("sha256"); HashCase->Description = TEXT("fixture");
+    HashCase->Preconditions.Reset(); HashCase->Steps = {TEXT("step")}; HashCase->ExpectedResult = TEXT("expected"); HashCase->RequiredEvidence = {TEXT("log")};
+    TestEqual(TEXT("审核规范UTF8字节固定SHA256向量"), HashCase->GetContractFingerprint(), FString(TEXT("b0287143cb1bb3788930fcfb81dc09fdbd9dc9b34a835aafb2db279d911ec513")));
     return true;
 }
 #endif

@@ -87,6 +87,8 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoMenuSnapshot
     /** 当前/最近运行和目录真实结果，默认未执行。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FDivineBeastsDemoRunSnapshot Run;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FGamePlatformResult CatalogResult;
+    /** 切页加载/身份/UIManager失败独立显示，保留原页面的重试/返回能力。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FGamePlatformResult PageNavigationResult;
     /** 中文详情包含目的/依据/步骤/期望/缺口，失败保留可读原因。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FText Details;
     /** 作者内容指纹，不能冒充Editor已加载DLL版本。 */

@@ -12,7 +12,9 @@
     {
       "Name": "GamePlatformDeveloperTools",
       "Enabled": true,
-      "TargetAllowList": [ "Editor" ]
+      "TargetAllowList": [
+        "Editor"
+      ]
     },
     {
       "Name": "DBAGameplay",
@@ -81,7 +83,11 @@
     {
       "Name": "GamePlatformCamera",
       "Enabled": true,
-      "TargetAllowList": [ "Game", "Client", "Editor" ]
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
     },
     {
       "Name": "GamePlatformVFX",
@@ -90,7 +96,11 @@
     {
       "Name": "GamePlatformSettings",
       "Enabled": true,
-      "TargetAllowList": [ "Game", "Client", "Editor" ]
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
     },
     {
       "Name": "GamePlatformUI",
@@ -127,12 +137,140 @@
     {
       "Name": "GamePlatformSurface",
       "Enabled": true,
-      "TargetAllowList": ["Client", "Editor", "Game"]
+      "TargetAllowList": [
+        "Client",
+        "Editor",
+        "Game"
+      ]
     },
     {
       "Name": "GamePlatformWeather",
       "Enabled": true,
       "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformSave",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformCommerceUI",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformEntitlement",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformEquipment",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformLiveOps",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformProgression",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformDebug",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformServer",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformWater",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformPCG",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformNavigation",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformInteraction",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformAI",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GameplayAbilities",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
         "Client",
         "Editor"
       ]
@@ -193,8 +331,16 @@
       "Name": "DivineBeastsDemoClient",
       "Type": "ClientOnly",
       "LoadingPhase": "Default",
-      "TargetAllowList": [ "Game", "Client", "Editor" ],
-      "TargetConfigurationAllowList": [ "Debug", "DebugGame", "Development" ]
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ],
+      "TargetConfigurationAllowList": [
+        "Debug",
+        "DebugGame",
+        "Development"
+      ]
     }
   ]
 }

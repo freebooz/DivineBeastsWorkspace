@@ -148,8 +148,36 @@ public:
     TSharedRef<FGamePlatformTelemetrySchemaRegistry, ESPMode::ThreadSafe>
         GetSchemaRegistry() const;
 
+    /** 开发离线独占诊断：只接管空上下文/缓冲且无在途sink的真实GI；保留原sink原对象，不Shutdown/重建它。 */
+    bool BeginDevelopmentCapture(UWorld& World,FGuid Owner,FGuid& OutScope);
+    /** 固定合成操作与Schema；禁止生产记录混入本Scope，返回真实记录枚举；不转发远端。 */
+    bool ExecuteDevelopmentCapture(const FGuid& Scope,FName Operation,double Value,FString Identifier,
+        EGamePlatformTelemetryRecordResult& OutRecordResult);
+    /** 精确恢复原sink/上下文/采样和原缓冲策略；不以新NullSink假恢复。失败保留完整作用域。 */
+    bool EndDevelopmentCapture(const FGuid& Scope);
 private:
+    FGuid DevelopmentCaptureScope;
+    bool bEndingDevelopmentCapture=false;
+    bool bBeginningDevelopmentCapture=false;
+    TSharedPtr<IGamePlatformTelemetrySink,ESPMode::ThreadSafe> DevelopmentSavedSink;
+    TUniquePtr<FGamePlatformTelemetryBoundedBuffer> DevelopmentSavedBuffer;
+    TUniquePtr<FGamePlatformTelemetryRateLimiter> DevelopmentSavedRateLimiter;
+    TSharedPtr<FGamePlatformTelemetrySchemaRegistry,ESPMode::ThreadSafe> DevelopmentSavedSchema;
+    FGamePlatformTelemetryContext DevelopmentSavedContext;
+    FString DevelopmentSavedSamplingSeed;
+    bool bDevelopmentSavedEnabled=true,bDevelopmentSavedTrace=false;
+    FDateTime DevelopmentSavedLastFlushUtc;
+    int32 DevelopmentSavedLastFlushRecords=0;
+    EGamePlatformTelemetryRecordResult RecordEventOwned(const FGuid&,FGamePlatformTelemetryEvent);
+    EGamePlatformTelemetryRecordResult RecordMetricOwned(const FGuid&,FGamePlatformTelemetryMetric);
+    void BeginSessionOwned(const FGuid&,FString,FString);
+    void EndSessionOwned(const FGuid&);
+    void UpdateWorldContextOwned(const FGuid&,FString,FString,FString,FString,FString);
+    void UpdateCorrelationContextOwned(const FGuid&,FString,FString);
+    void BeforeWorldTravelOwned(const FGuid&);
 #if WITH_DEV_AUTOMATION_TESTS
+    // 仅原生回归观察/交换已空闲的真实GI sink槽；不成为生产配置接口或第二份Recorder。
+    friend struct FGamePlatformTelemetryDevelopmentTestAccess;
     // 仅回归制造“有数据但已撤销调度”的前置，不暴露生产可变状态或复制实现。
     friend class FGamePlatformTelemetryCompletionGenerationTest;
 #endif

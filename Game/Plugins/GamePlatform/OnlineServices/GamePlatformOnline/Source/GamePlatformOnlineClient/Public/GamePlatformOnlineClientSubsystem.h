@@ -169,6 +169,36 @@ public:
     virtual void CancelAll() = 0;
 };
 
+/** 受控空闲宿主的原生机制快照；只持有Provider/非秘密配置，不包含认证凭据，不可序列化或日志。 */
+struct FGamePlatformOnlineIdleProviderState
+{
+public:
+    bool HasProvider(const TSharedPtr<IGamePlatformOnlineAuthProvider>& Expected) const{return Provider==Expected;}
+private:
+    TSharedPtr<IGamePlatformOnlineAuthProvider> Provider;
+    FGamePlatformOnlineConfiguration Configuration;
+    bool bConfigured=false;
+    EGamePlatformOnlineServiceState ServiceState=EGamePlatformOnlineServiceState::Unknown;
+private:
+    friend class UGamePlatformOnlineClientSubsystem;
+    FGuid CapturedInstanceScope,CaptureIdentity;
+    uint64 CapturedBindingGeneration=0;
+};
+
+/** 原生恢复租约：只由所属服务签发/推进，不暴露Provider/配置或可写证明；不可序列化。 */
+class FGamePlatformOnlineProviderRestoreLease final
+{
+public:
+    bool IsValid() const{return Proof.IsValid();}
+    bool IsComplete() const{return Stage==EStage::Complete;}
+private:
+    friend class UGamePlatformOnlineClientSubsystem;
+    enum class EStage:uint8{FixtureInstalled,AwaitingConfiguration,Complete};
+    FGuid Scope,Proof,CaptureIdentity;
+    uint64 BindingGeneration=0;
+    EStage Stage=EStage::FixtureInstalled;
+};
+
 DECLARE_MULTICAST_DELEGATE_OneParam(
     FGamePlatformAuthSnapshotChangedNative,
     const FGamePlatformAuthSnapshot&);
@@ -230,6 +260,11 @@ public:
      * 切换会取消全部旧请求、清空认证并推进代次，防止迟到回调污染新上下文。
      */
     void SetProvider(TSharedPtr<IGamePlatformOnlineAuthProvider> InProvider);
+    /** 游戏线程：仅SignedOut且无在途请求时捕获机制，失败不修改Out；不暴露原始Token。 */
+    bool CaptureIdleProviderState(FGamePlatformOnlineIdleProviderState& Out) const;
+    /** 恢复精确捕获的机制/配置；阶段租约允许配置失败后重试，外部任何SetProvider均失效原绑定证明。 */
+    FGamePlatformResult RestoreIdleProviderState(const FGamePlatformOnlineIdleProviderState& Previous,
+        const TSharedPtr<IGamePlatformOnlineAuthProvider>& ExpectedCurrent,FGamePlatformOnlineProviderRestoreLease& InOutLease);
 
     void TryAutoLogin();
     void LoginWithCredentials(const FString& LoginName, const FString& Password);
@@ -313,5 +348,8 @@ private:
     FGamePlatformAuthSnapshotChangedNative AuthStateChanged;
     FGuid InstanceScopeId;
     bool bConfigured = false;
+    uint64 ProviderBindingGeneration=0;
+    FGuid ActiveProviderRestoreProof;
+    bool bProviderRestoreInProgress=false;
 };
 

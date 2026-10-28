@@ -5,6 +5,7 @@
 """
 import importlib.util
 import json
+import hashlib
 from pathlib import Path
 import shutil
 import sys
@@ -16,6 +17,25 @@ sys.path.insert(0, str(HERE))
 from SpellPresentationContract import ROOT, load_manifest, required_packages, inspect_migration_source_candidates
 
 OUT = ROOT / 'Saved/Validation/SingleImplementationConvergence20261027/SpellPresentation'
+
+
+def _backup_file(source):
+    """保留最初真实字节；扁平散列文件名避免Windows备份路径超过260字符。"""
+    relative = source.relative_to(ROOT).as_posix()
+    destination = OUT / 'Backup' / (hashlib.sha256(relative.encode('utf-8')).hexdigest() + '.bin')
+    index_path = OUT / 'BackupIndex.json'
+    index = json.loads(index_path.read_text('utf-8')) if index_path.exists() else {}
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if relative in index:
+        assert destination.is_file(), '已登记备份丢失: ' + relative
+        assert hashlib.sha256(destination.read_bytes()).hexdigest() == index[relative]['sha256'], '备份字节变化: ' + relative
+        return
+    original_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+    if not destination.exists():
+        shutil.copy2(source, destination)
+    assert hashlib.sha256(destination.read_bytes()).hexdigest() == original_hash, '备份不一致: ' + relative
+    index[relative] = {'backup': destination.relative_to(ROOT).as_posix(), 'sha256': original_hash}
+    index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), 'utf-8')
 
 
 def migrate():
@@ -84,10 +104,7 @@ def migrate():
         if not source_file.exists():
             source_file = mounts[mount] / (relative + '.umap')
         assert source_file.exists(), '备份包不存在: ' + path
-        backup = OUT / 'Backup' / source_file.relative_to(ROOT)
-        backup.parent.mkdir(parents=True, exist_ok=True)
-        if not backup.exists():
-            shutil.copy2(source_file, backup)
+        _backup_file(source_file)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / 'NativeMigrationPlan.json').write_text(json.dumps({'Mapping': mapping, 'Referencers': referencers, 'SourceCandidatePreflight': candidate_preflight,
                 'SaveBoundary': 'rename_assets saves internally before returning; predicted backup set plus post-call residual dirty diagnostics'}, ensure_ascii=False, indent=2), 'utf-8')
@@ -152,10 +169,7 @@ def apply():
     for path in [v['definition'] for v in data['bindings']] + [data['cook_label']]:
         source = pack / (path.removeprefix('/DBAPresentationPack_Core/') + '.uasset')
         if source.exists():
-            backup = OUT / 'Backup' / source.relative_to(ROOT)
-            backup.parent.mkdir(parents=True, exist_ok=True)
-            if not backup.exists():
-                shutil.copy2(source, backup)
+            _backup_file(source)
     for row, definition, system in assets:
         definition.set_editor_property('niagara_system', system)
         if row['require_cast_parameters']:
@@ -177,8 +191,12 @@ def apply():
     label.set_editor_property('is_runtime_label', False)
     label.set_editor_property('label_assets_in_my_directory', False)
     label.set_editor_property('explicit_assets', explicit)
-    label.set_editor_property('rules', u.PrimaryAssetRules(priority=1, apply_recursively=True,
-                              cook_rule=u.PrimaryAssetCookRule.ALWAYS_COOK))
+    # UE5.8的非BlueprintType结构不导出带关键字构造器或snake_case属性；使用实际反射字段。
+    rules = label.get_editor_property('rules')
+    rules.set_editor_property('Priority', 1)
+    rules.set_editor_property('bApplyRecursively', True)
+    rules.set_editor_property('CookRule', u.PrimaryAssetCookRule.ALWAYS_COOK)
+    label.set_editor_property('rules', rules)
     assert u.EditorAssetLibrary.save_loaded_asset(label, False)
     result = audit('NativeAfter.json')
     assert result['Passed'], result['Errors']

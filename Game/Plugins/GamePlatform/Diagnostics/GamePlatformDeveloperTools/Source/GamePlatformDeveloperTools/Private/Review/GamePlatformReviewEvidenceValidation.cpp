@@ -6,7 +6,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonReader.h"
 #include "HAL/PlatformFileManager.h"
-#include "HAL/PlatformMisc.h"
+#include "Hash/GamePlatformSHA256.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -136,8 +136,8 @@ FString HashEvidenceFile(const FString& Path)
     if (Size <= 0 || Size > 64 * 1024 * 1024 || !IsPlainPath(Path)) return FString();
     TArray<uint8> Bytes; if (!FFileHelper::LoadFileToArray(Bytes, *Path) || Bytes.Num() != Size ||
         Files.FileSize(*Path) != Size || Files.GetTimeStamp(*Path) != Time) return FString();
-    FSHA256Signature Signature;
-    return FPlatformMisc::GetSHA256Signature(Bytes.GetData(), Bytes.Num(), Signature) ? Signature.ToString().ToLower() : FString();
+    FString Hash;
+    return GamePlatform::Hash::TrySha256Hex(Bytes.GetData(), Bytes.Num(), Hash) ? Hash : FString();
 }
 FString ContractFingerprint(const UGamePlatformReviewCase& Case)
 {
@@ -148,8 +148,8 @@ FString ContractFingerprint(const UGamePlatformReviewCase& Case)
     for (const auto& Value : Case.Preconditions) Add(Value);
     Add(LexToString(Case.Steps.Num())); for (const auto& Value : Case.Steps) Add(Value);
     Add(Case.ExpectedResult); Add(LexToString(Case.RequiredEvidence.Num())); for (const auto& Value : Case.RequiredEvidence) Add(Value.ToLower());
-    FTCHARToUTF8 Utf8(*Canonical); FSHA256Signature Signature;
-    return FPlatformMisc::GetSHA256Signature(Utf8.Get(), Utf8.Length(), Signature) ? Signature.ToString().ToLower() : FString();
+    FTCHARToUTF8 Utf8(*Canonical); FString Hash;
+    return GamePlatform::Hash::TrySha256Hex(Utf8.Get(), Utf8.Length(), Hash) ? Hash : FString();
 }
 bool ValidateEvidenceReferences(const UGamePlatformReviewCase& Case, const UGamePlatformReviewReport& Report,
     const TArray<FString>& References, bool bRequireAll, FString& Error)

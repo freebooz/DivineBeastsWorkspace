@@ -298,6 +298,11 @@
   },
   "retired_authors": [
     {
+      "path": "Tools/Unreal/Abilities/BindDirectedMissileSlot1HealingSlot5UE.py",
+      "mode": "all",
+      "replacement": "Tools/Unreal/Abilities/BindFireIceHotbarUE58.py"
+    },
+    {
       "path": "Tools/Unreal/VFX/DevelopmentMagic/AuthorDevelopmentMagicVFXMonolith.py",
       "mode": "all"
     },

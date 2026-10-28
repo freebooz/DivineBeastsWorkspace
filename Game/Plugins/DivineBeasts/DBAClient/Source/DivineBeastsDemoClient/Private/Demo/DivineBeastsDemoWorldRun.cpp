@@ -26,6 +26,8 @@ struct FDivineBeastsDemoWorldRunPrivateState
     FGuid WorldId = FGuid::NewGuid();
     uint64 Generation = 0;
     bool bClosing = false;
+    /** Prepare实际进入后才产生适配器清理义务；失败/重试期间保留，不是调用栈临时标记。 */
+    bool bAdapterPrepareEntered = false;
     FString SourceFingerprint;
     TArray<FDivineBeastsDemoReviewCaseDefinition> ReviewCases;
     TArray<FDivineBeastsDemoFeatureEntry> Features;
@@ -58,6 +60,9 @@ bool ValidateScenarioParameters(const FDivineBeastsDemoScenarioDefinition& Scena
         case EDivineBeastsDemoParameterType::Identifier:
             if (!DivineBeasts::Demo::IsStableIdentityText(Value.IdentifierValue.ToString())) return false;
             bSame = Value.IdentifierValue == Definition.DefaultValue.IdentifierValue; break;
+        case EDivineBeastsDemoParameterType::AssetPath:
+            if (!DivineBeasts::Demo::IsStableAssetPathText(Value.AssetPathValue.ToString())) return false;
+            bSame = Value.AssetPathValue == Definition.DefaultValue.AssetPathValue; break;
         case EDivineBeastsDemoParameterType::Integer:
             if (Value.IntegerValue < -9007199254740991LL || Value.IntegerValue > 9007199254740991LL ||
                 static_cast<double>(Value.IntegerValue) < Definition.Minimum || static_cast<double>(Value.IntegerValue) > Definition.Maximum) return false;
@@ -80,7 +85,7 @@ void DeliverDemoCompletion(TFunction<void(const FGamePlatformResult&)> Deliver, 
 }
 }
 
-bool UDivineBeastsDemoWorldSubsystem::HasActiveScenario() const { return RunPrivateState && RunPrivateState->State.IsActive(); }
+bool UDivineBeastsDemoWorldSubsystem::HasActiveScenario() const { return RunPrivateState && (RunPrivateState->State.IsActive() || RunPrivateState->State.HasPendingCleanup()); }
 FDivineBeastsDemoRunSnapshot UDivineBeastsDemoWorldSubsystem::GetRunSnapshot() const
 { return RunPrivateState ? RunPrivateState->State.GetSnapshot() : FDivineBeastsDemoRunSnapshot(); }
 FName UDivineBeastsDemoWorldSubsystem::GetActiveAdapterId() const
@@ -126,6 +131,7 @@ bool UDivineBeastsDemoWorldSubsystem::BeginScenario(const FDivineBeastsDemoScena
     Token.RunId = FGuid::NewGuid(); Token.WorldId = RunPrivateState->WorldId; Token.Generation = ++RunPrivateState->Generation;
     if (!RunPrivateState->State.Begin(Token, Scenario.ScenarioId, Scenario.FeatureId, FPlatformTime::Seconds(), Scenario.PrepareTimeoutSeconds)) return false;
     RunPrivateState->Scenario = Scenario; RunPrivateState->Adapter = MakeShareable(Created.Release());
+    RunPrivateState->bAdapterPrepareEntered = false;
     RunPrivateState->SourceFingerprint = Catalog->GetSourceFingerprint(); RunPrivateState->ReviewCases.Reset(); RunPrivateState->EventRecords.Reset();
     RunPrivateState->Features.Reset(); RunPrivateState->bTerminalEvidenceAttempted = false;
     for (const auto& Plugin : Catalog->GetPlugins())
@@ -182,8 +188,25 @@ void UDivineBeastsDemoWorldSubsystem::PrepareScenarioAdapter()
     Context.Scenario = RunPrivateState->Scenario; Context.PrepareDeadlineSeconds = RunPrivateState->State.GetDeadlineSeconds();
     Context.SampleWidget = ActiveSampleWidget.Get();
     TWeakObjectPtr<UDivineBeastsDemoWorldSubsystem> WeakThis(this);
+    const auto ExpectedToken = Context.Token;
+    const TWeakObjectPtr<UWorld> ExpectedWorld = Context.World;
+    Context.PublishObservation = [WeakThis, ExpectedToken, ExpectedWorld](const FDivineBeastsDemoRunToken& Token, const FString& Text)
+    {
+        // 后台只比较值/长度并复制有界数据，所有UObject访问都在游戏线程。
+        if (!(Token == ExpectedToken) || Text.IsEmpty() || Text.Len() > 4096) return;
+        auto Deliver = [WeakThis, ExpectedWorld, Token, Text]()
+        {
+            auto* Self = WeakThis.Get();
+            if (!Self || !Self->RunPrivateState || Self->RunPrivateState->bClosing || !ExpectedWorld.IsValid() ||
+                Self->GetWorld() != ExpectedWorld.Get() || ExpectedWorld->bIsTearingDown) return;
+            if (Self->RunPrivateState->State.RecordObservation(Token, Text, FPlatformTime::Seconds())) Self->PublishRunSnapshot();
+        };
+        if (IsInGameThread()) Deliver();
+        else AsyncTask(ENamedThreads::GameThread, MoveTemp(Deliver));
+    };
     const auto Adapter = RunPrivateState->Adapter;
     TGuardValue<bool> Writing(bExecutingScenarioAdapter, true);
+    RunPrivateState->bAdapterPrepareEntered = true; // 必须先标记，Prepare可同步通知并重入Stop。
     Adapter->Prepare(Context, [WeakThis](const auto& Token, const auto& Result)
     { DeliverDemoCompletion([WeakThis, Token](const auto& Delivered) { if (auto* Self = WeakThis.Get()) Self->OnScenarioPrepared(Token, Delivered); }, Result); });
 }
@@ -236,29 +259,45 @@ bool UDivineBeastsDemoWorldSubsystem::RequestScenarioStop(const FGamePlatformRes
     if (RunPrivateState->State.GetSnapshot().State == EDivineBeastsDemoRunState::Stopping) return true;
     const auto Token = RunPrivateState->State.GetSnapshot().Token;
     if (!RunPrivateState->State.BeginStop(Token, Terminal, FPlatformTime::Seconds(), RunPrivateState->Scenario.StopTimeoutSeconds)) return false;
+    const uint64 Attempt = RunPrivateState->State.GetStopAttemptSerial();
+    RunPrivateState->bTerminalEvidenceAttempted = false;
     ArmScenarioDeadline(); PublishRunSnapshot();
+    if (!RunPrivateState || RunPrivateState->bClosing || !(RunPrivateState->State.GetSnapshot().Token == Token) ||
+        RunPrivateState->State.GetStopAttemptSerial() != Attempt || RunPrivateState->State.GetSnapshot().State != EDivineBeastsDemoRunState::Stopping) return true;
+    // 尚未把Context交给适配器：仅中央执行器可能持有资源，使用真实本Run身份走同一清理收口。
+    if (!RunPrivateState->bAdapterPrepareEntered)
+    { OnScenarioStopCompleted(Token, Attempt, FGamePlatformResult::Success()); return true; }
     const auto Adapter = RunPrivateState->Adapter;
     if (!Adapter)
-    { OnScenarioStopCompleted(Token, FGamePlatformResult::Failure(FName(TEXT("Demo.AdapterLost")), TEXT("清理时适配实例已失效。"))); return true; }
+    { OnScenarioStopCompleted(Token, Attempt, FGamePlatformResult::Failure(FName(TEXT("Demo.AdapterLost")), TEXT("清理时适配实例已失效。"))); return true; }
     TWeakObjectPtr<UDivineBeastsDemoWorldSubsystem> WeakThis(this);
     TGuardValue<bool> Writing(bExecutingScenarioAdapter, true);
-    Adapter->Stop([WeakThis](const auto& CompletedToken, const auto& Result)
-    { DeliverDemoCompletion([WeakThis, CompletedToken](const auto& Delivered)
-        { if (auto* Self = WeakThis.Get()) Self->OnScenarioStopCompleted(CompletedToken, Delivered); }, Result); });
+    Adapter->Stop([WeakThis, Attempt](const auto& CompletedToken, const auto& Result)
+    { DeliverDemoCompletion([WeakThis, Attempt, CompletedToken](const auto& Delivered)
+        { if (auto* Self = WeakThis.Get()) Self->OnScenarioStopCompleted(CompletedToken, Attempt, Delivered); }, Result); });
     return true;
 }
-void UDivineBeastsDemoWorldSubsystem::OnScenarioStopCompleted(const FDivineBeastsDemoRunToken& Token, const FGamePlatformResult& Result)
+void UDivineBeastsDemoWorldSubsystem::OnScenarioStopCompleted(const FDivineBeastsDemoRunToken& Token, uint64 Attempt, const FGamePlatformResult& Result)
 {
     if (!RunPrivateState || RunPrivateState->bClosing || !(RunPrivateState->State.GetSnapshot().Token == Token) ||
-        RunPrivateState->State.GetSnapshot().State != EDivineBeastsDemoRunState::Stopping) return;
+        RunPrivateState->State.GetSnapshot().State != EDivineBeastsDemoRunState::Stopping || RunPrivateState->State.GetStopAttemptSerial() != Attempt) return;
     if (RunPrivateState->State.GetDeadlineSeconds() <= FPlatformTime::Seconds()) { OnScenarioDeadline(); return; }
     const auto KeepAlive = RunPrivateState->Adapter;
-    const auto Released = ReleaseScenarioResources();
+    const auto Released = Result.IsSuccess() ? ReleaseScenarioResources() : Result;
+    if (!RunPrivateState || RunPrivateState->bClosing || !(RunPrivateState->State.GetSnapshot().Token == Token) ||
+        RunPrivateState->State.GetStopAttemptSerial() != Attempt) return;
     const double Now = FPlatformTime::Seconds();
     if (RunPrivateState->State.GetDeadlineSeconds() <= Now) { OnScenarioDeadline(); return; }
-    if (!RunPrivateState->State.CompleteStop(Token, Result.IsSuccess() ? Released : Result, Now)) return;
+    if (!RunPrivateState->State.CompleteStop(Token, Attempt, Released, Now)) return;
     const auto Completed = GetRunSnapshot();
-    RunPrivateState->Adapter.Reset(); ArmScenarioDeadline(); PublishRunSnapshot();
+    if (Released.IsSuccess())
+    {
+        RunPrivateState->bAdapterPrepareEntered = false;
+        RunPrivateState->Adapter.Reset();
+    }
+    ArmScenarioDeadline(); PublishRunSnapshot();
+    if (!RunPrivateState || RunPrivateState->bClosing || !(RunPrivateState->State.GetSnapshot().Token == Token) ||
+        RunPrivateState->State.GetStopAttemptSerial() != Attempt) return;
     if (auto* Catalog = GetWorld()->GetGameInstance()->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>())
         Catalog->OnScenarioStopped(*GetWorld(), Completed);
 }
@@ -279,20 +318,30 @@ void UDivineBeastsDemoWorldSubsystem::OnScenarioDeadline()
     if (Previous == EDivineBeastsDemoRunState::Preparing) RequestScenarioStop(RunPrivateState->State.GetSnapshot().OperationResult);
     else
     {
-        RunPrivateState->Adapter.Reset(); ReleaseScenarioResources(); PublishRunSnapshot();
+        // 超时不是资源已释放；保留本次适配/租约，等待用户显式重试或World退出。
+        const auto Expired = GetRunSnapshot();
+        const uint64 Attempt = RunPrivateState->State.GetStopAttemptSerial();
+        ArmScenarioDeadline(); PublishRunSnapshot();
+        if (!RunPrivateState || RunPrivateState->bClosing || !(RunPrivateState->State.GetSnapshot().Token == Expired.Token) ||
+            RunPrivateState->State.GetStopAttemptSerial() != Attempt) return;
         if (auto* Catalog = GetWorld()->GetGameInstance()->GetSubsystem<UDivineBeastsDemoCatalogSubsystem>())
             Catalog->OnScenarioStopped(*GetWorld(), GetRunSnapshot());
     }
 }
 FGamePlatformResult UDivineBeastsDemoWorldSubsystem::ReleaseScenarioResources()
 {
+    if (!RunPrivateState) return FGamePlatformResult::Success();
+    const auto Lease = RunPrivateState->ResourceLease;
+    if (Lease.IsValid())
+    {
+        auto* Data = GetWorld() && GetWorld()->GetGameInstance() ? IGamePlatformDataService::Get(*GetWorld()->GetGameInstance()) : nullptr;
+        if (!Data) return FGamePlatformResult::Failure(TEXT("Demo.ReleaseServiceUnavailable"), TEXT("释放样板资源时中央服务不可用，保留完整租约以便重试。"));
+        const auto Released = Data->ReleaseResources(Lease);
+        if (!Released.IsSuccess()) return Released;
+        RunPrivateState->ResourceLease = {};
+    }
     if (ActiveSampleWidget) ActiveSampleWidget->RemoveFromParent();
     ActiveSampleWidget = nullptr;
-    if (!RunPrivateState) return FGamePlatformResult::Success();
-    const auto Lease = RunPrivateState->ResourceLease; RunPrivateState->ResourceLease = {};
-    if (Lease.IsValid() && GetWorld() && GetWorld()->GetGameInstance())
-        if (auto* Data = IGamePlatformDataService::Get(*GetWorld()->GetGameInstance())) return Data->ReleaseResources(Lease);
-    if (Lease.IsValid()) return FGamePlatformResult::Failure(FName(TEXT("Demo.ReleaseServiceUnavailable")), TEXT("释放样板资源时中央服务不可用，未确认资源清理完成。"));
     return FGamePlatformResult::Success();
 }
 void UDivineBeastsDemoWorldSubsystem::ShutdownScenario()
@@ -301,6 +350,7 @@ void UDivineBeastsDemoWorldSubsystem::ShutdownScenario()
     RunPrivateState->bClosing = true; RunPrivateState->State.AbandonWorld();
     if (GetWorld()) GetWorld()->GetTimerManager().ClearTimer(RunPrivateState->DeadlineTimer);
     // 先失效Token，再析构受控适配，取消回调无法重新激活运行。
+    RunPrivateState->bAdapterPrepareEntered = false;
     RunPrivateState->Adapter.Reset(); ReleaseScenarioResources(); PublishRunSnapshot(); OnRunChanged.Clear();
 }
 bool UDivineBeastsDemoWorldSubsystem::WriteCurrentEvidence(FString& OutPath, FString& OutError)
@@ -313,3 +363,8 @@ bool UDivineBeastsDemoWorldSubsystem::WriteCurrentEvidence(FString& OutPath, FSt
     Evidence.EventRecords = RunPrivateState->EventRecords;
     return DivineBeasts::Demo::WriteRunEvidence(Evidence, OutPath, OutError);
 }
+
+#if WITH_DEV_AUTOMATION_TESTS
+// 与私有执行所有权同编译单元；不为回归导出RunState或生产测试API。
+#include "Tests/DivineBeastsDemoPreparingStopNativeTests.inl"
+#endif

@@ -16,6 +16,7 @@ class ADivineBeastsWeatherReviewController;
 class UDivineBeastsDemoHubWidget;
 class APlayerController;
 class UUserWidget;
+class IGamePlatformDataService;
 struct FDivineBeastsDemoWorldRunPrivateState;
 
 /**
@@ -29,6 +30,8 @@ class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoWorldSubsystem final : public 
     /** 回归验证平台同步打开回调的真实所有权，不向生产暴露测试入口。 */
     friend class FDivineBeastsDemoSynchronousScreenTest;
     friend class FDivineBeastsIndependentPluginPageTest;
+    /** 原生回归只读观察完整租约并注入适配器清理故障；不向运行公开测试接口。 */
+    friend class FDivineBeastsDemoPreparingStopNativeTest;
 public:
     /** 切换唯一演示页面，None返回中心；仅Catalog在运行清理成功后调用，不新建执行器。 */
     bool RequestPluginPage(FName PluginId);
@@ -137,6 +140,24 @@ private:
 
     /** GamePlatformData（平台数据）颁发的普通资源租约，退出只释放本世界所持身份。 */
     FGamePlatformDataLease UILease;
+    /** 准备阶段仅持自己的候选租约；旧活动页和租约到Opened提交前保持有效。 */
+    FGamePlatformDataLease PendingUILease;
+    /** 上次已提交页的撤销失败记录；下次显式操作重试，不用定时器隐藏失败。 */
+    FGamePlatformDataLease RetiredUILease;
+    FName PendingPagePluginId;
+    FSoftObjectPath PendingPageWidgetAsset;
+    FName PendingPageScreenId = TEXT("DivineBeasts.Demo.Hub");
+    FName RegisteredDemoScreenId = TEXT("DivineBeasts.Demo.Hub");
+    bool bPendingPage = false;
+    /** 无活动中心时只保存最新直达意图，不取消中心候选；中心真实Opened后再解析并进入插件。 */
+    bool bDeferredPluginPage = false;
+    FName DeferredPluginPageId;
+    uint64 DeferredHubGeneration = 0;
+    uint64 PageIntentGeneration = 0;
+    bool bPendingDefinitionRegistered = false;
+    TWeakObjectPtr<class UGamePlatformUIManagerSubsystem> PendingUIManager;
+    TWeakObjectPtr<class UDivineBeastsDemoHubViewModel> PendingScreenModel;
+    UPROPERTY(Transient) TObjectPtr<class UGamePlatformUIScreenDefinition> PendingPageScreenDefinition;
     /** 当前UI路由值；Widget软类仅从完整Catalog取得，永不按输入拼接加载路径。 */
     FName PagePluginId;
     FSoftObjectPath PageWidgetAsset;
@@ -181,7 +202,7 @@ private:
     void OnScenarioPrepared(const FDivineBeastsDemoRunToken& Token, const FGamePlatformResult& Result);
     void OnScenarioOperationCompleted(const FDivineBeastsDemoRunToken& Token, uint64 Serial,
         const FGamePlatformResult& Result);
-    void OnScenarioStopCompleted(const FDivineBeastsDemoRunToken& Token, const FGamePlatformResult& Result);
+    void OnScenarioStopCompleted(const FDivineBeastsDemoRunToken& Token, uint64 Attempt, const FGamePlatformResult& Result);
     /** 清理本次普通资源/样板控件；不撤销其他世界的需求。 */
     FGamePlatformResult ReleaseScenarioResources();
 
@@ -189,8 +210,20 @@ private:
     void OnOverlayAssetReady(FSoftObjectPath WidgetClassPath, const FGamePlatformDataLease& Lease,
         bool bSucceeded);
     bool ReleaseDemoOverlay();
+    /** 显式依赖版本为正常退出实现；门面只解析一次服务，失败仍尽力释放其他自身所有权。 */
+    bool ReleaseDemoOverlay(IGamePlatformDataService* Data);
     /** 新目录页面加载RootLayout/ScreenDefinition的中央租约，仅在开发世界装配。 */
     bool RequestScenarioOverlay(UWorld& World);
+    /** 候选准备与提交保持在既有WorldUI链；失败只撤本候选，不撤活动页。 */
+    bool BeginPagePreparation(UWorld& World, FName PluginId, const FSoftObjectPath& WidgetAsset);
+    bool PrepareQualifiedPluginPage(UWorld& World, FName PluginId, const FSoftObjectPath& WidgetAsset);
+    bool CancelPendingPage();
+    bool CancelPendingPage(IGamePlatformDataService* Data);
+    FGamePlatformResult ReleasePageLease(FGamePlatformDataLease& Lease);
+    FGamePlatformResult ReleasePageLease(FGamePlatformDataLease& Lease, IGamePlatformDataService* Data);
+    static FGamePlatformResult ValidatePageWidgetClass(UClass* WidgetClass, FName PluginId);
+    void FailPendingPage(uint64 ExpectedGeneration, const FGamePlatformResult& Result);
+    void PublishPageResult(const FGamePlatformResult& Result);
     void OnScenarioOverlayReady(uint64 Generation, const FGamePlatformDataLease& Lease, const FGamePlatformResult& Result);
     /** 平台打开请求按请求GUID核验；同步失败单独记录，防止受理返回值覆盖终态。 */
     UFUNCTION() void OnDemoScreenOpened(FGuid RequestId, FName ScreenId, UGamePlatformUIScreen* Screen);

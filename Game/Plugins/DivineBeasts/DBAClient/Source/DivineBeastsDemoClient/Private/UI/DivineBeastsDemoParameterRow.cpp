@@ -46,6 +46,9 @@ bool UDivineBeastsDemoParameterItem::SetTextValue(const FString& Text)
         if (!DivineBeasts::Demo::IsStableIdentityText(Text)) return false;
         Candidate.IdentifierValue = FName(*Text); break;
     }
+    case EDivineBeastsDemoParameterType::AssetPath:
+        if (!DivineBeasts::Demo::IsStableAssetPathText(Text)) return false;
+        Candidate.AssetPathValue = FSoftObjectPath(Text); break;
     default: return false;
     }
     Value = Candidate; bValidInput = true; return true;
@@ -76,7 +79,8 @@ void UDivineBeastsDemoParameterRow::NativeOnListItemObjectSet(UObject* Object)
     if (ParameterValueInput)
     {
         ParameterValueInput->SetVisibility(bBoolean ? ESlateVisibility::Collapsed : ESlateVisibility::Visible); ParameterValueInput->SetIsEnabled(bWritable);
-        const FString Text = Value.Type == EDivineBeastsDemoParameterType::Identifier ? Value.IdentifierValue.ToString() :
+        const FString Text = Value.Type == EDivineBeastsDemoParameterType::AssetPath ? Value.AssetPathValue.ToString() :
+            Value.Type == EDivineBeastsDemoParameterType::Identifier ? Value.IdentifierValue.ToString() :
             (Value.Type == EDivineBeastsDemoParameterType::Integer ? LexToString(Value.IntegerValue) : LexToString(Value.NumberValue));
         ParameterValueInput->SetText(FText::FromString(Text));
     }

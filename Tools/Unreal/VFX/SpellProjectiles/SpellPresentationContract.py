@@ -28,13 +28,15 @@ def binding(spell, stage):
 def guard_authoring(author, stages=None):
     """历史入口在协议/写入前核对唯一合同；全退休拒绝，部分退休仅放行显式独有阶段。"""
     relative = Path(author).resolve().relative_to(ROOT.resolve()).as_posix()
-    entries = [v for v in load_manifest()['retired_authors'] if v['path'] == relative]
+    data = load_manifest()
+    entries = [v for v in data['retired_authors'] if v['path'] == relative]
     if len(entries) != 1:
         raise RuntimeError('RETIRED_ENTRY_POINT: unregistered historical author: ' + relative)
     entry = entries[0]
     selected = set(stages or [])
     if entry['mode'] == 'all' or not selected or selected & set(entry.get('retired_stages', [])) or selected - set(entry.get('allowed_stages', [])):
-        raise RuntimeError('RETIRED_ENTRY_POINT: ' + relative + ': use current SpellProjectiles contract; requested=' + ','.join(sorted(selected)))
+        replacement = entry.get('replacement', data['owner'])
+        raise RuntimeError('RETIRED_ENTRY_POINT: ' + relative + ': use ' + replacement + '; requested=' + ','.join(sorted(selected)))
 
 
 def inspect_migration_source_candidates(sources, mounts, registry_candidates):

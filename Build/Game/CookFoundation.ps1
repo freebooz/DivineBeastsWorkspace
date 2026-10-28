@@ -85,6 +85,9 @@ try {
     # UBT ConfigCache仍会读取全局CustomConfig并改变Stage配置层；专服必须保留收据DedicatedServer剥离规则。
     $additionalCookerOptions = "-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback"
     if ($SkipZenStore) { $additionalCookerOptions += ' -SkipZenStore' }
+    $cookLocalCacheDirectory = Join-Path $context.Workspace 'Game/DerivedDataCache'
+    $additionalCookerOptions += (' -LocalDataCachePath="'+$cookLocalCacheDirectory+'" -ini:EditorSettings:/Script/UnrealEd.EditorSettings:LocalDerivedDataCache=(Path="'+$cookLocalCacheDirectory+'")')
+    $details.LocalDataCacheDirectory = $cookLocalCacheDirectory
     if ($Target -eq 'Server' -and @($serverPresentationPolicy.CookerArguments).Count -gt 0) {
         # FoundationStandalone仍保留原开发许可；只给Server Cooker追加逐目录+Key。
         # UE5.8 ConfigCacheIni按ArrayAdd处理独立token；不用同名Set、清数组或逗号拼接。
@@ -122,6 +125,14 @@ try {
     if ($Target -eq 'Server') { $arguments += @('-server','-noclient','-serverplatform=Win64') } else { $arguments += '-client' }
     $tool.Environment.uebp_LogFolder = Join-Path $context.Directory 'UATLogs'
     $tool.Environment.uebp_EngineSavedFolder = Join-Path $context.Directory 'EngineSaved'
+    # 与前端入口一致，仅覆盖本次UAT子进程环境，不修改用户/系统级TEMP或TMP。
+    $cookTemporaryDirectory = Join-Path $context.Workspace ('Saved/T/'+$RunId.ToString('N').Substring(0,8))
+    if (Test-Path -LiteralPath $cookTemporaryDirectory) { throw '本次Cook临时目录已存在，拒绝复用。' }
+    $null = New-Item -ItemType Directory -Path $cookTemporaryDirectory -Force
+    $tool.Environment.TEMP = $cookTemporaryDirectory
+    $tool.Environment.TMP = $cookTemporaryDirectory
+    $tool.Environment['UE-LocalDataCachePath'] = $cookLocalCacheDirectory
+    $details.TemporaryDirectory = $cookTemporaryDirectory
     $result = Invoke-FoundationProcess -FilePath $tool.Executable -Arguments $arguments -WorkingDirectory (Split-Path $tool.Dll) -OutputDirectory $context.Directory -TimeoutSeconds $TimeoutSeconds -Environment $tool.Environment
     $code = $result.ExitCode; $details.Result = $result
     if ($code -eq 0) {

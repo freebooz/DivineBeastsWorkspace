@@ -322,6 +322,7 @@ void UGamePlatformOnlineClientSubsystem::Initialize(
 void UGamePlatformOnlineClientSubsystem::Deinitialize()
 {
     check(IsInGameThread());
+    ++ProviderBindingGeneration;ActiveProviderRestoreProof.Invalidate();
     StopTicker();
 
     if (UGameInstance* Instance = GetGameInstance())
@@ -384,8 +385,12 @@ FGamePlatformResult UGamePlatformOnlineClientSubsystem::Configure(
         return Validated;
     }
 
+    const auto ConfiguringProvider=Runtime->Provider;
+    const uint64 ConfiguringBindingGeneration=ProviderBindingGeneration;
     const FGamePlatformResult ProviderResult =
-        Runtime->Provider->Configure(InConfiguration);
+        ConfiguringProvider->Configure(InConfiguration);
+    if(!Runtime || Runtime->Provider!=ConfiguringProvider || ProviderBindingGeneration!=ConfiguringBindingGeneration)
+        return FGamePlatformResult::Failure(TEXT("OnlineConfigurationSourceChanged"),TEXT("配置回调期间机制绑定已变化，未提交旧配置。"));
     if (!ProviderResult.IsSuccess())
     {
         return ProviderResult;
@@ -1232,14 +1237,66 @@ UGamePlatformOnlineClientSubsystem::GetCachedProfile() const
     return CachedProfile;
 }
 
+bool UGamePlatformOnlineClientSubsystem::CaptureIdleProviderState(FGamePlatformOnlineIdleProviderState& Out) const
+{
+    check(IsInGameThread());
+    const auto D=GetDiagnostics();
+    if(!Runtime || ActiveProviderRestoreProof.IsValid() || bProviderRestoreInProgress || Snapshot.State!=EGamePlatformAuthState::LoggedOut || !Runtime->Requests.IsEmpty() ||
+        Runtime->LoginOperationId.IsValid() || !Runtime->RefreshOperations.IsEmpty() || !Runtime->LogoutOperations.IsEmpty() ||
+        D.ActiveRequests!=0 || D.QueuedRequests!=0 || D.RefreshWaiters!=0)return false;
+    Out.Provider=Runtime->Provider;Out.Configuration=Configuration;Out.bConfigured=bConfigured;Out.ServiceState=ServiceState;
+    Out.CapturedInstanceScope=InstanceScopeId;Out.CapturedBindingGeneration=ProviderBindingGeneration;Out.CaptureIdentity=FGuid::NewGuid();
+    return true;
+}
+FGamePlatformResult UGamePlatformOnlineClientSubsystem::RestoreIdleProviderState(
+    const FGamePlatformOnlineIdleProviderState& Previous,const TSharedPtr<IGamePlatformOnlineAuthProvider>& ExpectedCurrent,
+    FGamePlatformOnlineProviderRestoreLease& Lease)
+{
+    check(IsInGameThread());
+    if(!Runtime || bProviderRestoreInProgress)
+        return FGamePlatformResult::Failure(TEXT("OnlineProviderRestoreBusy"),TEXT("服务不可用或恢复正在回调栈中。"));
+    if(!Lease.IsValid())
+    {
+        if(ActiveProviderRestoreProof.IsValid() || Previous.CapturedInstanceScope!=InstanceScopeId ||
+            ProviderBindingGeneration!=Previous.CapturedBindingGeneration+1 || Runtime->Provider!=ExpectedCurrent)
+            return FGamePlatformResult::Failure(TEXT("OnlineProviderOwnershipChanged"),TEXT("夹具安装代次/实例不匹配，不能开始恢复。"));
+        Lease.Scope=InstanceScopeId;Lease.Proof=FGuid::NewGuid();Lease.BindingGeneration=ProviderBindingGeneration;Lease.CaptureIdentity=Previous.CaptureIdentity;
+        Lease.Stage=FGamePlatformOnlineProviderRestoreLease::EStage::FixtureInstalled;ActiveProviderRestoreProof=Lease.Proof;
+    }
+    const auto ExpectedProvider=Lease.Stage==FGamePlatformOnlineProviderRestoreLease::EStage::FixtureInstalled?ExpectedCurrent:Previous.Provider;
+    if(Lease.Scope!=InstanceScopeId || Lease.CaptureIdentity!=Previous.CaptureIdentity || ProviderBindingGeneration!=Lease.BindingGeneration || Runtime->Provider!=ExpectedProvider ||
+        (Lease.Stage!=FGamePlatformOnlineProviderRestoreLease::EStage::Complete && Lease.Proof!=ActiveProviderRestoreProof))
+        return FGamePlatformResult::Failure(TEXT("OnlineProviderOwnershipChanged"),TEXT("恢复租约或绑定代次已被外部换绑失效，未覆盖当前机制。"));
+    if(Lease.IsComplete())return FGamePlatformResult::Success();
+    TGuardValue<bool> RestoreGuard(bProviderRestoreInProgress,true);
+    if(Lease.Stage==FGamePlatformOnlineProviderRestoreLease::EStage::FixtureInstalled)
+    {
+        Configuration=Previous.Configuration;bConfigured=false;
+        const uint64 ExpectedGeneration=ProviderBindingGeneration+1;
+        SetProvider(Previous.Provider); // 唯一取消/换代链；尚未恢复配置。
+        if(!Runtime || Runtime->Provider!=Previous.Provider || ProviderBindingGeneration!=ExpectedGeneration)
+            return FGamePlatformResult::Failure(TEXT("OnlineProviderRestoreReentered"),TEXT("恢复换绑期间来源已变化，保留失败。"));
+        Lease.BindingGeneration=ProviderBindingGeneration;
+        Lease.Stage=FGamePlatformOnlineProviderRestoreLease::EStage::AwaitingConfiguration;
+    }
+    if(Previous.bConfigured)
+    {
+        const auto Restored=Configure(Previous.Configuration);
+        if(!Restored.IsSuccess())return Restored; // 原样保留暂时失败及AwaitingConfiguration租约，Retry不再次换绑。
+        if(!Runtime || Runtime->Provider!=Previous.Provider || ProviderBindingGeneration!=Lease.BindingGeneration)
+            return FGamePlatformResult::Failure(TEXT("OnlineProviderRestoreReentered"),TEXT("配置通知期间来源已变化，未提交恢复完成。"));
+    }
+    ServiceState=Previous.ServiceState;Lease.Stage=FGamePlatformOnlineProviderRestoreLease::EStage::Complete;
+    ActiveProviderRestoreProof.Invalidate();return FGamePlatformResult::Success();
+}
+
 void UGamePlatformOnlineClientSubsystem::SetProvider(
     TSharedPtr<IGamePlatformOnlineAuthProvider> InProvider)
 {
     check(IsInGameThread());
-    if (!Runtime || Runtime->Provider == InProvider)
-    {
-        return;
-    }
+    if(!Runtime)return;
+    const uint64 ThisBindingGeneration=++ProviderBindingGeneration;
+    if(Runtime->Provider==InProvider)return; // 显式再次声明同指针绑定仍失效外部旧恢复租约。
 
 
     if (Runtime->LoginOperationId.IsValid())
@@ -1248,6 +1305,7 @@ void UGamePlatformOnlineClientSubsystem::SetProvider(
         Handle.InstanceScopeId = InstanceScopeId;
         Handle.RequestId = Runtime->LoginOperationId;
         Cancel(Handle);
+        if(!Runtime || ProviderBindingGeneration!=ThisBindingGeneration)return;
     }
 
     TArray<FGuid> RefreshOperationIds;
@@ -1258,6 +1316,7 @@ void UGamePlatformOnlineClientSubsystem::SetProvider(
         Handle.InstanceScopeId = InstanceScopeId;
         Handle.RequestId = OperationId;
         Cancel(Handle);
+        if(!Runtime || ProviderBindingGeneration!=ThisBindingGeneration)return;
     }
 
     TArray<FGuid> LogoutOperationIds;
@@ -1268,6 +1327,7 @@ void UGamePlatformOnlineClientSubsystem::SetProvider(
         Handle.InstanceScopeId = InstanceScopeId;
         Handle.RequestId = OperationId;
         Cancel(Handle);
+        if(!Runtime || ProviderBindingGeneration!=ThisBindingGeneration)return;
     }
 
     TArray<FGuid> Existing;
@@ -1277,12 +1337,12 @@ void UGamePlatformOnlineClientSubsystem::SetProvider(
         FGamePlatformAuthenticatedResponse Cancelled;
         Cancelled.Error = EGamePlatformAuthError::Cancelled;
         CompleteRequest(RequestId, MoveTemp(Cancelled));
+        if(!Runtime || ProviderBindingGeneration!=ThisBindingGeneration)return;
     }
 
-    if (Runtime->Provider.IsValid())
-    {
-        Runtime->Provider->CancelAll();
-    }
+    const auto PreviousProvider=Runtime->Provider;
+    if(PreviousProvider)PreviousProvider->CancelAll();
+    if(!Runtime || ProviderBindingGeneration!=ThisBindingGeneration)return;
 
     Runtime->Provider = MoveTemp(InProvider);
     Runtime->bRefreshInFlight = false;
@@ -1292,8 +1352,10 @@ void UGamePlatformOnlineClientSubsystem::SetProvider(
 
     if (bConfigured && Runtime->Provider.IsValid())
     {
+        const auto ConfiguringProvider=Runtime->Provider;
         const FGamePlatformResult Result =
-            Runtime->Provider->Configure(Configuration);
+            ConfiguringProvider->Configure(Configuration);
+        if(!Runtime || Runtime->Provider!=ConfiguringProvider || ProviderBindingGeneration!=ThisBindingGeneration)return;
         if (!Result.IsSuccess())
         {
             bConfigured = false;

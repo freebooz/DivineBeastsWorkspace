@@ -55,7 +55,23 @@ public:
     void ObserveReplicator(const AGamePlatformWeatherReplicator* Source, const FGamePlatformWeatherSnapshot& Snapshot);
     void ForgetReplicator(const AGamePlatformWeatherReplicator* Source);
 
+    /** 开发离线完整租约：只接管从未激活且无计划的世界；已有状态拒绝，Owner身份只供所有权核对。 */
+    bool BeginDevelopmentWeather(FGuid Owner,FGuid& OutScope);
+    /** 固定原生操作白名单；复用同一实现，不执行文本/反射。调用期间外部无令牌写入被拒绝。 */
+    bool DevelopmentWeather(const FGuid& Scope,FName Operation,const FGamePlatformWeatherState& State,
+        const TArray<FGamePlatformWeatherScheduleEntry>& Entries,int32 Seed,float Seconds);
+    /** 只撤本Scope创建的复制Actor/调度并发空快照；失败保留身份，不撤他源。 */
+    bool EndDevelopmentWeather(const FGuid& Scope);
 private:
+    FGuid DevelopmentScope;
+    bool bEndingDevelopment=false;
+    bool ActivateWeatherOwned(const FGuid&,const FGamePlatformWeatherState&);
+    bool SetWeatherOwned(const FGuid&,const FGamePlatformWeatherState&,float);
+    bool ApplyPresetOwned(const FGuid&,const UGamePlatformWeatherPresetDefinition*);
+    bool ConfigureScheduleOwned(const FGuid&,const TArray<FGamePlatformWeatherScheduleEntry>&,int32);
+    bool StartScheduleOwned(const FGuid&);
+    void StopScheduleInternal();
+
     /** 客户端不创建权威状态；真实Actor存在并且网络模式有权威资格才可提交。 */
     bool IsAuthoritativeWeatherWorld() const;
     bool PublishTransition(const FGamePlatformWeatherState& TargetState, float TransitionSeconds);

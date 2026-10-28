@@ -8,14 +8,14 @@ bool FRunState::IsActive() const
     return Snapshot.State == EDivineBeastsDemoRunState::Preparing || Snapshot.State == EDivineBeastsDemoRunState::Running ||
         Snapshot.State == EDivineBeastsDemoRunState::Stopping;
 }
-bool FRunState::IsCurrent(const FDivineBeastsDemoRunToken& Token) const { return IsActive() && Token.IsValid() && Token == Snapshot.Token; }
+bool FRunState::IsCurrent(const FDivineBeastsDemoRunToken& Token) const { return (IsActive() || Snapshot.bCleanupPending) && Token.IsValid() && Token == Snapshot.Token; }
 bool FRunState::Begin(const FDivineBeastsDemoRunToken& Token, FName ScenarioId, FName FeatureId, double Now, double Timeout)
 {
-    if (IsActive() || !Token.IsValid() || ScenarioId.IsNone() || FeatureId.IsNone() || !FMath::IsFinite(Now) || Now < 0.0 ||
+    if (IsActive() || Snapshot.bCleanupPending || !Token.IsValid() || ScenarioId.IsNone() || FeatureId.IsNone() || !FMath::IsFinite(Now) || Now < 0.0 ||
         !FMath::IsFinite(Timeout) || Timeout <= 0.0 || !FMath::IsFinite(Now + Timeout)) return false;
     Snapshot = {}; Snapshot.Token = Token; Snapshot.ScenarioId = ScenarioId; Snapshot.FeatureId = FeatureId;
     Snapshot.State = EDivineBeastsDemoRunState::Preparing;
-    DeadlineSeconds = Now + Timeout; OperationSerial = 0; bPrepareExpired = false; DesiredTerminal = {};
+    DeadlineSeconds = Now + Timeout; OperationSerial = 0; StopSerial = 0; bPrepareExpired = false; DesiredTerminal = {};
     return true;
 }
 bool FRunState::CompletePreparation(const FDivineBeastsDemoRunToken& Token, const FGamePlatformResult& Result, double Now)
@@ -28,6 +28,13 @@ bool FRunState::CompletePreparation(const FDivineBeastsDemoRunToken& Token, cons
     if (Result.IsSuccess()) { Snapshot.State = EDivineBeastsDemoRunState::Running; DeadlineSeconds = 0.0; }
     else bPrepareExpired = true; // 抑制同一次准备的重复完成，仍允许BeginStop。
     return true;
+}
+bool FRunState::RecordObservation(const FDivineBeastsDemoRunToken& Token, const FString& Text, double Now)
+{
+    if (!IsCurrent(Token) || (Snapshot.State != EDivineBeastsDemoRunState::Preparing && Snapshot.State != EDivineBeastsDemoRunState::Running) ||
+        !FMath::IsFinite(Now) || Now < 0 || Text.IsEmpty() || Text.Len() > 4096 || Snapshot.ObservationRevision == MAX_int32 ||
+        (Snapshot.State == EDivineBeastsDemoRunState::Preparing && (bPrepareExpired || Now >= DeadlineSeconds)) || Snapshot.ObservationText == Text) return false;
+    Snapshot.ObservationText = Text; ++Snapshot.ObservationRevision; return true;
 }
 bool FRunState::BeginOperation(const FDivineBeastsDemoRunToken& Token, uint64& OutSerial)
 {
@@ -44,19 +51,23 @@ bool FRunState::CompleteOperation(const FDivineBeastsDemoRunToken& Token, uint64
 }
 bool FRunState::BeginStop(const FDivineBeastsDemoRunToken& Token, const FGamePlatformResult& Terminal, double Now, double Timeout)
 {
-    if (!IsCurrent(Token) || Snapshot.State == EDivineBeastsDemoRunState::Stopping ||
+    if (!IsCurrent(Token) || Snapshot.State == EDivineBeastsDemoRunState::Stopping || StopSerial >= MAX_int32 ||
         Terminal.Status == EGamePlatformResultStatus::NotExecuted || !FMath::IsFinite(Now) ||
         !FMath::IsFinite(Timeout) || Timeout <= 0.0 || !FMath::IsFinite(Now + Timeout)) return false;
+    const bool bRetry = Snapshot.bCleanupPending && !IsActive();
     if (Snapshot.bOperationPending) Snapshot.OperationResult = FGamePlatformResult::Cancelled(TEXT("操作未完成即停止，迟到回调不计执行完成。"));
     Snapshot.State = EDivineBeastsDemoRunState::Stopping; Snapshot.bOperationPending = false;
-    DesiredTerminal = Terminal; DeadlineSeconds = Now + Timeout; return true;
+    if (!bRetry) DesiredTerminal = Terminal;
+    Snapshot.bCleanupPending = true; Snapshot.CleanupResult = {};
+    Snapshot.CleanupAttempt = static_cast<int32>(++StopSerial);
+    DeadlineSeconds = Now + Timeout; return true;
 }
-bool FRunState::CompleteStop(const FDivineBeastsDemoRunToken& Token, const FGamePlatformResult& Cleanup, double Now)
+bool FRunState::CompleteStop(const FDivineBeastsDemoRunToken& Token, uint64 Attempt, const FGamePlatformResult& Cleanup, double Now)
 {
-    if (!IsCurrent(Token) || Snapshot.State != EDivineBeastsDemoRunState::Stopping) return false;
+    if (!IsCurrent(Token) || Snapshot.State != EDivineBeastsDemoRunState::Stopping || Attempt != StopSerial) return false;
     if (!FMath::IsFinite(Now)) return false;
     if (Now >= DeadlineSeconds) { Expire(Now); return false; }
-    Snapshot.CleanupResult = Cleanup;
+    Snapshot.CleanupResult = Cleanup; Snapshot.bCleanupPending = !Cleanup.IsSuccess();
     Snapshot.TerminalResult = Cleanup.IsSuccess() ? DesiredTerminal : Cleanup;
     Snapshot.State = Snapshot.TerminalResult.IsSuccess() ? EDivineBeastsDemoRunState::Completed :
         (Snapshot.TerminalResult.Status == EGamePlatformResultStatus::Cancelled ? EDivineBeastsDemoRunState::Cancelled : EDivineBeastsDemoRunState::Failed);
@@ -73,15 +84,15 @@ bool FRunState::Expire(double Now)
     if (Snapshot.State == EDivineBeastsDemoRunState::Stopping)
     {
         Snapshot.CleanupResult = FGamePlatformResult::Failure(FName(TEXT("Demo.StopTimeout")), TEXT("案例清理超时，未确认恢复完成。"));
-        Snapshot.TerminalResult = Snapshot.CleanupResult; Snapshot.State = EDivineBeastsDemoRunState::Failed; DeadlineSeconds = 0.0;
+        Snapshot.bCleanupPending = true; Snapshot.TerminalResult = Snapshot.CleanupResult; Snapshot.State = EDivineBeastsDemoRunState::Failed; DeadlineSeconds = 0.0;
         return true;
     }
     return false;
 }
 void FRunState::AbandonWorld()
 {
-    if (!IsActive()) return;
-    Snapshot.bOperationPending = false; DeadlineSeconds = 0.0; bPrepareExpired = true;
+    if (!IsActive() && !Snapshot.bCleanupPending) return;
+    Snapshot.bCleanupPending = false; Snapshot.bOperationPending = false; DeadlineSeconds = 0.0; bPrepareExpired = true;
     Snapshot.CleanupResult = FGamePlatformResult::Cancelled(TEXT("世界正在退出，仅撤销本地所有权，不能确认旧世界恢复结果。"));
     Snapshot.TerminalResult = FGamePlatformResult::Cancelled(TEXT("世界退出，当前运行取消。"));
     Snapshot.State = EDivineBeastsDemoRunState::Cancelled;

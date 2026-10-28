@@ -4,6 +4,7 @@ import importlib.util
 from pathlib import Path
 import sys
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -55,6 +56,11 @@ class RetiredSpellAuthorsTest(unittest.TestCase):
         for stage in ('GroundRune', 'Launch', 'FrostResidue'):
             with patch.object(sys, 'argv', [str(AUTHOR), '--system', stage]), patch.object(author, 'protocol', side_effect=AssertionError('inspect is read only')):
                 author.main()
+            token = object()
+            with patch.object(sys, 'argv', [str(AUTHOR), '--apply', '--system', stage]), patch.object(author, 'protocol', return_value=token), patch.object(author, 'ensure_module') as module_step, patch.object(author, 'author_one') as stage_step:
+                author.main()
+                module_step.assert_called_once_with(token)
+                stage_step.assert_called_once_with(token, stage)
         from SpellPresentationContract import guard_authoring
         guard_authoring(AUTHOR, ['GroundRune', 'Launch', 'FrostResidue'])
 
@@ -63,6 +69,37 @@ class RetiredSpellAuthorsTest(unittest.TestCase):
         source = entry.read_text('utf-8')
         self.assertIn('RETIRED_ENTRY_POINT', source)
         self.assertNotIn('set_editor_property', source)
+
+    def test_old_hotbar_binding_fails_before_unreal_import(self):
+        """RED先静态拒绝活动旧脚本，绝不执行它的顶层导入/目录创建/UE写入。"""
+        entry = ROOT / 'Tools/Unreal/Abilities/BindDirectedMissileSlot1HealingSlot5UE.py'
+        source = entry.read_text('utf-8')
+        self.assertTrue('RETIRED_ENTRY_POINT' in source, 'old hotbar writer must be explicitly retired')
+        self.assertNotIn('set_editor_property', source)
+        self.assertNotIn('import unreal', source)
+        for args in ([], ['--apply']):
+            result = subprocess.run([sys.executable, '-B', str(entry)] + args, capture_output=True, text=True)
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn('RETIRED_ENTRY_POINT', result.stderr)
+            self.assertIn('Tools/Unreal/Abilities/BindFireIceHotbarUE58.py', result.stderr)
+            self.assertNotIn('ModuleNotFoundError', result.stderr)
+        spec = importlib.util.spec_from_file_location('retired_hotbar_import_test_only', entry)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)  # 兼容导入不依赖unreal，不执行旧作者顶层目录创建。
+        for name in ('run', 'main', 'apply'):
+            with self.assertRaisesRegex(RuntimeError, 'BindFireIceHotbarUE58.py'):
+                getattr(module, name)()
+
+    def test_hotbar_replacement_is_current_author_without_changing_approved_keys(self):
+        from SpellPresentationContract import load_manifest
+        relative = 'Tools/Unreal/Abilities/BindDirectedMissileSlot1HealingSlot5UE.py'
+        matches = [v for v in load_manifest()['retired_authors'] if v['path'] == relative]
+        self.assertEqual(1, len(matches), 'old hotbar author must be registered in the single retirement contract')
+        self.assertEqual('all', matches[0]['mode'])
+        self.assertEqual('Tools/Unreal/Abilities/BindFireIceHotbarUE58.py', matches[0]['replacement'])
+        tree = ast.parse((ROOT / matches[0]['replacement']).read_text('utf-8'))
+        new = next(v.value for v in tree.body if isinstance(v, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'NEW' for t in v.targets))
+        self.assertEqual({'fireball': 'Primary', 'frostbolt': 'Slot1', 'directedmissile': 'Slot2'}, ast.literal_eval(new))
 
     def test_migration_source_candidates_reject_localized_and_external_packages(self):
         from SpellPresentationContract import inspect_migration_source_candidates

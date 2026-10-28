@@ -13,10 +13,40 @@ param(
     [string]$EngineRoot,
     [string]$BuildResultPath,
     [string]$ClientExe,
+    # 可选真实插件身份；省略打开中心。独立页仍必须使用同一显式开发模式及构建证明。
+    [string]$PluginId='',
+    # 存储/偏好人工测试使用RunId自有UserDir，保留真实FPaths/Save实现且不碰既有玩家数据。
+    [switch]$ManualFixture,
+    # 显式选择真实Hub世界服务，不连接生产后端；完整离线夹具门禁仍强制。
+    [switch]$ManualWorldHost,
     [ValidateRange(960,3840)][int]$WindowWidth=1920,
     [ValidateRange(540,2160)][int]$WindowHeight=1080,
     [guid]$RunId=[guid]::NewGuid()
 )
+function Resolve-PluginDemoIndependentPage {
+    <# 纯参数合同：不启动进程、不加载UE、不把路径声明当原生资产已存在。 #>
+    param([Parameter(Mandatory)][string]$Workspace,[Parameter(Mandatory)]$Manifest,[AllowEmptyString()][string]$PluginId='')
+    if([string]::IsNullOrEmpty($PluginId)) {
+        return [pscustomobject]@{PluginId='';AssetFile='';Arguments=[string[]]@()}
+    }
+    if($PluginId.Length -ge 1024 -or $PluginId -cnotmatch '^[A-Za-z][A-Za-z0-9_]*$' -or $Manifest.manual_page_contract_version -ne 1) {
+        throw '独立页要求有效插件身份及已支持的页面合同。'
+    }
+    $pageMatches=@($Manifest.plugins | Where-Object { $_.plugin_id -eq $PluginId })
+    if($pageMatches.Count -ne 1){throw '独立页插件未登记或身份重复。'}
+    $canonical=[string]$pageMatches[0].plugin_id
+    $expected='/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_'+$canonical
+    if($pageMatches[0].test_page_asset -cne $expected){throw '独立页资产与插件身份不匹配。'}
+    $asset=Join-Path ([IO.Path]::GetFullPath($Workspace)) ('Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_'+$canonical+'.uasset')
+    return [pscustomobject]@{PluginId=$canonical;AssetFile=$asset;Arguments=[string[]]@('-DBAPluginTest='+$canonical)}
+}
+function Resolve-PluginDemoManualFixture {
+    <# 纯路径/参数解析；实际NativeSavedRoot必须在宿主日志中再核对。 #>
+    param([Parameter(Mandatory)][string]$Workspace,[Parameter(Mandatory)][guid]$RunId)
+    if($RunId -eq [guid]::Empty){throw '隔离宿主需要非空运行身份。'}
+    $fixtureRoot=[IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetFullPath($Workspace)) ('Saved/Validation/PluginManualUI20261027/Hosts/'+$RunId.ToString('D'))))
+    return [pscustomobject]@{UserDir=$fixtureRoot;NativeSavedRoot=(Join-Path $fixtureRoot 'Saved');Arguments=[string[]]@('-GamePlatformManualFixture',('-UserDir='+$fixtureRoot))}
+}
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
@@ -38,6 +68,11 @@ if (-not (Test-Path -LiteralPath $hubWidgetFile -PathType Leaf)) {
 }
 foreach ($relative in @('UI/WBP_DBA_PluginDemoRoot.uasset','UI/WBP_DBA_PluginDemoMenuRow.uasset','UI/WBP_DBA_PluginDemoParameterRow.uasset','Definitions/DA_DBA_PluginDemoCatalog.uasset','Definitions/DA_DBA_PluginDemoHubScreen.uasset')) {
     Assert-FoundationFile (Join-Path $uiRoot $relative)
+}
+$authorDocument=Get-Content -LiteralPath (Join-Path $workspace 'Docs/Implementation/PluginDemos/PluginDemoManifest.json') -Raw | ConvertFrom-Json
+$independentPage=Resolve-PluginDemoIndependentPage -Workspace $workspace -Manifest $authorDocument -PluginId $PluginId
+if($independentPage.AssetFile -and !(Test-Path -LiteralPath $independentPage.AssetFile -PathType Leaf)) {
+    throw '指定插件的原生独立页尚未制作；拒绝启动空页面。'
 }
 if (-not (Test-Path -LiteralPath $project -PathType Leaf)) { throw '找不到正式主工程。' }
 if ($Target -eq 'EditorGame') {
@@ -61,7 +96,15 @@ $manifest=Get-PluginDemoEvidenceFile -Root $workspace -Path 'Docs/Implementation
 $content=Get-PluginDemoContentSnapshot -Workspace $workspace -EngineRoot $engine.Root
 $afterContentBuild=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules $requiredModules
 foreach($field in @('BuildResultSHA256','InputSHA256','ArtifactSHA256')) { if ($buildProof.$field -cne $afterContentBuild.$field) { throw '启动快照期间源码/产物变化；未启动进程。' } }
-$originRoot=Join-Path $workspace "Game/Saved/GamePlatformValidation/Launches/$($RunId.ToString('D'))"
+$nativeSavedRoot=Join-Path $workspace 'Game/Saved'
+$fixture=$null
+if($ManualWorldHost -and -not $ManualFixture){throw 'ManualWorldHost要求ManualFixture隔离UserDir。'}
+if($ManualFixture){
+    $fixture=Resolve-PluginDemoManualFixture -Workspace $workspace -RunId $RunId
+    if(Test-Path -LiteralPath $fixture.UserDir){throw '拒绝复用已有人工测试宿主目录。'}
+    $nativeSavedRoot=$fixture.NativeSavedRoot
+}
+$originRoot=Join-Path $nativeSavedRoot "GamePlatformValidation/Launches/$($RunId.ToString('D'))"
 if (Test-Path -LiteralPath $originRoot) { throw '拒绝复用开发启动来源身份。' }
 $contentFile=Save-PluginDemoEvidenceJson -Root $originRoot -Relative 'Content.before.json' -Value $content
 $dir=Join-Path $workspace "Saved/Validation/PluginDemos/Launch/$RunId"
@@ -69,6 +112,9 @@ if (Test-Path -LiteralPath $dir) { throw "拒绝覆盖已有运行证据：$dir"
 $null=New-Item -ItemType Directory -Path $dir -Force
 $log=Join-Path $dir 'PluginDemo.log'
 $args+=@('-DBAPluginDemo',"-DBAPluginDemoMap=$map","-DBAPluginDemoLaunchId=$($RunId.ToString('D'))","-DBAPluginDemoContentFingerprint=$($content.SHA256)",'-windowed',"-ResX=$WindowWidth", "-ResY=$WindowHeight",'-nosplash','-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',"-abslog=$log")
+$args+=@($independentPage.Arguments)
+if($fixture){$args+=@($fixture.Arguments)}
+if($ManualWorldHost){$args+=@('-FoundationWorld','-DBAManualWorldHost')}
 $info=[Diagnostics.ProcessStartInfo]::new()
 $info.FileName=$exe
 $info.WorkingDirectory=Split-Path $exe
@@ -81,7 +127,7 @@ foreach($key in @('DBA_DEV_LOGIN_SECRET','DBA_DEV_TEST_LOGIN_ACCOUNTS_JSON','DIV
 $process=[Diagnostics.Process]::Start($info)
 if (-not $process) { throw '启动插件演示子进程失败。' }
 $started=$process.StartTime.ToUniversalTime()
-$record=[ordered]@{SchemaVersion=1;Kind='PluginDemoControlledLaunch';RunId=$RunId.ToString('D');Mode='DBAPluginDemo';Target=$Target;PID=$process.Id;Map=$map;EngineOrClientExe=$exe;Log=$log;StartedUtc=$started.ToString('o');Arguments=$args;BuildEvidence=$buildProof;ManifestSHA256=$manifest.SHA256;ContentSHA256=$content.SHA256;ContentSnapshot=$contentFile;HumanReview='Deferred'}
+$record=[ordered]@{SchemaVersion=1;Kind='PluginDemoControlledLaunch';RunId=$RunId.ToString('D');Mode='DBAPluginDemo';Target=$Target;PluginId=$independentPage.PluginId;ManualFixture=[bool]$ManualFixture;ManualWorldHost=[bool]$ManualWorldHost;ExpectedNativeSavedRoot=$nativeSavedRoot;PID=$process.Id;Map=$map;EngineOrClientExe=$exe;Log=$log;StartedUtc=$started.ToString('o');Arguments=$args;BuildEvidence=$buildProof;ManifestSHA256=$manifest.SHA256;ContentSHA256=$content.SHA256;ContentSnapshot=$contentFile;HumanReview='Deferred'}
 try {
     $null=Save-PluginDemoEvidenceJson -Root $originRoot -Relative 'Launch.json' -Value $record
     $null=Save-PluginDemoEvidenceJson -Root $dir -Relative 'Launch.json' -Value $record

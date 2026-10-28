@@ -319,7 +319,8 @@
             "boolean",
             "integer",
             "number",
-            "identifier"
+            "identifier",
+            "asset_path"
           ]
         },
         "unit": {
@@ -488,20 +489,21 @@
         },
         "operations": {
           "type": "array",
-          "description": "实际支持的操作；未知操作禁止执行",
+          "description": "声明的稳定操作ID；执行还须通过对应适配器的编译白名单和参数合同",
           "items": {
-            "type": "string",
-            "description": "操作能力",
-            "enum": [
-              "Execute",
-              "Pause",
-              "Resume",
-              "Stop",
-              "Reset"
-            ]
+            "$ref": "#/$defs/identity"
           },
           "minItems": 1,
           "uniqueItems": true
+        },
+        "operation_labels": {
+          "type": "object",
+          "description": "具名操作的中文显示标签；不能扩充未声明操作或作为执行指令",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
         },
         "prepare_timeout_seconds": {
           "type": "number",

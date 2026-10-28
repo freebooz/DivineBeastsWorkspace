@@ -65,6 +65,8 @@ def _validate_shape(value: object, rule: dict, schema: dict, location: str, issu
                 _validate_shape(item, properties[key], schema, location + "." + key, issues)
             elif rule.get("additionalProperties") is False:
                 _issue(issues, "unknown_field", location + "." + key, "未声明字段；禁止嵌入签收或额外执行命令。")
+            elif isinstance(rule.get("additionalProperties"), dict):
+                _validate_shape(item, rule["additionalProperties"], schema, location + "." + key, issues)
     elif isinstance(value, list):
         if len(value) < rule.get("minItems", 0):
             _issue(issues, "required_value", location, "列表缺少必需内容。")
@@ -237,6 +239,21 @@ def validate_manifest(document: dict, workspace: Path) -> list[dict]:
             _reference(plugin, plugins, identity, issues)
         if scenario["run_mode"] == "editor" and scenario["targets"] != ["Editor"]:
             _issue(issues, "invalid_value", identity, "编辑器制作只能声明Editor目标。")
+        labels = scenario.get('operation_labels', {})
+        folded_labels = set()
+        declared_operations = {operation.casefold() for operation in scenario['operations']}
+        for operation, label in labels.items():
+            _validate_shape(operation, {'$ref': '#/$defs/identity'}, schema, identity + '.operation_labels', issues)
+            if operation.casefold() in folded_labels:
+                _issue(issues, 'duplicate_id', identity, '操作标签含FName大小写重复身份。')
+            folded_labels.add(operation.casefold())
+            if operation.casefold() not in declared_operations:
+                _issue(issues, 'operation_label_unknown', identity, '标签不能登记案例未声明的操作。')
+            if not label.strip():
+                _issue(issues, 'invalid_value', identity, '具名操作标签不能只有空白。')
+        for operation in scenario['operations']:
+            if operation.casefold() not in {'execute', 'pause', 'resume', 'stop', 'reset'} and operation.casefold() not in folded_labels:
+                _issue(issues, 'operation_label_missing', identity, '具名操作需要可读中文标签，执行仍受适配白名单约束。')
         for asset in [scenario["map_asset"], scenario["widget_asset"]] + scenario["definition_assets"]:
             if asset and (not re.fullmatch(r"/[A-Za-z0-9_]+(?:/[A-Za-z0-9_]+)+(?:\.[A-Za-z0-9_]+)?", asset) or asset.startswith("/Content/")):
                 _issue(issues, "invalid_asset_path", identity, "不是合法挂载软引用：" + asset)
@@ -244,7 +261,7 @@ def validate_manifest(document: dict, workspace: Path) -> list[dict]:
         for name, parameter in parameters.items():
             kind = parameter["type"]
             default = parameter["default_value"]
-            if not _matches_type(default, "string" if kind == "identifier" else kind):
+            if not _matches_type(default, "string" if kind in ("identifier", "asset_path") else kind):
                 _issue(issues, "invalid_value", name, "参数默认值与声明类型不符。")
             elif kind in ("integer", "number"):
                 low, high = parameter.get("minimum"), parameter.get("maximum")
@@ -255,6 +272,11 @@ def validate_manifest(document: dict, workspace: Path) -> list[dict]:
             elif kind == "identifier":
                 # 参数值与记录身份共享一个Schema规则，避免允许脚本或UE保留空名。
                 _validate_shape(default, {"$ref": "#/$defs/identity"}, schema, name + ".default_value", issues)
+            elif kind == "asset_path":
+                if (len(default) >= 1024 or
+                        not re.fullmatch(r"/[A-Za-z0-9_]+(?:/[A-Za-z0-9_]+)+\.[A-Za-z0-9_]+", default) or
+                        default.startswith('/Content/')):
+                    _issue(issues, "invalid_asset_path", name, "资源参数必须是明确的挂载顶层对象路径，不允许磁盘/子对象/脚本文本。")
         covered = set()
         for review_id in scenario["review_case_ids"]:
             review = _reference(review_id, reviews, identity, issues)

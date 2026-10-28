@@ -14,6 +14,11 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsPluginDemoMode final
         bool bExplicitOptIn, bool bConflictingDevelopmentMode, const FString& RequestedEntryMap);
     /** 只读运行时启动参数检测，需-DBAPluginDemo和-DBAPluginDemoMap双重确认。 */
     static bool IsEnabled();
+    /** 中心与直达共用精确Hub启动资格；不以当前World路径代替启动地图参数。 */
+    static bool IsAllowedHubPageArguments(bool bDevelopment, bool bInteractiveClient,
+        bool bExplicitOptIn, bool bConflictingDevelopmentMode, const FString& RequestedEntryMap);
+    /** 运行时Hub启动资格；后续登记案例World仍可导航，CameraReview启动始终拒绝。 */
+    static bool IsHubPageEnabled();
     /** 真实uplugin名称的词法检查；目录存在性仍由Catalog核验，拒绝路径/空名。 */
     static bool IsValidPluginIdText(const FString& PluginId);
     /** 独立页直达只允许完整开发资格和精确Hub入口，不扩展镜头审核地图资格。 */

@@ -12,6 +12,9 @@
 #include "Engine/LocalPlayer.h"
 
 #include "Engine/World.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Engine/Engine.h"
 #include "GameFramework/GameUserSettings.h"
 
@@ -31,7 +34,7 @@ namespace
  * 此处永远不直接调用NiagaraFunctionLibrary或加载第三方流体插件。
  */
 bool SubmitWaterVisualRequest(
-    UWorld* World, FName SemanticName, const FVector& SurfacePoint, float Magnitude)
+    UWorld* World, FName SemanticName, const FVector& SurfacePoint, float Magnitude,const TFunction<bool()>& StillCurrent)
 {
     if (!IsValid(World) || SemanticName.IsNone() || !World->GetGameInstance())
         return false;
@@ -42,6 +45,7 @@ bool SubmitWaterVisualRequest(
     bool bAccepted = false;
     for (ULocalPlayer* Player : World->GetGameInstance()->GetLocalPlayers())
     {
+        if(!StillCurrent())return false;
         if (!IsValid(Player) || Player->GetWorld() != World)
             continue;
         UGamePlatformPresentationClientSubsystem* Presentation =
@@ -63,7 +67,7 @@ bool SubmitWaterVisualRequest(
         bAccepted |= Presentation->Submit(Request) ==
             EGamePlatformPresentationSubmitResult::Submitted;
     }
-    return bAccepted;
+    return StillCurrent()&&bAccepted;
 }
 }
 void UGamePlatformWaterClientWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -145,11 +149,11 @@ bool UGamePlatformWaterClientWorldSubsystem::ShouldCreateSubsystem(UObject* Oute
 void UGamePlatformWaterClientWorldSubsystem::Deinitialize()
 {
     UnbindWaterPresence();
-    ClearPresentation();
+    ClearPresentationInternal();
     Super::Deinitialize();
 }
 
-void UGamePlatformWaterClientWorldSubsystem::ClearPresentation()
+void UGamePlatformWaterClientWorldSubsystem::ClearPresentationInternal()
 {
     ++Generation;
     PresetLease.Reset();
@@ -157,9 +161,9 @@ void UGamePlatformWaterClientWorldSubsystem::ClearPresentation()
     LastRippleTime = -100.;
 }
 
-bool UGamePlatformWaterClientWorldSubsystem::SetWaterQualityTier(
-    EGamePlatformWaterQualityTier NewTier)
+bool UGamePlatformWaterClientWorldSubsystem::SetWaterQualityTierOwned(const FGuid& Scope,EGamePlatformWaterQualityTier NewTier)
 {
+    if(Scope!=DevelopmentPresentationScope)return false;
     switch (NewTier)
     {
     case EGamePlatformWaterQualityTier::Low:
@@ -174,10 +178,10 @@ bool UGamePlatformWaterClientWorldSubsystem::SetWaterQualityTier(
     }
 }
 
-bool UGamePlatformWaterClientWorldSubsystem::ConfigurePresentation(
-    UGamePlatformWaterPresentationPreset* Preset)
+bool UGamePlatformWaterClientWorldSubsystem::ConfigurePresentationOwned(const FGuid& Scope,UGamePlatformWaterPresentationPreset* Preset)
 {
-    ClearPresentation();
+    if(Scope!=DevelopmentPresentationScope)return false;
+    ClearPresentationInternal();
     if (!IsValid(Preset) || !GetWorld() || GetWorld()->GetNetMode() == NM_DedicatedServer)
         return false;
     if (Preset->MaxRippleSpawnsPerSecond < 0 || Preset->MaxRippleSpawnsPerSecond > 96 ||
@@ -255,9 +259,11 @@ bool UGamePlatformWaterClientWorldSubsystem::RequestLocalRipple(
     if (RecentRippleTimes.Num() >= EffectiveMaxSpawns)
         return false;
 
+    const uint64 ExpectedGeneration=Generation;TStrongObjectPtr<UGamePlatformWaterPresentationPreset> KeepPreset(const_cast<UGamePlatformWaterPresentationPreset*>(Preset));
+    auto StillCurrent=[this,ExpectedGeneration,Preset,World]{return Generation==ExpectedGeneration&&PresetLease.Get()==Preset&&GetWorld()==World&&!World->bIsTearingDown;};
     const FVector SurfacePoint(WorldPosition.X, WorldPosition.Y, Sample.SurfaceZCm);
     const bool bRippleAccepted =
-        SubmitWaterVisualRequest(World, Preset->RippleSemanticTag, SurfacePoint, Strength);
+        SubmitWaterVisualRequest(World, Preset->RippleSemanticTag, SurfacePoint, Strength,StillCurrent);
     if (!bRippleAccepted)
         return false; // 真实资源目录还未就绪，不增加已受理预算或虚报粒子播放。
 
@@ -265,10 +271,32 @@ bool UGamePlatformWaterClientWorldSubsystem::RequestLocalRipple(
         QualityTier != EGamePlatformWaterQualityTier::Low)
     {
         SubmitWaterVisualRequest(World, Preset->SplashSemanticTag,
-            SurfacePoint, FMath::Min(Strength * 0.85f, 10.f));
+            SurfacePoint, FMath::Min(Strength * 0.85f, 10.f),StillCurrent);
     }
+    if(!StillCurrent())return false;
     RecentRippleTimes.Add(Now);
     LastRippleLocation = WorldPosition;
     LastRippleTime = Now;
     return true;
+}
+
+bool UGamePlatformWaterClientWorldSubsystem::ConfigurePresentation(UGamePlatformWaterPresentationPreset* P){return ConfigurePresentationOwned({},P);}
+bool UGamePlatformWaterClientWorldSubsystem::SetWaterQualityTier(EGamePlatformWaterQualityTier T){return SetWaterQualityTierOwned({},T);}
+void UGamePlatformWaterClientWorldSubsystem::ClearPresentation(){if(!DevelopmentPresentationScope.IsValid())ClearPresentationInternal();}
+bool UGamePlatformWaterClientWorldSubsystem::BeginDevelopmentPresentation(FGuid Owner,FGuid& OutScope){OutScope.Invalidate();
+#if UE_BUILD_SHIPPING
+ return false;
+#else
+ auto* W=GetWorld();if(!W||W->GetNetMode()!=NM_Standalone||W->WorldType!=EWorldType::Game||W->bIsTearingDown||!FParse::Param(FCommandLine::Get(),TEXT("DBAPluginDemo"))||!FParse::Param(FCommandLine::Get(),TEXT("GamePlatformManualFixture")))return false;
+#endif
+
+ if(!Owner.IsValid()||DevelopmentPresentationScope.IsValid()||PresetLease.IsValid()||!RecentRippleTimes.IsEmpty())return false;
+ DevelopmentQualityBaseline=QualityTier;DevelopmentPresentationScope=FGuid::NewGuid();OutScope=DevelopmentPresentationScope;return true;
+}
+bool UGamePlatformWaterClientWorldSubsystem::ConfigureDevelopmentPresentation(const FGuid& Scope,UGamePlatformWaterPresentationPreset* P){return Scope.IsValid()&&ConfigurePresentationOwned(Scope,P);}
+bool UGamePlatformWaterClientWorldSubsystem::SetDevelopmentWaterQuality(const FGuid& Scope,EGamePlatformWaterQualityTier T){
+ return Scope.IsValid()&&SetWaterQualityTierOwned(Scope,T);
+}
+bool UGamePlatformWaterClientWorldSubsystem::EndDevelopmentPresentation(const FGuid& Scope){
+ if(!Scope.IsValid()||Scope!=DevelopmentPresentationScope)return false;ClearPresentationInternal();SetWaterQualityTierOwned(Scope,DevelopmentQualityBaseline);DevelopmentPresentationScope.Invalidate();return true;
 }

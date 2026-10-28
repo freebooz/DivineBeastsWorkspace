@@ -1,6 +1,7 @@
 """经直接Monolith run_python调用的原生页作者。
 
-复用已审核Hub完整UMG树、共享子页及主题，只写固定插件默认值和对应页面定义。
+复用已审核Hub完整UMG树、共享子页及主题，只写固定插件默认值。
+页面定义复用已有Hub合同，由WorldUI在本次请求内产生瞬态副本，不另造70份无人消费的定义。
 离线计划阶段不导入UE；原生阶段检查工程、反射合同和脏包，保存前备份既有文件。
 不触发C++构建、切图、PIE、网络、人工签收或烘焙。
 """
@@ -13,6 +14,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import time
 from datetime import datetime
 
 WORKSPACE = Path(__file__).resolve().parents[3]
@@ -21,6 +23,25 @@ ASSET_ROOT = '/DBAUIPack_Core/Development/PluginDemos'
 HUB = ASSET_ROOT + '/UI/WBP_DBA_PluginDemoHub'
 HUB_DEFINITION = ASSET_ROOT + '/Definitions/DA_DBA_PluginDemoHubScreen'
 EVIDENCE = WORKSPACE / 'Saved/Validation/PluginManualUI20261027'
+
+
+def is_cold_reload(author_pid: int, saved_epoch: float, reader_pid: int, reader_started_epoch: float) -> bool:
+    """另一个先前已启动的Editor也可能缓存旧资产，不能只比较PID。"""
+    return author_pid != reader_pid and reader_started_epoch > saved_epoch > 0
+
+
+def current_process_started_epoch() -> float:
+    """读取Windows当前进程创建时间，既不启动进程也不访问其他进程。"""
+    import ctypes
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel.GetProcessTimes.argtypes = [wintypes.HANDLE] + [ctypes.POINTER(wintypes.FILETIME)] * 4
+    kernel.GetProcessTimes.restype = wintypes.BOOL
+    created, exited, system, user = (wintypes.FILETIME() for _ in range(4))
+    if not kernel.GetProcessTimes(kernel.GetCurrentProcess(), ctypes.byref(created), ctypes.byref(exited), ctypes.byref(system), ctypes.byref(user)):
+        raise ctypes.WinError(ctypes.get_last_error())
+    return ((created.dwHighDateTime << 32) | created.dwLowDateTime) / 10000000.0 - 11644473600.0
 
 
 def make_page_plan(document: dict, selected: list[str] | None = None) -> list[dict]:
@@ -44,8 +65,7 @@ def make_page_plan(document: dict, selected: list[str] | None = None) -> list[di
         name = expected.rsplit('/', 1)[-1]
         result.append({'plugin_id': identity, 'fixed_plugin_id': identity, 'widget': expected,
                        'widget_class': expected + '.' + name + '_C',
-                       'definition': ASSET_ROOT + '/Definitions/DA_DBA_PluginTest_' + identity + 'Screen',
-                       'screen_id': 'DivineBeasts.Demo.Plugin.' + identity})
+                       'definition_template': HUB_DEFINITION})
     return sorted(result, key=lambda p: p['plugin_id'])
 
 
@@ -96,18 +116,17 @@ def read_page(unreal, page: dict) -> dict:
     if fixed != page['plugin_id']:
         raise RuntimeError('fixed plugin mismatch: ' + page['widget'])
     status = str(blueprint.get_editor_property('status'))
-    if not status.endswith('BS_UP_TO_DATE'):
+    if blueprint.get_editor_property('status') != unreal.BlueprintStatus.BS_UP_TO_DATE:
         raise RuntimeError('page not compiled up to date: ' + page['widget'] + ': ' + status)
-    definition = unreal.EditorAssetLibrary.load_asset(page['definition'])
+    definition = unreal.EditorAssetLibrary.load_asset(page['definition_template'])
     if not isinstance(definition, unreal.GamePlatformUIScreenDefinition):
-        raise RuntimeError('missing real screen definition: ' + page['definition'])
-    if str(definition.get_editor_property('screen_id')) != page['screen_id']:
-        raise RuntimeError('screen identity mismatch: ' + page['definition'])
+        raise RuntimeError('missing canonical screen definition template')
+    if str(definition.get_editor_property('screen_id')) != 'DivineBeasts.Demo.Hub':
+        raise RuntimeError('canonical screen template identity mismatch')
     widget_class = definition.get_editor_property('widget_class')
-    if str(widget_class.to_soft_object_path().get_asset_path_name()) != page['widget_class']:
-        raise RuntimeError('screen widget class mismatch: ' + page['definition'])
-    if len(definition.get_editor_property('platform_widget_variants')):
-        raise RuntimeError('cross-plugin platform fallback is forbidden')
+    expected_hub_class = HUB + '.' + HUB.rsplit('/', 1)[-1] + '_C'
+    if widget_class is None or widget_class.get_path_name() != expected_hub_class:
+        raise RuntimeError('canonical screen template class mismatch')
     return {**page, 'compiled': True, 'saved': True, 'fixed_plugin_id': fixed,
             'tree_audit': 'requires_direct_monolith_ui_get_widget_tree'}
 
@@ -119,7 +138,7 @@ def author_pages(manifest_path: str = str(AUTHOR), selected: list[str] | None = 
     import unreal
     check_editor(unreal)
     assets = unreal.EditorAssetLibrary
-    targets = {path for page in plan for path in (page['widget'], page['definition'])}
+    targets = {page['widget'] for page in plan}
     dirty = {p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()}
     if dirty.intersection(targets | {HUB, HUB_DEFINITION}):
         raise RuntimeError('target or template has unsaved edits; preserve it before authoring')
@@ -134,7 +153,7 @@ def author_pages(manifest_path: str = str(AUTHOR), selected: list[str] | None = 
     content = (WORKSPACE / ui_pack['descriptor_path']).parent / 'Content'
     backup = EVIDENCE / 'Backups' / datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     for page in plan:
-        for key in ('widget', 'definition'):
+        for key in ('widget',):
             package = page[key]
             existing = assets.load_asset(package) if assets.does_asset_exist(package) else None
             if existing is not None:
@@ -167,16 +186,8 @@ def author_pages(manifest_path: str = str(AUTHOR), selected: list[str] | None = 
             unreal.BlueprintEditorLibrary.compile_blueprint(blueprint)
             if str(unreal.get_default_object(blueprint.generated_class()).get_editor_property('fixed_plugin_id')) != page['plugin_id']:
                 raise RuntimeError('compile lost fixed plugin context: ' + page['widget'])
-            definition = assets.load_asset(page['definition']) if assets.does_asset_exist(page['definition']) else assets.duplicate_asset(HUB_DEFINITION, page['definition'])
-            if not isinstance(definition, unreal.GamePlatformUIScreenDefinition):
-                raise RuntimeError('native screen definition duplication failed')
-            definition.set_editor_property('screen_id', page['screen_id'])
-            definition.set_editor_property('widget_class', unreal.SoftClassPath(page['widget_class']))
-            definition.set_editor_property('platform_widget_variants', {})
-            definition.set_editor_property('default_focus_widget_name', 'FeatureList')
-            for asset in (blueprint, definition):
-                if not assets.save_loaded_asset(asset, only_if_is_dirty=False):
-                    raise RuntimeError('native asset save failed: ' + asset.get_path_name())
+            if not assets.save_loaded_asset(blueprint, only_if_is_dirty=False):
+                raise RuntimeError('native asset save failed: ' + blueprint.get_path_name())
             result['pages'].append(read_page(unreal, page))
             result['saved_page_count'] = len(result['pages'])
             write_report()
@@ -185,6 +196,7 @@ def author_pages(manifest_path: str = str(AUTHOR), selected: list[str] | None = 
         write_report()
         raise
     result['status'] = 'saved_requires_independent_reload'
+    result['saved_epoch'] = time.time()
     write_report()
     return result
 

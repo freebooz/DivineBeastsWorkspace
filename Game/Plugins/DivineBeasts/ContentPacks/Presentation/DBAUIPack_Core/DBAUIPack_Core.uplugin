@@ -12,6 +12,139 @@
     {
       "Name": "DBAClient",
       "Enabled": true
+    },
+    {
+      "Name": "GamePlatformInput",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformApplicationFlow",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformEquipment",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "EngineCameras",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformWorld",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformWeather",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformWater",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformPCG",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "PCG",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformNavigation",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformSFX",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "DBASFXPack_Core",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformDeveloperTools",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformGameplay",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformAI",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Game",
+        "Client",
+        "Editor"
+      ]
     }
   ]
 }

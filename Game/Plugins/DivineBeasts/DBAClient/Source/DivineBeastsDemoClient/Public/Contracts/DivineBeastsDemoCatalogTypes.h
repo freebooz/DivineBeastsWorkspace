@@ -93,7 +93,9 @@ enum class EDivineBeastsDemoParameterType : uint8
     /** 作者number，仅读取有限NumberValue。 */
     Number UMETA(DisplayName="实数"),
     /** 作者identifier，仅读取非空稳定IdentifierValue。 */
-    Identifier UMETA(DisplayName="标识")
+    Identifier UMETA(DisplayName="标识"),
+    /** 作者asset_path；真实挂载顶层对象，不是控制台/磁盘路径。 */
+    AssetPath UMETA(DisplayName="资源路径")
 };
 
 /** 自包含类型化参数；Type仅选择一个有效载荷，其余字段不解释，不允许执行脚本字符串。 */
@@ -101,7 +103,7 @@ USTRUCT(BlueprintType)
 struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoParameterValue
 {
     GENERATED_BODY()
-    /** 显式参数类型；JSON四种类型一对一映射，非法枚举值明确拒绝。 */
+    /** 显式参数类型；JSON封闭类型一对一映射，非法枚举值明确拒绝。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
     EDivineBeastsDemoParameterType Type = EDivineBeastsDemoParameterType::Number;
     /** boolean载荷。 */
@@ -116,6 +118,9 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoParameterValue
     /** identifier载荷，稳定ASCII身份，不是控制台命令。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
     FName IdentifierValue;
+    /** asset_path载荷，只做软身份；加载/所有权由适配与中央Data服务验证。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
+    FSoftObjectPath AssetPathValue;
 };
 
 /** 参数编辑合同；先校验后显式提交，不代表业务数值已改变。 */
@@ -196,6 +201,9 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoScenarioDefinition
     /** 实际支持Execute/Pause/Resume/Stop/Reset，不支持者不可展示为可操作。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
     TArray<FName> Operations;
+    /** 具名操作中文标签；只映射已声明稳定ID，不是脚本/反射调用。旧内置控制可省略。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
+    TMap<FName, FText> OperationLabels;
     /** 准备超时秒数，作者必须明确有限正值，零表示未配置并拒绝激活。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|Demo")
     double PrepareTimeoutSeconds = 0.0;

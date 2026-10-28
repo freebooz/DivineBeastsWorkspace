@@ -53,6 +53,9 @@ public:
     virtual FGamePlatformResult Reload() override;
     virtual FGamePlatformResult SwitchUserContext(
         const FString& UserContextKey) override;
+    /** 仅原生所有权协调，调用者不得记录/显示该不透明键。 */
+    virtual bool TryGetUserContextKey(FString& Out) const override
+    {check(IsInGameThread());Out.Reset();if(bDeinitializing)return false;Out=CurrentUserContextKey;return true;}
     virtual FGamePlatformSettingsSnapshot GetSnapshot() const override;
     virtual FGamePlatformSettingsRuntimeDiagnostics GetDiagnostics() const override;
     virtual FGamePlatformSettingsRuntimeSubscription Subscribe(

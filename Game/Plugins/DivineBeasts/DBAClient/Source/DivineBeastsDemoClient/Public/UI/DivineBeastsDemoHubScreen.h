@@ -17,6 +17,7 @@ class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsDemoHubScreen : public UGamePlatfo
     /** 只允许原生回归检查真实选择委托；不增加运行时测试入口或可视控件树。 */
     friend class FDivineBeastsDemoKeyboardSelectionTest;
     friend class FDivineBeastsIndependentPluginPageTest;
+    friend class FDivineBeastsDemoWorldObservationTest;
 public:
     /** 读取Monolith蓝图默认上下文，WorldUI据此核对软类与插件身份，不改写类默认对象。 */
     FName GetFixedPluginId() const { return FixedPluginId; }
@@ -110,4 +111,14 @@ private:
     void ApplySnapshot();
     void SubmitOperation(FName OperationId);
     void DetachViewModel();
+    /** 只改变本页已制作控件的可见性；右侧展示真实Game World，不生成预览世界或查询业务。 */
+    UFUNCTION() void ToggleWorldObservation();
+    void SetWorldObservation(bool bEnabled);
+    bool bWorldObservation = false;
+    bool bApplyingObservationLayout = false;
+    bool bObservationExitRequested = false;
+    FLinearColor ObservationBackgroundColor;
+    uint8 ObservationBodyAlignment = 0;
+    TMap<TWeakObjectPtr<UWidget>, ESlateVisibility> ObservationHiddenWidgets;
+
 };

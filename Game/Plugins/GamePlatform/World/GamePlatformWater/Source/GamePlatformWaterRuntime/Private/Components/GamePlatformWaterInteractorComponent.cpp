@@ -24,6 +24,8 @@ void UGamePlatformWaterInteractorComponent::BeginPlay()
     QueryIntervalSeconds = FMath::Clamp(QueryIntervalSeconds, 0.1f, 2.f);
     FootSampleOffsetCm = FMath::Clamp(FootSampleOffsetCm, -300.f, 300.f);
     PollAuthorityWater(); // 首次立即完成，避免角色刚出生时错误认为不在水中。
+    // 首次真实状态通知可以同步停止/销毁本组件；EndPlay后旧BeginPlay栈不能重新挂计时器。
+    if(!IsRegistered()||!IsValid(GetOwner())||GetOwner()!=Owner||World->bIsTearingDown)return;
     World->GetTimerManager().SetTimer(QueryTimer, this,
         &UGamePlatformWaterInteractorComponent::PollAuthorityWater,
         QueryIntervalSeconds, true);
@@ -57,9 +59,10 @@ void UGamePlatformWaterInteractorComponent::ResetAuthorityWater()
     {
         WaterState = Clear;
         OnWaterStateChanged.Broadcast(WaterState);
+        if(!IsRegistered()||!IsValid(GetOwner())||!GetWorld()||GetWorld()->bIsTearingDown)return;
         OnWaterStateChangedNative.Broadcast(GetOwner(), WaterState);
-        if (AActor* Owner = GetOwner())
-            Owner->ForceNetUpdate();
+        if (AActor* Owner = GetOwner(); IsRegistered()&&IsValid(Owner))
+            if(IsRegistered()&&IsValid(Owner)&&GetOwner()==Owner)Owner->ForceNetUpdate();
     }
 }
 
@@ -91,6 +94,7 @@ void UGamePlatformWaterInteractorComponent::PollAuthorityWater()
     {
         WaterState = Next;
         OnWaterStateChanged.Broadcast(WaterState);
+        if(!IsRegistered()||!IsValid(GetOwner())||!GetWorld()||GetWorld()->bIsTearingDown)return;
         OnWaterStateChangedNative.Broadcast(Owner, WaterState);
         Owner->ForceNetUpdate();
     }

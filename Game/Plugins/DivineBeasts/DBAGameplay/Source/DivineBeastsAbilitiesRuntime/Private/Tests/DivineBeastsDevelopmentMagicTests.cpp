@@ -127,7 +127,7 @@ public:
             ASC->AbilityCommittedCallbacks.Remove(CommitHandle);
             ASC->OnGameplayEffectAppliedDelegateToSelf.Remove(EffectHandle);
             if (AbilityHandle.IsValid()) { ASC->CancelAbilityHandle(AbilityHandle); ASC->ClearAbility(AbilityHandle); }
-            if (PrimaryMissileHandle.IsValid()) { ASC->CancelAbilityHandle(PrimaryMissileHandle); ASC->ClearAbility(PrimaryMissileHandle); }
+            if (DirectedMissileHandle.IsValid()) { ASC->CancelAbilityHandle(DirectedMissileHandle); ASC->ClearAbility(DirectedMissileHandle); }
         }
         // 身份组件拥有自己的 Hero 租约；先结束借用者，不能提前释放本测试的预热需求。
         if (Pawn.IsValid()) { Pawn->Destroy(); }
@@ -188,7 +188,7 @@ public:
         ++FlightFrames;
         if (Scenario == EScenario::Healing)
         {
-            if (FlightFrames == 9) Test->TestEqual(TEXT("按键1起手0.45秒尚无权威弹体"), Projectiles.Num(), 0);
+            if (FlightFrames == 9) Test->TestEqual(TEXT("按键3起手0.45秒尚无权威弹体"), Projectiles.Num(), 0);
             if (FlightFrames < 11) return false;
             CheckPrimaryHealing(); return true;
         }
@@ -420,7 +420,7 @@ private:
     }
 
     /**
-     * 数字1飞弹及数字5治疗真实GAS输入回归；友方关系替身仅限此隔离测试。
+     * 数字3飞弹及数字5治疗真实GAS输入回归；友方关系替身仅限此隔离测试。
      * 验证20%目标最大生命、上限、0气势、10秒GAS冷却、敌方不获治疗，以及死亡/超距/旧代次拒绝且不自疗。
      * 关系替身不进入生产；竞技Roster桥另由真实装配负责。本测试不声称联机/UI/VFX已经验收。
      */
@@ -439,10 +439,24 @@ private:
         const auto* Set = Cast<UGamePlatformAbilitySetDefinition>(FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/DA_DBA_Rat_PlaceholderAbilitySet.DA_DBA_Rat_PlaceholderAbilitySet")).ResolveObject());
         if (!Test->TestNotNull(TEXT("真实技能授权集"), Set)) return false;
         const FGameplayTag HealingInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot3"));
-        const FGameplayTag MissileInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Primary"));
+        // 2026-10-27已批准按钮1火球、2冰箭、3定向飞弹；固定期望来自正式映射，不能从当前数据反推。
+        const FGameplayTag FireballInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Primary"));
+        const FGameplayTag FrostboltInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot1"));
+        const FGameplayTag MissileInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot2"));
         const auto* HealGrant = Set->Abilities.FindByPredicate([&](const auto& G) { return G.InputTag == HealingInput; });
+        const auto* FireballGrant = Set->Abilities.FindByPredicate([&](const auto& G) { return G.InputTag == FireballInput; });
+        const auto* FrostboltGrant = Set->Abilities.FindByPredicate([&](const auto& G) { return G.InputTag == FrostboltInput; });
         const auto* MissileGrant = Set->Abilities.FindByPredicate([&](const auto& G) { return G.InputTag == MissileInput; });
-        if (!Test->TestNotNull(TEXT("数字5真实治疗授权"), HealGrant) || !Test->TestNotNull(TEXT("数字1真实飞弹授权"), MissileGrant)) return false;
+        if (!Test->TestNotNull(TEXT("数字5真实治疗授权"), HealGrant) ||
+            !Test->TestNotNull(TEXT("数字1真实火球授权"), FireballGrant) ||
+            !Test->TestNotNull(TEXT("数字2真实冰箭授权"), FrostboltGrant) ||
+            !Test->TestNotNull(TEXT("数字3真实飞弹授权"), MissileGrant)) return false;
+        if (!Test->TestTrue(TEXT("Primary按键1明确绑定已批准火球类"), FireballGrant->AbilityClass.ToSoftObjectPath() ==
+                FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/GA_DBA_Rat_PlaceholderFireball.GA_DBA_Rat_PlaceholderFireball_C"))) ||
+            !Test->TestTrue(TEXT("Slot1按键2明确绑定已批准冰箭类"), FrostboltGrant->AbilityClass.ToSoftObjectPath() ==
+                FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/GA_DBA_Rat_PlaceholderFrostbolt.GA_DBA_Rat_PlaceholderFrostbolt_C"))) ||
+            !Test->TestTrue(TEXT("Slot2按键3明确绑定已批准定向飞弹类"), MissileGrant->AbilityClass.ToSoftObjectPath() ==
+                FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/GA_DBA_Rat_PlaceholderDirectedMissile.GA_DBA_Rat_PlaceholderDirectedMissile_C")))) return false;
         if (!Test->TestTrue(TEXT("数字5保留原治疗类"), HealGrant->AbilityClass.Get() == HealingClass)) return false;
         const auto* MissileClass = MissileGrant->AbilityClass.Get();
         const auto* MissileCDO = MissileClass ? Cast<UDivineBeastsPlaceholderGameplayAbility>(MissileClass->GetDefaultObject()) : nullptr;
@@ -452,13 +466,13 @@ private:
         FGameplayAbilitySpec HealSpec(HealingClass, 1); HealSpec.GetDynamicSpecSourceTags().AddTag(HealingInput);
         AbilityHandle = ASC->GiveAbility(HealSpec);
         FGameplayAbilitySpec MissileSpec(MissileGrant->AbilityClass.Get(), 1); MissileSpec.GetDynamicSpecSourceTags().AddTag(MissileInput);
-        PrimaryMissileHandle = ASC->GiveAbility(MissileSpec);
+        DirectedMissileHandle = ASC->GiveAbility(MissileSpec);
         if (!InitializeBurstTargets()) return false;
         Pawn->SetActorRotation(FRotator(0, 90, 0));
         SpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateRaw(this, &FRealMagicCommand::ObserveProjectile));
-        Test->TestTrue(TEXT("按键1平台输入受理"), ASC->AbilityInputPressed(MissileInput, ASC->GetInputToken()).IsSuccess());
+        Test->TestTrue(TEXT("按键3平台输入受理"), ASC->AbilityInputPressed(MissileInput, ASC->GetInputToken()).IsSuccess());
         ASC->ProcessAbilityInput(); ASC->AbilityInputReleased(MissileInput, ASC->GetInputToken());
-        Test->TestEqual(TEXT("按键1真实Fireball模式在起手开始时尚未出弹"), Projectiles.Num(), 0);
+        Test->TestEqual(TEXT("按键3真实Fireball模式在起手开始时尚未出弹"), Projectiles.Num(), 0);
         return true;
     }
 
@@ -469,13 +483,13 @@ private:
         auto* SourceCombat = Pawn->GetGamePlatformCombatComponent();
         const FGameplayTag CooldownTag = FGameplayTag::RequestGameplayTag(TEXT("DivineBeasts.Placeholder.Cooldown.Primary"));
         const FGameplayTag HealingInput = FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DivineBeasts.Slot3"));
-        Test->TestEqual(TEXT("按键1起手0.55秒只创建一枚权威弹体"), Projectiles.Num(), 1);
+        Test->TestEqual(TEXT("按键3起手0.55秒只创建一枚权威弹体"), Projectiles.Num(), 1);
         if (Projectiles.Num()==1)
         {
             Test->TestEqual(TEXT("弹体复制正确表现身份"), Projectiles[0].Facts.PresentationStyleId, FName(TEXT("DBA.Development.DirectedMissile")));
             if (auto* Missile = Projectiles[0].Actor.Get())
             {
-                Test->TestTrue(TEXT("真实按键1沿角色施法朝向起飞而非直接对准侧方目标"),
+                Test->TestTrue(TEXT("真实按键3沿角色施法朝向起飞而非直接对准侧方目标"),
                     FVector::DotProduct(Missile->GetActorForwardVector(), Pawn->GetActorForwardVector()) > .999);
                 const FVector Start = Missile->GetActorLocation();
                 Missile->Tick(1.f / 120.f);
@@ -488,7 +502,7 @@ private:
         if (FrozenTarget.IsValid()) FrozenTarget->Destroy();
         if (AlternateTarget.IsValid()) AlternateTarget->Destroy();
         FrozenTarget.Reset(); AlternateTarget.Reset();
-        ASC->CancelAbilityHandle(PrimaryMissileHandle); ASC->ClearAbility(PrimaryMissileHandle); PrimaryMissileHandle = FGameplayAbilitySpecHandle();
+        ASC->CancelAbilityHandle(DirectedMissileHandle); ASC->ClearAbility(DirectedMissileHandle); DirectedMissileHandle = FGameplayAbilitySpecHandle();
         const auto ClearCooldown = [&]()
         { ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(CooldownTag)); };
         const auto SetHealth = [](UGamePlatformAbilitySystemComponent* System, float Health)
@@ -1110,7 +1124,7 @@ private:
     UClass* CostClass = nullptr;
     UClass* CooldownClass = nullptr;
     FGameplayAbilitySpecHandle AbilityHandle;
-    FGameplayAbilitySpecHandle PrimaryMissileHandle; // 治疗回归跨帧借用的真实数字1授权，由同一夹具收回。
+    FGameplayAbilitySpecHandle DirectedMissileHandle; // 治疗回归跨帧借用的真实数字3授权，由同一夹具收回。
     FGameplayTagContainer WindupCooldownTags; // 起手场景借用的真实冷却标签值，跨潜伏帧不持有Ability/CDO裸引用。
     FDelegateHandle SpawnHandle, CommitHandle, EffectHandle;
     TArray<FObservedProjectile> Projectiles;

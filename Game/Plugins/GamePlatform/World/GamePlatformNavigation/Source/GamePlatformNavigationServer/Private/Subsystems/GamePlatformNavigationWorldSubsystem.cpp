@@ -603,6 +603,7 @@ bool UGamePlatformNavigationWorldSubsystem::RegisterInvoker(
         Profile->TileRemovalRadius);
 
     RegisteredInvokers.Add(ActorKey);
+    RegisteredInvokerProfiles.Add(ActorKey,AgentProfileId);
     Actor.OnDestroyed.AddUniqueDynamic(
         this,
         &UGamePlatformNavigationWorldSubsystem::HandleInvokerDestroyed);
@@ -630,6 +631,7 @@ void UGamePlatformNavigationWorldSubsystem::UnregisterInvoker(
         &UGamePlatformNavigationWorldSubsystem::HandleInvokerDestroyed);
 
     RegisteredInvokers.Remove(Key);
+    RegisteredInvokerProfiles.Remove(Key);
 }
 
 FGamePlatformNavigationDiagnostics
@@ -1167,4 +1169,12 @@ void UGamePlatformNavigationWorldSubsystem::HandleInvokerDestroyed(
     {
         UnregisterInvoker(*DestroyedActor);
     }
+}
+
+bool UGamePlatformNavigationWorldSubsystem::UnregisterAgentProfile(const UGamePlatformNavigationAgentProfile* Profile){
+ check(IsInGameThread());if(!Profile)return false;const auto* Registered=AgentProfiles.Find(Profile->ProfileId);
+ if(!Registered||Registered->Get()!=Profile)return false;
+ for(const auto& Pair:RegisteredInvokerProfiles)if(Pair.Key.IsValid()&&Pair.Value==Profile->ProfileId)return false;
+ for(const auto& Pair:AsyncRequests)if(Pair.Value.Request.AgentProfileId==Profile->ProfileId)return false;
+ AgentProfiles.Remove(Profile->ProfileId);return true;
 }

@@ -162,6 +162,14 @@ FPrimaryAssetId UGamePlatformUIManagerSubsystem::GetCurrentThemeId() const
     return ThemeService ? ThemeService->GetCurrentThemeId() : FPrimaryAssetId();
 }
 
+FGamePlatformUIThemeSnapshot UGamePlatformUIManagerSubsystem::GetThemeSnapshot() const
+{return ThemeService?ThemeService->GetSnapshot():FGamePlatformUIThemeSnapshot();}
+FGamePlatformResult UGamePlatformUIManagerSubsystem::RestoreThemeSnapshot(const FGamePlatformUIThemeSnapshot& S,int64 Revision,FGuid& OutRequest)
+{
+    OutRequest.Invalidate();return !bClosing&&ThemeService?ThemeService->RestoreSnapshot(S,Revision,OutRequest):
+        FGamePlatformResult::Failure(TEXT("UI.Theme.RestoreUnavailable"),TEXT("本LocalPlayer主题服务不可用。"));
+}
+
 int64 UGamePlatformUIManagerSubsystem::GetThemeRevision() const
 {
     return ThemeService ? ThemeService->GetRevision() : 0;

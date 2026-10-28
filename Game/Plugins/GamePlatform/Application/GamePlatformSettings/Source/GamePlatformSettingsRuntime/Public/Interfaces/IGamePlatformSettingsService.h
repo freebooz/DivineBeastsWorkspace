@@ -68,6 +68,9 @@ public:
      */
     virtual FGamePlatformResult SwitchUserContext(const FString& UserContextKey) = 0;
 
+    /** 游戏线程C++所有权协调：读取当前不透明用户键；不进入蓝图/快照/日志，失败清空Out。 */
+    virtual bool TryGetUserContextKey(FString& Out) const {Out.Reset();return false;}
+
     virtual FGamePlatformSettingsSnapshot GetSnapshot() const = 0;
     virtual FGamePlatformSettingsRuntimeDiagnostics GetDiagnostics() const = 0;
 

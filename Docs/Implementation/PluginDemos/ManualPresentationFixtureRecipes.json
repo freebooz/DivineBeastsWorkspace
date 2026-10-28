@@ -1,0 +1,187 @@
+{
+  "status": "six_common_fixtures_native_authored_and_validated_runtime_and_visual_pending",
+  "existing": [
+    {
+      "path": "/DBAContentPack_Common/Mannequins/DBA/Meshes/SKM_Manny_Simple.SKM_Manny_Simple",
+      "kind": "SkeletalMesh",
+      "validation": "Monolith核对真实材质支持GP_Dissolve完整参数；源文件存在不代表原生合同已过"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/Cameras/Profiles/DA_DBA_Camera_CharacterPreview.DA_DBA_Camera_CharacterPreview",
+      "kind": "GamePlatformCinematicCameraProfile",
+      "validation": "Monolith读取IsValidProfile和焦距/相机过渡；同LP舞台在实际World"
+    },
+    {
+      "path": "/GamePlatformSurface/ParameterCollections/MPC_GP_SurfaceGlobal.MPC_GP_SurfaceGlobal",
+      "kind": "MaterialParameterCollection",
+      "fields": [
+        "GP_Surface_GlobalWetness",
+        "GP_Surface_GlobalSnowAmount",
+        "GP_Surface_GlobalSnowHeightCm",
+        "GP_Surface_GlobalMossInfluence",
+        "GP_Surface_GlobalPuddleAmount",
+        "GP_Surface_RainIntensity",
+        "GP_Surface_SnowIntensity",
+        "GP_Surface_TemperatureCelsius",
+        "GlobalWindFrom",
+        "GlobalWindTo",
+        "GlobalWindTiming",
+        "GlobalWindSeed"
+      ]
+    },
+    {
+      "path": "/GamePlatformSurface/Marks/DA_GP_SurfaceMarkCatalog.DA_GP_SurfaceMarkCatalog",
+      "kind": "GamePlatformSurfaceMarkCatalog",
+      "validation": "五种Style实际Decal材质，LifetimeSeconds>0且<=120；须通过原生核对，平台唯一服务Data租约持有"
+    },
+    {
+      "path": "/DBASFXPack_Core/Audio/UI/Definitions/DA_DBA_SFX_UI_Click.DA_DBA_SFX_UI_Click",
+      "logical_id": "presentation.dba.audio.ui.click@1",
+      "kind": "GamePlatformSFXDefinition",
+      "validation": "真实TwoD声音；World可另选已登记frost.cast；Attached与FloatParameter正向资源需精确原生配方补齐"
+    },
+    {
+      "path": "/DBAUIPack_Core/UI/Themes/DA_DBA_UITheme_Default.DA_DBA_UITheme_Default",
+      "primary_asset_id": "GamePlatformDefinition:dba.ui.theme.default@1",
+      "kind": "GamePlatformUIThemeDefinition",
+      "validation": "先由原正式主题装配建立非空基线；Data Scan、UI bundles和三类Style软类原生加载"
+    },
+    {
+      "path": "Tools/Unreal/VFX/SpellProjectiles/PresentationManifest.json",
+      "kind": "current mapping contract",
+      "validation": "只用bindings[].definition/logical_id/system当前映射，不使用source_system退休来源；本批不制作新魔法Niagara"
+    }
+  ],
+  "create": [
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Camera/BP_DBA_PluginDemoHitShake.BP_DBA_PluginDemoHitShake_C",
+      "parent": "/Script/EngineCameras.DefaultCameraShakeBase",
+      "root_pattern": "/Script/EngineCameras.PerlinNoiseCameraShakePattern",
+      "properties": {
+        "Duration": 0.35,
+        "BlendInTime": 0.05,
+        "BlendOutTime": 0.1,
+        "LocationAmplitudeMultiplier": 0,
+        "RotationAmplitudeMultiplier": 0.25
+      },
+      "validation": "须Monolith读取真实RootShakePattern并确认有限0.35秒；运行时GetShakeInfo实际核对固定0..0.5秒；EngineCameras内容依赖须在.uplugin登记"
+    },
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/UI/WBP_DBA_PluginDemoTestScreen.WBP_DBA_PluginDemoTestScreen_C",
+      "parent": "/Script/GamePlatformUIClient.GamePlatformUIScreen",
+      "named_widgets": {
+        "ManualText": "TextBlock",
+        "CloseButton": "Button"
+      },
+      "validation": "固定字号22；一个精确CloseScreen动作，遵守真实UIManager，原生保存重载"
+    },
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/UI/DA_DBA_PluginDemoTestScreen.DA_DBA_PluginDemoTestScreen",
+      "parent": "/Script/GamePlatformUIClient.GamePlatformUIScreenDefinition",
+      "properties": {
+        "ScreenId": "PluginDemo.ManualScreen",
+        "WidgetClass": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/UI/WBP_DBA_PluginDemoTestScreen.WBP_DBA_PluginDemoTestScreen_C",
+        "Layer": "Modal",
+        "InputMode": "GameAndUI",
+        "PausePolicy": "Never",
+        "bSurvivesTravel": false
+      }
+    },
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/UI/WBP_DBA_PluginDemoNotification.WBP_DBA_PluginDemoNotification_C",
+      "parent": "/Script/GamePlatformUIClient.GamePlatformNotificationWidget",
+      "validation": "BP_OnNotificationRequestApplied将Request.Title/Message事件投影TextBlock，无Tick"
+    },
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/UI/WBP_DBA_PluginDemoFeedback.WBP_DBA_PluginDemoFeedback_C",
+      "parent": "/Script/GamePlatformUIClient.GamePlatformFeedbackWidget",
+      "validation": "BP_OnFeedbackRequestApplied将Text事件投影，有限视觉动画引擎播放；Feedback操作前切WidgetClass到此路径"
+    },
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/UI/WBP_DBA_PluginDemoNameplate.WBP_DBA_PluginDemoNameplate_C",
+      "parent": "/Script/GamePlatformUIClient.GamePlatformWorldNameplateWidget",
+      "named_widgets": {
+        "NameText": "TextBlock",
+        "ValueText": "TextBlock",
+        "ResourceFill": "ProgressBar"
+      },
+      "validation": "实际命名合同以平台原生父类ApplyWorldUIRequest为准；静止首投影/最终镜头/DPI事件验证"
+    }
+  ],
+  "extra_conditions": [
+    "Fixtures已加入现有GamePlatformDefinition扫描，不能新增AssetManager。",
+    "右侧World观察机位/灯光/地面原生创建由根统一处理。",
+    "十行为需要真实已发布Definition×行为×质量矩阵；当前仅有通用真实Play入口，不声称十行为资源全覆盖。",
+    "SFX Attached/MetaSound参数的真实已发布定义尚未静态定位：须沿当前登记选择或登记明确缺口，不能临时复制第二播放器。"
+  ],
+  "hub_host_recipe": {
+    "asset_path": "/Game/Development/PluginDemos/Blueprints/BP_DBA_PluginManualHost.BP_DBA_PluginManualHost_C",
+    "parent": "/Script/Engine.GameModeBase",
+    "only_map_override": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+    "properties": {
+      "PlayerControllerClass": "/Script/DBAWorldsRuntime.DivineBeastsWorldPlayerController",
+      "GameStateClass": "/Script/Engine.GameStateBase",
+      "PlayerStateClass": "/Script/Engine.PlayerState",
+      "DefaultPawnClass": "/Script/Engine.DefaultPawn"
+    },
+    "preserve": [
+      "current manually edited PlayerStart transform",
+      "existing CameraActor Player0 activation/view",
+      "all production world GameModes and global Config"
+    ],
+    "source_evidence": [
+      {
+        "path": "Game/Plugins/DivineBeasts/DBAWorlds/Source/DBAWorldsRuntime/Private/Gameplay/DivineBeastsWorldPlayerController.cpp",
+        "symbols": "constructor,BeginPlay,RefreshLocalWorldFacts,RefreshWorldInputPolicy,UpdateCameraManager"
+      },
+      {
+        "path": "Game/Plugins/GamePlatform/Gameplay/GamePlatformGameplay/Source/GamePlatformGameplay/Private/Framework/GamePlatformPlayerControllerBase.cpp",
+        "symbols": "ReportLocalPreparation and explicit preparation-only RPC; no automatic login/BeginPlay"
+      },
+      {
+        "path": "Game/Plugins/GamePlatform/World/GamePlatformInteraction/Source/GamePlatformInteraction/Private/Components/GamePlatformInteractorComponent.cpp",
+        "symbols": "BeginPlay,SetLocalFocusPolicy,ReconcileLocalFocusSampling"
+      },
+      {
+        "path": "Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsApplicationFlowClient/Private/DivineBeastsApplicationFlowSubsystem.cpp",
+        "symbols": "Initialize DBAPluginDemo early return"
+      }
+    ],
+    "effects": [
+      "Engine GameState has no Experience and Engine PlayerState is not platform lifecycle state; no ReportLocalPreparation/ServerActive path",
+      "WorldPC constructor disables Interactor local focus, it stays disabled without Active; no focus sampling timer starts",
+      "WorldPC binds DBA actions/axes and owns inactive move/look locks; actual UIManager/CommonUI interaction must be runtime checked",
+      "UpdateCameraManager final-view event runs for LocalController+CameraManager independently of GameplayActive",
+      "DefaultPawn is not Character; this minimum host does not make snow foot walking ready"
+    ],
+    "status": "existing_root_authored_saved_and_cold_reloaded_do_not_duplicate"
+  },
+  "native_dissolve_material_audit": {
+    "report": "Saved/Validation/PluginManualUI20261027/Presentation.DissolveMaterial.NativeAudit.json",
+    "all_manny_slots": "six_scalar_plus_edge_color_present_and_masked",
+    "visual_runtime": "pending"
+  },
+  "sfx_manual_fixtures": {
+    "report": "Saved/Validation/PluginManualUI20261027/Presentation.SFXFixtures.Authored.json",
+    "cue": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Audio/S_DBA_PluginDemoManualPitch.S_DBA_PluginDemoManualPitch",
+    "definition_ids": [
+      "GamePlatformDefinition:sfx.demo.twod@1",
+      "GamePlatformDefinition:sfx.demo.world@1",
+      "GamePlatformDefinition:sfx.demo.attached@1"
+    ],
+    "parameter": "ManualPitch",
+    "input_range": [
+      0,
+      1
+    ],
+    "pitch_range": [
+      0.8,
+      1.2
+    ],
+    "wave_sequence_count": 16,
+    "source_wave_unchanged": true,
+    "native_validation": "4_valid_zero_warning",
+    "cold_reload": "pending",
+    "audible_acceptance": "pending"
+  }
+}

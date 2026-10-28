@@ -183,51 +183,47 @@ void UDivineBeastsDemoWorldSubsystem::OnOverlayAssetReady(
 
 bool UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay()
 {
+    auto* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
+    return ReleaseDemoOverlay(Instance ? IGamePlatformDataService::Get(*Instance) : nullptr);
+}
+bool UDivineBeastsDemoWorldSubsystem::ReleaseDemoOverlay(IGamePlatformDataService* Data)
+{
     if (bReleasingDemoOverlay) return false;
+    // 候选失败阻止新导航，但World退出仍必须继续撤销活动页、输入和其他自身租约。
+    TArray<FString> Failures;
+    if (!CancelPendingPage(Data)) Failures.Add(TEXT("候选租约：") + LastFeedback.ToString());
     TGuardValue<bool> Releasing(bReleasingDemoOverlay, true);
-    ++OverlayGeneration;
+    bool bActiveDefinitionRemaining = false;
     if (auto* Manager = DemoUIManager.Get())
     {
         Manager->OnScreenOpened.RemoveDynamic(this, &ThisClass::OnDemoScreenOpened);
         Manager->OnScreenOpenFailed.RemoveDynamic(this, &ThisClass::OnDemoScreenFailed);
-        if (PendingScreenRequestId.IsValid()) Manager->CancelOpen(PendingScreenRequestId);
         if (auto* Screen = ActiveScreen.Get()) Manager->CloseScreen(Screen);
-        if (bRegisteredDemoScreen) Manager->UnregisterScreenDefinition(TEXT("DivineBeasts.Demo.Hub"));
+        if (bRegisteredDemoScreen && Manager->HasScreenDefinition(RegisteredDemoScreenId) &&
+            !Manager->UnregisterScreenDefinition(RegisteredDemoScreenId))
+        { bActiveDefinitionRemaining = true; Failures.Add(TEXT("活动页定义注销失败。")); }
     }
-    DemoUIManager.Reset(); ActiveScreen.Reset(); PendingScreenRequestId.Invalidate(); bRegisteredDemoScreen = false;
-    PageScreenDefinition = nullptr;
-    OpeningScreenModel.Reset(); SynchronouslyOpenedScreenRequestId.Invalidate();
-    bOpeningScreen = false; bSynchronousScreenFailure = false;
-    if (UDivineBeastsDemoHubWidget* Widget = ActiveWidget.Get())
-    {
-        Widget->RemoveFromParent();
-    }
+    ActiveScreen.Reset(); bRegisteredDemoScreen = bActiveDefinitionRemaining;
+    if (!bActiveDefinitionRemaining) { DemoUIManager.Reset(); PageScreenDefinition = nullptr; }
+    if (auto* Widget = ActiveWidget.Get()) Widget->RemoveFromParent();
     ActiveWidget.Reset();
     if (APlayerController* Controller = DemoInputController.Get())
     {
         if (Controller->GetWorld() == GetWorld())
         {
-            // 仅撤销本演示世界安装的输入设置，不访问下一地图的控制器。
             Controller->SetInputMode(FInputModeGameOnly());
             Controller->bShowMouseCursor = bOriginalMouseCursorVisible;
         }
     }
     DemoInputController.Reset();
-    if (FGamePlatformDataLease Lease = UILease; Lease.IsValid())
-    {
-        UGameInstance* Instance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
-        if (IGamePlatformDataService* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr)
-        {
-            const auto Released = Data->ReleaseResources(Lease);
-            if (!Released.IsSuccess())
-            { LastFeedback = FText::FromString(TEXT("开发页资源撤销失败，保留原租约并阻止新页面：") + Released.Message); return false; }
-        }
-        else { LastFeedback = FText::FromString(TEXT("中央Data服务不可用，开发页租约未确认清理。")); return false; }
-    }
-    UILease = {};
+    const auto ActiveReleased = ReleasePageLease(UILease, Data);
+    const auto RetiredReleased = ReleasePageLease(RetiredUILease, Data);
+    if (!ActiveReleased.IsSuccess()) Failures.Add(TEXT("活动页租约：") + ActiveReleased.Message);
+    if (!RetiredReleased.IsSuccess()) Failures.Add(TEXT("旧页租约：") + RetiredReleased.Message);
+    if (!Failures.IsEmpty())
+    { LastFeedback = FText::FromString(TEXT("退出清理未全部完成：") + FString::Join(Failures, TEXT("；"))); return false; }
     return true;
 }
-
 
 bool UDivineBeastsDemoWorldSubsystem::ApplyWeather(EGamePlatformWeatherType Weather, float TransitionSeconds)
 {

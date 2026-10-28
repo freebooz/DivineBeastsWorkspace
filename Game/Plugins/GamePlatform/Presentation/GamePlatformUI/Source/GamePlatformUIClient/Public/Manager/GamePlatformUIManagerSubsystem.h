@@ -8,6 +8,7 @@
 #include "GamePlatformUITypes.h"
 #include "Types/GamePlatformDataLease.h"
 #include "Styling/GamePlatformUIThemeTypes.h"
+#include "Types/GamePlatformResult.h"
 #include "Requests/GamePlatformUIFeedbackRequest.h"
 #include "Requests/GamePlatformUINotificationRequest.h"
 #include "Requests/GamePlatformWorldUIRequest.h"
@@ -83,6 +84,13 @@ public:
     FPrimaryAssetId GetCurrentThemeId() const;
     UFUNCTION(BlueprintPure, Category="UI|Theme")
     int64 GetThemeRevision() const;
+    /** GT读取完整主题身份、上下文和LP作用域；空主题也可恢复。 */
+    FGamePlatformUIThemeSnapshot GetThemeSnapshot() const;
+    /** GT条件恢复：Scope一致、ExpectedRevision仍当前且没有在途请求才接纳。
+     * 非空主题复用唯一异步主题链，OutRequest由OnThemeRequestFinished完成；空主题同步清空并广播OnThemeChanged。
+     * 调用方持排他业务租约，外部新修订/请求拒绝覆盖；失败保留原状态，不能自行Shutdown服务恢复。
+     */
+    FGamePlatformResult RestoreThemeSnapshot(const FGamePlatformUIThemeSnapshot& Snapshot,int64 ExpectedRevision,FGuid& OutRequest);
     /** 供平台兼容绑定使用，返回已加载只读类；无资源时不执行加载。 */
     UClass* ResolveThemeStyle(EGamePlatformUIStyleKind Kind, FName StyleId, bool bAllowParentFallback, FText& Error) const;
     UPROPERTY(BlueprintAssignable, Category="UI|Theme") FGamePlatformUIThemeChanged OnThemeChanged;

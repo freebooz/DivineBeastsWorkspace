@@ -9,10 +9,38 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import shutil
+import os
+import time
+from datetime import datetime
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[3]
 PACKAGE = "/DBAUIPack_Core/Development/PluginDemos/Definitions/DA_DBA_PluginDemoCatalog"
+
+
+def snapshot_editor_value(value):
+    """UE容器getter可能借用原属性；独立复制结构及数组，避免失败回滚保留新内容。"""
+    import unreal
+    if isinstance(value, unreal.Array):
+        return [snapshot_editor_value(item) for item in value]
+    if isinstance(value, unreal.StructBase):
+        return value.copy()
+    return value
+
+
+def apply_catalog_fields(asset, fields, save):
+    """保存失败时恢复完整原生值；调用方仍拥有备份与最终保存，不吞掉失败。"""
+    previous = {key: snapshot_editor_value(asset.get_editor_property(key)) for key in fields}
+    try:
+        for key, item in fields.items():
+            asset.set_editor_property(key, item)
+        if asset.get_editor_property('source_fingerprint') != fields['source_fingerprint'] or not save():
+            raise RuntimeError('真实目录保存或指纹回读失败。')
+    except Exception:
+        for key, item in previous.items():
+            asset.set_editor_property(key, item)
+        raise
 
 
 def read_author_source(manifest_path: str) -> tuple[dict, str]:
@@ -44,6 +72,9 @@ def build_catalog(manifest_path: str) -> dict:
     definition_class = getattr(unreal, "DivineBeastsDemoCatalogDefinition", None)
     if definition_class is None:
         raise RuntimeError("BlockedByEditorBinary：新目录反射类未加载；本脚本不会触发编译。")
+    dirty = {p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()}
+    if PACKAGE in dirty:
+        raise RuntimeError("目录资产有未保存编辑，保留用户内容并停止作者更新。")
 
     def value(kind: str, **fields):
         """通过USTRUCT（原生反射结构）构造器一次传入已审查字段。
@@ -58,11 +89,12 @@ def build_catalog(manifest_path: str) -> dict:
         return struct_class(**fields)
 
     def parameter(record: dict):
-        """封闭四类型一对一转换；不用浮点保存整数或任意脚本字符串。"""
-        payload = {"boolean": "b_boolean_value", "integer": "integer_value", "number": "number_value", "identifier": "identifier_value"}
+        """封闭类型一对一转换；路径与稳定身份分开，不接受任意脚本文本。"""
+        payload = {"boolean": "b_boolean_value", "integer": "integer_value", "number": "number_value", "identifier": "identifier_value", "asset_path": "asset_path_value"}
         # UE Python的b前缀属性通常去除b；用反射实测名称，不臆测失败后默认数值。
         payload["boolean"] = "boolean_value"
-        parameter_value = value("DivineBeastsDemoParameterValue", type=getattr(unreal.DivineBeastsDemoParameterType, record["type"].upper()), **{payload[record["type"]]: record["default_value"]})
+        default = unreal.SoftObjectPath(record['default_value']) if record['type'] == 'asset_path' else record['default_value']
+        parameter_value = value("DivineBeastsDemoParameterValue", type=getattr(unreal.DivineBeastsDemoParameterType, record["type"].upper()), **{payload[record["type"]]: default})
         return value("DivineBeastsDemoParameterDefinition", parameter_id=record["parameter_id"], unit=record["unit"],
                      default_value=parameter_value, minimum=record.get("minimum", 0), maximum=record.get("maximum", 0),
                      default_source=record["default_source"], writable=record["writable"], apply_when=record["apply_when"])
@@ -74,7 +106,7 @@ def build_catalog(manifest_path: str) -> dict:
         "data_version": value("GamePlatformDataVersion", schema_version=2, content_revision=1),
         "plugins": [value("DivineBeastsDemoPluginEntry", **{
             **{k: v for k, v in p.items() if k != "test_page_asset"},
-            **({"test_page_asset": unreal.SoftObjectPath(p["test_page_asset"] + "." + p["test_page_asset"].rsplit("/", 1)[-1])}
+            **({"test_page_asset": unreal.SoftObjectPath(p["test_page_asset"] + "." + p["test_page_asset"].rsplit("/", 1)[-1] + "_C")}
                if p.get("test_page_asset") else {})}) for p in document["plugins"]],
         "features": [], "scenarios": [], "review_cases": [], "legacy_map_routes": []}
     for feature in document["features"]:
@@ -84,6 +116,7 @@ def build_catalog(manifest_path: str) -> dict:
     for record in document["scenarios"]:
         item = {k: record[k] for k in ("scenario_id", "feature_id", "related_feature_ids", "title", "adapter_id", "run_mode", "targets", "required_plugins", "preconditions", "operations", "prepare_timeout_seconds", "stop_timeout_seconds", "review_case_ids")}
         item.update(template_id=record["template"], parameters=[parameter(p) for p in record["parameters"]],
+                    operation_labels={key: unreal.Text(label) for key, label in record.get('operation_labels', {}).items()},
                     map_asset=unreal.SoftObjectPath(record["map_asset"]), widget_asset=unreal.SoftObjectPath(record["widget_asset"]),
                     definition_assets=[unreal.SoftObjectPath(p) for p in record["definition_assets"]])
         fields["scenarios"].append(value("DivineBeastsDemoScenarioDefinition", **item))
@@ -97,6 +130,16 @@ def build_catalog(manifest_path: str) -> dict:
     asset = assets.load_asset(PACKAGE) if assets.does_asset_exist(PACKAGE) else None
     if asset is not None and not isinstance(asset, definition_class):
         raise RuntimeError("既有目录父类不匹配，需独立迁移，不覆盖。")
+    backup = None
+    if asset is not None:
+        pack = next(p for p in document['plugins'] if p['plugin_id'] == 'DBAUIPack_Core')
+        relative = Path(PACKAGE.removeprefix('/DBAUIPack_Core/')).with_suffix('.uasset')
+        original = (WORKSPACE / pack['descriptor_path']).parent / 'Content' / relative
+        if not original.is_file():
+            raise RuntimeError('现有原生目录文件缺失，不能先备份再更新。')
+        backup = WORKSPACE / 'Saved/Validation/PluginManualUI20261027/Backups' / datetime.now().strftime('Catalog-%Y%m%d-%H%M%S-%f') / relative
+        backup.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(original, backup)
     if asset is None:
         factory = unreal.DataAssetFactory()
         factory.set_editor_property("data_asset_class", definition_class)
@@ -104,18 +147,14 @@ def build_catalog(manifest_path: str) -> dict:
         asset = unreal.AssetToolsHelpers.get_asset_tools().create_asset(name, directory, definition_class, factory)
     if asset is None:
         raise RuntimeError("真实DataAsset创建失败。")
-    previous = {key: asset.get_editor_property(key) for key in fields}
-    try:
-        for key, item in fields.items():
-            asset.set_editor_property(key, item)
-        if asset.get_editor_property("source_fingerprint") != fingerprint or not assets.save_loaded_asset(asset, only_if_is_dirty=False):
-            raise RuntimeError("真实目录保存或指纹回读失败。")
-    except Exception:
-        for key, item in previous.items():
-            asset.set_editor_property(key, item)
-        raise
-    return {"package": PACKAGE, "source_fingerprint": fingerprint, "saved": True,
-            "independent_reload": "not_run", "runtime": "not_run", "human_review": "deferred"}
+    apply_catalog_fields(asset, fields, lambda: assets.save_loaded_asset(asset, only_if_is_dirty=False))
+    result = {"package": PACKAGE, "source_fingerprint": fingerprint, "saved": True, "backup": str(backup) if backup else None,
+              "editor_pid": os.getpid(), "saved_epoch": time.time(),
+              "independent_reload": "not_run", "runtime": "not_run", "human_review": "deferred"}
+    report = WORKSPACE / 'Saved/Validation/PluginManualUI20261027/T01.Catalog.Authored.json'
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    return result
 
 
 if __name__ == "__main__":

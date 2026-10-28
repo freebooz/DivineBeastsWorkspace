@@ -41,7 +41,25 @@ public:
     /** 项目组合根在本世界启用光雾联动；禁用/重配先恢复原场景，生命周期仍归本Subsystem。 */
     void ConfigureAtmosphere(const FGamePlatformWeatherAtmosphereProfile& Profile);
 
+    bool BeginDevelopmentAtmosphere(FGuid Owner,FGuid& OutScope);
+    bool ConfigureDevelopmentAtmosphere(const FGuid& Scope,const FGamePlatformWeatherAtmosphereProfile& Profile);
+    bool EndDevelopmentAtmosphere(const FGuid& Scope);
+    /** 仅默认天气表面/零风且无原生风源的开发World；不覆盖原有非默认投影。 */
+    bool BeginDevelopmentProjection(FGuid Owner,FGuid& OutScope);
+    /** 空天气已投影后精确归还；外部后继天气字段/风被保留，不回写旧默认。 */
+    bool EndDevelopmentProjection(const FGuid& Scope);
 private:
+    FGuid DevelopmentProjectionScope;
+    FGamePlatformWeatherState DevelopmentExpectedSurface;
+    FVector4 DevelopmentExpectedWindFrom=FVector4(0,0,0,0),DevelopmentExpectedWindTo=FVector4(0,0,0,0),DevelopmentExpectedWindTiming=FVector4(0,0,0,0);
+    int32 DevelopmentExpectedWindSeed=2026;
+    bool bDevelopmentSurfaceTakenOver=false,bDevelopmentWindTakenOver=false;
+    FGuid DevelopmentAtmosphereScope;
+    uint64 AtmosphereConfigurationGeneration=0;
+    bool bEndingDevelopmentAtmosphere=false;
+    FGamePlatformWeatherAtmosphereProfile ConfiguredAtmosphereProfile,DevelopmentAtmosphereBaseline;
+    void ConfigureAtmosphereOwned(const FGuid&,const FGamePlatformWeatherAtmosphereProfile&);
+
     friend class FGamePlatformWeatherWindRefreshReentryTest;
     friend class FGamePlatformWeatherWindClockTest;
     friend class FGamePlatformWeatherNativeWindTest;

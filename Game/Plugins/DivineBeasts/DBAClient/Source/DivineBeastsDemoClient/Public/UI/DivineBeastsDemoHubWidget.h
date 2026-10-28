@@ -7,6 +7,7 @@
 
 #include "DivineBeastsDemoHubWidget.generated.h"
 class UDivineBeastsDemoHubViewModel;
+struct FDivineBeastsDemoScenarioDefinition;
 class UDivineBeastsDemoParameterItem;
 
 /** 既有兼容开发界面与Detail/Controls/Report子页的父类；主Hub已派生HubScreen。
@@ -69,6 +70,14 @@ private:
     void RefreshPanelPresentation();
     bool HasCurrentPresentationModel() const;
     void SubmitPanelOperation(FName OperationId);
+    /** 从只读案例合同构建具名选择；控件树仍由Monolith制作。 */
+    void RefreshPanelOperationChoices(const FDivineBeastsDemoScenarioDefinition* Scenario, bool bCanExecute);
+    TArray<FName> PanelOperationIds;
+    FName PanelOperationsScenario;
+    FString PanelOperationsFingerprint;
+    bool bRefreshingPanelOperationChoices = false;
+    bool bPendingPanelOperationChoiceRefresh = false;
+    UFUNCTION() void PanelRunSelectedOperation();
     UFUNCTION() void PanelModelChanged(int32 Revision, int32 PageGeneration);
     UFUNCTION() void PanelLaunch();
     UFUNCTION() void PanelExecute();

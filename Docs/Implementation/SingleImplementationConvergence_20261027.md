@@ -25,3 +25,20 @@
 后端、战斗C++、VFX源工具分别分区修改；只有本任务主代理操作Monolith。当前ThirdParty/GlooPrint及其他任务未提交内容保持原状。共用正式工程，以避免UE资产写入工作副本；源码任务不得自行启动构建或编辑器。无提交/推送要求，不自动提交。
 
 任务进度与变更清单记录在Saved/Validation/SingleImplementationConvergence20261027/。新增、重命名、删除正式文件同步总体目录规划；对稳定资源身份的兼容说明保留于本文件。
+
+## 完成记录（2026-10-28）
+
+|审查项|最终整改|验证|
+|---|---|---|
+|F01 魔法双状态机|共用CombatGameplayAbility，旧类只适配数据与资格，保留序列化字段|三目标完整增量成功；31项真实GAS成功；独立源码复审关闭|
+|F02 竞争作者|当前表现由单一manifest及作者管理，旧VFX和旧键位写入入口退休；冰箭作者只允许独有辅助阶段|退休入口及合同23项通过；旧包负测被拒绝|
+|F03 旧验收路径|作者、原生验收、容器和GPU门禁读取同一当前合同|9阶段独立原生冷读通过；15系统原生诊断0错误0警告|
+|F04 新旧资源同Cook|迁移42包到无版本职责目录并创建明确标签，双客户端配置按同合同生成|最终Client实际Cook/Stage通过：674项必需资源齐全、禁止资源0；同次15系统编译记录齐全、Shader诊断0；Server实际剥离检查禁止条目0|
+|F05 两套Refresh规则|统一原子轮换、绝对截止与重放撤销，各仓储计入等待并复核取消|受影响Go/productiondeps/race/vet/生成检查通过；独立复审原失败用例转绿|
+|F06 两套竞技人数|Shared schema为真源，由既有生成器派生Go/C++，匹配及分服共同读取|生成一致性、容量敏感用例及受影响后端检查通过|
+
+- 目录与逐包名称见[当前法术资源收敛记录](VFX/SpellPresentationConvergence_20261027.md)。稳定反射名、Definition路径与逻辑ID保留兼容，不存在两套相同的活动施法执行器。
+- 固定UE5.8参数保持；最终Editor/Client/Server完整构建分别为`14c8ff49`、`5f65d5d5`、`97b7334c`。两端构建输入SHA一致，Stage内exe与对应当前构建exe哈希一致。
+- 最终客户端Cook为`092b4eeb-f3b5-4f44-8cc1-12db28524469`，服务器Cook为`34451cb9-2a8d-47e8-b754-c44e6180283c`。首个客户端包资源及Shader错误检查均正常，但缺5个CPU系统的同Cook重编日志，原失败保留；最终仅本次显式启用引擎已有`-ForceDPCVars=fx.ForceCompileOnLoad=1`，取得全部15条真实编译记录。没有清DDC、削减必需系统或关闭门禁。
+- Cook/Stage、UAT日志、临时工作区均在当前工程Saved；本次Cook本地DDC复用工程Game/DerivedDataCache。已有真实RHI颜色发布门禁也已通过。PowerShell宿主一次ucrtbase异常与原始失败记录均保留，未混作成功证据。
+- 最终分层汇总为`Saved/Validation/SingleImplementationConvergence20261027/DeliverySummary.json`。本轮没有启动新游戏客户端、部署后端或重启实际世界服务器；Village/MainArena真实准入、声音与人工视觉仍是独立运行验收，不能从本次编译、Native或Cook推断通过。真实PostgreSQL/Redis网络集成未执行，后端证据限实际运行的测试及复审范围。

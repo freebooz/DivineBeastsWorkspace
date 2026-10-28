@@ -119,6 +119,13 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Demo") bool OpenPluginPage(FName PluginId);
     /** 旅行后仍沿用请求页的固定上下文；None表示中心，不拥有世界运行或页面租约。 */
     FName GetPluginPageContext() const { return PluginPageContext; }
+    /** 共同Hub启动资格加当前已登记World边界；中心与World防御检查复用此判定。 */
+    bool CanOpenPluginPageInWorld(const UWorld& World) const;
+    /** 只在真实UIManager打开成功后提交页面上下文，不把Data受理当页面完成。 */
+    void CommitPluginPageContext(FName PluginId);
+    /** 页面导航终态独立于目录/案例结果，经OnCatalogChanged投影到仍可操作的当前页。 */
+    void PublishPageNavigationResult(const FGamePlatformResult& Result);
+    FGamePlatformResult GetPageNavigationResult() const { return PageNavigationResult; }
     /** 事件所有者为本游戏实例；调用者持委托句柄并在失活/退出解绑。 */
     FDivineBeastsDemoCatalogChanged OnCatalogChanged;
     /** 游戏线程开发组合根注册真实工厂；重复/关闭返回无效完整句柄。 */
@@ -153,6 +160,7 @@ private:
     /** 清理等待中的页面意图；None在bPendingPluginPage为true时表示中心。 */
     FName PendingPluginPageId;
     FName PluginPageContext;
+    FGamePlatformResult PageNavigationResult;
     bool bPendingPluginPage = false;
     bool bDirectPluginRouteConsumed = false;
     /** 私有快照、Data完整租约和请求代次；无进程全局缓存。 */

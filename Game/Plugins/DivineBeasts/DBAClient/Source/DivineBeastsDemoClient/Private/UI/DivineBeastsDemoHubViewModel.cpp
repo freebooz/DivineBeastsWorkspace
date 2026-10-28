@@ -185,6 +185,7 @@ void UDivineBeastsDemoHubViewModel::RebuildSnapshot()
     Snapshot.Run = BoundWorld.IsValid() ? BoundWorld->GetRunSnapshot() : FDivineBeastsDemoRunSnapshot();
     if (!OwnsFeature(Snapshot.Run.FeatureId)) Snapshot.Run = {};
     Snapshot.CatalogResult = Catalog->GetCatalogResult(); Snapshot.SourceFingerprint = Catalog->GetSourceFingerprint();
+    Snapshot.PageNavigationResult = Catalog->GetPageNavigationResult();
     const auto AllPlugins = Catalog->GetPlugins(); Snapshot.TotalPlugins = AllPlugins.Num();
     const FString Query = Filter.SearchText.TrimStartAndEnd();
     for (const auto& Plugin : AllPlugins)
