@@ -15,6 +15,7 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	bool InspectManualShortcuts(FString& Snapshot)const;
 	static void ExecuteLayoutOnGraph(UEdGraph* Graph);
 	static void ExecuteLayoutAndGroupOnGraph(UEdGraph* Graph);
 	static void ExecuteLayoutAndRouteOnGraph(UEdGraph* Graph);

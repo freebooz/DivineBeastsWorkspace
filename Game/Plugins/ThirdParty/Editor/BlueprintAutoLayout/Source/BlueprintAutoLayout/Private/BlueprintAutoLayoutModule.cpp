@@ -193,6 +193,13 @@ public:
 
 // Build the layout config from the user's editor preferences (spacing, color, straighten
 // tolerance). Returns the chosen wire-handling mode via OutMode so callers pick the entry point.
+
+bool FBlueprintAutoLayoutModule::InspectManualShortcuts(FString& Snapshot)const {
+ if(!InputProcessor.IsValid()||!FBlueprintAutoLayoutCommands::IsRegistered()){Snapshot=TEXT("实际键盘处理器或命令尚未注册。");return false;}
+ const auto& C=FBlueprintAutoLayoutCommands::Get();if(!C.AutoLayoutGraph.IsValid()||!C.LayoutSelected.IsValid())return false;
+ const auto A=C.AutoLayoutGraph->GetActiveChord(EMultipleKeyBindingIndex::Primary),B=C.LayoutSelected->GetActiveChord(EMultipleKeyBindingIndex::Primary);
+ Snapshot=FString::Printf(TEXT("注册链 BlueprintAutoLayout TCommands -> 模块InputProcessor::HandleKeyDownEvent -> 焦点Blueprint SGraphEditor -> 原操作；全图=%s 选中=%s；本检查未注入键盘事件。"),*A->GetInputText().ToString(),*B->GetInputText().ToString());return true;
+}
 static FBlueprintLayoutConfig GetLayoutConfig(EBPALWireHandling& OutMode)
 {
 	FBlueprintLayoutConfig Config;

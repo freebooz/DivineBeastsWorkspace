@@ -1,6 +1,8 @@
 #include "Scenarios/DivineBeastsDemoGameplayScenarios.h"
 #include "Demo/DivineBeastsDemoCatalogSubsystem.h"
+#include "GamePlatformAbilityTags.h"
 namespace DivineBeasts::Demo {
+FGameplayTag GameplayManualInputTag(){return GamePlatformAbilityTags::InputTestServer.GetTag();}
 FDivineBeastsDemoScenarioDefinition GameplayManualDefinition(FName F){ FDivineBeastsDemoScenarioDefinition D;D.FeatureId=F;D.AdapterId=FName(*(TEXT("PlatformGameplay.")+F.ToString()));D.ScenarioId=FName(*(F.ToString()+TEXT(".Manual")));
 if(F==TEXT("GamePlatformGameplay.experience")){D.Operations={TEXT("PrepareGameplayHost"),TEXT("BeginExperience"),TEXT("SubscribeExperience"),TEXT("Snapshot"),TEXT("DrainExperience"),TEXT("UnsubscribeExperience"),TEXT("Stop")};
 return D;}
@@ -24,7 +26,7 @@ if(F==TEXT("GamePlatformAbilitySystem.avatar_gate")){D.Operations={TEXT("CreateF
 return D;}
 if(F==TEXT("GamePlatformAbilitySystem.tag_input")){D.Operations={TEXT("CreateFixture"),TEXT("BindAvatar"),TEXT("SetActive"),TEXT("GrantInput"),TEXT("Press"),TEXT("Release"),TEXT("ProcessInput"),TEXT("ClearInput"),TEXT("RevokeInput"),TEXT("Snapshot"),TEXT("Reset"),TEXT("Stop")};
 {FDivineBeastsDemoParameterDefinition P;P.ParameterId=TEXT("Active");P.DefaultValue.Type=EDivineBeastsDemoParameterType::Boolean;P.DefaultValue.bBooleanValue=true;P.Minimum=0;P.Maximum=0;D.Parameters.Add(P);}
-{FDivineBeastsDemoParameterDefinition P;P.ParameterId=TEXT("InputTag");P.DefaultValue.Type=EDivineBeastsDemoParameterType::Identifier;P.DefaultValue.IdentifierValue=TEXT("Platform.Ability.Input.DemoManual");P.Minimum=0;P.Maximum=0;D.Parameters.Add(P);}
+{FDivineBeastsDemoParameterDefinition P;P.ParameterId=TEXT("InputTag");P.DefaultValue.Type=EDivineBeastsDemoParameterType::Identifier;P.DefaultValue.IdentifierValue=GameplayManualInputTag().GetTagName();P.Minimum=0;P.Maximum=0;D.Parameters.Add(P);}
 return D;}
 if(F==TEXT("GamePlatformAbilitySystem.cast_facts")){D.Operations={TEXT("CreateFixture"),TEXT("PublishCast"),TEXT("DuplicateCast"),TEXT("CancelCast"),TEXT("Snapshot"),TEXT("Reset"),TEXT("Stop")};
 {FDivineBeastsDemoParameterDefinition P;P.ParameterId=TEXT("AbilityId");P.DefaultValue.Type=EDivineBeastsDemoParameterType::Identifier;P.DefaultValue.IdentifierValue=TEXT("Demo.Manual.Cast");P.Minimum=0;P.Maximum=0;D.Parameters.Add(P);}

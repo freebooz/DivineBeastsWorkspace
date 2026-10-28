@@ -1,3 +1,5 @@
+// T06开发人工页：项目私有Editor适配或平台中立租约；仅游戏线程，事件驱动。
+// 只拥有本Run对象/完整租约，停止失败保留身份供重试；不操作用户图、账号或生产服务器。
 #include "Scenarios/DivineBeastsDemoWorldState.h"
 #include "Scenarios/DivineBeastsDemoManualWorldHostSubsystem.h"
 #include "Interfaces/IGamePlatformDataService.h"
@@ -16,7 +18,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/BoxComponent.h"
 namespace DivineBeasts::Demo {
-bool FWorldManualState::Alive()const{return bActive&&!bCleaning&&World.IsValid()&&!World->bIsTearingDown&&Player.IsValid()&&Player->GetWorld()==World.Get()&&Host.IsValid()&&Host->Owns(Context.Token);}
+bool FWorldManualState::Alive()const{return bActive&&!bCleaning&&World.IsValid()&&!World->bIsTearingDown&&Player.IsValid()&&Player->GetWorld()==World.Get()&&Host.IsValid()&&Host->Owns(Context.Token)&&(!UDivineBeastsDemoManualHostSubsystem::IsEditorFeature(Feature)||Host->OwnsEditorFixture(Context.Token));}
 UGameInstance* FWorldManualState::Instance()const{return World.IsValid()?World->GetGameInstance():nullptr;}
 IGamePlatformDataService* FWorldManualState::Data()const{return Instance()?IGamePlatformDataService::Get(*Instance()):nullptr;}
 void FWorldManualState::Observe(FString Text)const {if(Alive()&&Context.PublishObservation)Context.PublishObservation(Context.Token,Text.Left(4096));}
@@ -37,14 +39,17 @@ FGamePlatformResult FWorldManualState::Prepare(){
  auto* Widget=Cast<UUserWidget>(Context.SampleWidget.Get());Player=Widget?Widget->GetOwningLocalPlayer():nullptr;
  if(!World.IsValid()||World->GetNetMode()!=NM_Standalone||!World->IsGameWorld()||!World->HasBegunPlay()||!Player.IsValid()||Player->GetWorld()!=World.Get()||!Data())return WorldError(TEXT("Demo.World.Source"),TEXT("需要同GI/LP的Standalone GameWorld、真实SampleWidget与Data；不能初始化替代子系统。"));
  Host=Instance()->GetSubsystem<UDivineBeastsDemoManualHostSubsystem>();if(!Host.IsValid())return WorldError(TEXT("Demo.World.Host"),TEXT("排他ManualHost不可用。"));
- auto R=Host->Acquire(Context.Token,*World);if(!R.IsSuccess())return R;bHost=true;
- if((Feature.ToString().StartsWith(TEXT("GamePlatformWorld."))||Feature.ToString().StartsWith(TEXT("GamePlatformPCG."))))
+ 
+ const bool bEditorFeature=UDivineBeastsDemoManualHostSubsystem::IsEditorFeature(Feature);
+ auto R=bEditorFeature?Host->AcquireEditorFixture(Context.Token,*World,Feature):Host->Acquire(Context.Token,*World);if(!R.IsSuccess())return R;bHost=true;
+
+ if(!bEditorFeature&&(Feature.ToString().StartsWith(TEXT("GamePlatformWorld."))||Feature.ToString().StartsWith(TEXT("GamePlatformPCG."))))
   if(auto* WorldHost=World->GetSubsystem<UDivineBeastsDemoManualWorldHostSubsystem>()){
    R=WorldHost->PrepareRun(Context.Token,Feature);if(!R.IsSuccess())return R;
   }
  Observer.Reset(NewObject<UDivineBeastsDemoWorldObserver>(Instance()));
  bActive=true;const TWeakPtr<FWorldManualState> Weak=AsShared();const auto E=Epoch;
- if(auto* Service=IGamePlatformWorldService::Get(*World)){
+ if(auto* Service=bEditorFeature?nullptr:IGamePlatformWorldService::Get(*World)){
   FGamePlatformResult Accepted;
   ReadinessSubscription=Service->SubscribeReadiness(World.Get(),[Weak,E](const FGamePlatformWorldReadinessSnapshot& V){
    if(auto P=Weak.Pin())if(P->Current(E))P->Observe(FString::Printf(TEXT("真实World状态通知 State=%d Definition=%d RegionDefinitions=%d Providers=%d RegionsReady=%d Code=%s"),int32(V.Context.ReadinessState),V.bDefinitionLoaded,V.bRegionDefinitionsLoaded,V.RegisteredRegionProviders,V.bRequiredRegionsRegistered,*V.Context.Result.Code.ToString()));
@@ -68,7 +73,14 @@ FGamePlatformResult FWorldManualState::ReleaseAsset(){
  if(DefinitionLease.IsValid()){auto* S=Data();auto R=S?S->ReleaseDefinition(DefinitionLease):WorldError(TEXT("Demo.World.DefinitionDataLost"),TEXT("原Data失效，保留定义完整租约。"));if(!R.IsSuccess())return R;DefinitionLease={};}
  if(!AssetLease.IsValid())return FGamePlatformResult::Success();auto* S=Data();auto R=S?S->ReleaseResources(AssetLease):WorldError(TEXT("Demo.World.DataLost"),TEXT("Data服务失效，保留完整租约供Stop重试。"));if(R.IsSuccess())AssetLease={};return R;
 }
+
 void FWorldManualState::Load(const FSoftObjectPath& P,TFunction<FGamePlatformResult(UObject*)> Apply,FDivineBeastsDemoOperationCompletion Done){
+#if WITH_EDITOR
+ if(UDivineBeastsDemoManualHostSubsystem::IsEditorFeature(Feature)){
+  auto Original=MoveTemp(Apply);const auto Weak=TWeakPtr<FWorldManualState>(AsShared());const auto E=Epoch;const auto Token=Context.Token;const auto Source=World;
+  Apply=[Original=MoveTemp(Original),Weak,E,Token,Source](UObject* O)mutable{auto Self=Weak.Pin();if(!Self||!Self->Current(E)||!(Self->Context.Token==Token)||Self->World!=Source)return FGamePlatformResult::Cancelled(TEXT("原Editor资源准备来源已失效。"));TGuardValue<bool> Calling(Self->bEditorOperationActive,true);auto R=Original(O);return Self->Current(E)?R:FGamePlatformResult::Cancelled(TEXT("Editor原生应用通知期间已停止。"));};
+ }
+#endif
  if(AssetLease.IsValid()&&!LoadingCompletion&&AssetLease.ResourcePaths.Num()==1&&AssetLease.ResourcePaths[0]==P&&Data()&&Data()->GetLeaseState(AssetLease)==EGamePlatformDataRequestState::Succeeded){
   TStrongObjectPtr<UObject> Asset(P.ResolveObject());
   if(auto* Definition=Cast<UGamePlatformDefinitionBase>(Asset.Get())){
@@ -126,6 +138,7 @@ FGamePlatformResult FWorldManualState::ResetObjects(){
 }
 FGamePlatformResult FWorldManualState::Cleanup(){
 #if WITH_EDITOR
+ if(bEditorOperationActive)return WorldError(TEXT("Demo.Editor.OperationInFlight"),TEXT("Editor原生同步操作尚未返回；保留对象/资源/编辑器租约供Stop重试。"));
  if(bAuthoringGraph)return WorldError(TEXT("Demo.PCG.AuthoringInFlight"),TEXT("原生作者/保存回调尚未返回；完整Data租约和宿主保留到Stop重试；已保存图不会删除。"));
  if(bSpawningLink)return WorldError(TEXT("Demo.Nav.SpawnInFlight"),TEXT("原生SmartLink出生栈尚未核对候选，不能提前释放宿主；候选收敛后Stop重试。"));
 #endif

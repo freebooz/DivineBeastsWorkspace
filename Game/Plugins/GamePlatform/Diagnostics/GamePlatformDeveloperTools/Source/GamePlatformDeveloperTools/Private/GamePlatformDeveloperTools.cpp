@@ -2,6 +2,8 @@
  * 不拥有项目玩法或服务器状态；资产修改只由调用者显式指定，模块启动不修改内容，关闭注销入口。
  */
 #include "Modules/ModuleManager.h"
+#include "Manual/GamePlatformEditorResources.h"
+#include "Engine/World.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/IAssetRegistry.h"
@@ -33,12 +35,51 @@
 
 #define LOCTEXT_NAMESPACE "GamePlatformDeveloperTools"
 
-class FGamePlatformDeveloperToolsModule final : public IModuleInterface
+class FGamePlatformDeveloperToolsModule final : public IGamePlatformEditorResources
 {
+
 public:
+    bool Acquire(UObject& Owner,UWorld& World,FGuid RunId,FGuid WorldId,uint64 Generation,FGamePlatformEditorResourceLease& Out,FString& Error)override {
+        check(IsInGameThread());Error.Reset();Out={};
+        if(!GEditor||!IsValid(&Owner)||!IsValid(&World)||World.bIsTearingDown||!RunId.IsValid()||!WorldId.IsValid()||Generation==0){Error=TEXT("Editor资源租约要求有效编辑器、来源和完整身份。");return false;}
+        if(EditorLease.IsValid()||PendingEditorCleanup||bRetryingEditorCleanup){Error=TEXT("Editor全局资源已有拥有者或正在精确清理；不会抢占失效世界或后继工具。");return false;}
+        EditorLease.LeaseId=FGuid::NewGuid();EditorLease.RunId=RunId;EditorLease.WorldId=WorldId;EditorLease.Generation=Generation;EditorLease.Editor=GEditor;EditorLease.Owner=&Owner;EditorLease.World=&World;Out=EditorLease;return true;
+    }
+    bool Owns(const FGamePlatformEditorResourceLease& Lease)const override {return Lease.IsValid()&&EditorLease==Lease&&Lease.Editor.Get()==GEditor&&Lease.Owner.IsValid()&&Lease.World.IsValid();}
+    bool Release(const FGamePlatformEditorResourceLease& Lease,FString& Error)override {
+        check(IsInGameThread());Error.Reset();
+        if(!Lease.IsValid()||!(EditorLease==Lease)){Error=TEXT("Editor资源释放身份不匹配，保留原租约。");return false;}
+        if(PendingEditorCleanup&&!bRetryingEditorCleanup){Error=TEXT("失败清理已由Editor作用域拥有，必须精确RetryCleanup确认后才能释放。");return false;}
+        if(bRetryingEditorCleanup){bEditorCleanupReleaseConfirmed=true;return true;}
+        EditorLease={};bEditorCleanupReleaseConfirmed=false;return true;
+    }
+
+    bool RetainCleanup(const FGamePlatformEditorResourceLease& Lease,FGamePlatformEditorCleanupRetry Retry,const FString& Error)override {
+        check(IsInGameThread());if(!Lease.IsValid()||!(Lease==EditorLease)||!Retry||bRetryingEditorCleanup)return false;
+        if(PendingEditorCleanup)return true; // 同一完整租约已保留；绝不替换原对象状态。
+        PendingEditorCleanup=MoveTemp(Retry);PendingEditorCleanupError=Error;EditorCleanupChanged.Broadcast(GetCleanupSnapshot());return true;
+    }
+    bool RetryCleanup(const FGamePlatformEditorResourceLease& Lease,EGamePlatformEditorCleanupPolicy Policy,FString& Error)override {
+        check(IsInGameThread());Error.Reset();
+        if(bRetryingEditorCleanup||!PendingEditorCleanup||!Lease.IsValid()||!(Lease==EditorLease)){Error=TEXT("没有匹配完整租约的待清理状态，或重试同步重入。");return false;}
+        TGuardValue<bool> Retrying(bRetryingEditorCleanup,true);
+        // 回调可调用精确Release；本地移动强引用保证它不会在自己执行栈中被销毁。
+        auto Work=MoveTemp(PendingEditorCleanup);const bool Done=Work(Policy,Error);
+        if(!Done){PendingEditorCleanup=MoveTemp(Work);PendingEditorCleanupError=Error;bRetryingEditorCleanup=false;EditorCleanupChanged.Broadcast(GetCleanupSnapshot());return false;}
+        if(!bEditorCleanupReleaseConfirmed){PendingEditorCleanup=MoveTemp(Work);Error=TEXT("回调未确认原租约释放，继续保留状态。");PendingEditorCleanupError=Error;bRetryingEditorCleanup=false;EditorCleanupChanged.Broadcast(GetCleanupSnapshot());return false;}
+        // 原回调完整成功才真正清除租约；同步回调栈中不会出现可被后继Acquire抢占的空隙。
+        EditorLease={};bEditorCleanupReleaseConfirmed=false;PendingEditorCleanupError.Reset();bRetryingEditorCleanup=false;EditorCleanupChanged.Broadcast(GetCleanupSnapshot());return true;
+    }
+    FGamePlatformEditorCleanupSnapshot GetCleanupSnapshot()const override {check(IsInGameThread());return {EditorLease,bool(PendingEditorCleanup)||bRetryingEditorCleanup,PendingEditorCleanupError};}
+    FDelegateHandle AddCleanupChanged(FGamePlatformEditorCleanupChanged::FDelegate Handler)override{check(IsInGameThread());return EditorCleanupChanged.Add(MoveTemp(Handler));}
+    void RemoveCleanupChanged(FDelegateHandle Handle)override{check(IsInGameThread());EditorCleanupChanged.Remove(Handle);}
     virtual void StartupModule() override
+
     {
+
         FGamePlatformValidationService::RegisterBuiltInRules();
+        EditorCleanupInspect=MakeUnique<FAutoConsoleCommand>(TEXT("GP.EditorResources.Pending"),TEXT("只读列出待清理完整身份与冲突；不会自动重试。"),FConsoleCommandDelegate::CreateLambda([this]{const auto V=GetCleanupSnapshot();UE_LOG(LogTemp,Display,TEXT("EditorCleanup pending=%d lease=%s run=%s world=%s generation=%llu error=%s"),V.bPending,*V.Lease.LeaseId.ToString(),*V.Lease.RunId.ToString(),*V.Lease.WorldId.ToString(),V.Lease.Generation,*V.LastError);}));
+        EditorCleanupRetryCommand=MakeUnique<FAutoConsoleCommand>(TEXT("GP.EditorResources.Retry"),TEXT("显式精确重试：LeaseId RunId WorldId Generation retry|preserve_external；只操作已保留原状态。"),FConsoleCommandWithArgsDelegate::CreateRaw(this,&FGamePlatformDeveloperToolsModule::RetryEditorCleanupCommand));
         // 引擎原生初始化是动画关键帧制作的前置条件；只注册入口，不扫描或自动改写资产。
         AnimationDataModelCommand = MakeUnique<FAutoConsoleCommand>(
             TEXT("GP.Animation.InitializeDataModel"),
@@ -56,6 +97,8 @@ public:
 
     virtual void ShutdownModule() override
     {
+        EditorCleanupInspect.Reset();EditorCleanupRetryCommand.Reset();
+        if(PendingEditorCleanup)UE_LOG(LogTemp,Error,TEXT("Editor模块关闭时仍有未解决清理；没有宣称恢复或抢占外部状态：%s"),*PendingEditorCleanupError);
         AnimationDataModelCommand.Reset();
         if (!IsRunningCommandlet())
         {
@@ -67,6 +110,18 @@ public:
     }
 
 private:
+
+    FGamePlatformEditorResourceLease EditorLease;
+    FGamePlatformEditorCleanupChanged EditorCleanupChanged;
+    FGamePlatformEditorCleanupRetry PendingEditorCleanup;FString PendingEditorCleanupError;bool bRetryingEditorCleanup=false,bEditorCleanupReleaseConfirmed=false;
+    TUniquePtr<FAutoConsoleCommand> EditorCleanupInspect,EditorCleanupRetryCommand;
+    /** 不接受脚本文本/路径；完整原租约与封闭处置枚举都必须匹配。 */
+    void RetryEditorCleanupCommand(const TArray<FString>& Args){
+        if(Args.Num()!=5){UE_LOG(LogTemp,Error,TEXT("需要完整LeaseId RunId WorldId Generation和retry|preserve_external。"));return;}
+        auto Lease=GetCleanupSnapshot().Lease;FGuid L,Run,W;uint64 Generation=0;
+        if(!FGuid::Parse(Args[0],L)||!FGuid::Parse(Args[1],Run)||!FGuid::Parse(Args[2],W)||!LexTryParseString(Generation,*Args[3])||L!=Lease.LeaseId||Run!=Lease.RunId||W!=Lease.WorldId||Generation!=Lease.Generation||(Args[4]!=TEXT("retry")&&Args[4]!=TEXT("preserve_external"))){UE_LOG(LogTemp,Error,TEXT("完整清理身份或封闭处置不匹配。"));return;}
+        FString Error;const bool Done=RetryCleanup(Lease,Args[4]==TEXT("retry")?EGamePlatformEditorCleanupPolicy::RetryUnchanged:EGamePlatformEditorCleanupPolicy::PreserveExternalChanges,Error);UE_LOG(LogTemp,Display,TEXT("EditorCleanup success=%d error=%s"),Done,*Error);
+    }
     /** 仅游戏线程Editor制作调用；失败明确报错，保存及后续关键帧仍归调用者，不含项目资源身份。 */
     static void InitializeAnimationDataModel(const TArray<FString>& Arguments)
     {

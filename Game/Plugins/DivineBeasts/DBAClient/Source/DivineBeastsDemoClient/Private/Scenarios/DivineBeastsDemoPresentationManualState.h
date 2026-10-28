@@ -95,9 +95,11 @@ struct FPresentationManualState : TSharedFromThis<FPresentationManualState>
     FGamePlatformWorldUIRequest WorldUIRequest;
     bool bOwnView=false;
 #if WITH_EDITOR
-    TStrongObjectPtr<UWorld> EditorWindWorld;
+    TWeakObjectPtr<UWorld> EditorWindWorld;
+    FGamePlatformSurfaceWindTransition ExpectedEditorWind;
     FGamePlatformSurfaceWindTransition OriginalEditorWind;
     bool bEditorWindCaptured=false;
+    bool bEditorWindOperation=false;
 #endif
     bool Alive()const;
     bool Current(uint64 E)const{return Alive()&&Epoch==E;}

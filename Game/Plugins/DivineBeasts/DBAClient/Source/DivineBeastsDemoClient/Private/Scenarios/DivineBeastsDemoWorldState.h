@@ -82,6 +82,7 @@ struct FWorldManualState:TSharedFromThis<FWorldManualState> {
  TArray<TWeakObjectPtr<AGamePlatformNavigationSmartLinkProxy>> RetiringLinks;
  bool bSpawningLink=false;
  bool bAuthoringGraph=false;
+ bool bEditorOperationActive=false;
  FString SavedRealizedGraph; // 持久产物不是Run临时资源；Stop不删除。
  FGamePlatformResult CreateOwnedSmartLink(double Distance,bool bEnabled,FName TraversalType);
  TWeakObjectPtr<UGamePlatformNavigationAgentProfile> NavProfile;

@@ -3,6 +3,7 @@
 #include "Misc/AutomationTest.h"
 #include "Scenarios/DivineBeastsDemoGameplayScenarios.h"
 #include "Engine/World.h"
+#include "GamePlatformAbilityTags.h"
 #include "UObject/StrongObjectPtr.h"
 #include <limits>
 using namespace DivineBeasts::Demo;
@@ -33,5 +34,17 @@ bool FDBAGameplaySourceTest::RunTest(const FString&){
  int32 N=0;X->Prepare(C,[&](const auto&T,const auto&R){++N;TestTrue(TEXT("full token returned"),T==C.Token);TestFalse(TEXT("foreign source refused"),R.IsSuccess());});
  X->Stop([&](const auto&,const auto&R){++N;TestTrue(TEXT("no foreign resource to clean"),R.IsSuccess());});
  X->Execute(TEXT("Damage"),{},[&](const auto&,const auto&R){++N;TestFalse(TEXT("stopped source cannot revive"),R.IsSuccess());});TestEqual(TEXT("one completion per command"),N,3);return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDBAGameplayRuntimeInputTagTest,"DivineBeasts.PluginDemos.Gameplay.NativeFix1.RuntimeInputTag",EAutomationTestFlags::EditorContext|EAutomationTestFlags::ClientContext|EAutomationTestFlags::EngineFilter)
+bool FDBAGameplayRuntimeInputTagTest::RunTest(const FString&){
+ const FGameplayTag RuntimeTag=GamePlatformAbilityTags::InputTestServer.GetTag();
+ TestTrue(TEXT("approved Runtime native input tag is loaded"),RuntimeTag.IsValid());
+ TestEqual(TEXT("existing stable Runtime identity"),RuntimeTag.GetTagName(),FName(TEXT("Platform.Ability.Input.TestServer")));
+ const auto D=GameplayManualDefinition(TEXT("GamePlatformAbilitySystem.tag_input"));
+ const auto* P=D.Parameters.FindByPredicate([](const auto& V){return V.ParameterId==TEXT("InputTag");});
+ if(!TestNotNull(TEXT("typed InputTag parameter exists"),P))return false;
+ TestEqual(TEXT("typed author default uses the same Runtime registration"),P->DefaultValue.IdentifierValue,RuntimeTag.GetTagName());
+ TestFalse(TEXT("ClientOnly module did not register its old native tag"),FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DemoManual"),false).IsValid());
+ return true;
 }
 #endif

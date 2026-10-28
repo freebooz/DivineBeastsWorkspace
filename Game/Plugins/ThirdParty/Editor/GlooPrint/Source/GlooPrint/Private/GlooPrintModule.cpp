@@ -4,6 +4,9 @@
 #include "GlooPrintEditor.h"
 #include "GlooPrintWireDrawing.h"
 #include "GlooPrintSettings.h"
+#include "GlooPrintManual.h"
+#include "GlooPrintGraph.h"
+#include "GlooPrintManualPIE.h"
 
 #include "EdGraph/EdGraph.h"
 #include "Editor.h"
@@ -20,7 +23,9 @@ DEFINE_LOG_CATEGORY_STATIC(LogGlooPrint, Log, All);
 
 class FGlooPrintModule final : public IModuleInterface
 {
+
 public:
+    GlooPrint::FEditor* GetManualEditor()const{return Editor.Get();}
     virtual void StartupModule() override
     {
         bStopped = false;
@@ -138,4 +143,14 @@ private:
     bool bStopped = false;
 };
 
+
+namespace GlooPrint {bool IsOwnedManualPIEGraph(const UEdGraph* Graph){auto* M=FModuleManager::GetModulePtr<FGlooPrintModule>(TEXT("GlooPrint"));auto* E=M?M->GetManualEditor():nullptr;return E&&E->OwnsManualPIEGraph(Graph);}}
+namespace GlooPrintManual {
+bool QualifyOwnedPIEGraph(UObject& Root,UEdGraph& Graph,UWorld& World,FGuid RunId,FGuid WorldId,uint64 Generation,TFunction<bool()> Guard,FOwnedGraph& Out,FString& Error){auto* M=FModuleManager::GetModulePtr<FGlooPrintModule>(TEXT("GlooPrint"));auto* E=M?M->GetManualEditor():nullptr;if(!E){Error=TEXT("供应商真实Editor尚未注册。");return false;}return E->QualifyManualPIEGraph(Root,Graph,World,RunId,WorldId,Generation,MoveTemp(Guard),Out,Error);}
+bool ReleaseOwnedPIEGraph(const FOwnedGraph& Lease,FString& Error){auto* M=FModuleManager::GetModulePtr<FGlooPrintModule>(TEXT("GlooPrint"));auto* E=M?M->GetManualEditor():nullptr;if(!E){Error=TEXT("原供应商Editor已失效，保留图资格。");return false;}return E->ReleaseManualPIEGraph(Lease,Error);}
+bool IsGraphEligible(UEdGraph& Graph,FString& Error){return GlooPrint::CanFormatGraph(&Graph,Error);}
+bool Submit(UEdGraph& Graph,TFunction<bool()> Guard,FCompletion Done,FRequest& Out,FString& Error){auto* M=FModuleManager::GetModulePtr<FGlooPrintModule>(TEXT("GlooPrint"));auto* E=M?M->GetManualEditor():nullptr;if(!E){Error=TEXT("GlooPrint真实Editor/Slate尚未注册。");return false;}return E->SubmitManual(Graph,MoveTemp(Guard),MoveTemp(Done),Out,Error);}
+bool Cancel(const FRequest& R,FString& Error){auto* M=FModuleManager::GetModulePtr<FGlooPrintModule>(TEXT("GlooPrint"));auto* E=M?M->GetManualEditor():nullptr;if(!E){Error=TEXT("原GlooPrint模块已失效，保留请求身份。");return false;}return E->CancelManual(R,Error);}
+bool InspectShortcuts(FString& Snapshot){auto* M=FModuleManager::GetModulePtr<FGlooPrintModule>(TEXT("GlooPrint"));auto* E=M?M->GetManualEditor():nullptr;return E&&E->InspectManualShortcuts(Snapshot);}
+}
 IMPLEMENT_MODULE(FGlooPrintModule, GlooPrint)

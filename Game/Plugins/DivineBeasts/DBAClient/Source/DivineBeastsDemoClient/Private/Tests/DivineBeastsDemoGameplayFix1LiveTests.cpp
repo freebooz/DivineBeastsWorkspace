@@ -16,11 +16,14 @@
 #include "Misc/Parse.h"
 #include "HAL/PlatformTime.h"
 #include "Interfaces/IGamePlatformDataService.h"
+#include "GamePlatformAbilityTags.h"
+#include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
 using namespace DivineBeasts::Demo;
 namespace {
 struct FFix1Live:TSharedFromThis<FFix1Live>{
  FAutomationTestBase* T=nullptr;TUniquePtr<IDivineBeastsDemoScenarioAdapter> Adapter;TSharedPtr<FGameplayManualState> State;FDivineBeastsDemoScenarioContext C;TStrongObjectPtr<UDivineBeastsDemoPresentationTestScreen> Widget;
- TArray<FDivineBeastsDemoParameterValue> Values;FGamePlatformResult Last;bool Ready=true,ArmStop=false,DidStop=false;int32 Step=0,Variant=0;double Deadline=0;FName Operation;int32 TypedAction=0,TypedLoadCallbacks=0,TypedCleanupCallbacks=0;bool TypedReentered=false;FGamePlatformResult TypedCleanupResult;FGamePlatformDataLease TypedOriginalLease;TFunction<bool(FFix1Live&)> Drive;
+ TArray<FDivineBeastsDemoParameterValue> Values;FGamePlatformResult Last;bool Ready=true,ArmStop=false,DidStop=false;int32 Step=0,Variant=0;double Deadline=0;FName Operation;float InputEnergyAtCompletion=-1.f;int32 TypedAction=0,TypedLoadCallbacks=0,TypedCleanupCallbacks=0;bool TypedReentered=false;FGamePlatformResult TypedCleanupResult;FGamePlatformDataLease TypedOriginalLease;TFunction<bool(FFix1Live&)> Drive;
  bool Init(FAutomationTestBase& Test,FName F){T=&Test;UWorld* W=nullptr;if(GEngine)for(auto& V:GEngine->GetWorldContexts())if(auto* P=V.World())if(P->WorldType==EWorldType::Game&&P->GetNetMode()==NM_Standalone&&P->HasBegunPlay())W=P;
   if(!FParse::Param(FCommandLine::Get(),TEXT("GameplayManualNative"))||!W||!W->GetGameInstance()||!W->GetGameInstance()->GetFirstGamePlayer()){T->AddError(TEXT("HostRequired: real Standalone Hub, GameplayManualNative/DBAPluginDemo/GamePlatformManualFixture"));return false;}
   Widget.Reset(CreateWidget<UDivineBeastsDemoPresentationTestScreen>(W->GetGameInstance()->GetFirstGamePlayer()->GetPlayerController(W)));if(!Widget.IsValid())return false;
@@ -33,7 +36,7 @@ struct FFix1Live:TSharedFromThis<FFix1Live>{
    if(auto R=Weak.Pin())if(R->ArmStop&&!R->DidStop&&R->State->GameplayHost.IsValid())if(auto* PC=R->State->GameplayHost->GetFixtureController())if(auto* PS=PC->GetPlayerState<AGamePlatformPlayerStateBase>())if(PS->GetLifecycleSnapshot().IsRegistered()){R->DidStop=true;R->Adapter->Stop([Weak](const auto&,const auto& Result){if(auto S=Weak.Pin())S->T->TestFalse(TEXT("reentrant Stop retains in-flight host"),Result.IsSuccess());});}};
   Adapter=CreateGameplayManualScenarioForTesting(*W,F,State);bool B=false;Adapter->Prepare(C,[&](const auto&,const auto& R){B=R.IsSuccess();if(!B)T->AddError(R.Message);});Deadline=FPlatformTime::Seconds()+60;return B;
  }
- void Issue(FName O){Ready=false;Operation=O;auto Weak=TWeakPtr<FFix1Live>(AsShared());Adapter->Execute(O,Values,[Weak,O](const auto& Token,const auto& R){if(auto S=Weak.Pin()){S->T->TestTrue(TEXT("full run identity on every callback"),Token==S->C.Token);if(O==TEXT("LoadDefinition"))++S->TypedLoadCallbacks;S->Last=R;S->Ready=true;}});}
+ void Issue(FName O){Ready=false;Operation=O;auto Weak=TWeakPtr<FFix1Live>(AsShared());Adapter->Execute(O,Values,[Weak,O](const auto& Token,const auto& R){if(auto S=Weak.Pin()){S->T->TestTrue(TEXT("full run identity on every callback"),Token==S->C.Token);if(O==TEXT("LoadDefinition"))++S->TypedLoadCallbacks;if((O==TEXT("CommitInput")||O==TEXT("ProcessInput"))&&S->State->Source.IsValid())if(const auto* A=S->State->Source->Combat->GetCombatAttributeSet())S->InputEnergyAtCompletion=A->GetEnergy();S->Last=R;S->Ready=true;}});}
  void Stop(){Ready=false;auto Weak=TWeakPtr<FFix1Live>(AsShared());Adapter->Stop([Weak](const auto& Token,const auto& R){if(auto S=Weak.Pin()){S->T->TestTrue(TEXT("full cleanup identity"),Token==S->C.Token);S->Last=R;S->Ready=true;}});}
  void SetPath(const TCHAR* P){Values[0].AssetPathValue=FSoftObjectPath(P);}
  bool Tick(){if(FPlatformTime::Seconds()>Deadline){T->AddError(TEXT("Timeout waiting for actual service state; no forced success."));Stop();return true;}if(!Ready)return false;return Drive?Drive(*this):true;}
@@ -47,8 +50,9 @@ bool DefinitionRegression(FAutomationTestBase& T,int32 Variant){auto R=MakeShare
   if(S.Step==2){S.T->TestTrue(TEXT("valid typed selection accepted"),S.Last.IsSuccess());S.T->TestTrue(TEXT("current typed object recorded"),S.State->DefinitionObject.IsValid());S.T->TestTrue(TEXT("actual current resource lease succeeded"),S.State->Resources.IsValid()&&S.State->Data()&&S.State->Data()->GetLeaseState(S.State->Resources)==EGamePlatformDataRequestState::Succeeded);if(S.Variant!=2){S.T->TestFalse(TEXT("pure definition has no fabricated Character prerequisite"),S.State->Source.IsValid());S.T->TestTrue(TEXT("own lease names exactly current selected path"),S.State->Resources.ResourcePaths.Num()==1&&S.State->Resources.ResourcePaths[0]==S.Values[0].AssetPathValue);}++S.Step;if(S.Variant==2){S.SetPath(TEXT("/DBAGameplay/Definitions/DA_Hero_Zodiac_Rat.DA_Hero_Zodiac_Rat"));S.Issue(Load);}else S.Issue(Validate);return false;}
   if(S.Step==3){if(S.Variant!=2){S.T->TestTrue(TEXT("valid current definition validates"),S.Last.IsSuccess());S.SetPath(S.Variant==0?TEXT("/DBAGameplay/Abilities/Placeholders/DA_DBA_Rat_PlaceholderAbilitySet.DA_DBA_Rat_PlaceholderAbilitySet"):TEXT("/DBAGameplay/Definitions/DA_Hero_Zodiac_Rat.DA_Hero_Zodiac_Rat"));S.Issue(Load);++S.Step;return false;}S.Step=4;}
   if(S.Step==4){S.T->TestFalse(TEXT("wrong domain fails on fixed feature"),S.Last.IsSuccess());S.T->TestFalse(TEXT("old typed object was cleared"),S.State->DefinitionObject.IsValid());S.T->TestFalse(TEXT("old Hero cannot be reused"),S.State->Hero.IsValid());S.T->TestFalse(TEXT("old AI cannot be reused"),S.State->AI.IsValid());++S.Step;S.Issue(Validate);return false;}
-  if(S.Step==5){S.T->TestFalse(TEXT("Validate/Possess after wrong domain cannot recover old result"),S.Last.IsSuccess());S.T->AddExpectedError(TEXT("MissingGameplayDefinition"),EAutomationExpectedErrorFlags::Contains,0);S.SetPath(TEXT("/DBAUIPack_Core/Development/PluginDemos/Fixtures/Gameplay/MissingGameplayDefinition.MissingGameplayDefinition"));++S.Step;S.Issue(Load);return false;}
-  if(S.Step==6){S.T->TestFalse(TEXT("missing resource actual load fails"),S.Last.IsSuccess());++S.Step;S.Issue(Validate);return false;}
+  // 每次运行使用独立缺失路径，避免原生StreamableManager负缓存吞掉后续必需的错误日志。
+  if(S.Step==5){S.T->TestFalse(TEXT("Validate/Possess after wrong domain cannot recover old result"),S.Last.IsSuccess());const FString MissingName=TEXT("MissingGameplayDefinition_")+S.C.Token.RunId.ToString(EGuidFormats::Digits);S.T->AddExpectedError(MissingName,EAutomationExpectedErrorFlags::Contains,0);const FString MissingPath=TEXT("/DBAUIPack_Core/Development/PluginDemos/Fixtures/Gameplay/")+MissingName+TEXT(".")+MissingName;S.SetPath(*MissingPath);++S.Step;S.Issue(Load);return false;}
+  if(S.Step==6){S.T->TestFalse(TEXT("missing resource actual load fails"),S.Last.IsSuccess());S.T->TestEqual(TEXT("real Data resource failure identity"),S.Last.Code,FName(TEXT("ResourceLoadFailed")));++S.Step;S.Issue(Validate);return false;}
   if(S.Step==7){S.T->TestFalse(TEXT("Validate/Possess after failure cannot return old success"),S.Last.IsSuccess());++S.Step;S.Stop();return false;}return S.Finish();
  };ADD_LATENT_AUTOMATION_COMMAND(FFix1Wait(R));return true;}
 bool TypedCompletionReentry(FAutomationTestBase& T,bool Reset){auto R=MakeShared<FFix1Live>();if(!R->Init(T,TEXT("GamePlatformCharacter.definition")))return false;R->TypedAction=Reset?2:1;
@@ -61,6 +65,25 @@ bool TypedCompletionReentry(FAutomationTestBase& T,bool Reset){auto R=MakeShared
   }
   if(S.Step==2){S.T->TestFalse(TEXT("Validate after synchronous Reset cannot fall back"),S.Last.IsSuccess());++S.Step;S.Stop();return false;}
   S.T->TestEqual(TEXT("later Stop never re-completes original load"),S.TypedLoadCallbacks,1);return S.Finish();
+ };ADD_LATENT_AUTOMATION_COMMAND(FFix1Wait(R));return true;}
+bool RuntimeInputRegression(FAutomationTestBase& T,bool Energy){auto R=MakeShared<FFix1Live>();if(!R->Init(T,Energy?FName(TEXT("GamePlatformCombat.energy")):FName(TEXT("GamePlatformAbilitySystem.tag_input"))))return false;R->Variant=Energy?1:0;
+ R->Drive=[](FFix1Live& S){
+  if(S.Step==0){++S.Step;S.Issue(TEXT("CreateFixture"));return false;}
+  if(S.Step==1){if(!S.T->TestTrue(TEXT("real input fixture resources loaded"),S.Last.IsSuccess())){S.Stop();return true;}++S.Step;S.Issue(S.Variant?TEXT("ActivateFixture"):TEXT("BindAvatar"));return false;}
+  if(S.Step==2){if(!S.T->TestTrue(TEXT("real input avatar preparation accepted"),S.Last.IsSuccess())){S.Stop();return true;}++S.Step;S.Issue(S.Variant?TEXT("CommitInput"):TEXT("SetActive"));return false;}
+  if(!S.Variant&&S.Step==3){S.T->TestTrue(TEXT("actual fixture active"),S.Last.IsSuccess());++S.Step;S.Issue(TEXT("GrantInput"));return false;}
+  if(!S.Variant&&S.Step==4){S.T->TestTrue(TEXT("actual GAS GiveAbility accepts typed Runtime input"),S.Last.IsSuccess());auto* Spec=S.State->Source->ASC->FindAbilitySpecFromHandle(S.State->InputHandle);if(!S.T->TestNotNull(TEXT("real granted spec exists"),Spec)){S.Stop();return true;}S.T->TestTrue(TEXT("actual spec owns approved Runtime input tag"),Spec->GetDynamicSpecSourceTags().HasTagExact(GamePlatformAbilityTags::InputTestServer.GetTag()));++S.Step;S.Issue(TEXT("Press"));return false;}
+  if(!S.Variant&&S.Step==5){S.T->TestTrue(TEXT("real tagged press accepted"),S.Last.IsSuccess());++S.Step;S.Issue(TEXT("ProcessInput"));return false;}
+  if((S.Variant&&S.Step==3)||(!S.Variant&&S.Step==6)){
+   S.T->TestTrue(TEXT("real GAS commit succeeds without relaxed eligibility or cost"),S.Last.IsSuccess());
+   S.T->TestEqual(TEXT("one real fixture ability commit"),S.State->Source->CommittedInputs,1);
+   auto* Spec=S.State->Source->ASC->FindAbilitySpecFromHandle(S.State->InputHandle);if(S.T->TestNotNull(TEXT("real committed spec exists"),Spec))S.T->TestTrue(TEXT("energy and input use same Runtime tag"),Spec->GetDynamicSpecSourceTags().HasTagExact(GamePlatformAbilityTags::InputTestServer.GetTag()));
+   S.T->TestEqual(TEXT("actual GAS cost at completion consumes exactly 25 from native 100"),S.InputEnergyAtCompletion,75.f);
+   if(S.Variant){S.Step=9;S.Stop();return false;}S.Step=7;S.Issue(TEXT("Release"));return false;
+  }
+  if(S.Step==7){S.T->TestTrue(TEXT("actual tagged release accepted"),S.Last.IsSuccess());++S.Step;S.Issue(TEXT("RevokeInput"));return false;}
+  if(S.Step==8){S.T->TestTrue(TEXT("actual spec revoke accepted"),S.Last.IsSuccess());S.T->TestFalse(TEXT("owned spec handle cleared"),S.State->InputHandle.IsValid());++S.Step;S.Stop();return false;}
+  S.T->TestFalse(TEXT("own input resources cleared by Stop"),S.State->Resources.IsValid());S.T->TestFalse(TEXT("own fixture cleared by Stop"),S.State->Source.IsValid());return S.Finish();
  };ADD_LATENT_AUTOMATION_COMMAND(FFix1Wait(R));return true;}
 bool HostRegression(FAutomationTestBase& T,bool Reenter){auto R=MakeShared<FFix1Live>();if(!R->Init(T,TEXT("GamePlatformGameplay.admission_spawn")))return false;R->Variant=Reenter?1:0;
  if(!Cast<ADivineBeastsDemoGameplayHostMode>(R->C.World->GetAuthGameMode())){T.AddError(TEXT("HostRequired: fresh Hub?game=/Script/DivineBeastsDemoClient.DivineBeastsDemoGameplayHostMode + DBAManualGameplayHost/FoundationGameplayOffline/FoundationWorld/DBAManualWorldHost. Each Host test needs its own process/world."));return false;}
@@ -107,4 +130,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGameplayTypedStopLive,"DivineBeasts.PluginDemo
 bool FGameplayTypedStopLive::RunTest(const FString&){return TypedCompletionReentry(*this,false);}
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGameplayTypedResetLive,"DivineBeasts.PluginDemos.Gameplay.Fix2.Live.TypedCompletionReset",EAutomationTestFlags::ClientContext|EAutomationTestFlags::EngineFilter)
 bool FGameplayTypedResetLive::RunTest(const FString&){return TypedCompletionReentry(*this,true);}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGameplayRuntimeTagLive,"DivineBeasts.PluginDemos.Gameplay.NativeFix1.Live.TagInput",EAutomationTestFlags::ClientContext|EAutomationTestFlags::EngineFilter)
+bool FGameplayRuntimeTagLive::RunTest(const FString&){return RuntimeInputRegression(*this,false);}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGameplayRuntimeEnergyLive,"DivineBeasts.PluginDemos.Gameplay.NativeFix1.Live.EnergyCommit",EAutomationTestFlags::ClientContext|EAutomationTestFlags::EngineFilter)
+bool FGameplayRuntimeEnergyLive::RunTest(const FString&){return RuntimeInputRegression(*this,true);}
 #endif

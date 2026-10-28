@@ -1,6 +1,14 @@
 // Copyright 2026 Ishtmeet Singh. All Rights Reserved.
 
 #include "GlooPrintEditor.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
+#include "Engine/Blueprint.h"
+#include "Materials/Material.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "GlooPrintMeasurementCache.h"
 #include "GlooPrintGraphAdapter.h"
 #include "GlooPrintSettings.h"
@@ -254,6 +262,7 @@ bool FFormatJob::Advance(double Deadline)
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(GlooPrint_PlanFormat);
     auto& S = *State;
+    FString EligibilityError;if(!CanFormatGraph(S.Graph.Get(),EligibilityError)){S.Fail(EligibilityError);return true;}
     do
     {
         if (S.Phase == FState::EPhase::Layout)
@@ -523,7 +532,11 @@ void FEditor::CloseProgress()
 
 void FEditor::CancelPending()
 {
-    ++RequestGeneration; Pending.Reset(); CloseProgress();
+
+    ++RequestGeneration;
+    TOptional<FPendingFormat> Cancelled=MoveTemp(Pending);Pending.Reset();CloseProgress();
+    if(Cancelled)FinishManual(Cancelled.GetValue(),false,true,0,TEXT("原生CancelPending撤销本次任务。"));
+
 }
 
 void FEditor::ShowProgress()
@@ -538,7 +551,53 @@ void FEditor::ShowProgress()
     if (Item) { Item->SetCompletionState(SNotificationItem::CS_Pending); Progress = Item; }
 }
 
-void FEditor::ExecutePanel(TWeakPtr<SGraphPanel> WeakPanel)
+
+
+bool FEditor::OwnsManualPIEGraph(const UEdGraph* Graph)const {
+ if(!IsInGameThread()||!GEditor||GEditor->bIsSimulatingInEditor||!OwnedManualGraph.IsValid()||OwnedManualGraph.Graph.Get()!=Graph||!IsValid(Graph)||!OwnedManualGraph.Root.IsValid()||Graph->GetOuter()!=OwnedManualGraph.Root.Get()||OwnedManualGraph.Root->GetOutermost()!=GetTransientPackage()||!OwnedManualGraph.Root->HasAnyFlags(RF_Transient)||!OwnedManualGuard||!OwnedManualGuard())return false;
+ auto* W=OwnedManualGraph.World.Get();auto* GI=W?W->GetGameInstance():nullptr;
+ if(!W||W->bIsTearingDown||W->WorldType!=EWorldType::PIE||W->GetNetMode()!=NM_Standalone||GEditor->PlayWorld!=W||!GI||GI->GetLocalPlayers().Num()!=1||!GI->GetFirstGamePlayer()||GI->GetFirstGamePlayer()->GetWorld()!=W)return false;
+ int32 Count=0;bool EngineOwned=false;if(GEngine)for(const auto& C:GEngine->GetWorldContexts())if(C.WorldType==EWorldType::PIE&&C.World()){++Count;EngineOwned|=C.World()==W&&C.OwningGameInstance==GI;}return Count==1&&EngineOwned;
+}
+bool FEditor::QualifyManualPIEGraph(UObject& Root,UEdGraph& Graph,UWorld& World,FGuid RunId,FGuid WorldId,uint64 Generation,TFunction<bool()> Guard,GlooPrintManual::FOwnedGraph& Out,FString& Error){
+ check(IsInGameThread());Out={};Error.Reset();
+ if(OwnedManualGraph.IsValid()||!CommandList||!FParse::Param(FCommandLine::Get(),TEXT("GamePlatformManualEditorFixture"))||!RunId.IsValid()||!WorldId.IsValid()||Generation==0||!Guard||!Guard()||!IsValid(&Root)||Root.GetOutermost()!=GetTransientPackage()||!Root.HasAnyFlags(RF_Transient)||(!Root.IsA<UBlueprint>()&&!Root.IsA<UMaterial>())||Graph.GetOuter()!=&Root){Error=TEXT("需要空闲唯一Editor、显式开发PIE和精确自有Transient图/完整来源。");return false;}
+ OwnedManualGraph={FGuid::NewGuid(),RunId,WorldId,Generation,&Root,&Graph,&World};OwnedManualGuard=MoveTemp(Guard);
+ if(!OwnsManualPIEGraph(&Graph)){OwnedManualGraph={};OwnedManualGuard={};Error=TEXT("真实引擎PIE/GI/LP或当前来源不合格。");return false;}Out=OwnedManualGraph;return true;
+}
+bool FEditor::ReleaseManualPIEGraph(const GlooPrintManual::FOwnedGraph& Lease,FString& Error){
+ check(IsInGameThread());Error.Reset();if(!Lease.IsValid()||!(Lease==OwnedManualGraph)){Error=TEXT("图资格释放不匹配完整身份。");return false;}
+ if(ActiveManualRequest.IsValid()||(Pending&&Pending->ManualRequest.Graph==Lease.Graph)){Error=TEXT("本图原生任务尚在途，先精确取消/等待终态。");return false;}OwnedManualGraph={};OwnedManualGuard={};return true;
+}
+bool FEditor::InspectManualShortcuts(FString& Snapshot)const {
+ if(!CommandList||!FCommands::IsRegistered()||!FCommands::Get().Format.IsValid())return false;
+ const auto Chord=FCommands::Get().Format->GetActiveChord(EMultipleKeyBindingIndex::Primary);
+ Snapshot=TEXT("注册链 GlooPrint TCommands -> 同一个FEditor::HandleKeyDownEvent -> CommandList::ProcessCommandBindings -> ExecuteFocused/ExecutePanel；活跃键位=")+Chord->GetInputText().ToString()+TEXT("；本检查没有注入键盘事件。");return true;
+}
+bool FEditor::SubmitManual(UEdGraph& Graph,TFunction<bool()> Guard,GlooPrintManual::FCompletion Done,GlooPrintManual::FRequest& Out,FString& Error){
+ check(IsInGameThread());Out={};
+ if(Pending||ActiveManualRequest.IsValid()){Error=TEXT("GlooPrint已有外部或本Run任务，拒绝接管。");return false;}
+ const auto Editor=SGraphEditor::FindGraphEditorForGraph(&Graph);auto* Panel=Editor?Editor->GetGraphPanel():nullptr;
+ if(!Panel||!Guard||!Guard()||!OwnsManualPIEGraph(&Graph)){Error=TEXT("需要本Run可见真实SGraphEditor/Panel和当前来源。");return false;}
+ Out.Id=FGuid::NewGuid();Out.Graph=&Graph;
+ ExecutePanelInternal(StaticCastSharedRef<SGraphPanel>(Panel->AsShared()),Out,MoveTemp(Guard),MoveTemp(Done));return true;
+}
+bool FEditor::CancelManual(const GlooPrintManual::FRequest& R,FString& Error){
+ check(IsInGameThread());Error.Reset();
+ if(!R.IsValid()){Error=TEXT("无本Run请求身份。");return false;}
+
+    if(ActiveManualRequest.IsValid()){Error=TEXT("原生任务同步栈尚未返回；保留图/请求到显式取消重试，不接管后继任务。");return false;}
+    if(!Pending)return true;
+ if(Pending->ManualRequest.Id!=R.Id||Pending->ManualRequest.Graph!=R.Graph){Error=TEXT("当前任务已归后继工具，拒绝取消。");return false;}
+ CancelPending();return true;
+}
+void FEditor::FinishManual(FPendingFormat& R,bool Success,bool Cancelled,int32 Changed,const FString& Reason){
+ auto Done=MoveTemp(R.ManualCompletion);if(!Done)return;
+ if(R.ManualGuard&&!R.ManualGuard()){Success=false;Cancelled=true;}
+ Done(Success,Cancelled,Changed,Reason);
+}
+void FEditor::ExecutePanel(TWeakPtr<SGraphPanel> WeakPanel){ExecutePanelInternal(WeakPanel);}
+void FEditor::ExecutePanelInternal(TWeakPtr<SGraphPanel> WeakPanel,GlooPrintManual::FRequest ManualRequest,TFunction<bool()> Guard,GlooPrintManual::FCompletion Done)
 {
     TRACE_CPUPROFILER_EVENT_SCOPE(GlooPrint_FormatDispatch);
     auto& Slate = FSlateApplication::Get();
@@ -560,7 +619,7 @@ void FEditor::ExecutePanel(TWeakPtr<SGraphPanel> WeakPanel)
             Slate.SetKeyboardFocus(Panel, EFocusCause::SetDirectly);
             if (!CanFormatGraph(Panel->GetGraphObj(), Reason) || !ValidateMeasurementGraph(Panel->GetGraphObj(), Reason))
             {
-                ReportFormatResult(false, 0, Reason); return;
+                ReportFormatResult(false, 0, Reason);if(Done)Done(false,false,0,Reason);return;
             }
             auto Cache = Panel->GetMetaData<FMeasurementCache>();
             if (!Cache)
@@ -569,6 +628,7 @@ void FEditor::ExecutePanel(TWeakPtr<SGraphPanel> WeakPanel)
             }
             CachedPanels.RemoveAll([](const auto& Weak) { return !Weak.IsValid(); }); CachedPanels.AddUnique(Panel);
             FPendingFormat Request;
+            Request.ManualRequest=ManualRequest;Request.ManualGuard=MoveTemp(Guard);Request.ManualCompletion=MoveTemp(Done);
             Request.Panel = Panel; Request.Graph = Panel->GetGraphObj(); Request.Cache = Cache;
             Request.Scale = Window->GetDPIScaleFactor() * Slate.GetApplicationScale();
             Request.Visibility = Panel->GetPinVisibility(); Request.StartedAt = StartedAt;
@@ -594,18 +654,21 @@ void FEditor::ExecutePanel(TWeakPtr<SGraphPanel> WeakPanel)
                 if (bSame)
                 {
                     for (const auto& Node : Request.Nodes) { Cache->Find(*Node.Node.Get(), Node.State); }
-                    ReportFormatResult(true, 0, {}); return;
+                    ReportFormatResult(true, 0, {});FinishManual(Request,true,false,0,{});return;
                 }
             }
+            // 开发Owner请求先进入原FEditor既有Pending队列；保留一帧明确取消窗口，不新增Ticker/执行器。
+            if(ManualRequest.IsValid()){Request.LastAttemptFrame=GFrameCounter;Pending=MoveTemp(Request);ShowProgress();return;}
             ContinueRequest(MoveTemp(Request), StartedAt + 0.004);
             return;
         }
     }
-    ReportFormatResult(false, 0, Reason);
+    ReportFormatResult(false, 0, Reason);if(Done)Done(false,false,0,Reason);
 }
 
 void FEditor::ContinueRequest(FPendingFormat Request, double Deadline)
 {
+    TGuardValue<GlooPrintManual::FRequest> Calling(ActiveManualRequest,Request.ManualRequest);
     TRACE_CPUPROFILER_EVENT_SCOPE(GlooPrint_FormatContinuation);
     auto& Slate = FSlateApplication::Get();
     FString Reason;
@@ -615,7 +678,7 @@ void FEditor::ContinueRequest(FPendingFormat Request, double Deadline)
     {
         if (!Request.Capture && Request.AttemptsMade > 0 && !IsPendingCurrent(Request, Slate))
         {
-            CloseProgress(); ReportFormatResult(false, 0, TEXT("Formatting canceled because the graph, selection or display changed.")); return;
+            CloseProgress(); ReportFormatResult(false, 0, TEXT("Formatting canceled because the graph, selection or display changed."));FinishManual(Request,false,true,0,TEXT("图/选择/显示来源已改变。"));return;
         }
         if (!Request.Capture)
         {
@@ -643,7 +706,7 @@ void FEditor::ContinueRequest(FPendingFormat Request, double Deadline)
     }
     if (!IsPendingCurrent(Request, Slate, false))
     {
-        CloseProgress(); ReportFormatResult(false, 0, TEXT("Formatting canceled because the graph, selection or display changed.")); return;
+        CloseProgress(); ReportFormatResult(false, 0, TEXT("Formatting canceled because the graph, selection or display changed."));FinishManual(Request,false,true,0,TEXT("图/选择/显示来源已改变。"));return;
     }
     if (!bFinished || (!bSuccess && bNeedsRetry && Request.AttemptsMade < 4))
     {
@@ -689,7 +752,7 @@ void FEditor::ContinueRequest(FPendingFormat Request, double Deadline)
         }
     }
     else if (bNeedsRetry) { Reason = TEXT("Geometry is still unavailable after three deferred attempts. ") + Reason; }
-    CloseProgress(); ReportFormatResult(bSuccess, Changed, Reason);
+    CloseProgress(); ReportFormatResult(bSuccess, Changed, Reason);FinishManual(Request,bSuccess,false,Changed,Reason);
 }
 
 bool FEditor::IsPendingCurrent(const FPendingFormat& Request, FSlateApplication& SlateApp, bool bValidateNodes) const
@@ -697,7 +760,7 @@ bool FEditor::IsPendingCurrent(const FPendingFormat& Request, FSlateApplication&
     const auto Panel = Request.Panel.Pin();
     const auto Cache = Request.Cache.Pin();
     UEdGraph* Graph = Request.Graph.Get();
-    if (Request.Generation != RequestGeneration || !GetDefault<UGlooPrintSettings>()->bFormattingEnabled ||
+    if ((Request.ManualGuard&&!Request.ManualGuard()) || Request.Generation != RequestGeneration || !GetDefault<UGlooPrintSettings>()->bFormattingEnabled ||
         Request.Settings != GetDefault<UGlooPrintSettings>()->GetLayoutSettings() ||
         Request.Style != GetDefault<UGlooPrintSettings>()->GetWireStyle() ||
         !Panel || !Graph || !Cache || Panel->GetGraphObj() != Graph ||
@@ -734,7 +797,7 @@ void FEditor::Tick(float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICur
     const FMeasureFormatSlice MeasureSlice;
     TRACE_CPUPROFILER_EVENT_SCOPE(GlooPrint_FormatPendingTick);
     FPendingFormat Request = MoveTemp(Pending.GetValue()); Pending.Reset();
-    if (!IsPendingCurrent(Request, SlateApp, false)) { CloseProgress(); return; }
+    if (!IsPendingCurrent(Request, SlateApp, false)) { CloseProgress();FinishManual(Request,false,true,0,TEXT("原生任务来源已失效。"));return; }
     ContinueRequest(MoveTemp(Request), FPlatformTime::Seconds() + 0.004);
 }
 

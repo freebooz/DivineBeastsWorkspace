@@ -8,7 +8,7 @@ VerifyOnly只核验二进制门禁、不创建UE进程。Execute使用Foundation
 退出0仅表示指定测试组实际成功，1校验/运行失败，2未执行；不代表画面、Cook或人工核验。
 #>
 param([switch]$Execute,[switch]$VerifyOnly,[string]$EngineRoot,[string]$BuildResultPath,
-    [ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')][string]$Suite='Demo',[string]$ReportPath,
+    [ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')][string]$Suite='Demo',[string]$ReportPath,
     [guid]$RunId=[guid]::NewGuid(),[ValidateRange(1,86400)][int]$TimeoutSeconds=900)
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -50,7 +50,16 @@ try {
             $arguments+=(Get-PluginDemoNativeFlag $Suite)
             $details.ExecutionHost='EditorGameStandaloneClientContext'
         }
-        if ($Suite -in @('Demo','PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')) {
+        if($Suite -eq 'EditorManual'){
+            # 必须是真正Editor，以引擎Play Session创建PIE；不采用-game或NullRHI伪装Editor功能。
+            $editor=Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor.exe'
+            Assert-FoundationFile $editor
+            $arguments=@($arguments|Where-Object{$_ -cne '-nullrhi'})
+            $arguments=@($arguments[0],(Get-PluginDemoMapURL $Suite))+@($arguments|Select-Object -Skip 1)
+            $arguments+=@('-RenderOffscreen','-windowed','-ResX=1280','-ResY=720',(Get-PluginDemoNativeFlag $Suite))
+            $details.ExecutionHost='EditorPIE'
+        }
+        if ($Suite -in @('Demo','PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')) {
             # 真实GI服务回归与人工页共用显式离线夹具门禁，写入本次工程内独立用户目录。
             $fixtureRoot=Join-Path $workspace "Saved/Validation/PluginManualUI20261027/Hosts/$($context.RunId)"
             $null=New-Item -ItemType Directory -Path $fixtureRoot -Force
@@ -73,7 +82,7 @@ try {
         $count=Assert-PluginDemoRunResult -ProcessResult $result -Cases @($parsed.tests) -Before $before -After $after -Suite $Suite
         $details.ValidatedTests=$count; $details.BuildEvidenceAfter=$after
         $details.AutomationReportSHA256=(Get-FileHash -LiteralPath $index -Algorithm SHA256).Hash
-        $code=0; $message=if($Suite -in @('PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHashLive','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')){'本组真实Standalone ClientContext原生测试及前后二进制门禁通过；非打包Client，未验收视听。'}else{'本组原生测试及前后二进制门禁通过；NullRHI不证明视觉，未做人工核验。'}
+        $code=0; $message=if($Suite -eq 'EditorManual'){'本组真实Editor/PIE原生回归与前后二进制门禁通过；未签人工键鼠/画面验收。'}elseif($Suite -in @('PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHashLive','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')){'本组真实Standalone ClientContext原生测试及前后二进制门禁通过；非打包Client，未验收视听。'}else{'本组原生测试及前后二进制门禁通过；NullRHI不证明视觉，未做人工核验。'}
     }
 } catch [IO.FileNotFoundException] {
     # 前置缺失才是未执行；UE实际启动后的缺报告（包括崩溃）必须保留失败语义。

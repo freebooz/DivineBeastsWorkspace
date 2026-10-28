@@ -11,6 +11,7 @@
 #include "Scenarios/DivineBeastsDemoPresentationScenarios.h"
 #include "Scenarios/DivineBeastsDemoWorldScenarios.h"
 #include "Scenarios/DivineBeastsDemoGameplayScenarios.h"
+#include "Scenarios/DivineBeastsDemoEditorScenarios.h"
 #include "Demo/DivineBeastsDemoWorldSubsystem.h"
 #include "Definitions/DivineBeastsDemoCatalogDefinition.h"
 #include "Development/DivineBeastsPluginDemoMode.h"
@@ -40,6 +41,7 @@ struct FDivineBeastsDemoCatalogPrivateState
     TArray<FDivineBeastsDemoAdapterRegistrationHandle> PresentationRegistrations;
     TArray<FDivineBeastsDemoAdapterRegistrationHandle> WorldRegistrations;
     TArray<FDivineBeastsDemoAdapterRegistrationHandle> GameplayRegistrations;
+    TArray<FDivineBeastsDemoAdapterRegistrationHandle> EditorRegistrations;
     FName PendingScenarioId;
     FName PendingMap;
 };
@@ -123,6 +125,13 @@ void UDivineBeastsDemoCatalogSubsystem::Initialize(FSubsystemCollectionBase& Col
         LastOperationMessage = FText::FromString(PrivateState->Result.Message);
         return;
     }
+    PrivateState->EditorRegistrations = DivineBeasts::Demo::RegisterEditorManualScenarios(*this);
+    if (PrivateState->EditorRegistrations.Num() != 9)
+    {
+        PrivateState->Result = FGamePlatformResult::Failure(TEXT("Demo.EditorRegistrationFailed"),TEXT("Editor九组工厂未完整注册；拒绝发布半份目录。"));
+        LastOperationMessage = FText::FromString(PrivateState->Result.Message);
+        return;
+    }
     RefreshCatalog();
 }
 void UDivineBeastsDemoCatalogSubsystem::Deinitialize()
@@ -138,6 +147,7 @@ void UDivineBeastsDemoCatalogSubsystem::Deinitialize()
         PrivateState->PresentationRegistrations.Reset();
         PrivateState->WorldRegistrations.Reset();
         PrivateState->GameplayRegistrations.Reset();
+        PrivateState->EditorRegistrations.Reset();
         OnCatalogChanged.Clear();
         const auto Active = PrivateState->ActiveLease;
         const auto Pending = PrivateState->PendingLease;

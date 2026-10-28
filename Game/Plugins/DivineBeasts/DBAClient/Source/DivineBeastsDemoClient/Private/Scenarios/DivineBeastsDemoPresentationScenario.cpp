@@ -1,3 +1,5 @@
+// T06开发人工页：项目私有Editor适配或平台中立租约；仅游戏线程，事件驱动。
+// 只拥有本Run对象/完整租约，停止失败保留身份供重试；不操作用户图、账号或生产服务器。
 #include "Scenarios/DivineBeastsDemoPresentationManualState.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Interfaces/GamePlatformVFXService.h"
@@ -24,7 +26,7 @@
 namespace DivineBeasts::Demo
 {
 bool FPresentationManualState::Alive()const
-{return bActive&&!bCleaning&&World.IsValid()&&!World->bIsTearingDown&&Player.IsValid()&&Player->GetWorld()==World.Get();}
+{return bActive&&!bCleaning&&World.IsValid()&&!World->bIsTearingDown&&Player.IsValid()&&Player->GetWorld()==World.Get()&&(Feature!=TEXT("GamePlatformSurface.editor_wind")||(Host.IsValid()&&Host->OwnsEditorFixture(Context.Token)));}
 UGameInstance* FPresentationManualState::Instance()const{return World.IsValid()?World->GetGameInstance():nullptr;}
 IGamePlatformDataService* FPresentationManualState::Data()const{return Instance()?IGamePlatformDataService::Get(*Instance()):nullptr;}
 void FPresentationManualState::Observe(FString Text)const
@@ -37,7 +39,7 @@ FGamePlatformResult FPresentationManualState::Prepare()
         return PresentationError(TEXT("Demo.Presentation.Source"),TEXT("需要同World/LocalPlayer的真实SampleWidget及中央Data服务。"));
     Host=Instance()->GetSubsystem<UDivineBeastsDemoManualHostSubsystem>();
     if(!Host.IsValid())return PresentationError(TEXT("Demo.Presentation.HostMissing"),TEXT("先应用T04 ManualHost；不初始化第二份平台子系统。"));
-    const auto Acquired=Host->Acquire(Context.Token,*World);if(!Acquired.IsSuccess())return Acquired;bHost=true;
+    const auto Acquired=Feature==TEXT("GamePlatformSurface.editor_wind")?Host->AcquireEditorFixture(Context.Token,*World,Feature):Host->Acquire(Context.Token,*World);if(!Acquired.IsSuccess())return Acquired;bHost=true;
     if(Feature.ToString().StartsWith(TEXT("GamePlatformVFX."))&&!IGamePlatformVFXService::Get(World.Get()))return PresentationError(TEXT("Demo.VFX.Missing"),TEXT("本World实际VFX服务不可用。"));
     if(Feature.ToString().StartsWith(TEXT("GamePlatformSFX."))&&!IGamePlatformSFXService::Get(World.Get()))return PresentationError(TEXT("Demo.SFX.Missing"),TEXT("本World实际SFX服务不可用。"));
     if(Feature.ToString().StartsWith(TEXT("GamePlatformPresentation."))&&!Local<UGamePlatformPresentationClientSubsystem>())return PresentationError(TEXT("Demo.Presentation.Missing"),TEXT("同LP中立表现服务不可用。"));

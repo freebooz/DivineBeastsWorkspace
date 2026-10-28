@@ -4,6 +4,7 @@
 
 #include "GlooPrintLayout.h"
 #include "GlooPrintRouting.h"
+#include "GlooPrintManual.h"
 #include "Framework/Application/IInputProcessor.h"
 
 class SGraphPanel;
@@ -62,7 +63,16 @@ class FEditor final : public IInputProcessor, public TSharedFromThis<FEditor>
 public:
     void Initialize();
     void Shutdown();
+
     void OnSettingsChanged();
+
+    bool QualifyManualPIEGraph(UObject& Root,UEdGraph& Graph,UWorld& World,FGuid RunId,FGuid WorldId,uint64 Generation,TFunction<bool()> Guard,GlooPrintManual::FOwnedGraph& Out,FString& Error);
+    bool ReleaseManualPIEGraph(const GlooPrintManual::FOwnedGraph& Lease,FString& Error);
+    bool OwnsManualPIEGraph(const UEdGraph* Graph)const;
+    bool SubmitManual(UEdGraph& Graph,TFunction<bool()> Guard,GlooPrintManual::FCompletion Done,GlooPrintManual::FRequest& Out,FString& Error);
+    bool CancelManual(const GlooPrintManual::FRequest& Request,FString& Error);
+    bool InspectManualShortcuts(FString& Snapshot)const;
+
     virtual void Tick(float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor) override;
     virtual bool HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& Event) override;
     virtual const TCHAR* GetDebugName() const override { return TEXT("GlooPrint Format Graph"); }
@@ -89,11 +99,20 @@ private:
         uint64 Revision = 0;
         uint64 LastAttemptFrame = 0;
         uint64 Generation = 0;
+
         double StartedAt = 0;
+        GlooPrintManual::FRequest ManualRequest;
+        TFunction<bool()> ManualGuard;
+        GlooPrintManual::FCompletion ManualCompletion;
+
         int32 AttemptsMade = 0;
     };
     void ExecuteFocused();
+
     void ExecutePanel(TWeakPtr<SGraphPanel> WeakPanel);
+    void ExecutePanelInternal(TWeakPtr<SGraphPanel> WeakPanel,GlooPrintManual::FRequest ManualRequest={},TFunction<bool()> Guard={},GlooPrintManual::FCompletion Done={});
+    static void FinishManual(FPendingFormat& Request,bool Success,bool Cancelled,int32 Changed,const FString& Reason);
+
     bool IsPendingCurrent(const FPendingFormat& Request, FSlateApplication& SlateApp, bool bValidateNodes = true) const;
     void ContinueRequest(FPendingFormat Request, double Deadline);
     void CancelPending();
@@ -119,5 +138,7 @@ private:
     TOptional<FPendingFormat> Pending;
     TWeakPtr<SNotificationItem> Progress;
     uint64 RequestGeneration = 0;
+    GlooPrintManual::FRequest ActiveManualRequest;
+    GlooPrintManual::FOwnedGraph OwnedManualGraph;TFunction<bool()> OwnedManualGuard;
 };
 }

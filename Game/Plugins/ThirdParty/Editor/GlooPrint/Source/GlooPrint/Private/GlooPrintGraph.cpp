@@ -1,6 +1,7 @@
 // Copyright 2026 Ishtmeet Singh. All Rights Reserved.
 
 #include "GlooPrintGraph.h"
+#include "GlooPrintManualPIE.h"
 #include "GlooPrintGraphAdapter.h"
 #include "GlooPrintMeasurementCache.h"
 
@@ -25,7 +26,7 @@ bool CanFormatGraph(UEdGraph* Graph, FString& OutReason)
         return false;
     }
     if (!ValidateGraphOwner(Graph, OutReason)) { return false; }
-    if (IsGraphReadOnly(Graph) || GEditor->PlayWorld || GEditor->bIsSimulatingInEditor)
+    if (IsGraphReadOnly(Graph) || (GEditor->PlayWorld && !IsOwnedManualPIEGraph(Graph)) || GEditor->bIsSimulatingInEditor)
     {
         OutReason = TEXT("Formatting is unavailable in a read-only graph or during play/simulation.");
         return false;
@@ -194,6 +195,7 @@ bool FGraphCaptureJob::Advance(double Deadline)
     TRACE_CPUPROFILER_EVENT_SCOPE(GlooPrint_Snapshot);
     auto& S = *State;
     if (S.bDone) { return true; }
+    if (!CanFormatGraph(S.Graph.Get(),S.Reason)) { S.bDone=true;return true; }
     if (!S.Measurement.Advance(Deadline)) { return false; }
     FGraphMeasurement Measured;
     if (S.Measurement.TakeResult(Measured, S.Reason, &S.bNeedsRetry))

@@ -9,7 +9,7 @@
 #>
 param(
     [switch]$Start,
-    [ValidateSet('EditorGame','Client')][string]$Target='EditorGame',
+    [ValidateSet('EditorGame','EditorManual','Client')][string]$Target='EditorGame',
     [string]$EngineRoot,
     [string]$BuildResultPath,
     [string]$ClientExe,
@@ -49,6 +49,22 @@ function Resolve-PluginDemoManualFixture {
     $fixtureRoot=[IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetFullPath($Workspace)) ('Saved/Validation/PluginManualUI20261027/Hosts/'+$RunId.ToString('D'))))
     return [pscustomobject]@{UserDir=$fixtureRoot;NativeSavedRoot=(Join-Path $fixtureRoot 'Saved');Arguments=[string[]]@('-GamePlatformManualFixture',('-UserDir='+$fixtureRoot))}
 }
+function Resolve-PluginDemoExecutionHost {
+    <# 纯宿主参数合同。EditorManual进入正常编辑器，由真实单人PIE运行页面；不伪装Standalone。
+       World/Gameplay宿主沿唯一既有参数映射，互斥模式不混用；无进程、资源或业务副作用。 #>
+    param([ValidateSet('EditorGame','EditorManual','Client')][string]$Target='EditorGame',
+        [switch]$ManualFixture,[switch]$ManualWorldHost,[switch]$ManualGameplayHost)
+    $worldRequested=[bool]($ManualWorldHost -or $ManualGameplayHost)
+    $editorRequested=$Target -eq 'EditorManual'
+    if(($worldRequested -or $editorRequested) -and -not $ManualFixture){throw '显式开发世界/Editor宿主要求ManualFixture隔离UserDir。'}
+    if($editorRequested -and $worldRequested){throw 'Editor/PIE不能与Standalone World/Gameplay宿主混用。'}
+    $url=Get-PluginDemoMapURL Demo;$flags=@()
+    if($editorRequested){$flags=@(Get-PluginDemoNativeFlag EditorManual)}
+    elseif($ManualGameplayHost){$url=Get-PluginDemoMapURL GameplayHost;$flags=@(Get-PluginDemoHostFlags GameplayHost)}
+    elseif($worldRequested){$flags=@(Get-PluginDemoHostFlags WorldHostLive)}
+    [pscustomobject]@{StartupURL=$url;Arguments=[string[]]$flags;UseGameFlag=($Target -eq 'EditorGame');
+        ManualWorldHost=$worldRequested;ManualGameplayHost=[bool]$ManualGameplayHost;ManualEditorFixture=$editorRequested}
+}
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
@@ -58,9 +74,9 @@ Import-Module (Join-Path $PSScriptRoot 'PluginDemoValidation.psm1') -Force
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $project=Join-Path $workspace 'Game/DivineBeastsArena.uproject'
 $map='/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub'
-if($ManualGameplayHost){$ManualWorldHost=$true}
-if($ManualWorldHost -and -not $ManualFixture){throw '开发世界/Gameplay宿主要求ManualFixture隔离UserDir。'}
-$startupURL=if($ManualGameplayHost){Get-PluginDemoMapURL GameplayHost}else{$map}
+$executionSelection=Resolve-PluginDemoExecutionHost -Target $Target -ManualFixture:$ManualFixture -ManualWorldHost:$ManualWorldHost -ManualGameplayHost:$ManualGameplayHost
+$ManualWorldHost=$executionSelection.ManualWorldHost
+$startupURL=$executionSelection.StartupURL
 $mapFile=Join-Path $workspace 'Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoHub.umap'
 # 演示门户必须同时拥有真实UE地图与Monolith制作的Widget蓝图，禁止启动无交互空白关卡。
 $uiRoot=Join-Path $workspace 'Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Content/Development/PluginDemos'
@@ -81,13 +97,15 @@ if($independentPage.AssetFile -and !(Test-Path -LiteralPath $independentPage.Ass
     throw '指定插件的原生独立页尚未制作；拒绝启动空页面。'
 }
 if (-not (Test-Path -LiteralPath $project -PathType Leaf)) { throw '找不到正式主工程。' }
-if ($Target -eq 'EditorGame') {
+if ($Target -in @('EditorGame','EditorManual')) {
     $engine=Get-FoundationEngine $EngineRoot
     # -game不加载Editor审核模块，运行只观察四个机制模块；独立Review测试仍要求完整工具模块证明。
     $requiredModules=@(Get-PluginDemoRuntimeModuleNames)
+    if($executionSelection.ManualEditorFixture){$requiredModules+=@('GamePlatformDeveloperTools','BlueprintAutoLayout','GlooPrint','GamePlatformPCGEditor','GamePlatformSurfaceEditor')}
     $buildProof=Assert-FoundationEditorBuildResult -Workspace $workspace -Engine $engine -BuildResultPath $BuildResultPath -RequiredModules $requiredModules
     $exe=Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor.exe'
-    $args=@($project,$startupURL,'-game')
+    $args=@($project,$startupURL)
+    if($executionSelection.UseGameFlag){$args+='-game'}
 } else {
     # Editor证据不能证明另一个Client可执行文件；在有Client产物绑定门禁前明确拒绝，禁止偷用旧exe。
     throw 'Client发布产物绑定证据尚未实现；当前仅允许匹配完整Editor证据的EditorGame，不自动构建。'
@@ -104,7 +122,6 @@ $afterContentBuild=Assert-FoundationEditorBuildResult -Workspace $workspace -Eng
 foreach($field in @('BuildResultSHA256','InputSHA256','ArtifactSHA256')) { if ($buildProof.$field -cne $afterContentBuild.$field) { throw '启动快照期间源码/产物变化；未启动进程。' } }
 $nativeSavedRoot=Join-Path $workspace 'Game/Saved'
 $fixture=$null
-if($ManualWorldHost -and -not $ManualFixture){throw 'ManualWorldHost要求ManualFixture隔离UserDir。'}
 if($ManualFixture){
     $fixture=Resolve-PluginDemoManualFixture -Workspace $workspace -RunId $RunId
     if(Test-Path -LiteralPath $fixture.UserDir){throw '拒绝复用已有人工测试宿主目录。'}
@@ -120,8 +137,7 @@ $log=Join-Path $dir 'PluginDemo.log'
 $args+=@('-DBAPluginDemo',"-DBAPluginDemoMap=$map","-DBAPluginDemoLaunchId=$($RunId.ToString('D'))","-DBAPluginDemoContentFingerprint=$($content.SHA256)",'-windowed',"-ResX=$WindowWidth", "-ResY=$WindowHeight",'-nosplash','-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',"-abslog=$log")
 $args+=@($independentPage.Arguments)
 if($fixture){$args+=@($fixture.Arguments)}
-if($ManualGameplayHost){$args+=@(Get-PluginDemoHostFlags GameplayHost)}
-elseif($ManualWorldHost){$args+=@(Get-PluginDemoHostFlags WorldHostLive)}
+$args+=@($executionSelection.Arguments)
 $info=[Diagnostics.ProcessStartInfo]::new()
 $info.FileName=$exe
 $info.WorkingDirectory=Split-Path $exe
@@ -134,7 +150,8 @@ foreach($key in @('DBA_DEV_LOGIN_SECRET','DBA_DEV_TEST_LOGIN_ACCOUNTS_JSON','DIV
 $process=[Diagnostics.Process]::Start($info)
 if (-not $process) { throw '启动插件演示子进程失败。' }
 $started=$process.StartTime.ToUniversalTime()
-$record=[ordered]@{SchemaVersion=1;Kind='PluginDemoControlledLaunch';RunId=$RunId.ToString('D');Mode='DBAPluginDemo';Target=$Target;PluginId=$independentPage.PluginId;ManualFixture=[bool]$ManualFixture;ManualWorldHost=[bool]$ManualWorldHost;ManualGameplayHost=[bool]$ManualGameplayHost;StartupURL=$startupURL;ExpectedNativeSavedRoot=$nativeSavedRoot;PID=$process.Id;Map=$map;EngineOrClientExe=$exe;Log=$log;StartedUtc=$started.ToString('o');Arguments=$args;BuildEvidence=$buildProof;ManifestSHA256=$manifest.SHA256;ContentSHA256=$content.SHA256;ContentSnapshot=$contentFile;HumanReview='Deferred'}
+$record=[ordered]@{SchemaVersion=1;Kind='PluginDemoControlledLaunch';RunId=$RunId.ToString('D');Mode='DBAPluginDemo';Target=$Target;PluginId=$independentPage.PluginId;ManualFixture=[bool]$ManualFixture;ManualWorldHost=[bool]$ManualWorldHost;ManualGameplayHost=[bool]$ManualGameplayHost;ManualEditorFixture=[bool]$executionSelection.ManualEditorFixture;StartupURL=$startupURL;ExpectedNativeSavedRoot=$nativeSavedRoot;PID=$process.Id;Map=$map;EngineOrClientExe=$exe;Log=$log;StartedUtc=$started.ToString('o');Arguments=$args;BuildEvidence=$buildProof;ManifestSHA256=$manifest.SHA256;ContentSHA256=$content.SHA256;ContentSnapshot=$contentFile;HumanReview='Deferred'}
+if($executionSelection.ManualEditorFixture){$record['EditorInstruction']='在本开发Hub使用单人Standalone网络模式启动PIE；Editor功能必须处于真实PIE，不能用-game替代。'}
 try {
     $null=Save-PluginDemoEvidenceJson -Root $originRoot -Relative 'Launch.json' -Value $record
     $null=Save-PluginDemoEvidenceJson -Root $dir -Relative 'Launch.json' -Value $record

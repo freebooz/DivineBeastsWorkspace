@@ -644,9 +644,9 @@
       "feature_id": "BlueprintAutoLayout.group",
       "plugin_id": "BlueprintAutoLayout",
       "title": "布局并自动分组注释",
-      "purpose": "人工测试范围：布局并自动分组注释\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：选Auto Layout & Group Graph，检查按事件/函数子树分组\n失败/非法输入：检查重复执行不无意义堆叠注释；Undo恢复\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"CommentColorMode KeywordSemantic/CyclingPalette\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。",
+      "purpose": "人工测试范围：布局并自动分组注释\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：选Auto Layout & Group Graph，检查按事件/函数子树分组\n失败/非法输入：检查重复执行不无意义堆叠注释；Undo恢复\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"CommentColorMode KeywordSemantic/CyclingPalette\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。\nT06候选接线：真实Editor单人PIE+排他资源租约；九组供应商公开窄桥与当前原实现。NOT_COMPILED/NOT_EXECUTED；未集成/原生运行/人工签收不计完成。\n清理：精确设置CAS、当前本Run事务才允许显式Undo，不自动撤销用户后继事务；冲突保留原资源供重试。键位只读检查，不能计人工按键通过。\nT06 Fix1候选：Owner精确Transient图PIE资格贯穿捕获/规划/Apply，Editor作用域保留失败清理；正常/取消/失败原生回归严格区分。仍NOT_COMPILED/NOT_EXECUTED/NOT_REVIEWED。",
       "implementation_status": "partial",
-      "integration_status": "unregistered",
+      "integration_status": "registered",
       "run_status": "idle",
       "review_status": "not_reviewed",
       "owner_path": "Game/Plugins/ThirdParty/Editor/BlueprintAutoLayout",
@@ -656,15 +656,17 @@
           "symbol": "ExecuteLayoutAndGroupOnGraph"
         }
       ],
-      "scenario_ids": []
+      "scenario_ids": [
+        "BlueprintAutoLayout.group.Manual"
+      ]
     },
     {
       "feature_id": "BlueprintAutoLayout.route",
       "plugin_id": "BlueprintAutoLayout",
       "title": "布局绕线及分组绕线",
-      "purpose": "人工测试范围：布局绕线及分组绕线\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：分别执行Route Wires和Group & Route，检查障碍绕行和重跑幂等\n失败/非法输入：真实增加knot必须保持连接语义；无异步取消API，不显示假Stop\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"WireHandling;long-edge knots;layered engine\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。",
+      "purpose": "人工测试范围：布局绕线及分组绕线\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：分别执行Route Wires和Group & Route，检查障碍绕行和重跑幂等\n失败/非法输入：真实增加knot必须保持连接语义；无异步取消API，不显示假Stop\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"WireHandling;long-edge knots;layered engine\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。\nT06候选接线：真实Editor单人PIE+排他资源租约；九组供应商公开窄桥与当前原实现。NOT_COMPILED/NOT_EXECUTED；未集成/原生运行/人工签收不计完成。\n清理：精确设置CAS、当前本Run事务才允许显式Undo，不自动撤销用户后继事务；冲突保留原资源供重试。键位只读检查，不能计人工按键通过。\nT06 Fix1候选：Owner精确Transient图PIE资格贯穿捕获/规划/Apply，Editor作用域保留失败清理；正常/取消/失败原生回归严格区分。仍NOT_COMPILED/NOT_EXECUTED/NOT_REVIEWED。",
       "implementation_status": "partial",
-      "integration_status": "unregistered",
+      "integration_status": "registered",
       "run_status": "idle",
       "review_status": "not_reviewed",
       "owner_path": "Game/Plugins/ThirdParty/Editor/BlueprintAutoLayout",
@@ -674,15 +676,17 @@
           "symbol": "LayoutGroupAndRouteGraph"
         }
       ],
-      "scenario_ids": []
+      "scenario_ids": [
+        "BlueprintAutoLayout.route.Manual"
+      ]
     },
     {
       "feature_id": "BlueprintAutoLayout.selected",
       "plugin_id": "BlueprintAutoLayout",
       "title": "仅布局选中节点",
-      "purpose": "人工测试范围：仅布局选中节点\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：选择节点后Auto Layout Selected或Ctrl/Cmd+Shift+K\n失败/非法输入：无选择禁用；核对未选节点与连接保持\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"SelectedNodes;Graph\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。",
+      "purpose": "人工测试范围：仅布局选中节点\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：选择节点后Auto Layout Selected或Ctrl/Cmd+Shift+K\n失败/非法输入：无选择禁用；核对未选节点与连接保持\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"SelectedNodes;Graph\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。\nT06候选接线：真实Editor单人PIE+排他资源租约；九组供应商公开窄桥与当前原实现。NOT_COMPILED/NOT_EXECUTED；未集成/原生运行/人工签收不计完成。\n清理：精确设置CAS、当前本Run事务才允许显式Undo，不自动撤销用户后继事务；冲突保留原资源供重试。键位只读检查，不能计人工按键通过。\nT06 Fix1候选：Owner精确Transient图PIE资格贯穿捕获/规划/Apply，Editor作用域保留失败清理；正常/取消/失败原生回归严格区分。仍NOT_COMPILED/NOT_EXECUTED/NOT_REVIEWED。",
       "implementation_status": "partial",
-      "integration_status": "unregistered",
+      "integration_status": "registered",
       "run_status": "idle",
       "review_status": "not_reviewed",
       "owner_path": "Game/Plugins/ThirdParty/Editor/BlueprintAutoLayout",
@@ -692,15 +696,17 @@
           "symbol": "ExecuteLayoutSelectedOnGraph"
         }
       ],
-      "scenario_ids": []
+      "scenario_ids": [
+        "BlueprintAutoLayout.selected.Manual"
+      ]
     },
     {
       "feature_id": "BlueprintAutoLayout.settings",
       "plugin_id": "BlueprintAutoLayout",
       "title": "布局引擎、间距、连线与键位配置",
-      "purpose": "人工测试范围：布局引擎、间距、连线与键位配置\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：Editor Preferences > Plugins > Blueprint Anti-Pasta配置后重试测试图\n失败/非法输入：间距约束读取UPROPERTY;配置与图变化各自恢复；快捷键可即时重绑\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"bUseLayeredEngine=true;bMaterializeLongEdges=true;WireHandling;StraightenMaxNudge0..600默认120;H/V默认110/44\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。",
+      "purpose": "人工测试范围：布局引擎、间距、连线与键位配置\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：Editor Preferences > Plugins > Blueprint Anti-Pasta配置后重试测试图\n失败/非法输入：间距约束读取UPROPERTY;配置与图变化各自恢复；快捷键可即时重绑\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"bUseLayeredEngine=true;bMaterializeLongEdges=true;WireHandling;StraightenMaxNudge0..600默认120;H/V默认110/44\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。\nT06候选接线：真实Editor单人PIE+排他资源租约；九组供应商公开窄桥与当前原实现。NOT_COMPILED/NOT_EXECUTED；未集成/原生运行/人工签收不计完成。\n清理：精确设置CAS、当前本Run事务才允许显式Undo，不自动撤销用户后继事务；冲突保留原资源供重试。键位只读检查，不能计人工按键通过。\nT06 Fix1候选：Owner精确Transient图PIE资格贯穿捕获/规划/Apply，Editor作用域保留失败清理；正常/取消/失败原生回归严格区分。仍NOT_COMPILED/NOT_EXECUTED/NOT_REVIEWED。",
       "implementation_status": "partial",
-      "integration_status": "unregistered",
+      "integration_status": "registered",
       "run_status": "idle",
       "review_status": "not_reviewed",
       "owner_path": "Game/Plugins/ThirdParty/Editor/BlueprintAutoLayout",
@@ -710,15 +716,17 @@
           "symbol": "UBlueprintAutoLayoutSettings"
         }
       ],
-      "scenario_ids": []
+      "scenario_ids": [
+        "BlueprintAutoLayout.settings.Manual"
+      ]
     },
     {
       "feature_id": "BlueprintAutoLayout.whole",
       "plugin_id": "BlueprintAutoLayout",
       "title": "整图自动布局与快捷键",
-      "purpose": "人工测试范围：整图自动布局与快捷键\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：活动Blueprint图右键/工具栏Auto Layout Graph或Ctrl/Cmd+Shift+L\n失败/非法输入：非K2/无焦点/无Graph保持禁用；不支持运行时客户端\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"Graph;StartX/StartY;选中锚点政策以真实实现为准\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。",
+      "purpose": "人工测试范围：整图自动布局与快捷键\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：活动Blueprint图右键/工具栏Auto Layout Graph或Ctrl/Cmd+Shift+L\n失败/非法输入：非K2/无焦点/无Graph保持禁用；不支持运行时客户端\n取消：同步事务无公开异步取消API；执行前返回或完成后Undo，不显示假Stop\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"Graph;StartX/StartY;选中锚点政策以真实实现为准\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。\nT06候选接线：真实Editor单人PIE+排他资源租约；九组供应商公开窄桥与当前原实现。NOT_COMPILED/NOT_EXECUTED；未集成/原生运行/人工签收不计完成。\n清理：精确设置CAS、当前本Run事务才允许显式Undo，不自动撤销用户后继事务；冲突保留原资源供重试。键位只读检查，不能计人工按键通过。\nT06 Fix1候选：Owner精确Transient图PIE资格贯穿捕获/规划/Apply，Editor作用域保留失败清理；正常/取消/失败原生回归严格区分。仍NOT_COMPILED/NOT_EXECUTED/NOT_REVIEWED。",
       "implementation_status": "partial",
-      "integration_status": "unregistered",
+      "integration_status": "registered",
       "run_status": "idle",
       "review_status": "not_reviewed",
       "owner_path": "Game/Plugins/ThirdParty/Editor/BlueprintAutoLayout",
@@ -728,7 +736,9 @@
           "symbol": "ExecuteLayoutOnGraph"
         }
       ],
-      "scenario_ids": []
+      "scenario_ids": [
+        "BlueprintAutoLayout.whole.Manual"
+      ]
     },
     {
       "feature_id": "DBAArena.eligibility",
@@ -7744,9 +7754,9 @@
       "feature_id": "GlooPrint.cancelundo",
       "plugin_id": "GlooPrint",
       "title": "分片排版取消与单步撤销",
-      "purpose": "人工测试范围：分片排版取消与单步撤销\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：在较大隔离图排版进度中按Cancel，再成功排版后Undo\n失败/非法输入：取消/图改变保持原图；一次Undo恢复；不承诺大图耗时达标\n取消：进度Cancel；原图不变；旧任务不回写\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"图/选中/显示代次;本次任务身份\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。",
+      "purpose": "人工测试范围：分片排版取消与单步撤销\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：在较大隔离图排版进度中按Cancel，再成功排版后Undo\n失败/非法输入：取消/图改变保持原图；一次Undo恢复；不承诺大图耗时达标\n取消：进度Cancel；原图不变；旧任务不回写\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"图/选中/显示代次;本次任务身份\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。\nT06候选接线：真实Editor单人PIE+排他资源租约；九组供应商公开窄桥与当前原实现。NOT_COMPILED/NOT_EXECUTED；未集成/原生运行/人工签收不计完成。\n清理：精确设置CAS、当前本Run事务才允许显式Undo，不自动撤销用户后继事务；冲突保留原资源供重试。键位只读检查，不能计人工按键通过。\nT06 Fix1候选：Owner精确Transient图PIE资格贯穿捕获/规划/Apply，Editor作用域保留失败清理；正常/取消/失败原生回归严格区分。仍NOT_COMPILED/NOT_EXECUTED/NOT_REVIEWED。",
       "implementation_status": "partial",
-      "integration_status": "unregistered",
+      "integration_status": "registered",
       "run_status": "idle",
       "review_status": "not_reviewed",
       "owner_path": "Game/Plugins/ThirdParty/Editor/GlooPrint",
@@ -7756,15 +7766,17 @@
           "symbol": "CancelPending"
         }
       ],
-      "scenario_ids": []
+      "scenario_ids": [
+        "GlooPrint.cancelundo.Manual"
+      ]
     },
     {
       "feature_id": "GlooPrint.format",
       "plugin_id": "GlooPrint",
       "title": "蓝图/材质整图排版与锚点保留",
-      "purpose": "人工测试范围：蓝图/材质整图排版与锚点保留\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：在可编辑Blueprint/Material图中选锚点，按F或右键GlooPrint > Format Graph\n失败/非法输入：不支持PoseGraph/Niagara/ControlRig/行为树；无活动图/只读图拒绝\n取消：进度Cancel；原图不变；旧任务不回写\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"完整活动图含断开群;选中节点固定;布局间距/注释padding\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。",
+      "purpose": "人工测试范围：蓝图/材质整图排版与锚点保留\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：在可编辑Blueprint/Material图中选锚点，按F或右键GlooPrint > Format Graph\n失败/非法输入：不支持PoseGraph/Niagara/ControlRig/行为树；无活动图/只读图拒绝\n取消：进度Cancel；原图不变；旧任务不回写\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"完整活动图含断开群;选中节点固定;布局间距/注释padding\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。\nT06候选接线：真实Editor单人PIE+排他资源租约；九组供应商公开窄桥与当前原实现。NOT_COMPILED/NOT_EXECUTED；未集成/原生运行/人工签收不计完成。\n清理：精确设置CAS、当前本Run事务才允许显式Undo，不自动撤销用户后继事务；冲突保留原资源供重试。键位只读检查，不能计人工按键通过。\nT06 Fix1候选：Owner精确Transient图PIE资格贯穿捕获/规划/Apply，Editor作用域保留失败清理；正常/取消/失败原生回归严格区分。仍NOT_COMPILED/NOT_EXECUTED/NOT_REVIEWED。",
       "implementation_status": "partial",
-      "integration_status": "unregistered",
+      "integration_status": "registered",
       "run_status": "idle",
       "review_status": "not_reviewed",
       "owner_path": "Game/Plugins/ThirdParty/Editor/GlooPrint",
@@ -7774,15 +7786,17 @@
           "symbol": "FormatGraph"
         }
       ],
-      "scenario_ids": []
+      "scenario_ids": [
+        "GlooPrint.format.Manual"
+      ]
     },
     {
       "feature_id": "GlooPrint.settings",
       "plugin_id": "GlooPrint",
       "title": "编辑器配置与快捷键",
-      "purpose": "人工测试范围：编辑器配置与快捷键\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：Editor Preferences > Plugins > GlooPrint调设置并重绑快捷键\n失败/非法输入：保存测试配置；快捷键冲突与另一个格式插件不能同时抢入口\n取消：进度Cancel；原图不变；旧任务不回写\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"bFormattingEnabled;H/V间距16..2048默认96/48;CommentPadding8..512默认32\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。",
+      "purpose": "人工测试范围：编辑器配置与快捷键\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：Editor Preferences > Plugins > GlooPrint调设置并重绑快捷键\n失败/非法输入：保存测试配置；快捷键冲突与另一个格式插件不能同时抢入口\n取消：进度Cancel；原图不变；旧任务不回写\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"bFormattingEnabled;H/V间距16..2048默认96/48;CommentPadding8..512默认32\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。\nT06候选接线：真实Editor单人PIE+排他资源租约；九组供应商公开窄桥与当前原实现。NOT_COMPILED/NOT_EXECUTED；未集成/原生运行/人工签收不计完成。\n清理：精确设置CAS、当前本Run事务才允许显式Undo，不自动撤销用户后继事务；冲突保留原资源供重试。键位只读检查，不能计人工按键通过。\nT06 Fix1候选：Owner精确Transient图PIE资格贯穿捕获/规划/Apply，Editor作用域保留失败清理；正常/取消/失败原生回归严格区分。仍NOT_COMPILED/NOT_EXECUTED/NOT_REVIEWED。",
       "implementation_status": "partial",
-      "integration_status": "unregistered",
+      "integration_status": "registered",
       "run_status": "idle",
       "review_status": "not_reviewed",
       "owner_path": "Game/Plugins/ThirdParty/Editor/GlooPrint",
@@ -7792,15 +7806,17 @@
           "symbol": "HorizontalSpacing"
         }
       ],
-      "scenario_ids": []
+      "scenario_ids": [
+        "GlooPrint.settings.Manual"
+      ]
     },
     {
       "feature_id": "GlooPrint.wires",
       "plugin_id": "GlooPrint",
       "title": "三种连线样式、缩放和交互",
-      "purpose": "人工测试范围：三种连线样式、缩放和交互\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：首选项切Rounded90/Diagonal45/Native，悬停/拖动/缩放与双击插普通reroute\n失败/非法输入：遮挡/重叠路由有局限；不得改变连接与默认值\n取消：进度Cancel；原图不变；旧任务不回写\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"WireStyle;引脚颜色/执行高亮;双击可见wire\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。",
+      "purpose": "人工测试范围：三种连线样式、缩放和交互\n预期：观察真实事件/场景/声音；受理、Ready与完成分别记录\n正常操作：首选项切Rounded90/Diagonal45/Native，悬停/拖动/缩放与双击插普通reroute\n失败/非法输入：遮挡/重叠路由有局限；不得改变连接与默认值\n取消：进度Cancel；原图不变；旧任务不回写\n清理：隔离图Undo并恢复本次首选项/键位；不关闭编辑器\n参数合同：{\"rangePolicy\": \"实际类型/Definition校验；未定义数值范围不猜测\", \"editable\": true, \"contract\": \"WireStyle;引脚颜色/执行高亮;双击可见wire\"}\n接线状态/缺口：需Editor桥接；ClientOnly不能链接Editor；ThirdParty现不被中心发现\n当前为源码/内容盘点，真实操作接线、原生运行与人工签收分开核验；缺服务不得伪造成功。\nT06候选接线：真实Editor单人PIE+排他资源租约；九组供应商公开窄桥与当前原实现。NOT_COMPILED/NOT_EXECUTED；未集成/原生运行/人工签收不计完成。\n清理：精确设置CAS、当前本Run事务才允许显式Undo，不自动撤销用户后继事务；冲突保留原资源供重试。键位只读检查，不能计人工按键通过。\nT06 Fix1候选：Owner精确Transient图PIE资格贯穿捕获/规划/Apply，Editor作用域保留失败清理；正常/取消/失败原生回归严格区分。仍NOT_COMPILED/NOT_EXECUTED/NOT_REVIEWED。",
       "implementation_status": "partial",
-      "integration_status": "unregistered",
+      "integration_status": "registered",
       "run_status": "idle",
       "review_status": "not_reviewed",
       "owner_path": "Game/Plugins/ThirdParty/Editor/GlooPrint",
@@ -7810,7 +7826,9 @@
           "symbol": "WireStyle"
         }
       ],
-      "scenario_ids": []
+      "scenario_ids": [
+        "GlooPrint.wires.Manual"
+      ]
     },
     {
       "feature_id": "MobaPresentation.context",
@@ -29228,7 +29246,7 @@
         {
           "parameter_id": "InputTag",
           "type": "identifier",
-          "default_value": "Platform.Ability.Input.DemoManual",
+          "default_value": "Platform.Ability.Input.TestServer",
           "minimum": 0,
           "maximum": 0,
           "unit": "cm/s/秒或标识，见说明",
@@ -30384,6 +30402,847 @@
       ],
       "review_case_ids": [
         "GamePlatformQuest.tracking.Manual.Review"
+      ]
+    },
+    {
+      "scenario_id": "BlueprintAutoLayout.whole.Manual",
+      "feature_id": "BlueprintAutoLayout.whole",
+      "title": "整图自动布局与快捷键：原生Editor人工操作",
+      "related_feature_ids": [],
+      "adapter_id": "EditorManual.BlueprintAutoLayout.whole",
+      "template": "GameplaySandbox",
+      "run_mode": "editor",
+      "targets": [
+        "Editor"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "BlueprintAutoLayout",
+        "GamePlatformDeveloperTools",
+        "GamePlatformData",
+        "GamePlatformUI"
+      ],
+      "preconditions": [
+        "正常Development Editor打开本工程精确Hub；DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+GamePlatformManualEditorFixture",
+        "引擎真实单人Standalone网络PIE/GI/LP；非-game、非Commandlet、非多客户端PIE，无FoundationWorld/DBAManualWorldHost/GameplayManualNative/WorldManualNative混用",
+        "T06已按完整Source/Base集成并真实构建；只操作本Run原生Blueprint/Material图，不操作用户已有资源",
+        "设置/事务/全局Editor资源精确拥有；外部后继冲突明确失败并保留，Stop可重试；快捷键注册链与人工键盘验收分开",
+        "旧World退出清理失败时，新真实单人Editor PIE可Prepare进入只读恢复模式；通过现有操作下拉执行观察/重试/明确保留外部设置，成功后Stop再Prepare操作新图。"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+      "definition_assets": [],
+      "operations": [
+        "CreateGraph",
+        "Snapshot",
+        "SelectAnchors",
+        "ClearSelection",
+        "InspectShortcuts",
+        "Undo",
+        "Reset",
+        "Stop",
+        "LayoutWhole",
+        "InspectPendingCleanup",
+        "RetryPendingCleanup",
+        "PreserveExternalAndRetry"
+      ],
+      "operation_labels": {
+        "CreateGraph": "创建本Run原生图样板",
+        "Snapshot": "读取真实图与设置快照",
+        "SelectAnchors": "选择样板锚点",
+        "ClearSelection": "清空真实选择",
+        "InspectShortcuts": "检查真实命令和活跃键位注册链",
+        "Undo": "仅撤销当前本Run事务",
+        "Reset": "清理本图并精确恢复设置",
+        "Stop": "停止并精确释放Editor租约",
+        "LayoutWhole": "调用供应商整图布局",
+        "InspectPendingCleanup": "观察Editor挂起清理身份",
+        "RetryPendingCleanup": "重试原身份清理",
+        "PreserveExternalAndRetry": "明确保留外部设置并完成清理"
+      },
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 15,
+      "parameters": [],
+      "review_case_ids": [
+        "BlueprintAutoLayout.whole.Manual.Review"
+      ]
+    },
+    {
+      "scenario_id": "BlueprintAutoLayout.selected.Manual",
+      "feature_id": "BlueprintAutoLayout.selected",
+      "title": "仅布局选中节点：原生Editor人工操作",
+      "related_feature_ids": [],
+      "adapter_id": "EditorManual.BlueprintAutoLayout.selected",
+      "template": "GameplaySandbox",
+      "run_mode": "editor",
+      "targets": [
+        "Editor"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "BlueprintAutoLayout",
+        "GamePlatformDeveloperTools",
+        "GamePlatformData",
+        "GamePlatformUI"
+      ],
+      "preconditions": [
+        "正常Development Editor打开本工程精确Hub；DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+GamePlatformManualEditorFixture",
+        "引擎真实单人Standalone网络PIE/GI/LP；非-game、非Commandlet、非多客户端PIE，无FoundationWorld/DBAManualWorldHost/GameplayManualNative/WorldManualNative混用",
+        "T06已按完整Source/Base集成并真实构建；只操作本Run原生Blueprint/Material图，不操作用户已有资源",
+        "设置/事务/全局Editor资源精确拥有；外部后继冲突明确失败并保留，Stop可重试；快捷键注册链与人工键盘验收分开",
+        "旧World退出清理失败时，新真实单人Editor PIE可Prepare进入只读恢复模式；通过现有操作下拉执行观察/重试/明确保留外部设置，成功后Stop再Prepare操作新图。"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+      "definition_assets": [],
+      "operations": [
+        "CreateGraph",
+        "Snapshot",
+        "SelectAnchors",
+        "ClearSelection",
+        "InspectShortcuts",
+        "Undo",
+        "Reset",
+        "Stop",
+        "LayoutSelected",
+        "InspectPendingCleanup",
+        "RetryPendingCleanup",
+        "PreserveExternalAndRetry"
+      ],
+      "operation_labels": {
+        "CreateGraph": "创建本Run原生图样板",
+        "Snapshot": "读取真实图与设置快照",
+        "SelectAnchors": "选择样板锚点",
+        "ClearSelection": "清空真实选择",
+        "InspectShortcuts": "检查真实命令和活跃键位注册链",
+        "Undo": "仅撤销当前本Run事务",
+        "Reset": "清理本图并精确恢复设置",
+        "Stop": "停止并精确释放Editor租约",
+        "LayoutSelected": "调用供应商选中布局",
+        "InspectPendingCleanup": "观察Editor挂起清理身份",
+        "RetryPendingCleanup": "重试原身份清理",
+        "PreserveExternalAndRetry": "明确保留外部设置并完成清理"
+      },
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 15,
+      "parameters": [],
+      "review_case_ids": [
+        "BlueprintAutoLayout.selected.Manual.Review"
+      ]
+    },
+    {
+      "scenario_id": "BlueprintAutoLayout.group.Manual",
+      "feature_id": "BlueprintAutoLayout.group",
+      "title": "布局并自动分组注释：原生Editor人工操作",
+      "related_feature_ids": [],
+      "adapter_id": "EditorManual.BlueprintAutoLayout.group",
+      "template": "GameplaySandbox",
+      "run_mode": "editor",
+      "targets": [
+        "Editor"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "BlueprintAutoLayout",
+        "GamePlatformDeveloperTools",
+        "GamePlatformData",
+        "GamePlatformUI"
+      ],
+      "preconditions": [
+        "正常Development Editor打开本工程精确Hub；DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+GamePlatformManualEditorFixture",
+        "引擎真实单人Standalone网络PIE/GI/LP；非-game、非Commandlet、非多客户端PIE，无FoundationWorld/DBAManualWorldHost/GameplayManualNative/WorldManualNative混用",
+        "T06已按完整Source/Base集成并真实构建；只操作本Run原生Blueprint/Material图，不操作用户已有资源",
+        "设置/事务/全局Editor资源精确拥有；外部后继冲突明确失败并保留，Stop可重试；快捷键注册链与人工键盘验收分开",
+        "旧World退出清理失败时，新真实单人Editor PIE可Prepare进入只读恢复模式；通过现有操作下拉执行观察/重试/明确保留外部设置，成功后Stop再Prepare操作新图。"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+      "definition_assets": [],
+      "operations": [
+        "CreateGraph",
+        "Snapshot",
+        "SelectAnchors",
+        "ClearSelection",
+        "InspectShortcuts",
+        "Undo",
+        "Reset",
+        "Stop",
+        "LayoutGroup",
+        "InspectPendingCleanup",
+        "RetryPendingCleanup",
+        "PreserveExternalAndRetry"
+      ],
+      "operation_labels": {
+        "CreateGraph": "创建本Run原生图样板",
+        "Snapshot": "读取真实图与设置快照",
+        "SelectAnchors": "选择样板锚点",
+        "ClearSelection": "清空真实选择",
+        "InspectShortcuts": "检查真实命令和活跃键位注册链",
+        "Undo": "仅撤销当前本Run事务",
+        "Reset": "清理本图并精确恢复设置",
+        "Stop": "停止并精确释放Editor租约",
+        "LayoutGroup": "调用供应商注释分组",
+        "InspectPendingCleanup": "观察Editor挂起清理身份",
+        "RetryPendingCleanup": "重试原身份清理",
+        "PreserveExternalAndRetry": "明确保留外部设置并完成清理"
+      },
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 15,
+      "parameters": [],
+      "review_case_ids": [
+        "BlueprintAutoLayout.group.Manual.Review"
+      ]
+    },
+    {
+      "scenario_id": "BlueprintAutoLayout.route.Manual",
+      "feature_id": "BlueprintAutoLayout.route",
+      "title": "布局绕线及分组绕线：原生Editor人工操作",
+      "related_feature_ids": [],
+      "adapter_id": "EditorManual.BlueprintAutoLayout.route",
+      "template": "GameplaySandbox",
+      "run_mode": "editor",
+      "targets": [
+        "Editor"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "BlueprintAutoLayout",
+        "GamePlatformDeveloperTools",
+        "GamePlatformData",
+        "GamePlatformUI"
+      ],
+      "preconditions": [
+        "正常Development Editor打开本工程精确Hub；DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+GamePlatformManualEditorFixture",
+        "引擎真实单人Standalone网络PIE/GI/LP；非-game、非Commandlet、非多客户端PIE，无FoundationWorld/DBAManualWorldHost/GameplayManualNative/WorldManualNative混用",
+        "T06已按完整Source/Base集成并真实构建；只操作本Run原生Blueprint/Material图，不操作用户已有资源",
+        "设置/事务/全局Editor资源精确拥有；外部后继冲突明确失败并保留，Stop可重试；快捷键注册链与人工键盘验收分开",
+        "旧World退出清理失败时，新真实单人Editor PIE可Prepare进入只读恢复模式；通过现有操作下拉执行观察/重试/明确保留外部设置，成功后Stop再Prepare操作新图。"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+      "definition_assets": [],
+      "operations": [
+        "CreateGraph",
+        "Snapshot",
+        "SelectAnchors",
+        "ClearSelection",
+        "InspectShortcuts",
+        "Undo",
+        "Reset",
+        "Stop",
+        "LayoutRoute",
+        "LayoutGroupRoute",
+        "InspectPendingCleanup",
+        "RetryPendingCleanup",
+        "PreserveExternalAndRetry"
+      ],
+      "operation_labels": {
+        "CreateGraph": "创建本Run原生图样板",
+        "Snapshot": "读取真实图与设置快照",
+        "SelectAnchors": "选择样板锚点",
+        "ClearSelection": "清空真实选择",
+        "InspectShortcuts": "检查真实命令和活跃键位注册链",
+        "Undo": "仅撤销当前本Run事务",
+        "Reset": "清理本图并精确恢复设置",
+        "Stop": "停止并精确释放Editor租约",
+        "LayoutRoute": "调用供应商连线路由",
+        "LayoutGroupRoute": "调用供应商分组并路由",
+        "InspectPendingCleanup": "观察Editor挂起清理身份",
+        "RetryPendingCleanup": "重试原身份清理",
+        "PreserveExternalAndRetry": "明确保留外部设置并完成清理"
+      },
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 15,
+      "parameters": [],
+      "review_case_ids": [
+        "BlueprintAutoLayout.route.Manual.Review"
+      ]
+    },
+    {
+      "scenario_id": "BlueprintAutoLayout.settings.Manual",
+      "feature_id": "BlueprintAutoLayout.settings",
+      "title": "布局引擎、间距、连线与键位配置：原生Editor人工操作",
+      "related_feature_ids": [],
+      "adapter_id": "EditorManual.BlueprintAutoLayout.settings",
+      "template": "GameplaySandbox",
+      "run_mode": "editor",
+      "targets": [
+        "Editor"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "BlueprintAutoLayout",
+        "GamePlatformDeveloperTools",
+        "GamePlatformData",
+        "GamePlatformUI"
+      ],
+      "preconditions": [
+        "正常Development Editor打开本工程精确Hub；DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+GamePlatformManualEditorFixture",
+        "引擎真实单人Standalone网络PIE/GI/LP；非-game、非Commandlet、非多客户端PIE，无FoundationWorld/DBAManualWorldHost/GameplayManualNative/WorldManualNative混用",
+        "T06已按完整Source/Base集成并真实构建；只操作本Run原生Blueprint/Material图，不操作用户已有资源",
+        "设置/事务/全局Editor资源精确拥有；外部后继冲突明确失败并保留，Stop可重试；快捷键注册链与人工键盘验收分开",
+        "旧World退出清理失败时，新真实单人Editor PIE可Prepare进入只读恢复模式；通过现有操作下拉执行观察/重试/明确保留外部设置，成功后Stop再Prepare操作新图。"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+      "definition_assets": [],
+      "operations": [
+        "CreateGraph",
+        "Snapshot",
+        "SelectAnchors",
+        "ClearSelection",
+        "InspectShortcuts",
+        "Undo",
+        "Reset",
+        "Stop",
+        "ApplySettings",
+        "LayoutWhole",
+        "InspectPendingCleanup",
+        "RetryPendingCleanup",
+        "PreserveExternalAndRetry"
+      ],
+      "operation_labels": {
+        "CreateGraph": "创建本Run原生图样板",
+        "Snapshot": "读取真实图与设置快照",
+        "SelectAnchors": "选择样板锚点",
+        "ClearSelection": "清空真实选择",
+        "InspectShortcuts": "检查真实命令和活跃键位注册链",
+        "Undo": "仅撤销当前本Run事务",
+        "Reset": "清理本图并精确恢复设置",
+        "Stop": "停止并精确释放Editor租约",
+        "ApplySettings": "应用有界供应商设置",
+        "LayoutWhole": "调用供应商整图布局",
+        "InspectPendingCleanup": "观察Editor挂起清理身份",
+        "RetryPendingCleanup": "重试原身份清理",
+        "PreserveExternalAndRetry": "明确保留外部设置并完成清理"
+      },
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 15,
+      "parameters": [
+        {
+          "parameter_id": "HorizontalSpacing",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 110,
+          "minimum": 0,
+          "maximum": 1000,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "VerticalSpacing",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 44,
+          "minimum": 0,
+          "maximum": 1000,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "WireHandling",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 0,
+          "minimum": 0,
+          "maximum": 2,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "CommentColor",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 0,
+          "minimum": 0,
+          "maximum": 1,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Layered",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "LongEdges",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Straighten",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 120,
+          "minimum": 0,
+          "maximum": 600,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "BranchSpacing",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 90,
+          "minimum": 0,
+          "maximum": 1000,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "EventSpacing",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 200,
+          "minimum": 0,
+          "maximum": 2000,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "BlueprintAutoLayout.settings.Manual.Review"
+      ]
+    },
+    {
+      "scenario_id": "GlooPrint.format.Manual",
+      "feature_id": "GlooPrint.format",
+      "title": "蓝图/材质整图排版与锚点保留：原生Editor人工操作",
+      "related_feature_ids": [],
+      "adapter_id": "EditorManual.GlooPrint.format",
+      "template": "GameplaySandbox",
+      "run_mode": "editor",
+      "targets": [
+        "Editor"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GlooPrint",
+        "GamePlatformDeveloperTools",
+        "GamePlatformData",
+        "GamePlatformUI"
+      ],
+      "preconditions": [
+        "正常Development Editor打开本工程精确Hub；DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+GamePlatformManualEditorFixture",
+        "引擎真实单人Standalone网络PIE/GI/LP；非-game、非Commandlet、非多客户端PIE，无FoundationWorld/DBAManualWorldHost/GameplayManualNative/WorldManualNative混用",
+        "T06已按完整Source/Base集成并真实构建；只操作本Run原生Blueprint/Material图，不操作用户已有资源",
+        "设置/事务/全局Editor资源精确拥有；外部后继冲突明确失败并保留，Stop可重试；快捷键注册链与人工键盘验收分开",
+        "旧World退出清理失败时，新真实单人Editor PIE可Prepare进入只读恢复模式；通过现有操作下拉执行观察/重试/明确保留外部设置，成功后Stop再Prepare操作新图。"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+      "definition_assets": [],
+      "operations": [
+        "CreateGraph",
+        "Snapshot",
+        "SelectAnchors",
+        "ClearSelection",
+        "InspectShortcuts",
+        "Undo",
+        "Reset",
+        "Stop",
+        "QueueFormat",
+        "CancelFormat",
+        "InspectPendingCleanup",
+        "RetryPendingCleanup",
+        "PreserveExternalAndRetry"
+      ],
+      "operation_labels": {
+        "CreateGraph": "创建本Run原生图样板",
+        "Snapshot": "读取真实图与设置快照",
+        "SelectAnchors": "选择样板锚点",
+        "ClearSelection": "清空真实选择",
+        "InspectShortcuts": "检查真实命令和活跃键位注册链",
+        "Undo": "仅撤销当前本Run事务",
+        "Reset": "清理本图并精确恢复设置",
+        "Stop": "停止并精确释放Editor租约",
+        "QueueFormat": "提交供应商真实分片格式化",
+        "CancelFormat": "取消本Run精确请求",
+        "InspectPendingCleanup": "观察Editor挂起清理身份",
+        "RetryPendingCleanup": "重试原身份清理",
+        "PreserveExternalAndRetry": "明确保留外部设置并完成清理"
+      },
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 15,
+      "parameters": [
+        {
+          "parameter_id": "GraphKind",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 0,
+          "minimum": 0,
+          "maximum": 1,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GlooPrint.format.Manual.Review"
+      ]
+    },
+    {
+      "scenario_id": "GlooPrint.wires.Manual",
+      "feature_id": "GlooPrint.wires",
+      "title": "三种连线样式、缩放和交互：原生Editor人工操作",
+      "related_feature_ids": [],
+      "adapter_id": "EditorManual.GlooPrint.wires",
+      "template": "GameplaySandbox",
+      "run_mode": "editor",
+      "targets": [
+        "Editor"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GlooPrint",
+        "GamePlatformDeveloperTools",
+        "GamePlatformData",
+        "GamePlatformUI"
+      ],
+      "preconditions": [
+        "正常Development Editor打开本工程精确Hub；DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+GamePlatformManualEditorFixture",
+        "引擎真实单人Standalone网络PIE/GI/LP；非-game、非Commandlet、非多客户端PIE，无FoundationWorld/DBAManualWorldHost/GameplayManualNative/WorldManualNative混用",
+        "T06已按完整Source/Base集成并真实构建；只操作本Run原生Blueprint/Material图，不操作用户已有资源",
+        "设置/事务/全局Editor资源精确拥有；外部后继冲突明确失败并保留，Stop可重试；快捷键注册链与人工键盘验收分开",
+        "旧World退出清理失败时，新真实单人Editor PIE可Prepare进入只读恢复模式；通过现有操作下拉执行观察/重试/明确保留外部设置，成功后Stop再Prepare操作新图。"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+      "definition_assets": [],
+      "operations": [
+        "CreateGraph",
+        "Snapshot",
+        "SelectAnchors",
+        "ClearSelection",
+        "InspectShortcuts",
+        "Undo",
+        "Reset",
+        "Stop",
+        "QueueFormat",
+        "CancelFormat",
+        "ApplySettings",
+        "InspectPendingCleanup",
+        "RetryPendingCleanup",
+        "PreserveExternalAndRetry"
+      ],
+      "operation_labels": {
+        "CreateGraph": "创建本Run原生图样板",
+        "Snapshot": "读取真实图与设置快照",
+        "SelectAnchors": "选择样板锚点",
+        "ClearSelection": "清空真实选择",
+        "InspectShortcuts": "检查真实命令和活跃键位注册链",
+        "Undo": "仅撤销当前本Run事务",
+        "Reset": "清理本图并精确恢复设置",
+        "Stop": "停止并精确释放Editor租约",
+        "QueueFormat": "提交供应商真实分片格式化",
+        "CancelFormat": "取消本Run精确请求",
+        "ApplySettings": "应用有界供应商设置",
+        "InspectPendingCleanup": "观察Editor挂起清理身份",
+        "RetryPendingCleanup": "重试原身份清理",
+        "PreserveExternalAndRetry": "明确保留外部设置并完成清理"
+      },
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 15,
+      "parameters": [
+        {
+          "parameter_id": "GraphKind",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 0,
+          "minimum": 0,
+          "maximum": 1,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Enabled",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "WireStyle",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 0,
+          "minimum": 0,
+          "maximum": 2,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "HorizontalSpacing",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 96,
+          "minimum": 16,
+          "maximum": 2048,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "VerticalSpacing",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 48,
+          "minimum": 16,
+          "maximum": 2048,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "CommentPadding",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 32,
+          "minimum": 8,
+          "maximum": 512,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GlooPrint.wires.Manual.Review"
+      ]
+    },
+    {
+      "scenario_id": "GlooPrint.settings.Manual",
+      "feature_id": "GlooPrint.settings",
+      "title": "编辑器配置与快捷键：原生Editor人工操作",
+      "related_feature_ids": [],
+      "adapter_id": "EditorManual.GlooPrint.settings",
+      "template": "GameplaySandbox",
+      "run_mode": "editor",
+      "targets": [
+        "Editor"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GlooPrint",
+        "GamePlatformDeveloperTools",
+        "GamePlatformData",
+        "GamePlatformUI"
+      ],
+      "preconditions": [
+        "正常Development Editor打开本工程精确Hub；DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+GamePlatformManualEditorFixture",
+        "引擎真实单人Standalone网络PIE/GI/LP；非-game、非Commandlet、非多客户端PIE，无FoundationWorld/DBAManualWorldHost/GameplayManualNative/WorldManualNative混用",
+        "T06已按完整Source/Base集成并真实构建；只操作本Run原生Blueprint/Material图，不操作用户已有资源",
+        "设置/事务/全局Editor资源精确拥有；外部后继冲突明确失败并保留，Stop可重试；快捷键注册链与人工键盘验收分开",
+        "旧World退出清理失败时，新真实单人Editor PIE可Prepare进入只读恢复模式；通过现有操作下拉执行观察/重试/明确保留外部设置，成功后Stop再Prepare操作新图。"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+      "definition_assets": [],
+      "operations": [
+        "CreateGraph",
+        "Snapshot",
+        "SelectAnchors",
+        "ClearSelection",
+        "InspectShortcuts",
+        "Undo",
+        "Reset",
+        "Stop",
+        "QueueFormat",
+        "CancelFormat",
+        "ApplySettings",
+        "InspectPendingCleanup",
+        "RetryPendingCleanup",
+        "PreserveExternalAndRetry"
+      ],
+      "operation_labels": {
+        "CreateGraph": "创建本Run原生图样板",
+        "Snapshot": "读取真实图与设置快照",
+        "SelectAnchors": "选择样板锚点",
+        "ClearSelection": "清空真实选择",
+        "InspectShortcuts": "检查真实命令和活跃键位注册链",
+        "Undo": "仅撤销当前本Run事务",
+        "Reset": "清理本图并精确恢复设置",
+        "Stop": "停止并精确释放Editor租约",
+        "QueueFormat": "提交供应商真实分片格式化",
+        "CancelFormat": "取消本Run精确请求",
+        "ApplySettings": "应用有界供应商设置",
+        "InspectPendingCleanup": "观察Editor挂起清理身份",
+        "RetryPendingCleanup": "重试原身份清理",
+        "PreserveExternalAndRetry": "明确保留外部设置并完成清理"
+      },
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 15,
+      "parameters": [
+        {
+          "parameter_id": "GraphKind",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 0,
+          "minimum": 0,
+          "maximum": 1,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "Enabled",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "WireStyle",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 0,
+          "minimum": 0,
+          "maximum": 2,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "HorizontalSpacing",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 96,
+          "minimum": 16,
+          "maximum": 2048,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "VerticalSpacing",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 48,
+          "minimum": 16,
+          "maximum": 2048,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        },
+        {
+          "parameter_id": "CommentPadding",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 32,
+          "minimum": 8,
+          "maximum": 512,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GlooPrint.settings.Manual.Review"
+      ]
+    },
+    {
+      "scenario_id": "GlooPrint.cancelundo.Manual",
+      "feature_id": "GlooPrint.cancelundo",
+      "title": "分片排版取消与单步撤销：原生Editor人工操作",
+      "related_feature_ids": [],
+      "adapter_id": "EditorManual.GlooPrint.cancelundo",
+      "template": "GameplaySandbox",
+      "run_mode": "editor",
+      "targets": [
+        "Editor"
+      ],
+      "required_plugins": [
+        "DBAClient",
+        "GlooPrint",
+        "GamePlatformDeveloperTools",
+        "GamePlatformData",
+        "GamePlatformUI"
+      ],
+      "preconditions": [
+        "正常Development Editor打开本工程精确Hub；DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+GamePlatformManualEditorFixture",
+        "引擎真实单人Standalone网络PIE/GI/LP；非-game、非Commandlet、非多客户端PIE，无FoundationWorld/DBAManualWorldHost/GameplayManualNative/WorldManualNative混用",
+        "T06已按完整Source/Base集成并真实构建；只操作本Run原生Blueprint/Material图，不操作用户已有资源",
+        "设置/事务/全局Editor资源精确拥有；外部后继冲突明确失败并保留，Stop可重试；快捷键注册链与人工键盘验收分开",
+        "旧World退出清理失败时，新真实单人Editor PIE可Prepare进入只读恢复模式；通过现有操作下拉执行观察/重试/明确保留外部设置，成功后Stop再Prepare操作新图。"
+      ],
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+      "definition_assets": [],
+      "operations": [
+        "CreateGraph",
+        "Snapshot",
+        "SelectAnchors",
+        "ClearSelection",
+        "InspectShortcuts",
+        "Undo",
+        "Reset",
+        "Stop",
+        "QueueFormat",
+        "CancelFormat",
+        "InspectPendingCleanup",
+        "RetryPendingCleanup",
+        "PreserveExternalAndRetry"
+      ],
+      "operation_labels": {
+        "CreateGraph": "创建本Run原生图样板",
+        "Snapshot": "读取真实图与设置快照",
+        "SelectAnchors": "选择样板锚点",
+        "ClearSelection": "清空真实选择",
+        "InspectShortcuts": "检查真实命令和活跃键位注册链",
+        "Undo": "仅撤销当前本Run事务",
+        "Reset": "清理本图并精确恢复设置",
+        "Stop": "停止并精确释放Editor租约",
+        "QueueFormat": "提交供应商真实分片格式化",
+        "CancelFormat": "取消本Run精确请求",
+        "InspectPendingCleanup": "观察Editor挂起清理身份",
+        "RetryPendingCleanup": "重试原身份清理",
+        "PreserveExternalAndRetry": "明确保留外部设置并完成清理"
+      },
+      "prepare_timeout_seconds": 30,
+      "stop_timeout_seconds": 15,
+      "parameters": [
+        {
+          "parameter_id": "GraphKind",
+          "type": "integer",
+          "unit": "图坐标单位或封闭枚举；GraphKind=0 Blueprint/1 Material；WireStyle=0直角/1斜角/2原生；布尔=0/1",
+          "default_value": 0,
+          "minimum": 0,
+          "maximum": 1,
+          "default_source": "供应商当前设置的公开范围；本Run夹具初值，不写磁盘首选项",
+          "writable": true,
+          "apply_when": "execute"
+        }
+      ],
+      "review_case_ids": [
+        "GlooPrint.cancelundo.Manual.Review"
       ]
     }
   ],
@@ -37152,6 +38011,177 @@
         "Stop；失败保留句柄显式重试；重进重新CreateFixture，确认旧事件不恢复新页；不声明全GI租约为0。"
       ],
       "expected_result": "只对已有真实权威缓存Track/Untrack并恢复初态；Hub空缓存明确失败，不Apply合成权威快照。需要真实Quest来源后才能正常人工追踪。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "BlueprintAutoLayout.whole.Manual.Review",
+      "version": 1,
+      "scenario_id": "BlueprintAutoLayout.whole.Manual",
+      "feature_id": "BlueprintAutoLayout.whole",
+      "steps": [
+        "从现有70页对应固定PluginId入口选择本案例，Prepare读取完整Run/World/设置快照。",
+        "先无图执行核对失败，再创建本Run原生图并按中文按钮执行：创建本Run原生图样板、读取真实图与设置快照、选择样板锚点、清空真实选择、检查真实命令和活跃键位注册链、仅撤销当前本Run事务、清理本图并精确恢复设置、停止并精确释放Editor租约、调用供应商整图布局。",
+        "检查无选择/错误参数/关闭或销毁对象、重复/取消/Undo、设置外部后继及事务后继；快捷键只读注册链不算人工按键通过。",
+        "Stop/Reset；失败保留资源显式重试，重进与World退出检查旧Run事件不恢复页面。",
+        "设置外部后继冲突后EndPIE；新真实单人PIE打开原固定插件页并Prepare，核对完整挂起身份；在操作下拉选择观察/重试/明确保留外部设置并执行。清理成功后Stop再Prepare，验证恢复普通图操作。"
+      ],
+      "expected_result": "实际供应商原函数/事务/设置通知产生可观察结果；本RunBlueprint/Material原生窗口可操作。受理、异步终态、原生截图和人工审核分别记录；不覆盖用户后继状态，不以空选择/缺图/资源缺失计成功。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "BlueprintAutoLayout.selected.Manual.Review",
+      "version": 1,
+      "scenario_id": "BlueprintAutoLayout.selected.Manual",
+      "feature_id": "BlueprintAutoLayout.selected",
+      "steps": [
+        "从现有70页对应固定PluginId入口选择本案例，Prepare读取完整Run/World/设置快照。",
+        "先无图执行核对失败，再创建本Run原生图并按中文按钮执行：创建本Run原生图样板、读取真实图与设置快照、选择样板锚点、清空真实选择、检查真实命令和活跃键位注册链、仅撤销当前本Run事务、清理本图并精确恢复设置、停止并精确释放Editor租约、调用供应商选中布局。",
+        "检查无选择/错误参数/关闭或销毁对象、重复/取消/Undo、设置外部后继及事务后继；快捷键只读注册链不算人工按键通过。",
+        "Stop/Reset；失败保留资源显式重试，重进与World退出检查旧Run事件不恢复页面。",
+        "设置外部后继冲突后EndPIE；新真实单人PIE打开原固定插件页并Prepare，核对完整挂起身份；在操作下拉选择观察/重试/明确保留外部设置并执行。清理成功后Stop再Prepare，验证恢复普通图操作。"
+      ],
+      "expected_result": "实际供应商原函数/事务/设置通知产生可观察结果；本RunBlueprint/Material原生窗口可操作。受理、异步终态、原生截图和人工审核分别记录；不覆盖用户后继状态，不以空选择/缺图/资源缺失计成功。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "BlueprintAutoLayout.group.Manual.Review",
+      "version": 1,
+      "scenario_id": "BlueprintAutoLayout.group.Manual",
+      "feature_id": "BlueprintAutoLayout.group",
+      "steps": [
+        "从现有70页对应固定PluginId入口选择本案例，Prepare读取完整Run/World/设置快照。",
+        "先无图执行核对失败，再创建本Run原生图并按中文按钮执行：创建本Run原生图样板、读取真实图与设置快照、选择样板锚点、清空真实选择、检查真实命令和活跃键位注册链、仅撤销当前本Run事务、清理本图并精确恢复设置、停止并精确释放Editor租约、调用供应商注释分组。",
+        "检查无选择/错误参数/关闭或销毁对象、重复/取消/Undo、设置外部后继及事务后继；快捷键只读注册链不算人工按键通过。",
+        "Stop/Reset；失败保留资源显式重试，重进与World退出检查旧Run事件不恢复页面。",
+        "设置外部后继冲突后EndPIE；新真实单人PIE打开原固定插件页并Prepare，核对完整挂起身份；在操作下拉选择观察/重试/明确保留外部设置并执行。清理成功后Stop再Prepare，验证恢复普通图操作。"
+      ],
+      "expected_result": "实际供应商原函数/事务/设置通知产生可观察结果；本RunBlueprint/Material原生窗口可操作。受理、异步终态、原生截图和人工审核分别记录；不覆盖用户后继状态，不以空选择/缺图/资源缺失计成功。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "BlueprintAutoLayout.route.Manual.Review",
+      "version": 1,
+      "scenario_id": "BlueprintAutoLayout.route.Manual",
+      "feature_id": "BlueprintAutoLayout.route",
+      "steps": [
+        "从现有70页对应固定PluginId入口选择本案例，Prepare读取完整Run/World/设置快照。",
+        "先无图执行核对失败，再创建本Run原生图并按中文按钮执行：创建本Run原生图样板、读取真实图与设置快照、选择样板锚点、清空真实选择、检查真实命令和活跃键位注册链、仅撤销当前本Run事务、清理本图并精确恢复设置、停止并精确释放Editor租约、调用供应商连线路由、调用供应商分组并路由。",
+        "检查无选择/错误参数/关闭或销毁对象、重复/取消/Undo、设置外部后继及事务后继；快捷键只读注册链不算人工按键通过。",
+        "Stop/Reset；失败保留资源显式重试，重进与World退出检查旧Run事件不恢复页面。",
+        "设置外部后继冲突后EndPIE；新真实单人PIE打开原固定插件页并Prepare，核对完整挂起身份；在操作下拉选择观察/重试/明确保留外部设置并执行。清理成功后Stop再Prepare，验证恢复普通图操作。"
+      ],
+      "expected_result": "实际供应商原函数/事务/设置通知产生可观察结果；本RunBlueprint/Material原生窗口可操作。受理、异步终态、原生截图和人工审核分别记录；不覆盖用户后继状态，不以空选择/缺图/资源缺失计成功。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "BlueprintAutoLayout.settings.Manual.Review",
+      "version": 1,
+      "scenario_id": "BlueprintAutoLayout.settings.Manual",
+      "feature_id": "BlueprintAutoLayout.settings",
+      "steps": [
+        "从现有70页对应固定PluginId入口选择本案例，Prepare读取完整Run/World/设置快照。",
+        "先无图执行核对失败，再创建本Run原生图并按中文按钮执行：创建本Run原生图样板、读取真实图与设置快照、选择样板锚点、清空真实选择、检查真实命令和活跃键位注册链、仅撤销当前本Run事务、清理本图并精确恢复设置、停止并精确释放Editor租约、应用有界供应商设置、调用供应商整图布局。",
+        "检查无选择/错误参数/关闭或销毁对象、重复/取消/Undo、设置外部后继及事务后继；快捷键只读注册链不算人工按键通过。",
+        "Stop/Reset；失败保留资源显式重试，重进与World退出检查旧Run事件不恢复页面。",
+        "设置外部后继冲突后EndPIE；新真实单人PIE打开原固定插件页并Prepare，核对完整挂起身份；在操作下拉选择观察/重试/明确保留外部设置并执行。清理成功后Stop再Prepare，验证恢复普通图操作。"
+      ],
+      "expected_result": "实际供应商原函数/事务/设置通知产生可观察结果；本RunBlueprint/Material原生窗口可操作。受理、异步终态、原生截图和人工审核分别记录；不覆盖用户后继状态，不以空选择/缺图/资源缺失计成功。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GlooPrint.format.Manual.Review",
+      "version": 1,
+      "scenario_id": "GlooPrint.format.Manual",
+      "feature_id": "GlooPrint.format",
+      "steps": [
+        "从现有70页对应固定PluginId入口选择本案例，Prepare读取完整Run/World/设置快照。",
+        "先无图执行核对失败，再创建本Run原生图并按中文按钮执行：创建本Run原生图样板、读取真实图与设置快照、选择样板锚点、清空真实选择、检查真实命令和活跃键位注册链、仅撤销当前本Run事务、清理本图并精确恢复设置、停止并精确释放Editor租约、提交供应商真实分片格式化、取消本Run精确请求。",
+        "检查无选择/错误参数/关闭或销毁对象、重复/取消/Undo、设置外部后继及事务后继；快捷键只读注册链不算人工按键通过。",
+        "Stop/Reset；失败保留资源显式重试，重进与World退出检查旧Run事件不恢复页面。",
+        "设置外部后继冲突后EndPIE；新真实单人PIE打开原固定插件页并Prepare，核对完整挂起身份；在操作下拉选择观察/重试/明确保留外部设置并执行。清理成功后Stop再Prepare，验证恢复普通图操作。"
+      ],
+      "expected_result": "实际供应商原函数/事务/设置通知产生可观察结果；本RunBlueprint/Material原生窗口可操作。受理、异步终态、原生截图和人工审核分别记录；不覆盖用户后继状态，不以空选择/缺图/资源缺失计成功。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GlooPrint.wires.Manual.Review",
+      "version": 1,
+      "scenario_id": "GlooPrint.wires.Manual",
+      "feature_id": "GlooPrint.wires",
+      "steps": [
+        "从现有70页对应固定PluginId入口选择本案例，Prepare读取完整Run/World/设置快照。",
+        "先无图执行核对失败，再创建本Run原生图并按中文按钮执行：创建本Run原生图样板、读取真实图与设置快照、选择样板锚点、清空真实选择、检查真实命令和活跃键位注册链、仅撤销当前本Run事务、清理本图并精确恢复设置、停止并精确释放Editor租约、提交供应商真实分片格式化、取消本Run精确请求、应用有界供应商设置。",
+        "检查无选择/错误参数/关闭或销毁对象、重复/取消/Undo、设置外部后继及事务后继；快捷键只读注册链不算人工按键通过。",
+        "Stop/Reset；失败保留资源显式重试，重进与World退出检查旧Run事件不恢复页面。",
+        "设置外部后继冲突后EndPIE；新真实单人PIE打开原固定插件页并Prepare，核对完整挂起身份；在操作下拉选择观察/重试/明确保留外部设置并执行。清理成功后Stop再Prepare，验证恢复普通图操作。"
+      ],
+      "expected_result": "实际供应商原函数/事务/设置通知产生可观察结果；本RunBlueprint/Material原生窗口可操作。受理、异步终态、原生截图和人工审核分别记录；不覆盖用户后继状态，不以空选择/缺图/资源缺失计成功。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GlooPrint.settings.Manual.Review",
+      "version": 1,
+      "scenario_id": "GlooPrint.settings.Manual",
+      "feature_id": "GlooPrint.settings",
+      "steps": [
+        "从现有70页对应固定PluginId入口选择本案例，Prepare读取完整Run/World/设置快照。",
+        "先无图执行核对失败，再创建本Run原生图并按中文按钮执行：创建本Run原生图样板、读取真实图与设置快照、选择样板锚点、清空真实选择、检查真实命令和活跃键位注册链、仅撤销当前本Run事务、清理本图并精确恢复设置、停止并精确释放Editor租约、提交供应商真实分片格式化、取消本Run精确请求、应用有界供应商设置。",
+        "检查无选择/错误参数/关闭或销毁对象、重复/取消/Undo、设置外部后继及事务后继；快捷键只读注册链不算人工按键通过。",
+        "Stop/Reset；失败保留资源显式重试，重进与World退出检查旧Run事件不恢复页面。",
+        "设置外部后继冲突后EndPIE；新真实单人PIE打开原固定插件页并Prepare，核对完整挂起身份；在操作下拉选择观察/重试/明确保留外部设置并执行。清理成功后Stop再Prepare，验证恢复普通图操作。"
+      ],
+      "expected_result": "实际供应商原函数/事务/设置通知产生可观察结果；本RunBlueprint/Material原生窗口可操作。受理、异步终态、原生截图和人工审核分别记录；不覆盖用户后继状态，不以空选择/缺图/资源缺失计成功。",
+      "required_evidence": [
+        "log",
+        "state_dump",
+        "screenshot"
+      ]
+    },
+    {
+      "review_case_id": "GlooPrint.cancelundo.Manual.Review",
+      "version": 1,
+      "scenario_id": "GlooPrint.cancelundo.Manual",
+      "feature_id": "GlooPrint.cancelundo",
+      "steps": [
+        "从现有70页对应固定PluginId入口选择本案例，Prepare读取完整Run/World/设置快照。",
+        "先无图执行核对失败，再创建本Run原生图并按中文按钮执行：创建本Run原生图样板、读取真实图与设置快照、选择样板锚点、清空真实选择、检查真实命令和活跃键位注册链、仅撤销当前本Run事务、清理本图并精确恢复设置、停止并精确释放Editor租约、提交供应商真实分片格式化、取消本Run精确请求。",
+        "检查无选择/错误参数/关闭或销毁对象、重复/取消/Undo、设置外部后继及事务后继；快捷键只读注册链不算人工按键通过。",
+        "Stop/Reset；失败保留资源显式重试，重进与World退出检查旧Run事件不恢复页面。",
+        "设置外部后继冲突后EndPIE；新真实单人PIE打开原固定插件页并Prepare，核对完整挂起身份；在操作下拉选择观察/重试/明确保留外部设置并执行。清理成功后Stop再Prepare，验证恢复普通图操作。"
+      ],
+      "expected_result": "实际供应商原函数/事务/设置通知产生可观察结果；本RunBlueprint/Material原生窗口可操作。受理、异步终态、原生截图和人工审核分别记录；不覆盖用户后继状态，不以空选择/缺图/资源缺失计成功。",
       "required_evidence": [
         "log",
         "state_dump",

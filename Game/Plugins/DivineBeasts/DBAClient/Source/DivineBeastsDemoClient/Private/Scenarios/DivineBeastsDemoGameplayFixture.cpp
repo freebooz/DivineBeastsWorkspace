@@ -7,9 +7,7 @@
 #include "Components/GamePlatformAIStateComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
-#include "NativeGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
-UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_DBA_DemoManualInput,"Platform.Ability.Input.DemoManual");
 ADivineBeastsDemoGameplayFixture::ADivineBeastsDemoGameplayFixture(){
  PrimaryActorTick.bCanEverTick=false;AutoPossessAI=EAutoPossessAI::Disabled;GetCharacterMovement()->bRunPhysicsWithNoController=true;
  ASC=CreateDefaultSubobject<UGamePlatformAbilitySystemComponent>(TEXT("ASC"));

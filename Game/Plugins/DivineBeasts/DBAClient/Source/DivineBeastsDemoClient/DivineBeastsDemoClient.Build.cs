@@ -45,7 +45,9 @@ public class DivineBeastsDemoClient : ModuleRules
         {
             // 仅Editor私有桥生成待审对象；Client公共头不含Editor/Review类型，更不执行人工决定。
             PrivateDependencyModuleNames.AddRange(new[] { "GamePlatformDeveloperTools", "UnrealEd",
-                "GamePlatformServer", "GamePlatformEquipmentServer", "GamePlatformSurfaceEditor", "GamePlatformPCGEditor", "GamePlatformNavigationServer", "NavigationSystem", "AIModule", "GamePlatformAIServer", "GamePlatformQuestServer" });
+                "GamePlatformServer", "GamePlatformEquipmentServer", "GamePlatformSurfaceEditor", "GamePlatformPCGEditor", "GamePlatformNavigationServer", "NavigationSystem", "AIModule", "GamePlatformAIServer", "GamePlatformQuestServer",
+                // 真正Editor图样板/供应商Owner公开窄桥，仅Editor目标链接。
+                "BlueprintAutoLayout", "GlooPrint", "BlueprintGraph", "GraphEditor", "Kismet", "MaterialEditor" });
         }
         if (Target.bWithLiveCoding)
         {

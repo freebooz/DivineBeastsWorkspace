@@ -4,9 +4,10 @@ $ErrorActionPreference='Stop';Set-StrictMode -Version Latest
 Import-Module (Join-Path $PSScriptRoot '../../../Build/Game/PluginDemoValidation.psm1') -Force
 $prefix='DivineBeasts.PluginDemos.Gameplay.'
 $groups=@{
-    Gameplay=@('Contract','ParameterBoundary','SourceIsolation','Fix1.RequiredOperations')|ForEach-Object{$prefix+$_}
+    Gameplay=@('Contract','ParameterBoundary','SourceIsolation','Fix1.RequiredOperations','NativeFix1.RuntimeInputTag')|ForEach-Object{$prefix+$_}
     GameplayLive=@('Live.CombatLifecycle','Live.StopDuringDamage','Live.UniqueCharacterInitialization','Fix1.Live.HeroSelection',
-        'Fix1.Live.AbilitySetSelection','Fix1.Live.AISelection','Fix1.Live.ProjectileCases','Fix2.Live.TypedCompletionStop','Fix2.Live.TypedCompletionReset')|ForEach-Object{$prefix+$_}
+        'Fix1.Live.AbilitySetSelection','Fix1.Live.AISelection','Fix1.Live.ProjectileCases','Fix2.Live.TypedCompletionStop','Fix2.Live.TypedCompletionReset',
+        'NativeFix1.Live.TagInput','NativeFix1.Live.EnergyCommit')|ForEach-Object{$prefix+$_}
     GameplayHost=@($prefix+'Fix1.Live.HostLifecycle')
     GameplayHostStop=@($prefix+'Fix1.Live.HostStopReentry')
     PreparingStopLive=@('EventSuccessor','PendingResourceSuccessor','EnteredPrepareRetry','WorldExitPending','WorldExitEntered')|ForEach-Object{'DivineBeasts.Demo.WorldLive.PreparingStop.'+$_}

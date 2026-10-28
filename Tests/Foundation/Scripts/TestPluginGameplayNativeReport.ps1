@@ -31,6 +31,12 @@ try{
             Suites=@(@{Name=$suite;Evidence=(Join-Path $workspace "$directory/$suite");Result=@{ExitCode=0;ProcessId=123;StartTimeTicks=$started.Ticks;TimedOut=$false;Cleaned=$true}})}
         $automation=Join-Path $workspace "$directory/$suite/Automation/index.json"
         $resultPath=Join-Path $workspace "$directory/result.json";$processPath=Join-Path $workspace "$directory/$suite/process.json"
+        $engineLogPath=Join-Path $workspace "$directory/$suite/Unreal.log"
+        $cleanLog='LogAutomationController: Display: Test Completed. Result={Success}'
+        $null=New-Item -ItemType Directory -Force -Path (Split-Path $engineLogPath)
+        [IO.File]::WriteAllText($engineLogPath,$cleanLog,[Text.UTF8Encoding]::new($false))
+        $result.EngineLogSHA256=(Get-FileHash -LiteralPath $engineLogPath -Algorithm SHA256).Hash
+        $result.EngineLogLines=1
         Save $automation @{tests=@($policy.Tests|ForEach-Object{@{fullTestPath=$_;state='Success'}})}
         $result.AutomationReportSHA256=(Get-FileHash $automation -Algorithm SHA256).Hash
         Save $processPath $process;Save $resultPath $result
@@ -57,6 +63,14 @@ try{
             Save $processPath $variant;$rejected=$false;try{$null=& $read}catch{$rejected=$true}
             Require $rejected '实际宿主URL/旗标或独占目录错误仍被接受。';Save $processPath $process
         }
+        $badLog='LogOutputDevice: Error: Ensure condition failed: false [File:NativeGameplayTags.cpp] [Line: 41]'
+        [IO.File]::WriteAllText($engineLogPath,$badLog,[Text.UTF8Encoding]::new($false))
+        $rejected=$false;try{$null=& $read}catch{$rejected=$true}
+        Require $rejected '原始引擎日志被改写后摘要仍被接受。'
+        $changedResult=Clone $result;$changedResult.EngineLogSHA256=(Get-FileHash -LiteralPath $engineLogPath -Algorithm SHA256).Hash
+        Save $resultPath $changedResult
+        $rejected=$false;try{$null=& $read}catch{$rejected=$true}
+        Require $rejected '单项Success掩盖真实引擎Ensure。'
     }
     Write-Output "PluginGameplayNativeReportCases=$checks Failed=0 UEExecuted=False"
 }finally{

@@ -47,7 +47,7 @@ FGamePlatformResult FGameplayManualState::Combat(FName O,const FManualArguments&
  FGamePlatformCombatSpec Spec;Spec.Source=S;Spec.Target=T;Spec.SourceAvatarGeneration=S->GetCombatAvatarGeneration();Spec.TargetAvatarGeneration=T->GetCombatAvatarGeneration();Spec.Magnitude=A.Number(TEXT("Magnitude"));Spec.SourceAbilityId=TEXT("Demo.Manual.TrustedCombatFixture");Spec.EventId=FGuid::NewGuid();
  if(O==TEXT("Launch")){
   if(Projectile.IsValid())return GameplayError(TEXT("Demo.Gameplay.ProjectileExists"),TEXT("原弹体仍归本Run；Reset清理再发射。"));
-  if(!InputHandle.IsValid()){auto R=GrantInput(FGameplayTag::RequestGameplayTag(TEXT("Platform.Ability.Input.DemoManual"),false));if(!R.IsSuccess())return R;}
+  if(!InputHandle.IsValid()){auto R=GrantInput(GameplayManualInputTag());if(!R.IsSuccess())return R;}
   int32 Before=S->CommittedInputs;bool B=S->ASC->TryActivateAbility(InputHandle);if(!Current(E))return FGamePlatformResult::Cancelled(TEXT("Commit通知期间停止。"));if(!B||S->CommittedInputs<=Before)return GameplayError(TEXT("Demo.Gameplay.CommitRejected"),TEXT("真实GAS Commit拒绝，不生成弹体。"));
   int32 Generation=0;Spec.Target=S->Combat->GetSelectedProjectileTarget(2000,Generation);Spec.TargetAvatarGeneration=Generation;FGamePlatformCombatProjectileMotion Motion;
   FActorSpawnParameters P;P.ObjectFlags|=RF_Transient;P.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -57,7 +57,8 @@ FGamePlatformResult FGameplayManualState::Combat(FName O,const FManualArguments&
   if(B){auto* V=NewObject<UStaticMeshComponent>(Projectile.Get());Projectile->AddInstanceComponent(V);V->SetupAttachment(Projectile->GetRootComponent());V->SetCollisionEnabled(ECollisionEnabled::NoCollision);V->SetRelativeScale3D(FVector(.12));V->SetStaticMesh(Cast<UStaticMesh>(FSoftObjectPath(TEXT("/Engine/BasicShapes/Cube.Cube")).ResolveObject()));V->RegisterComponent();}
   return GameplayBool(B,TEXT("AuthorityInitialize native projectile; no synthetic hit or optional magic VFX"));
  }
- if(O==TEXT("StaleDamage"))Spec.SourceAvatarGeneration=FMath::Max(0,Spec.SourceAvatarGeneration-1);
+ // 平台将非正代次解释为未指定；首代没有正数前代，使用2明确制造失配，仍由真实权威拒绝。
+ if(O==TEXT("StaleDamage"))Spec.SourceAvatarGeneration=Spec.SourceAvatarGeneration>1?Spec.SourceAvatarGeneration-1:2;
  FGamePlatformCombatResult R;
  if(O==TEXT("Damage")||O==TEXT("StaleDamage")||O==TEXT("DuplicateDamage")){
   if(O==TEXT("DuplicateDamage")){if(!LastDamageId.IsValid())return GameplayError(TEXT("Demo.Gameplay.NoPriorDamage"),TEXT("先执行一次Damage。"));Spec.EventId=LastDamageId;}else LastDamageId=Spec.EventId;

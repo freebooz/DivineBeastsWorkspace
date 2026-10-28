@@ -6,7 +6,7 @@ Import-Module (Join-Path $PSScriptRoot '../Validation/FoundationAutomationReport
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1')
 function Get-PluginDemoSuitePolicy {
     <# 返回当前必需完整测试身份和模块；不得以旧二进制仅含的子集覆盖新清单。 #>
-    param([ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')][string]$Suite='Demo')
+    param([ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')][string]$Suite='Demo')
     switch ($Suite) {
         Demo { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformUIClient','GamePlatformWaterRuntime');Tests=@('Definition','Catalog','Lifecycle','Menu','BirdScenario','Samples','Evidence','LaunchPolicy','World.ContractRejectsInjectedOperations','World.FactoryRejectsForeignFeature','World.FeatureWhitelist','World.FullRunIdentity','World.IdentifierAndAssetTypes','World.InteractionArgumentDefaults','World.NonFiniteAndRange','World.RotatedWaterAndClearedMiss','World.WrongWorldThenStop') | ForEach-Object { 'DivineBeasts.PluginDemos.'+$_ }} }
         Review { [pscustomobject]@{Prefix='GamePlatform.DeveloperTools.';Modules=@('GamePlatformDeveloperTools');Tests=@('ReviewEvidence','Rules','Allowlist','ReportPath','ManualReview','PerformanceBaseline','Naming.BlueprintParentPrefixes','DefinitionIdentityContract') | ForEach-Object { 'GamePlatform.DeveloperTools.'+$_ }} }
@@ -19,16 +19,17 @@ function Get-PluginDemoSuitePolicy {
         WorldAuthoringLive { [pscustomobject]@{Prefix='DivineBeasts.Demo.WorldLive.';Host='EditorGameStandaloneClientContext';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','DivineBeastsArena','GamePlatformWorld','GamePlatformPCG','GamePlatformPCGEditor','GamePlatformData','GamePlatformUIClient');Tests=@('DivineBeasts.Demo.WorldLive.RealizedAuthoringLeaseAndSave','DivineBeasts.Demo.WorldLive.RealizedAuthoringStopDuringAssetCreated','DivineBeasts.Demo.WorldLive.RealizedProjectRejectBeforeData')} }
         EvidenceHash { [pscustomobject]@{Prefix='GamePlatform.Core.';Host='Editor';Modules=@('GamePlatformCore','DivineBeastsDemoClient','GamePlatformDeveloperTools');Tests=@('GamePlatform.Core.SHA256','DivineBeasts.PluginDemos.Evidence','GamePlatform.DeveloperTools.ReviewEvidence')} }
         EvidenceHashLive { [pscustomobject]@{Prefix='GamePlatform.Core.';Host='EditorGameStandaloneClientContext';Modules=@('GamePlatformCore','DivineBeastsDemoClient');Tests=@('GamePlatform.Core.SHA256','DivineBeasts.PluginDemos.Evidence')} }
-        Gameplay { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.Gameplay.';Host='Editor';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformUIClient','GamePlatformGameplay','GamePlatformCharacter','GamePlatformAbilitySystem','GamePlatformCombat','GamePlatformAnimationClient','GamePlatformAI','GamePlatformQuest','GamePlatformQuestClient','DivineBeastsCharactersRuntime','DBAWorldsRuntime','GamePlatformWorld','GamePlatformAIServer','GamePlatformQuestServer');Tests=@('Contract','ParameterBoundary','SourceIsolation','Fix1.RequiredOperations') | ForEach-Object { 'DivineBeasts.PluginDemos.Gameplay.'+$_ } } }
-        GameplayLive { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.Gameplay.';Host='EditorGameStandaloneClientContext';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformUIClient','GamePlatformGameplay','GamePlatformCharacter','GamePlatformAbilitySystem','GamePlatformCombat','GamePlatformAnimationClient','GamePlatformAI','GamePlatformQuest','GamePlatformQuestClient','DivineBeastsCharactersRuntime','DBAWorldsRuntime','GamePlatformWorld');Tests=@('Live.CombatLifecycle','Live.StopDuringDamage','Live.UniqueCharacterInitialization','Fix1.Live.HeroSelection','Fix1.Live.AbilitySetSelection','Fix1.Live.AISelection','Fix1.Live.ProjectileCases','Fix2.Live.TypedCompletionStop','Fix2.Live.TypedCompletionReset') | ForEach-Object { 'DivineBeasts.PluginDemos.Gameplay.'+$_ } } }
+        Gameplay { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.Gameplay.';Host='Editor';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformUIClient','GamePlatformGameplay','GamePlatformCharacter','GamePlatformAbilitySystem','GamePlatformCombat','GamePlatformAnimationClient','GamePlatformAI','GamePlatformQuest','GamePlatformQuestClient','DivineBeastsCharactersRuntime','DBAWorldsRuntime','GamePlatformWorld','GamePlatformAIServer','GamePlatformQuestServer');Tests=@('Contract','ParameterBoundary','SourceIsolation','Fix1.RequiredOperations','NativeFix1.RuntimeInputTag') | ForEach-Object { 'DivineBeasts.PluginDemos.Gameplay.'+$_ } } }
+        GameplayLive { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.Gameplay.';Host='EditorGameStandaloneClientContext';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformUIClient','GamePlatformGameplay','GamePlatformCharacter','GamePlatformAbilitySystem','GamePlatformCombat','GamePlatformAnimationClient','GamePlatformAI','GamePlatformQuest','GamePlatformQuestClient','DivineBeastsCharactersRuntime','DBAWorldsRuntime','GamePlatformWorld');Tests=@('Live.CombatLifecycle','Live.StopDuringDamage','Live.UniqueCharacterInitialization','Fix1.Live.HeroSelection','Fix1.Live.AbilitySetSelection','Fix1.Live.AISelection','Fix1.Live.ProjectileCases','Fix2.Live.TypedCompletionStop','Fix2.Live.TypedCompletionReset','NativeFix1.Live.TagInput','NativeFix1.Live.EnergyCommit') | ForEach-Object { 'DivineBeasts.PluginDemos.Gameplay.'+$_ } } }
         GameplayHost { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.Gameplay.';Host='EditorGameStandaloneClientContext';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformUIClient','GamePlatformGameplay','GamePlatformCharacter','GamePlatformAbilitySystem','GamePlatformCombat','GamePlatformAnimationClient','GamePlatformAI','GamePlatformQuest','GamePlatformQuestClient','DivineBeastsCharactersRuntime','DBAWorldsRuntime','GamePlatformWorld');Tests=@('DivineBeasts.PluginDemos.Gameplay.Fix1.Live.HostLifecycle')} }
         GameplayHostStop { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.Gameplay.';Host='EditorGameStandaloneClientContext';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformUIClient','GamePlatformGameplay','GamePlatformCharacter','GamePlatformAbilitySystem','GamePlatformCombat','GamePlatformAnimationClient','GamePlatformAI','GamePlatformQuest','GamePlatformQuestClient','DivineBeastsCharactersRuntime','DBAWorldsRuntime','GamePlatformWorld');Tests=@('DivineBeasts.PluginDemos.Gameplay.Fix1.Live.HostStopReentry')} }
         PreparingStopLive { [pscustomobject]@{Prefix='DivineBeasts.Demo.WorldLive.PreparingStop.';Host='EditorGameStandaloneClientContext';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformCore','GamePlatformWorld','GamePlatformUIClient');Tests=@('EventSuccessor','PendingResourceSuccessor','EnteredPrepareRetry','WorldExitPending','WorldExitEntered') | ForEach-Object { 'DivineBeasts.Demo.WorldLive.PreparingStop.'+$_ } } }
+        EditorManual { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.Editor.';Host='EditorPIE';Modules=@('DivineBeastsDemoClient','DivineBeastsApplicationFlowClient','GamePlatformData','GamePlatformUIClient','GamePlatformCore','GamePlatformDeveloperTools','BlueprintAutoLayout','GlooPrint','GamePlatformPCGEditor','GamePlatformPCG','GamePlatformSurfaceEditor','GamePlatformSurfaceClient','GamePlatformWorld','DBAWorldsRuntime');Tests=@('ContractClosed','PIE.CentralRunnerRetainedCleanup','PIE.HostEligibilityAndLease','PIE.NineVendorLifecycle','PIE.StopReentryAndWorldExit','PIE.TwoEngineGameInstancesExclusive','Vendor.OwnedGraphAndConflict') | ForEach-Object { 'DivineBeasts.PluginDemos.Editor.'+$_ }} }
         LaunchPolicy { [pscustomobject]@{Prefix='DivineBeasts.PluginDemos.';Modules=@('DivineBeastsApplicationFlowClient');Tests=@('DivineBeasts.PluginDemos.LaunchPolicy')} }
     }
 }
 function Get-PluginDemoNativeFlag {
-    <# 精确Live组使用自己的显式原生夹具旗标；非Live组拒绝调用。 #>
+    <# 精确原生宿主使用自己的显式夹具旗标；普通合同组拒绝调用。 #>
     param([string]$Suite)
     switch($Suite){
         PresentationLive {'-PresentationManualNative'}
@@ -36,6 +37,7 @@ function Get-PluginDemoNativeFlag {
         EvidenceHashLive {'-EvidenceManualNative'}
         {$_ -in @('GameplayLive','GameplayHost','GameplayHostStop')} {'-GameplayManualNative'}
         PreparingStopLive {'-WorldManualNative'}
+        EditorManual {'-GamePlatformManualEditorFixture'}
         default {throw '该Suite不是已登记Live宿主。'}
     }
 }
@@ -57,21 +59,21 @@ function Get-PluginDemoHostFlags {
     }
 }
 function Get-PluginDemoAutomationFilter {
-    param([ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')][string]$Suite='Demo')
+    param([ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')][string]$Suite='Demo')
     $policy=Get-PluginDemoSuitePolicy $Suite
-    if($Suite -in @('Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')) { return ($policy.Tests -join '+') }
+    if($Suite -in @('Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')) { return ($policy.Tests -join '+') }
     $policy.Prefix.TrimEnd('.')
 }
 function Assert-PluginDemoRunResult {
     <# 纯值门禁：进程必须真实退出，测试须完整成功，测试前后输入/产物必须一致。
        测试替身只在隔离回归中使用；本函数通过不等于产生了真实UE报告。 #>
-    param($ProcessResult,$Cases,$Before,$After,[ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')][string]$Suite='Demo')
+    param($ProcessResult,$Cases,$Before,$After,[ValidateSet('Demo','Review','LaunchPolicy','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')][string]$Suite='Demo')
     if ($ProcessResult.ExitCode -ne 0 -or $ProcessResult.TimedOut -ne $false -or $ProcessResult.Cleaned -ne $true -or $ProcessResult.ProcessId -le 0) { throw '原生测试进程失败、超时、未清理或身份缺失。' }
     foreach ($field in @('BuildResultSHA256','InputSHA256','ArtifactSHA256')) {
         if ([string]$Before.$field -cnotmatch '^[A-Fa-f0-9]{64}$' -or $Before.$field -cne $After.$field) { throw "运行期间构建/源码/产物变化：$field" }
     }
     $policy=Get-PluginDemoSuitePolicy $Suite
-    if($Suite -in @('WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')) {
+    if($Suite -in @('WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')) {
         # 精确过滤器跨平台/项目命名空间；拒绝额外、重复、缺失及任何非Success记录。
         if(@($Cases).Count -ne $policy.Tests.Count){throw '专用World组实际记录数与精确集合不匹配。'}
         foreach($path in $policy.Tests){

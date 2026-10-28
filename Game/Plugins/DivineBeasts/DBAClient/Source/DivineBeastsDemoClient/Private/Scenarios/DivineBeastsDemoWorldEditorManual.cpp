@@ -1,3 +1,5 @@
+// T06开发人工页：项目私有Editor适配或平台中立租约；仅游戏线程，事件驱动。
+// 只拥有本Run对象/完整租约，停止失败保留身份供重试；不操作用户图、账号或生产服务器。
 #include "Scenarios/DivineBeastsDemoWorldState.h"
 #include "Scenarios/DivineBeastsDemoPCGAuthoringPolicy.h"
 #if WITH_EDITOR
@@ -74,7 +76,12 @@ FGamePlatformResult FWorldManualState::CleanupEditor(){
 void FWorldManualState::EditorOperation(FName O,const FManualArguments& A,FDivineBeastsDemoOperationCompletion D){
 #if !WITH_EDITOR
  D(Context.Token,WorldError(TEXT("Demo.World.EditorHostRequired"),TEXT("本功能需要Editor条件私有桥；普通Client不链接Editor或ServerOnly。")));
+
 #else
+ const bool bScopedEditor=UDivineBeastsDemoManualHostSubsystem::IsEditorFeature(Feature);
+ TGuardValue<bool> CallingEditor(bEditorOperationActive,bScopedEditor||bEditorOperationActive);
+ if(bScopedEditor){auto Original=MoveTemp(D);const auto Weak=TWeakPtr<FWorldManualState>(AsShared());const auto E=Epoch;const auto Token=Context.Token;const auto Source=World;D=[Original=MoveTemp(Original),Weak,E,Token,Source](const auto&,const auto& R)mutable{auto S=Weak.Pin();const bool Current=S&&S->Current(E)&&S->Context.Token==Token&&S->World==Source;Original(Token,Current?R:FGamePlatformResult::Cancelled(TEXT("Editor操作通知期间来源失活。")));};}
+ if(UDivineBeastsDemoManualHostSubsystem::IsEditorFeature(Feature)&&(!Host.IsValid()||!Host->OwnsEditorFixture(Context.Token))){D(Context.Token,WorldError(TEXT("Demo.EditorLeaseRequired"),TEXT("Editor操作需要本Run真实PIE的Editor排他租约。")));return;}
  if(Feature.ToString().StartsWith(TEXT("GamePlatformNavigation."))){
   auto* N=World->GetSubsystem<UGamePlatformNavigationWorldSubsystem>();if(!N){D(Context.Token,WorldError(TEXT("Demo.Nav.HostRequired"),TEXT("Editor中的真实NavigationServer服务不可用；不手工初始化第二份服务。")));return;}
   if(O==TEXT("CreateLink")){
