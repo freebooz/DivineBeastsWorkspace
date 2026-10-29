@@ -17,6 +17,13 @@
 - 本包不创建C++模块，不复制平台世界逻辑；Client、Dedicated Server、Editor均需挂载本包以读取同一权威地图身份。
 - 纯客户端VFX/Surface表现资源不得成为服务器就绪的硬依赖；碰撞、导航、权威PCG结果可随地图进入Server Cook（服务器烘焙）。
 
+
+## 2026-10-28 Landscape Grass 人工选花草接口
+
+- 项目专用两份原生 LandscapeGrassType：Terrain/LandscapeGrass/GrassTypes/LGT_DBA_Village_Grass 与 LGT_DBA_Village_Flowers，网格留给人工在 UE5.8 编辑器中选；与 PCG、Static Mesh Foliage 资产不同。
+- Tools/Unreal/Terrain/AuthorVillageLandscapeGrassUE58.py 负责在现有 M_DBA_Village_LandscapeBridge 上增量添加 LS_Grass → LandscapeGrassOutput 和野花覆盖参数。不改 L_Village_Start 地图、地形高度、导航、碰撞、PlayerStart，写材质前必须备份。
+- 美术选择、图层绘制、可见实例及 Cook 隔离尚须独立验收。详见 Docs/Implementation/LandscapeGrassUE58_20261028.md。
+
 ## 2026-10-12 十层正式地形扫描PBR源的保存与UE验收边界
 
 2026-10-13增量：用户要求新手村草地，已通过Monolith将共享Landscape母材质增补为55节点，增加250厘米重复的地面Albedo/Normal/ORM参数；默认纹理仍只引用本包三张中性Texture2D。对应高清扫描草地三贴图由第三层`DBAPresentationPack_Core/Textures/Terrain/Grass`持有，客户端Data世界租约写入MID，不给地图硬引用纯表现包。本轮不写地图、不修改两个PlayerStart、地形高度/碰撞/导航，也不表示十层地形全面接入。新C++构建、真实PIE绿色回归与新Cook发布仍待完成，不能以材质保存替代运行验收。

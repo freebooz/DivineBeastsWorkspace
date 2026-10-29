@@ -42,6 +42,8 @@ private:
     /** 本地输入轴值沿控制器水平朝向请求运动；无控制器或移动输入被忽略时不请求，服务器运动复制仍权威。 */
     void MoveForward(float Value);
     void MoveRight(float Value);
+    /** 游泳专用垂直输入：Space上浮、左Ctrl下潜；陆地时不产生移动，不引入自定义运动复制。 */
+    void MoveSwimmingVertical(float Value);
     /** 本地镜头轴输入交给引擎Controller处理；不修改权威位置、出生身份或技能资格。 */
     void TurnCamera(float Value);
     void LookCamera(float Value);

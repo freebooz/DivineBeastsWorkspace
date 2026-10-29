@@ -30,6 +30,11 @@ ADivineBeastsGameplayCharacter::ADivineBeastsGameplayCharacter()
     bUseControllerRotationYaw = true;
     GetCharacterMovement()->bOrientRotationToMovement = false;
     GetCharacterMovement()->MaxWalkSpeed = 450.f; GetCharacterMovement()->JumpZVelocity = 500.f;
+    // 原生Swimming依赖关卡中bWaterVolume=true的PhysicsVolume；由CharacterMovement执行并复用网络预测/校正。
+    // 这里只设置游泳参数，绝不根据水下特效或客户端Overlap私自调用SetMovementMode。
+    GetCharacterMovement()->MaxSwimSpeed = 280.f;
+    GetCharacterMovement()->Buoyancy = 1.05f;
+    GetCharacterMovement()->BrakingDecelerationSwimming = 260.f;
     // 基类已拥有唯一ASC/Combat/CharacterIdentity/GameplayEligibility；不能重建主线旧HeroIdentity或遮蔽继承成员。
     AbilityLoadout = CreateDefaultSubobject<UDivineBeastsAbilityLoadoutComponent>(TEXT("AbilityLoadout"));
     // 服务器只复制水域进入/离开和深浅状态；普通竞技地图无水区域时保持干态。
@@ -41,6 +46,7 @@ void ADivineBeastsGameplayCharacter::SetupPlayerInputComponent(UInputComponent* 
     // 原生输入只请求ACharacter运动，不提交坐标RPC；服务器仍校验运动与准入资格。
     Input->BindAxis(TEXT("DBA.MoveForward"), this, &ThisClass::MoveForward);
     Input->BindAxis(TEXT("DBA.MoveRight"), this, &ThisClass::MoveRight);
+    Input->BindAxis(TEXT("DBA.SwimVertical"), this, &ThisClass::MoveSwimmingVertical);
     Input->BindAxis(TEXT("DBA.Turn"), this, &ThisClass::TurnCamera);
     Input->BindAxis(TEXT("DBA.Look"), this, &ThisClass::LookCamera);
     Input->BindAction(TEXT("DBA.Jump"), IE_Pressed, this, &ACharacter::Jump);
@@ -71,8 +77,13 @@ void ADivineBeastsGameplayCharacter::HandleAbilityInputReleased(FGameplayTag Inp
 }
 void ADivineBeastsGameplayCharacter::MoveForward(float Value)
 {
-    if (Controller && !Controller->IsMoveInputIgnored())
-    { AddMovementInput(FRotationMatrix(FRotator(0, Controller->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::X), Value); }
+    if (!Controller || Controller->IsMoveInputIgnored()) return;
+    // 水下前进跟随镜头俯仰，实现W向潜水方向游动；陆地保留原有水平WASD控制。
+    const UCharacterMovementComponent* Movement = GetCharacterMovement();
+    const FRotator ControlRotation = Controller->GetControlRotation();
+    const FRotator InputRotation = Movement && Movement->IsSwimming()
+        ? ControlRotation : FRotator(0.f, ControlRotation.Yaw, 0.f);
+    AddMovementInput(FRotationMatrix(InputRotation).GetUnitAxis(EAxis::X), Value);
 }
 void ADivineBeastsGameplayCharacter::MoveRight(float Value)
 {
@@ -80,6 +91,13 @@ void ADivineBeastsGameplayCharacter::MoveRight(float Value)
     { AddMovementInput(FRotationMatrix(FRotator(0, Controller->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), Value); }
 }
 void ADivineBeastsGameplayCharacter::TurnCamera(float Value) { AddControllerYawInput(Value); }
+void ADivineBeastsGameplayCharacter::MoveSwimmingVertical(float Value)
+{
+    if (FMath::IsNearlyZero(Value) || !Controller || Controller->IsMoveInputIgnored()) return;
+    const UCharacterMovementComponent* Movement = GetCharacterMovement();
+    // 上浮/下潜只走引擎AddMovementInput→CharacterMovement网络预测，不复制独立深度或坐标。
+    if (Movement && Movement->IsSwimming()) AddMovementInput(FVector::UpVector, Value);
+}
 void ADivineBeastsGameplayCharacter::LookCamera(float Value) { AddControllerPitchInput(Value); }
 
 UAbilitySystemComponent* ADivineBeastsGameplayCharacter::GetAbilitySystemComponent() const

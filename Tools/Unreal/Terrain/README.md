@@ -2,6 +2,13 @@
 
 所属：DivineBeastsWorkspace/Tools/Unreal/Terrain。唯一工程：Game/DivineBeastsArena.uproject（UE5.8），项目实际内容归DBAWorldPack_Village；平台底层机制使用GamePlatformSurfaceEditor与GamePlatformPCGEditor。
 
+
+### 2026-10-28 Landscape Grass 原生花草选择入口
+
+- 新增 Tools/Unreal/Terrain/AuthorVillageLandscapeGrassUE58.py，负责创建 Village 两份原生 LandscapeGrassType，并仅向已有 LandscapeBridge 材质追加 LS_Grass 权重驱动的 LandscapeGrassOutput；保留原地表及天气节点，脚本增量且不覆盖人工 Mesh 选择。
+- GrassType 位于 DBAWorldPack_Village/Terrain/LandscapeGrass/GrassTypes；当前 Grass Mesh 初始空置，需用户在 UE 编辑器中人工选择。正式关卡未由脚本重新绘制图层、修改碰撞或高度。操作与验收：Docs/Implementation/LandscapeGrassUE58_20261028.md。
+- 原生资产创建、表达式保存、客户端/服务器 Cook 与实际植被生成各自独立判定，不得将静态脚本存在冒充实际UE验收。
+
 ## 2026-10-16 十层PBR真实原生实施增量
 
 - 十种扫描材质正式40份UE Texture2D及10份新Height已由UE5.8导入；`M_DBA_Terrain_Production10`与审核MI保存并通过独立编辑器母材质重载（262表达式）。四份Forest/Rock/Shore/Road权重过滤PCG Graph、1009×1009独立Landscape审核图、四类绑定由真实制作流水线保存；正式Village共享地图未改。
