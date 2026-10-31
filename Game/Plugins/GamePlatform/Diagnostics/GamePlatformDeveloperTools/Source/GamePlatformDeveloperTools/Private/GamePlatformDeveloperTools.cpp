@@ -29,6 +29,11 @@
 #include "Performance/GamePlatformPerformanceTestRunner.h"
 #include "Review/GamePlatformReviewTypes.h"
 #include "ToolMenus.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Styling/AppStyle.h"
+#include "Styling/SlateStyle.h"
+#include "Styling/SlateStyleRegistry.h"
+#include "Widgets/Text/STextBlock.h"
 #include "Validation/GamePlatformStaticValidators.h"
 #include "Validation/GamePlatformGlobalAssetValidator.h"
 #include "Validation/GamePlatformValidationService.h"
@@ -97,6 +102,7 @@ public:
 
     virtual void ShutdownModule() override
     {
+        PluginUIFontAuditCommand.Reset();
         EditorCleanupInspect.Reset();EditorCleanupRetryCommand.Reset();
         if(PendingEditorCleanup)UE_LOG(LogTemp,Error,TEXT("Editor模块关闭时仍有未解决清理；没有宣称恢复或抢占外部状态：%s"),*PendingEditorCleanupError);
         AnimationDataModelCommand.Reset();
@@ -106,10 +112,78 @@ public:
             UToolMenus::UnregisterOwner(this);
         }
 
+        if (PluginMenuStyle.IsValid())
+        {
+            if (FSlateApplication::IsInitialized()) FSlateApplication::Get().DismissAllMenus();
+            FSlateStyleRegistry::UnRegisterSlateStyle(*PluginMenuStyle);
+            PluginMenuStyle.Reset();
+        }
+
         FGamePlatformValidationService::ResetForShutdown();
     }
 
 private:
+
+    /** 只供本地插件菜单借用的样式；不写入引擎 AppStyle/CoreStyle。 */
+    TSharedPtr<FSlateStyleSet> PluginMenuStyle;
+    TUniquePtr<FAutoConsoleCommand> PluginUIFontAuditCommand;
+
+    void RegisterPluginMenuTypography()
+    {
+        if (!PluginMenuStyle.IsValid())
+        {
+            PluginMenuStyle = MakeShared<FSlateStyleSet>(TEXT("GamePlatform.PluginMenuTypography"));
+            PluginMenuStyle->SetParentStyleName(FAppStyle::GetAppStyleSetName());
+            for (const TCHAR* Key : { TEXT("Menu.Label"), TEXT("Menu.Keybinding"), TEXT("Menu.Heading"), TEXT("ToolBar.Label"), TEXT("ToolBar.Heading") })
+            {
+                if (!FAppStyle::Get().HasWidgetStyle<FTextBlockStyle>(Key)) continue;
+                FTextBlockStyle Text = FAppStyle::Get().GetWidgetStyle<FTextBlockStyle>(Key);
+                Text.Font.Size = 10;
+                PluginMenuStyle->Set(Key, Text);
+            }
+            FEditableTextBoxStyle Input = FAppStyle::Get().GetWidgetStyle<FEditableTextBoxStyle>(TEXT("Menu.EditableText"));
+            Input.TextStyle.Font.Size = 10;
+            PluginMenuStyle->Set(TEXT("Menu.EditableText"), Input);
+            FSlateStyleRegistry::RegisterSlateStyle(*PluginMenuStyle);
+            PluginUIFontAuditCommand = MakeUnique<FAutoConsoleCommand>(TEXT("GP.UI.PluginMenuFontAudit"),
+                TEXT("只读核对插件局部菜单字体及引擎原字体；不修改样式。"),
+                FConsoleCommandDelegate::CreateLambda([Style = PluginMenuStyle]
+                {
+                    const UToolMenu* Generated = UToolMenus::Get()->GenerateMenu(TEXT("LevelEditor.MainMenu.Tools"), FToolMenuContext());
+                    const float GeneratedLabel = Generated ? Generated->GetStyleSet()->GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Label")).Font.Size : -1;
+                    UE_LOG(LogTemp, Display, TEXT("PluginMenuFontAudit LocalLabel=%.1f LocalHeading=%.1f LocalKeybinding=%.1f EngineLabel=%.1f GeneratedEngineLabel=%.1f ScopePreserved=%d"),
+                        Style->GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Label")).Font.Size,
+                        Style->GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Heading")).Font.Size,
+                        Style->GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Keybinding")).Font.Size,
+                        FAppStyle::Get().GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Label")).Font.Size, GeneratedLabel,
+                        Generated && Generated->GetStyleSet()->GetStyleSetName() != Style->GetStyleSetName());
+                }));
+        }
+        // 仅独占的插件子菜单可以选择整份局部样式；共享的引擎菜单不得整体改字号。
+        for (const TCHAR* MenuName : { TEXT("LevelEditor.MainMenu.Tools.GamePlatformValidation"),
+            TEXT("LevelEditor.MainMenu.Tools.GamePlatformPluginDemos") })
+        {
+            UToolMenus::Get()->ExtendMenu(MenuName)->AddDynamicSection(TEXT("GamePlatformPluginMenuTypography"),
+                FNewToolMenuDelegate::CreateLambda([Style = PluginMenuStyle](UToolMenu* Generated)
+                { if (Generated) Generated->SetStyleSet(Style.Get()); }));
+        }
+        UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.MainMenu.Tools"))->AddDynamicSection(
+            TEXT("GamePlatformPluginRootTypography"), FNewToolMenuDelegate::CreateLambda([Style = PluginMenuStyle](UToolMenu* Generated)
+            {
+                if (!Generated) return;
+                for (FToolMenuSection& Section : Generated->Sections)
+                {
+                    if (Section.Name != TEXT("GamePlatformValidation") && Section.Name != TEXT("GamePlatformPluginDemos")) continue;
+                    for (FToolMenuEntry& Entry : Section.Blocks)
+                    {
+                        const TAttribute<FText> Label = Entry.Label;
+                        Entry.MakeCustomWidget = FNewToolMenuCustomWidget::CreateLambda(
+                            [Style, Label](const FToolMenuContext&, const FToolMenuCustomWidgetContext&) -> TSharedRef<SWidget>
+                            { return SNew(STextBlock).TextStyle(&Style->GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Label"))).Text(Label); });
+                    }
+                }
+            }));
+    }
 
     FGamePlatformEditorResourceLease EditorLease;
     FGamePlatformEditorCleanupChanged EditorCleanupChanged;
@@ -152,6 +226,7 @@ private:
     void RegisterMenus()
     {
         FToolMenuOwnerScoped OwnerScoped(this);
+        RegisterPluginMenuTypography();
 
         UToolMenu* ToolsMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Tools");
         if (!ToolsMenu)

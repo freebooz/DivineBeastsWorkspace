@@ -173,7 +173,7 @@ void UDivineBeastsAbilityBarPanel::RefreshSlotHotkey(
     Hotkey->SetText(Label);
     // 仅固定已授权的提示字号与非命中策略；保留资产字体、颜色、位置、主题等视觉所有权。
     FSlateFontInfo HotkeyFont = Hotkey->GetFont();
-    HotkeyFont.Size = 12;
+    HotkeyFont.Size = 10;
     Hotkey->SetFont(HotkeyFont);
     Hotkey->SetVisibility(Label.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 }

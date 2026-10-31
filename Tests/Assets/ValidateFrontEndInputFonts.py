@@ -25,5 +25,5 @@ for screen, names in (
         checks.append({"screen": screen, "widget": name, "font_size": font_size,
                        "scale_x": scale.x, "scale_y": scale.y})
 print(json.dumps(checks))
-assert all(x["font_size"] == 16.0 and x["scale_x"] == 1.0 and x["scale_y"] == 1.0
-           for x in checks), "输入框字体必须为固定16号，控件RenderScale必须为1"
+assert all(x["font_size"] == 10.0 and x["scale_x"] == 1.0 and x["scale_y"] == 1.0
+           for x in checks), "输入框字体必须为固定10号，控件RenderScale必须为1"

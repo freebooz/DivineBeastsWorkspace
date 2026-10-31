@@ -32,6 +32,10 @@ public:
     UPROPERTY(BlueprintReadOnly, Transient, Category="Locomotion")
     bool bIsGrounded = false;
 
+    /** 只读CharacterMovement真实Swimming模式；无Pawn及动画失活时清空，不按水花/输入推断。 */
+    UPROPERTY(BlueprintReadOnly, Transient, Category="Locomotion")
+    bool bIsSwimming = false;
+
     /** 下落模式且实际垂直速度严格大于零；供状态机直接读取上升条件。顶点、下降、非法速度、无Pawn和失活为false。 */
     UPROPERTY(BlueprintReadOnly, Transient, Category="Locomotion")
     bool bIsRising = false;

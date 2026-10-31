@@ -49,7 +49,7 @@ UButton* UDivineBeastsCameraReviewWidget::AddButton(
     Caption->SetText(FText::FromString(Label));
     // 多平台演示控件统一使用小字号；防止默认UMG字体放大后横排按钮溢出面板。
     FSlateFontInfo ButtonFont = Caption->GetFont();
-    ButtonFont.Size = 14;
+    ButtonFont.Size = 10;
     Caption->SetFont(ButtonFont);
     Caption->SetColorAndOpacity(FSlateColor(FLinearColor::White));
     Button->SetContent(Caption);
@@ -85,7 +85,7 @@ TSharedRef<SWidget> UDivineBeastsCameraReviewWidget::RebuildWidget()
         UTextBlock::StaticClass());
     Title->SetText(FText::FromString(TEXT("SSLM 电影镜头演示")));
     FSlateFontInfo TitleFont = Title->GetFont();
-    TitleFont.Size = 18;
+    TitleFont.Size = 10;
     Title->SetFont(TitleFont);
     Title->SetColorAndOpacity(FSlateColor(FLinearColor(0.60f, 0.85f, 1.0f, 1.f)));
     Layout->AddChildToVerticalBox(Title);
@@ -118,7 +118,7 @@ TSharedRef<SWidget> UDivineBeastsCameraReviewWidget::RebuildWidget()
         UTextBlock::StaticClass(), TEXT("CinematicReviewStatus"));
     StatusText->SetText(FText::FromString(TEXT("选择镜头，调整光圈与焦点")));
     FSlateFontInfo StatusFont = StatusText->GetFont();
-    StatusFont.Size = 13;
+    StatusFont.Size = 10;
     StatusText->SetFont(StatusFont);
     StatusText->SetAutoWrapText(true);
     StatusText->SetColorAndOpacity(FSlateColor(FLinearColor(0.85f, 0.90f, 0.95f, 1.f)));

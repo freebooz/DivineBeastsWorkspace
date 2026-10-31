@@ -152,8 +152,12 @@ bool FGamePlatformLocomotionAirborneVerticalSpeedTest::RunTest(const FString&)
     TestFalse(TEXT("飞行不能由取反下落伪造落地"), Animation->bIsGrounded);
     TestFalse(TEXT("飞行正Z不触发地面跳跃上升段"), Animation->bIsRising);
     Movement->SetMovementMode(MOVE_Swimming);
+    Animation->NativeUpdateAnimation(0.f);
+    TestTrue(TEXT("游泳由真实运动模式驱动动画"), Animation->bIsSwimming);
     Animation->NativeUpdateAnimation(1.0f / 60.0f);
     TestFalse(TEXT("游泳不能误触发落地段"), Animation->bIsGrounded);
+    Animation->NativeUninitializeAnimation();
+    TestFalse(TEXT("失活清空旧泳态"), Animation->bIsSwimming);
 
     Movement->Velocity = FVector::ZeroVector;
     Movement->SetMovementMode(MOVE_Walking);

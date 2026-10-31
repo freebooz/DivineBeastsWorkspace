@@ -6,6 +6,7 @@
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
 #include "Components/DivineBeastsV6PassiveComponent.h"
 #include "Components/GamePlatformWaterInteractorComponent.h"
+#include "Components/GamePlatformCombatComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -31,6 +32,11 @@ ADivineBeastsGameplayCharacter::ADivineBeastsGameplayCharacter()
     bUseControllerRotationYaw = true;
     GetCharacterMovement()->bOrientRotationToMovement = false;
     GetCharacterMovement()->MaxWalkSpeed = 450.f; GetCharacterMovement()->JumpZVelocity = 500.f;
+    // 原生水物理体积和CharacterMovement共用预测/服务器运动；浮力略大于1支持静止浮水。
+    GetCharacterMovement()->GetNavAgentPropertiesRef().bCanSwim = true;
+    GetCharacterMovement()->MaxSwimSpeed = 280.f;
+    GetCharacterMovement()->Buoyancy = 1.1f;
+    GetCharacterMovement()->BrakingDecelerationSwimming = 256.f;
     // 基类已拥有唯一ASC/Combat/CharacterIdentity/GameplayEligibility；不能重建主线旧HeroIdentity或遮蔽继承成员。
     AbilityLoadout = CreateDefaultSubobject<UDivineBeastsAbilityLoadoutComponent>(TEXT("AbilityLoadout"));
     // 挂载实体而不激活：V6正式批准DataAsset尚不存在，默认所有12固有被动都不生效。
@@ -44,6 +50,7 @@ void ADivineBeastsGameplayCharacter::SetupPlayerInputComponent(UInputComponent* 
     // 原生输入只请求ACharacter运动，不提交坐标RPC；服务器仍校验运动与准入资格。
     Input->BindAxis(TEXT("DBA.MoveForward"), this, &ThisClass::MoveForward);
     Input->BindAxis(TEXT("DBA.MoveRight"), this, &ThisClass::MoveRight);
+    Input->BindAxis(TEXT("DBA.SwimVertical"), this, &ThisClass::SwimVertical);
     Input->BindAxis(TEXT("DBA.Turn"), this, &ThisClass::TurnCamera);
     Input->BindAxis(TEXT("DBA.Look"), this, &ThisClass::LookCamera);
     Input->BindAction(TEXT("DBA.Jump"), IE_Pressed, this, &ACharacter::Jump);
@@ -95,12 +102,26 @@ void ADivineBeastsGameplayCharacter::HandleAbilityInputReleased(FGameplayTag Inp
 void ADivineBeastsGameplayCharacter::MoveForward(float Value)
 {
     if (Controller && !Controller->IsMoveInputIgnored())
-    { AddMovementInput(FRotationMatrix(FRotator(0, Controller->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::X), Value); }
+    {
+        const FRotator View = Controller->GetControlRotation();
+        const bool bSwimming = GetCharacterMovement()->IsSwimming();
+        if (bSwimming && GetGamePlatformCombatComponent()->IsCombatDead()) return;
+        AddMovementInput(FRotationMatrix(bSwimming ? FRotator(View.Pitch,View.Yaw,0) : FRotator(0,View.Yaw,0)).GetUnitAxis(EAxis::X), Value);
+    }
 }
 void ADivineBeastsGameplayCharacter::MoveRight(float Value)
 {
     if (Controller && !Controller->IsMoveInputIgnored())
-    { AddMovementInput(FRotationMatrix(FRotator(0, Controller->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), Value); }
+    {
+        if (GetCharacterMovement()->IsSwimming() && GetGamePlatformCombatComponent()->IsCombatDead()) return;
+        AddMovementInput(FRotationMatrix(FRotator(0, Controller->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), Value);
+    }
+}
+void ADivineBeastsGameplayCharacter::SwimVertical(float Value)
+{
+    if (Controller && !Controller->IsMoveInputIgnored() && GetCharacterMovement()->IsSwimming() &&
+        !GetGamePlatformCombatComponent()->IsCombatDead() && FMath::IsFinite(Value))
+        AddMovementInput(FVector::UpVector, FMath::Clamp(Value,-1.f,1.f));
 }
 void ADivineBeastsGameplayCharacter::TurnCamera(float Value) { AddControllerYawInput(Value); }
 void ADivineBeastsGameplayCharacter::LookCamera(float Value) { AddControllerPitchInput(Value); }

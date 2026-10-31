@@ -17,7 +17,7 @@
   ],
   "screen_definition": {"path": "/DBAUIPack_Core/Development/PluginDemos/Definitions/DA_DBA_PluginDemoHubScreen", "class": "/Script/GamePlatformUIClient.GamePlatformUIScreenDefinition", "screen_id": "DivineBeasts.Demo.Hub", "widget": "WBP_DBA_PluginDemoHub", "layer": "Screen", "input": "GameAndUI", "pause": "Never", "focus": "PluginSearchInput", "survives_travel": false},
   "asset_root": "/DBAUIPack_Core/Development/PluginDemos",
-  "layout": "三列虚拟化列表+详情/控制/报告三子页切换；可滚动正文和参数，固定18/20/28字号，不缩放正文；安全区内保留返回，控制页保留停止；窄屏及设备焦点仍须运行验证",
+  "layout": "三列虚拟化列表+详情/控制/报告三子页切换；可滚动正文和参数，标题、正文、按钮、标签和输入统一固定10号字体，不缩放正文；安全区内保留返回，控制页保留停止；窄屏及设备焦点仍须运行验证",
   "visual": "复用现有温润自然碧绿玉石主题；禁颗粒/砂砾/过锐化；不为截图问题改变原稿RGB",
   "focus_order": ["PluginSearchInput", "LayerFilterCombo", "PluginList", "FeatureList", "ScenarioList", "DetailTabButton", "ControlsTabButton", "ReportTabButton", "LaunchScenarioButton", "ReturnButton"],
   "required_validation": ["父类/命名控件/实际类型回读", "层栈与列表entry class回读", "焦点可达性与键鼠/手柄导航", "可访问性中文正文及非颜色状态", "1920x1080/2560x1440/3840x2160/小安全区", "编译日志零错误", "保存关闭重开回读", "新彩色资产源像素与RHI单次编码比较"],

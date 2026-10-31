@@ -17,6 +17,7 @@
 #include "HAL/PlatformApplicationMisc.h"
 #include "HAL/PlatformTime.h"
 #include "Input/Reply.h"
+#include "Styling/CoreStyle.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SSearchBox.h"
 #include "Widgets/Layout/SBorder.h"
@@ -62,6 +63,14 @@ namespace
 
         void Construct(const FArguments&)
         {
+            // 插件自有文字局部统一为10号；不修改引擎全局样式。
+            PanelTextStyle = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("NormalText");
+            PanelTextStyle.Font.Size = 10;
+            PanelButtonTextStyle = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("ButtonText");
+            PanelButtonTextStyle.Font.Size = 10;
+            PanelSearchStyle = FCoreStyle::Get().GetWidgetStyle<FSearchBoxStyle>("SearchBox");
+            PanelSearchStyle.TextBoxStyle.TextStyle.Font.Size = 10;
+            PanelSearchStyle.ActiveFontInfo.Size = 10;
             Categories =
             {
                 TEXT("World"),
@@ -89,6 +98,7 @@ namespace
                     .Padding(2.0f)
                     [
                         SNew(SButton)
+                        .TextStyle(&PanelButtonTextStyle)
                         .Text(FText::FromName(Category))
                         .OnClicked_Lambda(
                             [this, Index]()
@@ -111,6 +121,7 @@ namespace
                     .AutoHeight()
                     [
                         SNew(STextBlock)
+                        .TextStyle(&PanelTextStyle)
                         .Text(FText::FromString(
                             TEXT("GamePlatformDebug｜游戏平台调试面板（Development/Test）")))
                     ]
@@ -133,6 +144,7 @@ namespace
                         .Padding(2.0f)
                         [
                             SNew(SButton)
+                        .TextStyle(&PanelButtonTextStyle)
                             .Text_Lambda(
                                 [this]()
                                 {
@@ -155,6 +167,7 @@ namespace
                         .Padding(2.0f)
                         [
                             SNew(SButton)
+                        .TextStyle(&PanelButtonTextStyle)
                             .Text_Lambda(
                                 [this]()
                                 {
@@ -182,6 +195,7 @@ namespace
                         .Padding(2.0f)
                         [
                             SNew(SButton)
+                        .TextStyle(&PanelButtonTextStyle)
                             .Text_Lambda(
                                 [this]()
                                 {
@@ -201,6 +215,7 @@ namespace
                         .Padding(2.0f)
                         [
                             SNew(SButton)
+                        .TextStyle(&PanelButtonTextStyle)
                             .Text(FText::FromString(TEXT("立即刷新")))
                             .OnClicked_Lambda(
                                 [this]()
@@ -215,6 +230,7 @@ namespace
                         .Padding(2.0f)
                         [
                             SNew(SButton)
+                        .TextStyle(&PanelButtonTextStyle)
                             .Text(FText::FromString(TEXT("复制脱敏摘要")))
                             .OnClicked_Lambda(
                                 [this]()
@@ -231,6 +247,7 @@ namespace
                         .Padding(2.0f)
                         [
                             SNew(SButton)
+                        .TextStyle(&PanelButtonTextStyle)
                             .Text_Lambda(
                                 [this]()
                                 {
@@ -253,6 +270,7 @@ namespace
                     .Padding(2.0f)
                     [
                         SNew(SSearchBox)
+                        .Style(&PanelSearchStyle)
                         .HintText(FText::FromString(TEXT("搜索字段")))
                         .OnTextChanged_Lambda(
                             [this](const FText& Text)
@@ -276,6 +294,7 @@ namespace
                             + SScrollBox::Slot()
                             [
                                 SAssignNew(ClientTextWidget, STextBlock)
+                                .TextStyle(&PanelTextStyle)
                                 .Text(FText::FromString(TEXT("Client View（客户端视角）")))
                                 .AutoWrapText(true)
                             ]
@@ -289,6 +308,7 @@ namespace
                             + SScrollBox::Slot()
                             [
                                 SAssignNew(ServerTextWidget, STextBlock)
+                                .TextStyle(&PanelTextStyle)
                                 .Text(FText::FromString(TEXT("Server View（服务器权威视角）")))
                                 .AutoWrapText(true)
                             ]
@@ -327,6 +347,10 @@ namespace
         }
 
     private:
+        FTextBlockStyle PanelTextStyle;
+        FTextBlockStyle PanelButtonTextStyle;
+        FSearchBoxStyle PanelSearchStyle;
+
         AActor* ResolveTarget(UWorld* World) const
         {
             APlayerController* PC = World

@@ -8446,9 +8446,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -8535,9 +8536,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -8626,9 +8628,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -8717,9 +8720,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -8806,9 +8810,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -8897,9 +8902,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -8988,9 +8994,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9079,9 +9086,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9170,9 +9178,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9261,9 +9270,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9352,9 +9362,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9443,9 +9454,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9534,9 +9546,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9625,9 +9638,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9716,9 +9730,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9807,9 +9822,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9898,9 +9914,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -9989,9 +10006,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10080,9 +10098,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10171,9 +10190,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10262,9 +10282,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10353,9 +10374,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10444,9 +10466,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10535,9 +10558,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10626,9 +10650,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10717,9 +10742,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10808,9 +10834,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10899,9 +10926,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -10990,9 +11018,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11081,9 +11110,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11172,9 +11202,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11263,9 +11294,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11354,9 +11386,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11445,9 +11478,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11536,9 +11570,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11627,9 +11662,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11718,9 +11754,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11809,9 +11846,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11900,9 +11938,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -11991,9 +12030,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12082,9 +12122,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12173,9 +12214,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12264,9 +12306,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12355,9 +12398,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12446,9 +12490,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12535,9 +12580,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12624,9 +12670,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12715,9 +12762,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12804,9 +12852,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12893,9 +12942,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -12982,9 +13032,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13070,9 +13121,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13158,9 +13210,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13248,9 +13301,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13336,9 +13390,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13427,9 +13482,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13516,9 +13572,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13605,9 +13662,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13696,9 +13754,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13785,9 +13844,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -13876,9 +13936,10 @@
       "preconditions": [
         "显式开发演示模式、对应内容包启用、真实Monolith预览样板已加载",
         "资源选择限本包顶层对象；Auto显示纹理/模型/材质，NativeEditor使用原生只读预览",
-        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充"
+        "三维样板仅独立本地World；世界进入和内容注册生命周期另有案例，不由本检查冒充",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoAssetPreview.WBP_DBA_PluginDemoAssetPreview_C",
       "definition_assets": [],
       "operations": [
@@ -24071,10 +24132,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/GamePlatformVFX/Development/Review/Maps/L_VFXReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/GamePlatformVFX/Development/Review/Maps/L_VFXReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -24225,10 +24287,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/GamePlatformVFX/Development/Review/Maps/L_VFXReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/GamePlatformVFX/Development/Review/Maps/L_VFXReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -24375,10 +24438,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/GamePlatformVFX/Development/Review/Maps/L_VFXReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/GamePlatformVFX/Development/Review/Maps/L_VFXReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -24653,10 +24717,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/GamePlatformVFX/Development/Review/Maps/L_VFXReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/GamePlatformVFX/Development/Review/Maps/L_VFXReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -24781,10 +24846,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -24961,10 +25027,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -25141,10 +25208,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -25321,10 +25389,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -25390,10 +25459,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_CameraEffects；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_CameraEffects",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -25492,10 +25562,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_CameraEffects；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_CameraEffects",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -25951,10 +26022,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/Game/Development/Terrain/Maps/L_DBA_TerrainFunctionReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Terrain/Maps/L_DBA_TerrainFunctionReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -26211,11 +26283,12 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
         "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
-        "同LP真实Character/Mesh带foot_l/foot_r；Surface雪接触开启且有积雪接收材质；实际走动/跳跃由最终骨骼事件触发，不伪造接触"
+        "同LP真实Character/Mesh带foot_l/foot_r；Surface雪接触开启且有积雪接收材质；实际走动/跳跃由最终骨骼事件触发，不伪造接触",
+        "本案例观察关卡：/Game/Development/Snow/Maps/L_DBA_SnowReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Snow/Maps/L_DBA_SnowReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -26279,10 +26352,11 @@
       ],
       "preconditions": [
         "显式DBAPluginDemo和-GamePlatformManualFixture；同LP SampleWidget；Game/Standalone；排他ManualHost（非PIE）",
-        "T04.Fix2及本T05源码已应用并完整构建；当前Hub右侧真实World观察区已接线",
-        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源"
+        "T04.Fix2及本T05源码已应用并完整构建；必须进入本案例登记的真实观察关卡；插件页在切图后保持同一功能身份",
+        "仅使用本工程当前发布资源；资源/Shader已原生创建、保存、重载；缺资源报告失败，禁止Review/V3旧资源",
+        "本案例观察关卡：/GamePlatformSurface/Development/Review/Maps/L_GP_SurfaceMarksReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/GamePlatformSurface/Development/Review/Maps/L_GP_SurfaceMarksReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -26790,9 +26864,10 @@
       "preconditions": [
         "显式DBAPluginDemo和GamePlatformManualFixture；同GI/LP Standalone Game World；排他ManualHost",
         "T05 World镜像已中央集成/完整构建；原生资产另由Monolith制作并保存重载",
-        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误"
+        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误",
+        "本案例观察关卡：/Game/Development/Weather/Maps/L_DBA_WeatherReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Weather/Maps/L_DBA_WeatherReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -26885,9 +26960,10 @@
       "preconditions": [
         "显式DBAPluginDemo和GamePlatformManualFixture；同GI/LP Standalone Game World；排他ManualHost",
         "T05 World镜像已中央集成/完整构建；原生资产另由Monolith制作并保存重载",
-        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误"
+        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误",
+        "本案例观察关卡：/Game/Development/Weather/Maps/L_DBA_WeatherReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Weather/Maps/L_DBA_WeatherReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -26971,9 +27047,10 @@
       "preconditions": [
         "显式DBAPluginDemo和GamePlatformManualFixture；同GI/LP Standalone Game World；排他ManualHost",
         "T05 World镜像已中央集成/完整构建；原生资产另由Monolith制作并保存重载",
-        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误"
+        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误",
+        "本案例观察关卡：/Game/Development/Weather/Maps/L_DBA_WeatherReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Weather/Maps/L_DBA_WeatherReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -27053,9 +27130,10 @@
       "preconditions": [
         "显式DBAPluginDemo和GamePlatformManualFixture；同GI/LP Standalone Game World；排他ManualHost",
         "T05 World镜像已中央集成/完整构建；原生资产另由Monolith制作并保存重载",
-        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误"
+        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误",
+        "本案例观察关卡：/Game/Development/Water/L_GP_WaterReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Water/L_GP_WaterReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -27155,9 +27233,10 @@
       "preconditions": [
         "显式DBAPluginDemo和GamePlatformManualFixture；同GI/LP Standalone Game World；排他ManualHost",
         "T05 World镜像已中央集成/完整构建；原生资产另由Monolith制作并保存重载",
-        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误"
+        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误",
+        "本案例观察关卡：/Game/Development/Water/L_GP_WaterReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Water/L_GP_WaterReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -27261,9 +27340,10 @@
       "preconditions": [
         "显式DBAPluginDemo和GamePlatformManualFixture；同GI/LP Standalone Game World；排他ManualHost",
         "T05 World镜像已中央集成/完整构建；原生资产另由Monolith制作并保存重载",
-        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误"
+        "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误",
+        "本案例观察关卡：/Game/Development/Water/L_GP_WaterReview；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验"
       ],
-      "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+      "map_asset": "/Game/Development/Water/L_GP_WaterReview",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
       "definition_assets": [],
       "operations": [
@@ -27464,7 +27544,9 @@
         "T05 World镜像已中央集成/完整构建；原生资产另由Monolith制作并保存重载",
         "仅本Run对象；不创建生产Experience、ServerActive或正式角色；缺导航/图/预设必须给真实错误",
         "专用真实Hub Standalone：DBAPluginDemo+DBAPluginDemoMap=Hub+GamePlatformManualFixture+FoundationWorld+DBAManualWorldHost；旧Foundation装配互斥，世界租约到World退出。",
-        "区域定义加载与provider就绪分别观察；regions页撤宿主provider由本Run登记，其它World/PCG页恢复；外部同ID冲突明确失败。"
+        "区域定义加载与provider就绪分别观察；regions页撤宿主provider由本Run登记，其它World/PCG页恢复；外部同ID冲突明确失败。",
+        "本案例观察关卡：/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub；场景/资产已原生创建或加载，功能受理、视听效果与人工结论分别核验",
+        "ValidateProfile读取精确Hub宿主的真实World readiness；地形观察由Surface.environment的地形关卡单独覆盖，不扩大宿主资格"
       ],
       "map_asset": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
       "widget_asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",

@@ -33,6 +33,9 @@
 #include "SGraphPanel.h"
 #include "ScopedTransaction.h"
 #include "Styling/AppStyle.h"
+#include "Styling/SlateStyleRegistry.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Text/STextBlock.h"
 #include "UObject/UObjectGlobals.h"
 #include "Widgets/Notifications/SNotificationList.h"
 #include "Widgets/SWindow.h"
@@ -824,7 +827,27 @@ TSharedRef<FExtender> FEditor::ExtendMenu(const TSharedRef<FUICommandList> Comma
     return Extender;
 }
 
-void FEditor::BuildMenu(FMenuBuilder& Menu) { Menu.AddMenuEntry(FCommands::Get().Format); }
+void FEditor::BuildMenu(FMenuBuilder& Menu)
+{
+    const auto Command = FCommands::Get().Format;
+    const ISlateStyle* Style = FSlateStyleRegistry::FindSlateStyle(TEXT("GamePlatform.PluginMenuTypography"));
+    const auto Commands = Menu.GetTopCommandList();
+    const FUIAction* Action = Commands.IsValid() ? Commands->GetActionForCommand(Command) : nullptr;
+    if (!Style || !Action) { Menu.AddMenuEntry(Command); return; }
+    // 复用原来的命令委托、资格和快捷键；只替换本插件的标签/快捷键文字。
+    const FSlateFontInfo Font = Style->GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Label")).Font;
+    FMenuEntryParams Params;
+    Params.DirectActions = *Action;
+    Params.LabelOverride = Command->GetLabel();
+    Params.ToolTipOverride = Command->GetDescription();
+    Params.IconOverride = Command->GetIcon();
+    Params.InputBindingOverride = FText::GetEmpty();
+    Params.UserInterfaceActionType = EUserInterfaceActionType::Button;
+    Params.EntryWidget = SNew(SHorizontalBox)
+        + SHorizontalBox::Slot().FillWidth(1)[SNew(STextBlock).Font(Font).Text(Command->GetLabel())]
+        + SHorizontalBox::Slot().AutoWidth().Padding(12, 0)[SNew(STextBlock).Font(Font).Text(Command->GetInputText())];
+    Menu.AddMenuEntry(Params);
+}
 
 void FEditor::BuildMaterialMenu(UToolMenu* Menu)
 {
@@ -837,10 +860,22 @@ void FEditor::BuildMaterialMenu(UToolMenu* Menu)
         const auto Panel = StaticCastSharedPtr<SGraphPanel>(Focused);
         if (Panel->GetGraphObj() != Context->Graph || !Panel->IsGraphEditable()) { return; }
         const TWeakPtr<SGraphPanel> WeakPanel = Panel;
-        Menu->AddSection(TEXT("GlooPrintMaterial"), LOCTEXT("MaterialMenu", "GlooPrint")).AddMenuEntry(
+        FToolMenuSection& Section = Menu->AddSection(TEXT("GlooPrintMaterial"), LOCTEXT("MaterialMenu", "GlooPrint"));
+        FToolMenuEntry& Entry = Section.AddMenuEntry(
             TEXT("GlooPrintFormat"), FCommands::Get().Format->GetLabel(), FCommands::Get().Format->GetDescription(), FSlateIcon(),
             FUIAction(FExecuteAction::CreateSP(this, &FEditor::ExecutePanel, WeakPanel),
                 FCanExecuteAction::CreateLambda([] { return GetDefault<UGlooPrintSettings>()->bFormattingEnabled; })));
+        if (const ISlateStyle* Style = FSlateStyleRegistry::FindSlateStyle(TEXT("GamePlatform.PluginMenuTypography")))
+        {
+            const FSlateFontInfo Font = Style->GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Label")).Font;
+            const TAttribute<FText> Label = Entry.Label;
+            Entry.MakeCustomWidget = FNewToolMenuCustomWidget::CreateLambda(
+                [Font, Label](const FToolMenuContext&, const FToolMenuCustomWidgetContext&) -> TSharedRef<SWidget>
+                { return SNew(STextBlock).Font(Font).Text(Label); });
+            Section.Label = FText::GetEmpty();
+            Section.Blocks.Insert(FToolMenuEntry::InitWidget(TEXT("GlooPrintMaterialHeading"),
+                SNew(STextBlock).Font(Font).Text(LOCTEXT("MaterialMenu", "GlooPrint")), FText::GetEmpty(), true, false), 0);
+        }
         return;
     }
 }

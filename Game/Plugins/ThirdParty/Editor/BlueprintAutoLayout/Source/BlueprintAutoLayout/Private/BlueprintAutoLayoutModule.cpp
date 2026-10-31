@@ -6,6 +6,10 @@
 #include "BlueprintAutoLayout.h"
 #include "BlueprintAutoLayoutSettings.h"
 #include "BlueprintAutoLayoutCommands.h"
+#include "Styling/SlateStyleRegistry.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/SBoxPanel.h"
 #include "ACPDistTools/ACPMenu.h"
 
 #include "BlueprintEditor.h"
@@ -560,6 +564,23 @@ void FBlueprintAutoLayoutModule::RegisterMenuExtensions()
 						FBlueprintAutoLayoutModule::ExecuteLayoutSelectedOnGraph(Graph, Selected);
 					})));
 			}
+			// SSLM只修改本插件生成的文字，保留共享图编辑器菜单和节点自身样式。
+			const ISlateStyle* TextStyle = FSlateStyleRegistry::FindSlateStyle(TEXT("GamePlatform.PluginMenuTypography"));
+			if (TextStyle)
+			{
+				const FSlateFontInfo Font = TextStyle->GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Label")).Font;
+				for (FToolMenuEntry& Entry : InSection.Blocks)
+				{
+					const TAttribute<FText> Label = Entry.Label;
+					Entry.MakeCustomWidget = FNewToolMenuCustomWidget::CreateLambda(
+						[Font, Label](const FToolMenuContext&, const FToolMenuCustomWidgetContext&) -> TSharedRef<SWidget>
+						{ return SNew(STextBlock).Font(Font).Text(Label); });
+				}
+				const FText Heading = InSection.Label.Get();
+				InSection.Label = FText::GetEmpty();
+				InSection.Blocks.Insert(FToolMenuEntry::InitWidget(TEXT("BlueprintAutoLayoutHeading"),
+					SNew(STextBlock).Font(Font).Text(Heading), FText::GetEmpty(), true, false), 0);
+			}
 		}));
 
 	// Add the toolbar button to the Blueprint editor's toolbar.
@@ -646,7 +667,10 @@ void FBlueprintAutoLayoutModule::RegisterToolbarExtension()
 					TWeakObjectPtr<UEdGraph> WeakGraph(Graph);
 					const bool bHasSelection = WeakSelected.Num() > 0;
 
-					FMenuBuilder MenuBuilder(true, nullptr);
+					// SSLM菜单只借用平台注册的局部文字样式；独立安装时保留原引擎默认值。
+					const ISlateStyle* PluginMenuStyle = FSlateStyleRegistry::FindSlateStyle(TEXT("GamePlatform.PluginMenuTypography"));
+					FMenuBuilder MenuBuilder(true, nullptr, TSharedPtr<FExtender>(), false,
+						PluginMenuStyle ? PluginMenuStyle : &FCoreStyle::Get());
 
 					// 1 — Auto Layout Graph
 					MenuBuilder.AddMenuEntry(
@@ -770,7 +794,7 @@ void FBlueprintAutoLayoutModule::RegisterToolbarExtension()
 
 			// Combo button: left-click runs whichever action was chosen last (sticky default);
 			// the dropdown arrow reveals all five actions and updates the default.
-			InSection.AddEntry(FToolMenuEntry::InitComboButton(
+			FToolMenuEntry& ToolbarEntry = InSection.AddEntry(FToolMenuEntry::InitComboButton(
 				"AutoLayoutGraph",
 				FUIAction(FExecuteAction::CreateLambda([GetFocusedGraph]()
 				{
@@ -786,6 +810,19 @@ void FBlueprintAutoLayoutModule::RegisterToolbarExtension()
 				TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([]() { return GetDefaultTooltip(); })),
 				FSlateIcon(BPAL_STYLE_SETNAME, "GraphEditor.AlignNodesTop")
 			));
+			if (const ISlateStyle* Style = FSlateStyleRegistry::FindSlateStyle(TEXT("GamePlatform.PluginMenuTypography")))
+			{
+				const FSlateFontInfo Font = Style->GetWidgetStyle<FTextBlockStyle>(TEXT("Menu.Label")).Font;
+				ToolbarEntry.MakeCustomWidget = FNewToolMenuCustomWidget::CreateLambda(
+					[Font](const FToolMenuContext&, const FToolMenuCustomWidgetContext&) -> TSharedRef<SWidget>
+					{
+						return SNew(SVerticalBox)
+							+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center)
+							[SNew(SImage).Image(FSlateIcon(BPAL_STYLE_SETNAME, "GraphEditor.AlignNodesTop").GetIcon())]
+							+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center)
+							[SNew(STextBlock).Font(Font).Text_Lambda([] { return GetDefaultShortLabel(); })];
+					});
+			}
 		}));
 }
 

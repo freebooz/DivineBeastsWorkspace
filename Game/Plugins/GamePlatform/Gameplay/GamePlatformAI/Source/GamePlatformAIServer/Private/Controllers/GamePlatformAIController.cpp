@@ -171,7 +171,7 @@ void AGamePlatformAIController::OnMoveCompleted(FAIRequestID RequestID, const FP
 {
     Super::OnMoveCompleted(RequestID, Result);
     // 仅对成功抵达的原生脑当前目标立即重评；取消或失败不触发新的攻击请求。
-    if (!HasAuthority() || !Result.IsSuccess() || !bBrainReady || bStoppedForDeath ||
+    if (!HasAuthority() || !Result.IsSuccess() || !bBrainReady || bStoppedForDeath || bSubmittingNativeChaseMove ||
         !ActiveDefinition || ActiveDefinition->BrainType != EGamePlatformAIBrainType::None ||
         !IsValid(GetPawn()) || !CurrentTarget.IsValid()) return;
     const AActor* Target = CurrentTarget.Get();
@@ -1456,7 +1456,11 @@ void AGamePlatformAIController::RequestChase(AActor& Target)
     if (bMovedEnough || bRefreshTime)
     {
         if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
+        {
+            // 引擎在已到达目标时同步调用OnMoveCompleted；延后到既有决策时钟，避免无限重入。
+            TGuardValue<bool> RequestGuard(bSubmittingNativeChaseMove, true);
             MoveToActor(&Target, ActiveDefinition->PreferredRange);
+        }
         LastMoveGoal = TargetLocation;
         LastMoveRequestTime = Now;
 

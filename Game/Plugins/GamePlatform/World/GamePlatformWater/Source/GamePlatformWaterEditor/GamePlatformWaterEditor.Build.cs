@@ -7,5 +7,6 @@ public class GamePlatformWaterEditor : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "UnrealEd", "GamePlatformWaterRuntime" });
+        PrivateDependencyModuleNames.AddRange(new[] { "AssetRegistry", "Water", "GeometryCore" });
     }
 }

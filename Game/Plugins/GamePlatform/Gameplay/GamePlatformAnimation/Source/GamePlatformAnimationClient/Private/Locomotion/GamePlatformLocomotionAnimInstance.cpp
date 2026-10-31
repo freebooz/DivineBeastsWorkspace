@@ -11,6 +11,7 @@ void UGamePlatformLocomotionAnimInstance::NativeInitializeAnimation()
     VerticalSpeedCmPerSecond = 0.0f;
     bIsFalling = false;
     bIsGrounded = false;
+    bIsSwimming = false;
     bIsRising = false;
 }
 
@@ -31,6 +32,7 @@ void UGamePlatformLocomotionAnimInstance::NativeUpdateAnimation(float DeltaSecon
     bIsFalling = Movement && Movement->IsFalling();
     // 显式快照让简单布尔转换规则无需组合/取反；真实移动模式确认地面，缺Owner或其他移动模式不能误播Landing。
     bIsGrounded = Movement && Movement->IsMovingOnGround();
+    bIsSwimming = Movement && Movement->IsSwimming();
     bIsRising = bIsFalling && VerticalSpeedCmPerSecond > 0.0f;
 }
 
@@ -40,6 +42,7 @@ void UGamePlatformLocomotionAnimInstance::NativeUninitializeAnimation()
     VerticalSpeedCmPerSecond = 0.0f;
     bIsFalling = false;
     bIsGrounded = false;
+    bIsSwimming = false;
     bIsRising = false;
     Super::NativeUninitializeAnimation();
 }

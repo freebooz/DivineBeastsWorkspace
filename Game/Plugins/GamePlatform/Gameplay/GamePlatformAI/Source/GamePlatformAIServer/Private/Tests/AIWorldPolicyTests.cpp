@@ -25,6 +25,8 @@ int main()
 #include "Data/GamePlatformAIDefinition.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/Character.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "Tags/GamePlatformAITags.h"
 
 namespace
@@ -178,6 +180,45 @@ bool FAIIdleMovementPolicyTest::RunTest(const FString& Parameters)
     Controller->UnPossess();
     Controller->Possess(Pawn);
     TestEqual(TEXT("重新占有清除旧巡逻退避"), Controller->NextPatrolSelectionTime, 0.0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAIImmediateChaseCompletionTest, "GamePlatform.AI.Movement.ImmediateChaseCompletion",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::ServerContext | EAutomationTestFlags::EngineFilter)
+bool FAIImmediateChaseCompletionTest::RunTest(const FString& Parameters)
+{
+    (void)Parameters;
+    const UWorld::InitializationValues Values = UWorld::InitializationValues().AllowAudioPlayback(false)
+        .CreatePhysicsScene(true).CreateNavigation(false).CreateAISystem(true).ShouldSimulatePhysics(false);
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &Values);
+    if (!TestNotNull(TEXT("真实Game世界"), World)) return false;
+    ON_SCOPE_EXIT { World->DestroyWorld(false); };
+    World->InitializeActorsForPlay(FURL());
+    auto* Pawn = World->SpawnActor<ACharacter>();
+    auto* Target = World->SpawnActor<APawn>();
+    auto* Controller = World->SpawnActor<AGamePlatformAIController>();
+    if (!TestNotNull(TEXT("追击角色"), Pawn) || !TestNotNull(TEXT("目标"), Target) ||
+        !TestNotNull(TEXT("控制器"), Controller)) return false;
+    auto* Identity = NewObject<UGamePlatformAITargetComponent>(Target);
+    Target->AddInstanceComponent(Identity); Identity->RegisterComponent(); Identity->BeginPlay();
+    Controller->Possess(Pawn);
+    auto* Definition = NewObject<UGamePlatformAIDefinition>(Controller);
+    Definition->BrainType = EGamePlatformAIBrainType::None;
+    Definition->AttackRange = 300.0f;
+    Definition->PreferredRange = 200.0f;
+    Controller->ActiveDefinition = Definition;
+    Controller->bBrainReady = true;
+    Controller->bRetainCombatTarget = true;
+    Controller->UpsertCandidate(Target, Target->GetActorLocation(), false, true, false);
+    Controller->SetCurrentTarget(Target);
+    FAIMoveRequest Request(Target);
+    Request.SetAcceptanceRadius(Definition->PreferredRange);
+    if (!TestTrue(TEXT("真实PathFollowing已在目标范围，MoveTo会同步完成"),
+        Controller->GetPathFollowingComponent()->HasReached(Request))) return false;
+    // 不可见目标仍须追击：旧实现从同步完成回调递归请求MoveTo，导致栈溢出。
+    Controller->RequestChase(*Target);
+    TestTrue(TEXT("即时完成安全返回并记录追击请求"), Controller->LastMoveRequestTime >= 0.0);
+    TestEqual(TEXT("目标身份未被替换"), Controller->CurrentTarget.Get(), static_cast<AActor*>(Target));
     return true;
 }
 #endif

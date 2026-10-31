@@ -101,8 +101,8 @@ def setup(run,quality='High',view='LakeShore'):
         u.SystemLibrary.execute_console_command(w,'sg.'+group+'Quality '+str(q['scalability']))
     for key,value in q.items():
         if key!='scalability': u.SystemLibrary.execute_console_command(w,key+' '+str(value))
-    # 0仍触发UEditorEngine的120 FPS隐式夹取；本轮临时1000高上限，结束恢复0。
-    for cmd in ['t.MaxFPS 1000','r.VSync 0','r.DynamicRes.OperationMode 0','r.ScreenPercentage 100','r.GPUCsvStatsEnabled 1']:
+    # 调试禁止设置人为帧率上限；PIE若仍受编辑器隐式限制，需单独核实并报告。
+    for cmd in ['t.MaxFPS 0','r.VSync 0','r.DynamicRes.OperationMode 0','r.ScreenPercentage 100','r.GPUCsvStatsEnabled 1']:
         u.SystemLibrary.execute_console_command(w,cmd)
     camera=set_camera(view)
     landscape=bind_landscape(w)

@@ -91,6 +91,7 @@ protected:
 private:
     // 私有纯规则只投影当前Pawn/World事实；友元仅供模块内部UE回归，不开放玩法调用入口。
     friend class FAIIdleMovementPolicyTest;
+    friend class FAIImmediateChaseCompletionTest;
     enum class EIdleMovementAction { ContinueMove, Wait, ReturnHome, SelectPatrolGoal };
 
     /** 游戏线程无目标决策：距离为水平平方厘米，半径为厘米；输入来自已校验定义和当前原生路径。
@@ -156,6 +157,8 @@ private:
     EGamePlatformAIError LastError = EGamePlatformAIError::None;
     bool bBrainReady = false;
     bool bStoppedForDeath = false;
+    /** MoveToActor可能同步报告已到达；该阶段禁止完成回调递归提交追击。 */
+    bool bSubmittingNativeChaseMove = false;
 
     UFUNCTION()
     void HandleTargetPerceptionUpdated(

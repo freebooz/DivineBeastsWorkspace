@@ -5,6 +5,9 @@
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/PhysicsVolume.h"
+#include "Components/BrushComponent.h"
+#include "PhysicsEngine/BodySetup.h"
 
 AGamePlatformWaterRegion::AGamePlatformWaterRegion()
 {
@@ -23,6 +26,16 @@ AGamePlatformWaterRegion::AGamePlatformWaterRegion()
 
 bool AGamePlatformWaterRegion::IsWaterRegionValid() const
 {
+    if (bRequirePhysicsVolume || WaterPhysicsVolume)
+    {
+        const APhysicsVolume* Volume = WaterPhysicsVolume;
+        const UBrushComponent* Brush = IsValid(Volume) ? Volume->GetBrushComponent() : nullptr;
+        const UBodySetup* Body = Brush ? const_cast<UBrushComponent*>(Brush)->GetBodySetup() : nullptr;
+        return Region.IsValid() && IsValid(Volume) && Volume->GetWorld() == GetWorld() &&
+            Volume->bWaterVolume == Region.bSwimmable && Volume->Priority == Region.Priority + 1 &&
+            IsValid(Body) && Body->AggGeom.GetElementCount() > 0 &&
+            FMath::IsFinite(GetActorLocation().Z);
+    }
     const FVector Extents = WaterBounds ? WaterBounds->GetUnscaledBoxExtent() : FVector::ZeroVector;
     return Region.IsValid() && IsValid(WaterBounds) &&
         Extents.GetMin() > 0.f && FMath::IsFinite(GetActorLocation().Z);
@@ -32,9 +45,16 @@ bool AGamePlatformWaterRegion::SampleRegion(
     const FVector& WorldPosition, FGamePlatformWaterSample& OutSample) const
 {
     OutSample = FGamePlatformWaterSample();
-    if (!IsWaterRegionValid())
+    if (WorldPosition.ContainsNaN() || !IsWaterRegionValid())
         return false;
     const float SurfaceZ = static_cast<float>(GetActorLocation().Z) + Region.SurfaceOffsetCm;
+    if (WaterPhysicsVolume)
+    {
+        if (!WaterPhysicsVolume->EncompassesPoint(WorldPosition)) return false;
+        const FBox Bounds = WaterPhysicsVolume->GetComponentsBoundingBox(true);
+        return Bounds.IsValid && FGamePlatformWaterMath::SampleWaterVolume(
+            FTransform(Bounds.GetCenter()), Bounds.GetExtent(), SurfaceZ, WorldPosition, Region, OutSample);
+    }
     return FGamePlatformWaterMath::SampleWaterVolume(
         WaterBounds->GetComponentTransform(), WaterBounds->GetUnscaledBoxExtent(),
         SurfaceZ, WorldPosition, Region, OutSample);

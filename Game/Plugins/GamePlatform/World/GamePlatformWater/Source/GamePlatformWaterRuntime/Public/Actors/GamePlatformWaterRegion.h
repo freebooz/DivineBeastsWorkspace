@@ -8,6 +8,7 @@
 #include "GamePlatformWaterRegion.generated.h"
 
 class UBoxComponent;
+class APhysicsVolume;
 
 /** 水域边界须对应正式地图已烘焙区域，默认无碰撞与无Tick；注册失败时不参与游戏判定。 */
 UCLASS(BlueprintType, Blueprintable)
@@ -28,6 +29,15 @@ public:
     /** 含水面高度偏移、浅水阈值与流向，纯共享规则，不含纹理引用。 */
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Water|Authority")
     FGamePlatformWaterRegionConfig Region;
+
+    /** 已烘焙原生水物理体积，和CharacterMovement共用精确几何；只能指向同一World。
+     * 不引用WaterBody或渲染资源，Dedicated Server仍保留Brush碰撞。 */
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Water|Authority")
+    TObjectPtr<APhysicsVolume> WaterPhysicsVolume;
+
+    /** 新水域显式要求精确体积；失效时拒绝，不能回退旧Box并覆盖岸上陆地。 */
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Water|Authority")
+    bool bRequirePhysicsVolume = false;
 
     /** 失效区域不会参与权威查询，报告给日志和审核面板而不是自动修复。 */
     UFUNCTION(BlueprintPure, Category="GamePlatform|Water")

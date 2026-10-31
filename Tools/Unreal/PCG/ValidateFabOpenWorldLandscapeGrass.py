@@ -15,6 +15,9 @@ def run():
     assert isinstance(material, u.Material) and isinstance(instance, u.MaterialInstanceConstant)
     assert instance.get_editor_property('parent').get_path_name().split('.')[0] == MAT
     lib = u.MaterialEditingLibrary
+    for name, expected in (('GP_FabPlantHeightCm', 40.), ('GP_FabPlantWindAmplitudeCm', 25.),
+                           ('GP_FabPlantWindDistanceCm', 10000.)):
+        assert abs(lib.get_material_instance_scalar_parameter_value(instance, name) - expected) < .001
     wpo = lib.get_material_property_input_node(material, u.MaterialProperty.MP_WORLD_POSITION_OFFSET)
     assert isinstance(wpo, u.MaterialExpressionAdd)
     branches = lib.get_inputs_for_material_expression(material, wpo)
@@ -38,10 +41,10 @@ def run():
             assert len(mats) == 1 and mats[0].get_path_name().split('.')[0] == MI
             assert item.get_editor_property('grass_density').get_editor_property('default') == density
             assert item.get_editor_property('grass_density_quality').get_editor_property('default') == density
-            assert item.get_editor_property('start_cull_distance').get_editor_property('default') == 3000
-            assert item.get_editor_property('start_cull_distance_quality').get_editor_property('default') == 3000
-            assert item.get_editor_property('end_cull_distance').get_editor_property('default') == 4500
-            assert item.get_editor_property('end_cull_distance_quality').get_editor_property('default') == 4500
+            assert item.get_editor_property('start_cull_distance').get_editor_property('default') == 6000
+            assert item.get_editor_property('start_cull_distance_quality').get_editor_property('default') == 6000
+            assert item.get_editor_property('end_cull_distance').get_editor_property('default') == 8000
+            assert item.get_editor_property('end_cull_distance_quality').get_editor_property('default') == 8000
         assert len(seen) == count
         print('FAB_LANDSCAPE_GRASS_ASSET_OK', name, count)
     print('FAB_LANDSCAPE_GRASS_CHECK: native_assets_only; village_binding=false; interaction_runtime=false; cook=false; visual=false')

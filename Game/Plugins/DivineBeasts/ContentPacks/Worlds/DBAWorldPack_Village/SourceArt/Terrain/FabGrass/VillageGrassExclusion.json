@@ -1,5 +1,5 @@
 {
-  "mapSha256": "2fa3662054514dc65f6e97ecb50b05d85bca9481a5608325fd18ca2cb393012f",
+  "mapSha256": "befce449f7783e73be033411d07c94095fb37c780408f0c36ff36cc7f521f1a9",
   "bounds": [
     -25200.0,
     -25200.0,
@@ -7,17 +7,15 @@
     50400.0
   ],
   "size": 2048,
-  "survey": "E:\\work\\2026\\DivineBeastsWorkspace\\Saved\\Validation\\FabVillageGrass\\960ee672-3455-4a73-9888-573635a45c9e\\VillageWaterAndSpatialSurvey.json",
+  "survey": "E:\\work\\2026\\DivineBeastsWorkspace\\Saved\\Validation\\FabVillageGrass\\d19d0742-6ea1-45ff-be7a-8340a6f1e910\\VillageWaterAndSpatialSurvey.json",
   "domains": [
-    "Gameplay.Spawn",
     "ManualLock",
-    "Gameplay.Spawn",
     "Building.Parcel",
     "Road.Main",
     "Road.ForestPath",
     "Road.ForestPath",
     "Road.ForestPath"
   ],
-  "pngSha256": "e3e87cf8f6d52fd9097b9000cdd43fe2f480ce0076007cea092e6dd768ee57b3",
+  "pngSha256": "28a2d31d578aebc6180fd762f3be06c2a90f9d32a2c62a1453cb36ea8da9a9e2",
   "whiteMeansExcluded": true
 }
