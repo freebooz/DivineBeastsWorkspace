@@ -78,3 +78,25 @@ Task2：0de10965完整Editor构建通过；原生凹岸几何/失效体积断言
 Task2完成：0b452d96完整Editor增量构建通过；PID50080原生执行GamePlatform.Water两项、GamePlatform.Animation.Locomotion两项均通过且0warning，DivineBeasts.Water.SwimmingInput通过（唯一warning为既有GAS GameplayCue路径默认扫描）。隔离后仅/Temp/Untitled_1为测试脏包，真实Hub未标脏；关闭测试宿主不保存。Client/Server完整增量构建开始。资产作者PID44148重新加载磁盘新手村；本轮不再在真实资产作者中运行测试构造世界。
 
 Task3 Ruling：本机MaterialEditingLibrary.cpp:1485/1507/1573的Scalar/Texture/Vector Setter会写入并更新实例，但bResult始终false；作者按参数名存在、真实值回读、保存和独立重载核验，不能把false当写入未发生而反复覆盖。已定位原生实现，未改引擎。母材质通过Shader编译，5采样器/估算14次像素纹理采样，不作GPU毫秒达标结论。
+
+Task3原生保存：新手村精确水域、2500cm深度、QueryOnly水下查询和稳定MI_DBA_Village_Lake绑定已保存；湖岸/河流256点回读误差0，两个PlayerStart未变。现有WaterReview镜像水下材质与精确体积并保留Review.Lake区域ID。四份Kachujin原生泳姿序列及2D泳潜BlendSpace已保存，现有ABP在地面基础分支内按bIsSwimming切换，保留跳跃、DefaultSlot及死亡覆盖；编译0错误0警告，12玩家Profile均使用同一骨架/ABP。水下母材质的6项图结构warning全部与官方原始母材质相同，不擅自整理原始图。
+
+Task2补充Ruling：原生APhysicsVolume仅按几何和体积优先级选区，会与已有高优先级禁泳Region及未发布/失效规则分歧。新增测试86604857构建后观察到“未发布水域仍授予资格”失败；未开始Play的瞬态World不能冒充已运行Chaos Broadphase，单元用例改为真实IsOverlapInVolume资格+PhysicsVolumeChanged通知，完整Broadphase留给实际运行。新增APhysicsVolume薄派生AGamePlatformWaterPhysicsVolume仅复用唯一WaterWorldSubsystem查询过滤原生资格，不增加移动器、Tick或复制状态；同级同世界所有权失效即拒绝。两份本轮新烘焙体积需升级此类型，再Cook。
+
+Task3：PID45144已升级两份体积、保存并核实18,000地形采样误差0。0065e047完整Editor、2f164652完整Client/Server均通过。PID24048冷重载Village与Review的Region/体积/水下材质及四份泳姿/6采样BlendSpace，ABP为UpToDate；目标脏包0。
+
+Task3运行：真实Standalone PIE先在浅审核池验证Native Chaos自动进入Swimming、动画一致及离水清理；固定200cm深度断言触底失败，保留RuntimeSwimming.json。探针改用实际World时间及独占输出目录，在Village调查最深点(-4500,1800)执行：下潜约660cm、平游约742cm、上浮约828cm、传送离水回Walking，五项断言通过，未调用SetMovementMode。证据RuntimeProbe-ca5cbabf与VillageSwimming.mp4；键盘焦点、联机/弱网及人工签收不由此代替。t.MaxFPS=0、VSync=0真实回读；PIE不作性能达标结论。Editor的bThrottleCPUWhenNotForeground仅本进程临时关闭以完成截图，未SaveConfig。
+
+Final review：fresh water_final_review（gpt-6-astra）发现3项Important：重复ID被拒Actor可借同名资格；作者未拒绝普通PhysicsVolume冲突；材质作者重跑可覆盖脏包。一次修复通道，先新增失败回归，不再派发复审。材质脏包两项行为测试已观察3处失败后转2/2通过。目录职责登记随交付补齐。
+
+Final Ruling：普通未接入合同体积采用作者期AABB保守拒绝重叠，保留有效平台Region体积的显式覆盖 — 防止原生选择绕过唯一规则 — 可能要求人工消除并无真实相交的包围盒冲突，不自动改动既有体积。
+
+Final Ruling：审核图增加数据型Pawn/GameMode以供实际WASD/Space/Ctrl操作，直接复用主线类、同一Kachujin/ABP — 原DefaultPawn不能演示游泳 — 仅开发图，无正式身份或网络准入豁免。
+
+Final：c21d04ca原生失败回归构建通过，PID47100观察到3项明确失败：重复ID体积借用资格、普通体积重叠未拒绝、错误后留有绑定。随后补注册成员指针检查与作者期保守重叠拒绝，材质作者已有未保存保护；真实截图另发现UE Python Rotator位置参数顺序不同于C++，审核Pawn/探针改用pitch/yaw/roll关键字，待原生回读与复采。
+
+Final：审查Declined to judge均按原要求维持：不做氧气/溺水；仅覆盖当前12份主线Profile共用Kachujin骨架；速度/浮力及泳姿审美仍待人工；审核Pawn/GameMode须追加本轮原生编译、保存、重载及实际控制证据。Medium/High焦散仅缩强度，不声称少采样或GPU节省。
+
+Final：c21d04ca原生失败回归构建通过，PID47100观察到3项明确失败：重复ID体积借用资格、普通体积重叠未拒绝、错误后留有绑定。随后补注册成员指针检查与作者期保守重叠拒绝，材质作者已有未保存保护；真实截图另发现UE Python Rotator位置参数顺序不同于C++，审核Pawn/探针改用pitch/yaw/roll关键字，待原生回读与复采。
+
+Final：审查Declined to judge均按原要求维持：不做氧气/溺水；仅覆盖当前12份主线Profile共用Kachujin骨架；速度/浮力及泳姿审美仍待人工；审核Pawn/GameMode须追加本轮原生编译、保存、重载及实际控制证据。Medium/High焦散仅缩强度，不声称少采样或GPU节省。

@@ -379,6 +379,7 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
             # Ferns由独立装饰类剥离，真实Cook结果仍须另验，地图与权威AI定义禁止剥离。
             is_reviewed_world_visual_leaf = package.casefold() in (
                 "/dbaworldpack_village/water/materials",
+                "/dbaworldpack_village/water/textures",  # 只供水下材质采样，CPU水域不依赖纹理
                 "/dbaworldpack_village/water/blueprints",
                 "/dbaworldpack_village/creatures/wolf",
                 "/dbaworldpack_village/creatures/vampirealusth",

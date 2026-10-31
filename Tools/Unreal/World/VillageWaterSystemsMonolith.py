@@ -150,8 +150,9 @@ def author_geometry(underwater_material):
     config.set_editor_property('flow_speed_cm_per_second', 0)
     config.set_editor_property('swimmable', True)
     region.set_editor_property('region', config)
-    region.set_actor_label(region_id + '_Authority')
-    region.set_folder_path('Water/Authority')
+    if not existing:
+        region.set_actor_label(region_id + '_Authority')
+        region.set_folder_path('Water/Authority')
     depth = 2500.0 if package == VILLAGE else 1000.0
     assert not region.get_editor_property('water_physics_volume'), '已有体积不得重复烘焙'
     volume, error = u.GamePlatformWaterEditorLibrary.bake_lake_physics_volume(lake, region, depth)
@@ -194,3 +195,52 @@ def finish_geometry():
 
 def backup_hash(package):
     return hashlib.sha256(package_file(package).read_bytes()).hexdigest()
+
+
+def upgrade_qualified_volume():
+    """只升级本轮生成的普通PhysicsVolume，不转换任何用户既有物理体积。"""
+    world, actors=world_actors()
+    package=world.get_path_name().split('.')[0]
+    assert not u.EditorLoadingAndSavingUtils.get_dirty_map_packages()
+    assert not u.EditorLoadingAndSavingUtils.get_dirty_content_packages()
+    assert (OUT/(world.get_name()+'.GeometrySaved.json')).is_file(), '没有本轮作者记录，不转换'
+    regions=[r for r in actors if isinstance(r,u.GamePlatformWaterRegion) and r.get_editor_property('require_physics_volume')]
+    assert len(regions)==1
+    region=regions[0];old=region.get_editor_property('water_physics_volume')
+    if isinstance(old,u.GamePlatformWaterPhysicsVolume):
+        verify_world();return
+    assert old and old.get_class().get_path_name()=='/Script/Engine.PhysicsVolume'
+    assert old.get_actor_label()==str(region.get_editor_property('region').region_id)+'_PhysicsVolume'
+    lake=next(a for a in actors if a.get_class().get_path_name()=='/Script/Water.WaterBodyLake')
+    region.set_editor_property('water_physics_volume',None)
+    assert u.get_editor_subsystem(u.EditorActorSubsystem).destroy_actor(old)
+    volume,error=u.GamePlatformWaterEditorLibrary.bake_lake_physics_volume(lake,region,2500.0 if package==VILLAGE else 1000.0)
+    assert volume and not str(error),str(error)
+    assert isinstance(volume,u.GamePlatformWaterPhysicsVolume) and volume.get_editor_property('water_region')==region
+    volume.set_folder_path('Water/Authority')
+    if package==REVIEW:
+        region.set_actor_label('GP_WaterReview_LakeAuthority')
+    finish_geometry()
+
+
+def verify_protected_village():
+    """以修改前独立地形调查核验全部18000个采样，不用地图文件变化推断地形变化。"""
+    import re
+    world,actors=world_actors()
+    assert world.get_path_name().split('.')[0]==VILLAGE
+    survey=json.loads((ROOT/'Saved/Validation/FabVillageGrass/6d678a97-2cfb-448b-85c6-4e667813127a/VillageWaterSurvey.json').read_text(encoding='utf-8'))
+    ignored=[a for a in actors if not isinstance(a,u.LandscapeProxy)]
+    error=0.0;count=0
+    for y,row in enumerate(survey['heights']):
+        for x,expected in enumerate(row):
+            px=survey['origin'][0]+x*survey['step'];py=survey['origin'][1]+y*survey['step']
+            hit=u.SystemLibrary.line_trace_single(world,u.Vector(px,py,16000),u.Vector(px,py,-12000),
+                u.TraceTypeQuery.ECC_VISIBILITY,False,ignored,u.DrawDebugTrace.NONE).export_text()
+            assert 'LandscapeHeightfieldCollisionComponent' in hit and 'bBlockingHit=True' in hit
+            z=re.search(r'ImpactPoint=\(X=[^,]+,Y=[^,]+,Z=([^\)]+)\)',hit)
+            assert z
+            error=max(error,abs(float(z.group(1))-expected));count+=1
+    assert error<.1,'地形高度变化：'+str(error)+'cm'
+    result={'pid':os.getpid(),'terrain_samples':count,'maximum_error_cm':error,'affects_landscape':False,'scope':'native traces against unchanged pre-task terrain survey'}
+    (OUT/'VillageTerrainVerified.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+    print('VILLAGE_TERRAIN_UNCHANGED',json.dumps(result))

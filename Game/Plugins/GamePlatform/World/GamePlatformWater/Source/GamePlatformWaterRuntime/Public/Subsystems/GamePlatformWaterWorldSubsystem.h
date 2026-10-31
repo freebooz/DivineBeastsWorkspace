@@ -23,6 +23,8 @@ public:
     bool RegisterRegion(AGamePlatformWaterRegion* Region);
     /** 只解除当前Actor的注册，不撤销其他水域；允许重复调用。 */
     void UnregisterRegion(const AGamePlatformWaterRegion* Region);
+    /** 核对本世界实际注册的Actor身份；同名ID不能替代成员资格，撤销后立即为false。 */
+    bool IsRegionRegistered(const AGamePlatformWaterRegion* Region) const;
 
     /** 无水时OutSample清空；重叠区域以高优先级优先，仍相同则选离水面最近的结果。 */
     UFUNCTION(BlueprintPure, Category="GamePlatform|Water")

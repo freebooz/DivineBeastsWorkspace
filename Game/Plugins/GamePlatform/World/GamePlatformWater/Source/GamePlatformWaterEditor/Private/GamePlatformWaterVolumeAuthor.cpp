@@ -2,6 +2,7 @@
 #include "GamePlatformWaterEditorLibrary.h"
 #include "GamePlatformWaterBrushBuilder.h"
 #include "Actors/GamePlatformWaterRegion.h"
+#include "Actors/GamePlatformWaterPhysicsVolume.h"
 #include "ActorFactories/ActorFactory.h"
 #include "WaterBodyLakeActor.h"
 #include "WaterBodyComponent.h"
@@ -17,6 +18,8 @@
 #include "Engine/World.h"
 #include "Engine/Brush.h"
 #include "Engine/Polys.h"
+#include "EngineUtils.h"
+#include "GameFramework/DefaultPhysicsVolume.h"
 #include "Model.h"
 
 bool UGamePlatformWaterBrushBuilder::Build(UWorld* World, ABrush* Brush)
@@ -59,7 +62,8 @@ APhysicsVolume* UGamePlatformWaterEditorLibrary::BakeLakePhysicsVolume(
     UWorld* World = IsValid(Lake) ? Lake->GetWorld() : nullptr;
     const auto Fail = [&OutError](const TCHAR* Message) -> APhysicsVolume* { OutError = Message; return nullptr; };
     if (!IsInGameThread() || !GEditor || !World || World->WorldType != EWorldType::Editor ||
-        !IsValid(Region) || Region->GetWorld() != World || !Region->Region.IsValid() || Region->WaterPhysicsVolume ||
+        !IsValid(Region) || Region->GetWorld() != World || Region->GetLevel() != Lake->GetLevel() ||
+        !Region->Region.IsValid() || Region->WaterPhysicsVolume ||
         !FMath::IsFinite(DepthCm) || DepthCm < 100.f || DepthCm > 20000.f)
         return Fail(TEXT("要求同一Editor世界、有效Region、空体积绑定及100~20000cm深度。"));
     UWaterBodyComponent* Water = Lake->GetWaterBodyComponent();
@@ -104,11 +108,30 @@ APhysicsVolume* UGamePlatformWaterEditorLibrary::BakeLakePhysicsVolume(
             OnSegment(A,B,C) || OnSegment(A,B,D) || OnSegment(C,D,A) || OnSegment(C,D,B))
             return Fail(TEXT("湖岸自交，拒绝烘焙物理水域。"));
     }
+    // 普通PhysicsVolume不查询平台索引，任意优先级都可能在禁泳覆盖时重新授予水态。
+    // 作者期保守按包围盒拒绝未知体积；不修改既有对象，不留半绑定或新Actor。
+    FBox Candidate(ForceInit);
+    for (const auto P : Points)
+    {
+        Candidate += Origin + FVector(P.X,P.Y,0);
+        Candidate += Origin + FVector(P.X,P.Y,-DepthCm);
+    }
+    for (TActorIterator<APhysicsVolume> It(World); It; ++It)
+    {
+        const auto* Existing = *It;
+        if (!IsValid(Existing) || Existing->IsA<ADefaultPhysicsVolume>()) continue;
+        const FBox Bounds = Existing->GetComponentsBoundingBox(true);
+        if (!Bounds.IsValid || !Candidate.Intersect(Bounds)) continue;
+        const auto* Qualified = Cast<AGamePlatformWaterPhysicsVolume>(Existing);
+        if (Qualified && IsValid(Qualified->WaterRegion) && Qualified->WaterRegion->IsWaterRegionValid()) continue;
+        return Fail(TEXT("湖岸范围与未纳入同一水域合同的PhysicsVolume包围盒重叠；请人工消除歧义后重试。"));
+    }
     UGamePlatformWaterBrushBuilder* Builder = NewObject<UGamePlatformWaterBrushBuilder>();
     Builder->Shore = MoveTemp(Points); Builder->DepthCm = DepthCm;
     FActorSpawnParameters Spawn; Spawn.OverrideLevel = Region->GetLevel(); Spawn.ObjectFlags |= RF_Transactional;
-    APhysicsVolume* Volume = World->SpawnActor<APhysicsVolume>(APhysicsVolume::StaticClass(), FTransform(Origin), Spawn);
+    auto* Volume = World->SpawnActor<AGamePlatformWaterPhysicsVolume>(AGamePlatformWaterPhysicsVolume::StaticClass(), FTransform(Origin), Spawn);
     if (!Volume) return Fail(TEXT("物理体积创建失败。"));
+    Volume->WaterRegion = Region;
     Volume->bWaterVolume = Region->Region.bSwimmable;
     Volume->bPhysicsOnContact = false;
     Volume->Priority = Region->Region.Priority + 1;
@@ -118,6 +141,7 @@ APhysicsVolume* UGamePlatformWaterEditorLibrary::BakeLakePhysicsVolume(
     Volume->SetActorLocation(Origin);
     Volume->GetBrushComponent()->SetCanEverAffectNavigation(false);
     Volume->GetBrushComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    Volume->GetBrushComponent()->SetCollisionResponseToAllChannels(ECR_Overlap);
     Volume->SetActorLabel(Region->Region.RegionId.ToString() + TEXT("_PhysicsVolume"));
     const UBodySetup* Body = Volume->GetBrushComponent()->GetBodySetup();
     if (!IsValid(Body) || Body->AggGeom.GetElementCount() == 0)

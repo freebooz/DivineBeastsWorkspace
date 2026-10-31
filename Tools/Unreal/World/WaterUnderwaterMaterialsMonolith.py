@@ -37,7 +37,16 @@ def common():
     return module
 
 
+def guard_clean_targets(paths):
+    """修改前拒绝目标未保存内容；不把作者metadata作为覆盖人工编辑的许可。"""
+    targets=set(paths)
+    dirty=[p.get_name() for p in u.EditorLoadingAndSavingUtils.get_dirty_content_packages() if p.get_name() in targets]
+    if dirty:
+        raise RuntimeError('目标资产含未保存修改，拒绝覆盖：'+', '.join(dirty))
+
+
 def ensure_master():
+    guard_clean_targets([MASTER])
     assets = u.EditorAssetLibrary; ed = u.MaterialEditingLibrary
     if assets.does_asset_exist(MASTER):
         obj = u.load_asset(MASTER)
@@ -115,12 +124,16 @@ def mask_png(points,minx,miny,sizex,sizey,path,n=1024):
 
 def author_instance():
     helper=common();world,actors=helper.world_actors();ed=u.MaterialEditingLibrary;assets=u.EditorAssetLibrary
-    master=ensure_master()
     village=world.get_path_name().split('.')[0]==helper.VILLAGE
     root='/DBAWorldPack_Village/Water' if village else '/Game/Development/Water'
     name='T_DBA_Village_LakeMask' if village else 'T_GP_ReviewLakeMask'
     material_path=root+'/Materials/'+('MI_DBA_Village_Underwater' if village else 'MI_GP_ReviewUnderwater')
     texture_path=root+'/Textures/'+name
+    guard_clean_targets([MASTER,material_path,texture_path])
+    # 来源metadata不代表本次未被人工编辑；先保护脏包，再备份既有真实资产。
+    for path in (material_path,texture_path):
+        if assets.does_asset_exist(path): helper.backup(path)
+    master=ensure_master()
     lake=next(a for a in actors if a.get_class().get_path_name()=='/Script/Water.WaterBodyLake')
     spline=lake.get_water_body_component().get_water_spline()
     points=[spline.get_location_at_distance_along_spline(spline.get_spline_length()*i/1024,u.SplineCoordinateSpace.WORLD).to_tuple() for i in range(1024)]

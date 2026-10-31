@@ -37313,7 +37313,8 @@
         "失败：缺资源/水体/非法请求如实失败，计数不等于 GPU 验收。",
         "取消/重置：注销本 Region/Interactor 或 ClearPresentation，停止本表现。",
         "清理：解绑 Presence，归还本材质/纹理/租约，不改正式地图或他源水体。",
-        "Stop后重新进入，核本Run对象/完整句柄已撤销；外部资源/PlayerStart/目录租约基线保留；事件迟到不得恢复旧UI"
+        "Stop后重新进入，核本Run对象/完整句柄已撤销；外部资源/PlayerStart/目录租约基线保留；事件迟到不得恢复旧UI",
+        "在对应Water审核关卡控制角色：WASD平游，W/S沿镜头俯仰游动，Space上浮、LeftCtrl下潜；检查陆地入水、自由潜水、水线过渡、散射/焦散、出水清理。当前不含氧气与溺水伤害。"
       ],
       "expected_result": "真实API受理、真实终态、画面/音频和人工结论分别记录；缺资源/宿主不可签收通过。",
       "required_evidence": [

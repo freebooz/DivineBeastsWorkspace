@@ -36,6 +36,13 @@
       "Reason": "湖泊、河流、瀑布与泡沫的项目材质实例仅引用客户端Surface材质；只排除材质叶子，不排除Village地图、权威水域蓝图或GamePlatformWaterRuntime。"
     },
     {
+      "PackagePath": "/DBAWorldPack_Village/Water/Textures",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Water/Textures",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "水下焦散的湖岸遮罩纹理仅由客户端水下材质采样；权威物理水域保存于地图Brush，不读取纹理。"
+    },
+    {
       "PackagePath": "/Game/Development/PluginDemos",
       "SourceDirectory": "Game/Content/Development/PluginDemos",
       "Profiles": "AllServers",

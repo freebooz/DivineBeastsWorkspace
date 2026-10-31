@@ -61,6 +61,12 @@ void UGamePlatformWaterWorldSubsystem::UnregisterRegion(const AGamePlatformWater
     });
 }
 
+bool UGamePlatformWaterWorldSubsystem::IsRegionRegistered(const AGamePlatformWaterRegion* Region) const
+{
+    return IsValid(Region) && Region->GetWorld() == GetWorld() && Regions.ContainsByPredicate(
+        [Region](const TWeakObjectPtr<AGamePlatformWaterRegion>& Entry) { return Entry.Get() == Region; });
+}
+
 bool UGamePlatformWaterWorldSubsystem::QueryWaterAtLocation(
     const FVector& WorldLocation, FGamePlatformWaterSample& OutSample) const
 {

@@ -95,6 +95,7 @@ class PolicyBehaviorTests(unittest.TestCase):
             "/GamePlatformVFX/Water/Niagara/NS_GP_WaterRipple.uasset",
             "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_Lake.uasset",
             "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_Waterfall.uasset",
+            "/DBAWorldPack_Village/Water/Textures/T_DBA_Village_LakeMask.uasset",
             "/DBAWorldPack_Village/Water/Blueprints/BP_DBA_VillageLake.uasset",
             "/DBAWorldPack_Village/Water/Blueprints/BP_DBA_VillageRiver.uasset",
             "/DBAWorldPack_Village/Water/Blueprints/BP_DBA_VillageWaterfall.uasset",
@@ -103,6 +104,7 @@ class PolicyBehaviorTests(unittest.TestCase):
             # Stage已排除VFX整包仍不能代替Cook排除；检查真实Cook输入策略，两阶段缺一不可。
             self.assertIn("/GamePlatformVFX/Water", self.policy.cook_paths(profile))
             self.assertIn("/DBAWorldPack_Village/Water/Materials", self.policy.cook_paths(profile))
+            self.assertIn("/DBAWorldPack_Village/Water/Textures", self.policy.cook_paths(profile))
             self.assertIn("/DBAWorldPack_Village/Water/Blueprints", self.policy.cook_paths(profile))
             for package in visual_packages:
                 with self.subTest(profile=profile, package=package):
