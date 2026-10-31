@@ -262,7 +262,7 @@ def author():
     if not isinstance(volume, u.Material) or not isinstance(ripple, u.Material):
         raise RuntimeError("既有体积/扰动母材质缺失，禁止复制替代")
     instance("MI_DBA_Fireball_Volume", volume,
-             {"RadiusCm": 30, "FormProgress": 1, "EmissionScale": 2.8, "DensityScale": 1})
+             {"RadiusCm": 25, "FormProgress": 1, "EmissionScale": 2.0, "DensityScale": 1})
     instance("MI_DBA_Fireball_AirRipple", ripple, {"P_Intensity": .008, "P_Opacity": .06})
     validate("NativeSaved.json")
 

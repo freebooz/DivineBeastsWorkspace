@@ -51,6 +51,12 @@ def validate(report_path=None, raise_on_error=True):
                 errors.append(stage + "没有保存材质依赖：" + name)
         if base + "/Niagara/NM_DBA_FireballMaterialParameters" not in dependencies:
             errors.append(stage + "没有公共材质参数适配模块")
+        # 编译通过不能证明Emitter已接进系统Spawn/Update图；本次真实缺接线回归。
+        node_class = u.load_class(None, "/Script/NiagaraEditor.NiagaraNodeEmitter")
+        nodes = [n for n in u.ObjectIterator(node_class)
+                 if n.get_path_name().startswith(system.get_path_name() + ":SystemSpawnScript.")]
+        if len(nodes) != 8:
+            errors.append(stage + "系统执行图未连接全部4个Emitter：" + str(len(nodes)))
         stages.append({"stage": stage, "system": row["system"], "dependencies": sorted(dependencies)})
     volume = u.load_asset(material_root + "Volume")
     if not isinstance(volume, u.MaterialInstanceConstant):

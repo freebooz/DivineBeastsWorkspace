@@ -256,11 +256,58 @@
     {
       "path": "/DBAPresentationPack_Core/VFX/IceArrow/Materials/MI_DBA_IceArrow_Trail",
       "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Textures/Fireball/T_DBA_Fireball_CoreFlipbook",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Textures/Fireball/T_DBA_Fireball_Trail",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Textures/Fireball/T_DBA_Fireball_ImpactFlipbook",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/M_DBA_Fireball_Flame",
+      "unreal_class": "Material"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Core",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Trail",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Impact",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Ember",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Volume",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_AirRipple",
+      "unreal_class": "MaterialInstanceConstant"
     }
   ],
   "editor_resources": [
     {
       "path": "/DBAPresentationPack_Core/VFX/IceArrow/Niagara/NM_DBA_IceArrowMotion",
+      "unreal_class": "NiagaraScript"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NM_DBA_FireballMaterialParameters",
       "unreal_class": "NiagaraScript"
     }
   ],

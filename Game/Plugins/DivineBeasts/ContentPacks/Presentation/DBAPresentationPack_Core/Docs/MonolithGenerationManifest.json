@@ -16,8 +16,14 @@
     "CreatedTextureCount": 3,
     "CreatedMasterMaterialCount": 1,
     "CreatedMaterialInstanceCount": 6,
-    "NativeTextureSize": [1024, 1024],
-    "SourceTextureSize": [1254, 1254],
+    "NativeTextureSize": [
+      1024,
+      1024
+    ],
+    "SourceTextureSize": [
+      1254,
+      1254
+    ],
     "SourceBytesPreserved": true,
     "NativeSaved": true,
     "NativePackageReloadVerified": true,
@@ -415,5 +421,36 @@
     "EditorAuthorModulesStripped": 3,
     "NetworkAcceptance": false,
     "EvidenceRoot": "Saved/Validation/CommonSkillVFX/DirectedMissileSlotBinding"
+  },
+  "FireballNiagaraIntegration20261031": {
+    "ScopeZh": "现有标准火球三阶段原位接入：圆形明黄50cm头、长世界轨迹、自发光和局部空气扰动。",
+    "NativeTool": "Monolith MCP 0.23.0 + UE5.8",
+    "Systems": [
+      "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FireballCast",
+      "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FireballFlight",
+      "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FireballImpact"
+    ],
+    "Module": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NM_DBA_FireballMaterialParameters",
+    "EmitterCounts": [
+      4,
+      4,
+      4
+    ],
+    "HeadDiameterCm": 50,
+    "AirQualityAlpha": [
+      0,
+      0.5,
+      1,
+      1.5
+    ],
+    "NativeCompileErrors": 0,
+    "NativeCompileWarnings": 0,
+    "NativeFlightSimulationPassed": true,
+    "NativeTrailExtentCmAtFixture4000": 813.7423095703125,
+    "BindingsChanged": false,
+    "ManualVisualAccepted": false,
+    "GPUBudgetMeasured": false,
+    "EvidenceRoot": "Saved/Validation/FireballNiagara20261031",
+    "NoteZh": "打包构建、Cook、实际联机和人工验收分别由对应证据报告确认；本清单不代替发布验证。"
   }
 }
