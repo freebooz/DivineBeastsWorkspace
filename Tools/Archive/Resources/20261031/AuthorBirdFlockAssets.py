@@ -7,6 +7,7 @@
 不在本脚本里伪造 Niagara 发射器、蓝图或材质资产文件扩展名。
 """
 from __future__ import annotations
+raise RuntimeError('此首版鸟群作者已退休归档；当前入口为Tools/Unreal/VFX/BirdFlock/ImportBirdFlockFlightMeshes.py。')
 import hashlib
 import json
 import os

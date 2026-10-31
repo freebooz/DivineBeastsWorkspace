@@ -8,6 +8,23 @@
 
 ## 目录结构与职责
 
+### 新手村固定对手约战增量（2026-10-31）
+
+约战沿用`internal/app/matchapi`现有命令、观察、Redis事务和`matchmaking.QueueState`唯一预留；接受后由`FormFixedCandidate`与快速匹配共用候选构造，继续使用原`matchservice`持久分配/签票/返回。没有新增服务、存储真源或匹配器。Shared既有`matchmaking-lifecycle.openapi.yaml`增加三个action、两个命令字段和活动邀请投影。
+
+新增路径与职责：
+
+| 路径 | 中文职责 |
+| --- | --- |
+| `internal/modules/matchmaking/challenge.go` | 同一持久队列内的60秒邀请值、软名单预留与终态释放；不冻结被邀请队伍编辑。 |
+| `internal/app/matchapi/matchmaking_challenge.go` | 解析双方真实满队/队长/版本，原子接受及授权邀请投影；不另建准入。 |
+| `internal/app/matchapi/matchmaking_challenge_test.go` | 五人数、固定对手、超时/拒绝/名单变化、忙碌/幂等/并发及会话回执隔离回归。 |
+| `internal/app/gateway/matchmaking_codec_test.go` | 公网与内部Envelope共用严格解码的新增字段、明确accept及拒绝重复键/冒名回归。 |
+| `internal/transport/httpadapter/matchmaking_challenge_test.go` | 真实HTTP客户端/handler的邀请与固定候选往返。 |
+| `internal/transport/grpcadapter/matchmaking_challenge_grpcdeps_test.go` | grpcdeps适配方法的同一事务邀请/接受与字段回读。 |
+
+生产仓储并发/目标队伍编辑回归扩展于既有`matchmaking_transactions_production_test.go`；固定约战分配、签票未知响应恢复及安全返回扩展于既有`runtime_test.go`。实际结果与未执行门禁见`Docs/Implementation/VillagePartyArena/BackendPortalChallengeResult_20261031.md`，不据此声明真实UE联机或部署通过。
+
 ### 身份与竞技定义收敛（2026-10-27）
 
 不新增、删除或重命名正式路径。`internal/modules/identity/service.go`保留公开游客入口和唯一Refresh执行，`password_service.go`提供共享`TokenRotation.Apply`规则；内存、Redis及PostgreSQL仓储在原子锁/事务内执行同一规则并保留历史摘要退出能力。`internal/tools/contractcodegen/main.go`从Shared既有ServerCatalog的`teamSize`生成Go/C++模式人数；`internal/modules/matchmaking/matchmaking.go`和`internal/contracts/gameserver/types.go`共同读取该绑定，不再保留两张容量表。回归位于既有`service_test.go`、`matchmaking_test.go`和生成器`main_test.go`。不改变五个部署服务和HTTP/公开Service方法签名。

@@ -54,6 +54,22 @@
       ]
     },
     {
+      "Name": "DBAWorlds",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GamePlatformInteraction",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Client",
+        "Editor"
+      ]
+    },
+    {
       "Name": "GamePlatformData",
       "Enabled": true
     },

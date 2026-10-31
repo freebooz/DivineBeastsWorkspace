@@ -68,11 +68,25 @@ class ResourceOwnershipContractTests(unittest.TestCase):
             self.api.appearance_signature({'leaf':'ground_AO'}))
 
     def test_retired_bird_author_cannot_recreate_old_runtime_meshes(self):
-        spec=importlib.util.spec_from_file_location('retired_bird_author',ROOT/'Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockAssets.py')
-        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-        module.MODE='apply'
+        self.assertFalse((ROOT/'Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockAssets.py').exists())
+        import runpy
         with self.assertRaisesRegex(RuntimeError,'已退休'):
-            module.main()
+            runpy.run_path(str(ROOT/'Tools/Archive/Resources/20261031/AuthorBirdFlockAssets.py'),run_name='__main__')
+
+    def test_completed_recovery_and_legacy_validator_are_outside_active_tools(self):
+        for path in ('Tools/Unreal/Terrain/ResumeTerrainV3FormalCover.ps1','Tools/Unreal/VFX/BirdFlock/ValidateBirdFlockAssets.py'):
+            self.assertFalse((ROOT/path).exists())
+            self.assertTrue((ROOT/'Tools/Archive/Resources/20261031'/Path(path).name).is_file())
+
+    def test_project_archives_reject_before_unreal_import_or_callback_registration(self):
+        import json,runpy
+        rows=json.loads((ROOT/'Tools/Archive/ScriptRetirementRegistry_20261031.json').read_text(encoding='utf-8'))['scripts']
+        self.assertEqual(len(rows),7)
+        for row in rows:
+            self.assertFalse((ROOT/row['source']).exists())
+            if row['archive'].endswith('.py'):
+                with self.subTest(path=row['archive']),self.assertRaisesRegex(RuntimeError,'已退休'):
+                    runpy.run_path(str(ROOT/row['archive']),run_name='__main__')
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@
 #include "Arena/GamePlatformArenaTypes.h"
 #include "Client/GamePlatformArenaClientTypes.h"
 #include "CoreMinimal.h"
+#include "Engine/EngineTypes.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "Types/GamePlatformDataLease.h"
 #include "DivineBeastsArenaUIClientSubsystem.generated.h"
@@ -18,6 +19,8 @@ class UGameInstance;
 class UCommonActivatableWidgetStack;
 class IGamePlatformArenaMatchmakingAdapter;
 class UGamePlatformOnlineClientSubsystem;
+class UGamePlatformInteractorComponent;
+struct FGamePlatformInteractionEvent;
 
 /**
  * UDivineBeastsArenaUIClientSubsystem（神兽联盟竞技UI本地玩家子系统）。
@@ -67,7 +70,12 @@ public:
 
     /** 打开模式选择，只发布本地页面需求，不代表已创建队列票据。公共小队通过可撤销提供者调用。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Arena|UI")
-    bool OpenMatchmakingMenu(const FString& PartyId=FString());
+    bool OpenMatchmakingMenu(const FString& PartyId=FString(),FName ModeId=NAME_None);
+    /** 仅浏览选择；真实报名或结果未知时保留原模式，非法目录身份拒绝。 */
+    bool SelectMatchmakingMenuMode(FName ModeId);
+    FName GetSelectedMatchmakingMode() const;
+    /** 仅撤销本地页面需求；不会退队、取消邀请或释放任何服务器票据。 */
+    void DismissMatchmakingMenu();
 
     /** 竞技组合根注入真实匹配适配器，返回精确撤销句柄。仅游戏线程；不接受覆盖已有提供者。
      * 平台/公共UI不认识此接口；未注入或后端合同不完整时所有副作用命令明确失败。
@@ -79,6 +87,13 @@ public:
     bool RequestMatchmaking(FName ModeId);
     bool CancelMatchmaking();
     bool RespondToMatchOffer(bool bAccept);
+    /** 公开玩家ID由后端解析本人/对方队伍；界面没有好友服务时不伪造好友名单。 */
+    bool SendChallenge(FName ModeId,const FString& TargetPlayerId);
+    bool ReplyChallenge(bool bAccept);
+    bool CancelChallengeInvitation();
+    bool CanSendChallenge(FName ModeId) const;
+    bool CanReplyChallenge() const;
+    bool CanCancelChallengeInvitation() const;
     /** 查询真实适配器能力/在途状态，不根据按钮、页面开关或Flow枚举授予权限。 */
     bool CanRequestMatchmaking() const;
     bool CanCancelMatchmaking() const;
@@ -94,6 +109,9 @@ public:
 
 private:
     friend class FDivineBeastsArenaConfirmedOfferRegressionTest;
+    friend class FDivineBeastsArenaPortalSelectionRegressionTest;
+    friend class FDivineBeastsArenaMenuDemandRegressionTest;
+    bool SubmitChallengeCommand(FName Action,FName ModeId,const FString& TargetPlayerId,bool bAccept);
     /** 每LocalPlayer只保留一个提供者和一个在途意图；不持有HTTP、队列权威或准入凭据。 */
     TSharedPtr<IGamePlatformArenaMatchmakingAdapter> MatchmakingAdapter;
     FGuid MatchmakingRegistration;
@@ -106,6 +124,18 @@ private:
     TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> MatchmakingAuthenticationSource;
     FDelegateHandle MatchmakingAuthenticationHandle;
     FString MatchmakingPartyId;
+    /** 浏览意图独立于真实队列；关闭后同状态通知不弹回，真实新邀请/候选仍能通知。 */
+    FName MatchmakingMenuMode=NAME_None;
+    bool bMatchmakingMenuRequested=false,bMatchmakingMenuDismissed=false;
+    FString LastChallengeNotificationId;
+    /** 控制器/世界生命周期维护唯一本地Interactor订阅；从不Tick扫描组件。 */
+    TWeakObjectPtr<APlayerController> ArenaEntranceController;
+    TWeakObjectPtr<UGamePlatformInteractorComponent> ArenaEntranceInteractor;
+    FGuid LastArenaEntranceRequest;
+    void BindArenaEntranceInteractor(APlayerController* Controller);
+    void UnbindArenaEntranceInteractor();
+    UFUNCTION() void HandleArenaEntranceInteraction(const FGamePlatformInteractionEvent& Event);
+    UFUNCTION() void HandleArenaEntranceControllerEndPlay(AActor* Actor,EEndPlayReason::Type Reason);
     bool IsMatchmakingAuthenticationCurrent() const;
     /** 生命周期内订阅平台认证事件，退出/重登先撤销旧提供者和候选，不等待页面刷新。 */
     void ConnectMatchmakingAuthentication();
@@ -212,6 +242,8 @@ private:
     /** HUD不进入CommonUI页面栈，由本竞技子系统单独创建、挂载与卸载。 */
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformMobaArenaHUDBase> ActiveArenaHUD = nullptr;
+    /** 场内HUD与村庄排队状态共用同一普通HUD/Data加载器，不进入激活栈或新建资源服务。 */
+    FName ActiveArenaHUDSurfaceId=NAME_None,PendingArenaHUDSurfaceId=NAME_None;
     FGamePlatformDataLease PendingArenaHUDLoad;
     FGamePlatformDataLease ActiveArenaHUDLease;
     TWeakObjectPtr<UGameInstance> PendingArenaHUDInstance;

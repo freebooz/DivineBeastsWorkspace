@@ -83,6 +83,32 @@ func (r *PartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs, playe
 					}
 				}
 			}
+			for _, challenge := range state.Challenges {
+				if challenge.Phase == matchmaking.PhaseChallengeInvitation {
+					for _, id := range []string{challenge.PartyAID, challenge.PartyBID} {
+						if id != "" {
+							parties[id] = true
+						}
+					}
+					for _, id := range challenge.PlayerIDs() {
+						players[id] = true
+					}
+				}
+			}
+			// 先WATCH并解析可信成员索引，再加载双方真实Party；调用方不能猜测目标队伍ID。
+			for player := range players {
+				key := partyMemberPrefix + player
+				if err := connection.Watch(ctx, key).Err(); err != nil {
+					return err
+				}
+				id, err := connection.Get(ctx, key).Result()
+				if err != nil && !errors.Is(err, redis.Nil) {
+					return err
+				}
+				if id != "" {
+					parties[id] = true
+				}
+			}
 			tx := &matchapi.MatchmakingTransaction{Queue: state, Parties: map[string]*party.Party{}, PlayerParties: map[string]string{}}
 			originals := map[string]*party.Party{}
 			ids := []string{}
@@ -173,6 +199,11 @@ func (r *PartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs, playe
 			}
 			if queueChanged {
 				for _, q := range []*matchmaking.QueueState{before, state} {
+					for _, challenge := range q.Challenges {
+						for _, actor := range challenge.PlayerIDs() {
+							actors[actor] = true
+						}
+					}
 					for _, entry := range q.Entries {
 						for _, actor := range entry.Ticket.PartyMemberIDs {
 							actors[actor] = true

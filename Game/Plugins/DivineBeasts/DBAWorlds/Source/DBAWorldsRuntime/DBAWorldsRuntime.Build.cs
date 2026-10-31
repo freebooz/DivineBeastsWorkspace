@@ -18,6 +18,8 @@ public class DBAWorldsRuntime : ModuleRules
             // UDivineBeastsWorldDefinition继承Data层定义基类，链接其虚函数实现不能依赖World的传递依赖。
             "GamePlatformData",
             "GamePlatformWorld",
+            // 公开入口Actor实现平台中立交互接口，不公开或依赖竞技客户端。
+            "GamePlatformInteraction",
             // 第三层世界服务器组合使用平台天气权威入口，不携带客户端表面/音效实现。
             "GamePlatformWeatherRuntime",
             // 客户端和专服共用的权威水域查询，仅有CPU体积及流速规则。
@@ -34,9 +36,7 @@ public class DBAWorldsRuntime : ModuleRules
             // 世界输入清理仅通过平台公开ASC撤销按住命令；不引入客户端UI、Niagara或网络权威替代。
             "GamePlatformAbilitySystem",
             // 世界点击仅提交平台战斗选中意图，命中/伤害和弹体追踪仍由服务器平台实现。
-            "GamePlatformCombat",
-            // 本地焦点及服务器交互RPC由平台唯一组件承载，项目只选择输入方式。
-            "GamePlatformInteraction"
+            "GamePlatformCombat"
         });
         // 鼠标命中检验只用于有视口的目标；Dedicated Server不链接Slate或任何项目UI客户端。
         if (Target.Type != TargetType.Server)

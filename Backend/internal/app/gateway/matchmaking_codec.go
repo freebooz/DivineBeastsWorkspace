@@ -20,7 +20,7 @@ func DecodeMatchmakingActorJSON(payload string) (matchmaking.ActorContext, error
 func DecodeMatchmakingCommandJSON(payload string) (matchmaking.Command, error) {
 	var command matchmaking.Command
 	request := &http.Request{Header: make(http.Header), Body: io.NopCloser(strings.NewReader(payload))}
-	err := DecodeOnlineJSON(request, &command, []string{"action", "clientRequestId", "expectedRevision", "ticketId", "candidateId", "arenaModeId", "partyId", "regionId", "accept"}, []string{"action", "clientRequestId", "expectedRevision"})
+	err := DecodeOnlineJSON(request, &command, []string{"action", "clientRequestId", "expectedRevision", "ticketId", "candidateId", "arenaModeId", "partyId", "regionId", "accept", "targetPlayerId", "challengeId"}, []string{"action", "clientRequestId", "expectedRevision"})
 	return command, err
 }
 

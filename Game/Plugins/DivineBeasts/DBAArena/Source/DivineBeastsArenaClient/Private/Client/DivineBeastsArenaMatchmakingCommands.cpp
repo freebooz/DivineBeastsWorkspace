@@ -8,6 +8,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "ViewModels/GamePlatformArenaViewModel.h"
+#include "Catalog/DivineBeastsArenaModeCatalog.h"
 
 void UDivineBeastsArenaUIClientSubsystem::ConnectMatchmakingAuthentication()
 {
@@ -87,8 +88,37 @@ void UDivineBeastsArenaUIClientSubsystem::ResetMatchmakingBridge()
     MatchmakingPlayerId.Empty();
     MatchmakingAuthGeneration.Invalidate();
     MatchmakingPartyId.Empty();
+    MatchmakingMenuMode=NAME_None;
+    bMatchmakingMenuRequested=false;bMatchmakingMenuDismissed=false;LastChallengeNotificationId.Empty();
     MatchmakingCommandFeedback = FText::GetEmpty();
+    if(!bDeinitializing)SetObservedArenaClientFlowState(EGamePlatformArenaClientFlowState::Idle);
     OnMatchmakingCommandChanged.Broadcast();
+}
+
+FName UDivineBeastsArenaUIClientSubsystem::GetSelectedMatchmakingMode() const
+{
+    if(const auto* Source=MatchmakingSource.Get())
+    {
+        const FName Observed=Source->GetObservedMatchmakingMode();
+        if(!Observed.IsNone())return Observed;
+    }
+    return MatchmakingMenuMode;
+}
+bool UDivineBeastsArenaUIClientSubsystem::SelectMatchmakingMenuMode(FName ModeId)
+{
+    if(bDeinitializing||(!ModeId.IsNone()&&!FDivineBeastsArenaModeCatalog::Find(ModeId)))return false;
+    const auto State=MatchmakingAdapter?MatchmakingAdapter->GetObservedState():EGamePlatformArenaClientFlowState::Idle;
+    const auto* Source=MatchmakingSource.Get();
+    const bool bLocked=bMatchmakingCommandPending||!MatchmakingLogicalRequestId.IsEmpty()||
+        (Source&&!Source->GetObservedMatchmakingMode().IsNone())||
+        (State!=EGamePlatformArenaClientFlowState::Idle&&State!=EGamePlatformArenaClientFlowState::Failed);
+    if(bLocked)
+    {
+        if(ModeId==GetSelectedMatchmakingMode())return true;
+        MatchmakingCommandFeedback=FText::FromString(TEXT("当前模式已经锁定；切换前须确认旧邀请或匹配已取消"));
+        OnMatchmakingCommandChanged.Broadcast();return false;
+    }
+    MatchmakingMenuMode=ModeId;OnMatchmakingCommandChanged.Broadcast();return true;
 }
 
 bool UDivineBeastsArenaUIClientSubsystem::CanRequestMatchmaking() const
@@ -135,6 +165,7 @@ bool UDivineBeastsArenaUIClientSubsystem::RequestMatchmaking(FName ModeId)
         return false;
     }
     bMatchmakingCommandPending = true;
+    MatchmakingMenuMode=ModeId;
     MatchmakingLogicalRequestId = LogicalId;
     const uint64 Generation = ++MatchmakingCommandGeneration;
     const auto Adapter = MatchmakingAdapter; // 保持同步回调/提供者撤销期间对象有效。
@@ -229,6 +260,73 @@ void UDivineBeastsArenaUIClientSubsystem::CompleteConfirmedTicketState(const FSt
         MatchmakingLogicalRequestId.Empty();
 }
 
+bool UDivineBeastsArenaUIClientSubsystem::CanSendChallenge(FName ModeId) const
+{
+    FString Reason;const auto* Source=MatchmakingSource.Get();
+    return CanRequestMatchmaking()&&Source&&Source->GetMatchmakingAdapter()==MatchmakingAdapter&&Source->CanChallengeMode(ModeId,Reason);
+}
+bool UDivineBeastsArenaUIClientSubsystem::CanReplyChallenge() const
+{
+    const auto* Source=MatchmakingSource.Get();
+    return !bDeinitializing&&!bMatchmakingCommandPending&&IsMatchmakingAuthenticationCurrent()&&Source&&
+        Source->GetMatchmakingAdapter()==MatchmakingAdapter&&Source->IsApplicationFlowInWorld()&&Source->GetObservedChallenge().bCanReply;
+}
+bool UDivineBeastsArenaUIClientSubsystem::CanCancelChallengeInvitation() const
+{
+    const auto* Source=MatchmakingSource.Get();
+    return !bDeinitializing&&!bMatchmakingCommandPending&&IsMatchmakingAuthenticationCurrent()&&Source&&
+        Source->GetMatchmakingAdapter()==MatchmakingAdapter&&Source->IsApplicationFlowInWorld()&&Source->GetObservedChallenge().bCanCancel;
+}
+bool UDivineBeastsArenaUIClientSubsystem::SendChallenge(FName ModeId,const FString& TargetPlayerId)
+{return SubmitChallengeCommand(TEXT("challenge"),ModeId,TargetPlayerId,false);}
+bool UDivineBeastsArenaUIClientSubsystem::ReplyChallenge(bool bAccept)
+{return SubmitChallengeCommand(TEXT("challengeReply"),NAME_None,FString(),bAccept);}
+bool UDivineBeastsArenaUIClientSubsystem::CancelChallengeInvitation()
+{return SubmitChallengeCommand(TEXT("challengeCancel"),NAME_None,FString(),false);}
+bool UDivineBeastsArenaUIClientSubsystem::SubmitChallengeCommand(FName Action,FName ModeId,const FString& TargetPlayerId,bool bAccept)
+{
+    const bool bSend=Action==TEXT("challenge"),bReply=Action==TEXT("challengeReply");
+    bool bTargetValid=!TargetPlayerId.IsEmpty()&&TargetPlayerId.Len()<=128&&TargetPlayerId.TrimStartAndEnd()==TargetPlayerId;
+    for(const TCHAR Character:TargetPlayerId)if(Character<32||Character==127)bTargetValid=false;
+    if((bSend&&(!CanSendChallenge(ModeId)||!bTargetValid||TargetPlayerId==MatchmakingPlayerId))||
+        (bReply&&!CanReplyChallenge())||(!bSend&&!bReply&&(Action!=TEXT("challengeCancel")||!CanCancelChallengeInvitation())))
+    {
+        MatchmakingCommandFeedback=FText::FromString(TEXT("约战目标、完整队伍或邀请状态尚不可用，请等待同步并检查公开玩家ID"));
+        OnMatchmakingCommandChanged.Broadcast();return false;
+    }
+    auto* Source=MatchmakingSource.Get();
+    bMatchmakingCommandPending=true;
+    if(bSend)MatchmakingMenuMode=ModeId;
+    const FString Id=FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens);
+    if(MatchmakingLogicalRequestId.IsEmpty())MatchmakingLogicalRequestId=Id;
+    const FString LogicalId=MatchmakingLogicalRequestId;
+    const uint64 Generation=++MatchmakingCommandGeneration;
+    const TWeakObjectPtr<UDivineBeastsArenaUIClientSubsystem> Weak(this);
+    const TWeakObjectPtr<UWorld> World(GetWorld());
+    OnMatchmakingCommandChanged.Broadcast();
+    if(bDeinitializing||MatchmakingCommandGeneration!=Generation||!bMatchmakingCommandPending||MatchmakingSource.Get()!=Source)return false;
+    auto Completion=[Weak,World,Generation,LogicalId](bool bConfirmed,const FString& Error)
+    {
+        auto* Self=Weak.Get();
+        if(!IsInGameThread()||!Self||Self->bDeinitializing||!World.IsValid()||Self->GetWorld()!=World.Get()||
+            Self->MatchmakingCommandGeneration!=Generation||!Self->bMatchmakingCommandPending||!Self->IsMatchmakingAuthenticationCurrent())return;
+        Self->bMatchmakingCommandPending=false;++Self->MatchmakingCommandGeneration;
+        Self->MatchmakingCommandFeedback=FText::FromString(bConfirmed?TEXT("服务器已确认约战操作；邀请接受后仍须全员分别确认"):
+            Error==TEXT("Matchmaking.CommandUnconfirmed")?TEXT("约战结果未知，正在重新同步；不会重复发起邀请"):TEXT("约战未获受理；对方可能忙碌、名单变化或邀请已结束"));
+        if(Self->MatchmakingAdapter)
+        {
+            const auto State=Self->MatchmakingAdapter->GetObservedState();
+            Self->CompleteConfirmedTicketState(LogicalId,State);
+            if(bConfirmed)Self->SetObservedArenaClientFlowState(State);
+        }
+        Self->OnMatchmakingCommandChanged.Broadcast();
+    };
+    if(bSend)Source->RequestChallenge(ModeId,TargetPlayerId,Id,MoveTemp(Completion));
+    else if(bReply)Source->ReplyChallenge(bAccept,Id,MoveTemp(Completion));
+    else Source->CancelChallenge(Id,MoveTemp(Completion));
+    return true;
+}
+
 void UDivineBeastsArenaUIClientSubsystem::RefreshMatchmakingSource()
 {
     if(bDeinitializing)return;auto* Source=MatchmakingSource.Get();if(!Source)return;
@@ -237,6 +335,11 @@ void UDivineBeastsArenaUIClientSubsystem::RefreshMatchmakingSource()
     if(!MatchmakingAdapter)RegisterMatchmakingAdapter(Adapter);
     if(MatchmakingAdapter!=Adapter)return; // 独立测试/显式工具提供者拥有其注册，真实来源不越权替换。
     MatchmakingCommandFeedback=Source->GetObservedMatchmakingStatus();
+    const auto Challenge=Source->GetObservedChallenge();
+    if(Challenge.bPresent&&LastChallengeNotificationId!=Challenge.ChallengeId)
+    {LastChallengeNotificationId=Challenge.ChallengeId;bMatchmakingMenuRequested=true;bMatchmakingMenuDismissed=false;}
+    const FName ObservedMode=Source->GetObservedMatchmakingMode();
+    if(!ObservedMode.IsNone())MatchmakingMenuMode=ObservedMode;
     if(Adapter->SupportsTicketLifecycle())
     {
         const auto State=Adapter->GetObservedState();

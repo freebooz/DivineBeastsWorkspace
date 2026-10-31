@@ -141,6 +141,14 @@ func (s *Service) RunMatchmaking(ctx context.Context, allocate func(context.Cont
 			}
 		}
 		now := time.Now().UTC()
+		for _, challenge := range state.Challenges {
+			if challenge.Phase == matchmaking.PhaseChallengeInvitation {
+				remaining := challenge.DeadlineUTC.Sub(now)
+				if remaining > 0 && remaining < retryAfter {
+					retryAfter = remaining
+				}
+			}
+		}
 		for _, entry := range state.Entries {
 			if matchmaking.IsTerminal(entry.Phase) || entry.DeadlineUTC.IsZero() {
 				continue

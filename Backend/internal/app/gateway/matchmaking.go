@@ -65,16 +65,17 @@ func (a *api) commandMatchmaking(w http.ResponseWriter, r *http.Request, session
 		return
 	}
 	var command matchmaking.Command
-	if err := DecodeOnlineJSON(r, &command, []string{"action", "clientRequestId", "expectedRevision", "ticketId", "candidateId", "arenaModeId", "partyId", "regionId", "accept"}, []string{"action", "clientRequestId", "expectedRevision"}); err != nil {
+	if err := DecodeOnlineJSON(r, &command, []string{"action", "clientRequestId", "expectedRevision", "ticketId", "candidateId", "arenaModeId", "partyId", "regionId", "accept", "targetPlayerId", "challengeId"}, []string{"action", "clientRequestId", "expectedRevision"}); err != nil {
 		writeOnlineError(w, err)
 		return
 	}
-	actor, err := a.authenticatedMatchmakingActor(r.Context(), session, command.Action == "start" || command.Action == "reply")
+	requireCharacter := command.Action == "start" || command.Action == "reply" || command.Action == "challenge" || command.Action == "challengeReply"
+	actor, err := a.authenticatedMatchmakingActor(r.Context(), session, requireCharacter)
 	if err != nil {
 		writeMatchmakingError(w, err)
 		return
 	}
-	if command.Action == "start" || command.Action == "reply" {
+	if requireCharacter {
 		if err := a.attachMatchmakingPresence(r.Context(), &actor); err != nil {
 			writeMatchmakingError(w, err)
 			return

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """验证 UE5.8 Editor -ExecCmds=py 脚本入口，使用自身独立进程并自动退出。"""
+raise RuntimeError('SCRIPT_RETIRED: 已退休归档，见Tools/Archive/Project/20261031/README.md。')
 from pathlib import Path
 import json,time,os,unreal
 root=Path(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir())).parent

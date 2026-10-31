@@ -36,10 +36,10 @@ func (s *Service) CommandMatchmaking(ctx context.Context, actor matchmaking.Acto
 	if !validMatchID(actor.PlayerID) || !validMatchID(command.ClientRequestID) || command.ExpectedRevision < 0 {
 		return matchmaking.PlayerSnapshot{}, errors.New("MATCH_COMMAND_INVALID: 命令主体或版本无效")
 	}
-	if command.Action != "start" && command.Action != "cancel" && command.Action != "reply" && command.Action != "ready" {
+	if command.Action != "start" && command.Action != "cancel" && command.Action != "reply" && command.Action != "ready" && command.Action != "challenge" && command.Action != "challengeReply" && command.Action != "challengeCancel" {
 		return matchmaking.PlayerSnapshot{}, errors.New("MATCH_COMMAND_INVALID: 未注册命令")
 	}
-	if command.Action == "start" {
+	if command.Action == "start" || command.Action == "challenge" {
 		cfg := s.matchmakingSettings
 		if cfg == nil || !cfg.Enabled {
 			return matchmaking.PlayerSnapshot{}, errors.New("MATCH_CONTENT_NOT_CONFIGURED: 竞技内容未装配")
@@ -52,10 +52,10 @@ func (s *Service) CommandMatchmaking(ctx context.Context, actor matchmaking.Acto
 			return matchmaking.PlayerSnapshot{}, errors.New("MATCH_COMMAND_INVALID: 区域未配置")
 		}
 	}
-	if (command.Action == "start" || command.Action == "reply") && (!validMatchID(actor.SessionID) || !validMatchID(actor.CharacterID) || !validMatchID(actor.HeroDefinitionID) || actor.CharacterRevision < 1) {
+	if (command.Action == "start" || command.Action == "reply" || command.Action == "challenge" || command.Action == "challengeReply") && (!validMatchID(actor.SessionID) || !validMatchID(actor.CharacterID) || !validMatchID(actor.HeroDefinitionID) || actor.CharacterRevision < 1) {
 		return matchmaking.PlayerSnapshot{}, errors.New("MATCH_CHARACTER_REQUIRED: 必须使用已验证会话和角色")
 	}
-	if len(command.PartyID) > 128 || len(command.ArenaModeID) > 128 || len(command.RegionID) > 128 || len(command.CandidateID) > 128 || len(command.TicketID) > 128 {
+	if len(command.PartyID) > 128 || len(command.ArenaModeID) > 128 || len(command.RegionID) > 128 || len(command.CandidateID) > 128 || len(command.TicketID) > 128 || len(command.TargetPlayerID) > 128 || len(command.ChallengeID) > 128 {
 		return matchmaking.PlayerSnapshot{}, errors.New("MATCH_COMMAND_INVALID: 字段超过限制")
 	}
 	repository, ok := s.parties.(AtomicMatchmakingRepository)
@@ -64,14 +64,20 @@ func (s *Service) CommandMatchmaking(ctx context.Context, actor matchmaking.Acto
 	}
 	operationKey := scopedOperationKey(actor.PlayerID, "match-command/"+command.Action, command.ClientRequestID)
 	fingerprint := fingerprintOf(command)
-	// 身份在事务外生成，WATCH重试不产生新的副作用；只有start实际使用此ID。
+	if command.Action == "challenge" || command.Action == "challengeReply" || command.Action == "challengeCancel" {
+		fingerprint = fingerprintOf([]any{command, actor.SessionID})
+	}
+	// 身份在事务外生成，WATCH重试不产生新的副作用；start创建票据，challenge创建邀请。
 	ticketID := ""
 	if command.Action == "start" {
 		ticketID = s.nextID("matchmaking")
+	} else if command.Action == "challenge" {
+		ticketID = s.nextID("challenge")
 	}
-	err := repository.UpdateMatchmaking(ctx, []string{command.PartyID}, []string{actor.PlayerID}, func(tx *MatchmakingTransaction) error {
+	err := repository.UpdateMatchmaking(ctx, []string{command.PartyID}, []string{actor.PlayerID, command.TargetPlayerID}, func(tx *MatchmakingTransaction) error {
 		now := time.Now().UTC()
-		tx.Queue.Prune(now)
+		tx.Queue.Expire(now)
+		reconcileChallenges(tx, now)
 		if receipt, found := tx.Queue.Receipts[operationKey]; found {
 			if receipt.Fingerprint != fingerprint {
 				return errors.New("MATCH_IDEMPOTENCY_CONFLICT: 同一命令对应不同内容")
@@ -83,6 +89,16 @@ func (s *Service) CommandMatchmaking(ctx context.Context, actor matchmaking.Acto
 		}
 		affectedTicket := command.TicketID
 		switch command.Action {
+		case "challenge":
+			if err := createChallenge(tx, actor, command, ticketID, now); err != nil {
+				return err
+			}
+			affectedTicket = ticketID
+		case "challengeReply", "challengeCancel":
+			if err := replyChallenge(tx, actor, command, now); err != nil {
+				return err
+			}
+			affectedTicket = command.ChallengeID
 		case "start":
 			if command.PartyID == "" && tx.PlayerParties[actor.PlayerID] != "" {
 				return errors.New("MATCH_PARTY_REQUIRED: 已组队玩家必须整队报名")
@@ -131,6 +147,15 @@ func (s *Service) CommandMatchmaking(ctx context.Context, actor matchmaking.Acto
 				return err
 			}
 		case "reply":
+			if candidate, found := tx.Queue.Candidates[command.CandidateID]; found && candidate.ChallengeID != "" {
+				invitation, known := tx.Queue.Challenges[candidate.ChallengeID]
+				if !known {
+					return errors.New("MATCH_STATE_INVALID: 约战候选来源丢失")
+				}
+				if (actor.PlayerID == invitation.OwnerPlayerID && actor.SessionID != invitation.OwnerSessionID) || (actor.PlayerID == invitation.TargetPlayerID && actor.SessionID != invitation.TargetSessionID) {
+					return errors.New("MATCH_CHARACTER_REQUIRED: 约战队长认证代次已经变化")
+				}
+			}
 			if existing, found := tx.Queue.Contexts[actor.PlayerID]; found {
 				if candidate, known := tx.Queue.Candidates[command.CandidateID]; known {
 					for _, slot := range candidate.Roster {
@@ -191,6 +216,7 @@ func (s *Service) advanceMatchmaking(tx *MatchmakingTransaction, now time.Time) 
 	for _, p := range tx.Parties {
 		p.ReconcilePresence(now)
 	}
+	reconcileChallenges(tx, now)
 	for id, entry := range tx.Queue.Entries {
 		p := tx.Parties[entry.Ticket.PartyID]
 		if p == nil || matchmaking.IsTerminal(entry.Phase) {
@@ -320,8 +346,25 @@ func (s *Service) ReadMatchmakingState(ctx context.Context, actor string) (match
 		}
 	}
 	id := q.Reservations[actor]
+	if challenge, found := q.Challenges[id]; found && challenge.Phase == matchmaking.PhaseChallengeInvitation {
+		projectChallenge(&snapshot, challenge, actor, now)
+		return snapshot, nil
+	}
 	if id == "" {
 		var latest time.Time
+		var latestChallenge *matchmaking.Challenge
+		for _, challenge := range q.Challenges {
+			if challenge.Phase != matchmaking.PhaseCancelled || challenge.UpdatedAtUTC.Before(latest) {
+				continue
+			}
+			for _, player := range challenge.PlayerIDs() {
+				if player == actor {
+					value := challenge
+					latestChallenge = &value
+					latest = challenge.UpdatedAtUTC
+				}
+			}
+		}
 		for candidateID, entry := range q.Entries {
 			if !matchmaking.IsTerminal(entry.Phase) || entry.UpdatedAtUTC.Before(latest) {
 				continue
@@ -330,8 +373,13 @@ func (s *Service) ReadMatchmakingState(ctx context.Context, actor string) (match
 				if player == actor {
 					id = candidateID
 					latest = entry.UpdatedAtUTC
+					latestChallenge = nil
 				}
 			}
+		}
+		if latestChallenge != nil {
+			projectChallenge(&snapshot, *latestChallenge, actor, now)
+			return snapshot, nil
 		}
 	}
 	entry, found := q.Entries[id]

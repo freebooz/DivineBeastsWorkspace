@@ -7,6 +7,10 @@
 
 ## 目录结构与职责
 
+### 固定对手约战合同增量（2026-10-31）
+
+不新增或重命名Shared路径。既有`Contracts/GamePlatform/OpenAPI/matchmaking-lifecycle.openapi.yaml`增量为1.1.0，定义`challenge/challengeReply/challengeCancel`、`targetPlayerId/challengeId`、`challengeInvitation`及仅活动邀请出现的`ChallengeSnapshot`。邀请60秒、双方满队、接受后30秒全员确认，仍使用既有命令/观察/迁移路由与内部JSON Envelope。运行既有`Backend/internal/tools/contractcodegen`生成器及`-check`；由于OperationId/路由与模式目录未变，注册表无实际差异。未手工修改生成物，未运行`-official`全量官方绑定生成。实施和验证边界见`Docs/Implementation/VillagePartyArena/BackendPortalChallengeResult_20261031.md`。
+
 ### 竞技模式人数唯一真源（2026-10-27）
 
 不新增、删除或重命名正式路径。既有`Contracts/Games/DivineBeasts/Schemas/server-catalog.schema.json`的`x-arena-mode-context-map[].teamSize`拥有模式单队人数；既有Backend契约生成器同步派生Go/C++绑定，匹配、分服与Assignment校验消费同一来源。生成规则和命令见`Docs/Codegen.md`，禁止手改生成物或另建手工人数表。

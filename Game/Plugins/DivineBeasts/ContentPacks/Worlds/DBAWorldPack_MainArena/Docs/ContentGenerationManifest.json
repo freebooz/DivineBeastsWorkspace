@@ -8,24 +8,46 @@
   "ExperienceDefinition": "GamePlatformDefinition:experience.mainarena.main@1",
   "PawnDefinition": "GamePlatformDefinition:divinebeasts.pawn.arena_character@1",
   "FloorSizeCentimeters": [
-    6000,
-    4000
+    50000,
+    50000
   ],
   "GeometryActors": 9,
   "PlayerStartsPerTeam": 5,
   "Navigation": {
-    "Tiles": 105,
+    "Tiles": 7803,
     "DirtyAreas": 0,
     "BoundsVolumes": 1,
     "CrossTeamPathCentimeters": 4600,
     "Partial": false
   },
   "Saved": true,
-  "ColdReloadVerified": true,
+  "ColdReloadVerified": false,
   "CookVerified": false,
   "NetworkVerified": false,
   "ManualVisualAccepted": false,
-  "AuthoringScript": "Saved/Validation/PartyArena20261015/Content/CreateMainArena.py",
-  "ColdReloadEditorProcessId": 25236,
-  "ColdReadbackEvidence": "Saved/Validation/PartyArena20261015/Content/ColdReadback.json"
+  "SavedReloadVerified": true,
+  "OriginalGeneration": {
+    "Date": "2026-10-15",
+    "AuthoringScript": "Saved/Validation/PartyArena20261015/Content/CreateMainArena.py",
+    "ColdReadbackEvidence": "Saved/Validation/PartyArena20261015/Content/ColdReadback.json",
+    "ColdReloadEditorProcessId": 25236
+  },
+  "CurrentVisualChange": {
+    "HorizonGlow": false,
+    "EditorProcessId": 25704,
+    "FillLightLux": 0.22,
+    "FinalSavedReloadVerified": true,
+    "Date": "2026-10-31",
+    "CellSizeCentimeters": 100,
+    "CookVerified": false,
+    "GeometryColdReloadVerified": true,
+    "ChecksPassed": 79,
+    "Evidence": "Saved/Validation/MainArenaReference20261031/Readback.json",
+    "FixedBrightness": 3.0,
+    "FinalColdReloadVerified": false,
+    "MainLightLux": 5.5,
+    "NetworkVerified": false,
+    "ExtendedLuminanceRange": false,
+    "ManualVisualAccepted": false
+  }
 }

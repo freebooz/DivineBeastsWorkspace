@@ -30,6 +30,9 @@ public class DivineBeastsArenaClient : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "DivineBeastsApplicationFlowClient",
+            // 五门只发布中立交互结果；竞技本地组合根读取入口身份，世界层不反向认识竞技UI。
+            "DBAWorldsRuntime",
+            "GamePlatformInteraction",
             // 私有UListView模板接线实际引用Slate表格/属性描述符，必须直接链接其定义模块。
             "Slate",
             "SlateCore",
@@ -41,6 +44,10 @@ public class DivineBeastsArenaClient : ModuleRules
             "DivineBeastsCharactersRuntime",
             "DivineBeastsAbilitiesRuntime", // 只读取拥有者已授予技能快照，绝不授予/激活技能。
             "DivineBeastsPresentationRuntime",
+            // 可选门旋涡只协调世界内容注册与中立请求，不依赖Niagara或VFX私有执行器。
+            "DivineBeastsPresentationClient",
+            "GamePlatformPresentationClient",
+            "GameplayTags",
             // 竞技客户端只复用项目战斗UI DTO→平台反馈的现有适配，不新造Widget或复制UI管理器。
             "DivineBeastsUIClient",
             "GamePlatformCombat",

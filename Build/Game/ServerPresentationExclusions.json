@@ -15,6 +15,20 @@
   },
   "CookDirectories": [
     {
+      "PackagePath": "/DBAWorldPack_Village/VFX/Activities/Arena",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/VFX/Activities/Arena",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "竞技门旋涡Niagara、GPU模块、材质和EffectType仅供客户端；入口交互与模式定义仍由服务器加载。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Definitions/Presentation/Activities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Definitions/Presentation/Activities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "活动入口纯表现VFX定义不进专服；Definitions/Activities/Arena中的五项权威入口定义不在排除范围。"
+    },
+    {
       "PackagePath": "/DBAWorldPack_Village/Water/Blueprints",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Water/Blueprints",
       "Profiles": "AllServers",

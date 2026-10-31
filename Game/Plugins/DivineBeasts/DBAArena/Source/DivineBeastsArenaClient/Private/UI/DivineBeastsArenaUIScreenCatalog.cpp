@@ -44,6 +44,17 @@ FDivineBeastsArenaUISurfaceDescriptor MakeHUD()
     return Descriptor;
 }
 
+FDivineBeastsArenaUISurfaceDescriptor MakeQueueStatusHUD()
+{
+    FDivineBeastsArenaUISurfaceDescriptor Descriptor;
+    Descriptor.SurfaceId=TEXT("UI.HUD.ArenaQueueStatus");
+    Descriptor.Kind=EDivineBeastsArenaUISurfaceKind::HUD;
+    Descriptor.Layer=EGamePlatformUILayer::HUD;
+    Descriptor.InputMode=EGamePlatformUIInputMode::GameOnly;
+    Descriptor.WidgetClassPath=TEXT("/DBAArena/UI/HUD/WBP_DBA_UI_ArenaQueueStatus.WBP_DBA_UI_ArenaQueueStatus_C");
+    return Descriptor;
+}
+
 const TArray<FDivineBeastsArenaUISurfaceDescriptor>& BuildCatalog()
 {
     static const TArray<FDivineBeastsArenaUISurfaceDescriptor> Catalog =
@@ -80,7 +91,8 @@ const TArray<FDivineBeastsArenaUISurfaceDescriptor>& BuildCatalog()
             EGamePlatformUILayer::Screen,
             EGamePlatformUIInputMode::UIOnly,
             TEXT("CloseButton")),
-        MakeHUD()
+        MakeHUD(),
+        MakeQueueStatusHUD()
     };
     return Catalog;
 }

@@ -189,7 +189,7 @@ func (r *MemoryPartyRepository) Update(ctx context.Context, partyID string, expe
 		return nil, err
 	}
 	for id := range next.Members {
-		if _, retained := current.Members[id]; !retained && r.queue != nil && r.queue.Reservations[id] != "" {
+		if _, retained := current.Members[id]; !retained && r.queue != nil && r.queue.HasRosterReservation(id) {
 			return nil, errors.New("MATCH_PLAYER_RESERVED: 目标玩家已有活动匹配")
 		}
 		if owner := r.players[id]; owner != "" && owner != partyID {

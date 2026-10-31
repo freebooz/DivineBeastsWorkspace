@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-31",
+  "method": "Recoverable archive; all original bytes retained under Saved; native assets untouched",
+  "scripts": [
+    {
+      "source": "Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockAssets.py",
+      "archive": "Tools/Archive/Resources/20261031/AuthorBirdFlockAssets.py",
+      "bytes": 14578,
+      "originalSha256": "10bb459a3f2fe658d2502f08511d7d657b1abd48bf206cf27e37503ffd2a356f",
+      "archivedSha256": "ae7a7d1c876754763bce331e8e11f0827550e5847a71b15cdb26e765a3b87e19",
+      "originalBackup": "Saved/Validation/ResourceOwnershipRemediation20261031/ScriptAudit/ArchiveOriginals/AuthorBirdFlockAssets.py"
+    },
+    {
+      "source": "Tools/Unreal/VFX/BirdFlock/ValidateBirdFlockAssets.py",
+      "archive": "Tools/Archive/Resources/20261031/ValidateBirdFlockAssets.py",
+      "bytes": 3621,
+      "originalSha256": "c38cf9fd8e95c9613653f36129fcddfb791680aeb8aed190de7562185acef48c",
+      "archivedSha256": "f0bf33e451e136bd8936fe507d1f2a934f760b1234f87fb1fdbcfd26d4253a2a",
+      "originalBackup": "Saved/Validation/ResourceOwnershipRemediation20261031/ScriptAudit/ArchiveOriginals/ValidateBirdFlockAssets.py"
+    },
+    {
+      "source": "Tools/Unreal/Terrain/ResumeTerrainV3FormalCover.ps1",
+      "archive": "Tools/Archive/Resources/20261031/ResumeTerrainV3FormalCover.ps1",
+      "bytes": 6042,
+      "originalSha256": "d6f82f8a5351c5b37d972de0b398fb82794e918fefc2f1f3221b571744aef03b",
+      "archivedSha256": "519d04987abd6cd62a777c093406238cf0b8359fe141ff1dfa76958c8ffb4934",
+      "originalBackup": "Saved/Validation/ResourceOwnershipRemediation20261031/ScriptAudit/ArchiveOriginals/ResumeTerrainV3FormalCover.ps1"
+    },
+    {
+      "source": "Tools/Unreal/PCG/PromoteVillageForestReview.py",
+      "archive": "Tools/Archive/Project/20261031/PromoteVillageForestReview.py",
+      "bytes": 6912,
+      "originalSha256": "553360509d2be04a11c0f5848f221c3ae2623328c13cc683dc89b2a424f7885e",
+      "archivedSha256": "6f9ce990885f0b20603d83773d0ffcaadac27ba8876b6ea96f7c98bdff1011a8",
+      "originalBackup": "Saved/Validation/ResourceOwnershipRemediation20261031/ScriptAudit/ArchiveOriginals/PromoteVillageForestReview.py",
+      "reason": "Completed one-time forest promotion. promote_map only accepts a frozen original map SHA; current formal map has changed. promote_assets rejects a second ForestPaths append.",
+      "replacement": {
+        "kind": "completed_operation",
+        "details": "The promoted formal map and runtime forest assets are the current maintained result. Subsequent modifications require an explicitly established new baseline; there is no need to replay this frozen promotion."
+      }
+    },
+    {
+      "source": "Tools/Unreal/VFX/DevelopmentMagic/CapturePalmRedesignProbeUE58.py",
+      "archive": "Tools/Archive/Project/20261031/CapturePalmRedesignProbeUE58.py",
+      "bytes": 7772,
+      "originalSha256": "7585d9eeadd1f5bd74c1a9abf5280fc216165ae0c69aec14d18cdb506aac963e",
+      "archivedSha256": "d5e7475c9310ffc1b0949f4f8dcaa977e5c1725fbea9c755e2e7f5f8dd9c6e1f",
+      "originalBackup": "Saved/Validation/ResourceOwnershipRemediation20261031/ScriptAudit/ArchiveOriginals/CapturePalmRedesignProbeUE58.py",
+      "reason": "Byte-identical duplicate of retained CapturePalmRedesignReviewUE58.py; both declare the same PalmReview class, stages and output root. Probe has no unique behavior.",
+      "replacement": {
+        "kind": "exact_retained_equivalent",
+        "path": "E:\\work\\2026\\DivineBeastsWorkspace\\Tools\\Unreal\\VFX\\DevelopmentMagic\\CapturePalmRedesignReviewUE58.py",
+        "details": "Keep Review as the single implementation. Final dual-palm capture remains separately maintained as CapturePalmRedesignDualReviewUE58.py."
+      }
+    },
+    {
+      "source": "Tools/Unreal/VFX/DevelopmentMagic/ProbeFireballEditorAutoExec.py",
+      "archive": "Tools/Archive/Project/20261031/ProbeFireballEditorAutoExec.py",
+      "bytes": 1165,
+      "originalSha256": "332ced6f9d2b9a678d0edf36f0cc7a23187f58b8b082551531b45bb77e6165f7",
+      "archivedSha256": "018d6909ba8762590ecf26bc01a75295ac0aa2e992f798737335010cffb20de3",
+      "originalBackup": "Saved/Validation/ResourceOwnershipRemediation20261031/ScriptAudit/ArchiveOriginals/ProbeFireballEditorAutoExec.py",
+      "reason": "Completed initial -ExecCmds=py transport experiment. Its entire job is to wait eight Slate ticks, save completed=true and quit the owned Editor. It does not author or validate a game asset.",
+      "replacement": {
+        "kind": "completed_capability_probe",
+        "details": "Normal maintained native capture/authoring entries already use the established Editor Python/Monolith execution route. No recurring capability test or caller requires this frozen probe."
+      }
+    },
+    {
+      "source": "Tools/Unreal/PluginDemos/BindManualPCGRealizedMonolith.py",
+      "archive": "Tools/Archive/Project/20261031/BindManualPCGRealizedMonolith.py",
+      "bytes": 5458,
+      "originalSha256": "4e7d015f10ac1b3decd7aa938767b3d63be927dceb2b59dacb615a003331802f",
+      "archivedSha256": "f14d691bd8dce43dc40f479f4c7bf1b3efc771e544d659f213a8f21a5818b2f6",
+      "originalBackup": "Saved/Validation/ResourceOwnershipRemediation20261031/ScriptAudit/ArchiveOriginals/BindManualPCGRealizedMonolith.py",
+      "reason": "Completed one-time binding of one frozen WorldAuthoringLive result to the existing manual PCG profile. It refuses execution whenever its authored report exists and requires the old template binding.",
+      "replacement": {
+        "kind": "completed_operation",
+        "details": "Retain the bound profile and realized graph plus independent cold-read receipts. Recurring native authoring remains in Build/Game/TestPluginWorldHost.ps1 WorldAuthoringLive; any future rebinding needs a new baseline rather than replaying this receipt."
+      }
+    }
+  ]
+}

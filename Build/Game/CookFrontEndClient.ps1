@@ -193,6 +193,18 @@ try {
         $details.GrassContainerReport=$grassReport; $details.GrassContainerResult=$grassResult
         $code=$grassResult.ExitCode
     }
+    if ($code -eq 0) {
+        # 同一有限合同拒绝退休身份/样例/历史；枚举本次全部IoStore容器，不能漏查新增Chunk。
+        $resourcePython=Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        $resourceGate=Join-Path $context.Workspace 'Tools/Unreal/Resources/ValidateResourceOwnershipContainer.py'
+        Assert-FoundationFile $resourcePython; Assert-FoundationFile $resourceGate
+        $resourceDirectory=Join-Path $context.Directory 'ResourceOwnershipGate'
+        $null=New-Item -ItemType Directory -Path $resourceDirectory
+        $resourceReport=Join-Path $resourceDirectory 'ResourceOwnership.json'
+        $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments @($resourceGate,'--stage',$stageDirectory,'--unreal-pak',$pakTool,'--profile',$CustomConfig,'--report',$resourceReport) -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
+        $details.ResourceOwnershipGateResult=$resourceResult; $details.ResourceOwnershipReport=$resourceReport
+        $code=$resourceResult.ExitCode
+    }
     $message='实际客户端Cook/Stage和IoStore资源门禁结束；仍须验证认证、UI交互与网络准入。'
 } catch [IO.FileNotFoundException] { $code=2; $message=$_.Exception.Message }
 catch { $code=1; $message=$_.Exception.Message }

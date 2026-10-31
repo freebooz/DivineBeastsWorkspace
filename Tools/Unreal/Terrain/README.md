@@ -2,6 +2,8 @@
 
 所属：DivineBeastsWorkspace/Tools/Unreal/Terrain。唯一工程：Game/DivineBeastsArena.uproject（UE5.8），项目实际内容归DBAWorldPack_Village；平台底层机制使用GamePlatformSurfaceEditor与GamePlatformPCGEditor。
 
+2026-10-31当前路径：Village绑定的12项审核母材质/实例归`/DBAWorldPack_Village/Development/Terrain/Production10`，十张公共色彩图归`/DBAPresentationPack_Core/Textures/Terrain/Production10`；作者和验证器已同步。已完成的Dirt单图恢复脚本归`Tools/Archive/Resources/20261031`并拒绝执行，不能重放旧9/10阶段。下文保留历史制作事实；现行状态见`Docs/Implementation/Resources/ResourceOwnershipDelivery_20261031.md`。
+
 ## 2026-10-18 全局配色V3.0十层扫描地形非破坏性改造
 
 - 依据[唯一V3.0色彩主规范](../../../Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)和[地形实物审查报告](../../../Docs/Implementation/TerrainColorV3ComplianceReview_20261018.md)，十层初始CC0扫描PBR基础色经分析存在偏黄、偏暗和道路辨识度不足等问题。

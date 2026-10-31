@@ -8,6 +8,7 @@
 - `Content/Definitions/DA_DBA_World_MainArena.uasset`：主竞技世界定义。
 - `Content/Definitions/DA_DBA_Experience_MainArena.uasset`：主竞技体验装配定义。
 - `Content/Definitions/DA_DBA_Pawn_ArenaCharacter.uasset`：竞技角色装配定义。
+- `Content/Materials/M_Arena_CheckerStone.uasset`、`M_Arena_BoundarySlate.uasset`：本世界拥有的棋盘石面与深蓝灰边界/掩体材质。2026-10-31视觉改造保持原地图身份，场地500×500米、暗场照明，无地平线辉光；人工视觉、Cook和联机状态分别记录。
 
 运行边界：`DBAWorlds`负责世界类型，`DBAArena`负责项目竞技装配，`GamePlatformArena`负责通用竞技机制；不同人数的1v1—5v5通过正式模式定义配置，不复制五套地图或服务器Target。服务器持有权威地图、碰撞、导航和必要装配数据，纯UI/VFX/音效等内容不得依赖此包的服务器必须加载根目录。
 

@@ -154,6 +154,18 @@ try {
             if ($code -eq 0) { $details.ServerPresentationAudit = ($auditOutput -join "\n") | ConvertFrom-Json }
         }
     }
+    if ($code -eq 0) {
+        # Server及显式PluginDemoClient共用同一退休资源合同，演示只允许批准的terrain_review目标。
+        $resourcePython=Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        $resourceGate=Join-Path $context.Workspace 'Tools/Unreal/Resources/ValidateResourceOwnershipContainer.py'
+        Assert-FoundationFile $resourcePython; Assert-FoundationFile $resourceGate
+        $resourceDirectory=Join-Path $context.Directory 'ResourceOwnershipGate'
+        $null=New-Item -ItemType Directory -Path $resourceDirectory
+        $resourceReport=Join-Path $resourceDirectory 'ResourceOwnership.json'
+        $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments @($resourceGate,'--stage',$stageDirectory,'--unreal-pak',(Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealPak.exe'),'--profile',$CustomConfig,'--target',$Target,'--report',$resourceReport) -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
+        $details.ResourceOwnershipGateResult=$resourceResult; $details.ResourceOwnershipReport=$resourceReport
+        $code=$resourceResult.ExitCode
+    }
     $message = if ($Target -eq 'Server') { '实际UAT Cook/Stage及服务器表现产物门禁结束；结果见独立容器证据，不代表运行或联机通过。' }
         else { '实际UAT客户端开发地图Cook/Stage结束；不代表运行通过。' }
 } catch [IO.FileNotFoundException] { $code = 2; $message = $_.Exception.Message }

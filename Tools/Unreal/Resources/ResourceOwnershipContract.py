@@ -26,6 +26,14 @@ def validate_contract(doc):
     """返回有限move列表；只支持本轮已批准Owner，不从输入推导任意根目录。"""
     if doc.get('schema_version') != 1 or doc.get('migration_id') != 'ResourceOwnership20261031':
         raise ValueError('未知资源归属合同身份/版本')
+    retired={GROUPS[g][0].rstrip('/') for g in ('plants_runtime','stylehex_samples','terrain_review')}
+    never={GROUPS['plants_samples'][1].rstrip('/').rsplit('/',1)[0],
+           GROUPS['terrain_review'][1].rstrip('/').rsplit('/',1)[0],
+           GROUPS['bird_history'][1].rstrip('/').rsplit('/',2)[0]}
+    for field, expected in (('retired_roots',retired),('never_cook_roots',never)):
+        values=doc.get(field)
+        if not isinstance(values,list) or len(values)!=len(expected) or set(values)!=expected:
+            raise ValueError('发布退休/开发目录不能偏离已批准归属合同：'+field)
     moves = doc.get('moves')
     if not isinstance(moves, list) or not moves:
         raise ValueError('迁移清单不能为空')

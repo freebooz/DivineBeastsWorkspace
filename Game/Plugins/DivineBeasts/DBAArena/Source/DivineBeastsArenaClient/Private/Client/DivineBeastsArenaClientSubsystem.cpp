@@ -192,6 +192,7 @@ FText UDivineBeastsArenaClientSubsystem::GetObservedMatchmakingStatus()const
     if(!MigrationError.IsEmpty())return MigrationError;
     if(!OnlineMatchmaking||!OnlineMatchmaking->GetSnapshot().bKnown)return FText::FromString(TEXT("正在同步匹配状态"));
     const auto& View=OnlineMatchmaking->GetSnapshot();
+    if(View.Phase==TEXT("challengeInvitation"))return FText::FromString(TEXT("约战邀请待回复；接受后全员分别确认"));
     if(View.Phase==TEXT("readyCheck"))return FText::FromString(TEXT("等待全部队员准备；名单保持完整"));
     if(View.Phase==TEXT("searching"))return FText::FromString(TEXT("正在匹配；小队不会被拆分"));
     if(View.Phase==TEXT("confirmation"))return FText::FromString(FString::Printf(TEXT("已找到对局 · 已确认 %d / %d"),View.Accepted,View.Participants));
@@ -201,6 +202,45 @@ FText UDivineBeastsArenaClientSubsystem::GetObservedMatchmakingStatus()const
     if(View.Phase==TEXT("returning"))return FText::FromString(TEXT("对局已结束，可以安全返回"));
     if(View.Phase==TEXT("cancelled")||View.Phase==TEXT("failed"))return FText::FromString(TEXT("本次匹配已结束，可以重新报名"));
     return FText::FromString(View.bServiceReady?TEXT("请选择模式；单人可直接匹配"):TEXT("当前竞技场不可用，请稍后重试"));
+}
+FName UDivineBeastsArenaClientSubsystem::GetObservedMatchmakingMode() const
+{
+    if(!OnlineMatchmaking)return NAME_None;
+    const auto& View=OnlineMatchmaking->GetSnapshot();
+    if(View.Phase==TEXT("idle")||View.Phase==TEXT("completed")||View.Phase==TEXT("cancelled")||View.Phase==TEXT("failed"))return NAME_None;
+    return FName(*View.ModeId);
+}
+FDivineBeastsArenaChallengeView UDivineBeastsArenaClientSubsystem::GetObservedChallenge() const
+{
+    return OnlineMatchmaking&&OnlineMatchmaking->GetSnapshot().bKnown?OnlineMatchmaking->GetSnapshot().Challenge:FDivineBeastsArenaChallengeView{};
+}
+bool UDivineBeastsArenaClientSubsystem::CanChallengeMode(FName ModeId,FString& Reason) const
+{
+    if(!CanQueueMode(ModeId,Reason))return false;
+    const auto* Mode=FDivineBeastsArenaModeCatalog::Find(ModeId);
+    const auto& Party=PartySource->GetSnapshot().Snapshot;
+    const int32 Count=Party.bHasParty?Party.Members.Num():1;
+    if(!Mode||Count!=Mode->TeamSize){Reason=TEXT("约战需要双方各有完整人数；请先组满本方小队");return false;}
+    const auto State=OnlineMatchmaking->GetObservedState();
+    if(State!=EGamePlatformArenaClientFlowState::Idle){Reason=TEXT("当前已有邀请或报名，请先等待终态或取消");return false;}
+    Reason.Empty();return true;
+}
+void UDivineBeastsArenaClientSubsystem::RequestChallenge(FName ModeId,const FString& TargetPlayerId,const FString& Id,TFunction<void(bool,const FString&)> Done)
+{
+    FString Error;FGamePlatformArenaMatchmakingRequest Request;
+    if(bDeinitializing||!CanChallengeMode(ModeId,Error)||!BuildMatchmakingRequest(ModeId,FString(),FString(),Id,Request,Error))
+    {Done(false,TEXT("Matchmaking.ChallengeUnavailable"));return;}
+    OnlineMatchmaking->RequestChallenge(Request,TargetPlayerId,MoveTemp(Done));
+}
+void UDivineBeastsArenaClientSubsystem::ReplyChallenge(bool bAccept,const FString& Id,TFunction<void(bool,const FString&)> Done)
+{
+    if(bDeinitializing||!bApplicationFlowInWorld||!OnlineMatchmaking){Done(false,TEXT("Matchmaking.ChallengeUnavailable"));return;}
+    OnlineMatchmaking->ReplyChallenge(bAccept,Id,MoveTemp(Done));
+}
+void UDivineBeastsArenaClientSubsystem::CancelChallenge(const FString& Id,TFunction<void(bool,const FString&)> Done)
+{
+    if(bDeinitializing||!bApplicationFlowInWorld||!OnlineMatchmaking){Done(false,TEXT("Matchmaking.ChallengeUnavailable"));return;}
+    OnlineMatchmaking->CancelChallenge(Id,MoveTemp(Done));
 }
 void UDivineBeastsArenaClientSubsystem::HandleMatchmakingChanged()
 {

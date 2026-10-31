@@ -53,7 +53,7 @@ bool FDivineBeastsArenaUISurfaceInventoryTest::RunTest(const FString&)
     const TArray<FDivineBeastsArenaUISurfaceDescriptor>& Surfaces =
         FDivineBeastsArenaUIScreenCatalog::GetSurfaces();
 
-    TestEqual(TEXT("DBAArena应拥有5个Screen加1个ArenaHUD"), Surfaces.Num(), 6);
+    TestEqual(TEXT("DBAArena应拥有5个Screen加场内/排队两个普通HUD"), Surfaces.Num(), 7);
 
     TSet<FName> UniqueIds;
     int32 ScreenCount = 0;
@@ -83,7 +83,7 @@ bool FDivineBeastsArenaUISurfaceInventoryTest::RunTest(const FString&)
     }
 
     TestEqual(TEXT("竞技Screen数量"), ScreenCount, 5);
-    TestEqual(TEXT("竞技HUD数量"), HUDCount, 1);
+    TestEqual(TEXT("竞技HUD数量"), HUDCount, 2);
 
     for (const FName RequiredId : {
          FName(TEXT("UI.Screen.Matchmaking")),
@@ -91,7 +91,8 @@ bool FDivineBeastsArenaUISurfaceInventoryTest::RunTest(const FString&)
          FName(TEXT("UI.Screen.ArenaHeroSelection")),
          FName(TEXT("UI.Screen.Scoreboard")),
          FName(TEXT("UI.Screen.PostMatchResult")),
-         FName(TEXT("UI.HUD.Arena"))})
+         FName(TEXT("UI.HUD.Arena")),
+         FName(TEXT("UI.HUD.ArenaQueueStatus"))})
     {
         TestNotNull(
             *FString::Printf(
@@ -213,6 +214,9 @@ bool FDivineBeastsArenaUIScreenInstanceOwnershipRegressionTest::RunTest(const FS
 
     // 真实Deinitialize与Root替换共用ClearScreenOwnership：先撤实例Key，再Closed，最后拆Root。
     // Root是受控Native夹具且未安装到Viewport；原CommonUI栈保持活着，精确复现旧成员仍在场。
+    // 上一次明确关闭撤销了浏览需求；本段模拟用户再次打开之后收到的独立请求。
+    Service->bMatchmakingMenuDismissed=false;
+    Service->bMatchmakingMenuRequested=true;
     Stack->AddWidgetInstance(*A);
     FGamePlatformUIScreenOwnershipTestAccess::Register(*Manager, *A, *Stack);
     const FGuid RootExitRequest = FGuid::NewGuid();

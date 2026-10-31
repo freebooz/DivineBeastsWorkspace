@@ -10,6 +10,7 @@ import (
 	"divinebeasts/backend/internal/modules/gameserver"
 	"divinebeasts/backend/internal/modules/match"
 	"divinebeasts/backend/internal/modules/matchmaking"
+	"divinebeasts/backend/internal/modules/party"
 	"divinebeasts/backend/internal/modules/servertransfer"
 	"encoding/json"
 	"errors"
@@ -48,10 +49,11 @@ func (c *interruptedControl) AllocateWorldTransfer(ctx context.Context, input ga
 
 // TestRuntimeFiveModesAndSafeReturn覆盖真实报名/逐人确认、未知签票恢复、入场、可信结果及重新分配来源体验。
 func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
-	for scenario := 0; scenario < 10; scenario++ {
+	for scenario := 0; scenario < 20; scenario++ {
 		size := scenario%5 + 1
-		bFault := scenario >= 5
-		t.Run(fmt.Sprintf("%dv%d-fault-%t", size, size, bFault), func(t *testing.T) {
+		bFault := scenario%10 >= 5
+		challenge := scenario >= 10
+		t.Run(fmt.Sprintf("%dv%d-fault-%t-challenge-%t", size, size, bFault, challenge), func(t *testing.T) {
 			ctx := context.Background()
 			counter := 0
 			nextID := func(prefix string) string { counter++; return fmt.Sprintf("%s-%d", prefix, counter) }
@@ -82,7 +84,46 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 				player := fmt.Sprintf("player-%02d", index)
 				actor := matchmaking.ActorContext{PlayerID: player, SessionID: "session-" + player, CharacterID: "char-" + player, HeroDefinitionID: "hero-test", CharacterRevision: 1, SourceGameServerID: "old-village-that-no-longer-exists", SourceExperienceID: gameservercontract.ExperienceVillageTutorial}
 				actors = append(actors, actor)
-				if _, err := queue.CommandMatchmaking(ctx, actor, matchmaking.Command{Action: "start", ClientRequestID: "start-" + player, ArenaModeID: mode, RegionID: "test"}); err != nil {
+				if !challenge {
+					if _, err := queue.CommandMatchmaking(ctx, actor, matchmaking.Command{Action: "start", ClientRequestID: "start-" + player, ArenaModeID: mode, RegionID: "test"}); err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+			if challenge {
+				partyID := ""
+				revision := int64(0)
+				if size > 1 {
+					for team := 0; team < 2; team++ {
+						p, err := queue.CreateParty(ctx, actors[team*size].PlayerID, "test-leader")
+						if err != nil {
+							t.Fatal(err)
+						}
+						p, err = repo.Update(ctx, p.ID, p.Revision, "", "", func(p *party.Party) error {
+							for i := 1; i < size; i++ {
+								if err := p.AddMember(party.Member{PlayerID: actors[team*size+i].PlayerID, Online: true}); err != nil {
+									return err
+								}
+							}
+							return nil
+						})
+						if err != nil {
+							t.Fatal(err)
+						}
+						if team == 0 {
+							partyID = p.ID
+							revision = p.Revision
+						}
+					}
+				}
+				invite, err := queue.CommandMatchmaking(ctx, actors[0], matchmaking.Command{Action: "challenge", ClientRequestID: "invite", PartyID: partyID, ExpectedRevision: revision, TargetPlayerID: actors[size].PlayerID, ArenaModeID: mode, RegionID: "test"})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if invite.Challenge == nil {
+					t.Fatal("缺少约战邀请")
+				}
+				if _, err := queue.CommandMatchmaking(ctx, actors[size], matchmaking.Command{Action: "challengeReply", ClientRequestID: "accept-invite", ChallengeID: invite.Challenge.ChallengeID, ExpectedRevision: invite.Challenge.Revision, Accept: true}); err != nil {
 					t.Fatal(err)
 				}
 			}

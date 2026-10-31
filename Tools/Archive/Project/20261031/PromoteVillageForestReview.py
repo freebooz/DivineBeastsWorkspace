@@ -3,6 +3,7 @@
 仅通过Monolith内的原生UE资产API执行。先备份地图与母材质；运行资源原生迁移，
 使用正式地图身份供既有登录/服务器准入链消费，不新增或绕过认证入口。
 """
+raise RuntimeError('SCRIPT_RETIRED: 已退休归档，见Tools/Archive/Project/20261031/README.md。')
 import hashlib,json,math
 from pathlib import Path
 import unreal as u

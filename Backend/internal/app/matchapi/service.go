@@ -117,7 +117,7 @@ func (r *MemoryPartyRepository) Save(_ context.Context, value *party.Party) erro
 		return errors.New("PARTY_CONDITIONAL_UPDATE_REQUIRED: 已有队伍必须条件更新")
 	}
 	for id := range value.Members {
-		if r.queue != nil && r.queue.Reservations[id] != "" {
+		if r.queue != nil && r.queue.HasRosterReservation(id) {
 			return errors.New("MATCH_PLAYER_RESERVED: 排队或比赛期间不能创建其他队伍")
 		}
 		if owner := r.players[id]; owner != "" && owner != value.ID {

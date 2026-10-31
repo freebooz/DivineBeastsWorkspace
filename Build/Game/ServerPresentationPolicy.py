@@ -134,10 +134,12 @@ def _virtual_package(filename: str) -> str | None:
         if part == "content":
             if index == 0 or parts[index - 1] in ("game", "divinebeastsarena"):
                 return "/game/" + "/".join(parts[index + 1:])
+            if parts[index - 1] == 'engine':
+                return '/engine/' + '/'.join(parts[index + 1:])
             if "plugins" in parts[:index]:
                 return "/" + parts[index - 1] + "/" + "/".join(parts[index + 1:])
     # 直接输入的插件长包名，例如/DBAGameplay/Definitions/A.uasset。
-    if parts[0].startswith(("dba", "gameplatform")):
+    if parts[0] == 'engine' or parts[0].startswith(("dba", "gameplatform")):
         return "/" + "/".join(parts)
     return None
 
@@ -378,6 +380,8 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
             # 世界包同时拥有地图/权威水域与纯视觉预设。仅准许明确登记的视觉叶子；
             # Ferns由独立装饰类剥离，真实Cook结果仍须另验，地图与权威AI定义禁止剥离。
             is_reviewed_world_visual_leaf = package.casefold() in (
+                "/dbaworldpack_village/vfx/activities/arena",  # 客户端门内旋涡，不含交互实体
+                "/dbaworldpack_village/definitions/presentation/activities",  # Attached纯表现定义
                 "/dbaworldpack_village/water/materials",
                 "/dbaworldpack_village/water/textures",  # 只供水下材质采样，CPU水域不依赖纹理
                 "/dbaworldpack_village/water/blueprints",
@@ -429,8 +433,16 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
     return ServerPresentationPolicy(raw)
 
 
-def read_iostore_csv(path: Path) -> list[ArtifactEntry]:
+def package_from_artifact(filename: str) -> str | None:
+    """将已验证的项目/插件容器文件名还原为小写长包名，供其它Build门禁复用。"""
+    return _virtual_package(filename)
+
+
+def read_iostore_csv(path: Path, target: str = 'Server') -> list[ArtifactEntry]:
     """读取UE5.8 ListContainer CSV；拒绝空/截断/错误平台/无名资源，不能只相信工具退出0。"""
+    if target not in ('Client','Server'):
+        raise PolicyError('IoStore解析目标必须为Client或Server')
+    expected_platform='Windows'+target
     try:
         with path.open("r", encoding="utf-8-sig", newline="") as handle:
             rows = list(csv.reader(handle, skipinitialspace=True, strict=True))
@@ -452,13 +464,14 @@ def read_iostore_csv(path: Path) -> list[ArtifactEntry]:
             raise PolicyError(f"IoStore CSV第{index}行尺寸无效: {path}")
         if not chunk:
             raise PolicyError(f"IoStore CSV第{index}行缺少ChunkType")
-        if (filename,chunk) in (("<ContainerHeader>","ContainerHeader"),("<ScriptObjects>","ScriptObjects")):
+        native_client_shader = target == 'Client' and (filename,chunk) == ('<ShaderCode>','ShaderCode')
+        if (filename,chunk) in (("<ContainerHeader>","ContainerHeader"),("<ScriptObjects>","ScriptObjects")) or native_client_shader:
             # UE5.8真实ListContainer将容器头写成精确占位标记，并非文件路径。
             # global.utoc的ScriptObjects没有目标平台，真实CSV为Unknown；仅精确global容器例外。
             # 其余元数据仍须专服目标；不允许实际资产借Unknown或改块类型绕过路径审计。
             global_script_objects = chunk == "ScriptObjects" and platform == "Unknown" and row.get("ContainerName") == "global"
-            if platform != "WindowsServer" and not global_script_objects:
-                raise PolicyError(f"IoStore容器头目标不是WindowsServer: {platform}")
+            if platform != expected_platform and not global_script_objects:
+                raise PolicyError(f"IoStore容器头目标不是{expected_platform}: {platform}")
             filename = ""
         elif not filename or filename == "-":
             if chunk not in METADATA_CHUNKS:
@@ -466,8 +479,8 @@ def read_iostore_csv(path: Path) -> list[ArtifactEntry]:
             filename = ""  # 明确元数据不能计为资产存在，也不解释成任意文件名。
         else:
             _evidence_path(filename)
-            if filename.casefold().endswith(ASSET_EXTENSIONS) and platform != "WindowsServer":
-                raise PolicyError(f"IoStore资源目标不是WindowsServer: {platform}")
+            if filename.casefold().endswith(ASSET_EXTENSIONS) and platform != expected_platform:
+                raise PolicyError(f"IoStore资源目标不是{expected_platform}: {platform}")
         entries.append(ArtifactEntry(filename, int(row["Size"]), chunk, platform))
     return entries
 

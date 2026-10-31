@@ -101,6 +101,11 @@ func (r *MemoryPartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs,
 	if string(before) != string(after) {
 		// 预留被释放的玩家也要通知，不能只扫描新状态中的活跃成员。
 		for _, state := range []*matchmaking.QueueState{original, queue} {
+			for _, challenge := range state.Challenges {
+				for _, player := range challenge.PlayerIDs() {
+					changed[player] = true
+				}
+			}
 			for _, entry := range state.Entries {
 				for _, player := range entry.Ticket.PartyMemberIDs {
 					changed[player] = true
@@ -133,7 +138,7 @@ func SamePartyMembers(before, after *party.Party) bool {
 // ValidateMatchmakingTransaction复核活动票据与预留一一对应，防止恢复或新命令写出幽灵锁；失败不会部分提交。
 func ValidateMatchmakingTransaction(tx *MatchmakingTransaction) error {
 	expected := map[string]string{}
-	if tx.Queue == nil || tx.Queue.Entries == nil || tx.Queue.Reservations == nil || tx.Queue.Candidates == nil || tx.Queue.Receipts == nil || tx.Queue.Contexts == nil || tx.Queue.Revision < 0 || len(tx.Queue.Entries) > 4*matchmaking.MaxActiveTickets {
+	if tx.Queue == nil || tx.Queue.Entries == nil || tx.Queue.Reservations == nil || tx.Queue.Candidates == nil || tx.Queue.Receipts == nil || tx.Queue.Contexts == nil || tx.Queue.Challenges == nil || tx.Queue.Revision < 0 || len(tx.Queue.Entries) > 4*matchmaking.MaxActiveTickets || len(tx.Queue.Challenges) > 4*matchmaking.MaxActiveTickets {
 		return errors.New("MATCH_TRANSACTION_INVALID: 队列缺失或超限")
 	}
 	for id, entry := range tx.Queue.Entries {
@@ -148,6 +153,35 @@ func ValidateMatchmakingTransaction(tx *MatchmakingTransaction) error {
 				return errors.New("MATCH_PLAYER_RESERVED: 多条活动票据包含同一玩家")
 			}
 			expected[player] = id
+		}
+	}
+	for id, c := range tx.Queue.Challenges {
+		if id != c.ID || c.Revision < 1 {
+			return errors.New("MATCH_TRANSACTION_INVALID: 邀请键或修订不一致")
+		}
+		if c.Phase != matchmaking.PhaseChallengeInvitation {
+			continue
+		}
+		if _, exists := tx.Queue.Entries[id]; exists {
+			return errors.New("MATCH_TRANSACTION_INVALID: 邀请与票据身份冲突")
+		}
+		mode, ok := matchmaking.ArenaModeByID(c.ArenaModeID)
+		if !ok || len(c.TeamAPlayerIDs) != mode.TeamSize || len(c.TeamBPlayerIDs) != mode.TeamSize || c.RegionID == "" || c.DeadlineUTC.IsZero() {
+			return errors.New("MATCH_TRANSACTION_INVALID: 邀请模式名单无效")
+		}
+		owner, target := false, false
+		for i, members := range [][]string{c.TeamAPlayerIDs, c.TeamBPlayerIDs} {
+			for _, player := range members {
+				if player == "" || expected[player] != "" {
+					return errors.New("MATCH_PLAYER_RESERVED: 邀请与活动资格重复")
+				}
+				expected[player] = id
+				owner = owner || (i == 0 && player == c.OwnerPlayerID)
+				target = target || (i == 1 && player == c.TargetPlayerID)
+			}
+		}
+		if !owner || !target {
+			return errors.New("MATCH_TRANSACTION_INVALID: 邀请队长不在各自名单")
 		}
 	}
 	if len(expected) != len(tx.Queue.Reservations) {

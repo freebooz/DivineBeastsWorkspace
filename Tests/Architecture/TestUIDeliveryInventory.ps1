@@ -48,7 +48,8 @@ $entries = @(
     @('UI.Screen.ArenaHeroSelection','Arena','DBAArena','P0','Screens/WBP_DBA_UI_Arena_HeroSelection.uasset','UI/Screens/DivineBeastsArenaHeroSelectionScreen.h'),
     @('UI.Screen.Scoreboard','Arena','DBAArena','P1','Screens/WBP_DBA_UI_Arena_Scoreboard.uasset','UI/Screens/DivineBeastsScoreboardScreen.h'),
     @('UI.Screen.PostMatchResult','Arena','DBAArena','P0','Screens/WBP_DBA_UI_Arena_PostMatch.uasset','UI/Screens/DivineBeastsPostMatchResultScreen.h'),
-    @('UI.HUD.Arena','Arena','DBAArena','P0','HUD/WBP_DBA_UI_ArenaHUD.uasset','UI/HUD/DivineBeastsArenaHUD.h')
+    @('UI.HUD.Arena','Arena','DBAArena','P0','HUD/WBP_DBA_UI_ArenaHUD.uasset','UI/HUD/DivineBeastsArenaHUD.h'),
+    @('UI.HUD.ArenaQueueStatus','Arena','DBAArena','P0','HUD/WBP_DBA_UI_ArenaQueueStatus.uasset','UI/HUD/DivineBeastsArenaQueueStatusWidget.h')
 )
 
 $issues = [Collections.Generic.List[string]]::new()

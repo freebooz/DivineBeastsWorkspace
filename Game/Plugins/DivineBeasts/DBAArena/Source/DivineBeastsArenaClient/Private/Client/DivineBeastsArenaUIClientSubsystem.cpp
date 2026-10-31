@@ -1,7 +1,11 @@
 ﻿// 项目客户端每LocalPlayer竞技UI适配：借用平台页面/Data与MOBA事实，拥有World/Actor委托；退出清空投影，无Widget轮询。
 #include "Client/DivineBeastsArenaUIClientSubsystem.h"
 #include "Client/DivineBeastsArenaClientSubsystem.h"
+#include "Client/GamePlatformArenaMatchmakingAdapter.h"
 #include "Social/DivineBeastsPartyUIClientSubsystem.h"
+#include "Catalog/DivineBeastsArenaModeCatalog.h"
+#include "Gameplay/DivineBeastsArenaEntrance.h"
+#include "Components/GamePlatformInteractorComponent.h"
 
 // GetRootLayout（获取界面根布局）与GetParent（获取面板父控件）需要完整UObject派生类型，
 // 仅有前置声明时IsValid无法安全地执行指针转换；此处显式引用对应公共头文件。
@@ -65,12 +69,14 @@ void UDivineBeastsArenaUIClientSubsystem::Initialize(
 
     RegisterArenaScreenDefinitions();
     RefreshArenaViewFromWorld();
+    BindArenaEntranceInteractor(GetLocalPlayer()?GetLocalPlayer()->GetPlayerController(GetWorld()):nullptr);
 }
 
 void UDivineBeastsArenaUIClientSubsystem::Deinitialize()
 {
     if (bDeinitializing) return;
     bDeinitializing = true;
+    UnbindArenaEntranceInteractor();
     DisconnectMatchmakingAuthentication();
     ResetMatchmakingBridge();
     if(auto* PartyUI=GetLocalPlayer()->GetSubsystem<UDivineBeastsPartyUIClientSubsystem>())PartyUI->UnregisterActivity(PartyActivityHandle);
@@ -103,6 +109,7 @@ void UDivineBeastsArenaUIClientSubsystem::PlayerControllerChanged(
 {
     Super::PlayerControllerChanged(NewPlayerController);
     if (bDeinitializing) return;
+    BindArenaEntranceInteractor(NewPlayerController);
     ResetMatchmakingBridge();
     const uint64 Expected = ++SurfaceOperationGeneration;
 
@@ -167,6 +174,7 @@ bool UDivineBeastsArenaUIClientSubsystem::RefreshArenaViewFromWorld()
 void UDivineBeastsArenaUIClientSubsystem::BindWorldReadinessEvents(UWorld* World)
 {
     if (BoundWorld.Get() == World) { return; }
+    UnbindArenaEntranceInteractor();
     const uint64 Expected = ++SurfaceOperationGeneration;
     if (BoundWorld.IsValid()) { BoundWorld->GameStateSetEvent.Remove(GameStateSetHandle); }
     // 跨世界先失效旧投影；保持新的匹配/连接流程由其拥有者后续事件更新。
@@ -174,7 +182,10 @@ void UDivineBeastsArenaUIClientSubsystem::BindWorldReadinessEvents(UWorld* World
     UnbindArenaEvents();
     BoundWorld = World; GameStateSetHandle.Reset();
     if (World)
-    { GameStateSetHandle = World->GameStateSetEvent.AddWeakLambda(this, [this](AGameStateBase*) { RefreshArenaViewFromWorld(); }); }
+    {
+        GameStateSetHandle = World->GameStateSetEvent.AddWeakLambda(this, [this](AGameStateBase*) { RefreshArenaViewFromWorld(); });
+        BindArenaEntranceInteractor(GetLocalPlayer()?GetLocalPlayer()->GetPlayerController(World):nullptr);
+    }
     if (bResetPreviousWorld && IsValid(ArenaViewModel)) { ArenaViewModel->ResetReplicatedArenaState(); }
     if (bDeinitializing || SurfaceOperationGeneration != Expected) return;
     CloseArenaScreen();
@@ -191,16 +202,60 @@ void UDivineBeastsArenaUIClientSubsystem::HandleWorldCleanup(UWorld* World, bool
     if (bDeinitializing || BoundWorld.IsValid() || SurfaceOperationGeneration != BeforeBinding + 1) return;
 }
 
-bool UDivineBeastsArenaUIClientSubsystem::OpenMatchmakingMenu(const FString& PartyId)
+bool UDivineBeastsArenaUIClientSubsystem::OpenMatchmakingMenu(const FString& PartyId,FName ModeId)
 {
     auto* Instance=GetLocalPlayer()?GetLocalPlayer()->GetGameInstance():nullptr;
     auto* Client=Instance?Instance->GetSubsystem<UDivineBeastsArenaClientSubsystem>():nullptr;
     if(bDeinitializing||!PlatformUI||!ArenaViewModel||!Client||!Client->IsApplicationFlowInWorld()||
-        !ArenaViewModel->MatchId.IsEmpty())return false;
+        !ArenaViewModel->MatchId.IsEmpty()||(!ModeId.IsNone()&&!FDivineBeastsArenaModeCatalog::Find(ModeId)))return false;
+    if(!ModeId.IsNone())SelectMatchmakingMenuMode(ModeId);
     MatchmakingPartyId=PartyId;
-    ArenaViewModel->SetObservedClientFlowState(EGamePlatformArenaClientFlowState::Matchmaking);
-    SyncArenaSurface();
+    bMatchmakingMenuRequested=true;bMatchmakingMenuDismissed=false;
+    const auto Adapter=Client->GetMatchmakingAdapter();
+    const auto Observed=Adapter?Adapter->GetObservedState():EGamePlatformArenaClientFlowState::Idle;
+    SetObservedArenaClientFlowState(Observed==EGamePlatformArenaClientFlowState::Idle||Observed==EGamePlatformArenaClientFlowState::Failed?EGamePlatformArenaClientFlowState::Matchmaking:Observed);
+    OnMatchmakingCommandChanged.Broadcast();
     return ActiveArenaScreen.IsValid()||OpeningArenaRequestId.IsValid();
+}
+
+void UDivineBeastsArenaUIClientSubsystem::DismissMatchmakingMenu()
+{
+    bMatchmakingMenuRequested=false;bMatchmakingMenuDismissed=true;
+    SyncArenaSurface();
+}
+
+void UDivineBeastsArenaUIClientSubsystem::UnbindArenaEntranceInteractor()
+{
+    if(auto* Interactor=ArenaEntranceInteractor.Get())Interactor->OnInteractionEvent.RemoveDynamic(this,&ThisClass::HandleArenaEntranceInteraction);
+    if(auto* Controller=ArenaEntranceController.Get())Controller->OnEndPlay.RemoveDynamic(this,&ThisClass::HandleArenaEntranceControllerEndPlay);
+    ArenaEntranceInteractor.Reset();ArenaEntranceController.Reset();LastArenaEntranceRequest.Invalidate();
+}
+void UDivineBeastsArenaUIClientSubsystem::BindArenaEntranceInteractor(APlayerController* Controller)
+{
+    if(ArenaEntranceController.Get()==Controller&&ArenaEntranceInteractor.IsValid())return;
+    UnbindArenaEntranceInteractor();
+    if(bDeinitializing||!IsValid(Controller)||!Controller->IsLocalController()||Controller->GetLocalPlayer()!=GetLocalPlayer()||
+        !Controller->GetWorld()||Controller->GetWorld()!=GetWorld()||Controller->GetWorld()->bIsTearingDown||RetiredWorld.Get()==Controller->GetWorld())return;
+    auto* Interactor=Controller->FindComponentByClass<UGamePlatformInteractorComponent>();
+    if(!Interactor)return;
+    ArenaEntranceController=Controller;ArenaEntranceInteractor=Interactor;
+    Controller->OnEndPlay.AddUniqueDynamic(this,&ThisClass::HandleArenaEntranceControllerEndPlay);
+    Interactor->OnInteractionEvent.AddUniqueDynamic(this,&ThisClass::HandleArenaEntranceInteraction);
+}
+void UDivineBeastsArenaUIClientSubsystem::HandleArenaEntranceControllerEndPlay(AActor* Actor,EEndPlayReason::Type)
+{if(Actor==ArenaEntranceController.Get())UnbindArenaEntranceInteractor();}
+void UDivineBeastsArenaUIClientSubsystem::HandleArenaEntranceInteraction(const FGamePlatformInteractionEvent& Event)
+{
+    const auto* Controller=ArenaEntranceController.Get();const auto* Interactor=ArenaEntranceInteractor.Get();
+    const auto* Entrance=Cast<ADivineBeastsArenaEntrance>(Event.TargetActor);
+    if(bDeinitializing||!Controller||!Interactor||!Entrance||!Controller->IsLocalController()||Controller->GetLocalPlayer()!=GetLocalPlayer()||
+        Controller->GetWorld()!=GetWorld()||Entrance->GetWorld()!=GetWorld()||!GetWorld()||GetWorld()->bIsTearingDown||RetiredWorld.Get()==GetWorld()||
+        Event.InteractorActor!=Controller||Event.EventType!=EGamePlatformInteractionEventType::InteractionCommitted||!Event.Result.IsSuccess()||
+        Event.OptionId!=FName(TEXT("Arena.Entry.Open"))||Event.Result.OptionId!=Event.OptionId||!Event.RequestId.IsValid()||!Event.SessionId.IsValid()||
+        Event.RequestId!=Event.Result.RequestId||Event.SessionId!=Event.Result.SessionId||LastArenaEntranceRequest==Event.RequestId)return;
+    const FName Mode=Entrance->GetArenaModeId();if(Mode.IsNone()||!FDivineBeastsArenaModeCatalog::Find(Mode))return;
+    LastArenaEntranceRequest=Event.RequestId;
+    OpenMatchmakingMenu(FString(),Mode);
 }
 
 FName UDivineBeastsArenaUIClientSubsystem::ResolvePrimaryArenaSurfaceId() const
@@ -213,7 +268,15 @@ FName UDivineBeastsArenaUIClientSubsystem::ResolvePrimaryArenaSurfaceId() const
     switch (ArenaViewModel->FlowState)
     {
     case EGamePlatformArenaClientFlowState::Matchmaking:
-        return TEXT("UI.Screen.Matchmaking");
+    {
+        if(!bMatchmakingMenuDismissed)return TEXT("UI.Screen.Matchmaking");
+        if(!MatchmakingAdapter)return NAME_None;
+        const auto State=MatchmakingAdapter->GetObservedState();
+        const bool bPendingObservation=State==EGamePlatformArenaClientFlowState::Failed&&
+            (!GetSelectedMatchmakingMode().IsNone()||!MatchmakingLogicalRequestId.IsEmpty());
+        return State==EGamePlatformArenaClientFlowState::Matchmaking||bPendingObservation?
+            FName(TEXT("UI.HUD.ArenaQueueStatus")):NAME_None;
+    }
 
     case EGamePlatformArenaClientFlowState::MatchFound:
         return TEXT("UI.Screen.MatchFoundReady");
@@ -246,7 +309,9 @@ void UDivineBeastsArenaUIClientSubsystem::SetObservedArenaClientFlowState(
 {
     if (!bDeinitializing && IsValid(ArenaViewModel))
     {
-        ArenaViewModel->SetObservedClientFlowState(InFlowState);
+        const auto Projected=InFlowState==EGamePlatformArenaClientFlowState::Idle&&bMatchmakingMenuRequested?
+            EGamePlatformArenaClientFlowState::Matchmaking:InFlowState;
+        ArenaViewModel->SetObservedClientFlowState(Projected);
         SyncArenaSurface();
     }
 }
@@ -286,7 +351,8 @@ void UDivineBeastsArenaUIClientSubsystem::SyncArenaSurface()
         return;
     }
 
-    if (Desired == TEXT("UI.HUD.Arena"))
+    const auto* DesiredSurface=FDivineBeastsArenaUIScreenCatalog::Find(Desired);
+    if (DesiredSurface&&DesiredSurface->Kind==EDivineBeastsArenaUISurfaceKind::HUD)
     {
         CloseArenaScreen();
         if (!IsCurrent()) return;
@@ -475,39 +541,45 @@ void UDivineBeastsArenaUIClientSubsystem::HandleArenaScreenClosed(FName ScreenId
         // Root撤账早于WidgetList清空，不能仅凭旧成员仍在容器忽略自有实例的真正关闭。
         // 暂失活不改变归属，避免IsActivated把被同栈新页覆盖的自有页误清。
         if (IsValid(PlatformUI) && PlatformUI->IsScreenOwnedByStack(Owned, OriginalStack)) return;
+        const bool bClosedMatchmaking=ScreenId==FName(TEXT("UI.Screen.Matchmaking"));
+        if(bClosedMatchmaking)
+        {bMatchmakingMenuRequested=false;bMatchmakingMenuDismissed=true;}
         ActiveArenaScreen.Reset();
         ActiveArenaScreenStack.Reset();
         ActiveArenaSurfaceId = NAME_None;
+        if(bClosedMatchmaking)SyncArenaSurface();
     }
 }
 
 void UDivineBeastsArenaUIClientSubsystem::EnsureArenaHUD()
 {
-    if (bDeinitializing || ResolvePrimaryArenaSurfaceId() != TEXT("UI.HUD.Arena") ||
+    const FName Desired=ResolvePrimaryArenaSurfaceId();
+    const auto* Surface=FDivineBeastsArenaUIScreenCatalog::Find(Desired);
+    if (bDeinitializing || !Surface || Surface->Kind!=EDivineBeastsArenaUISurfaceKind::HUD ||
         !IsValid(PlatformUI) || !IsValid(PlatformUI->GetRootLayout()) ||
-        !IsValid(ArenaViewModel) || FailedArenaSurfaceId == TEXT("UI.HUD.Arena")) return;
-    if (IsValid(ActiveArenaHUD) && IsValid(ActiveArenaHUD->GetParent())) return;
-    if (PendingArenaHUDLoad.IsValid()) return;
+        !IsValid(ArenaViewModel) || FailedArenaSurfaceId == Desired) return;
+    if (IsValid(ActiveArenaHUD) && IsValid(ActiveArenaHUD->GetParent())&&ActiveArenaHUDSurfaceId==Desired) return;
+    if (PendingArenaHUDLoad.IsValid()&&PendingArenaHUDSurfaceId==Desired) return;
     const TStrongObjectPtr<UDivineBeastsArenaUIClientSubsystem> KeepService(this);
-    if (ActiveArenaHUDLease.IsValid() || IsValid(ActiveArenaHUD))
+    if (ActiveArenaHUDLease.IsValid() || IsValid(ActiveArenaHUD)||PendingArenaHUDLoad.IsValid())
     {
         RemoveArenaHUD();
         if (bDeinitializing || PendingArenaHUDLoad.IsValid() ||
-            ResolvePrimaryArenaSurfaceId() != TEXT("UI.HUD.Arena")) return;
+            ResolvePrimaryArenaSurfaceId() != Desired) return;
     }
-    const auto* Surface = FDivineBeastsArenaUIScreenCatalog::Find(TEXT("UI.HUD.Arena"));
     const FSoftObjectPath Path(Surface ? Surface->WidgetClassPath : FString());
     UWorld* World = GetWorld();
     UGameInstance* Instance = GetLocalPlayer() ? GetLocalPlayer()->GetGameInstance() : nullptr;
     IGamePlatformDataService* Data = Instance ? IGamePlatformDataService::Get(*Instance) : nullptr;
     if (!Path.IsValid() || !World || World->bIsTearingDown || BoundWorld.Get() != World || !Data)
     {
-        FailedArenaSurfaceId = TEXT("UI.HUD.Arena");
+        FailedArenaSurfaceId = Desired;
         return;
     }
     const uint32 RequestGeneration = ++ArenaHUDRequestGeneration;
     PendingArenaHUDInstance = Instance;
     PendingArenaHUDWorld = World;
+    PendingArenaHUDSurfaceId=Desired;
     FGamePlatformResult Accepted;
     const TWeakObjectPtr<UDivineBeastsArenaUIClientSubsystem> WeakThis(this);
     const TStrongObjectPtr<UGameInstance> KeepInstance(Instance);
@@ -516,7 +588,7 @@ void UDivineBeastsArenaUIClientSubsystem::EnsureArenaHUD()
         this, [WeakThis, RequestGeneration](const FGamePlatformDataLease& Completed, const FGamePlatformResult& Result)
         { if (auto* Self = WeakThis.Get()) Self->HandleArenaHUDLoaded(RequestGeneration, Completed, Result); }, Accepted);
     if (bDeinitializing || RequestGeneration != ArenaHUDRequestGeneration || BoundWorld.Get() != World ||
-        ResolvePrimaryArenaSurfaceId() != TEXT("UI.HUD.Arena"))
+        ResolvePrimaryArenaSurfaceId() != Desired)
     {
         if (Lease.IsValid()) Data->ReleaseResources(Lease);
         return;
@@ -524,7 +596,8 @@ void UDivineBeastsArenaUIClientSubsystem::EnsureArenaHUD()
     if (!Accepted.IsSuccess() || !Lease.IsValid())
     {
         PendingArenaHUDInstance.Reset(); PendingArenaHUDWorld.Reset();
-        FailedArenaSurfaceId = TEXT("UI.HUD.Arena");
+        PendingArenaHUDSurfaceId=NAME_None;
+        FailedArenaSurfaceId = Desired;
         if (Lease.IsValid()) Data->ReleaseResources(Lease);
         return;
     }
@@ -538,25 +611,27 @@ void UDivineBeastsArenaUIClientSubsystem::HandleArenaHUDLoaded(uint32 RequestGen
     const FGamePlatformDataLease OwnedLease = Lease;
     const TWeakObjectPtr<UGameInstance> Instance = PendingArenaHUDInstance;
     const TWeakObjectPtr<UWorld> World = PendingArenaHUDWorld;
+    const FName Desired=PendingArenaHUDSurfaceId;
     const TStrongObjectPtr<UDivineBeastsArenaUIClientSubsystem> KeepService(this);
     const TStrongObjectPtr<UGamePlatformUIManagerSubsystem> UI(PlatformUI);
     const TStrongObjectPtr<UGamePlatformArenaViewModel> ViewModel(ArenaViewModel);
     const TStrongObjectPtr<UGamePlatformUILayerStack> Root(UI.IsValid() ? UI->GetRootLayout() : nullptr);
-    const auto IsCurrent = [this, RequestGeneration, OwnedLease, Instance, World, UI = UI.Get(), Root = Root.Get()]
+    const auto IsCurrent = [this, RequestGeneration, OwnedLease, Instance, World, Desired, UI = UI.Get(), Root = Root.Get()]
     {
         return !bDeinitializing && RequestGeneration == ArenaHUDRequestGeneration &&
             PendingArenaHUDLoad.LeaseId == OwnedLease.LeaseId && World.IsValid() && !World->bIsTearingDown &&
             BoundWorld == World && GetWorld() == World.Get() && Instance.IsValid() && GetLocalPlayer() &&
             GetLocalPlayer()->GetGameInstance() == Instance.Get() && PlatformUI == UI && IsValid(UI) &&
-            IsValid(Root) && UI->GetRootLayout() == Root && ResolvePrimaryArenaSurfaceId() == TEXT("UI.HUD.Arena");
+            IsValid(Root) && UI->GetRootLayout() == Root && PendingArenaHUDSurfaceId==Desired && ResolvePrimaryArenaSurfaceId() == Desired;
     };
-    const auto Discard = [this, RequestGeneration, OwnedLease, Instance](UGamePlatformMobaArenaHUDBase* HUD, bool bFailure)
+    const auto Discard = [this, RequestGeneration, OwnedLease, Instance, Desired](UGamePlatformMobaArenaHUDBase* HUD, bool bFailure)
     {
         // 先摘本请求字段，再进入Widget/Data外部边界；旧完成只释放自己的租约，不清新请求。
         if (RequestGeneration == ArenaHUDRequestGeneration && PendingArenaHUDLoad.LeaseId == OwnedLease.LeaseId)
         {
             PendingArenaHUDLoad = {}; PendingArenaHUDInstance.Reset(); PendingArenaHUDWorld.Reset();
-            if (bFailure && !bDeinitializing) FailedArenaSurfaceId = TEXT("UI.HUD.Arena");
+            PendingArenaHUDSurfaceId=NAME_None;
+            if (bFailure && !bDeinitializing) FailedArenaSurfaceId = Desired;
         }
         if (IsValid(HUD)) HUD->RemoveFromParent();
         ReleaseArenaHUDLease(OwnedLease, Instance);
@@ -564,7 +639,7 @@ void UDivineBeastsArenaUIClientSubsystem::HandleArenaHUDLoaded(uint32 RequestGen
     IGamePlatformDataService* Data = Instance.IsValid() ? IGamePlatformDataService::Get(*Instance.Get()) : nullptr;
     if (!IsCurrent() || !Result.IsSuccess() || !Data || Data->GetLeaseState(OwnedLease) != EGamePlatformDataRequestState::Succeeded)
     { Discard(nullptr, IsCurrent()); return; }
-    const auto* Surface = FDivineBeastsArenaUIScreenCatalog::Find(TEXT("UI.HUD.Arena"));
+    const auto* Surface = FDivineBeastsArenaUIScreenCatalog::Find(Desired);
     TSoftClassPtr<UGamePlatformMobaArenaHUDBase> Class(FSoftObjectPath(Surface ? Surface->WidgetClassPath : FString()));
     UClass* LoadedClass = Class.Get();
     APlayerController* Controller = GetLocalPlayer()->GetPlayerController(World.Get());
@@ -583,6 +658,7 @@ void UDivineBeastsArenaUIClientSubsystem::HandleArenaHUDLoaded(uint32 RequestGen
     if (!bAttached || !IsCurrent()) { Discard(HUD.Get(), !bAttached && IsCurrent()); return; }
     // 同步Init/挂载均仍属同一World、布局与请求后，原子转移唯一Data租约到已显示HUD。
     ActiveArenaHUD = HUD.Get(); ActiveArenaHUDLease = OwnedLease; ActiveArenaHUDInstance = Instance;
+    ActiveArenaHUDSurfaceId=Desired;PendingArenaHUDSurfaceId=NAME_None;
     PendingArenaHUDLoad = {}; PendingArenaHUDInstance.Reset(); PendingArenaHUDWorld.Reset();
     FailedArenaSurfaceId = NAME_None;
 }
@@ -601,6 +677,7 @@ void UDivineBeastsArenaUIClientSubsystem::RemoveArenaHUD()
     const auto Active = ActiveArenaHUDLease; const auto ActiveInstance = ActiveArenaHUDInstance;
     const TStrongObjectPtr<UGamePlatformMobaArenaHUDBase> HUD(ActiveArenaHUD);
     PendingArenaHUDLoad = {}; ActiveArenaHUDLease = {}; ActiveArenaHUD = nullptr;
+    PendingArenaHUDSurfaceId=NAME_None;ActiveArenaHUDSurfaceId=NAME_None;
     PendingArenaHUDInstance.Reset(); ActiveArenaHUDInstance.Reset(); PendingArenaHUDWorld.Reset();
     // 旧对象/租约都已摘下；移除委托若触发新HUD请求，旧栈只清自己的捕获值。
     if (HUD.IsValid()) HUD->RemoveFromParent();

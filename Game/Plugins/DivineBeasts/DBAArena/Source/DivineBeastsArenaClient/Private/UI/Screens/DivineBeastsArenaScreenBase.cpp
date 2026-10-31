@@ -35,12 +35,19 @@ void UDivineBeastsArenaScreenBase::ModeSelected(UObject* Object)
 {
     if(bRebuildingModes)return;
     const auto* Item=Cast<UDivineBeastsPartyListItem>(Object);
-    SelectedMode=Item&&FDivineBeastsArenaModeCatalog::Find(FName(*Item->Key))?FName(*Item->Key):NAME_None;
+    const FName Requested=Item&&FDivineBeastsArenaModeCatalog::Find(FName(*Item->Key))?FName(*Item->Key):NAME_None;
+    auto* Service=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsArenaUIClientSubsystem>():nullptr;
+    if(ExpectedSurfaceId==FName(TEXT("UI.Screen.Matchmaking"))&&Service)
+    {Service->SelectMatchmakingMenuMode(Requested);SelectedMode=Service->GetSelectedMatchmakingMode();}
+    else SelectedMode=Requested;
     RefreshInitialState();
 }
 void UDivineBeastsArenaScreenBase::RefreshInitialState()
 {
     Super::RefreshInitialState();
+    if(ExpectedSurfaceId==FName(TEXT("UI.Screen.Matchmaking")))
+        if(const auto* Service=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsArenaUIClientSubsystem>():nullptr)
+            SelectedMode=Service->GetSelectedMatchmakingMode();
     auto Text=[this](const TCHAR* Name,const FText& Value){if(auto* T=Cast<UTextBlock>(GetWidgetFromName(Name)))T->SetText(Value);};
     auto* VM=GetArenaViewModel();
     if(auto* List=Cast<UListView>(GetWidgetFromName(TEXT("ModeList"))))
@@ -121,4 +128,10 @@ void UDivineBeastsArenaScreenBase::ReturnWorld()
     const bool bAccepted=Client&&Client->RequestPostMatchReturnToWorld();
     CommandFeedback=FText::FromString(bAccepted?TEXT("返回请求已交给既有应用流程，等待后端新准入"):TEXT("当前结果或流程不允许返回；未使用旧地址或旧票据"));RefreshInitialState();
 }
-void UDivineBeastsArenaScreenBase::CloseArenaPage(){CloseScreen();}
+void UDivineBeastsArenaScreenBase::CloseArenaPage()
+{
+    if(ExpectedSurfaceId==FName(TEXT("UI.Screen.Matchmaking")))
+        if(auto* Service=GetOwningLocalPlayer()?GetOwningLocalPlayer()->GetSubsystem<UDivineBeastsArenaUIClientSubsystem>():nullptr)
+        {Service->DismissMatchmakingMenu();return;}
+    CloseScreen();
+}

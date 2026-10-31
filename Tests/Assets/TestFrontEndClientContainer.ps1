@@ -180,6 +180,10 @@ try {
         foreach($name in @('PartyPanel','PartyInviteModal','PartyReadyCheckModal','PartyApplications','PartyListEntry')){$required+="DBAUIPack_Core/Content/UI/Social/WBP_DBA_$name.uasset"}
         foreach($name in @('Matchmaking','MatchFoundReady','HeroSelection','Scoreboard','PostMatch')){$required+="DBAArena/Content/UI/Screens/WBP_DBA_UI_Arena_$name.uasset"}
         $required+='DBAArena/Content/UI/HUD/WBP_DBA_UI_ArenaHUD.uasset'
+        $required+='DBAArena/Content/UI/HUD/WBP_DBA_UI_ArenaQueueStatus.uasset'
+        foreach($mode in @('duel1v1','team2v2','team3v3','team4v4','team5v5')){$required+="DBAWorldPack_Village/Content/Definitions/Activities/Arena/DA_Village_ArenaEntrance_$mode.uasset"}
+        foreach($asset in @('NS_VillageArenaGate_Vortex','NET_VillageArenaGate','M_VillageArenaGate_Particle')){$required+="DBAWorldPack_Village/Content/VFX/Activities/Arena/$asset.uasset"}
+        $required+='DBAWorldPack_Village/Content/Definitions/Presentation/Activities/DA_VillageArenaGate_Vortex.uasset'
         $required+='DBAUIPack_Core/Content/UI/Materials/Social/M_DBA_PartyJade_V1.uasset'
     }
     # 音频逻辑ID通过目录软加载，AssetManager扫描不能保证Cook。

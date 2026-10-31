@@ -11,6 +11,7 @@
 #>
 [CmdletBinding()]
 param([switch]$Apply, [string]$EngineRoot = 'D:/UnrealEngine-5.8.0-release')
+throw 'Dirt单图恢复已完成，此脚本已退休归档；当前原生完整验证见Resources/ResourceOwnershipMonolith.py及地形现行校验器。'
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $progressPath = Join-Path $root 'Saved/ArtReview/TerrainColorV3FormalCover/ProgressManifest.json'

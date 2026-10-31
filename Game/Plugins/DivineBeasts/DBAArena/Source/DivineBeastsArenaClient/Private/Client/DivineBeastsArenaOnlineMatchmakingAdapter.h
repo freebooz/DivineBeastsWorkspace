@@ -5,6 +5,7 @@
 #include "Types/GamePlatformOnlineRequests.h"
 #include "Containers/Ticker.h"
 #include "Flow/DivineBeastsFlowTypes.h"
+#include "Client/DivineBeastsArenaClientSubsystem.h"
 class UGamePlatformOnlineClientSubsystem;
 struct FGamePlatformAuthSnapshot;
 class FJsonObject;
@@ -17,6 +18,7 @@ struct FDivineBeastsArenaQueueSnapshot
     int64 Revision=0,CandidateRevision=0;
     FDateTime DeadlineUtc,ServerTimeUtc;
     int32 Participants=0,Accepted=0;
+    FDivineBeastsArenaChallengeView Challenge;
 };
 
 /** 每GameInstance一条本人观察，多个页面借用；认证撤销先增加代次，再取消在途请求与一次性恢复。 */
@@ -36,6 +38,9 @@ public:
     void RequestMatchmaking(const FGamePlatformArenaMatchmakingRequest& Request,TFunction<void(bool,const FString&)> Completion) override;
     void CancelMatchmaking(const FString& ClientRequestId,TFunction<void(bool,const FString&)> Completion) override;
     void RespondToMatchOffer(const FGamePlatformArenaMatchOffer& Offer,bool bAccept,const FString& ClientRequestId,TFunction<void(bool,const FString&)> Completion) override;
+    void RequestChallenge(const FGamePlatformArenaMatchmakingRequest& Request,const FString& TargetPlayerId,TFunction<void(bool,const FString&)> Completion);
+    void ReplyChallenge(bool bAccept,const FString& ClientRequestId,TFunction<void(bool,const FString&)> Completion);
+    void CancelChallenge(const FString& ClientRequestId,TFunction<void(bool,const FString&)> Completion);
     EGamePlatformArenaClientFlowState GetObservedState()const override;
     bool SupportsTicketLifecycle()const override;
     FGamePlatformArenaMatchOffer GetObservedOffer()const override;
@@ -47,9 +52,12 @@ private:
     void AuthenticationChanged(const FGamePlatformAuthSnapshot& Authentication);
     void Observe(uint64 ExpectedGeneration);
     void StopRequests();
+    void StopObservation();
     bool DecodeSnapshot(const TSharedPtr<FJsonObject>& Object,FDivineBeastsArenaQueueSnapshot& Out)const;
     bool ApplySnapshot(FDivineBeastsArenaQueueSnapshot Next);
     void SendCommand(TSharedRef<FJsonObject> Body,const FString& RequestId,TFunction<void(bool,const FString&)> Completion);
+    /** 快速匹配和约战共用本人队伍身份/版本合同，不复制网络或权威名单规则。 */
+    TSharedPtr<FJsonObject> BuildRosterCommand(const TCHAR* Action,const FGamePlatformArenaMatchmakingRequest& Input,FString& OutError) const;
     TWeakObjectPtr<UGamePlatformOnlineClientSubsystem> Online;
     TWeakObjectPtr<UObject> Owner;
     FDelegateHandle AuthHandle;
@@ -61,6 +69,8 @@ private:
     int64 CancelRevision=0;
     FGuid AuthGeneration;
     uint64 Generation=0;
+    /** 命令确认时单独失效旧长观察，不能同时取消刚触发的可信迁移。 */
+    uint64 ObservationGeneration=0;
     int32 Failures=0;
     bool bStarted=false;
 };

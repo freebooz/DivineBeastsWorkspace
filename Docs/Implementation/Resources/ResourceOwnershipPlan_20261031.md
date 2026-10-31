@@ -1,6 +1,6 @@
 # 资源归属整改实施计划（2026-10-31）
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 原生迁移175包，收敛植物/地形归属并隔离历史/样例，保留现有效果。
 **Architecture:** 同一正式工程、现有内容包、AssetTools RenameAssets；单一路径合同连接作者、校验与发布，绝不复制运行逻辑。
@@ -27,34 +27,34 @@
 
 Files: Tools/Unreal/Resources/{ResourceOwnershipContract.py,ResourceOwnershipManifest.json,ResourceOwnershipMonolith.py}; Tests/Assets/TestResourceOwnershipContract.py。
 Interfaces: load_contract/validate_contract返回175项source/target/group；native baseline、move_group、verify和cold_read从同一合同读取。
-- [ ] 写合同冲突/非法路径及源旧引用阻断测试，观察RED，再实现有限合同校验。
-- [ ] 原生清洁检查、引用快照、完整资产备份及保效指纹/截图；真实基线对归属断言RED。
+- [x] 写合同冲突/非法路径及源旧引用阻断测试，观察RED，再实现有限合同校验。
+- [x] 原生清洁检查、引用快照、完整资产备份及保效指纹/截图；真实基线对归属断言RED。
 
 ### Task 2：公共植物与地形归属
 
 Files: 上述合同/Monolith作者；VillageGrassWorldSubsystem.cpp、VillageSnowSettings.cpp及其Tests；两客户端INI、TerrainV3ColorMapping及当前地形/花草作者/验证器。
-- [ ] 原生迁移51在用花草与40样例、12地形审核包与10公共色彩图，逐组保存/回读。
-- [ ] 同步代码/配置/作者路径，保护源图哈希与效果指纹；失败原样留证，Native归属验证转GREEN。
+- [x] 原生迁移51在用花草与40样例、12地形审核包与10公共色彩图，逐组保存/回读。
+- [x] 同步代码/配置/作者路径，保护源图哈希与效果指纹；失败原样留证，Native归属验证转GREEN。
 
 ### Task 3：鸟历史、StyleHex与发布目录
 
 Files: 原生7旧鸟网格、55StyleHex样例；DefaultGame.ini、PluginDemoClient/DefaultGame.ini、ServerPresentationExclusions.json及生成INI；Tests/Assets资源与包验证。
-- [ ] 先验证当前Flight资产指纹和引用，原生迁移历史/样例，不改变当前系统。
-- [ ] 完成有限重定向引用修复、源路径清理与发布阻断；保持既有兼容对象除非明确完成引用迁移。
-- [ ] 最小离线/原生回归与独立进程冷读，保效指纹、地图布局和新Owner图通过。
+- [x] 先验证当前Flight资产指纹和引用，原生迁移历史/样例，不改变当前系统。
+- [x] 完成有限重定向引用修复、源路径清理与发布阻断；保持既有兼容对象除非明确完成引用迁移。
+- [x] 最小离线/原生回归与独立进程冷读，保效指纹、地图布局和新Owner图通过。
 
 ### Task 4：构建与实际发布验证
 
 Files: 既有BuildFoundation/CookFoundation/CookFrontEndClient及必要有限容器检查。
-- [ ] 仅最终源输入执行完整Editor/Client/Server增量构建；本轮RHI颜色证据有效则复用。
-- [ ] 实际Client/Server/11图演示Cook/Stage，检查新路径唯一导出、旧路径/历史/样例拒绝及专服CPU数据保留。
-- [ ] 如启动前端验证，先绑定新Stage、共享合同、真实Village/MainArena路径/PID，受控更换本轮旧实例。
+- [x] 仅最终源输入执行完整Editor/Client/Server增量构建；本轮RHI颜色证据有效则复用。
+- [x] 实际Client/Server/11图演示Cook/Stage，检查新路径唯一导出、旧路径/历史/样例拒绝及专服CPU数据保留。
+- [x] 如启动前端验证，先绑定新Stage、共享合同、真实Village/MainArena路径/PID，受控更换本轮旧实例。
 
 ### Task 5：文档、一次fresh审查与交付
 
 Files: Foliage README、相关Owner文档、总体目录规划、ResourceOwnershipDelivery_20261031.md。
-- [ ] 更新原型/当前/历史、来源与唯一入口；资产/源码/构建/Cook/运行/人工分别报告。
-- [ ] 一次fresh整体审查；Important补失败回归后一轮修复，不派复审。
+- [x] 更新原型/当前/历史、来源与唯一入口；资产/源码/构建/Cook/运行/人工分别报告。
+- [x] 一次fresh整体审查；Important补失败回归后一轮修复，不派复审。
 
 ## Execution ledger
 
@@ -65,3 +65,11 @@ Ruling: 在用供应商闭包51包与40样例分开，历史鸟和StyleHex只迁
 Task1：合同五项回归先因缺模块RED，再全部GREEN；实际原生归属门禁Before明确155条失败（植物44、地形111）。全部4605资产/外置包已备份2758929913字节。第一次备份审批超时未执行，短命令重试获批；Windows长路径读取/复制统一加原生长路径前缀，未移到工程外。PID7028原生完成175包保效基线，全部目标无冲突、脏包0。
 
 Task2/3：175目标已全部由原生RenameAssets迁移。地形色图第一次因CDO软引用警示在unattended模式默认Cancel，零目标写入；完整失败journal另存后经已授权的可见确认继续成功。样例批次后错误地强制保存空旧包导致FullyLoad复活旧导出并引用新包私有子对象；真实新目标像素/参数完整，已用原生ConsolidateAssets收敛并清理源重定向，作者改为不保存空旧包。未关闭校验器。57+1项本轮无引用Redirector已原生精确清理；原生公共Owner图155失败转为0。迁移前导出的35张PNG像素仍是严格合同；流送Mip驻留尺寸不作为源图尺寸，UE FName的大小写等价按引擎身份核对，新增两项真实失败回归留证。当前脏包0。
+
+Task3冷读：独立Editor PID41308重新加载175目标、634条依赖边，原生Owner0反向依赖/175旧路径0引用；35源PNG、76 OBJ几何、材质参数及43 Actor/全部ISM实例指纹保持。植物原生风节点与24草/12花配置、291节点/8函数地形、三质量MI及三审核地图绑定回读通过；原生Snow ClientBridgeContract 1/1通过，实际t.MaxFPS=0、r.VSync=0。
+
+Final: fixed 退休资源合同未接入持续容器门禁 — TestResourceContainerGate缺模块RED→GREEN；两Cook入口读取同一Manifest并枚举全部IoStore。实际Client发现精确ShaderCode元数据解析漏项，新增真实类型夹具RED→GREEN；只允许Client的<ShaderCode>/ShaderCode，不允许真实退休路径借元数据类型逃逸。原Client Cook/Stage与其它门禁均成功；原总体失败收据保留，修复后对相同Stage重新列容器并通过61项软依赖及退休禁入，不重复Cook、不改原报告。
+
+Task4：完整Editor a71838ba-f616-40a5-aa11-48c61ee9de8b Eligible；完整Client/Server b0bc05c3-1410-4399-a17d-37e1ab5b6159成功。实际Server e5a833ae-9820-4eaa-8993-d956610b6265通过1459导出且本轮纯表现目标0；Client f3463976-344b-448d-8453-39eb79f32c52原生Cook/Stage成功、2829导出的新门禁独立复核通过51植物+10色图；PluginDemoClient d91429a8-1a24-4fa0-a089-dc68ae4f2b67的11图/1540导出通过，仅引用2项必要审核地形，无样例/鸟历史。没有新Stage联机准入或人工代签。
+
+用户追加脚本清理并扩展全项目：898项脚本/4697文本引用审查后可恢复归档7项45548字节；894维护入口保留，693 Python及207 PowerShell（含归档）语法0错误，原始/归档SHA均核对。无引用或日期旧不作为退休依据；合同消费的VFX兼容stub保留。详见ScriptCleanupAudit_20261031.md。

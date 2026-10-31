@@ -1,6 +1,10 @@
 # TestingAndEvidence（测试与证据）
 
-C++ Automation 测试源码当前 3 个：InteractionOption 结构验证、Focus 稳定排序/距离过滤、Interactor/Interactable 组件与 Request 身份字段构造。
+2026-10-31 新增`Private/Tests/InteractionClientCommitBridgeTests.cpp`，四个原生用例统一前缀`GamePlatform.Interaction.Network.ClientCommit`：`Snapshot`验证成功快照独立于当前会话、重复及本地权威回声；`RejectsInvalidIdentity`验证完整身份、接收者、错World及已销毁目标；`RejectsStaleScope`覆盖Pawn和Controller宿主的拥有关系换代、失活/重显及EndPlay；`ReentrantDelivery`覆盖真实动态监听中的重复消息/失活和有界历史淘汰。测试直接调用生产RPC接收实现与发送记录边界，不替代真实网络可靠性测试。
+
+本次先写回归后修改机制，但按主任务分工未执行Editor构建、RED/GREEN或Automation；不可记录为测试通过。后续由主任务统一Editor构建和精确运行以上四项，并保留既有`GamePlatform.Interaction.Lifecycle.TerminalListenerStartsDifferentTarget`重入回归。新的Client RPC需要同步重建客户端与服务器，并另证实际联机传输、延迟/断线及Cook。
+
+以下为历史复审记录，不代表2026-10-31新增链路已验收。既有C++ Automation包含InteractionOption结构验证、Focus稳定排序/距离过滤、组件与Request身份构造，以及后续生命周期/同步重入回归。
 
 `Build/Validation/VerifyInteraction.ps1（交互插件静态工程门禁）`已于本轮复审执行通过，确认平台层/World 归属、单 Runtime（共享运行时）模块、公开依赖最小化、无上层直接依赖、无 Tick（每帧轮询）、仅两个低频 Server RPC（服务器远程调用）、组件实例身份、请求/提交幂等、失效弱会话清理、Hold（长按）上限、Begin/Cancel（开始/取消）独立限流、TargetGeneration（目标代次）安全回绕，以及 Custom（自定义）提交默认 Fail-Closed（失败关闭）。
 

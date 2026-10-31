@@ -2,6 +2,7 @@
 """Monolith内真实PIE掌心审核：固定相机，手动固定步进Niagara，记录截图与真实粒子。
 只清理本任务拥有的临时审核地图，原V3编译脏缓存不保存。该工具不绑定正式技能。
 """
+raise RuntimeError('SCRIPT_RETIRED: 已退休归档，见Tools/Archive/Project/20261031/README.md。')
 import unreal as u,time,json,traceback,os
 from pathlib import Path
 from datetime import datetime,timezone

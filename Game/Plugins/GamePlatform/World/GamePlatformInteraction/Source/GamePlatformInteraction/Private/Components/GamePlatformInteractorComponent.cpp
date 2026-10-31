@@ -20,6 +20,24 @@
 
 namespace
 {
+// 客户端通知记录与去重历史各自有界；达到上限时宁可拒绝过旧通知，也不恢复过期界面。
+constexpr int32 MaxLocalNotificationRecords = 64;
+
+bool IsCommittedInteractionEvent(EGamePlatformInteractionEventType EventType)
+{
+    return EventType == EGamePlatformInteractionEventType::InteractionCommitted ||
+        EventType == EGamePlatformInteractionEventType::PickupConsumed ||
+        EventType == EGamePlatformInteractionEventType::HarvestCompleted;
+}
+
+/** 两份权威快照必须表达同一完整终态，不能只校验外层GUID而接受内层错配结果。 */
+bool HaveIdenticalInteractionResults(const FGamePlatformInteractionResult& Left, const FGamePlatformInteractionResult& Right)
+{
+    return Left.RequestId == Right.RequestId && Left.SessionId == Right.SessionId &&
+        Left.OptionId == Right.OptionId && Left.Error == Right.Error && Left.State == Right.State &&
+        Left.CancelReason == Right.CancelReason && Left.FinalTargetRevision == Right.FinalTargetRevision;
+}
+
 template <typename TInterface>
 const TInterface* FindProviderOnActor(const AActor* Actor)
 {
@@ -226,6 +244,8 @@ UGamePlatformInteractorComponent::UGamePlatformInteractorComponent()
 void UGamePlatformInteractorComponent::BeginPlay()
 {
     Super::BeginPlay();
+    bAcceptLocalNotifications = true;
+    ResetLocalNotificationScope();
     // Pawn的Controller事件覆盖服务器Possess及客户端OnRep_Controller；Controller宿主覆盖换Pawn。
     if (APawn* Pawn = Cast<APawn>(GetOwner()))
     { Pawn->ReceiveControllerChangedDelegate.AddUniqueDynamic(this, &ThisClass::HandleOwnerControllerChanged); }
@@ -241,15 +261,17 @@ void UGamePlatformInteractorComponent::SetLocalFocusPolicy(bool bEnabled, bool b
 {
     check(IsInGameThread());
     if (bLocalFocusEnabled == bEnabled && bUsePointerFocus == bUsePointer) return;
+    const bool bActivationChanged = bLocalFocusEnabled != bEnabled;
     bLocalFocusEnabled = bEnabled;
     bUsePointerFocus = bUsePointer;
+    if (bActivationChanged) { ResetLocalNotificationScope(); }
     if (HasBegunPlay()) ReconcileLocalFocusSampling();
 }
 
 void UGamePlatformInteractorComponent::HandleOwnerControllerChanged(APawn*, AController*, AController*)
-{ ReconcileLocalFocusSampling(); }
+{ ResetLocalNotificationScope(); ReconcileLocalFocusSampling(); }
 void UGamePlatformInteractorComponent::HandleOwnerPawnChanged(APawn*, APawn*)
-{ ReconcileLocalFocusSampling(); }
+{ ResetLocalNotificationScope(); ReconcileLocalFocusSampling(); }
 
 void UGamePlatformInteractorComponent::ReconcileLocalFocusSampling()
 {
@@ -284,6 +306,9 @@ void UGamePlatformInteractorComponent::ReconcileLocalFocusSampling()
 void UGamePlatformInteractorComponent::EndPlay(
     const EEndPlayReason::Type EndPlayReason)
 {
+    // 先撤销通知资格，再进入可能同步广播的服务器取消路径；重入或迟到RPC不能恢复旧本地显示。
+    bAcceptLocalNotifications = false;
+    ResetLocalNotificationScope();
     if (APawn* Pawn = Cast<APawn>(GetOwner()))
     { Pawn->ReceiveControllerChangedDelegate.RemoveDynamic(this, &ThisClass::HandleOwnerControllerChanged); }
     if (AController* Controller = Cast<AController>(GetOwner()))
@@ -509,6 +534,8 @@ FGuid UGamePlatformInteractorComponent::BeginFocusedInteraction()
     Request.ObservedTargetRevision = CurrentFocus.TargetRevision;
     Request.OptionId = CurrentFocus.Option.OptionId;
 
+    // 必须先记发送快照；本地宿主的Server RPC可能同步执行，远端结果也不能借用变化后的Focus。
+    RememberLocalRequest(Request);
     ServerRequestBeginInteraction(Request);
     return Request.RequestId;
 }
@@ -734,6 +761,102 @@ void UGamePlatformInteractorComponent::OnRep_CurrentSession()
 void UGamePlatformInteractorComponent::OnRep_LastResult()
 {
     OnResultChanged.Broadcast(LastResult);
+}
+
+void UGamePlatformInteractorComponent::ResetLocalNotificationScope()
+{
+    check(IsInGameThread());
+    LocalNotificationScopeId = FGuid::NewGuid();
+    LocalNotificationWorld = GetWorld();
+    LocalNotificationController = ResolvePlayerController(GetOwner());
+    LocalNotificationPawn = ResolveControlledPawn(GetOwner());
+    LocalNotificationRequests.Reset();
+    LocalNotificationRequestOrder.Reset();
+    DeliveredNotificationSessions.Reset();
+    DeliveredNotificationSessionOrder.Reset();
+}
+
+void UGamePlatformInteractorComponent::ReconcileLocalNotificationScope()
+{
+    // 正常由拥有关系事件换代；命令/RPC边界再核对一次，覆盖尚未完成的复制顺序与世界退休。
+    if (!LocalNotificationScopeId.IsValid() || LocalNotificationWorld.Get() != GetWorld() ||
+        LocalNotificationController.Get() != ResolvePlayerController(GetOwner()) ||
+        LocalNotificationPawn.Get() != ResolveControlledPawn(GetOwner()))
+    { ResetLocalNotificationScope(); }
+}
+
+void UGamePlatformInteractorComponent::RememberLocalRequest(const FGamePlatformInteractionRequest& Request)
+{
+    check(IsInGameThread());
+    ReconcileLocalNotificationScope();
+    if (!bAcceptLocalNotifications || !bLocalFocusEnabled || !IsValid(GetOwner()) || GetOwner()->HasAuthority() ||
+        !GetWorld() || GetWorld()->bIsTearingDown || !IsLocallyControlledOwner() ||
+        !LocalNotificationPawn.IsValid() || !Request.RequestId.IsValid() || !IsValid(Request.TargetActor) ||
+        Request.TargetActor->IsActorBeingDestroyed() || Request.TargetActor->GetWorld() != GetWorld() ||
+        !Request.TargetInstanceId.IsValid() || Request.TargetGeneration <= 0 ||
+        Request.ObservedTargetRevision <= 0 || Request.OptionId.IsNone() || LocalNotificationRequests.Contains(Request.RequestId))
+    { return; }
+
+    FLocalNotificationRequest Record;
+    Record.TargetActor = Request.TargetActor;
+    Record.TargetInstanceId = Request.TargetInstanceId;
+    Record.TargetGeneration = Request.TargetGeneration;
+    Record.TargetRevision = Request.ObservedTargetRevision;
+    Record.OptionId = Request.OptionId;
+    Record.ScopeId = LocalNotificationScopeId;
+    LocalNotificationRequests.Add(Request.RequestId, Record);
+    LocalNotificationRequestOrder.Add(Request.RequestId);
+    if (LocalNotificationRequestOrder.Num() > MaxLocalNotificationRecords)
+    {
+        LocalNotificationRequests.Remove(LocalNotificationRequestOrder[0]);
+        LocalNotificationRequestOrder.RemoveAt(0);
+    }
+}
+
+void UGamePlatformInteractorComponent::ClientReceiveCommittedInteraction_Implementation(
+    FGamePlatformInteractionEvent Event, FGamePlatformInteractionSession Session,
+    APlayerController* RecipientController, APawn* RecipientPawn)
+{
+    check(IsInGameThread());
+    ReconcileLocalNotificationScope();
+    UWorld* World = GetWorld();
+    AActor* Owner = GetOwner();
+    // Listen/Standalone本地权威已从PublishEvent收到同一事实；RPC只投影远端拥有者，不承担业务判定。
+    if (!bAcceptLocalNotifications || !bLocalFocusEnabled || !IsValid(this) || !IsValid(Owner) || Owner->HasAuthority() ||
+        Owner->IsActorBeingDestroyed() || !World || World->bIsTearingDown || !IsLocallyControlledOwner() ||
+        !IsValid(RecipientController) || !IsValid(RecipientPawn) || RecipientPawn->IsActorBeingDestroyed() ||
+        RecipientController->GetWorld() != World || RecipientPawn->GetWorld() != World ||
+        RecipientController != LocalNotificationController.Get() || RecipientPawn != LocalNotificationPawn.Get() ||
+        RecipientPawn->GetController() != RecipientController || RecipientController->GetPawn() != RecipientPawn ||
+        !IsValid(Event.TargetActor) || Event.TargetActor->IsActorBeingDestroyed() || Event.TargetActor->GetWorld() != World ||
+        Event.InteractorActor != Owner || Session.InteractorActor != Owner || Event.TargetActor != Session.TargetActor ||
+        !IsCommittedInteractionEvent(Event.EventType) || !Event.RequestId.IsValid() || !Event.SessionId.IsValid() ||
+        Event.RequestId != Session.RequestId || Event.SessionId != Session.SessionId ||
+        Event.OptionId.IsNone() || Event.OptionId != Session.OptionId || Session.InteractorGeneration <= 0 ||
+        Event.Result.RequestId != Event.RequestId || Event.Result.SessionId != Event.SessionId ||
+        Event.Result.OptionId != Event.OptionId || !Event.Result.IsSuccess() ||
+        Event.Result.CancelReason != EGamePlatformInteractionCancelReason::None || Event.Result.FinalTargetRevision <= 0 ||
+        Session.State != EGamePlatformInteractionSessionState::Completed || !HaveIdenticalInteractionResults(Event.Result, Session.Result) ||
+        DeliveredNotificationSessions.Contains(Event.SessionId))
+    { return; }
+
+    FLocalNotificationRequest* Record = LocalNotificationRequests.Find(Event.RequestId);
+    if (!Record || Record->bDelivered || Record->ScopeId != LocalNotificationScopeId || !Record->TargetActor.IsValid() ||
+        Record->TargetActor.Get() != Event.TargetActor || Record->TargetInstanceId != Session.TargetInstanceId ||
+        Record->TargetGeneration != Session.TargetGeneration || Record->TargetRevision != Session.TargetRevisionAtStart ||
+        Record->OptionId != Event.OptionId)
+    { return; }
+
+    // 外部监听可同步收到重复消息、失活、换拥有者或销毁组件。先完成去重，再广播值副本，返回后不访问组件状态。
+    Record->bDelivered = true;
+    DeliveredNotificationSessions.Add(Event.SessionId);
+    DeliveredNotificationSessionOrder.Add(Event.SessionId);
+    if (DeliveredNotificationSessionOrder.Num() > MaxLocalNotificationRecords)
+    {
+        DeliveredNotificationSessions.Remove(DeliveredNotificationSessionOrder[0]);
+        DeliveredNotificationSessionOrder.RemoveAt(0);
+    }
+    OnInteractionEvent.Broadcast(Event);
 }
 
 bool UGamePlatformInteractorComponent::IsLocallyControlledOwner() const
@@ -1331,11 +1454,14 @@ void UGamePlatformInteractorComponent::FinishSession(
     FinalResult.OptionId = FinishedSession.OptionId;
     FinishedSession.State = FinalResult.State;
     FinishedSession.Result = FinalResult;
+    // CacheTerminalResult的监听可换Pawn/Controller；后续RPC只能发给这里捕获的原接收者，不能重定向给新拥有者。
+    const TWeakObjectPtr<APlayerController> RecipientController(ResolvePlayerController(GetOwner()));
+    const TWeakObjectPtr<APawn> RecipientPawn(ResolveControlledPawn(GetOwner()));
     CurrentSession = FinishedSession;
     CacheTerminalResult(FinalResult);
     if (!IsValid(this) || !IsValid(GetOwner()) || !GetWorld() || GetWorld()->bIsTearingDown) { return; }
     // A事实仍可独立发布；此事件既不读取CurrentSession，也不修改重入后的B。
-    PublishEvent(EventType, FinalResult, FinishedSession);
+    PublishEvent(EventType, FinalResult, FinishedSession, RecipientController.Get(), RecipientPawn.Get());
     if (!IsValid(this) || !IsValid(GetOwner()) || !GetWorld() || GetWorld()->bIsTearingDown ||
         CurrentSession.SessionId != FinishedSession.SessionId ||
         CurrentSession.InteractorGeneration != FinishedSession.InteractorGeneration) { return; }
@@ -1345,7 +1471,9 @@ void UGamePlatformInteractorComponent::FinishSession(
 void UGamePlatformInteractorComponent::PublishEvent(
     EGamePlatformInteractionEventType EventType,
     const FGamePlatformInteractionResult& Result,
-    const FGamePlatformInteractionSession& Session)
+    const FGamePlatformInteractionSession& Session,
+    APlayerController* RecipientController,
+    APawn* RecipientPawn)
 {
     FGamePlatformInteractionEvent Event;
     Event.EventType = EventType;
@@ -1355,6 +1483,16 @@ void UGamePlatformInteractorComponent::PublishEvent(
     Event.TargetActor = Session.TargetActor;
     Event.OptionId = Session.OptionId;
     Event.Result = Result;
+    // 可靠一次性消息不依赖Active->Completed是否被属性复制合并；先排队再广播，避免监听者改写会话/拥有者。
+    // 本地Listen/Standalone仍只走下方原有广播；远程消息也不会重执行Commit或外部业务命令。
+    if (GetOwner() && GetOwner()->HasAuthority() && IsCommittedInteractionEvent(EventType) && Result.IsSuccess() &&
+        IsValid(RecipientController) && IsValid(RecipientPawn) && !RecipientController->IsLocalController() &&
+        RecipientController->GetNetConnection() && RecipientController == ResolvePlayerController(GetOwner()) &&
+        RecipientPawn == ResolveControlledPawn(GetOwner()) && RecipientController->GetPawn() == RecipientPawn &&
+        RecipientPawn->GetController() == RecipientController && GetWorld() && !GetWorld()->bIsTearingDown &&
+        RecipientController->GetWorld() == GetWorld() && RecipientPawn->GetWorld() == GetWorld() &&
+        IsValid(Session.TargetActor) && !Session.TargetActor->IsActorBeingDestroyed() && Session.TargetActor->GetWorld() == GetWorld())
+    { ClientReceiveCommittedInteraction(Event, Session, RecipientController, RecipientPawn); }
     OnInteractionEvent.Broadcast(Event);
 }
 

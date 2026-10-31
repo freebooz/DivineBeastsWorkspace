@@ -8,6 +8,7 @@ AssetRegistry 资源（3 StaticMesh + 3 Texture2D + 3 MaterialInstanceConstant +
 该校验不等于蓝图/Niagara、实时飞行、Cook、GPU渲染或人工审美验收。
 """
 from __future__ import annotations
+raise RuntimeError('此首版鸟群校验器已退休归档；当前入口为Tools/Unreal/VFX/BirdFlock/ValidateBirdFlockP4Assets.py。')
 import hashlib
 import json
 from pathlib import Path

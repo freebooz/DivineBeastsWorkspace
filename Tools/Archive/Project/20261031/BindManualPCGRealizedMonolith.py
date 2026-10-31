@@ -1,4 +1,5 @@
 """消费真实原生作者输出，显式绑定开发Profile；不生成、不Bake、不改共享模板。"""
+raise RuntimeError('SCRIPT_RETIRED: 已退休归档，见Tools/Archive/Project/20261031/README.md。')
 from pathlib import Path
 import hashlib
 import importlib.util

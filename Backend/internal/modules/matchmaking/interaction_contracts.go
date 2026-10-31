@@ -9,15 +9,17 @@ import (
 
 // Command只表示用户意图；认证主体、会话和角色由Gateway另行注入，禁止在正文冒名。
 type Command struct {
-	Action           string `json:"action"`                  // start/cancel/reply/ready；不同阶段权限分别验证。
-	ClientRequestID  string `json:"clientRequestId"`         // 主体/操作域幂等键，重试沿用。
-	ExpectedRevision int64  `json:"expectedRevision,string"` // start为队伍版本；solo start为0，其余为对应聚合版本。
-	TicketID         string `json:"ticketId,omitempty"`      // 取消或准备的当前票据身份。
-	CandidateID      string `json:"candidateId,omitempty"`   // 逐人确认身份，不是入场资格。
-	ArenaModeID      string `json:"arenaModeId,omitempty"`   // start的模式定义身份。
-	PartyID          string `json:"partyId,omitempty"`       // 已组队必须提供本人实际队伍，单人可为空。
-	RegionID         string `json:"regionId,omitempty"`      // start区域分区。
-	Accept           bool   `json:"accept"`                  // ready/reply时的本人接受意图。
+	Action           string `json:"action"`                   // start/cancel/reply/ready及challenge三命令；各阶段独立验证。
+	ClientRequestID  string `json:"clientRequestId"`          // 主体/操作域幂等键，重试沿用。
+	ExpectedRevision int64  `json:"expectedRevision,string"`  // start为队伍版本；solo start为0，其余为对应聚合版本。
+	TicketID         string `json:"ticketId,omitempty"`       // 取消或准备的当前票据身份。
+	CandidateID      string `json:"candidateId,omitempty"`    // 逐人确认身份，不是入场资格。
+	TargetPlayerID   string `json:"targetPlayerId,omitempty"` // 公开对手身份，服务器解析其真实队伍及队长。
+	ChallengeID      string `json:"challengeId,omitempty"`    // 固定名单邀请身份，不能替代本人授权。
+	ArenaModeID      string `json:"arenaModeId,omitempty"`    // start的模式定义身份。
+	PartyID          string `json:"partyId,omitempty"`        // 已组队必须提供本人实际队伍，单人可为空。
+	RegionID         string `json:"regionId,omitempty"`       // start区域分区。
+	Accept           bool   `json:"accept"`                   // ready/reply时的本人接受意图。
 }
 
 // UnmarshalJSON防止缺失accept被Go零值解释为主动拒绝；重复键/未知字段仍由外层严格对象解码器拒绝。
@@ -27,7 +29,7 @@ func (c *Command) UnmarshalJSON(payload []byte) error {
 	if err := json.Unmarshal(payload, &next); err != nil {
 		return err
 	}
-	if next.Action == "ready" || next.Action == "reply" {
+	if next.Action == "ready" || next.Action == "reply" || next.Action == "challengeReply" {
 		var fields map[string]json.RawMessage
 		if err := json.Unmarshal(payload, &fields); err != nil {
 			return err
@@ -79,6 +81,22 @@ type PlayerSnapshot struct {
 	CanReady          bool                  `json:"canReady"`                 // 当前是否能提交本人限时准备。
 	ReasonCode        string                `json:"reasonCode"`               // 安全稳定原因，不含任意内部正文。
 	Participants      []ParticipantSnapshot `json:"participants"`             // 最多10个授权可见成员。
+	Challenge         *ChallengeSnapshot    `json:"challenge,omitempty"`      // 仅邀请双方名单可见，不含会话或迁移秘密。
+}
+
+// ChallengeSnapshot是Shared约战邀请的授权只读投影；接受邀请不能代替逐人候选确认。
+type ChallengeSnapshot struct {
+	ChallengeID    string    `json:"challengeId"`     // 本轮固定对手邀请。
+	Revision       int64     `json:"revision,string"` // 回复和取消的条件版本。
+	OwnerPlayerID  string    `json:"ownerPlayerId"`   // 发起队长或单人。
+	TargetPlayerID string    `json:"targetPlayerId"`  // 服务器解析的接收队长或单人。
+	ArenaModeID    string    `json:"arenaModeId"`     // 已登记人数模式。
+	RegionID       string    `json:"regionId"`        // 同一部署区域。
+	DeadlineUTC    time.Time `json:"deadlineUtc"`     // 60秒邀请权威期限。
+	CanReply       bool      `json:"canReply"`        // 仅接收队长可回复。
+	CanCancel      bool      `json:"canCancel"`       // 仅发起主体可取消。
+	TeamAPlayerIDs []string  `json:"teamAPlayerIds"`  // 邀请时不可变甲队名单。
+	TeamBPlayerIDs []string  `json:"teamBPlayerIds"`  // 邀请时不可变乙队名单。
 }
 
 // Observation在独立匹配作用域续接同一仓储事件日志；初始和失效游标均提供完整快照。

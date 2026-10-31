@@ -47,6 +47,7 @@ ARENA_PARENTS = {
     "Scoreboard": "DivineBeastsScoreboardScreen",
     "PostMatch": "DivineBeastsPostMatchResultScreen",
     "ArenaHUD": "DivineBeastsArenaHUD",
+    "ArenaQueueStatus": "DivineBeastsArenaQueueStatusWidget",
 }
 BIND_HEADERS = {
     "Login": "Screens/Login/DivineBeastsLoginScreen.h",
@@ -83,6 +84,10 @@ def catalog_entries(public: str, arena: str) -> list[dict[str, str]]:
         result.append({"id": "UI.HUD.Arena", "owner": "arena", "name": "ArenaHUD",
             "parent": ARENA_PARENTS["ArenaHUD"],
             "asset": str(ARENA / "HUD/WBP_DBA_UI_ArenaHUD.uasset")})
+    if re.search(r'\bMakeQueueStatusHUD\(\s*\)', arena):
+        result.append({"id": "UI.HUD.ArenaQueueStatus", "owner": "arena", "name": "ArenaQueueStatus",
+            "parent": ARENA_PARENTS["ArenaQueueStatus"],
+            "asset": str(ARENA / "HUD/WBP_DBA_UI_ArenaQueueStatus.uasset")})
     return result
 
 
@@ -127,7 +132,7 @@ def audit(entries: list[dict[str, str]]) -> dict:
                     names_found += 1
                 else:
                     issues.append("WBP缺少C++必需命名控件：" + ident + "/" + name)
-    if public_count < 18 or arena_count < 6:
+    if public_count < 18 or arena_count < 7:
         issues.append("公共或竞技目录已登记页面数量低于历史已交付下限")
     root = PUBLIC / "Root/WBP_DBA_UI_RootLayout.uasset"
     if not root.is_file() or "DivineBeastsRootLayout" not in root.read_bytes().decode("latin-1"):

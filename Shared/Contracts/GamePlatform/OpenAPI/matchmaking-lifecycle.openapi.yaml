@@ -1,14 +1,14 @@
 openapi: 3.1.0
 info:
   title: 平台组队匹配生命周期
-  version: 1.0.0
-  description: 1v1至5v5单人/不可拆分队伍的准备、报名、逐人确认、本人事件观察及受控迁移。会话和角色由Gateway验证，不信任正文主体。
+  version: 1.1.0
+  description: 1v1至5v5单人/不可拆分队伍的准备、报名、固定对手约战邀请、逐人确认、本人事件观察及受控迁移。约战接受后直接复用同一候选和分配链，不进入随机搜索。会话和角色由Gateway验证，不信任正文主体。
 security: [{ bearerAuth: [] }]
 paths:
   /v1/matchmaking/commands:
     post:
       operationId: commandCurrentMatchmaking
-      summary: 提交本人开始、整队取消、准备或逐人回复意图
+      summary: 提交本人开始、整队取消、准备、逐人回复或固定对手约战意图
       requestBody:
         required: true
         content:
@@ -70,15 +70,24 @@ components:
       additionalProperties: false
       required: [action, clientRequestId, expectedRevision]
       properties:
-        action: { type: string, enum: [start, cancel, ready, reply], description: 阶段明确的本人意图，不含伪造比赛结果 }
+        action: { type: string, enum: [start, cancel, ready, reply, challenge, challengeReply, challengeCancel], description: 约战由本人队长发起、对方真实队长回复，接受后双方全员仍须30秒逐人确认；邀请不冻结目标Party编辑 }
         clientRequestId: { type: string, minLength: 1, maxLength: 128, description: 主体/操作域的稳定逻辑命令身份，同键异参冲突 }
         expectedRevision: { $ref: '#/components/schemas/Revision' }
         ticketId: { type: string, maxLength: 128, description: 取消/准备票据，不能替代权限 }
         candidateId: { type: string, maxLength: 128, description: 逐人确认候选 }
+        targetPlayerId: { type: string, maxLength: 128, description: challenge指定的公开对手ID，服务端解析真实整队及接收队长 }
+        challengeId: { type: string, maxLength: 128, description: challengeReply/challengeCancel的邀请身份，不替代权限 }
         arenaModeId: { type: string, maxLength: 128, description: 已登记1v1至5v5模式 }
         partyId: { type: string, maxLength: 128, description: 小队必须整队报名，单人无需建队 }
         regionId: { type: string, maxLength: 128, description: 已配置区域分区 }
         accept: { type: boolean, description: 本人同意/拒绝，队长不能代替其他人确认 }
+      allOf:
+        - if: { properties: { action: { enum: [ready, reply, challengeReply] } } }
+          then: { required: [accept] }
+        - if: { properties: { action: { const: challenge } } }
+          then: { required: [targetPlayerId, arenaModeId, regionId] }
+        - if: { properties: { action: { enum: [challengeReply, challengeCancel] } } }
+          then: { required: [challengeId] }
     CommandResult:
       type: object
       required: [clientRequestId, snapshot]
@@ -93,7 +102,7 @@ components:
         serviceReady: { type: boolean, description: 真实内容和持久编排已装配，开始命令仍需独立验证。 }
         development: { type: boolean, description: 当前内容仅为开发联调。 }
         regionId: { type: string, maxLength: 128, description: 默认或当前队列区域。 }
-        state: { type: string, enum: [idle, readyCheck, searching, confirmation, allocating, transferReady, inMatch, returning, completed, cancelled, failed], description: 服务器生命周期，UI不可提前推进 }
+        state: { type: string, enum: [idle, challengeInvitation, readyCheck, searching, confirmation, allocating, transferReady, inMatch, returning, completed, cancelled, failed], description: 服务器生命周期，UI不可提前推进 }
         ticketId: { type: string, description: 当前或最近报名 }
         partyId: { type: string, description: 原子普通队伍；solo为空 }
         arenaModeId: { type: string, description: 服务器认可模式 }
@@ -106,6 +115,7 @@ components:
         canReply: { type: boolean, description: 本人可回复候选 }
         canReady: { type: boolean, description: 本人可回复限时准备 }
         reasonCode: { type: string, description: 白名单安全原因，不输出内部异常 }
+        challenge: { $ref: '#/components/schemas/ChallengeSnapshot' }
         participants:
           type: array
           maxItems: 10
@@ -117,6 +127,23 @@ components:
               teamId: { type: string, description: 候选形成后由后端分配，否则为空 }
               ready: { type: boolean, description: 本轮模式/名单准备事实 }
               accepted: { type: boolean, description: 本人明确接受候选事实 }
+    ChallengeSnapshot:
+      type: object
+      additionalProperties: false
+      description: 仅活动邀请双方名单可见。顶层state=challengeInvitation时存在；接受或终结后省略。邀请60秒，双方必须各满N人，名单/队长版本变化使邀请失效；一人同时最多一项邀请/准备/队列/候选/比赛资格。
+      required: [challengeId, revision, ownerPlayerId, targetPlayerId, arenaModeId, regionId, deadlineUtc, canReply, canCancel, teamAPlayerIds, teamBPlayerIds]
+      properties:
+        challengeId: { type: string, minLength: 1, maxLength: 128, description: 固定对手邀请身份 }
+        revision: { $ref: '#/components/schemas/Revision' }
+        ownerPlayerId: { type: string, description: 发起队长或无队伍单人 }
+        targetPlayerId: { type: string, description: 服务端解析的接收队长或无队伍单人 }
+        arenaModeId: { type: string, description: Shared登记的1v1至5v5模式 }
+        regionId: { type: string, description: 本轮部署认可区域 }
+        deadlineUtc: { type: string, format: date-time, description: 权威邀请截止时间 }
+        canReply: { type: boolean, description: 仅接收队长本人且邀请有效时可回复 }
+        canCancel: { type: boolean, description: 仅发起主体本人且邀请有效时可取消 }
+        teamAPlayerIds: { type: array, minItems: 1, maxItems: 5, uniqueItems: true, items: { type: string }, description: 甲队固定公开名单，含ownerPlayerId }
+        teamBPlayerIds: { type: array, minItems: 1, maxItems: 5, uniqueItems: true, items: { type: string }, description: 乙队固定公开名单，含targetPlayerId，与甲队等人数且不重叠 }
     Observation:
       type: object
       required: [scopeId, cursor, resyncRequired, changed, snapshot]
