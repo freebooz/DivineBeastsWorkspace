@@ -43,4 +43,26 @@ bool FDivineBeastsArenaEntranceContractTest::RunTest(const FString&)
     TestFalse(TEXT("拒绝其它选项"),Entrance->CommitInteraction(Session,Wrong));
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsArenaEntranceStrippedPresentationTest,
+    "DivineBeasts.Worlds.ArenaEntrance.StrippedPresentation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsArenaEntranceStrippedPresentationTest::RunTest(const FString&)
+{
+    UWorld* World=UWorld::CreateWorld(EWorldType::Game,false);
+    ON_SCOPE_EXIT { World->DestroyWorld(false); };
+    auto* Entrance=World->SpawnActor<ADivineBeastsArenaEntrance>();
+    auto* Definition=NewObject<UDivineBeastsArenaEntranceDefinition>(Entrance);
+    FGamePlatformId::TryParse(TEXT("divinebeasts.activityentrance.stripped@1"),Definition->LogicalId);
+    Definition->ArenaModeId=TEXT("Arena.Mode.Duel1v1");
+    Entrance->EntranceDefinition=Definition;
+    // 实际Server Cook剥离TextRender后的合同：显示对象缺失仍须建立同一权威交互。
+    Entrance->Title=nullptr; Entrance->Frame=nullptr; Entrance->Surface=nullptr;
+    Entrance->OnConstruction(Entrance->GetActorTransform());
+    auto* Target=Entrance->FindComponentByClass<UGamePlatformInteractableComponent>();
+    TestEqual(TEXT("纯表现被剥离仍保留真实模式"),Entrance->GetArenaModeId(),Definition->ArenaModeId);
+    TestTrue(TEXT("纯表现缺失不阻断服务器交互"),Target && Target->IsInteractionEnabled());
+    TestNotNull(TEXT("权威选项仍存在"),Target?Target->FindOption(TEXT("Arena.Entry.Open")):nullptr);
+    return true;
+}
 #endif

@@ -1,4 +1,24 @@
 {
+  "VillageArenaPortal20261031": {
+    "Status": "NativeSavedColdReloadVerifiedPendingManualAndGPUBudget",
+    "NativeTool": "Monolith MCP 0.23.0 + UE5.8",
+    "Map": "/DBAWorldPack_Village/Maps/L_Village_Start",
+    "AuthorityDefinitions": "/DBAWorldPack_Village/Definitions/Activities/Arena",
+    "SharedGeometry": "/DBAWorldPack_Village/Environment/Activities/Arena",
+    "VortexSystem": "/DBAWorldPack_Village/VFX/Activities/Arena/NS_VillageArenaGate_Vortex",
+    "PresentationDefinition": "/DBAWorldPack_Village/Definitions/Presentation/Activities/DA_VillageArenaGate_Vortex",
+    "Entrances": 5,
+    "Modes": ["Arena.Mode.Duel1v1", "Arena.Mode.Team2v2", "Arena.Mode.Team3v3", "Arena.Mode.Team4v4", "Arena.Mode.Team5v5"],
+    "PlayerStartsPreserved": true,
+    "NativeNonPartialNavigationPaths": 5,
+    "VortexSystemCountPerWorld": 5,
+    "EmitterCountPerSystem": 1,
+    "BaseParticlesPerSystem": 96,
+    "SourceAndEvidence": "Saved/Validation/VillageArenaPortal20261031",
+    "Delivery": "Docs/Implementation/VillagePartyArena/VillageArenaPortalDelivery_20261031.md",
+    "HumanAccepted": false,
+    "GPUBudgetMeasured": false
+  },
   "VillageMistMoonlight20261018": {
     "Status": "NativeSavedColdReloadAndCookVerifiedPendingManualAndGPU",
     "NativeTool": "Monolith MCP 0.23.0 + UE5.8",

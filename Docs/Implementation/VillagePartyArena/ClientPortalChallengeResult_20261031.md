@@ -69,3 +69,11 @@
 - 新增私有显式依赖`DivineBeastsPresentationClient`、`GamePlatformPresentationClient`、`GameplayTags`。前两模块分别属于已声明的DBAClient、GamePlatformPresentation插件；不新增Niagara/VFX模块依赖，不修改世界或服务器反向依赖。
 
 先写新增原生回归源码再实现协调器，尚未由本分任务编译或观察新增RED/GREEN：`DivineBeasts.Arena.VFX.EntranceLifecycle`覆盖首次快照/重复观察、缺Primary/注册不可用、旧Active回调和退出后迟到事件；`EntranceCancellation`通过真实平台Submit边界核对取消原身份、同提供者及重复移除；`EntranceRegistrationFailure`实际调用未初始化的项目内容服务，验证申请失败且没有残留内容包/预载，重复通知不反复申请。该测试不伪造Data成功或Niagara播放成功。最终新增C++需主任务重新构建Editor/Client/Server并运行上述回归；此前15项GREEN不能覆盖本追加。
+
+### Cook发现的原生标签宿主修正
+
+后续主任务已报告上述3项原生回归及Editor/Client/Server构建通过，但Server Cook真实失败。本分任务读取`Saved/Validation/FoundationM0/106f65e1-4a28-4d24-9414-7613f8ae7cbd/Cook-Server/stdout.log`及本机UE5.8 `NativeGameplayTags.cpp:41`，确认旋涡Native Tag被定义在ClientOnly的DivineBeastsArenaClient；UE要求Native标签属于Runtime或RuntimeAndProgram以保证双端标签表一致。原有原生测试没有覆盖宿主校验，不能证明Cook通过。
+
+按既有DivineBeastsCharactersRuntime标签惯例，将唯一extern声明/定义迁至现有双端`DivineBeastsArenaRuntime/Public/Tags/DivineBeastsArenaTags.h`和`Private/Tags/DivineBeastsArenaTags.cpp`，Runtime公开增加真实GameplayTags模块依赖。客户端协调器仅引用共享`DivineBeastsArenaTags::ArenaEntranceVortex`，不再定义Native Tag；稳定字符串仍为`Presentation.Environment.ArenaEntrance.Vortex`。不改模块宿主、不增加INI副本、不关闭ensure，服务器只包含共享标签而不包含Niagara/VFX执行或纯表现资源。
+
+`EntranceLifecycle`补充调用真实Native Tag宿主验证及编辑器元数据断言，防止再将该标签放回ClientOnly。该修正源码自审和`git diff --check`已执行，最终重新构建、原生回归、Client/Server Cook由主任务统一执行；本分任务未自行构建或使用Monolith，尚不声明Cook故障已经验证消除。

@@ -42,7 +42,9 @@ FName ADivineBeastsArenaEntrance::GetArenaModeId() const
 void ADivineBeastsArenaEntrance::RefreshDefinition()
 {
     const FName Mode=GetArenaModeId();
-    Title->SetText(IsValid(EntranceDefinition)?EntranceDefinition->DisplayName:FText::GetEmpty());
+    // 专服Cook会剥离TextRender；可选标题不参与入口资格或交互配置。
+    if (IsValid(Title) && GetNetMode()!=NM_DedicatedServer)
+        Title->SetText(IsValid(EntranceDefinition)?EntranceDefinition->DisplayName:FText::GetEmpty());
     if (!HasAuthority()) return;
     if (Mode.IsNone()) { Interactable->SetInteractionEnabled(false); return; }
     FGamePlatformInteractionOption Option;

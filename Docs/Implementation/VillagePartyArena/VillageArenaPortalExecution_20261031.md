@@ -30,3 +30,16 @@
 - GPU核验曾发现VM诊断0但真实DXC有Index%3标识未替换，改为fmod(float(Index),3.0)，实际GPU日志不再新增错误。SimCache真实回读位置/颜色/尺寸已有效，但现场截图粒子仍不可见；继续排查渲染，不能据VM或SimCache宣称视觉通过。
 - 追加客户端World协调器及三项生命周期原生回归；最终Editor构建282be74d-e289-4a39-b278-dafc20460bf2执行中。UI两资产已重载，19+5个文字/输入字号全部10。
 - 最终独立源码审查无剩余Critical/Important；Native UI台账遗漏新HUD已补MakeQueueStatusHUD、父类和阈值7；实际客户端容器要求新HUD、五入口定义及旋涡依赖。服务器只排除两个纯表现叶子，原五权威定义保留，策略35项回归通过。
+- 新增原生GREEN：FinalNative/Automation为14/14 Success，覆盖完整Arena.UI、入口及三个旋涡生命周期测试；真实RHI颜色门禁69e199f9-1c76-405f-9506-42418d4c540f通过。Editor 282be74d、Client/Server 47c1b183完整目标Passed；后续标签修复仍须重建。
+- 冷重载暴露Niagara旧调用节点无法编译；移除并重新添加同一已保存模块调用后，原位保存/重载零错误，五门实际组件恢复Active且在视口渲染。保留同一模块/NS身份，没有新版本资源。SpawnBurst显式Emitter.Age与首循环限制，Emitter采用Infinite，避免重复发射或24小时人为到期。
+- 真实GPU SimCache：0.25秒两次采样均96粒子，94粒子半径减小、2粒子循环重生，坐标有界；VortexMotionNative.json留证。此运动核验不等于GPU预算通过。
+- 首次Server Cook 106f65e1因ClientOnly模块定义NativeGameplayTag触发引擎ensure而失败。唯一标签已迁至DivineBeastsArenaRuntime，未关闭校验；准备同参数重建/Cook。旧两个验证客户端21376/23592因构建内存压力已按已知包路径核对后正常关闭；账号数据未改，后续版本核对后恢复两窗。
+- 旋涡冷启动问题根因已找到：Monolith创建的模块InputMap被设为不暴露/可选，与UE原生模块的必需ParameterMap合同不同；冷载时调用引脚重建后断链。已通过Monolith复制原生ParticleState InputMap曝光合同（Exposed/Required true、AutoBind/Hidden false），原NS单Emitter重建引用后保存；独立进程30456编译零错误，五门激活并渲染，原位重载亦通过。当前资源NativeGPU回读仍96稳定、94向内、2循环，绑定最终源资产SHA。
+- 源码标签修复已限定复审通过；Editor a8540867、Client/Server 980b1602完整目标Passed；TagFixNative三项GREEN。Server Cook fcb37236实际Stage/容器剥离Passed。Client首次73a9b62a的实际Cook与684项内容门禁通过，但缺5项同次Niagara编译日志，完整包装器失败；用既有ForceNiagaraCompileOnLoad参数重跑51eed6e6，完整Cook、63项法术闭包和GPU诊断门禁全部Passed，不清DDC、不放宽门禁。
+- 后端Gateway/Match在原sslm-validation-8238653a环境增量构建/更新，Identity、PlayerData、Control容器身份完全保留，网关ready=200，无账号/角色重置。旧Village/MainArena在核对PID/路径/启动时间及无客户端/空竞技槽后排空替换。
+- 实际新Village运行暴露新增入口RefreshDefinition对被Server Cook剥离的Title无空值保护，崩溃RED为f5828036/VillageServer.log:798。已增加IsValid及DedicatedServer显示隔离，并补StrippedPresentation原生回归；2d26357e完整Editor增量构建执行中。此前Cook Passed不等于服务器运行通过。
+- 空引用修复限定复审通过；2d26357e Editor、31d238ca Client/Server完整目标Passed，StrippedNative五项全部Success。Cook ead1fa96被本轮两个插件原生清单文档变化拒绝；9fa37ce8完整Editor再次Passed后，7180784e又被并行材质任务的DBAPresentationPack_Core清单更新拒绝，均未进入UAT，不放宽证据门禁。只读wait_threads已确认并行任务完成，48b1ccfa增量Editor绑定稳定后的清单，不重做已通过的无变化测试。
+- 发现默认Monolith端口9316连接到另一个材质编辑器51920，停止对默认端点操作。通过computer-use按进程35812实际窗口462066确认本轮Village编辑器及旋涡画面；控制台因OpenClipboard失败未执行端口更改，未写项目设置。当前原生资产无需继续修改，保留两个编辑器。
+- 最终48b1ccfa Editor门禁下，b7a2906f Server Cook/Stage、32549ea0 Client Cook/Stage及实际资源容器/Shader门禁全部Passed。恢复Village PID28064与MainArena PID48884，真实Stage二进制绑定31d238ca完整双目标产物，初始化后八分钟以上无Fatal/战斗复制校验错误，原Title崩溃未复现。进程、boot和哈希记录VerifiedServers.json及FrontEndVersionGate.json。
+- 两个测试客户端由最新32549ea0 Stage恢复为PID21928/13148，run d1197916-f3a3-4d87-80ba-46e6c05baddc；实际窗口、启动时间、路径、初始化和无限帧CVar日志核对。仍停在登录界面，不自动登录、不重置账户/角色；实际1v1准入/结算/返回和人工/GPU验收保持未完成。
+- 用户停止Computer Use后未再发送键鼠输入，Village编辑器35812保留供人工检查。源码、资产及插件清单冻结；不再发起构建/Cook。后续火球任务可按VillageArenaPortalDelivery_20261031.md最终交接状态继续同步打包；未调用内部消息工具发送未经本轮明确授权的回复。

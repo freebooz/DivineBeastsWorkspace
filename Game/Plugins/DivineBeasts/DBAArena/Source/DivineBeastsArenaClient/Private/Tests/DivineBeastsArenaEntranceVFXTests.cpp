@@ -5,6 +5,7 @@
 #include "Gameplay/DivineBeastsArenaEntrance.h"
 #include "GamePlatformPresentationClientSubsystem.h"
 #include "DivineBeastsPresentationClientSubsystem.h"
+#include "Tags/DivineBeastsArenaTags.h"
 #include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
@@ -45,6 +46,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsArenaEntranceVFXLifecycleTest,
     "DivineBeasts.Arena.VFX.EntranceLifecycle",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsArenaEntranceVFXLifecycleTest::RunTest(const FString&)
 {
+    // 真实引擎验证Tag宿主；ClientOnly原生注册会在此合同或Cook启动时触发ensure。
+    const auto NativeRow=DivineBeastsArenaTags::ArenaEntranceVortex.GetGameplayTagTableRow();
+    TestEqual(TEXT("共享标签保留已发布稳定身份"),NativeRow.Tag,FName(TEXT("Presentation.Environment.ArenaEntrance.Vortex")));
+#if UE_INCLUDE_NATIVE_GAMEPLAYTAG_METADATA
+    TestEqual(TEXT("原生标签必须由双端Runtime拥有"),DivineBeastsArenaTags::ArenaEntranceVortex.GetModuleName(),FName(TEXT("DivineBeastsArenaRuntime")));
+#endif
     UWorld* World=UWorld::CreateWorld(EWorldType::Game,false);
     const TStrongObjectPtr<UDivineBeastsArenaEntranceVFXWorldSubsystem> Service(NewObject<UDivineBeastsArenaEntranceVFXWorldSubsystem>(World));
     ON_SCOPE_EXIT {Service->Deinitialize();World->DestroyWorld(false);};

@@ -1,0 +1,99 @@
+{
+  "description": "标准火球术可组合纹理源合同；源RGBA不重采样，UE原生构建1024x1024，材质执行4x4帧索引。",
+  "generator": "built-in image_gen",
+  "reference": "Reference_StandardFireball.png",
+  "textures": [
+    {
+      "file": "T_DBA_Fireball_CoreFlipbook.png",
+      "role": "core",
+      "sha256": "9eb7e5354315a15b451239c4b7e2bbdf04d5d56042061c80683b0e8fb77a9474",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames": 16,
+      "fps": 24,
+      "loop": true,
+      "build_size": [
+        1024,
+        1024
+      ],
+      "sRGB": false
+    },
+    {
+      "file": "T_DBA_Fireball_Trail.png",
+      "role": "trail",
+      "sha256": "db063479639568ec585fe3493419b128789ba04efccc0b565ad195c5d821006e",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": true,
+      "build_size": [
+        1024,
+        1024
+      ],
+      "sRGB": false
+    },
+    {
+      "file": "T_DBA_Fireball_ImpactFlipbook.png",
+      "role": "impact",
+      "sha256": "c7cbcaf7023338a886b4b39b371cab13829562a5b8a237c40958d88a6a7a375e",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        253
+      ],
+      "grid": [
+        4,
+        4
+      ],
+      "frames": 16,
+      "fps": 26,
+      "loop": false,
+      "build_size": [
+        1024,
+        1024
+      ],
+      "sRGB": false
+    }
+  ],
+  "prompt_summary": {
+    "shared": "参考用户提供标准火球术图；只生成中性灰度RGBA强度与透明度，不含人物、场景、文字、边框、UI或水印。",
+    "core": "4x4共16帧，同一球形火焰核心滚动循环，固定中心和大小，灰度细节，透明格边。",
+    "trail": "单张水平火焰拖尾，右端宽亮根部、左端细长尾焰，5至7条流畅火舌，真实透明背景。",
+    "impact": "4x4共16帧，固定起点的单次点燃、膨胀、火冠、衰减过程，末帧消散，真实透明背景。"
+  },
+  "native_material": "M_DBA_Fireball_Flame",
+  "dynamic_parameter_names": [
+    "AgeSeconds",
+    "FrameOffset",
+    "Dissolve",
+    "IntensityScale"
+  ],
+  "manual_review_approved": false
+}

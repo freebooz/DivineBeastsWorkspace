@@ -3,7 +3,7 @@
 #include "Gameplay/DivineBeastsArenaEntrance.h"
 #include "DivineBeastsPresentationClientSubsystem.h"
 #include "GamePlatformPresentationClientSubsystem.h"
-#include "NativeGameplayTags.h"
+#include "Tags/DivineBeastsArenaTags.h"
 #include "Components/SceneComponent.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
@@ -13,12 +13,11 @@
 
 namespace
 {
-UE_DEFINE_GAMEPLAY_TAG_STATIC(ArenaEntranceVortexTag,"Presentation.Environment.ArenaEntrance.Vortex");
 const FName PackId(TEXT("DBA.Village.ArenaEntrance.Vortex"));
 const FName DefinitionId(TEXT("divinebeasts.vfx.village_arena_gate_vortex@1"));
 }
 
-FGameplayTag UDivineBeastsArenaEntranceVFXWorldSubsystem::GetVortexSemantic(){return ArenaEntranceVortexTag;}
+FGameplayTag UDivineBeastsArenaEntranceVFXWorldSubsystem::GetVortexSemantic(){return DivineBeastsArenaTags::ArenaEntranceVortex;}
 
 FDivineBeastsPresentationContentPackFragment UDivineBeastsArenaEntranceVFXWorldSubsystem::BuildContentFragment()
 {
@@ -29,7 +28,7 @@ FDivineBeastsPresentationContentPackFragment UDivineBeastsArenaEntranceVFXWorldS
     Catalog.FragmentId=TEXT("DBA.Presentation.Village.ArenaEntrance.Vortex");Catalog.Revision=1;
     Catalog.Scope=EGamePlatformPresentationCatalogScope::ContentPack;Catalog.OwnerScopeId=PackId;Catalog.LifecycleScope=Fragment.LifecycleScope;
     FGamePlatformPresentationCatalogEntry Entry;
-    Entry.EntryId=TEXT("DBA.Village.ArenaEntrance.Vortex.Visual");Entry.SemanticTag=ArenaEntranceVortexTag;
+    Entry.EntryId=TEXT("DBA.Village.ArenaEntrance.Vortex.Visual");Entry.SemanticTag=GetVortexSemantic();
     Entry.ContextQuery.ContentPackId=PackId;Entry.ProviderChannel=TEXT("VFX");Entry.DefinitionId=DefinitionId;
     Entry.Scope=EGamePlatformPresentationCatalogScope::ContentPack;Entry.ContentRevision=TEXT("1");
     Catalog.Entries.Add(Entry);return Fragment;
@@ -135,7 +134,7 @@ void UDivineBeastsArenaEntranceVFXWorldSubsystem::SubmitActor(AActor* Actor)
     const TStrongObjectPtr<UDivineBeastsArenaEntranceVFXWorldSubsystem> KeepService(this);
     const TStrongObjectPtr<UGamePlatformPresentationClientSubsystem> KeepPlatform(Platform);
     const FGuid Expected=OwnerToken;
-    FGamePlatformPresentationRequest Request;Request.RequestId=FGuid::NewGuid();Request.SemanticTag=ArenaEntranceVortexTag;
+    FGamePlatformPresentationRequest Request;Request.RequestId=FGuid::NewGuid();Request.SemanticTag=GetVortexSemantic();
     Request.ContextId=Actor->GetFName();Request.Context.ContentPackId=PackId;
     Request.SourceLocation=Actor->GetActorTransform().TransformPosition(FVector(0,0,210));
     Request.SourceRotation=Actor->GetActorRotation();Request.AttachComponent=Root;
