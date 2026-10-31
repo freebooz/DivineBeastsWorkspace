@@ -2,6 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "GamePlatformWaterEditorLibrary.h"
 #include "Actors/GamePlatformWaterRegion.h"
+#include "Subsystems/GamePlatformWaterWorldSubsystem.h"
 #include "WaterBodyLakeActor.h"
 #include "WaterBodyComponent.h"
 #include "WaterSplineComponent.h"
@@ -54,11 +55,26 @@ bool FGamePlatformWaterVolumeTests::RunTest(const FString&)
         Character->SetActorLocation(FVector(-1000,-1000,1000));
         Movement->SetUpdatedComponent(Character->GetCapsuleComponent());
         Movement->GetNavAgentPropertiesRef().bCanSwim = true;
-        Character->GetCapsuleComponent()->SetPhysicsVolume(Volume, true);
+        Character->SetActorLocation(FVector(50,50,-50));
+        TestFalse(TEXT("未发布水域规则时体积不能自行授予游泳"), Volume->IsOverlapInVolume(*Character->GetCapsuleComponent()));
+        auto* Water = W->GetSubsystem<UGamePlatformWaterWorldSubsystem>();
+        TestTrue(TEXT("发布本世界唯一水域索引"), Water->RegisterRegion(Region));
+        W->AddPhysicsVolume(Volume);
+        Character->GetCapsuleComponent()->UpdatePhysicsVolume(true);
         TestTrue(TEXT("原生物理水域通知进入Swimming"), Movement->IsSwimming());
-        Character->GetCapsuleComponent()->SetPhysicsVolume(nullptr, true);
-        TestFalse(TEXT("原生退出通知清除Swimming"), Movement->IsSwimming());
+        auto* NoSwim = W->SpawnActor<AGamePlatformWaterRegion>();
+        NoSwim->Region.RegionId = TEXT("Test.NoSwim");
+        NoSwim->Region.Priority = 100;
+        NoSwim->Region.bSwimmable = false;
+        TestTrue(TEXT("高优先级禁止游泳规则发布"), Water->RegisterRegion(NoSwim));
+        Character->GetCapsuleComponent()->UpdatePhysicsVolume(true);
+        TestFalse(TEXT("原生运动必须服从同一水域索引的禁止游泳规则"), Movement->IsSwimming());
+        Water->UnregisterRegion(NoSwim);
+        Character->GetCapsuleComponent()->UpdatePhysicsVolume(true);
+        TestTrue(TEXT("撤销覆盖后原生游泳恢复"), Movement->IsSwimming());
         Region->WaterPhysicsVolume = nullptr;
+        Character->GetCapsuleComponent()->UpdatePhysicsVolume(true);
+        TestFalse(TEXT("区域失效时孤立体积不能继续授予游泳"), Movement->IsSwimming());
         TestFalse(TEXT("要求精确水域时缺体积必须失败"), Region->IsWaterRegionValid());
         TestFalse(TEXT("缺体积不能退回大Box"), Region->SampleRegion(FVector(0,0,-50), Sample));
         TestFalse(TEXT("失败必须清空旧采样"), Sample.bInWater);

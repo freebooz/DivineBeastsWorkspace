@@ -137,6 +137,10 @@ def author_geometry(underwater_material):
     assert isinstance(material, u.MaterialInterface)
     region_id = 'Village.Lake' if package == VILLAGE else 'Review.Lake.NativeSwim'
     existing = [a for a in actors if isinstance(a, u.GamePlatformWaterRegion) and str(a.get_editor_property('region').region_id) == region_id]
+    if not existing and package == REVIEW:
+        existing = [a for a in actors if isinstance(a,u.GamePlatformWaterRegion) and a.get_actor_label()=='GP_WaterReview_LakeAuthority']
+        if existing:
+            region_id=str(existing[0].get_editor_property('region').region_id)
     assert len(existing) <= 1
     region = existing[0] if existing else u.get_editor_subsystem(u.EditorActorSubsystem).spawn_actor_from_class(u.GamePlatformWaterRegion, lake.get_actor_location())
     config = region.get_editor_property('region')
