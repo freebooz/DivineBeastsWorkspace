@@ -15,9 +15,9 @@ from pathlib import Path
 MODE = os.environ.get("TERRAIN_FUNCTION_REVIEW_MAP_MODE", "inspect").strip().lower()
 SOURCE = "/Game/Development/Terrain/Maps/L_DBA_TerrainMaskReview"
 TARGET = "/Game/Development/Terrain/Maps/L_DBA_TerrainFunctionReview"
-REVIEW_MI = ("/DBAPresentationPack_Core/Materials/Terrain/"
+REVIEW_MI = ("/DBAWorldPack_Village/Development/Terrain/Production10/"
              "MI_DBA_Terrain_Production10_FunctionIntegrated_Review")
-ORIGINAL_MI = ("/DBAPresentationPack_Core/Materials/Terrain/"
+ORIGINAL_MI = ("/DBAWorldPack_Village/Development/Terrain/Production10/"
                "MI_DBA_Terrain_Production10_Review")
 
 
@@ -43,7 +43,7 @@ def run() -> None:
     if not isinstance(candidate, unreal.MaterialInstanceConstant):
         raise RuntimeError("函数化审核MI尚未真实生成")
     if candidate.get_editor_property("parent").get_path_name().split(".")[0] != (
-            "/DBAPresentationPack_Core/Materials/Terrain/M_DBA_Terrain_Production10_FunctionIntegrated"):
+            "/DBAWorldPack_Village/Development/Terrain/Production10/M_DBA_Terrain_Production10_FunctionIntegrated"):
         raise RuntimeError("审核MI未继承正确的函数化十层母材质")
 
     if MODE == "copy":

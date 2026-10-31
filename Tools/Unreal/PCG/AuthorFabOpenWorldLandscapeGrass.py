@@ -7,7 +7,7 @@
 import json
 import unreal as u
 
-SRC = '/Game/PN_OpenWorldFoliage'
+SRC = '/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage'
 DEST = '/DBAFoliagePack_Core/Foliage/Grass/FabOpenWorld'
 MASTER = DEST + '/M_DBA_OpenWorldFoliage_GlobalWind'
 INSTANCE = DEST + '/MI_DBA_OpenWorldFoliage_GlobalWind'

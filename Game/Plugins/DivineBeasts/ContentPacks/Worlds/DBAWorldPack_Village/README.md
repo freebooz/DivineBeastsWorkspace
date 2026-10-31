@@ -1,4 +1,6 @@
 # DBAWorldPack_Village（神兽联盟新手村世界内容包）
+
+2026-10-31资源归属更新：三份硬绑定Village贴图的Production10审核母材质和九份实例归本包`Development/Terrain/Production10`。它们只供开发审核地图，默认不进入正式Client或专服；PluginDemoClient按地图白名单精确放开此开发目录。十张公共V3色彩图归`/DBAPresentationPack_Core/Textures/Terrain/Production10`，项目雪地表现软路径已同步。正式Village共享Landscape母材质、地形、Actor及实例布局未改。历史制作与来源记录保留原路径事实；当前路径合同与阶段证据见`Docs/Implementation/Resources/ResourceOwnershipDelivery_20261031.md`。
 ## 2026-10-18 新手村地形V3资源最终原生收口（最新进度）
 
 当前正式十层地形BaseColor（基础色）原位覆盖与独立UE冷重载 **10/10已通过**；原Dirt（普通泥土）被锁情况已解决，并无待修改的第十层。中立共享Landscape母材质M_DBA_Village_LandscapeBridge由55节点增量升级为81节点Texture Bombing（纹理轰炸），已有三通道一致UV及高/低画质分支；新建256×256 V3绿色草地共享默认Texture2D并已实际绑定两处VillageGroundAlbedoTexture，独立UE5.8冷重载通过。正式L_Village_Start地图哈希未变，雪/湿润、法线、ORM、PCG、碰撞导航不重新生成，纯客户端高精贴图继续通过资源租约加载。正式服务器共享地图依赖审计通过。

@@ -128,6 +128,18 @@ class PolicyBehaviorTests(unittest.TestCase):
         self.assertTrue(accepted.is_forbidden('/DBAWorldPack_Village/Development/Wind/Maps/Review.umap', 'DedicatedServer'))
         self.assertFalse(accepted.is_forbidden('/DBAWorldPack_Village/Maps/L_Village_Start.umap', 'DedicatedServer'))
 
+    def test_resource_owner_migration_strips_review_history_and_vendor_only(self):
+        packages=('/DBAWorldPack_Village/Development/Terrain/Production10/M_DBA_Terrain_Production10.uasset',
+            '/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/Old.uasset',
+            '/Game/Development/Vendor/PN_OpenWorldFoliage/Maps/Showroom.umap',
+            '/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_01.uasset',
+            '/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Grass_BaseColor_V3.uasset')
+        for profile in PROFILES:
+            for package in packages:
+                self.assertTrue(self.policy.is_forbidden(package,profile),package)
+            self.assertFalse(self.policy.is_forbidden('/DBAWorldPack_Village/Maps/L_Village_Start.umap',profile))
+            self.assertFalse(self.policy.is_forbidden('/DBAWorldPack_Village/Terrain/M_DBA_VillageLandscape.uasset',profile))
+
     def test_wolf_visual_leaf_is_stripped_but_ai_and_map_remain(self):
         """狼的外观不得把客户端动画模块带入专服；AI和真实导航地图必须保留。"""
         for profile in PROFILES:

@@ -17,8 +17,8 @@ WORLD = ROOT / ("Game/Plugins/DivineBeasts/ContentPacks/Worlds/"
                 "DBAWorldPack_Village/Content/Maps/L_Village_Start.umap")
 PLATFORM = ROOT / ("Game/Plugins/GamePlatform/Presentation/"
                    "GamePlatformSurface/Content/MaterialFunctions")
-CLIENT = ROOT / ("Game/Plugins/DivineBeasts/ContentPacks/Presentation/"
-                 "DBAPresentationPack_Core/Content/Materials/Terrain")
+CLIENT = ROOT / ("Game/Plugins/DivineBeasts/ContentPacks/Worlds/"
+                 "DBAWorldPack_Village/Content/Development/Terrain/Production10")
 
 
 def load_module(path: Path, module_name: str):

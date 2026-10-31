@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """UE5.8真实制作十层扫描PBR+可选高度融合+湿润/积雪/苔藓的客户端材质。
 
-归属第三层DBAPresentationPack_Core（纯客户端表现内容），不能把含高精扫描纹理的
+归属第三层DBAWorldPack_Village/Development/Terrain/Production10（客户端审核内容），不能把含高精扫描纹理的
 材质硬引用到正式Village共享地图或服务器。十层Landscape LayerInfo身份仍归
 DBAWorldPack_Village；PCG使用相同LS_*权重，不直接生成视觉材质。
 默认inspect；apply仅新增独立项目材质，不覆盖旧校准母材质；
@@ -19,7 +19,7 @@ SOURCES=ROOT/"Tools/Unreal/Terrain/TerrainProductionPBRManifest_v1.json"
 MODE=os.getenv("TERRAIN_PRODUCTION_MATERIAL_MODE","inspect").lower().strip()
 # 明确的可选候选版本：原正式高精母材质与审核MI均不覆盖；保持十层LayerInfo和所有纹理参数名。
 FUNCTION_INTEGRATION=os.getenv("TERRAIN_FUNCTION_INTEGRATION","0").strip()=="1"
-BASE="/DBAPresentationPack_Core/Materials/Terrain"
+BASE="/DBAWorldPack_Village/Development/Terrain/Production10"
 MASTER=BASE+("/M_DBA_Terrain_Production10_FunctionIntegrated" if FUNCTION_INTEGRATION
              else "/M_DBA_Terrain_Production10")
 INSTANCE=BASE+("/MI_DBA_Terrain_Production10_FunctionIntegrated_Review" if FUNCTION_INTEGRATION

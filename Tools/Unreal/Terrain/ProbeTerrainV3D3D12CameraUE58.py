@@ -12,7 +12,7 @@ import math
 from pathlib import Path
 
 MAP="/Game/Development/Terrain/Maps/L_DBA_TerrainColorV3Review"
-EXPECTED_MAT="/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_V3_Review"
+EXPECTED_MAT="/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_V3_Review"
 ROOT=Path(__file__).resolve().parents[3]
 DEST=ROOT/"Game/Saved/Validation/TerrainV3D3D12CameraFixed_20261018"
 

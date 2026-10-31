@@ -25,14 +25,15 @@ def check(require_native: bool = False):
     policy=json.loads(SERVER.read_text(encoding="utf-8"))
     uproject=json.loads(UPROJECT.read_text(encoding="utf-8"))
     assert len(policy["Profiles"])==3
-    assert "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Grass_BaseColor_V3.T_DBA_Terrain_Grass_BaseColor_V3" in settings
+    assert "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Grass_BaseColor_V3.T_DBA_Terrain_Grass_BaseColor_V3" in settings
     for role in ["Normal","ORM"]:
         expected=f"/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_{role}.T_DBA_Terrain_Grass_{role}"
         assert expected in settings and expected in client, f"草地{role}匹配纹理配置错误"
-    assert "GroundAlbedoTexture=/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/" in client
-    assert '+DirectoriesToAlwaysCook=(Path="/DBAPresentationPack_Core/Materials/Terrain/TexturesV3")' in client
+    assert "GroundAlbedoTexture=/DBAPresentationPack_Core/Textures/Terrain/Production10/" in client
+    assert '+DirectoriesToAlwaysCook=(Path="/DBAPresentationPack_Core/Textures/Terrain/Production10")' in client
     excludes={x["PackagePath"] for x in policy["CookDirectories"]}
-    assert "/DBAPresentationPack_Core/Materials/Terrain" in excludes
+    assert "/DBAWorldPack_Village/Development/Terrain" in excludes
+    assert "/DBAPresentationPack_Core/Textures/Terrain/Production10" in excludes
     assert "/DBAPresentationPack_Core/Textures/Terrain/Grass" in excludes
     packs={x["Name"]:x for x in uproject["Plugins"]}
     assert "Server" not in packs["DBAPresentationPack_Core"]["TargetAllowList"]
@@ -56,7 +57,7 @@ def check(require_native: bool = False):
     assert len(backup["files"])==12
     sources=ROOT/"Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/SourceArt/Terrain/V3"
     assert len(list(sources.glob("*_BaseColor_V3_Source.png")))==10
-    v3asset=ROOT/"Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3"
+    v3asset=ROOT/"Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Textures/Terrain/Production10"
     assert len(list(v3asset.glob("*_BaseColor_V3.uasset")))==10
     if require_native:
         manifest=ROOT/"Saved/ArtReview/TerrainColorV3FormalCover/AppliedManifest.json"

@@ -3,7 +3,7 @@
 """UE5.8 鸟群真实资源创建工具：导入FBX/PNG并建立平台材质与项目材质实例。
 
 工程边界：只操作新的 BirdFlock 目录，创建前验证工程和源清单；不覆盖既有已编辑资源。
-inspect=列出预计资产；apply=UE5.8 编辑器 PythonScriptPlugin 正式写入并保存。
+历史首版作者已退休：仅inspect供来源追溯；当前Flight网格使用ImportBirdFlockFlightMeshes.py。
 不在本脚本里伪造 Niagara 发射器、蓝图或材质资产文件扩展名。
 """
 from __future__ import annotations
@@ -267,6 +267,8 @@ def make_instances(unreal,tools,assets,master,textures,meshes):
 
 
 def main():
+    if MODE=='apply':
+        raise RuntimeError('旧鸟群原型写入入口已退休；当前网格仅由ImportBirdFlockFlightMeshes.py维护，历史资源不得恢复到运行目录。')
     data=verified()
     for entry in data["files"]:
         print("BIRD_SOURCE_CHECK_OK",entry["path"],entry["bytes"])

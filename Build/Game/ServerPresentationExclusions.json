@@ -295,11 +295,11 @@
       "Reason": "神兽联盟环境雪苔项目材质实例为客户端纯表现，不属于服务器必要资源。"
     },
     {
-      "PackagePath": "/DBAPresentationPack_Core/Materials/Terrain",
-      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain",
+      "PackagePath": "/DBAPresentationPack_Core/Textures/Terrain/Production10",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Textures/Terrain/Production10",
       "Profiles": "AllServers",
       "Availability": "Present",
-      "Reason": "十层V3地形基础色、函数化高精母材质与客户端MI只负责视觉表现；专服地图仍持有DBAWorldPack_Village中性桥接母材质，不允许硬依赖此目录。"
+      "Reason": "十张公共地形色彩图仅供客户端雪地与材质表现；迁移保留源RGB，专服地图权威地形不依赖此目录。"
     },
     {
       "PackagePath": "/DBAPresentationPack_Core/Textures/Terrain/Grass",
@@ -475,6 +475,27 @@
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "统一植物风原生审核地图/夹具不提供权威碰撞或玩法，禁止进入服务器发布包。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Development/Terrain",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/Terrain",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "世界绑定的12项Production10审核材质仅用于开发演示，不含正式地图或权威地形。"
+    },
+    {
+      "PackagePath": "/Game/Development/Vendor",
+      "SourceDirectory": "Game/Content/Development/Vendor",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "PN与StyleHex供应商原始样例保留历史内部引用，不进入正式客户端或专服。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/Development/History",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Development/History",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "七项旧鸟网格历史留存，当前Flight网格及Niagara链保持稳定；专服不加载鸟视觉。"
     }
   ],
   "StageOnlyDirectories": [

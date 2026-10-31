@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """SSLM正式扫描地形PBR三档质量候选材质实例制作与独立验证。
 
-归属：第三层纯客户端DBAPresentationPack_Core；只创建新MI，不替换正式Village共享地图、
+归属：第三层DBAWorldPack_Village/Development/Terrain/Production10的客户端审核内容；只创建新MI，不替换正式Village共享地图、
 已有审核MI、平台母材质或服务器权威图层。旧母材质原配方保留高档启用高度混合；
 新函数化候选因UE5.8静态开关写入限制，三个档位仅继承关闭高度混合并用有效标量调节，
 不得假称高档已启用HeightBlend。十基础层保持可见，不伪报GPU性能改善。
@@ -15,7 +15,7 @@ import os
 MODE=os.environ.get("TERRAIN_QUALITY_PROFILES_MODE","inspect").strip().lower()
 # 原有质量档保持不变；仅显式 opt-in 才给函数化候选生成独立三档MI。
 FUNCTION_INTEGRATION=os.environ.get("TERRAIN_FUNCTION_INTEGRATION","0").strip()=="1"
-BASE="/DBAPresentationPack_Core/Materials/Terrain"
+BASE="/DBAWorldPack_Village/Development/Terrain/Production10"
 MASTER=BASE+("/M_DBA_Terrain_Production10_FunctionIntegrated" if FUNCTION_INTEGRATION
              else "/M_DBA_Terrain_Production10")
 CONFIG={

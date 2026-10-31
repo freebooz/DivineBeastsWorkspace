@@ -1,6 +1,6 @@
 # Village lake underwater and swimming implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 在现有原生新手村湖泊中实现双端游泳/自由潜水及对应水下光学。
 **Architecture:** 原生Water负责湖面和最终相机水下检测；现有WaterRegion绑定同源烘焙PhysicsVolume，CharacterMovement负责唯一网络运动。Surface持有通用材质，Village持有具体参数，沿用事件通知及唯一VFX/SFX链。
@@ -29,37 +29,37 @@
 **Files:** `Tools/Unreal/World/VillageWaterSystemsMonolith.py`；证据 `Saved/Validation/VillageWaterSystems20261031`。
 **Interfaces:** `inspect_world()` 记录Lake身份/碰撞/材质、Region、物理体积、骨架动作；`verify_world()` 对真实泳区与查询合同断言。
 
-- [ ] 启动唯一正式编辑器，原生读取Village和现有WaterReview；保存精确指纹和只读报告。
-- [ ] 在当前缺失物理水域和水下查询的真实基线上运行verify，观察明确失败，保留日志。
+- [x] 启动唯一正式编辑器，原生读取Village和现有WaterReview；保存精确指纹和只读报告。
+- [x] 在当前缺失物理水域和水下查询的真实基线上运行verify，观察明确失败，保留日志。
 
 ### Task 2: 双端水域、泳潜输入与动画事实
 
 **Files:** `GamePlatformWaterRuntime/Public/Actors/GamePlatformWaterRegion.h` 及Private实现/Tests；`GamePlatformWaterEditorLibrary.h/.cpp`；`DivineBeastsGameplayCharacter.h/.cpp`；`DefaultInput.ini`；`GamePlatformLocomotionAnimInstance.h/.cpp`及既有Tests。
 **Interfaces:** Region新增 `WaterPhysicsVolume` 与显式要求精确体积的配置，SampleRegion优先查询该体积；Editor提供 `BakeLakePhysicsVolume(AActor*, AGamePlatformWaterRegion*, float, FString&)`；角色 `SwimVertical(float)` 只在Swimming时提交原生加速度；动画 `bIsSwimming` 反映实际移动模式。
 
-- [ ] 添加实际失效体积/凹岸/进出水和输入资格回归；对当前实现观察失败。
-- [ ] 实现现有Region的原生体积接线及同源作者，烘焙闭合Brush，拒绝跨世界/空体积/歧义；保留显式旧Box兼容。
-- [ ] 完成原生泳潜参数、W/S视线运动、Space/Ctrl升降及只读动画字段，保持地面输入和权威死亡/失控门禁。
-- [ ] 完整Editor增量构建并运行相关原生回归，所有必要用例通过。
+- [x] 添加实际失效体积/凹岸/进出水和输入资格回归；对当前实现观察失败。
+- [x] 实现现有Region的原生体积接线及同源作者，烘焙闭合Brush，拒绝跨世界/空体积/歧义；保留显式旧Box兼容。
+- [x] 完成原生泳潜参数、W/S视线运动、Space/Ctrl升降及只读动画字段，保持地面输入和权威死亡/失控门禁。
+- [x] 完整Editor增量构建并运行相关原生回归，所有必要用例通过。
 
 ### Task 3: 真实湖体、水下材质及动画资产
 
 **Files:** 同一Monolith工具、通用Water材质/函数、Village稳定材质实例、现有审核地图和Village地图、当前主线角色动画资产。
 **Interfaces:** 消费Task2的原生体积作者；相机使用WaterSubsystem；具体材质参数/纹理由真实反射决定，保证其他世界默认行为。
 
-- [ ] 通过Monolith备份、建立精确水域、恢复湖体QueryOnly水下检测，保存后回读泳区和湖体边界不变。
-- [ ] 完成同一水面/水下链的吸收散射、局部动画焦散及四档策略，编译Shader；绑定稳定Village实例。
-- [ ] 原生审查当前骨架与动作，复用或制作基础泳姿并接入现有动画图，编译保存。
-- [ ] 独立新进程重载，verify由RED转GREEN；固定镜头截图及动态泳潜/水线证据。
+- [x] 通过Monolith备份、建立精确水域、恢复湖体QueryOnly水下检测，保存后回读泳区和湖体边界不变。
+- [x] 完成同一水面/水下链的吸收散射、局部动画焦散及四档策略，编译Shader；绑定稳定Village实例。
+- [x] 原生审查当前骨架与动作，复用或制作基础泳姿并接入现有动画图，编译保存。
+- [x] 独立新进程重载，verify由RED转GREEN；固定镜头截图及动态泳潜/水线证据。
 
 ### Task 4: 构建、Cook、联机与交付
 
 **Files:** 当前构建/Cook/启动脚本和必要精确CustomConfig、交付文档；不复制执行器。
 **Interfaces:** 实际Client/Server构建输入、包、PID与角色；原生容器清单和运行日志分别记录。
 
-- [ ] 受影响Editor/Client/Server完整增量目标通过；精确Cook/Stage，实际容器检查CPU体积保留/纯表现剥离。
+- [x] 受影响Editor/Client/Server完整增量目标通过；精确Cook/Stage，实际容器检查CPU体积保留/纯表现剥离。
 - [ ] 核对Village与MainArena真实运行版本，必要时同步/受控重启，再执行双端泳潜与清理回归。
-- [ ] 一次fresh整体代码审查，修复实质问题，分别报告原生、自动化、运行、GPU和人工签收；不代填人工通过。
+- [x] 一次fresh整体代码审查，修复实质问题，分别报告原生、自动化、运行、GPU和人工签收；不代填人工通过。
 
 ## Execution ledger
 
@@ -100,3 +100,12 @@ Final：审查Declined to judge均按原要求维持：不做氧气/溺水；仅
 Final：c21d04ca原生失败回归构建通过，PID47100观察到3项明确失败：重复ID体积借用资格、普通体积重叠未拒绝、错误后留有绑定。随后补注册成员指针检查与作者期保守重叠拒绝，材质作者已有未保存保护；真实截图另发现UE Python Rotator位置参数顺序不同于C++，审核Pawn/探针改用pitch/yaw/roll关键字，待原生回读与复采。
 
 Final：审查Declined to judge均按原要求维持：不做氧气/溺水；仅覆盖当前12份主线Profile共用Kachujin骨架；速度/浮力及泳姿审美仍待人工；审核Pawn/GameMode须追加本轮原生编译、保存、重载及实际控制证据。Medium/High焦散仅缩强度，不声称少采样或GPU节省。
+
+
+Final completed evidence：Editor c044dafb、Client/Server b2d9fef8、Server Cook345bc0e8、Client Cook b96661d9、11图Demo Cook96a2cb69均Passed。Water实际容器九项客户端唯一导出/服务器纯表现0；专服地图保留精确CPU体积。PID7844最终冷重载与Catalog新指纹通过。PID7028经真实Catalog.OpenScenario成功从Hub进入WaterReview并自动生成主线泳潜Pawn，28秒后仍在目标图且MoveIgnored=false；没有使用Generic GameInstance旁路作该导航证据。
+
+Final fixed：重复ID与未管理体积冲突 — c21d04ca原生RED3错误→c044dafb Water2/2 GREEN（隔离World销毁2warning，无测试错误）；动画2/2、泳潜输入1/1通过；脏包保护RED3失败→2/2 GREEN；服务器策略34/34 GREEN。不派复审。
+
+Final runtime boundary：真实Village/MainArena已绑定当前Server Stage/PID38960、23188；两Client PID25100、10696由当前包停留手动登录页，实际日志t.MaxFPS=0/r.VSync=0；源码/权威资产/映像兼容门禁通过。用户未手动登录及进行双端泳潜、弱网和视觉签收，故该条仍未勾选，HumanAccepted与OnlineAdmissionVerified保持false。
+
+Final integration：使用finishing-a-development-branch收尾，按现有原位执行与.git只读约束保留当前工作区，不进行提交、推送、合并或删除。Cook生成的四份FileOpenOrder日志保留原始证据。

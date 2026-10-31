@@ -3,11 +3,11 @@
 import unreal as u
 
 ROOT = '/DBAFoliagePack_Core/Foliage/Grass/FabOpenWorld/'
-SOURCE = '/Game/PN_OpenWorldFoliage/Meshes/'
+SOURCE = '/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/'
 MAT = ROOT + 'M_DBA_OpenWorldFoliage_GlobalWind'
 MI = ROOT + 'MI_DBA_OpenWorldFoliage_GlobalWind'
 WIND = '/GamePlatformSurface/MaterialFunctions/Vegetation/MF_GP_DirectionalVegetationWind'
-INTERACTION = '/Game/PN_OpenWorldFoliage/Materials/Interaction.Interaction'
+INTERACTION = '/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Materials/Interaction.Interaction'
 
 
 def run():

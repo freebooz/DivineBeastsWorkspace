@@ -15,7 +15,7 @@ from pathlib import Path
 MODE=os.environ.get("TERRAIN_PBR_GPU_REVIEW_MODE","inspect").lower().strip()
 MAP="/Game/Development/Terrain/Maps/L_DBA_TerrainMaskReview"
 MPC="/GamePlatformSurface/ParameterCollections/MPC_GP_SurfaceGlobal"
-MI="/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_Review"
+MI="/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_Review"
 # 名称 / 雪量 / 湿润度 / 全局苔藓影响：重用GamePlatformSurface唯一MPC。
 STATES=(
     ("Dry",0.0,0.0,0.0),

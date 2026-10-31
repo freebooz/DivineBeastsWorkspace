@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""UE5.8 鸟群资产只读回归校验。
+"""UE5.8 鸟群首版历史资产只读回归校验；当前运行资产使用ValidateBirdFlockP4Assets.py。
 
 必须在正式 UnrealEditor-Cmd PythonScriptPlugin 下运行。重新加载先前真实写盘的十件
 AssetRegistry 资源（3 StaticMesh + 3 Texture2D + 3 MaterialInstanceConstant + 1 Material）。
@@ -39,7 +39,7 @@ def main():
     print("BIRD_VERIFY_PLATFORM_MASTER",parent.get_path_name())
     checked=1
     for name in SPECIES:
-        mesh=lib.load_asset(BIRD+"/Meshes/SM_DBA_Bird_"+name+"_Cm")
+        mesh=lib.load_asset('/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/SM_DBA_Bird_'+name+'_Cm')
         tex=lib.load_asset(BIRD+"/Textures/T_DBA_Bird_"+name+"_Albedo")
         mat=lib.load_asset(BIRD+"/Materials/MI_DBA_Bird_"+name)
         if not isinstance(mesh,unreal.StaticMesh):

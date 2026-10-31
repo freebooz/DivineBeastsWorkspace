@@ -30,6 +30,10 @@
 - 来自当前对话的梨花、樱花、银杏、梧桐、枫叶高清参考图集导出为可人工导入的源包；远程连接器未能接受ImageGen原图文件引用，当前工程内33套新源图是独立程序绘制版本。待原图可信传入`SourceArt/AmbientNature/ExternalReferences`后，使用`ImportApprovedAmbientReferenceArtUE58.py（原图SHA校验与UE导入工具）`做可回滚的手工批准替换；任何未知来源图片不得冒充已交付原图。
 - 实施细节、未完成门禁和证据见`Docs/Implementation/AmbientNatureAssetLibrary_20261011.md（自然环境资源库实施文档）`。正式验收仍需地图区域动态接入、Editor目标反射注册、区域DataAsset落盘、Cook/Stage、D3D12及移动端实际性能与人工视觉测试。
 
+## 2026-10-31资源归属更新
+
+十张公共地形色彩图当前归`Textures/Terrain/Production10`；三份Village绑定审核母材质及九份实例归`DBAWorldPack_Village/Development/Terrain/Production10`，公共包不再反向依赖世界包。当前鸟群三项`VFX/Environment/BirdFlock/Meshes/Flight`保持稳定；七项旧网格归`Development/History/BirdFlock/Meshes`且禁止正式Cook。当前作者同步`Tools/Unreal/Resources/ResourceOwnershipManifest.json`对应路径；来源图和下文历史审核记录不重写。迁移与各阶段验证见`Docs/Implementation/Resources/ResourceOwnershipDelivery_20261031.md`。
+
 ## Niagara PBR 落叶外观母版（2026-10-11）
 
 平台 `GamePlatformVFX（游戏平台视觉特效插件）` 已通过 UE5.8 实际保存 `M_GP_AmbientNature_PBR_Foliage（通用双面植被PBR母材质）`，包含基础颜色、法线、粗糙度、独立OpacityMask（透明裁剪）、镜面反射与Subsurface（次表面透光），不硬引用本项目纹理。项目 `AmbientNature（自然环境内容）` 已登记33套 `MI_DBA_Ambient_*（项目材质实例）`和原 Niagara 变体，不另建播放框架。

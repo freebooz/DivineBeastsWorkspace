@@ -36,3 +36,5 @@
 - 新手村地图、植被、AI、水体编辑器桥接等初始用户修改保留。本轮场景与字体工作没有改写新手村湖泊。
 
 完整证据目录：`Saved/Validation/PluginSceneFontAudit/20261030`。构建与 Cook 原始结果：`Saved/Validation/FoundationM0/<RunId>/Build/result.json` 或 `Cook-Client/result.json`；启动原始结果：`Saved/Validation/PluginDemos/Launch/19c31d5a-092f-41af-a707-5f8d9c66fc89/Launch.json`。
+
+2026-10-31 水体后续实施补充：沿用本报告的70页/10号字体结果；Water审核图已增加主线泳潜Pawn、水下表现及对应操作说明，作者Manifest/Catalog指纹更新为587e4980e4708cb74ead56ec219448c9b42a88a5d289f8c7604bb5b6553f3ac7，独立冷读通过。当前11图演示客户端Cook/Stage为96a2cb69-f245-48b2-a066-5e131357263c；更早演示包仅作历史证据。真实双端及人工边界见同目录上层Water/VillageLakeUnderwaterSwimDelivery_20261031.md。

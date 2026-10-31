@@ -18,7 +18,7 @@ UDivineBeastsVillageSnowSettings::UDivineBeastsVillageSnowSettings()
     // V3草地色是同一Poly Haven CC0扫描BaseColor的派生，Normal/ORM必须取该源扫描对应版本，
     // 防止颜色与微表面来自两套不同扫描而出现不真实的光照/高光。原V3母材质和审核地图继续独立。
     GroundAlbedoTexture = FSoftObjectPath(TEXT(
-        "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Grass_BaseColor_V3.T_DBA_Terrain_Grass_BaseColor_V3"));
+        "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Grass_BaseColor_V3.T_DBA_Terrain_Grass_BaseColor_V3"));
     GroundNormalTexture = FSoftObjectPath(TEXT(
         "/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_Normal.T_DBA_Terrain_Grass_Normal"));
     GroundORMTexture = FSoftObjectPath(TEXT(

@@ -62,7 +62,7 @@ bool FDivineBeastsVillageSnowBridgeContractTest::RunTest(const FString& Paramete
         // 新正式视觉合同：V3草地色与该CC0扫描的法线/ORM配对，不回退到历史黄褐色基础色。
         TestEqual(TEXT("正式Village客户端应使用已创建V3.0草地色软路径"),
             Config->GroundAlbedoTexture.ToString(),
-            FString(TEXT("/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Grass_BaseColor_V3.T_DBA_Terrain_Grass_BaseColor_V3")));
+            FString(TEXT("/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Grass_BaseColor_V3.T_DBA_Terrain_Grass_BaseColor_V3")));
         TestEqual(TEXT("正式Village草地法线来自同一CC0纹理组"),
             Config->GroundNormalTexture.ToString(),
             FString(TEXT("/DBAWorldPack_Village/Terrain/Textures/Grass/T_DBA_Terrain_Grass_Normal.T_DBA_Terrain_Grass_Normal")));

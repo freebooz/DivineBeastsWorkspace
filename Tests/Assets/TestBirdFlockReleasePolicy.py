@@ -449,6 +449,14 @@ def required_files():
 
 
 class BirdFlockReleasePolicyTests(unittest.TestCase):
+    def test_archived_history_mesh_and_sidecar_are_rejected(self):
+        root=DBA.split('/VFX/',1)[0]+'/Development/History/BirdFlock/Meshes'
+        for suffix in ('.uasset','.ubulk','.uexp'):
+            item=root+'/SM_DBA_Bird_Seagull_Cm'+suffix
+            report=self.report(required_files()+[item])
+            self.assertEqual(report['status'],'failed')
+            self.assertIn(item,report['forbidden'])
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='bird-release-')
         self.addCleanup(self.tmp.cleanup)

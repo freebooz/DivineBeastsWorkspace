@@ -12,8 +12,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SURFACE = ROOT / ("Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/"
                   "Content/MaterialFunctions/Layers/MF_GP_PBRLayerBlend.uasset")
-PRESENT = ROOT / ("Game/Plugins/DivineBeasts/ContentPacks/Presentation/"
-                  "DBAPresentationPack_Core/Content/Materials/Terrain")
+PRESENT = ROOT / ("Game/Plugins/DivineBeasts/ContentPacks/Worlds/"
+                  "DBAWorldPack_Village/Content/Development/Terrain/Production10")
 MASTER = PRESENT / "M_DBA_Terrain_Production10_FunctionIntegrated.uasset"
 INSTANCE = PRESENT / "MI_DBA_Terrain_Production10_FunctionIntegrated_Review.uasset"
 REVIEW = ROOT / "Game/Content/Development/Terrain/Maps/L_DBA_TerrainFunctionReview.umap"

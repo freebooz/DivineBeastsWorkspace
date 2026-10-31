@@ -385,6 +385,7 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
                 "/dbaworldpack_village/creatures/vampirealusth",
                 "/dbaworldpack_village/pcg/ferns",
                 "/dbaworldpack_village/development/wind",  # 独立植物风审核夹具，不是正式地图/权威定义
+                "/dbaworldpack_village/development/terrain",  # 12项世界绑定审核材质；正式地形/权威地图不在此叶子
             )
             if package in ("/Game", "/Engine", "/Game/Development") or (not is_reviewed_world_visual_leaf and any(
                     _under(package.casefold(), root.casefold()) or _under(root.casefold(), package.casefold())

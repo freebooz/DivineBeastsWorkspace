@@ -21,7 +21,7 @@ namespace
     const FName FlowerName(TEXT("VillageFlowers"));
     const FSoftObjectPath GrassPath(TEXT("/DBAFoliagePack_Core/Foliage/Grass/FabOpenWorld/LGT_DBA_OpenWorldGrass.LGT_DBA_OpenWorldGrass"));
     const FSoftObjectPath FlowerPath(TEXT("/DBAFoliagePack_Core/Foliage/Grass/FabOpenWorld/LGT_DBA_OpenWorldFlowers.LGT_DBA_OpenWorldFlowers"));
-    const FSoftObjectPath ContactPath(TEXT("/Game/PN_OpenWorldFoliage/Materials/MaterialCollection.MaterialCollection"));
+    const FSoftObjectPath ContactPath(TEXT("/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Materials/MaterialCollection.MaterialCollection"));
 }
 
 bool UDivineBeastsVillageGrassWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const

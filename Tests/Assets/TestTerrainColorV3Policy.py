@@ -79,6 +79,9 @@ def check(native: bool = False) -> None:
     catalog = {x["semanticId"]: x for x in registry["items"]}
     rows = {(x["layer"], x["role"]): x for x in production["files"]}
     generated = {x["layer"]: x for x in report["layers"]}
+    # 生成报告是历史证据，不能回写；当前迁移合同只解析确切的旧包身份。
+    moves=json.loads((ROOT/'Tools/Unreal/Resources/ResourceOwnershipManifest.json').read_text(encoding='utf-8'))['moves']
+    current_paths={m['source']:m['target'] for m in moves}
     for layer in cfg["layers"]:
         name = layer["layer"]
         key = layer["semanticId"]
@@ -106,8 +109,8 @@ def check(native: bool = False) -> None:
         ensure(dst.is_file() and png_size(dst) == (2048, 2048) and
                sha256(dst) == generated_row["derivedSha256"],
                "V3新基础色纹理不存在/尺寸或哈希异常：" + name)
-        ensure(generated_row["futureUnrealAsset"].startswith(
-                   "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/"),
+        ensure(current_paths.get(generated_row["futureUnrealAsset"],generated_row["futureUnrealAsset"]).startswith(
+                   "/DBAPresentationPack_Core/Textures/Terrain/Production10/"),
                "新基础色不在客户端项目表现包：" + name)
     # 同时确认10组原始BaseColor/Normal/ORM/Height均与既有源指纹一致。
     for spec in production["files"]:
@@ -127,10 +130,12 @@ def check(native: bool = False) -> None:
            b"MI_DBA_Terrain_Production10_V3" not in village.read_bytes(),
            "V3审核候选被直接硬引用进服务器共用正式Village地图")
     if native:
-        base = ROOT / ("Game/Plugins/DivineBeasts/ContentPacks/Presentation/"
-                       "DBAPresentationPack_Core/Content/Materials/Terrain")
+        base = ROOT / ("Game/Plugins/DivineBeasts/ContentPacks/Worlds/"
+                       "DBAWorldPack_Village/Content/Development/Terrain/Production10")
+        colors = ROOT / ("Game/Plugins/DivineBeasts/ContentPacks/Presentation/"
+                         "DBAPresentationPack_Core/Content/Textures/Terrain/Production10")
         for row in report["layers"]:
-            asset = base / ("TexturesV3/T_DBA_Terrain_" + row["layer"] +
+            asset = colors / ("T_DBA_Terrain_" + row["layer"] +
                             "_BaseColor_V3.uasset")
             ensure(asset.is_file() and asset.stat().st_size > 2048,
                    "未找到真实UE纹理文件：" + str(asset))

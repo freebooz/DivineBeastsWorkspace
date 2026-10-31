@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[3]
 MODE = os.getenv("TERRAIN_COLOR_V3_GPU_MODE", "inspect").lower().strip()
 SCRIPT = ROOT / "Tools/Unreal/Terrain/CaptureTerrainProductionGPUReview.py"
 MAP = "/Game/Development/Terrain/Maps/L_DBA_TerrainColorV3Review"
-MI = ("/DBAPresentationPack_Core/Materials/Terrain/"
+MI = ("/DBAWorldPack_Village/Development/Terrain/Production10/"
       "MI_DBA_Terrain_Production10_V3_Review")
 
 

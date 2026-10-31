@@ -5,6 +5,7 @@
 原导入走Interchange并未保留期望的FbxImportUI顶点颜色合同。本次仅在独立作者
 进程选择引擎内置FBX导入器，不修改插件/项目配置；新资源_Flight不覆盖原_Cm。
 导入后检查实际ImportData类型、顶点色策略、尺寸和材质，再保存真实uasset。
+2026-10-31：本入口仍为当前Flight唯一网格作者；原_Cm等七份历史网格已归Development/History/BirdFlock/Meshes。
 """
 from pathlib import Path
 import hashlib
