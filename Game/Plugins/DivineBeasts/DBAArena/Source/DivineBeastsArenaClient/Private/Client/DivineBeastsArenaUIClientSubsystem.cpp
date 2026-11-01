@@ -255,7 +255,8 @@ void UDivineBeastsArenaUIClientSubsystem::HandleArenaEntranceInteraction(const F
         Event.RequestId!=Event.Result.RequestId||Event.SessionId!=Event.Result.SessionId||LastArenaEntranceRequest==Event.RequestId)return;
     const FName Mode=Entrance->GetArenaModeId();if(Mode.IsNone()||!FDivineBeastsArenaModeCatalog::Find(Mode))return;
     LastArenaEntranceRequest=Event.RequestId;
-    OpenMatchmakingMenu(FString(),Mode);
+    const bool bAccepted=OpenMatchmakingMenu(FString(),Mode);
+    UE_LOG(LogTemp,Display,TEXT("ArenaEntranceInteraction: Request=%s Mode=%s MenuAccepted=%d"),*Event.RequestId.ToString(),*Mode.ToString(),bAccepted?1:0);
 }
 
 FName UDivineBeastsArenaUIClientSubsystem::ResolvePrimaryArenaSurfaceId() const

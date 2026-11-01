@@ -61,7 +61,9 @@ void ProbeHostArenaInteraction(FFix1Live& S, bool bExpectedActive)
   S.T->TestEqual(TEXT("只向活动交互暴露当前Pawn代次"),Provider->GetGameplayAvatarGeneration(),bExpectedActive?int32(PS->GetLifecycleSnapshot().PawnGeneration):0);
  }
  auto* Interactor=C->FindComponentByClass<UGamePlatformInteractorComponent>();
- if(!S.T->TestNotNull(TEXT("复用真实世界控制器交互组件"),Interactor))return;
+ // 离线Host生成的是平台基类控制器；项目World派生类的默认交互组件在此显式组合一次。
+ if(!Interactor){Interactor=NewObject<UGamePlatformInteractorComponent>(C);C->AddInstanceComponent(Interactor);Interactor->RegisterComponent();}
+ if(!S.T->TestNotNull(TEXT("平台组件承载真实门交互"),Interactor))return;
  FActorSpawnParameters Spawn;Spawn.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
  const FVector Origin=C->GetPawn()?C->GetPawn()->GetActorLocation():FVector::ZeroVector;
  auto* Gate=C->GetWorld()->SpawnActor<ADivineBeastsArenaEntrance>(ADivineBeastsArenaEntrance::StaticClass(),Origin+FVector(100,0,-80),FRotator::ZeroRotator,Spawn);

@@ -28,6 +28,17 @@
 
 DECLARE_DELEGATE_OneParam(FDivineBeastsJournalInputDelegate, FName);
 
+int32 ADivineBeastsWorldPlayerController::GetGameplayAvatarGeneration() const
+{
+    const int32 Generation = Super::GetGameplayAvatarGeneration();
+    if (Generation <= 0) return 0;
+    const APawn* ControlledPawn = GetPawn();
+    const auto* ASC = ControlledPawn ? ControlledPawn->FindComponentByClass<UGamePlatformAbilitySystemComponent>() : nullptr;
+    // 项目Gate已经核对角色Ready、身份/战斗代次、死亡和服务器Active；
+    // 复用同一查询，防止死亡后的五秒重生等待仍因平台生命周期Active而打开竞技门。
+    return ASC && ASC->EvaluateActivationEligibility().IsSuccess() ? Generation : 0;
+}
+
 void ADivineBeastsWorldPlayerController::UpdateCameraManager(float DeltaSeconds)
 {
     Super::UpdateCameraManager(DeltaSeconds);

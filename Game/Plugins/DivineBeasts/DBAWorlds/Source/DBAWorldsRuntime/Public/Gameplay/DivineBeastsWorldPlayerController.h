@@ -18,6 +18,8 @@ class DBAWORLDSRUNTIME_API ADivineBeastsWorldPlayerController : public AGamePlat
 public:
     /** 双端控制器拥有一个平台交互发起组件；不创建第二份交互RPC或Pawn权威状态。 */
     ADivineBeastsWorldPlayerController();
+    /** 服务器交互复用平台准入代次和角色既有GAS资格门禁；死亡/角色未就绪仍返回0，不另存Active。 */
+    virtual int32 GetGameplayAvatarGeneration() const override;
     FSimpleMulticastDelegate OnLocalWorldFactsChanged;
     /** 本地ESC意图；UI客户端拥有订阅和菜单，共享世界模块不依赖客户端UI实现。 */
     FSimpleMulticastDelegate OnWorldEscapeRequested;

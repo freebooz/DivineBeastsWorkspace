@@ -3,7 +3,37 @@
 #include "Framework/GamePlatformGameModeBase.h"
 #include "Framework/GamePlatformPlayerStateBase.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/Pawn.h"
 #include "Engine/World.h" // 非Unity客户端目标需要UWorld完整类型来解析权威GameMode。
+
+bool AGamePlatformPlayerControllerBase::IsServerPlayerActiveForGameplay() const
+{
+    return GetGameplayAvatarGeneration() > 0;
+}
+
+int32 AGamePlatformPlayerControllerBase::GetGameplayAvatarGeneration() const
+{
+    check(IsInGameThread());
+    const UWorld* World = GetWorld();
+    const APawn* ControlledPawn = GetPawn();
+    const auto* State = GetPlayerState<AGamePlatformPlayerStateBase>();
+    if (!HasAuthority() || IsActorBeingDestroyed() || !World || World->bIsTearingDown ||
+        !IsValid(ControlledPawn) || ControlledPawn->IsActorBeingDestroyed() || ControlledPawn->GetWorld() != World ||
+        ControlledPawn->GetController() != this || !IsValid(State) || State->GetWorld() != World)
+    {
+        return 0;
+    }
+    const auto Snapshot = State->GetLifecycleSnapshot();
+    if (!Snapshot.IsServerActive() || Snapshot.ControlledPawn != ControlledPawn ||
+        Snapshot.PawnGeneration <= 0 || Snapshot.PawnGeneration > MAX_int32)
+    {
+        return 0;
+    }
+    // Experience宿主的唯一准入读取器已经校验当前连接与真实Active记录；
+    // 不把该状态镜像到供其他宿主组合的Pawn资格组件，也不接受本地准备作为授权。
+    const auto* Mode = World->GetAuthGameMode<AGamePlatformGameModeBase>();
+    return Mode && Mode->IsPlayerGameplayActive(*this) ? static_cast<int32>(Snapshot.PawnGeneration) : 0;
+}
 
 FGamePlatformResult AGamePlatformPlayerControllerBase::ReportLocalPreparation(const FGamePlatformLocalPreparationFacts& Facts)
 {

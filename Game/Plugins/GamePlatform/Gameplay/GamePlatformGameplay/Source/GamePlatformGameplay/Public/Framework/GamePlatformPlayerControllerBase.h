@@ -1,5 +1,6 @@
 #pragma once
 #include "GameFramework/PlayerController.h"
+#include "Interfaces/GamePlatformGameplayEligibilityProvider.h"
 #include "Types/GamePlatformGameplayReadiness.h"
 #include "Types/GamePlatformResult.h"
 #include "GamePlatformPlayerControllerBase.generated.h"
@@ -7,10 +8,14 @@ class AGamePlatformGameModeBase;
 
 /** 拥有者准备报告通道；不接受体验选择、玩家身份、Pawn类或出生坐标等权威参数。 */
 UCLASS(NotBlueprintable)
-class GAMEPLATFORMGAMEPLAY_API AGamePlatformPlayerControllerBase : public APlayerController
+class GAMEPLATFORMGAMEPLAY_API AGamePlatformPlayerControllerBase : public APlayerController, public IGamePlatformGameplayEligibilityProvider
 {
     GENERATED_BODY()
 public:
+    /** 游戏线程服务器查询：复用当前GameMode准入/Active权威，不复制另一份资格状态。客户端始终失败关闭。 */
+    virtual bool IsServerPlayerActiveForGameplay() const override;
+    /** 仅有效Active拥有关系返回PlayerState当前Pawn代次；失活、退出或int32越界返回0。 */
+    virtual int32 GetGameplayAvatarGeneration() const override;
     /** 拥有者准备令牌复制变化，仅用于触发本地事实重新采样。 */
     FSimpleMulticastDelegate OnPreparationChanged;
     /** 返回当前拥有者令牌；仅供关联准备状态，禁止用作认证凭据。 */
