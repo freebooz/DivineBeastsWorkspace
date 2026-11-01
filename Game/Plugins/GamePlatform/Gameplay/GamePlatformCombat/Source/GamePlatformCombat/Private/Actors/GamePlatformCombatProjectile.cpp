@@ -48,6 +48,7 @@ bool AGamePlatformCombatProjectile::AuthorityInitialize(const FGamePlatformComba
     FlightMotion = Motion;
     Origin = GetActorLocation(); Axis = Direction.GetSafeNormal();
     bHasHomingTarget = Spec.Target != nullptr;
+    bDirectTargetHoming = false;
     HomingTarget = Spec.Target.Get(); HomingTargetAvatarGeneration = Spec.TargetAvatarGeneration;
     HomingCenter = Origin;
     HomingHelixRadiusCm = Motion.HelixRadiusCm;
@@ -66,6 +67,11 @@ bool AGamePlatformCombatProjectile::AuthorityInitialize(const FGamePlatformComba
         {
             CastSpec={}; HomingTarget.Reset(); bHasHomingTarget=false; return false;
         }
+        // 只在发射时按角色中心分类，手部起射偏移不能改变正向锥资格。
+        // 后续仍追踪冻结的原目标；小于30度只取消额外Bezier弧线，不锁死旧坐标。
+        const FVector SourceToTarget = (TargetCenter - SourceCenter).GetSafeNormal(UE_SMALL_NUMBER, Axis);
+        bDirectTargetHoming = FVector::DotProduct(Axis, SourceToTarget) >
+            FMath::Cos(FMath::DegreesToRadians(30.0)) + UE_DOUBLE_SMALL_NUMBER;
         BuildHomingBezier(TargetCenter);
         // 射程是中心间施放资格，不是弧线路程。初次弧长加有界捕获余量冻结期限，后续重建不能延寿。
         FlightEndSeconds = FMath::Max(FlightEndSeconds, BezierArcLengths[32] / Motion.SpeedCmPerSecond) +
@@ -104,19 +110,29 @@ void AGamePlatformCombatProjectile::BuildHomingBezier(const FVector& TargetCente
     const FVector Delta = TargetCenter - HomingCenter;
     const float Distance = Delta.Size();
     const FVector Desired = Delta.GetSafeNormal(UE_SMALL_NUMBER, Axis);
-    const float Angle = FMath::Acos(FMath::Clamp(FVector::DotProduct(Axis, Desired), -1.0, 1.0));
-    FVector Normal = FVector::CrossProduct(Axis, Desired).GetSafeNormal();
-    if (Normal.IsNearlyZero())
+    if (bDirectTargetHoming)
     {
-        // 正后方也必须有非共线控制点；否则三次曲线会在直线上折返，不能形成用户要求的弧形。
-        Normal = (FVector::UpVector - Axis * FVector::DotProduct(FVector::UpVector, Axis)).GetSafeNormal();
-        if (Normal.IsNearlyZero()) Normal = FVector::RightVector;
+        BezierControl1 = BezierStart + Delta / 3.0;
+        BezierControl2 = BezierStart + Delta * (2.0 / 3.0);
+        // 直追允许朝向移动目标立即调整；否则固定的单段转角门禁会反复缩步至停飞。
+        // 真实段长、Sweep、有限期限及显式螺旋参数继续走同一运动链。
+        Axis = Desired;
     }
-    const FVector Side = FVector::CrossProduct(Desired, Normal).GetSafeNormal();
-    // 用户要求更舒展的大弧：控制柄占目标距离35%—60%，相较上一版约加宽三分之一；对齐时仍共线。
-    const float Handle = Distance * FMath::Lerp(.35f, .60f, Angle / UE_PI);
-    BezierControl1 = BezierStart + Axis * Handle;
-    BezierControl2 = BezierEnd - Desired * Handle + Side * (Handle * FMath::Sin(.5f * Angle));
+    else
+    {
+        const float Angle = FMath::Acos(FMath::Clamp(FVector::DotProduct(Axis, Desired), -1.0, 1.0));
+        FVector Normal = FVector::CrossProduct(Axis, Desired).GetSafeNormal();
+        if (Normal.IsNearlyZero())
+        {
+            // 正后方也必须有非共线控制点，不能在直线上折返。
+            Normal = (FVector::UpVector - Axis * FVector::DotProduct(FVector::UpVector, Axis)).GetSafeNormal();
+            if (Normal.IsNearlyZero()) Normal = FVector::RightVector;
+        }
+        const FVector Side = FVector::CrossProduct(Desired, Normal).GetSafeNormal();
+        const float Handle = Distance * FMath::Lerp(.35f, .60f, Angle / UE_PI);
+        BezierControl1 = BezierStart + Axis * Handle;
+        BezierControl2 = BezierEnd - Desired * Handle + Side * (Handle * FMath::Sin(.5f * Angle));
+    }
     FVector Previous = BezierStart;
     BezierArcLengths[0] = 0.f;
     for (int32 Index = 1; Index <= 32; ++Index)

@@ -490,12 +490,12 @@ bool FGamePlatformProjectileCurvedHelixConvergenceTest::RunTest(const FString&)
     TestTrue(TEXT("螺旋收束仍由真实Sweep命中"), Projectile->GetFlightFacts().bImpacted);
     return true;
 }
-// 微小偏角也必须保留起飞切线；不能在首个运动子步直接吸附到目标方向。
-// 覆盖近/中/远距离与最大合法射程，距离不应决定锁定弹体是否退化为直射。
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileSmallAngleArcTest,
-    "GamePlatform.Combat.Projectile.SmallAngleArcAtEveryDistance",
+// 用户确认的新合同：发射时角色中心夹角小于30度直追原目标，取消额外Bezier弧线。
+// 覆盖近/中/远与最大合法射程，距离和高速不能偷偷恢复小偏角弧线。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileFrontalConeTest,
+    "GamePlatform.Combat.Projectile.FrontalConeStraightAtEveryDistance",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FGamePlatformProjectileSmallAngleArcTest::RunTest(const FString&)
+bool FGamePlatformProjectileFrontalConeTest::RunTest(const FString&)
 {
     for (const float Distance : {100.f, 1000.f, 10000.f, 100000.f})
     {
@@ -516,9 +516,9 @@ bool FGamePlatformProjectileSmallAngleArcTest::RunTest(const FString&)
             MaxDeviation = FMath::Max(MaxDeviation,
                 FVector::CrossProduct(Projectile->GetActorLocation(), TargetDirection).Size());
         }
-        TestTrue(FString::Printf(TEXT("%.0f厘米的5度偏角仍先起飞再弧形转向，实测偏离%.4f厘米"), Distance, MaxDeviation),
-            MaxDeviation > Distance * .002f);
-        // 同一距离真正朝向目标时维持直线；不能靠对全部目标强加抛物线使上面的断言通过。
+        TestTrue(FString::Printf(TEXT("%.0f厘米的5度法术沿目标中心直追，偏弦%.4f厘米"), Distance, MaxDeviation),
+            MaxDeviation < .02);
+        // 同一距离真正朝向目标也保持直线，射程边界仍使用原有严格资格。
         Projectile->AuthorityCancel();
         auto* Facing = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
         Spec.EventId = FGuid::NewGuid();
@@ -544,8 +544,77 @@ bool FGamePlatformProjectileSmallAngleArcTest::RunTest(const FString&)
     auto* FastProjectile = Close.World->SpawnActor<AGamePlatformCombatProjectile>();
     if (!TestTrue(TEXT("极近高速小偏角初始化"), FastProjectile->AuthorityInitialize(CloseSpec, Fast, FVector::ForwardVector))) return false;
     FastProjectile->Tick(15.f / Fast.SpeedCmPerSecond);
-    TestTrue(TEXT("15厘米子步内也不能吸附为目标方向"),
-        FVector::CrossProduct(FastProjectile->GetActorLocation(), CloseDirection).Size() > .05);
+    TestTrue(TEXT("极近高速的小偏角法术也沿目标中心直追"),
+        FVector::CrossProduct(FastProjectile->GetActorLocation(), CloseDirection).Size() < .02);
+    return true;
+}
+
+// 严格30度边界与角色中心判定；手部偏移不能把29.9度误分类为大角度。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileFrontalBoundaryTest,
+    "GamePlatform.Combat.Projectile.FrontalConeBoundaryAndSourceCenter",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileFrontalBoundaryTest::RunTest(const FString&)
+{
+    for (const float Yaw : {29.9f, 30.f, 30.1f})
+    {
+        FProjectileTestWorld Fixture;
+        if (!Fixture.Initialize()) return false;
+        Fixture.Source->SetActorLocation(FVector::ZeroVector);
+        const FVector TargetDirection=FRotator(0,Yaw,0).Vector();
+        Fixture.Target->SetActorLocation(TargetDirection*1000.);
+        auto Spec=Fixture.CastSpec();Spec.Target=Fixture.Target;Spec.TargetAvatarGeneration=1;
+        FGamePlatformCombatProjectileMotion Motion;Motion.RangeCm=1500;
+        auto* Projectile=Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+        if(!Projectile->AuthorityInitialize(Spec,Motion,FVector::ForwardVector))return false;
+        double Deviation=0;
+        for(int32 Step=0;Step<30&&!Projectile->IsFlightFinished();++Step)
+        {
+            Projectile->Tick(1.f/120.f);
+            Deviation=FMath::Max(Deviation,FVector::CrossProduct(Projectile->GetActorLocation(),TargetDirection).Size());
+        }
+        TestTrue(FString::Printf(TEXT("%.1f度严格锥边界，偏弦%.4f厘米"),Yaw,Deviation),Yaw<30.f?Deviation<.02:Deviation>1.);
+        Projectile->AuthorityCancel();
+    }
+    FProjectileTestWorld Offset;
+    if(!Offset.Initialize())return false;
+    Offset.Source->SetActorLocation(FVector::ZeroVector);
+    Offset.Target->SetActorLocation(FRotator(0,29.9,0).Vector()*1000.);
+    const FVector Origin(300.,-100.,0.);
+    const FVector Chord=(Offset.TargetCombat->GetCombatTargetPoint()-Origin).GetSafeNormal();
+    auto Spec=Offset.CastSpec();Spec.Target=Offset.Target;Spec.TargetAvatarGeneration=1;
+    FGamePlatformCombatProjectileMotion Motion;Motion.RangeCm=1500;
+    auto* Projectile=Offset.World->SpawnActor<AGamePlatformCombatProjectile>(Origin,FRotator::ZeroRotator);
+    if(!Projectile->AuthorityInitialize(Spec,Motion,FVector::ForwardVector))return false;
+    Projectile->Tick(.1f);
+    TestTrue(TEXT("发射偏移不改变角色中心29.9度的直追资格"),FVector::CrossProduct(Projectile->GetActorLocation()-Origin,Chord).Size()<.02);
+    return true;
+}
+
+// 分类在发射时冻结；原目标移动到大角度时仍直追，不重添弧线、不停止推进。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileFrontalMovingTest,
+    "GamePlatform.Combat.Projectile.FrontalConeTracksMovingTarget",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileFrontalMovingTest::RunTest(const FString&)
+{
+    FProjectileTestWorld Fixture;
+    if(!Fixture.Initialize())return false;
+    Fixture.Source->SetActorLocation(FVector::ZeroVector);
+    Fixture.Target->SetActorLocation(FRotator(0,20,0).Vector()*1000.);
+    auto Spec=Fixture.CastSpec();Spec.Target=Fixture.Target;Spec.TargetAvatarGeneration=1;
+    FGamePlatformCombatProjectileMotion Motion;Motion.RangeCm=2000;
+    auto* Projectile=Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+    if(!Projectile->AuthorityInitialize(Spec,Motion,FVector::ForwardVector))return false;
+    Projectile->Tick(.05f);
+    Fixture.Target->SetActorLocation(FVector(0,900,100));
+    const FVector Before=Projectile->GetActorLocation();
+    const FVector Desired=(Fixture.TargetCombat->GetCombatTargetPoint()-Before).GetSafeNormal();
+    Projectile->Tick(1.f/120.f);
+    const FVector Moved=Projectile->GetActorLocation()-Before;
+    TestTrue(TEXT("原目标移动后每子步仍有实际推进"),Moved.Size()>1.);
+    TestTrue(TEXT("目标转到侧向后不恢复额外Bezier弧度"),FVector::CrossProduct(Moved,Desired).Size()<.02);
+    for(int32 Step=0;Step<300&&!Projectile->IsFlightFinished();++Step)Projectile->Tick(1.f/120.f);
+    TestTrue(TEXT("直追仍由真实Sweep确认移动目标命中"),Projectile->IsFlightFinished()&&Projectile->GetFlightFacts().bImpacted);
+    TestEqual(TEXT("移动原目标只承受一次权威伤害"),Fixture.TargetCombat->GetCombatHealth(),88.f);
     return true;
 }
 

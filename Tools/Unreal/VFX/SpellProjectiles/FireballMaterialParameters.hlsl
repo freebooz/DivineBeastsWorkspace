@@ -11,22 +11,24 @@ float rotation=InRotation;
 float strength=max(InColor.r,max(InColor.g,InColor.b));
 float3 color=float3(strength,strength,strength);
 if(Phase==1 && Role==0){
-    // Engine Sphere全尺寸100cm，0.5缩放与材质25cm半径共同限定50cm圆球。
+    // Engine Sphere全尺寸100cm；InScale由唯一视觉合同写入，不在模块复制尺寸真源。
     position=float3(0,0,0);
-    scale=float3(.5,.5,.5);
+    scale=InScale;
     color=float3(1,1,1);
 }
 if(Phase==1 && Role==1){
-    // 外焰保持在球头附近；不把主体拉成锥体，也不放大50cm主体包络。
+    // 外焰按同一球头尺寸缩放，保持圆形包络。
+    float surfaceScale=InScale.x/.5;
     float phase=float(ParticleIndex)*2.399963+seconds*.55;
     float z=2.0*frac(float(ParticleIndex)*.618034)-1.0;
     float radial=sqrt(max(0.0,1.0-z*z));
-    position=float3(-5+radial*cos(phase)*14,radial*sin(phase)*14,z*15);
-    sprite=float2(16,20);
+    position=float3(-5+radial*cos(phase)*11,radial*sin(phase)*11,z*12)*surfaceScale;
+    sprite=float2(10,14)*surfaceScale;
     color=float3(1,1,1);
 }
 if(Phase==1 && Role==2){
-    // InPosition是世界空间真实历史点，原样传递；尾部收窄由现有TrailFade负责。
+    // 世界空间历史点保留；较缓的Alpha使延长后的整条尾焰可读，宽度仍由既有TrailFade负责。
+    alpha=pow(alpha,.4);
     color=float3(1,1,1);
 }
 if(Phase==2 && Role==0){
@@ -47,7 +49,7 @@ if(Role==3){
     color=float3(1,1,1);
     if(Phase==1){
         position=float3(0,0,0);
-        float extent=Quality==1 ? .525 : (Quality==2 ? .55 : .575);
+        float extent=InScale.x*(Quality==1 ? 1.05 : (Quality==2 ? 1.10 : 1.15));
         scale=float3(extent,extent,extent);
     }
     if(Phase==2){

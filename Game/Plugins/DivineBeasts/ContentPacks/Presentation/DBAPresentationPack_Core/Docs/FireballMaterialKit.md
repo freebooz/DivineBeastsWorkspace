@@ -14,10 +14,10 @@ UE内容根为 `/DBAPresentationPack_Core/VFX/SpellProjectiles/`。纹理在 `Te
 | `T_DBA_Fireball_ImpactFlipbook` | 4×4、16帧一次性爆发，由点燃、膨胀到消散 |
 | `M_DBA_Fireball_Flame` | 唯一新增火焰母材质：Unlit、Additive、双面、Sprite/Ribbon/Mesh用途 |
 | `MI_DBA_Fireball_Core` | 16帧循环，24帧/秒，亮度3.2 |
-| `MI_DBA_Fireball_Trail` | 1帧，亮度2.6，局部UV波动 |
+| `MI_DBA_Fireball_Trail` | 1帧，亮度4.0，局部UV波动 |
 | `MI_DBA_Fireball_Impact` | 16帧，26帧/秒，单次播放，亮度4.0 |
 | `MI_DBA_Fireball_Ember` | 复用尾焰纹理的短小余烬，透明度0.65；由Niagara控制缩放和速度 |
-| `MI_DBA_Fireball_Volume` | 复用现有 `M_DBA_FireOrbVolume`，三维主体半径参数25cm，Engine Sphere缩放0.5，主体直径50cm；不是新建体积执行器 |
+| `MI_DBA_Fireball_Volume` | 复用现有 `M_DBA_FireOrbVolume`，三维主体半径参数40cm，Engine Sphere缩放0.8，主体直径80cm；不是新建体积执行器 |
 | `MI_DBA_Fireball_AirRipple` | 复用现有 `M_DBA_PalmAirRipple`，局部空气扰动装饰 |
 
 生成使用内置imagegen。三张原始PNG均为1254×1254 RGBA，原始字节完整保留；UE的 `ResizeToSpecificResolution` 在构建时缩到1024×1024，实际Texture2D尺寸已核对。此操作不会增加原稿细节，也不会用填边破坏4×4分格。灰度作为线性强度数据：关闭sRGB、MASKS压缩、保留Alpha、Clamp。翻页素材不生成Mip，并在材质中限制本格UV及淡出边界，避免小Mip和采样越界混入相邻帧；此选择仍需结合实际屏幕尺寸和GPU采样实测审核。
@@ -46,8 +46,10 @@ UE内容根为 `/DBAPresentationPack_Core/VFX/SpellProjectiles/`。纹理在 `Te
 
 原位接入作者为`Tools/Unreal/VFX/SpellProjectiles/IntegrateFireballNiagaraMonolith.py`。适配HLSL唯一源为同目录`FireballMaterialParameters.hlsl`，三阶段共用一个模块；新实例共用一个火焰母材质。原Cast/OrbBody共享运动模块未改写，冰系不受火球尺寸规则影响。
 
-飞行保留CPU世界空间Ribbon，寿命0.22秒、每秒100个点、初始宽24cm；原生SimCache在4000cm/s运动夹具下得到22点、813.74cm轨迹，四档均保留50cm核心与长尾。此项证明表现历史轨迹，不代替服务器运动或联机验收。球头及尾焰为自发光材质，局部热扰动为独立有界装饰。
+飞行保留CPU世界空间Ribbon，唯一视觉参数在PresentationManifest.fireball_appearance：寿命0.6秒、每秒140个点、初始宽80cm，与80cm球头衔接后按真实粒子寿命渐细。UV0采用ScaledUsingRibbonSegmentLength，Scale=(0.8,0.34)、Offset=(0,0.36)，补偿原图透明留白并裁掉圆形封口，使尾焰根部直接连接球头、可见宽度一致；不改源图字节。Fade.Life绑定Particles.Lifetime，避免历史0.22秒常量裁断新长尾。原生SimCache在实际默认3000cm/s运动夹具下得到84点、1750.31cm历史轨迹、宽度0.875—79.923cm，四档均保留80cm核心与长尾。32米有界范围覆盖最大50m/s和0.6秒历史。此项证明表现历史轨迹，不代替服务器运动或联机验收。球头及尾焰为自发光材质，局部热扰动为独立有界装饰。
 
 Monolith duplicate_emitter缺少系统执行图重建，曾导致新增扰动Emitter编译正常而零粒子；已改用add_emitter的引擎完整路径修复，三个系统均有8个系统Emitter节点。验证器检查此连接以及真实粒子，不以编译通过代替播放。Native/Cook/运行证据分别保存在`Saved/Validation/FireballNiagara20261031/`。
 
 独立审查发现原空气材质Opacity直连常量。现有共享母材质增加`P_UseParticleAlpha`默认0，保持全部旧实例输入不变；火球AirRipple唯一实例显式设1，使Opacity=P_Opacity×ParticleColor.A，折射仍按原通道控制。前摇/命中淡出与Low同时收敛透明度，避免暗壳残留。修改前原包已备份；未建立第二个扰动母材质。
+
+本次长尾原生证据位于`Saved/Validation/FireballTrail20261101/`：Native.RED保留旧UV/尺寸失败，四档FlightSimulation及NativeMotion为真实原生采样。固定移动镜头已核对根部连接与渐细；动态采样只验证表现，不代替权威弹道、最终Cook、联机与用户验收。

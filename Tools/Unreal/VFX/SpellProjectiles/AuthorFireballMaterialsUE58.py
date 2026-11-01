@@ -248,11 +248,12 @@ def instance(name, parent, scalars, texture=None):
 def author():
     """只导入三纹理、一个母材质和六个实例；不生成或绑定第二套Niagara。"""
     manifest = check_context()
+    visual = json.loads(Path(__file__).with_name("PresentationManifest.json").read_text("utf-8"))["fireball_appearance"]
     import_textures(manifest)
     parent = author_master()
     instance("MI_DBA_Fireball_Core", parent, {"Emission": 3.2, "Loop": 1})
     instance("MI_DBA_Fireball_Trail", parent,
-             {"Columns": 1, "Rows": 1, "FrameCount": 1, "Emission": 2.6, "WarpStrength": .012}, "T_DBA_Fireball_Trail")
+             {"Columns": 1, "Rows": 1, "FrameCount": 1, "Emission": visual["trail_emission"], "WarpStrength": .012}, "T_DBA_Fireball_Trail")
     instance("MI_DBA_Fireball_Impact", parent,
              {"Loop": 0, "FramesPerSecond": 26, "Emission": 4.0}, "T_DBA_Fireball_ImpactFlipbook")
     instance("MI_DBA_Fireball_Ember", parent,
@@ -262,7 +263,7 @@ def author():
     if not isinstance(volume, u.Material) or not isinstance(ripple, u.Material):
         raise RuntimeError("既有体积/扰动母材质缺失，禁止复制替代")
     instance("MI_DBA_Fireball_Volume", volume,
-             {"RadiusCm": 25, "FormProgress": 1, "EmissionScale": 2.0, "DensityScale": 1})
+             {"RadiusCm": visual["head_diameter_cm"]*.5, "FormProgress": 1, "EmissionScale": visual["head_emission"], "DensityScale": visual["head_density"], "HeadFullness": visual["head_fullness"]})
     instance("MI_DBA_Fireball_AirRipple", ripple, {"P_Intensity": .008, "P_Opacity": .06})
     validate("NativeSaved.json")
 

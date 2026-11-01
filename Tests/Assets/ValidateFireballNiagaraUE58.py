@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""标准火球接入只读原生门禁：检查真实保存依赖、唯一绑定及50cm材质合同。
+"""标准火球接入只读原生门禁：检查真实保存依赖、唯一绑定与当前视觉合同。
 
 仅由Monolith在SSLM UE5.8执行，不导入作者、不改资产、不替代实际粒子尺寸、
 CPU/GPU编译、Cook、联机或人工视觉验证。先记录未接线的RED，再检查保存后的GREEN。
@@ -57,14 +57,32 @@ def validate(report_path=None, raise_on_error=True):
                  if n.get_path_name().startswith(system.get_path_name() + ":SystemSpawnScript.")]
         if len(nodes) != 8:
             errors.append(stage + "系统执行图未连接全部4个Emitter：" + str(len(nodes)))
+        if stage == "Flight":
+            renderer_class=u.load_class(None,"/Script/Niagara.NiagaraRibbonRendererProperties")
+            renderers=[r for r in u.ObjectIterator(renderer_class)
+                       if r.get_path_name().startswith(system.get_path_name()+":FireTrail_")]
+            if len(renderers)!=1:
+                errors.append("当前火球没有唯一Ribbon Renderer")
+            else:
+                # 该枚举未完整导出到UE Python；使用原生Struct导出文本而非PythonizeEnumEntry。
+                actual=renderers[0].get_editor_property("UV0Settings").export_text()
+                if "DistributionMode="+data["fireball_appearance"]["trail_uv_distribution"] not in actual:
+                    errors.append("Ribbon UV必须整条归一化，不能平铺后被材质裁掉："+actual)
+                uv=renderers[0].get_editor_property("UV0Settings")
+                scale,offset=uv.get_editor_property("Scale"),uv.get_editor_property("Offset")
+                cfg=data["fireball_appearance"]
+                expected=(cfg["trail_uv_scale"][0],cfg["trail_uv_scale"][1],cfg["trail_u_offset"],cfg["trail_v_offset"])
+                if any(abs(a-b)>.0001 for a,b in zip((scale.x,scale.y,offset.x,offset.y),expected)):
+                    errors.append("Ribbon根部采样不符连接与等宽合同："+actual)
         stages.append({"stage": stage, "system": row["system"], "dependencies": sorted(dependencies)})
     volume = u.load_asset(material_root + "Volume")
     if not isinstance(volume, u.MaterialInstanceConstant):
         errors.append("火球体积实例缺失")
     else:
         radius = u.MaterialEditingLibrary.get_material_instance_scalar_parameter_value(volume, "RadiusCm")
-        if abs(radius - 25.0) > .001:
-            errors.append("球头半径不是25cm：" + str(radius))
+        expected_radius=data["fireball_appearance"]["head_diameter_cm"]*.5
+        if abs(radius - expected_radius) > .001:
+            errors.append("球头半径不符当前视觉合同：" + str(radius))
     result = {"Passed": not errors, "Errors": errors, "Stages": stages,
               "PhysicalParticleSizeVerified": False, "CookVerified": False,
               "RuntimeVerified": False, "ManualVisualAccepted": False}

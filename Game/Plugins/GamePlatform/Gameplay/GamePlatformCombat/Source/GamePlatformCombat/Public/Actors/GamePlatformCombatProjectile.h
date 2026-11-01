@@ -44,7 +44,8 @@ public:
      * 无效/过期来源、方向、参数、重复初始化返回false，不扣费、不加载资源、不生成伤害。
      * 调用方拥有生成失败后的销毁与技能取消；平台不决定项目开发配置或技能输入。
      * Spec.Target为空保持原轨迹；非空时冻结目标化身并追踪，死亡/销毁/换化身即终止，不重新寻敌。
-     * Direction为三次贝塞尔起飞切线；有目标时沿曲线追踪。初次弧长确定有限期限，移动目标不延寿、不扩大锁定射程。
+     * 发射时Direction与角色中心到目标中心方向小于30度，中心线持续直追；其余保持三次贝塞尔起飞切线。
+     * 该分类冻结，显式螺旋参数独立保留。初次路径确定有限期限，移动目标不延寿、不扩大锁定射程。
      */
     bool AuthorityInitialize(const FGamePlatformCombatSpec& Spec,
         const FGamePlatformCombatProjectileMotion& Motion, const FVector& Direction,
@@ -71,8 +72,10 @@ private:
     TWeakObjectPtr<AActor> HomingTarget;
     int32 HomingTargetAvatarGeneration = 0;
     bool bHasHomingTarget = false;
+    /** 发射时冻结的正向锥分类；不复制、不重新选目标，移动后不恢复额外弧线。 */
+    bool bDirectTargetHoming = false;
     FVector HomingCenter = FVector::ZeroVector;
-    /** 服务器独占三次贝塞尔控制点；目标移动时从当前中心/切线续接，保持位置和切线连续。 */
+    /** 服务器独占控制点；目标移动时从当前中心续接，弧线保持切线连续，直追重新指向目标。 */
     FVector BezierStart, BezierControl1, BezierControl2, BezierEnd;
     /** 固定32段弧长表用于按厘米推进；只在建弧/目标移动时计算，无资源分配、网络字段或客户端判定。 */
     float BezierArcLengths[33] = {};
@@ -88,7 +91,7 @@ private:
     bool HasCurrentSource() const;
     /** 每个真实运动子步及结算前检查冻结目标；无追踪请求返回true，不扫描世界。 */
     bool HasCurrentHomingTarget() const;
-    /** 当前中心为P0、当前切线确定P1；P2按夹角绕弧，P3为本子步原目标中心。反向时用稳定转弯平面。 */
+    /** P0为当前中心、P3为原目标当前中心；冻结的直追分支共线，其余按当前切线和稳定转弯平面建弧。 */
     void BuildHomingBezier(const FVector& TargetCenter);
     /** 按弧长表反查参数，返回真实三次贝塞尔位置与单位切线；零长度退回终点/当前切线。 */
     FVector EvaluateHomingBezier(float DistanceCm, FVector& OutTangent) const;

@@ -423,7 +423,7 @@
     "EvidenceRoot": "Saved/Validation/CommonSkillVFX/DirectedMissileSlotBinding"
   },
   "FireballNiagaraIntegration20261031": {
-    "ScopeZh": "现有标准火球三阶段原位接入：圆形明黄50cm头、长世界轨迹、自发光和局部空气扰动。",
+    "ScopeZh": "当前标准火球三阶段唯一实现：80cm明黄头，根部等宽相接、逐渐收细的世界长尾，自发光与局部空气扰动。",
     "NativeTool": "Monolith MCP 0.23.0 + UE5.8",
     "Systems": [
       "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FireballCast",
@@ -436,7 +436,7 @@
       4,
       4
     ],
-    "HeadDiameterCm": 50,
+    "HeadDiameterCm": 80,
     "AirQualityAlpha": [
       0,
       0.5,
@@ -446,11 +446,23 @@
     "NativeCompileErrors": 0,
     "NativeCompileWarnings": 0,
     "NativeFlightSimulationPassed": true,
-    "NativeTrailExtentCmAtFixture4000": 813.7423095703125,
     "BindingsChanged": false,
     "ManualVisualAccepted": false,
     "GPUBudgetMeasured": false,
-    "EvidenceRoot": "Saved/Validation/FireballNiagara20261031",
-    "NoteZh": "打包构建、Cook、实际联机和人工验收分别由对应证据报告确认；本清单不代替发布验证。"
+    "EvidenceRoot": "Saved/Validation/FireballTrail20261101",
+    "NoteZh": "打包构建、Cook、实际联机和人工验收分别由对应证据报告确认；本清单不代替发布验证。",
+    "NativeTrailExtentCmAtFixture3000": 1750.312213897705,
+    "TrailRootWidthCm": 80,
+    "TrailLifetimeSeconds": 0.6,
+    "TrailSpawnRate": 140,
+    "TrailUVScale": [
+      0.8,
+      0.34
+    ],
+    "TrailUVOffset": [
+      0,
+      0.36
+    ],
+    "TrailFadeLife": "Particles.Lifetime"
   }
 }

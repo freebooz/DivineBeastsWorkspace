@@ -379,5 +379,28 @@
         "FrostResidue"
       ]
     }
-  ]
+  ],
+  "fireball_appearance": {
+    "head_diameter_cm": 80.0,
+    "trail_lifetime_seconds": 0.6,
+    "trail_spawn_rate": 140.0,
+    "trail_root_width_cm": 80.0,
+    "trail_uv_distribution": "ScaledUsingRibbonSegmentLength",
+    "trail_emission": 5.5,
+    "fixed_bounds_extent_cm": 3200.0,
+    "trail_u_offset": 0.0,
+    "trail_uv_scale": [
+      0.8,
+      0.34
+    ],
+    "trail_v_offset": 0.36,
+    "head_emission": 3.5,
+    "head_density": 1.6,
+    "head_fullness": 0.7,
+    "trail_colors_srgb": {
+      "OuterColor": "FF2606",
+      "FlameColor": "FD630A",
+      "HotColor": "FFC43C"
+    }
+  }
 }

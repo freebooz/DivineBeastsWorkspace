@@ -144,7 +144,11 @@ assert u.EditorAssetLibrary.save_loaded_asset(label,False)
         bindings = {"Age": "Particles.Age", "InColor": "Particles.Color", "InPosition": "Particles.Position",
                     "ParticleIndex": "Particles.UniqueID", "Quality": "Engine.QualityLevel"}
         values = {"Phase": str(phase), "Role": str(role)}
-        if is_ribbon:
+        if phase == 1 and role != 2:
+            # 球头、外围火焰与扰动共享一个直径真源；Cast/Impact不消费飞行尺寸。
+            scale = self.manifest["fireball_appearance"]["head_diameter_cm"] / 100.0
+            values["InScale"] = f"(X={scale},Y={scale},Z={scale})"
+        elif is_ribbon:
             values["InScale"] = "(X=1,Y=1,Z=1)"
         else:
             bindings["InScale"] = "Particles.Scale"
@@ -215,26 +219,92 @@ for stage,name in [('Cast','E_FireAirRipple'),('Flight','AirRipple'),('Impact','
 """)
 
     def configure_materials(self):
-        """在既有体积母材质原位调成明黄色圆球，实例25cm；不产生第二种体积实现。"""
+        """原位采用明黄圆球，半径读取唯一视觉合同；不产生第二种体积实现。"""
+        visual = self.manifest["fireball_appearance"]
+        radius = visual["head_diameter_cm"] * .5
         self.python(f"""import unreal as u
 m=u.load_asset({(BASE+'/Materials/M_DBA_FireOrbVolume')!r})
 c=u.find_object(m,'MaterialExpressionCustom_0');code=c.get_editor_property('code')
 pairs=[('float outerRadius=.80+.26*(slow-.5)+.055*(detail-.5);','float outerRadius=.97+.05*(slow-.5)+.02*(detail-.5);'),
        ('float3 gold=float3(5.4,1.10,.035);','float3 gold=float3(5.4,3.8,.12);'),
        ('float3 warmWhite=float3(17.0,9.5,2.5);','float3 warmWhite=float3(12.0,10.5,3.5);')]
+changed=False
 for old,new in pairs:
  assert old in code or new in code,'体积源码发生非预期变化'
+ changed=changed or old in code
  code=code.replace(old,new)
-c.set_editor_property('code',code)
-u.MaterialEditingLibrary.recompile_material(m)
-assert u.EditorAssetLibrary.save_loaded_asset(m,False)
+# 可选填充默认0，当前火球显式启用；旧实例仍使用原体积密度。
+ML=u.MaterialEditingLibrary
+pins=list(c.get_editor_property('inputs'))
+if not any(str(p.get_editor_property('input_name'))=='HeadFullness' for p in pins):
+ pin=u.CustomInput();pin.set_editor_property('input_name','HeadFullness');pins.append(pin)
+ c.set_editor_property('inputs',pins)
+ scalar=ML.create_material_expression(m,u.MaterialExpressionScalarParameter,-700,700)
+ scalar.set_editor_property('parameter_name','HeadFullness');scalar.set_editor_property('default_value',0.0)
+ assert ML.connect_material_expressions(scalar,'',c,'HeadFullness')
+ changed=True
+for old,new in [('sampleFire(float3 p,float seconds)','sampleFire(float3 p,float seconds,float fullness)'),
+                ('f.sampleFire(p,PhaseSeconds)','f.sampleFire(p,PhaseSeconds,HeadFullness)'),
+                ('shell*(2.45*veins+.78*folds)*flowGate+1.15*core)',
+                 'shell*(2.45*veins+.78*folds)*flowGate+1.15*core+max(fullness,0.0)*.55*pow(saturate(1.0-radius),.3))')]:
+ assert old in code or new in code,'体积填充源码发生非预期变化'
+ changed=changed or old in code;code=code.replace(old,new)
+if changed:
+ c.set_editor_property('code',code)
+ u.MaterialEditingLibrary.recompile_material(m)
+ assert u.EditorAssetLibrary.save_loaded_asset(m,False)
 instance=u.load_asset({(MATERIALS+'Volume')!r})
-for key,value in [('RadiusCm',25.0),('EmissionScale',2.0)]:
+for key,value in [('RadiusCm',{radius!r}),('EmissionScale',{visual['head_emission']!r}),
+                  ('DensityScale',{visual['head_density']!r}),('HeadFullness',{visual['head_fullness']!r})]:
  u.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(instance,key,value)
  assert abs(u.MaterialEditingLibrary.get_material_instance_scalar_parameter_value(instance,key)-value)<.0001
 assert u.EditorAssetLibrary.save_loaded_asset(instance,False)
-print('FIREBALL_ROUND_YELLOW_50CM_MATERIAL_SAVED')
+print('FIREBALL_ROUND_YELLOW_CURRENT_SIZE_SAVED')
 """)
+        self.python(f"""import unreal as u
+ML=u.MaterialEditingLibrary
+mi=u.load_asset({(MATERIALS+'Trail')!r})
+def linear(v):return v/12.92 if v<=.04045 else ((v+.055)/1.055)**2.4
+for name,hex_value in {visual['trail_colors_srgb']!r}.items():
+ values=[linear(int(hex_value[i:i+2],16)/255.) for i in (0,2,4)]
+ ML.set_material_instance_vector_parameter_value(mi,name,u.LinearColor(*values,1))
+ actual=ML.get_material_instance_vector_parameter_value(mi,name)
+ assert all(abs(a-b)<.0001 for a,b in zip((actual.r,actual.g,actual.b),values))
+assert u.EditorAssetLibrary.save_loaded_asset(mi,False)
+""")
+
+    def configure_flight_trail(self):
+        """世界历史Ribbon整条归一化；旧每米平铺UV会被0-1边缘遮罩裁掉。"""
+        path, cfg = self.system("Flight"), self.manifest["fireball_appearance"]
+        for usage, suffix, inputs in [
+            ("emitter_update", "/SpawnRate", {"SpawnRate": cfg["trail_spawn_rate"]}),
+            ("particle_spawn", "/InitializeParticle", {"Lifetime": cfg["trail_lifetime_seconds"]}),
+            ("particle_spawn", "/NM_DBA_TrailLinkSpawn", {"WidthCm": cfg["trail_root_width_cm"]}),
+            ("particle_update", "/NM_DBA_TrailFade", {"WidthCm": cfg["trail_root_width_cm"]})]:
+            raw = self.niagara("get_ordered_modules", asset_path=path, emitter="FireTrail", usage=usage)
+            nodes = [n for n in json.loads(raw["result"]) if n.get("script_path", "").split(".")[0].endswith(suffix)]
+            if len(nodes) != 1:
+                raise RuntimeError("当前拖尾模块不唯一：" + suffix)
+            for key, value in inputs.items():
+                self.niagara("set_module_input_value", asset_path=path, emitter="FireTrail",
+                             module_node=nodes[0]["node_guid"], input=key, value=str(value))
+            if suffix.endswith("/NM_DBA_TrailFade"):
+                # 淡出必须消费实际粒子寿命，不能仍按历史0.22秒裁断延长后的尾部。
+                self.niagara("set_module_input_binding", asset_path=path, emitter="FireTrail",
+                             module_node=nodes[0]["node_guid"], input="Life", binding="Particles.Lifetime")
+        self.niagara("set_renderer_property", asset_path=path, emitter="FireTrail", renderer_index=0,
+                     property="UV0Settings", value="(DistributionMode=" + cfg["trail_uv_distribution"] +
+                     f",LeadingEdgeMode=Locked,TrailingEdgeMode=Locked,TilingLength=100,Offset=(X={cfg['trail_u_offset']},Y={cfg['trail_v_offset']}),Scale=(X={cfg['trail_uv_scale'][0]},Y={cfg['trail_uv_scale'][1]}))")
+        self.python(f"""import unreal as u
+mi=u.load_asset({(MATERIALS+'Trail')!r})
+u.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(mi,'Emission',{cfg['trail_emission']!r})
+assert u.MaterialEditingLibrary.get_material_instance_scalar_parameter_value(mi,'Emission')=={cfg['trail_emission']!r}
+assert u.EditorAssetLibrary.save_loaded_asset(mi,False)
+""")
+        # 世界历史路径可能向任意方向转弯；System有界包络包含最大50m/s的0.6秒历史。
+        extent = cfg["fixed_bounds_extent_cm"]
+        self.niagara("set_fixed_bounds", asset_path=path,
+                     min=[-extent, -extent, -extent], max=[extent, extent, extent])
 
     def configure_air_opacity(self):
         """共享扰动母材质增加默认关闭的Alpha输入，仅火球实例显式采用生命周期淡出。"""
@@ -299,6 +369,7 @@ print('AIR_OPACITY_OPT_IN_SAVED; legacy default=0, Fireball=1')
             self.niagara("save_system", asset_path=self.system(stage))
             print("FIREBALL_STAGE_SAVED", stage, flush=True)
         self.configure_air_quality()
+        self.configure_flight_trail()
         self.sync_cook_label()
 
 
