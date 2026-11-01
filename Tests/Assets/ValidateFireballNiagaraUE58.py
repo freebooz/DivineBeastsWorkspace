@@ -5,6 +5,7 @@
 CPU/GPU编译、Cook、联机或人工视觉验证。先记录未接线的RED，再检查保存后的GREEN。
 """
 import json
+import os,hashlib
 from pathlib import Path
 import sys
 import unreal as u
@@ -14,7 +15,7 @@ sys.path.insert(0, str(ROOT / "Tools/Unreal/VFX/SpellProjectiles"))
 from SpellPresentationContract import load_manifest
 
 
-def validate(report_path=None, raise_on_error=True):
+def validate(report_path=None, raise_on_error=True, native_graph_report=None):
     """返回真实原生错误集合；缺资产、旧绑定或尺寸错误都不能用跳过检查变绿。"""
     if Path(u.Paths.get_project_file_path()).resolve() != ROOT / "Game/DivineBeastsArena.uproject":
         raise RuntimeError("不是SSLM主工程")
@@ -24,7 +25,7 @@ def validate(report_path=None, raise_on_error=True):
     material_root = base + "/Materials/Fireball/MI_DBA_Fireball_"
     stage_materials = {
         "Cast": ["Core", "Trail", "Ember", "AirRipple"],
-        "Flight": ["Volume", "Core", "Trail", "AirRipple"],
+        "Flight": ["CoreSurface", "Shell", "ShellSprite", "Trail", "AirRipple", "Filament", "Glow", "FlightEmber"],
         "Impact": ["Impact", "Ember", "AirRipple"],
     }
     registry = u.AssetRegistryHelpers.get_asset_registry()
@@ -32,6 +33,10 @@ def validate(report_path=None, raise_on_error=True):
                                               include_soft_package_references=True)
     errors, stages = [], []
     data = load_manifest()
+    proof=json.loads(Path(native_graph_report).read_text('utf-8')) if native_graph_report else {}
+    if proof.get('pid')!=os.getpid(): errors.append('缺少同进程真实执行图证据')
+    content=ROOT/'Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content'
+
     for stage, materials in stage_materials.items():
         rows = [row for row in data["bindings"] if row["spell"] == "Fireball" and row["stage"] == stage]
         if len(rows) != 1:
@@ -52,11 +57,13 @@ def validate(report_path=None, raise_on_error=True):
         if base + "/Niagara/NM_DBA_FireballMaterialParameters" not in dependencies:
             errors.append(stage + "没有公共材质参数适配模块")
         # 编译通过不能证明Emitter已接进系统Spawn/Update图；本次真实缺接线回归。
-        node_class = u.load_class(None, "/Script/NiagaraEditor.NiagaraNodeEmitter")
-        nodes = [n for n in u.ObjectIterator(node_class)
-                 if n.get_path_name().startswith(system.get_path_name() + ":SystemSpawnScript.")]
-        if len(nodes) != 8:
-            errors.append(stage + "系统执行图未连接全部4个Emitter：" + str(len(nodes)))
+        graph=proof.get('stages',{}).get(stage,{})
+        asset=content/(row['system'].split('/',2)[2]+'.uasset')
+        if graph.get('sha256')!=hashlib.sha256(asset.read_bytes()).hexdigest():errors.append(stage+'执行图证据SHA不匹配')
+        nodes=[n for n in graph.get('graph',{}).get('nodes',[]) if n['class']=='NiagaraNodeEmitter']
+        expected_nodes=14 if stage=="Flight" else 8
+        if len(nodes) != expected_nodes:
+            errors.append(stage + "系统执行图Emitter数量不符：" + str(len(nodes)))
         if stage == "Flight":
             renderer_class=u.load_class(None,"/Script/Niagara.NiagaraRibbonRendererProperties")
             renderers=[r for r in u.ObjectIterator(renderer_class)
@@ -75,14 +82,19 @@ def validate(report_path=None, raise_on_error=True):
                 if any(abs(a-b)>.0001 for a,b in zip((scale.x,scale.y,offset.x,offset.y),expected)):
                     errors.append("Ribbon根部采样不符连接与等宽合同："+actual)
         stages.append({"stage": stage, "system": row["system"], "dependencies": sorted(dependencies)})
-    volume = u.load_asset(material_root + "Volume")
-    if not isinstance(volume, u.MaterialInstanceConstant):
-        errors.append("火球体积实例缺失")
-    else:
-        radius = u.MaterialEditingLibrary.get_material_instance_scalar_parameter_value(volume, "RadiusCm")
-        expected_radius=data["fireball_appearance"]["head_diameter_cm"]*.5
-        if abs(radius - expected_radius) > .001:
-            errors.append("球头半径不符当前视觉合同：" + str(radius))
+    cfg=data['fireball_appearance'];ML=u.MaterialEditingLibrary
+    core=u.load_asset(material_root+'CoreSurface');parent=core.get_editor_property('parent')
+    if parent.get_editor_property('blend_mode')!=u.BlendMode.BLEND_OPAQUE:errors.append('核心不是完整Opaque球面')
+    if abs(ML.get_material_instance_scalar_parameter_value(core,'FireIntensity')-cfg['head_emission']*cfg['material_emission_scale'])>.001:errors.append('核心发光不符当前合同')
+    mesh=u.load_asset(cfg['head_mesh'])
+    if not isinstance(mesh,u.StaticMesh) or mesh.get_static_mesh_description(0).get_triangle_count()!=3968:errors.append('圆滑球体几何错误')
+    for suffix,source in [('Trail','TrailBroad'),('Shell','ShellRing'),('Filament','TrailFilament')]:
+        mi=u.load_asset(material_root+suffix);tex=ML.get_material_instance_texture_parameter_value(mi,'FlameTexture')
+        if tex.get_path_name().split('.')[0]!=base+'/Textures/Fireball/T_DBA_Fireball_'+source:errors.append('残留错误纹理覆盖:'+suffix)
+    for row in data['resources']:
+        if '/Textures/Fireball/' in row['path']:
+            t=u.load_asset(row['path'])
+            if not isinstance(t,u.Texture2D) or t.get_editor_property('srgb')!=row['srgb']:errors.append('纹理颜色空间错误:'+row['path'])
     result = {"Passed": not errors, "Errors": errors, "Stages": stages,
               "PhysicalParticleSizeVerified": False, "CookVerified": False,
               "RuntimeVerified": False, "ManualVisualAccepted": False}

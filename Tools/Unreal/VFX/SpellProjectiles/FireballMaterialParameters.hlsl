@@ -10,26 +10,61 @@ float rotation=InRotation;
 // 不再把旧Layer值写入新材质Dissolve通道；粒子颜色只保留亮度与生命周期。
 float strength=max(InColor.r,max(InColor.g,InColor.b));
 float3 color=float3(strength,strength,strength);
+float distanceAge=0.0;
+float distanceFraction=0.0;
+if(Phase==1 && (Role==2 || Role==4)){
+    // 首次更新从真实出生点量距，此后积分Owner实际位移；不依赖某一出生帧是否恰有网络更新。
+    float previous=Particles.DynamicMaterialParameter.z;
+    distanceAge=previous<0.0 ? length(Engine.Owner.Position-InPosition) : previous+length(Engine.Owner.Velocity)*Engine.DeltaTime;
+    float budget=DBA_FB_TRAIL_LENGTH*clamp(User.TrailLengthScale,.05,1.0);
+    distanceFraction=saturate(distanceAge/max(budget,1.0));
+    float remaining=saturate(1.0-distanceFraction);
+    // 空间距离负责整条尾迹渐隐；年龄只在最后35%寿命收尾，避免加长后尚未到尾端就变暗。
+    float ageFade=saturate((1.0-Age/DBA_FB_TRAIL_MAX_LIFE)/.35);
+    alpha=pow(remaining,Role==2 ? .4 : .55)*pow(ageFade,1.2);
+    // 球后约15%尾长保持饱满截面，其后连续收窄；不让尾根一离开球体就塌细。
+    float taper=saturate((distanceFraction-.15)/.85);
+    Particles.RibbonWidth=(Role==2 ? DBA_FB_TRAIL_WIDTH : DBA_FB_FILAMENT_WIDTH)*pow(1.0-taper,.75)*pow(ageFade,.15);
+    if(distanceAge>budget)DataInstance.Alive=false;
+}
 if(Phase==1 && Role==0){
     // Engine Sphere全尺寸100cm；InScale由唯一视觉合同写入，不在模块复制尺寸真源。
     position=float3(0,0,0);
     scale=InScale;
     color=float3(1,1,1);
+    Particles.MeshOrientation=float4(0,0,0,1);
 }
 if(Phase==1 && Role==1){
     // 外焰按同一球头尺寸缩放，保持圆形包络。
-    float surfaceScale=InScale.x/.5;
-    float phase=float(ParticleIndex)*2.399963+seconds*.55;
-    float z=2.0*frac(float(ParticleIndex)*.618034)-1.0;
-    float radial=sqrt(max(0.0,1.0-z*z));
-    position=float3(-5+radial*cos(phase)*11,radial*sin(phase)*11,z*12)*surfaceScale;
-    sprite=float2(10,14)*surfaceScale;
+    position=float3(0,0,0);
+    scale=InScale;
+    sprite=float2(120,120)*InScale.x;
+    rotation=seconds*.12;
+    Particles.MeshOrientation=float4(sin(seconds*.75),0,0,cos(seconds*.75));
     color=float3(1,1,1);
 }
 if(Phase==1 && Role==2){
-    // 世界空间历史点保留；较缓的Alpha使延长后的整条尾焰可读，宽度仍由既有TrailFade负责。
-    alpha=pow(alpha,.4);
+    // 世界空间位置不回写；距离和年龄共用上方唯一宽度/消散实现。
     color=float3(1,1,1);
+}
+if(Phase==1 && Role==4){
+    // 三条金色丝带复用世界历史位置；出生时已分配稳定int Ribbon ID。
+    color=float3(1.2,1.2,1.0);
+}
+if(Phase==1 && Role==5){
+    position=float3(0,0,0);
+    sprite=float2(100,100)*InScale.x;
+    // 此共享柔光母材质无发光标量，仅火球自有粒子颜色消费相同亮度合同。
+    color=float3(3.5,1.8,.12)*DBA_FB_EMISSION_SCALE;
+    alpha=.13;
+    Particles.LightRadius=200.0;
+    Particles.LightEnabled=Quality>=2;
+}
+if(Phase==1 && Role==6){
+    // 世界空间火星速度由原生Solver推进，不能重新跟随弹体平移。
+    sprite=float2(3,9);
+    color=float3(2.5,.8,.08);
+    alpha=saturate(1.0-Age/.35);
 }
 if(Phase==2 && Role==0){
     position=float3(0,0,0);
@@ -65,5 +100,5 @@ Particles.Scale=scale;
 Particles.SpriteSize=sprite;
 Particles.SpriteRotation=rotation;
 Particles.Color=float4(color,alpha);
-Particles.DynamicMaterialParameter=float4(seconds,0,0,1);
+Particles.DynamicMaterialParameter=float4(seconds,distanceFraction,distanceAge,1);
 Particles.SubImageIndex=0.0;

@@ -383,9 +383,13 @@ void UGamePlatformInteractorComponent::RefreshLocalFocus()
 
     const UGamePlatformInteractionSettings* Settings =
         GetDefault<UGamePlatformInteractionSettings>();
-    const FVector TraceEnd =
-        ViewLocation +
-        ViewDirection * Settings->MaxConfiguredInteractionDistance;
+    // 第三人称镜头可远于角色的交互半径；射线只发现候选，资格距离仍从角色到交互点计算。
+    // 补偿观察点偏移，不扩大下方Option.MaxDistance过滤或服务器距离/视线许可。
+    const double TraceDistance = Settings->MaxConfiguredInteractionDistance +
+        FVector::Distance(ViewLocation, GetServerInteractorOrigin());
+    const bool bValidTrace = FMath::IsFinite(TraceDistance) && TraceDistance > 0.0 &&
+        !ViewLocation.ContainsNaN() && !ViewDirection.ContainsNaN();
+    const FVector TraceEnd = bValidTrace ? ViewLocation + ViewDirection * TraceDistance : FVector::ZeroVector;
 
     FCollisionQueryParams Params(
         SCENE_QUERY_STAT(GamePlatformInteractionFocus),
@@ -398,7 +402,7 @@ void UGamePlatformInteractorComponent::RefreshLocalFocus()
     }
 
     FHitResult Hit;
-    const bool bHit = GetWorld()->LineTraceSingleByChannel(
+    const bool bHit = bValidTrace && GetWorld()->LineTraceSingleByChannel(
         Hit,
         ViewLocation,
         TraceEnd,

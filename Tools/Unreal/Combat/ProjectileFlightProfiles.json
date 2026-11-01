@@ -1,0 +1,22 @@
+{
+  "fireball_definition": "/Game/Development/DivineBeasts/Abilities/MagicTests/DA_DBA_Rat_DevFireball",
+  "fireball_profile": "/DBAContentPack_Common/Gameplay/ProjectileFlight/DA_DBA_Fireball_Flight",
+  "demo_directory": "/Game/Development/DivineBeasts/ProjectileMotion",
+  "profiles": [
+    {"name":"Fireball","speed_mode":"ACCELERATE_THEN_CRUISE","initial_speed":1200,"max_speed":1800,"acceleration":4000,"acceleration_duration":0.15,"b_enable_homing":true},
+    {"name":"Constant","speed_mode":"CONSTANT_SPEED","initial_speed":1500,"max_speed":1500},
+    {"name":"Acceleration","speed_mode":"CONSTANT_ACCELERATION","initial_speed":1200,"max_speed":1800,"acceleration":4000},
+    {"name":"Deceleration","speed_mode":"DECELERATE","initial_speed":1800,"max_speed":1800,"min_speed":200,"deceleration":3200,"deceleration_duration":0.5},
+    {"name":"Curve","speed_mode":"SPEED_CURVE","initial_speed":1200,"min_speed":1200,"max_speed":1800,"curve_duration":0.15},
+    {"name":"Parabolic","speed_mode":"CONSTANT_SPEED","initial_speed":1500,"max_speed":3000,"gravity_scale":1,"b_enable_homing":false},
+    {"name":"Homing","speed_mode":"CONSTANT_ACCELERATION","initial_speed":1200,"max_speed":1800,"acceleration":4000,"b_enable_homing":true,"homing_acceleration":6000}
+  ],
+  "niagara_parameters": [
+    {"name":"User.ProjectileSpeed","type":"float","default":"1800"},
+    {"name":"User.SpeedNormalized","type":"float","default":"1"},
+    {"name":"User.AccelerationNormalized","type":"float","default":"0"},
+    {"name":"User.FlightDirection","type":"vec3","default":"{\"x\":1,\"y\":0,\"z\":0}"},
+    {"name":"User.FlightPhase","type":"int","default":"2"},
+    {"name":"User.TrailLengthScale","type":"float","default":"1"}
+  ]
+}

@@ -423,7 +423,7 @@
     "EvidenceRoot": "Saved/Validation/CommonSkillVFX/DirectedMissileSlotBinding"
   },
   "FireballNiagaraIntegration20261031": {
-    "ScopeZh": "当前标准火球三阶段唯一实现：80cm明黄头，根部等宽相接、逐渐收细的世界长尾，自发光与局部空气扰动。",
+    "ScopeZh": "唯一当前火球：40cm完整亮球头、同比Mesh+Sprite包裹外焰、最长700cm世界波浪尾迹、饱满尾根及逐渐透明末端；材质发光强度为原值一半。",
     "NativeTool": "Monolith MCP 0.23.0 + UE5.8",
     "Systems": [
       "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FireballCast",
@@ -433,10 +433,11 @@
     "Module": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NM_DBA_FireballMaterialParameters",
     "EmitterCounts": [
       4,
-      4,
+      7,
       4
     ],
-    "HeadDiameterCm": 80,
+    "HeadDiameterCm": 40,
+    "MaterialEmissionScale": 0.5,
     "AirQualityAlpha": [
       0,
       0.5,
@@ -449,20 +450,27 @@
     "BindingsChanged": false,
     "ManualVisualAccepted": false,
     "GPUBudgetMeasured": false,
-    "EvidenceRoot": "Saved/Validation/FireballTrail20261101",
+    "EvidenceRoot": "Saved/Validation/FireballTrailLength20261101",
     "NoteZh": "打包构建、Cook、实际联机和人工验收分别由对应证据报告确认；本清单不代替发布验证。",
-    "NativeTrailExtentCmAtFixture3000": 1750.312213897705,
-    "TrailRootWidthCm": 80,
-    "TrailLifetimeSeconds": 0.6,
-    "TrailSpawnRate": 140,
+    "NativeTrailExtentCmAtFixture3000": "see per-run actual SimCache",
+    "TrailRootWidthCm": 137.142857,
+    "TrailLifetimeSeconds": "0.5 maximum; world distance <=700cm * User.TrailLengthScale; age alpha fades during final 35 percent",
+    "FlightProfile": "/DBAContentPack_Common/Gameplay/ProjectileFlight/DA_DBA_Fireball_Flight",
+    "InitialSpeedCmPerSecond": 1200,
+    "CruiseSpeedCmPerSecond": 1800,
+    "AccelerationDurationSeconds": 0.15,
+    "TailTipAlphaFadeFraction": 0.14,
+    "TailFullRootFraction": 0.15,
+    "NativeSimulationEvidence": "Saved/Validation/FireballTrailLength20261101/DistanceTailScenarios.json",
+    "TrailSpawnRate": "Native SpawnPerUnit 20cm",
     "TrailUVScale": [
-      0.8,
-      0.34
+      1,
+      1
     ],
     "TrailUVOffset": [
       0,
-      0.36
+      0
     ],
-    "TrailFadeLife": "Particles.Lifetime"
+    "TrailFadeLife": "world distance and age; legacy TrailFade disabled only for Fireball"
   }
 }

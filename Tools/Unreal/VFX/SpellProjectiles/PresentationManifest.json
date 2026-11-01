@@ -293,11 +293,77 @@
       "unreal_class": "MaterialInstanceConstant"
     },
     {
-      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Volume",
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_CoreSurface",
       "unreal_class": "MaterialInstanceConstant"
     },
     {
       "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_AirRipple",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Filament",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Glow",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/M_DBA_Fireball_CoreSurface",
+      "unreal_class": "Material"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Textures/Fireball/T_DBA_Fireball_CoreFlow",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Textures/Fireball/T_DBA_Fireball_ShellRing",
+      "unreal_class": "Texture2D",
+      "srgb": true
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Textures/Fireball/T_DBA_Fireball_TrailBroad",
+      "unreal_class": "Texture2D",
+      "srgb": true
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Textures/Fireball/T_DBA_Fireball_TrailFilament",
+      "unreal_class": "Texture2D",
+      "srgb": true
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Textures/Fireball/T_DBA_Fireball_HeatRG",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Textures/Fireball/T_DBA_Fireball_NoisePack",
+      "unreal_class": "Texture2D",
+      "srgb": false
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Meshes/Fireball/SM_DBA_Fireball_CoreSphere",
+      "unreal_class": "StaticMesh"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/M_DBA_Fireball_Shell",
+      "unreal_class": "Material"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/M_DBA_Fireball_Trail",
+      "unreal_class": "Material"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Shell",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_FlightEmber",
+      "unreal_class": "MaterialInstanceConstant"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_ShellSprite",
       "unreal_class": "MaterialInstanceConstant"
     }
   ],
@@ -308,6 +374,14 @@
     },
     {
       "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NM_DBA_FireballMaterialParameters",
+      "unreal_class": "NiagaraScript"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NM_DBA_FireballSecondarySpawn",
+      "unreal_class": "NiagaraScript"
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NM_DBA_FireballTrailLifetime",
       "unreal_class": "NiagaraScript"
     }
   ],
@@ -381,26 +455,37 @@
     }
   ],
   "fireball_appearance": {
-    "head_diameter_cm": 80.0,
-    "trail_lifetime_seconds": 0.6,
-    "trail_spawn_rate": 140.0,
-    "trail_root_width_cm": 80.0,
+    "head_diameter_cm": 40.0,
+    "trail_root_width_cm": 137.142857,
+    "material_emission_scale": 0.5,
     "trail_uv_distribution": "ScaledUsingRibbonSegmentLength",
     "trail_emission": 5.5,
-    "fixed_bounds_extent_cm": 3200.0,
+    "fixed_bounds_extent_cm": 1000.0,
     "trail_u_offset": 0.0,
     "trail_uv_scale": [
-      0.8,
-      0.34
+      1.0,
+      1.0
     ],
-    "trail_v_offset": 0.36,
-    "head_emission": 3.5,
-    "head_density": 1.6,
-    "head_fullness": 0.7,
-    "trail_colors_srgb": {
-      "OuterColor": "FF2606",
-      "FlameColor": "FD630A",
-      "HotColor": "FFC43C"
-    }
-  }
+    "trail_v_offset": 0.0,
+    "head_emission": 4.0,
+    "shell_diameter_cm": 57.142857,
+    "glow_diameter_cm": 74.285714,
+    "trail_length_cm": 700.0,
+    "filament_count": 3,
+    "filament_width_cm": 6.857143,
+    "filament_radius_cm": 11.428571,
+    "ember_spawn_rate": 10.0,
+    "ember_lifetime_seconds": 0.35,
+    "filament_phase_radians_per_second": 6.0,
+    "core_material_mode": "OpaqueSurface",
+    "head_mesh": "/DBAPresentationPack_Core/VFX/SpellProjectiles/Meshes/Fireball/SM_DBA_Fireball_CoreSphere",
+    "trail_spacing_cm": 20.0,
+    "filament_spacing_cm": 25.0,
+    "trail_cooling_strength": 0.85,
+    "filament_cooling_strength": 0.2,
+    "trail_max_lifetime_seconds": 0.5
+  },
+  "retired_resources": [
+    "/DBAPresentationPack_Core/VFX/SpellProjectiles/Materials/Fireball/MI_DBA_Fireball_Volume"
+  ]
 }

@@ -104,7 +104,7 @@ def inspect_migration_source_candidates(sources, mounts, registry_candidates):
 def forbidden_systems(data=None):
     """迁移来源及更早退休系统均禁止进入新客户端容器；redirector也不作为可发布执行资产。"""
     data = data or json.loads(MANIFEST.read_text('utf-8'))
-    return sorted({v['source_system'] for v in data['bindings']} | set(data['retired_systems']))
+    return sorted({v['source_system'] for v in data['bindings']} | set(data['retired_systems']) | set(data.get('retired_resources',[])))
 
 
 def container_asset(package):

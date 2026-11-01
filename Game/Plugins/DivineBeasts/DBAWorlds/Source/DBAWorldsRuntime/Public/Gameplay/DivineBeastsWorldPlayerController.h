@@ -63,6 +63,7 @@ protected:
 private:
     friend class FDivineBeastsWorldTargetSelectionTest; // 隔离回归使用真实选择入口，不新增测试运行接口。
     friend class FDivineBeastsWorldTabTargetCycleTest;
+    friend class FDivineBeastsWorldPortalClickTest;
     /** 最终镜头缓存只用于抑制相同视图事件，不作为权威角色姿态或网络同步源。 */
     FVector LastNotifiedCameraLocation = FVector::ZeroVector;
     FRotator LastNotifiedCameraRotation = FRotator::ZeroRotator;
@@ -98,6 +99,8 @@ private:
     /** TAB按次查询100米内可见的全部可选单位；按距离稳定循环，复用鼠标选择通知与服务器资格校验。 */
     void RequestNextWorldTarget();
     void SetSelectedWorldTarget(AActor* Target);
+    /** 已核对短按、同一命中及视口遮挡后的单击入口；交互仍由平台执行服务器校验。 */
+    void CommitWorldPointerClick(AActor* Target);
     /** 必须由目标EndPlay撤销，不能依赖Widget逐帧检查无效弱指针。 */
     UFUNCTION()
     void HandleSelectedTargetEndPlay(AActor* Actor, EEndPlayReason::Type Reason);

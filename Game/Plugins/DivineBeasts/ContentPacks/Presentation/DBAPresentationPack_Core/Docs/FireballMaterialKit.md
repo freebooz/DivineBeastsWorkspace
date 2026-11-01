@@ -1,55 +1,42 @@
 # 标准火球术纹理与材质
 
-用户参考图：`SourceArt/VFX/SpellProjectiles/Fireball/Reference_StandardFireball.png`。
-本轮根据中间的大火球及右侧爆发制作可组合资源，已接入现有UE5.8 Niagara三阶段。图中的人物、城堡、文字、边框不进入纹理。资源属于项目公共表现包，不拥有伤害、飞行速度、命中或施法时序。
+当前唯一三阶段为 NS_DBA_FireballCast / Flight / Impact，Emitter数为4 / 7 / 4。稳定Definition、Catalog与平台执行链不变。所有权威弹道、碰撞及伤害仍由GamePlatformCombat裁决。
 
-## 资源及使用位置
+## 飞行视觉合同
 
-UE内容根为 `/DBAPresentationPack_Core/VFX/SpellProjectiles/`。纹理在 `Textures/Fireball/`，材质在 `Materials/Fireball/`。源图与提示词概要、SHA和分格合同在 `SourceArt/VFX/SpellProjectiles/Fireball/SourceManifest.json`。
+40cm完整Opaque球形内核，约57.14cm Mesh外焰配68.57cm Sprite火舌，约74.29cm柔光；圆润亮头接连续渐细的波浪长尾，尾端有少量分叉。Sphere使用唯一SM_DBA_Fireball_CoreSphere，100cm源直径、3968三角面，由合法OBJ源经UE原生导入，无权威碰撞变更。自有发光实例统一按material_emission_scale=0.5写绝对参数，重复作者不叠乘；共享柔光母材质无标量，由本火球ParticleColor应用同一系数，Alpha及共享母材质保持各自合同。
 
-| 资源 | 用途及合同 |
+七Emitter：Core（GPU本地）、SurfaceFlames（GPU本地）、FireTrail（CPU世界）、Filaments（CPU世界、3个NiagaraID分组）、Glow（CPU本地单粒子、Sprite及Light）、Embers（GPU世界）、AirRipple（GPU本地）。EmitterState先于SpawnBurst，避免首次两次出生。光源每火球最多1个，半径200cm；High/Epic启用，Medium/Low关闭真实粒子灯，材质发光保留。简单粒子光不承诺软阴影。
+
+当前标准火球使用共享DA_DBA_Fireball_Flight：1200cm/s起步，4000cm/s²推进，0.15秒达到1800cm/s；继续追踪原目标，<30°只取消额外弧线。其他未配置Profile的技能保留既有常速入口。
+
+世界尾迹按原生SpawnPerUnit采样：主尾20cm间距，金丝每条25cm间距。每点累计真实世界行进距离，目标历史最长700cm并按User.TrailLengthScale缩放；年龄上限0.5秒，年龄透明度仅在最后35%寿命收尾，空间透明度仍贯穿整段。静止不堆积新点，不以出生帧瞬时Owner速度计算寿命。Ribbon原始根宽137.14cm补偿源图透明留白，前15%保持饱满截面后渐细；UV全幅1×1。新端只在球内最后5%尾长淡入，尾端14%材质羽化透明，并叠加空间/时间Alpha衰减。可见根宽及自然分叉须以原生帧审核，不把原始137.14cm当作火球实际直径。
+
+## 五类飞行材质及纹理
+
+| 材质家族 | 职责 |
 | --- | --- |
-| `T_DBA_Fireball_CoreFlipbook` | 4×4、16帧循环火球表面/外围火焰，固定中心 |
-| `T_DBA_Fireball_Trail` | 单张右侧宽亮根部、左侧渐细尾焰，适合拉伸Sprite或Ribbon |
-| `T_DBA_Fireball_ImpactFlipbook` | 4×4、16帧一次性爆发，由点燃、膨胀到消散 |
-| `M_DBA_Fireball_Flame` | 唯一新增火焰母材质：Unlit、Additive、双面、Sprite/Ribbon/Mesh用途 |
-| `MI_DBA_Fireball_Core` | 16帧循环，24帧/秒，亮度3.2 |
-| `MI_DBA_Fireball_Trail` | 1帧，亮度4.0，局部UV波动 |
-| `MI_DBA_Fireball_Impact` | 16帧，26帧/秒，单次播放，亮度4.0 |
-| `MI_DBA_Fireball_Ember` | 复用尾焰纹理的短小余烬，透明度0.65；由Niagara控制缩放和速度 |
-| `MI_DBA_Fireball_Volume` | 复用现有 `M_DBA_FireOrbVolume`，三维主体半径参数40cm，Engine Sphere缩放0.8，主体直径80cm；不是新建体积执行器 |
-| `MI_DBA_Fireball_AirRipple` | 复用现有 `M_DBA_PalmAirRipple`，局部空气扰动装饰 |
+| M_DBA_Fireball_CoreSurface | Opaque Unlit球面，CoreFlow三通道，缓慢流动、黄白亮核与金黄脉络 |
+| M_DBA_Fireball_Shell | sRGB ShellRing，旋转贴面火舌，独立Alpha |
+| M_DBA_Fireball_Trail | sRGB TrailBroad / TrailFilament，宽尾、三金丝及少量飞行火星共用 |
+| M_DBA_DevMagicGlow（既有） | 复用柔光，实例MI_DBA_Fireball_Glow |
+| M_DBA_PalmAirRipple（既有） | 有界热扰动；共享母材质P_UseParticleAlpha默认0，只有火球实例显式1 |
 
-生成使用内置imagegen。三张原始PNG均为1254×1254 RGBA，原始字节完整保留；UE的 `ResizeToSpecificResolution` 在构建时缩到1024×1024，实际Texture2D尺寸已核对。此操作不会增加原稿细节，也不会用填边破坏4×4分格。灰度作为线性强度数据：关闭sRGB、MASKS压缩、保留Alpha、Clamp。翻页素材不生成Mip，并在材质中限制本格UV及淡出边界，避免小Mip和采样越界混入相邻帧；此选择仍需结合实际屏幕尺寸和GPU采样实测审核。
+原M_DBA_Fireball_Flame保留Cast/Impact灰度翻页职责，不再负责飞行彩色主尾。旧MI_DBA_Fireball_Volume已原生迁移为MI_DBA_Fireball_CoreSurface，退休身份禁止新Cook发布。没有第二套半球、System或项目播放器。
 
-火焰颜色由材质参数提供。外焰默认引用现行色彩规范的屏幕sRGB `F16B46`；中焰 `FFA31A` 和高温核心 `FFF3C4` 为本参考图的内容选择，均先按sRGB标准转换到线性再写入。颜色参数、亮度与透明度分别可调。RGB不预乘Alpha，Additive路径只应用一次透明度；启用12cm深度交界柔化。
+六张新源：CoreFlow1024²、HeatRG512²、NoisePack512²为原生校准的线性RGBA数据；ShellRing1254²、TrailBroad/TrailFilament2172×724为已获用户人工认可的彩色RGBA原稿。原字节及SHA保存在SourceManifest.json，未后期改RGB。实际GPU导入尺寸分别1024²/512²/512²/1024²/2048×512/1024×256，Color采样解码sRGB一次，Alpha保持线性。HeatRG/NoisePack为配套基础数据，当前共享热扰动沿用既有材质机制；不把未绑定的数据图写成已生效功能。
 
-## Niagara组合合同
+飞行RGBA主尾采用半周期错开的双采样、sin²交叉淡化，样本回绕点权重为零；内部按Alpha加权后恢复直通RGB，最终Alpha只应用一次。旧4×4灰度Cast/Impact素材保持MASKS、关闭sRGB、1024²、无跨格Mip。正式Renderer SubImage1×1，翻页在材质内完成。
 
-1. 既有 `NS_DBA_FireballCast/Flight/Impact` 仍是唯一阶段系统。本轮已原位接入新实例及唯一NM_DBA_FireballMaterialParameters，Emitter数量4/4/4；没有创建第二套System、Definition或Catalog。稳定绑定身份不变。
-2. 主体优先使用受控三维Mesh与 `MI_DBA_Fireball_Volume`，外围火舌复用Core实例。不要把多个交叉大卡片当作三维主体；体积材质本身是既有实现，成本必须实测。
-3. Sprite或Ribbon Renderer的 **Sub Image Size设为1×1**。4×4分格已由材质执行，不可再由Renderer重复分格。帧顺序从左至右、从上至下，材质自动在相邻两帧间混合。Texture的U轴为原稿左右方向；Sprite旋转或Ribbon朝向由Niagara控制。
-4. Dynamic Material Parameter索引0的四通道依次是：R=`Particles.Age`，单位秒；G=帧偏移，默认0；B=消散进度0—1，默认0；A=亮度/透明强度倍率，**必须设为1才正常显示**。Niagara的动态参数绑定须显式提供四个值，不能让未绑定通道默认0。母材质静态预览默认值为(0,0,0,1)。
-5. `ParticleColor` RGB作为乘色、A作为生命周期淡入淡出。默认白色乘色，A=1。`ManualFrame=-1`表示自动播放，0—15用于单帧审核；正式实例已恢复-1。`UseNiagaraAge=1`，每个粒子有独立时间；一次性命中不应使用全局时间。Core循环；Impact不循环，建议粒子有效期约16/26=0.615秒并于结束清理。
-6. 尾焰用单张实例，长度、速度、旋转与局部拖尾由现有Niagara控制，不改变服务器真实投射物。命中只能消费服务器已确认事实，不能由视觉接触自行触发伤害。
-7. 空气扰动只绑定到法术附近的有界Mesh，跟随施法、飞行和命中所属阶段启停，不能全屏扭曲。同一实例`P_Intensity=.008/P_Opacity=.06`，由Niagara ParticleColor Alpha按Epic/High/Medium/Low的1.5/1/.5/0倍调节。Low另由原生Renderer质量掩码30关闭。飞行范围为主体1.15/1.10/1.05倍；命中按粒子Age膨胀并在0.7秒内淡出。这些是制作参数，未宣称GPU预算通过。Low仍保留火球和关键命中反馈。
+DynamicParameter R为粒子秒数；飞行主尾/金丝G为归一化历史距离（颜色冷却），B为累计历史距离cm，A为强度1；其它层G/B为0。ParticleColor默认白色乘色，A负责空间及年龄消散。旧通用TrailFade在当前火球禁用，其它技能保留原用法。UseNiagaraAge=1；静态审核MID使用0，绝不保存到正式实例。
 
-## 重复执行与验收边界
+## 生命周期、质量与验收
 
-作者入口 `Tools/Unreal/VFX/SpellProjectiles/AuthorFireballMaterialsUE58.py`，只能通过Monolith `editor.run_python` 在本轮拥有的锁定UE5.8编辑器执行。拒绝其它任务同名目标；只对新建并登记的10项资产重做，不运行旧Review作者。逐包保存，不全局保存其它任务脏包。
+确认命中后仅表现可Drain，主体/外焰/柔光/热浪Inactive Kill，世界尾迹/火星Complete。平台既有账本Stopping保留完整句柄和资源直到OnSystemFinished，0.5秒兜底。取消与世界退出Immediate；世界拥有投射物Niagara组件，来源Actor正常销毁，不延长服务器命中与结算。
 
-原生证据位于 `Saved/Validation/FireballMaterials20261031/`：保存/重载清单、材质编译统计、固定相机实际UE截图和逐帧预览。预览图是素材显示检查；它不证明完整法术系统、Cook、打包、联机、声音、多人GPU开销或人工艺术验收已完成。
+Low关闭金丝/火星/热扰动，Medium以上保留装饰；热浪四档Alpha0/0.5/1/1.5。Native编译、冷重载、SimCache、GPU实测、Cook、实际网络准入及用户艺术认可分别留证。源图认可不等于材质认可；不标Production Ready。
 
-锁定引擎的材质实例Scalar/Texture setter实现始终返回false，即使实际写入成功。因此工具同时检查参数存在性及写后值/纹理回读，不采用该错误返回值作为验收。初次平面网格的黑图是默认相机沿平面边缘观察；球体预览及俯视平面相机提供反证，未为此改写正确的RGBA动态参数连接。
+作者：Tools/Unreal/VFX/SpellProjectiles/AuthorFireballMaterialsUE58.py、AuthorFireballHeadMeshUE58.py、IntegrateFireballNiagaraMonolith.py；数据烘焙BakeFireballDataTexturesUE58.py。唯一视觉映射及尺寸源PresentationManifest.json；运动模板源Tools/Unreal/Combat/ProjectileFlightProfiles.json。24项纹理/母材质/实例所有权在工程Saved；所有原生操作由直接Monolith执行，只逐包保存本任务资源。
 
-## 当前原生接入与回归
+本轮证据Saved/Validation/FireballTrail20261101及FireballFlight各独立RunId；旧17.5米/80cm/4Emitter记录仅为历史，不代表当前方案。
 
-原位接入作者为`Tools/Unreal/VFX/SpellProjectiles/IntegrateFireballNiagaraMonolith.py`。适配HLSL唯一源为同目录`FireballMaterialParameters.hlsl`，三阶段共用一个模块；新实例共用一个火焰母材质。原Cast/OrbBody共享运动模块未改写，冰系不受火球尺寸规则影响。
-
-飞行保留CPU世界空间Ribbon，唯一视觉参数在PresentationManifest.fireball_appearance：寿命0.6秒、每秒140个点、初始宽80cm，与80cm球头衔接后按真实粒子寿命渐细。UV0采用ScaledUsingRibbonSegmentLength，Scale=(0.8,0.34)、Offset=(0,0.36)，补偿原图透明留白并裁掉圆形封口，使尾焰根部直接连接球头、可见宽度一致；不改源图字节。Fade.Life绑定Particles.Lifetime，避免历史0.22秒常量裁断新长尾。原生SimCache在实际默认3000cm/s运动夹具下得到84点、1750.31cm历史轨迹、宽度0.875—79.923cm，四档均保留80cm核心与长尾。32米有界范围覆盖最大50m/s和0.6秒历史。此项证明表现历史轨迹，不代替服务器运动或联机验收。球头及尾焰为自发光材质，局部热扰动为独立有界装饰。
-
-Monolith duplicate_emitter缺少系统执行图重建，曾导致新增扰动Emitter编译正常而零粒子；已改用add_emitter的引擎完整路径修复，三个系统均有8个系统Emitter节点。验证器检查此连接以及真实粒子，不以编译通过代替播放。Native/Cook/运行证据分别保存在`Saved/Validation/FireballNiagara20261031/`。
-
-独立审查发现原空气材质Opacity直连常量。现有共享母材质增加`P_UseParticleAlpha`默认0，保持全部旧实例输入不变；火球AirRipple唯一实例显式设1，使Opacity=P_Opacity×ParticleColor.A，折射仍按原通道控制。前摇/命中淡出与Low同时收敛透明度，避免暗壳残留。修改前原包已备份；未建立第二个扰动母材质。
-
-本次长尾原生证据位于`Saved/Validation/FireballTrail20261101/`：Native.RED保留旧UV/尺寸失败，四档FlightSimulation及NativeMotion为真实原生采样。固定移动镜头已核对根部连接与渐细；动态采样只验证表现，不代替权威弹道、最终Cook、联机与用户验收。

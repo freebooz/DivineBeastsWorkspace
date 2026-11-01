@@ -172,6 +172,7 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
         {
             FGamePlatformPresentationRequest Cancel; Cancel.RequestId=OldRequest;
             Cancel.SemanticTag=MagicSemantic(Name,false); Cancel.PredictionState=EGamePlatformPresentationPredictionState::Cancelled;
+            Cancel.bAllowNaturalCompletion=Snapshot.bImpacted;
             SubmitProjectRequest(Cancel);
         }
     }

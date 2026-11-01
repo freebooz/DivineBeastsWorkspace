@@ -21,6 +21,8 @@ public:
     static constexpr float MaxProjectileSpeedCmPerSecond = 5000.0f;
     /** 拒绝范围外及非有限速度；仅项目服务器的技能数据校验使用，不接受客户端覆盖。 */
     static bool IsProjectileSpeedSupported(float SpeedCmPerSecond);
+    /** 新Profile独立校验初速/上限；未启用时保留既有3000..5000常速合同。 */
+    static bool IsProjectileMotionSupported(const FGamePlatformCombatProjectileMotion& Motion);
     /** 火球/冰箭默认权威起手（秒）；开发与占位执行器共用，同时驱动施法反馈与首次释放Timer。
      * 不套用于奥术连发、定向飞弹及已批准的独立技能例外，也不新增客户端计时真源。 */
     static constexpr float DefaultCastDurationSeconds = 0.5f;

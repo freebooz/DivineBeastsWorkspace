@@ -21,6 +21,10 @@ public:
         bool bStopComponent = true,
         bool bStopChildren = true);
     bool IsActive(const FGamePlatformVFXHandle& Handle) const;
+    /** 保留完整身份和反向索引到真实完成；重复Drain不得重新开始计时。 */
+    bool BeginStopping(const FGamePlatformVFXHandle& Handle);
+    bool IsStopping(const FGamePlatformVFXHandle& Handle) const;
+    UGamePlatformVFXDefinition* GetDefinition(const FGamePlatformVFXHandle& Handle) const;
     /** 游戏线程核对完整Id/Generation/World账本身份；组件已自然失活仍持有，直到Stop移除。 */
     bool OwnsHandle(const FGamePlatformVFXHandle& Handle) const;
     bool IsActiveId(const FGuid& Id) const;
@@ -29,6 +33,9 @@ public:
     TArray<FGamePlatformVFXHandle> GetChildren(const FGamePlatformVFXHandle& Handle) const;
     void Reset();
     int32 Num() const { return Records.Num(); }
+    /** 复用唯一实例账本，更新活动Projectile的中立运动参数；Stopping不更新。 */
+    int32 UpdateProjectileMotionParameters(const TFunction<bool()>& IsWorldCurrent = {});
+    bool SetMotionBindingEnabled(const FGamePlatformVFXHandle& Handle,bool bEnabled);
 
 private:
     TMap<FGuid, FGamePlatformVFXInstanceRecord> Records;

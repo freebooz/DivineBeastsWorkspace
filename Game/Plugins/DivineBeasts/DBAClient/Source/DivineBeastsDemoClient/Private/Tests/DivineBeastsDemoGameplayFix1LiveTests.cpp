@@ -6,6 +6,11 @@
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Components/GamePlatformExperienceComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Components/GamePlatformInteractorComponent.h"
+#include "Components/GamePlatformInteractableComponent.h"
+#include "Gameplay/DivineBeastsArenaEntrance.h"
+#include "Definitions/DivineBeastsArenaEntranceDefinition.h"
+#include "Interfaces/GamePlatformGameplayEligibilityProvider.h"
 #include "Framework/GamePlatformPlayerControllerBase.h"
 #include "Framework/GamePlatformPlayerStateBase.h"
 #include "Engine/Engine.h"
@@ -43,6 +48,40 @@ struct FFix1Live:TSharedFromThis<FFix1Live>{
  bool Finish(){T->TestTrue(TEXT("Stop cleanup succeeded"),Last.IsSuccess());T->TestFalse(TEXT("exclusive host released"),State->Host.IsValid()&&State->Host->Owns(C.Token));return true;}
 };
 class FFix1Wait final:public IAutomationLatentCommand{TSharedRef<FFix1Live> R;public:explicit FFix1Wait(TSharedRef<FFix1Live> V):R(V){}bool Update()override{return R->Tick();}};
+// 捕获真实Village故障：平台生命周期已Active，但交互误读Pawn中未激活的备用资格组件。
+// 仅隔离离线Host使用真实准入/准备/撤销入口；不改资格或跳过服务器校验。
+void ProbeHostArenaInteraction(FFix1Live& S, bool bExpectedActive)
+{
+ auto* C=S.State->GameplayHost->GetFixtureController();
+ const auto* Provider=Cast<IGamePlatformGameplayEligibilityProvider>(C);
+ S.T->TestNotNull(TEXT("平台控制器向交互提供现有生命周期资格"),Provider);
+ if(Provider){
+  S.T->TestEqual(TEXT("交互资格与真实服务器生命周期一致"),Provider->IsServerPlayerActiveForGameplay(),bExpectedActive);
+  const auto* PS=C->GetPlayerState<AGamePlatformPlayerStateBase>();
+  S.T->TestEqual(TEXT("只向活动交互暴露当前Pawn代次"),Provider->GetGameplayAvatarGeneration(),bExpectedActive?int32(PS->GetLifecycleSnapshot().PawnGeneration):0);
+ }
+ auto* Interactor=C->FindComponentByClass<UGamePlatformInteractorComponent>();
+ if(!S.T->TestNotNull(TEXT("复用真实世界控制器交互组件"),Interactor))return;
+ FActorSpawnParameters Spawn;Spawn.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+ const FVector Origin=C->GetPawn()?C->GetPawn()->GetActorLocation():FVector::ZeroVector;
+ auto* Gate=C->GetWorld()->SpawnActor<ADivineBeastsArenaEntrance>(ADivineBeastsArenaEntrance::StaticClass(),Origin+FVector(100,0,-80),FRotator::ZeroRotator,Spawn);
+ if(!S.T->TestNotNull(TEXT("真实竞技入口夹具"),Gate))return;
+ auto* Definition=NewObject<UDivineBeastsArenaEntranceDefinition>(Gate);
+ FGamePlatformId::TryParse(TEXT("divinebeasts.test.arenaeligibility@1"),Definition->LogicalId);
+ Definition->ArenaModeId=TEXT("Arena.Mode.Duel1v1");Gate->EntranceDefinition=Definition;Gate->OnConstruction(Gate->GetActorTransform());
+ const auto* Target=Gate->FindComponentByClass<UGamePlatformInteractableComponent>();
+ struct {FGamePlatformInteractionRequest Request;} Args;
+ Args.Request.RequestId=FGuid::NewGuid();Args.Request.TargetActor=Gate;Args.Request.TargetInstanceId=Target->GetTargetInstanceId();
+ Args.Request.TargetGeneration=Target->GetTargetGeneration();Args.Request.ObservedTargetRevision=Target->GetTargetRevision();Args.Request.OptionId=TEXT("Arena.Entry.Open");
+ if(auto* Begin=Interactor->FindFunction(TEXT("ServerRequestBeginInteraction"))){
+  Interactor->ProcessEvent(Begin,&Args);
+  const auto Result=Interactor->GetLastResult();
+  S.T->TestEqual(TEXT("真实门交互返回同一请求"),Result.RequestId,Args.Request.RequestId);
+  S.T->TestEqual(TEXT("准备前/撤销后拒绝，Active时真正提交"),Result.Error,bExpectedActive?EGamePlatformInteractionError::None:EGamePlatformInteractionError::InteractorNotActive);
+  S.T->TestEqual(TEXT("服务器门交互终态正确"),Result.State,bExpectedActive?EGamePlatformInteractionSessionState::Completed:EGamePlatformInteractionSessionState::Rejected);
+ }else S.T->AddError(TEXT("缺少原有交互服务器入口"));
+ Gate->Destroy();
+}
 bool DefinitionRegression(FAutomationTestBase& T,int32 Variant){auto R=MakeShared<FFix1Live>();FName F=Variant==0?TEXT("GamePlatformCharacter.definition"):Variant==1?TEXT("GamePlatformAbilitySystem.abilityset_definition"):TEXT("GamePlatformAI.brain");if(!R->Init(T,F))return false;R->Variant=Variant;
  R->Drive=[](FFix1Live& S){FName Load=S.Variant==2?TEXT("LoadAIDefinition"):TEXT("LoadDefinition");FName Validate=S.Variant==2?TEXT("PossessAI"):TEXT("ValidateDefinition");
   if(S.Step==0){if(S.Variant==2){S.Step=1;S.Issue(TEXT("CreateFixture"));}else{S.Step=2;S.Issue(Load);}return false;}
@@ -93,9 +132,9 @@ bool HostRegression(FAutomationTestBase& T,bool Reenter){auto R=MakeShared<FFix1
   if(S.Step==2){S.T->TestTrue(TEXT("real BeginExperience accepted"),S.Last.IsSuccess());if(!S.State->Experience.IsValid()||!S.State->Experience->GetExperienceSnapshot().IsServerActive())return false;++S.Step;S.Issue(TEXT("StaleFixtureAdmission"));return false;}
   if(S.Step==3){S.T->TestFalse(TEXT("mismatched local admission denied by actual authority"),S.Last.IsSuccess());S.ArmStop=S.Variant==1;++S.Step;S.Issue(TEXT("SubmitFixtureAdmission"));return false;}
   if(S.Step==4){if(S.Variant==1){S.T->TestTrue(TEXT("real player lifecycle event triggered Stop"),S.DidStop);S.T->TestFalse(TEXT("old submit cannot return success after Stop"),S.Last.IsSuccess());S.Step=10;S.Stop();return false;}S.T->TestTrue(TEXT("actual local admission submitted"),S.Last.IsSuccess());auto* C=S.State->GameplayHost->GetFixtureController();auto* PS=C?C->GetPlayerState<AGamePlatformPlayerStateBase>():nullptr;if(!PS||PS->GetLifecycleSnapshot().Stage!=EGamePlatformPlayerStage::AwaitingClient)return false;S.T->TestTrue(TEXT("native platform spawned and possessed real Pawn"),C->GetPawn()!=nullptr);++S.Step;S.Issue(TEXT("StaleFixturePreparation"));return false;}
-  if(S.Step==5){S.T->TestFalse(TEXT("wrong preparation token rejected"),S.Last.IsSuccess());++S.Step;S.Issue(TEXT("ConfirmFixturePreparation"));return false;}
-  if(S.Step==6){S.T->TestTrue(TEXT("actual native current preparation accepted"),S.Last.IsSuccess());auto* H=S.State->GameplayHost.Get();S.T->TestTrue(TEXT("real isolated platform lifecycle Active"),H->IsPlayerGameplayActive(*H->GetFixtureController()));++S.Step;S.Issue(TEXT("RevokeFixtureAdmission"));return false;}
-  if(S.Step==7){S.T->TestTrue(TEXT("actual admission revoke"),S.Last.IsSuccess());auto* C=S.State->GameplayHost->GetFixtureController();S.T->TestTrue(TEXT("platform revoke removed controlled Pawn"),C&&!C->GetPawn());++S.Step;S.Issue(TEXT("DrainExperience"));return false;}
+  if(S.Step==5){S.T->TestFalse(TEXT("wrong preparation token rejected"),S.Last.IsSuccess());ProbeHostArenaInteraction(S,false);++S.Step;S.Issue(TEXT("ConfirmFixturePreparation"));return false;}
+  if(S.Step==6){S.T->TestTrue(TEXT("actual native current preparation accepted"),S.Last.IsSuccess());auto* H=S.State->GameplayHost.Get();S.T->TestTrue(TEXT("real isolated platform lifecycle Active"),H->IsPlayerGameplayActive(*H->GetFixtureController()));ProbeHostArenaInteraction(S,true);++S.Step;S.Issue(TEXT("RevokeFixtureAdmission"));return false;}
+  if(S.Step==7){S.T->TestTrue(TEXT("actual admission revoke"),S.Last.IsSuccess());auto* C=S.State->GameplayHost->GetFixtureController();S.T->TestTrue(TEXT("platform revoke removed controlled Pawn"),C&&!C->GetPawn());ProbeHostArenaInteraction(S,false);++S.Step;S.Issue(TEXT("DrainExperience"));return false;}
   if(S.Step==8){S.T->TestTrue(TEXT("real drain accepted"),S.Last.IsSuccess());S.T->TestTrue(TEXT("actual Experience Released"),S.State->Experience->GetExperienceSnapshot().Stage==EGamePlatformExperienceStage::Released);S.Step=10;S.Stop();return false;}
   S.T->TestFalse(TEXT("per-run mode fixture released"),S.State->GameplayHost.IsValid());return S.Finish();
  };ADD_LATENT_AUTOMATION_COMMAND(FFix1Wait(R));return true;}

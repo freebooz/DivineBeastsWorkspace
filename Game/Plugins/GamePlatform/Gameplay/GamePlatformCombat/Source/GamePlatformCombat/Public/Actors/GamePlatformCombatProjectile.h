@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Types/GamePlatformCombatSpec.h"
 #include "Types/GamePlatformCombatProjectileMotion.h"
+#include "Interfaces/GamePlatformMotionSource.h"
 #include "GamePlatformCombatProjectile.generated.h"
 class USphereComponent;
 class AGamePlatformCombatProjectile;
@@ -32,10 +33,11 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatProjectileFacts
 };
 DECLARE_MULTICAST_DELEGATE_TwoParams(FGamePlatformProjectileFactsChanged,
     AGamePlatformCombatProjectile*, const FGamePlatformCombatProjectileFacts&);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGamePlatformProjectileFlightEvent);
 
 /** 直线/螺旋及显式目标弧线追踪Actor；同世界服务器拥有运动与命中，不提供客户端伤害RPC。 */
 UCLASS(Blueprintable)
-class GAMEPLATFORMCOMBAT_API AGamePlatformCombatProjectile : public AActor
+class GAMEPLATFORMCOMBAT_API AGamePlatformCombatProjectile : public AActor, public IGamePlatformMotionSource
 {
     GENERATED_BODY()
 public:
@@ -47,11 +49,25 @@ public:
      * 发射时Direction与角色中心到目标中心方向小于30度，中心线持续直追；其余保持三次贝塞尔起飞切线。
      * 该分类冻结，显式螺旋参数独立保留。初次路径确定有限期限，移动目标不延寿、不扩大锁定射程。
      */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat|Projectile")
     bool AuthorityInitialize(const FGamePlatformCombatSpec& Spec,
         const FGamePlatformCombatProjectileMotion& Motion, const FVector& Direction,
         FName PresentationStyleId = NAME_None);
     /** 可信服务器取消自有弹体；重复调用安全；无命中事实及伤害。 */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat|Projectile")
     void AuthorityCancel();
+    /** 仅未发射的服务器Actor可覆盖；已发射返回false，模板编辑只影响下一次发射。 */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat|Projectile")
+    bool AuthoritySetFlightConfig(const FGamePlatformCombatProjectileFlightConfig& Config);
+    virtual FVector GetVelocity() const override;
+    virtual FGamePlatformMotionSnapshot GetMotionSnapshot_Implementation() const override;
+    virtual void OnRep_ReplicatedMovement() override;
+    UPROPERTY(BlueprintAssignable, Category="Combat|Projectile") FGamePlatformProjectileFlightEvent OnFlightLaunched;
+    UPROPERTY(BlueprintAssignable, Category="Combat|Projectile") FGamePlatformProjectileFlightEvent OnAccelerationStarted;
+    UPROPERTY(BlueprintAssignable, Category="Combat|Projectile") FGamePlatformProjectileFlightEvent OnMaxSpeedReached;
+    UPROPERTY(BlueprintAssignable, Category="Combat|Projectile") FGamePlatformProjectileFlightEvent OnDecelerationStarted;
+    UPROPERTY(BlueprintAssignable, Category="Combat|Projectile") FGamePlatformProjectileFlightEvent OnFlightStopped;
+    UPROPERTY(BlueprintAssignable, Category="Combat|Projectile") FGamePlatformProjectileFlightEvent OnProjectileImpact;
     bool IsFlightFinished() const { return Facts.bFinished; }
     const FGamePlatformCombatProjectileFacts& GetFlightFacts() const { return Facts; }
     FGamePlatformProjectileFactsChanged& OnFlightFactsChanged() { return FactsChanged; }
@@ -65,7 +81,21 @@ private:
     UPROPERTY(ReplicatedUsing=OnRep_Facts) FGamePlatformCombatProjectileFacts Facts;
     /** 仅本服务器弹体拥有，不复制源强引用或任意伤害字段。EndPlay撤销。 */
     UPROPERTY(Transient) FGamePlatformCombatSpec CastSpec;
-    FGamePlatformCombatProjectileMotion FlightMotion;
+    UPROPERTY(Transient) FGamePlatformCombatProjectileMotion FlightMotion;
+    UPROPERTY(ReplicatedUsing=OnRep_FlightInitialization) FGamePlatformCombatProjectileFlightInitialization FlightInitialization;
+    UPROPERTY(Transient) FGamePlatformCombatProjectileFlightConfig FrozenFlight;
+    UPROPERTY(Transient) FGamePlatformCombatProjectileFlightConfig PendingFlight;
+    bool bHasPendingFlight = false;
+    FVector CurrentVelocity = FVector::ZeroVector;
+    float TravelledDistanceCm = 0;
+    float FlightDistanceLimitCm = 0;
+    int32 LastFlightPhase = 0;
+    bool bLaunchEventSent = false, bStopEventSent = false, bMaxSpeedEventSent = false;
+    UFUNCTION() void OnRep_FlightInitialization();
+    void DispatchFlightEvents();
+    float PropulsionDistance(float StartSeconds, float EndSeconds) const;
+    FVector BallisticVelocityAt(float Seconds) const;
+    FVector AdvanceFreePosition(float StepSeconds) const;
     FVector Origin = FVector::ZeroVector, Axis = FVector::ForwardVector;
     FVector RadialY = FVector::RightVector, RadialZ = FVector::UpVector;
     /** 显式追踪仅持弱引用；后续选择变化不能改写已发射弹体，过期目标不转为无目标弹体。 */
@@ -97,7 +127,6 @@ private:
     FVector EvaluateHomingBezier(float DistanceCm, FVector& OutTangent) const;
     /** 按弧长推进并传递螺旋截面；必要时缩小StepSeconds，确保每段不超过15厘米或11.25度。 */
     FVector AdvanceHomingPosition(float& StepSeconds, const FVector& TargetCenter);
-    FVector PositionAt(float Seconds) const;
     /** 先锁终态，再提交最多一次平台伤害；同步战斗回调重入不能复活/重复结算。 */
     void FinishFlight(const FHitResult* Hit);
 };

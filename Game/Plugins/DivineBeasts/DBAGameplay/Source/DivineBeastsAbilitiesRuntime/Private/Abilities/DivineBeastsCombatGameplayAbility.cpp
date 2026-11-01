@@ -58,7 +58,7 @@ void UDivineBeastsCombatGameplayAbility::ActivateAbility(
     const bool bProjectile = Execution.Mode == EDivineBeastsCombatExecution::Projectile;
     if (bProjectile &&
         (!Execution.Motion.IsValid() ||
-         !UDivineBeastsDevelopmentMagicDefinition::IsProjectileSpeedSupported(Execution.Motion.SpeedCmPerSecond) ||
+         !UDivineBeastsDevelopmentMagicDefinition::IsProjectileMotionSupported(Execution.Motion) ||
          !FMath::IsNearlyEqual(Execution.Motion.RangeCm, Balance.CastRangeCm) ||
          Execution.ProjectileCount < 1 || Execution.ProjectileCount > 3 ||
          !FMath::IsFinite(Execution.ProjectileIntervalSeconds) ||

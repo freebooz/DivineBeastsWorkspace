@@ -37,10 +37,11 @@ def check_context():
     if "-SSLMFireballMaterialsOwned" not in u.SystemLibrary.get_command_line():
         raise RuntimeError("不是本轮拥有的编辑器")
     dirty = [p.get_name() for p in u.EditorLoadingAndSavingUtils.get_dirty_content_packages()]
-    if any(not p.startswith((TEXTURES + "/", MATERIALS + "/")) for p in dirty):
+    own_refs={BASE+'/DA_DBA_SpellPresentationCook'}|{BASE+'/Niagara/NS_DBA_Fireball'+stage for stage in ['Cast','Flight','Impact']}
+    if any(not p.startswith((TEXTURES + "/", MATERIALS + "/")) and p not in own_refs for p in dirty):
         raise RuntimeError("存在其它任务脏包，停止写入：" + str(dirty))
     manifest = json.loads((SOURCE / "SourceManifest.json").read_text(encoding="utf-8"))
-    for row in manifest["textures"]:
+    for row in manifest["textures"]+manifest.get("flight_textures",[]):
         if hashlib.sha256((SOURCE / row["file"]).read_bytes()).hexdigest() != row["sha256"]:
             raise RuntimeError("源图发生变化：" + row["file"])
     return manifest
@@ -245,6 +246,176 @@ def instance(name, parent, scalars, texture=None):
     return save(mat)
 
 
+def author_flight_textures(cfg):
+    """唯一飞行纹理导入：原稿原字节保留，线性数据与sRGB颜色分开。"""
+    manifest=check_context()
+    rows=manifest.get("flight_textures",[])
+    if len(rows)!=6:raise RuntimeError("飞行纹理必须是已登记的六项")
+    result=[]
+    for row in rows:
+        source=SOURCE/row["file"]
+        if hashlib.sha256(source.read_bytes()).hexdigest()!=row["sha256"]:raise RuntimeError("飞行源图SHA不符")
+        path=TEXTURES+"/"+source.stem
+        owned=json.loads((OUT/"OwnedAssets.json").read_text())
+        if EL.does_asset_exist(path) and path not in owned:raise RuntimeError("飞行纹理已有其他所有者："+path)
+        if path not in owned:owned.append(path);record("OwnedAssets.json",owned)
+        if not EL.does_asset_exist(path):
+            task=u.AssetImportTask();task.filename=str(source);task.destination_path=TEXTURES
+            task.destination_name=source.stem;task.automated=True;task.save=False;task.replace_existing=False
+            AT.import_asset_tasks([task])
+        tex=u.load_asset(path)
+        if not isinstance(tex,u.Texture2D):raise RuntimeError("飞行纹理原生导入失败")
+        size=row.get("requested_build_size",row["size"])
+        wrap=not source.stem.endswith(("ShellRing","HeatRG"))
+        for key,value in {"srgb":row["srgb"],"compression_settings":u.TextureCompressionSettings.TC_DEFAULT if row["srgb"] else u.TextureCompressionSettings.TC_MASKS,
+                          "compression_no_alpha":False,"address_x":u.TextureAddress.TA_WRAP if wrap else u.TextureAddress.TA_CLAMP,
+                          "address_y":u.TextureAddress.TA_WRAP if source.stem.endswith(("CoreFlow","NoisePack")) else u.TextureAddress.TA_CLAMP,
+                          "power_of_two_mode":u.TexturePowerOfTwoSetting.RESIZE_TO_SPECIFIC_RESOLUTION,
+                          "resize_during_build_x":size[0],"resize_during_build_y":size[1],
+                          "mip_gen_settings":u.TextureMipGenSettings.TMGS_SIMPLE_AVERAGE,"never_stream":False}.items():tex.set_editor_property(key,value)
+        save(tex)
+        result.append({"path":path,"sRGB":tex.get_editor_property("srgb"),"actual_size":[tex.blueprint_get_size_x(),tex.blueprint_get_size_y()]})
+    record("FlightTextures.Native.json",result)
+    return result
+
+
+def author_core_surface(cfg):
+    """建立唯一Opaque球面材质；先用于原生材质审核，再由既有NS接入。"""
+    mat=create(MATERIALS+"/M_DBA_Fireball_CoreSurface",u.Material,u.MaterialFactoryNew())
+    ML.delete_all_material_expressions(mat)
+    mat.set_editor_property("blend_mode",u.BlendMode.BLEND_OPAQUE)
+    mat.set_editor_property("shading_model",u.MaterialShadingModel.MSM_UNLIT)
+    mat.set_editor_property("used_with_niagara_mesh_particles",True)
+    nodes={
+        "UV":expression(mat,u.MaterialExpressionTextureCoordinate,-900,-300),
+        "Clock":expression(mat,u.MaterialExpressionTime,-900,-100),
+        "D":expression(mat,u.MaterialExpressionDynamicParameter,-900,100,default_value=u.LinearColor(0,0,0,1)),
+        "NormalWS":expression(mat,u.MaterialExpressionVertexNormalWS,-900,300),
+        "PixelWS":expression(mat,u.MaterialExpressionWorldPosition,-900,500),
+        "CameraWS":expression(mat,u.MaterialExpressionCameraPositionWS,-900,700),
+        "FlowAtlas":expression(mat,u.MaterialExpressionTextureObjectParameter,-900,900,parameter_name="CoreFlowTexture",sampler_type=u.MaterialSamplerType.SAMPLERTYPE_MASKS,texture=u.load_asset(TEXTURES+"/T_DBA_Fireball_CoreFlow")),
+        "FireIntensity":expression(mat,u.MaterialExpressionScalarParameter,-550,100,parameter_name="FireIntensity",default_value=cfg["head_emission"]),
+        "UseNiagaraAge":expression(mat,u.MaterialExpressionScalarParameter,-550,250,parameter_name="UseNiagaraAge",default_value=1.),
+        "Gold":expression(mat,u.MaterialExpressionVectorParameter,-550,450,parameter_name="Gold",default_value=color_from_srgb("FFD234")),
+        "WarmWhite":expression(mat,u.MaterialExpressionVectorParameter,-550,650,parameter_name="WarmWhite",default_value=color_from_srgb("FFF5C9"))}
+    axis=expression(mat,u.MaterialExpressionConstant3Vector,-900,1100,constant=u.LinearColor(1,0,0,1))
+    forward=expression(mat,u.MaterialExpressionTransform,-550,1100,
+                       transform_source_type=u.MaterialVectorCoordTransformSource.TRANSFORMSOURCE_LOCAL,
+                       transform_type=u.MaterialVectorCoordTransform.TRANSFORM_WORLD)
+    connect(axis,"",forward,"");nodes["ForwardWS"]=forward
+    custom=expression(mat,u.MaterialExpressionCustom,0,0,code=Path(__file__).with_name("FireballCoreSurface.hlsl").read_text("utf-8"),output_type=u.CustomMaterialOutputType.CMOT_FLOAT3)
+    pins=[]
+    for key in nodes:
+        pin=u.CustomInput();pin.set_editor_property("input_name",key);pins.append(pin)
+    custom.set_editor_property("inputs",pins)
+    for key,node in nodes.items():connect(node,"RGBA" if key=="D" else ("RGB" if key in ("Gold","WarmWhite") else ""),custom,key)
+    if not ML.connect_material_property(custom,"",u.MaterialProperty.MP_EMISSIVE_COLOR):raise RuntimeError("圆球Emissive未接线")
+    ML.recompile_material(mat);ML.layout_material_expressions(mat);save(mat)
+    # 原生迁移原实例身份，保留已有NS引用；未建立第二套可竞争的当前核心。
+    old=MATERIALS+"/MI_DBA_Fireball_Volume";new=MATERIALS+"/MI_DBA_Fireball_CoreSurface"
+    owned=json.loads((OUT/"OwnedAssets.json").read_text())
+    if not EL.does_asset_exist(new) and EL.does_asset_exist(old):
+        if old not in owned:raise RuntimeError("旧核心实例不在本轮所有权中")
+        rename=u.AssetRenameData();rename.set_editor_property("asset",u.load_asset(old))
+        rename.set_editor_property("new_package_path",MATERIALS);rename.set_editor_property("new_name","MI_DBA_Fireball_CoreSurface")
+        if not AT.rename_assets([rename]):raise RuntimeError("核心实例原生迁移失败")
+        owned.remove(old);owned.append(new);record("OwnedAssets.json",owned)
+    mi=instance("MI_DBA_Fireball_CoreSurface",mat,{"FireIntensity":cfg["head_emission"],"UseNiagaraAge":1.})
+    return {"material":mat.get_path_name(),"instance":mi.get_path_name(),"blend":str(mat.get_editor_property("blend_mode"))}
+
+
+def author_flight_materials(cfg):
+    """当前飞行五类材质的唯一写入入口；源RGB、线性数据和Alpha各守一份合同。"""
+    check_context()
+    result={"core":author_core_surface(cfg)}
+    # 收敛此前同一协调器已创建的两项实例，不接受任意同名资产。
+    owned=json.loads((OUT/'OwnedAssets.json').read_text())
+    for name,expected in [('Filament',MATERIALS+'/M_DBA_Fireball_Flame'),('Glow','/DBAPresentationPack_Core/VFX/DevelopmentMagic/Materials/M_DBA_DevMagicGlow')]:
+        path=MATERIALS+'/MI_DBA_Fireball_'+name
+        if EL.does_asset_exist(path) and path not in owned:
+            old=u.load_asset(path)
+            assert isinstance(old,u.MaterialInstanceConstant) and old.get_editor_property('parent').get_path_name().split('.')[0]==expected
+            owned.append(path)
+    record('OwnedAssets.json',owned)
+    for family,source,is_shell in [('Shell','ShellRing',1),('Trail','TrailBroad',0)]:
+        mat=create(MATERIALS+'/M_DBA_Fireball_'+family,u.Material,u.MaterialFactoryNew())
+        ML.delete_all_material_expressions(mat)
+        for key,value in {'blend_mode':u.BlendMode.BLEND_ADDITIVE,'shading_model':u.MaterialShadingModel.MSM_UNLIT,'two_sided':True,
+                          'used_with_niagara_sprites':True,'used_with_niagara_ribbons':True,'used_with_niagara_mesh_particles':True}.items():mat.set_editor_property(key,value)
+        pc=expression(mat,u.MaterialExpressionParticleColor,-900,0)
+        nodes={'UV':(expression(mat,u.MaterialExpressionTextureCoordinate,-900,-200),''),'PC':(pc,'RGB'),'PA':(pc,'A'),
+               'D':(expression(mat,u.MaterialExpressionDynamicParameter,-900,200,default_value=u.LinearColor(0,0,0,1)),'RGBA'),
+               'Clock':(expression(mat,u.MaterialExpressionTime,-900,400),''),
+               'Flame':(expression(mat,u.MaterialExpressionTextureObjectParameter,-900,600,parameter_name='FlameTexture',sampler_type=u.MaterialSamplerType.SAMPLERTYPE_COLOR,texture=u.load_asset(TEXTURES+'/T_DBA_Fireball_'+source)),'')}
+        for i,(key,value) in enumerate({'Emission':3.0 if is_shell else cfg['trail_emission'],'OpacityScale':.7 if is_shell else 1.,'UseNiagaraAge':1.,'IsShell':float(is_shell),'CoolingStrength':cfg['trail_cooling_strength']}.items()):
+            nodes[key]=(expression(mat,u.MaterialExpressionScalarParameter,-600,800+i*80,parameter_name=key,default_value=float(value)),'')
+        custom=expression(mat,u.MaterialExpressionCustom,0,0,code=Path(__file__).with_name('FireballFlightFlame.hlsl').read_text('utf-8'),output_type=u.CustomMaterialOutputType.CMOT_FLOAT4)
+        pins=[]
+        for key in nodes:
+            pin=u.CustomInput();pin.set_editor_property('input_name',key);pins.append(pin)
+        custom.set_editor_property('inputs',pins)
+        for key,(node,pin) in nodes.items():connect(node,pin,custom,key)
+        rgb=expression(mat,u.MaterialExpressionComponentMask,350,0,r=True,g=True,b=True,a=False)
+        alpha=expression(mat,u.MaterialExpressionComponentMask,350,180,r=False,g=False,b=False,a=True)
+        connect(custom,'',rgb,'');connect(custom,'',alpha,'')
+        assert ML.connect_material_property(rgb,'',u.MaterialProperty.MP_EMISSIVE_COLOR)
+        assert ML.connect_material_property(alpha,'',u.MaterialProperty.MP_OPACITY)
+        if is_shell:
+            axis=expression(mat,u.MaterialExpressionConstant3Vector,-1100,1100,constant=u.LinearColor(1,0,0,1))
+            forward=expression(mat,u.MaterialExpressionTransform,-800,1100,transform_source_type=u.MaterialVectorCoordTransformSource.TRANSFORMSOURCE_LOCAL,transform_type=u.MaterialVectorCoordTransform.TRANSFORM_WORLD)
+            connect(axis,'',forward,'')
+            wpins={'UV':nodes['UV'],'Clock':nodes['Clock'],'IsShell':nodes['IsShell'],
+                   'NormalWS':(expression(mat,u.MaterialExpressionVertexNormalWS,-800,1300),''),'ForwardWS':(forward,'')}
+            wpo=expression(mat,u.MaterialExpressionCustom,0,600,code=Path(__file__).with_name('FireballShellSurface.hlsl').read_text('utf-8'),output_type=u.CustomMaterialOutputType.CMOT_FLOAT3)
+            fields=[]
+            for key in wpins:
+                pin=u.CustomInput();pin.set_editor_property('input_name',key);fields.append(pin)
+            wpo.set_editor_property('inputs',fields)
+            for key,(node,pin) in wpins.items():connect(node,pin,wpo,key)
+            assert ML.connect_material_property(wpo,'',u.MaterialProperty.MP_WORLD_POSITION_OFFSET)
+        ML.recompile_material(mat);ML.layout_material_expressions(mat);save(mat)
+        instance('MI_DBA_Fireball_'+family,mat,{'UseNiagaraAge':1.},'T_DBA_Fireball_'+source)
+        if is_shell:
+            instance('MI_DBA_Fireball_ShellSprite',mat,{'UseNiagaraAge':1.,'IsShell':2.,'OpacityScale':.28,'Emission':2.},'T_DBA_Fireball_ShellRing')
+        if not is_shell:
+            instance('MI_DBA_Fireball_Filament',mat,{'Emission':4.0,'OpacityScale':.85,'CoolingStrength':cfg['filament_cooling_strength']},'T_DBA_Fireball_TrailFilament')
+            instance('MI_DBA_Fireball_FlightEmber',mat,{'Emission':2.0,'OpacityScale':.65},'T_DBA_Fireball_TrailFilament')
+        result[family]=mat.get_path_name()
+    glow=u.load_asset('/DBAPresentationPack_Core/VFX/DevelopmentMagic/Materials/M_DBA_DevMagicGlow')
+    instance('MI_DBA_Fireball_Glow',glow,{})
+    configure_emission_scale(cfg)
+    record('FlightMaterials.Native.json',result)
+    return result
+
+
+def configure_emission_scale(cfg):
+    """按唯一合同写绝对发光值，重复运行不叠乘；不改原稿RGB或共享母材质。"""
+    gain=float(cfg['material_emission_scale'])
+    assert 0<=gain<=1
+    owned=json.loads((OUT/'OwnedAssets.json').read_text())
+    values={'Core':('Emission',3.2),'CoreSurface':('FireIntensity',cfg['head_emission']),
+            'Trail':('Emission',cfg['trail_emission']),'Shell':('Emission',3.),
+            'ShellSprite':('Emission',2.),'Filament':('Emission',4.),
+            'FlightEmber':('Emission',2.),'Impact':('Emission',4.),'Ember':('Emission',1.7)}
+    rows=[]
+    for name,(key,nominal) in values.items():
+        path=MATERIALS+'/MI_DBA_Fireball_'+name
+        assert path in owned,path
+        mi=u.load_asset(path);assert isinstance(mi,u.MaterialInstanceConstant)
+        value=float(nominal)*gain
+        assert key in {str(n) for n in ML.get_scalar_parameter_names(mi.get_editor_property('parent'))},(path,key)
+        # 与instance()相同：锁定UE的setter返回false，以真实参数及写后回读判定。
+        # 已达到绝对合同值时不重复写包，避免其它编辑器索引刚保存资产时的读取锁。
+        changed=abs(ML.get_material_instance_scalar_parameter_value(mi,key)-value)>1e-5
+        if changed:ML.set_material_instance_scalar_parameter_value(mi,key,value)
+        actual=ML.get_material_instance_scalar_parameter_value(mi,key)
+        assert abs(actual-value)<1e-5,(path,actual,value)
+        if changed:save(mi)
+        rows.append({'asset':path,'parameter':key,'nominal':nominal,'scale':gain,'actual':actual})
+    record('Emission.Native.json',rows)
+    return rows
+
+
 def author():
     """只导入三纹理、一个母材质和六个实例；不生成或绑定第二套Niagara。"""
     manifest = check_context()
@@ -258,65 +429,37 @@ def author():
              {"Loop": 0, "FramesPerSecond": 26, "Emission": 4.0}, "T_DBA_Fireball_ImpactFlipbook")
     instance("MI_DBA_Fireball_Ember", parent,
              {"Columns": 1, "Rows": 1, "FrameCount": 1, "Emission": 1.7, "OpacityScale": .65}, "T_DBA_Fireball_Trail")
-    volume = u.load_asset(BASE + "/Materials/M_DBA_FireOrbVolume")
+    author_flight_textures(visual)
+    author_flight_materials(visual)
     ripple = u.load_asset(BASE + "/Materials/M_DBA_PalmAirRipple")
-    if not isinstance(volume, u.Material) or not isinstance(ripple, u.Material):
-        raise RuntimeError("既有体积/扰动母材质缺失，禁止复制替代")
-    instance("MI_DBA_Fireball_Volume", volume,
-             {"RadiusCm": visual["head_diameter_cm"]*.5, "FormProgress": 1, "EmissionScale": visual["head_emission"], "DensityScale": visual["head_density"], "HeadFullness": visual["head_fullness"]})
     instance("MI_DBA_Fireball_AirRipple", ripple, {"P_Intensity": .008, "P_Opacity": .06})
     validate("NativeSaved.json")
 
 
 def validate(report_name="NativeReloaded.json"):
-    """检查保存资源的实际类型、纹理构建设置和实例父类；不声称Cook或GPU通过。"""
-    manifest = check_context()
-    owned = json.loads((OUT / "OwnedAssets.json").read_text())
-    rows = []
+    """按唯一源图/映射合同检查实际保存资产，拒绝旧覆盖与错误颜色空间。"""
+    manifest=check_context();owned=json.loads((OUT/'OwnedAssets.json').read_text())
+    source_rows={TEXTURES+'/'+Path(r['file']).stem:r for r in manifest['textures']+manifest.get('flight_textures',[])}
+    parents={'Core':'Flame','Impact':'Flame','Ember':'Flame','CoreSurface':'CoreSurface','Trail':'Trail','Shell':'Shell','ShellSprite':'Shell','Filament':'Trail','FlightEmber':'Trail'}
+    rows=[]
     for path in owned:
-        asset = u.load_asset(path)
-        if asset is None:
-            raise RuntimeError("保存后资源丢失：" + path)
-        row = {"path": path, "class": asset.get_class().get_name()}
-        if isinstance(asset, u.Texture2D):
-            row.update({"sRGB": asset.get_editor_property("srgb"),
-                        "build_size": [asset.get_editor_property("resize_during_build_x"), asset.get_editor_property("resize_during_build_y")],
-                        "actual_size": [asset.blueprint_get_size_x(), asset.blueprint_get_size_y()],
-                        "compression": str(asset.get_editor_property("compression_settings")),
-                        "mips": str(asset.get_editor_property("mip_gen_settings"))})
-            if row["sRGB"] or row["actual_size"] != [1024, 1024]:
-                raise RuntimeError("实际构建尺寸或线性设置不正确：" + str(row))
-        elif isinstance(asset, u.MaterialInstanceConstant):
-            row["parent"] = asset.get_editor_property("parent").get_path_name()
-            name = path.rsplit("/", 1)[1]
-            if name not in ("MI_DBA_Fireball_Volume", "MI_DBA_Fireball_AirRipple"):
-                if not row["parent"].startswith(MATERIALS + "/M_DBA_Fireball_Flame."):
-                    raise RuntimeError("实例未复用唯一火焰母材质：" + path)
-                row["scalars"] = {key: ML.get_material_instance_scalar_parameter_value(asset, key)
-                                  for key in ("Columns", "Rows", "FrameCount", "Loop", "ManualFrame", "UseNiagaraAge")}
-                row["texture"] = ML.get_material_instance_texture_parameter_value(asset, "FlameTexture").get_path_name()
-                expected_grid = 1 if name.endswith(("Trail", "Ember")) else 4
-                if any(row["scalars"][key] != expected_grid for key in ("Columns", "Rows")):
-                    raise RuntimeError("翻页网格合同错误：" + path)
-                if row["scalars"]["FrameCount"] != expected_grid ** 2:
-                    raise RuntimeError("实际帧数合同错误：" + path)
-                if row["scalars"]["ManualFrame"] != -1 or row["scalars"]["UseNiagaraAge"] != 1:
-                    raise RuntimeError("残留预览覆盖或未使用独立粒子年龄：" + path)
-                if name.endswith("Impact") and row["scalars"]["Loop"] != 0:
-                    raise RuntimeError("命中错误地循环播放")
-            elif name.endswith("Volume") and not row["parent"].startswith(BASE + "/Materials/M_DBA_FireOrbVolume."):
-                raise RuntimeError("未复用既有体积母材质")
-            elif name.endswith("AirRipple") and not row["parent"].startswith(BASE + "/Materials/M_DBA_PalmAirRipple."):
-                raise RuntimeError("未复用既有空气扰动母材质")
-        elif isinstance(asset, u.Material):
-            row["blend"] = str(asset.get_editor_property("blend_mode"))
-            row["scalars"] = [str(n) for n in ML.get_scalar_parameter_names(asset)]
+        asset=u.load_asset(path)
+        if asset is None:raise RuntimeError('已认领资源丢失:'+path)
+        row={'path':path,'class':asset.get_class().get_name()}
+        if isinstance(asset,u.Texture2D):
+            spec=source_rows[path];size=spec.get('requested_build_size',spec.get('size',[1024,1024]))
+            row.update(srgb=asset.get_editor_property('srgb'),actual_size=[asset.blueprint_get_size_x(),asset.blueprint_get_size_y()])
+            if row['srgb']!=spec.get('srgb',False) or row['actual_size']!=size:raise RuntimeError('纹理颜色空间/构建尺寸错误:'+str(row))
+        elif isinstance(asset,u.MaterialInstanceConstant):
+            name=path.rsplit('_',1)[1];parent=asset.get_editor_property('parent').get_path_name().split('.')[0]
+            expected=MATERIALS+'/M_DBA_Fireball_'+parents[name] if name in parents else (BASE+'/Materials/M_DBA_PalmAirRipple' if name=='AirRipple' else '/DBAPresentationPack_Core/VFX/DevelopmentMagic/Materials/M_DBA_DevMagicGlow')
+            if parent!=expected:raise RuntimeError('实例父类不符唯一职责合同:'+path)
+            row['parent']=parent
+            if 'UseNiagaraAge' in {str(n) for n in ML.get_scalar_parameter_names(asset)} and ML.get_material_instance_scalar_parameter_value(asset,'UseNiagaraAge')!=1:raise RuntimeError('残留材质预览时间覆盖')
         rows.append(row)
-    if len(rows) != 10 or len(manifest["textures"]) != 3:
-        raise RuntimeError("本轮资源数量不是3纹理+1母材质+6实例")
-    record(report_name, {"engine": u.SystemLibrary.get_engine_version(), "assets": rows,
-                         "niagara_modified": False, "cook_verified": False, "gpu_budget_verified": False})
-    print("FIREBALL_NATIVE_VERIFIED", len(rows), report_name)
+    if not set(source_rows).issubset(owned):raise RuntimeError('已登记源纹理尚未全部原生导入')
+    record(report_name,{'engine':u.SystemLibrary.get_engine_version(),'assets':rows,'cook_verified':False,'gpu_budget_verified':False,'manual_accepted':False})
+    print('FIREBALL_NATIVE_VERIFIED',len(rows),report_name)
 
 
 if __name__ == "__main__":

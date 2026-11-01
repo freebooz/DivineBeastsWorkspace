@@ -312,6 +312,8 @@ private:
             bValid &= Test->TestTrue(Label + TEXT("静态Definition合同合法"), Definition->ValidateDefinition().IsSuccess());
             // 复制真实定义做边界回归，不修改已保存资产或CDO以迁就测试。
             auto* SpeedProbe = DuplicateObject<UDivineBeastsDevelopmentMagicDefinition>(Definition, GetTransientPackage());
+            // 专门验证旧序列化常速入口；当前火球Profile的实际速度另行核对，不能用遗留字段冒充运行速度。
+            SpeedProbe->ProjectileMotion.FlightProfile=nullptr;SpeedProbe->ProjectileMotion.Flight.bEnabled=false;
             for (float Speed : {3000.f, 5000.f})
             {
                 SpeedProbe->ProjectileMotion.SpeedCmPerSecond = Speed;
@@ -334,7 +336,15 @@ private:
             bValid &= Test->TestTrue(Label + TEXT("真实GA声明开发伤害能力"), Ability->bDevelopmentDamageSampleSupported);
             bValid &= Test->TestEqual(Label + TEXT("一次提交弹数"), Definition->ProjectileCount, Expected.Count);
             bValid &= Test->TestEqual(Label + TEXT("连发间隔秒"), Definition->ProjectileIntervalSeconds, Expected.Interval);
-            bValid &= Test->TestEqual(Label + TEXT("速度厘米每秒"), Definition->ProjectileMotion.SpeedCmPerSecond, Expected.Speed);
+            bValid &= Test->TestEqual(Label + TEXT("兼容常速字段厘米每秒"), Definition->ProjectileMotion.SpeedCmPerSecond, Expected.Speed);
+            const auto& Flight=Definition->ProjectileMotion.ResolveFlightConfig();
+            if(Expected.Kind==EDivineBeastsDevelopmentMagicKind::Fireball)
+            {
+                bValid &= Test->TestNotNull(Label+TEXT("唯一共享飞行Profile"),Definition->ProjectileMotion.FlightProfile.Get());
+                bValid &= Test->TestTrue(Label+TEXT("启用加速并保留原目标追踪"),Flight.bEnabled && Flight.bEnableHoming && Flight.GravityScale==0);
+                bValid &= Test->TestEqual(Label+TEXT("实际起飞速度1200"),Flight.SpeedAt(0),1200.f);
+                bValid &= Test->TestEqual(Label+TEXT("0.15秒到1800"),Flight.SpeedAt(.15f),1800.f);
+            }
             bValid &= Test->TestEqual(Label + TEXT("最远施放距离50米"), Definition->ProjectileMotion.RangeCm, 5000.f);
             bValid &= Test->TestEqual(Label + TEXT("螺旋半径厘米"), Definition->ProjectileMotion.HelixRadiusCm, Expected.HelixRadius);
             bValid &= Test->TestEqual(Label + TEXT("螺旋频率转每秒"), Definition->ProjectileMotion.HelixTurnsPerSecond, Expected.HelixTurns);

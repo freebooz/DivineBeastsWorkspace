@@ -169,6 +169,10 @@ struct GAMEPLATFORMPRESENTATIONCORE_API FGamePlatformPresentationRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
     int32 RequestGeneration = 0;
 
+    /** 已确认结束时可选的短暂自然收尾；取消、失效和World退出保持默认false。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Presentation")
+    bool bAllowNaturalCompletion = false;
+
     bool IsValid() const
     {
         if (!RequestId.IsValid() || !SemanticTag.IsValid() ||

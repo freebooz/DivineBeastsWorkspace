@@ -92,6 +92,7 @@ public:
 
     virtual FGamePlatformVFXResult Play(const FGamePlatformVFXRequest& Request) override;
     virtual bool Stop(const FGamePlatformVFXHandle& Handle) override;
+    virtual bool StopWithMode(const FGamePlatformVFXHandle& Handle, EGamePlatformVFXStopMode Mode) override;
     virtual bool IsActive(const FGamePlatformVFXHandle& Handle) const override;
     virtual FGamePlatformVFXPlaybackSnapshot GetPlaybackSnapshot(const FGamePlatformVFXHandle& Handle) const override;
     virtual FDelegateHandle AddCompletionHandler(const FGamePlatformVFXPlaybackCompleted::FDelegate& Handler) override;
@@ -111,6 +112,9 @@ public:
 private:
     friend class FGamePlatformVFXPredictionTerminalTest;
     friend class FGamePlatformVFXResourceOwnershipTest;
+    friend class FGamePlatformVFXProjectileDrainSourceTest;
+    friend class FGamePlatformVFXProjectileDrainExitTest;
+    friend class FGamePlatformVFXProjectileDrainStaleTest;
     friend class FGamePlatformVFXDataIntegrationTest;
     friend class FGamePlatformVFXDiagnosticsWorldLifecycleTest;
     friend class FGamePlatformVFXDiagnosticsResourcePendingTest;
@@ -239,6 +243,8 @@ private:
     double LastFaunaWorldTime=0.0;
     void HandleFaunaWorldTick(UWorld* World,ELevelTick TickType,float DeltaSeconds);
     void TickFaunaInstances();
+    FDelegateHandle ProjectileMotionWorldTickHandle;
+    void HandleProjectileMotionWorldTick(UWorld* World,ELevelTick TickType,float DeltaSeconds);
 
     TMap<FGuid, FTimerHandle> LifetimeTimers;
     TMap<FGuid, TArray<FTimerHandle>> CompositeStepTimers;

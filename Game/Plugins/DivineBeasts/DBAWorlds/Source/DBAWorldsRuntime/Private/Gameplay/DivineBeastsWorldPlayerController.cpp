@@ -1,6 +1,7 @@
 // 第三层双端世界控制器：桥接平台准备事实；本地PC输入策略拥有当前Pawn的鼠标拖动/观察镜头。
 // 不依赖客户端UI，菜单由中立委托交给项目客户端；不提交坐标RPC或放宽服务器资格。
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Gameplay/DivineBeastsArenaEntrance.h"
 #include "Framework/GamePlatformGameStateBase.h"
 #include "Framework/GamePlatformPlayerStateBase.h"
 #include "Components/GamePlatformExperienceComponent.h"
@@ -252,9 +253,11 @@ void ADivineBeastsWorldPlayerController::SetCameraMouseButton(bool bRight, bool 
     {
         bPointerClickPending = false;
         // 恢复光标后再次验证UI遮挡和同一命中，避免按住期间目标移开/菜单出现导致误选。
-        if (bSelectOnRelease && IsPointerOverWorldViewport() && FindPointerTarget() == PointerPressedTarget.Get())
-            SetSelectedWorldTarget(PointerPressedTarget.Get());
+        AActor* ClickedTarget = PointerPressedTarget.Get();
+        const bool bCommitClick = bSelectOnRelease && IsPointerOverWorldViewport() && FindPointerTarget() == ClickedTarget;
+        // 交互成功可能同步打开页面并重入输入清理，先撤销本次鼠标候选。
         PointerPressedTarget.Reset();
+        if (bCommitClick) CommitWorldPointerClick(ClickedTarget);
     }
 }
 void ADivineBeastsWorldPlayerController::BeginLeftCameraDrag() { SetCameraMouseButton(false, true); }
@@ -462,6 +465,32 @@ AActor* ADivineBeastsWorldPlayerController::FindPointerTarget() const
     AActor* PawnActor = PawnHit.GetActor();
     return IsValid(PawnActor) && Cast<APawn>(PawnActor) &&
         (!bBlocked || PawnHit.Distance <= VisibilityHit.Distance + 2.f) ? PawnActor : nullptr;
+}
+
+void ADivineBeastsWorldPlayerController::CommitWorldPointerClick(AActor* Target)
+{
+    if (!CanProcessWorldInput()) return;
+    auto* Entrance = Cast<ADivineBeastsArenaEntrance>(Target);
+    if (!Entrance)
+    {
+        SetSelectedWorldTarget(Target);
+        return;
+    }
+    if (!IsValid(Entrance) || Entrance->GetWorld() != GetWorld()) return;
+    auto* Interactor = FindComponentByClass<UGamePlatformInteractorComponent>();
+    if (!Interactor) return;
+    Interactor->RefreshLocalFocus();
+    const auto Focus = Interactor->GetCurrentFocus();
+    // 只交互本次点击且已通过本地候选过滤的门，不借旧焦点打开另一扇门。
+    // 服务器仍重新验证拥有关系、Active、距离、视线和门的代次。
+    if (Focus.TargetActor != Entrance || !Focus.IsValid() || !Focus.bLocallyAvailable ||
+        Focus.Option.OptionId != FName(TEXT("Arena.Entry.Open")))
+    {
+        UE_LOG(LogTemp, Display, TEXT("ArenaEntranceClick: Mode=%s FocusAvailable=0"), *Entrance->GetArenaModeId().ToString());
+        return;
+    }
+    const FGuid Request = Interactor->BeginFocusedInteraction();
+    UE_LOG(LogTemp, Display, TEXT("ArenaEntranceClick: Mode=%s Requested=%d"), *Entrance->GetArenaModeId().ToString(), Request.IsValid());
 }
 
 void ADivineBeastsWorldPlayerController::SetSelectedWorldTarget(AActor* Target)

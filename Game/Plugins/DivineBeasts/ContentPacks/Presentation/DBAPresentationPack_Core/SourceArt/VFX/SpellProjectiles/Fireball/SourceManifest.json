@@ -95,5 +95,117 @@
     "Dissolve",
     "IntensityScale"
   ],
-  "manual_review_approved": false
+  "manual_review_approved": false,
+  "flight_shape_reference": {
+    "file": "Reference_FlightShape.png",
+    "sha256": "63168295cae457c0065ea50762e49a3bf94caf380c414a8808f07ddf620480fc",
+    "note": "2026-11-01用户指定球头与宽幅交织拖尾形状参考；场景背景不导入"
+  },
+  "flight_textures": [
+    {
+      "file": "T_DBA_Fireball_TrailBroad.png",
+      "sha256": "16a60b27741892db36814e39d9ac80aec44df034a92fdf84ce81916ad8b3c601",
+      "size": [
+        2172,
+        724
+      ],
+      "role": "Flight.MainTrail",
+      "srgb": true,
+      "alpha": "straight",
+      "generator": "built-in imagegen",
+      "status": "SourceHumanAcceptedPendingNativeMaterial",
+      "requested_build_size": [
+        2048,
+        512
+      ],
+      "source_human_accepted": true,
+      "source_human_response": "合适，保持此方向",
+      "native_material_reviewed": false
+    },
+    {
+      "file": "T_DBA_Fireball_ShellRing.png",
+      "sha256": "ca7f587c825a5301692b7e552398dac9f629fb289c56f5f51b7bfbc6cb0b9299",
+      "size": [
+        1254,
+        1254
+      ],
+      "role": "Flight.Shell",
+      "srgb": true,
+      "alpha": "straight",
+      "generator": "built-in imagegen",
+      "requested_build_size": [
+        1024,
+        1024
+      ],
+      "source_human_accepted": true,
+      "source_human_response": "合适，保持此方向",
+      "native_material_reviewed": false,
+      "status": "SourceHumanAcceptedPendingNativeMaterial"
+    },
+    {
+      "file": "T_DBA_Fireball_TrailFilament.png",
+      "sha256": "4a0f41570aa8cdb4b535fd19fa09cf87edd69727ae32b9b3ba99021859d76cb3",
+      "size": [
+        2172,
+        724
+      ],
+      "role": "Flight.Filament",
+      "srgb": true,
+      "alpha": "straight",
+      "generator": "built-in imagegen",
+      "requested_build_size": [
+        1024,
+        256
+      ],
+      "source_human_accepted": true,
+      "source_human_response": "合适，保持此方向",
+      "native_material_reviewed": false,
+      "status": "SourceHumanAcceptedPendingNativeMaterial"
+    },
+    {
+      "file": "T_DBA_Fireball_CoreFlow.png",
+      "sha256": "a4ae3296e0954f3201dbf26ea4d1ab112b643f81b9cf438e22fc1029ebb82e5e",
+      "size": [
+        1024,
+        1024
+      ],
+      "role": "Flight.CoreFlow",
+      "srgb": false,
+      "alpha": "straight",
+      "generator": "UE5.8 deterministic DrawMaterialToRenderTarget",
+      "calibration_run": "28b842b7-1239-43c4-88bc-648aa6c70fdc",
+      "status": "NativeDataCalibratedPendingImport",
+      "source_human_accepted": false
+    },
+    {
+      "file": "T_DBA_Fireball_HeatRG.png",
+      "sha256": "61e3d4680f7c0efd812af097bc4af721244fdfcc1393f89573afdc4af1d97106",
+      "size": [
+        512,
+        512
+      ],
+      "role": "Flight.HeatRG",
+      "srgb": false,
+      "alpha": "straight",
+      "generator": "UE5.8 deterministic DrawMaterialToRenderTarget",
+      "calibration_run": "28b842b7-1239-43c4-88bc-648aa6c70fdc",
+      "status": "NativeDataCalibratedPendingImport",
+      "source_human_accepted": false
+    },
+    {
+      "file": "T_DBA_Fireball_NoisePack.png",
+      "sha256": "e8e14b92bc7eeaf0b48310b04a228ed337b8abaa0d8ce55a7fe1237b8ea9be6a",
+      "size": [
+        512,
+        512
+      ],
+      "role": "Flight.NoisePack",
+      "srgb": false,
+      "alpha": "straight",
+      "generator": "UE5.8 deterministic DrawMaterialToRenderTarget",
+      "calibration_run": "28b842b7-1239-43c4-88bc-648aa6c70fdc",
+      "status": "NativeDataCalibratedPendingImport",
+      "source_human_accepted": false
+    }
+  ]
 }

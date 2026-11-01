@@ -14,12 +14,17 @@ bool UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProc
 {
     return DivineBeasts::DevelopmentAbilities::IsEnabledForCurrentProcess();
 }
+bool UDivineBeastsDevelopmentMagicDefinition::IsProjectileMotionSupported(const FGamePlatformCombatProjectileMotion& Motion)
+{
+    const auto& Config=Motion.ResolveFlightConfig();
+    return Motion.IsValid() && (Config.bEnabled ? Config.InitialSpeed>0 && Config.MaxSpeed<=MaxProjectileSpeedCmPerSecond : IsProjectileSpeedSupported(Motion.SpeedCmPerSecond));
+}
 FGamePlatformResult UDivineBeastsDevelopmentMagicDefinition::ValidateDefinition() const
 {
     const auto Parent = Super::ValidateDefinition();
     if (!Parent.IsSuccess()) return Parent;
     if (GetPresentationStyleId().IsNone() || !ProjectileMotion.IsValid() ||
-        !IsProjectileSpeedSupported(ProjectileMotion.SpeedCmPerSecond) || ProjectileCount < 1 || ProjectileCount > 3 ||
+        !IsProjectileMotionSupported(ProjectileMotion) || ProjectileCount < 1 || ProjectileCount > 3 ||
         !FMath::IsFinite(ProjectileIntervalSeconds) ||
         (ProjectileCount == 1 ? ProjectileIntervalSeconds != 0 : ProjectileIntervalSeconds < 0.05f || ProjectileIntervalSeconds > 1.0f))
         return FGamePlatformResult::Failure(TEXT("DevelopmentMagicInvalid"), TEXT("开发魔法类型、运动参数或有界连发间隔不合法。"));

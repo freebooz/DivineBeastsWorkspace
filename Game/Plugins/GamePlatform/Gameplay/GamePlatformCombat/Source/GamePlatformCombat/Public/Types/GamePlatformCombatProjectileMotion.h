@@ -1,6 +1,7 @@
 // 平台双端中立运动参数；不认识项目法术/生肖/MOBA，不持有任何表现资源。仅可信服务器消费。
 #pragma once
 #include "CoreMinimal.h"
+#include "Types/GamePlatformCombatProjectileFlight.h"
 #include "GamePlatformCombatProjectileMotion.generated.h"
 
 /** 直线/螺旋参数；厘米/秒及转/秒。螺旋本身不寻敌，只有服务器规格显式目标才启用追踪。 */
@@ -26,6 +27,14 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatProjectileMotion
     /** 初相位[0,1)转；连发可错开相位，起点仍为真实Actor出生位置。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Projectile")
     float InitialPhaseTurns = 0.0f;
+
+    /** 可选共享模板；存在时优先于内嵌Flight。发射时冻结，不改写模板。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Projectile")
+    TObjectPtr<UGamePlatformCombatProjectileFlightProfile> FlightProfile;
+    /** 未启用时完全沿用已发布固定速度字段；蓝图/服务器可按次覆盖同一结构。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Projectile")
+    FGamePlatformCombatProjectileFlightConfig Flight;
+    const FGamePlatformCombatProjectileFlightConfig& ResolveFlightConfig() const { return FlightProfile ? FlightProfile->Flight : Flight; }
 
     /** 只检查有限值及运动上界；此上界是实现合法区间，不冒充已经批准的CPU/GPU性能预算。 */
     bool IsValid() const;

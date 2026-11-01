@@ -324,8 +324,9 @@ bool FGamePlatformProjectilePossessionSelectionTest::RunTest(const FString&)
     Projectile->Tick(0.1f);
     TestFalse(TEXT("清选择没有取消已初始化弹体"), Projectile->IsFlightFinished());
     const double InstantAimY = 100.f * FVector(600, 200, 0).GetSafeNormal().Y;
-    TestTrue(TEXT("交接后继续逐步转向原目标，不能不追踪或直接吸附目标方向"),
-        Projectile->GetActorLocation().Y > 1 && Projectile->GetActorLocation().Y < InstantAimY);
+    // 本夹具正面0度初始化，按当前<30度合同直追；控制权交接不能把弹体改回弧线或换目标。
+    TestTrue(TEXT("正面弹体在交接后仍直追原目标，不能停追或恢复旧弧线"),
+        FMath::Abs(Projectile->GetActorLocation().Y - InstantAimY) < .05f);
     for (int32 Step = 0; Step < 4 && !Projectile->IsFlightFinished(); ++Step) Projectile->Tick(0.25f);
     TestTrue(TEXT("原冻结目标正常被真实Sweep命中"), Projectile->IsFlightFinished() && Projectile->GetFlightFacts().bImpacted);
     TestEqual(TEXT("交接前弹体仍仅结算一次原有12伤害"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
@@ -681,6 +682,269 @@ bool FGamePlatformProjectileVisibleRangeArcTest::RunTest(const FString&)
         Fixture.Target->SetActorLocation(TargetDirection * 5000.1f);
         TestNull(TEXT("超过最远50米不允许锁定施法"), Fixture.SourceCombat->GetSelectedProjectileTarget(5000.f, Generation));
     }
+    return true;
+}
+#if __has_include("Types/GamePlatformCombatProjectileFlight.h")
+#include "Types/GamePlatformCombatProjectileFlight.h"
+#define GP_HAS_PROJECTILE_FLIGHT 1
+#else
+#define GP_HAS_PROJECTILE_FLIGHT 0
+#endif
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileSpeedPolicyTest,
+    "GamePlatform.Combat.Projectile.Flight.SpeedPolicies",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileSpeedPolicyTest::RunTest(const FString&)
+{
+#if GP_HAS_PROJECTILE_FLIGHT
+    FGamePlatformCombatProjectileFlightConfig C; C.bEnabled=true;
+    C.SpeedMode=EGamePlatformProjectileSpeedMode::AccelerateThenCruise;
+    TestTrue(TEXT("1200/4000/1800/0.15配置有效"),C.IsValid());
+    TestEqual(TEXT("初速"),C.SpeedAt(0),1200.f);
+    TestEqual(TEXT("75毫秒"),C.SpeedAt(.075f),1500.f);
+    TestEqual(TEXT("150毫秒到顶"),C.SpeedAt(.15f),1800.f);
+    TestEqual(TEXT("巡航不再加速"),C.SpeedAt(1),1800.f);
+    TestTrue(TEXT("积分覆盖加速与巡航"),FMath::Abs(C.DistanceBetween(0,.3f)-495.f)<.05f);
+    C.SpeedMode=EGamePlatformProjectileSpeedMode::ConstantSpeed;
+    TestEqual(TEXT("常速不叠加推进"),C.SpeedAt(1),1200.f);
+    C.SpeedMode=EGamePlatformProjectileSpeedMode::ConstantAcceleration;
+    TestEqual(TEXT("恒加速受最大速度限制"),C.SpeedAt(5),1800.f);
+    C.SpeedMode=EGamePlatformProjectileSpeedMode::Decelerate; C.MinSpeed=200; C.DecelerationDuration=1;
+    TestEqual(TEXT("减速到下限不倒飞"),C.SpeedAt(10),200.f);
+    return true;
+#else
+    AddError(TEXT("缺少通用飞行速度策略；现有运动只支持固定SpeedCmPerSecond。")); return false;
+#endif
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileSpeedFrameTest,
+    "GamePlatform.Combat.Projectile.Flight.FrameStepConsistency",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileSpeedFrameTest::RunTest(const FString&)
+{
+#if GP_HAS_PROJECTILE_FLIGHT
+    for (int32 Hz : {30,60,120})
+    {
+        FProjectileTestWorld F; if(!F.Initialize())return false;
+        FGamePlatformCombatProjectileMotion M; M.RangeCm=10000; M.Flight.bEnabled=true;
+        M.Flight.SpeedMode=EGamePlatformProjectileSpeedMode::AccelerateThenCruise;
+        auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+        TestTrue(TEXT("加速发射"),P->AuthorityInitialize(F.CastSpec(),M,FVector::RightVector));
+        for(int32 I=0;I<Hz;++I)P->Tick(1.f/Hz);
+        TestTrue(FString::Printf(TEXT("%dHz一秒位移1755cm"),Hz),FMath::Abs(P->GetActorLocation().Y-1755)<.15);
+        TestTrue(TEXT("最大速度1800"),FMath::Abs(P->GetVelocity().Size()-1800)<.1);
+        TestFalse(TEXT("发射后禁止改配置"),P->AuthoritySetFlightConfig(M.Flight));
+    }
+    return true;
+#else
+    AddError(TEXT("缺少按时间积分的加速度运动。"));return false;
+#endif
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileSpeedGravityTest,
+    "GamePlatform.Combat.Projectile.Flight.GravityAndAuthorityImpact",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileSpeedGravityTest::RunTest(const FString&)
+{
+#if GP_HAS_PROJECTILE_FLIGHT
+    FProjectileTestWorld F;if(!F.Initialize())return false;
+    FGamePlatformCombatProjectileMotion M;M.RangeCm=10000;M.Flight.bEnabled=true;
+    M.Flight.SpeedMode=EGamePlatformProjectileSpeedMode::ConstantSpeed;
+    M.Flight.InitialSpeed=1000;M.Flight.MaxSpeed=2000;M.Flight.GravityScale=1;M.Flight.bEnableHoming=false;
+    auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+    TestTrue(TEXT("抛物线发射"),P->AuthorityInitialize(F.CastSpec(),M,FVector::RightVector));
+    P->Tick(.1f);
+    TestTrue(TEXT("重力未被推进速度重置"),P->GetActorLocation().Z < -4 && P->GetActorLocation().Y>99);
+    M.Flight.GravityScale=0;M.Flight.bEnableHoming=true;M.Flight.SpeedMode=EGamePlatformProjectileSpeedMode::AccelerateThenCruise;
+    M.Flight.InitialSpeed=1200;M.Flight.MaxSpeed=1800;M.RangeCm=1000;
+    auto* Shot=F.World->SpawnActor<AGamePlatformCombatProjectile>();auto S=F.CastSpec();S.Target=F.Target;
+    S.TargetAvatarGeneration=F.TargetCombat->GetCombatAvatarGeneration();
+    TestTrue(TEXT("加速仍追踪已选目标"),Shot->AuthorityInitialize(S,M,FVector::ForwardVector));
+    Shot->Tick(.25f);Shot->Tick(.25f);Shot->AuthorityCancel();
+    TestTrue(TEXT("Sweep确认命中"),Shot->GetFlightFacts().bImpacted);
+    TestEqual(TEXT("只结算一次"),F.TargetCombat->GetCombatHealth(),88.f);
+    return true;
+#else
+    AddError(TEXT("缺少推进与重力分离的统一运动积分。"));return false;
+#endif
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileSpeedValidationTest,
+    "GamePlatform.Combat.Projectile.Flight.ValidationAndCurve",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileSpeedValidationTest::RunTest(const FString&)
+{
+#if GP_HAS_PROJECTILE_FLIGHT
+    FGamePlatformCombatProjectileFlightConfig C;C.bEnabled=true;C.MaxSpeed=0;
+    TestFalse(TEXT("0不是无限速"),C.IsValid());C.MaxSpeed=1800;C.AccelerationDuration=-1;
+    TestFalse(TEXT("负时长拒绝"),C.IsValid());C.AccelerationDuration=.15f;
+    C.SpeedMode=EGamePlatformProjectileSpeedMode::SpeedCurve;
+    TestFalse(TEXT("空曲线拒绝"),C.IsValid());
+    auto Curve=TStrongObjectPtr<UCurveFloat>(NewObject<UCurveFloat>());
+    Curve->FloatCurve.AddKey(0,0);Curve->FloatCurve.AddKey(1,1);C.SpeedCurve=Curve.Get();C.CurveDuration=.15f;C.MinSpeed=1200;
+    TestTrue(TEXT("归一化CurveFloat有效"),C.IsValid());
+    TestTrue(TEXT("曲线不叠加恒推进"),FMath::Abs(C.SpeedAt(.075f)-1500)<.1f);
+    TestTrue(TEXT("曲线积分"),FMath::Abs(C.DistanceBetween(0,.3f)-495)<.1f);
+    C.InitialSpeed=NAN;TestFalse(TEXT("非有限输入拒绝"),C.IsValid());
+    C.InitialSpeed=1200;
+    const auto BadKey=Curve->FloatCurve.AddKey(.5f,.5f);
+    Curve->FloatCurve.SetKeyInterpMode(BadKey,RCIM_Cubic);
+    Curve->FloatCurve.GetKey(BadKey).LeaveTangent=NAN;
+    TestFalse(TEXT("关键帧值正常但切线非有限也拒绝"),C.IsValid());
+    return true;
+#else
+    AddError(TEXT("缺少Profile校验与CurveFloat策略。"));return false;
+#endif
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileCurveFreezeTest,
+    "GamePlatform.Combat.Projectile.Flight.CurveSnapshotAndFrameSteps",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileCurveFreezeTest::RunTest(const FString&)
+{
+    for(int32 Hz:{30,60,120})
+    {
+        FProjectileTestWorld F;if(!F.Initialize())return false;
+        auto* Profile=NewObject<UGamePlatformCombatProjectileFlightProfile>();
+        auto* Curve=NewObject<UCurveFloat>(Profile);
+        Curve->FloatCurve.AddKey(0,0);Curve->FloatCurve.AddKey(.5f,.75f);Curve->FloatCurve.AddKey(1,1);
+        auto& C=Profile->Flight;C.bEnabled=true;C.SpeedMode=EGamePlatformProjectileSpeedMode::SpeedCurve;
+        C.MinSpeed=1200;C.CurveDuration=.15f;C.SpeedCurve=Curve;
+        FGamePlatformCombatProjectileMotion M;M.RangeCm=10000;M.FlightProfile=Profile;
+        auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+        TestTrue(TEXT("共享曲线Profile发射"),P->AuthorityInitialize(F.CastSpec(),M,FVector::RightVector));
+        // 发射后修改模板和曲线，已发射Actor仍消费冻结快照。
+        Curve->FloatCurve.Reset();Curve->FloatCurve.AddKey(0,0);Curve->FloatCurve.AddKey(1,0);C.MaxSpeed=5000;
+        for(int32 I=0;I<Hz;++I)P->Tick(1.f/Hz);
+        TestTrue(FString::Printf(TEXT("%dHz非线性曲线积分1766.25cm"),Hz),FMath::Abs(P->GetActorLocation().Y-1766.25)<.2);
+        const auto S=P->GetMotionSnapshot_Implementation();
+        TestTrue(TEXT("快照保留冻结巡航上限"),S.bValid && S.Speed==1800 && S.MaxSpeed==1800 && S.FlightPhase==2);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileDecelLimitTest,
+    "GamePlatform.Combat.Projectile.Flight.DecelerationAndLimits",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileDecelLimitTest::RunTest(const FString&)
+{
+    FProjectileTestWorld F;if(!F.Initialize())return false;
+    FGamePlatformCombatProjectileMotion M;M.RangeCm=10000;M.Flight.bEnabled=true;
+    auto& C=M.Flight;C.SpeedMode=EGamePlatformProjectileSpeedMode::Decelerate;
+    C.InitialSpeed=600;C.Deceleration=600;C.DecelerationDuration=1;C.MaxFlightTime=.4f;
+    auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+    TestTrue(TEXT("减速发射"),P->AuthorityInitialize(F.CastSpec(),M,FVector::RightVector));
+    P->Tick(.25f);P->Tick(.25f);
+    TestTrue(TEXT("寿命边界192cm，无虚假命中"),P->IsFlightFinished() && !P->GetFlightFacts().bImpacted && FMath::Abs(P->GetActorLocation().Y-192)<.1);
+    C.SpeedMode=EGamePlatformProjectileSpeedMode::ConstantSpeed;C.InitialSpeed=1500;C.MaxFlightTime=10;C.MaxFlightDistance=100;
+    auto* Short=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+    TestTrue(TEXT("有限距离发射"),Short->AuthorityInitialize(F.CastSpec(),M,FVector::RightVector));Short->Tick(.2f);
+    TestTrue(TEXT("最大距离100cm停止"),Short->IsFlightFinished() && FMath::Abs(Short->GetActorLocation().Y-100)<.1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileLaunchReentryTest,
+    "GamePlatform.Combat.Projectile.Flight.LaunchCancellationReentry",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileLaunchReentryTest::RunTest(const FString&)
+{
+    FProjectileTestWorld F;if(!F.Initialize())return false;
+    auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+    FScriptDelegate Cancel;Cancel.BindUFunction(P,TEXT("AuthorityCancel"));
+    P->OnFlightLaunched.Add(Cancel);P->OnFlightStopped.Add(Cancel);
+    FGamePlatformCombatProjectileMotion M;M.Flight.bEnabled=true;
+    TestTrue(TEXT("真实蓝图事件在发射回调中取消"),P->AuthorityInitialize(F.CastSpec(),M,FVector::ForwardVector));
+    P->Tick(.25f);P->AuthorityCancel();
+    TestTrue(TEXT("终态不可复活或移动"),P->IsFlightFinished() && P->GetActorLocation().IsNearlyZero() && P->GetVelocity().IsNearlyZero());
+    TestEqual(TEXT("重入不造成伤害"),F.TargetCombat->GetCombatHealth(),100.f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileRotationFlagTest,
+    "GamePlatform.Combat.Projectile.Flight.OptionalRotation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileRotationFlagTest::RunTest(const FString&)
+{
+    FProjectileTestWorld F;if(!F.Initialize())return false;
+    auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();P->SetActorRotation(FRotator(0,45,0));
+    FGamePlatformCombatProjectileMotion M;M.Flight.bEnabled=true;M.Flight.bRotationFollowsVelocity=false;
+    TestTrue(TEXT("关闭朝向跟随仍可发射"),P->AuthorityInitialize(F.CastSpec(),M,FVector::RightVector));P->Tick(.05f);
+    TestTrue(TEXT("位置运动但不改写指定旋转"),P->GetActorLocation().Y>0 && FMath::Abs(P->GetActorRotation().Yaw-45)<.01);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileSteeringSpeedTest,
+    "GamePlatform.Combat.Projectile.Flight.PropulsionAndSteering",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileSteeringSpeedTest::RunTest(const FString&)
+{
+    FProjectileTestWorld F;if(!F.Initialize())return false;
+    F.Target->SetActorLocation(FVector(1000,200,0));
+    FGamePlatformCombatProjectileMotion M;M.RangeCm=3000;M.Flight.bEnabled=true;
+    M.Flight.SpeedMode=EGamePlatformProjectileSpeedMode::ConstantAcceleration;M.Flight.HomingAcceleration=6000;
+    auto S=F.CastSpec();S.Target=F.Target;S.TargetAvatarGeneration=F.TargetCombat->GetCombatAvatarGeneration();
+    auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+    TestTrue(TEXT("推进加速度与有限转向共用唯一运动链"),P->AuthorityInitialize(S,M,FVector::RightVector));
+    for(int32 I=0;I<400 && !P->IsFlightFinished();++I)
+    {
+        if(I==40)F.Target->SetActorLocation(FVector(1100,300,0));
+        P->Tick(.01f);
+        if(P->GetVelocity().Size()>1800.1){AddError(TEXT("追踪不能叠加越过最大速度"));return false;}
+    }
+    TestTrue(TEXT("有限转向追上移动中的原目标"),P->GetFlightFacts().bImpacted);
+    TestEqual(TEXT("真实Sweep只结算一次"),F.TargetCombat->GetCombatHealth(),88.f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileDecelReentryTest,
+    "GamePlatform.Combat.Projectile.Flight.DecelerationCancellationReentry",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileDecelReentryTest::RunTest(const FString&)
+{
+    FProjectileTestWorld F;if(!F.Initialize())return false;
+    auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+    FScriptDelegate Cancel;Cancel.BindUFunction(P,TEXT("AuthorityCancel"));P->OnDecelerationStarted.Add(Cancel);
+    FScriptDelegate Destroy;Destroy.BindUFunction(P,TEXT("K2_DestroyActor"));P->OnMaxSpeedReached.Add(Destroy);
+    FGamePlatformCombatProjectileMotion M;M.Flight.bEnabled=true;
+    M.Flight.SpeedMode=EGamePlatformProjectileSpeedMode::Decelerate;M.Flight.InitialSpeed=M.Flight.MaxSpeed;
+    TestTrue(TEXT("减速发射"),P->AuthorityInitialize(F.CastSpec(),M,FVector::RightVector));
+    TestTrue(TEXT("减速回调已取消"),P->IsFlightFinished());
+    TestFalse(TEXT("取消后不能继续触发最高速事件"),P->IsActorBeingDestroyed());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileDecelLifetimeTest,
+    "GamePlatform.Combat.Projectile.Flight.ExplicitDecelerationLifetime",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileDecelLifetimeTest::RunTest(const FString&)
+{
+    FProjectileTestWorld F;if(!F.Initialize())return false;
+    auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+    FGamePlatformCombatProjectileMotion M;M.RangeCm=4000;M.Flight.bEnabled=true;
+    M.Flight.SpeedMode=EGamePlatformProjectileSpeedMode::Decelerate;
+    M.Flight.InitialSpeed=1800;M.Flight.MaxSpeed=1800;M.Flight.MinSpeed=200;
+    M.Flight.Deceleration=3200;M.Flight.DecelerationDuration=.5f;M.Flight.MaxFlightTime=5;
+    TestTrue(TEXT("减速寿命发射"),P->AuthorityInitialize(F.CastSpec(),M,FVector::RightVector));
+    for(int32 I=0;I<30;++I)P->Tick(.1f);
+    TestFalse(TEXT("三秒时未达显式寿命或距离，不被旧常速期限截断"),P->IsFlightFinished());
+    TestTrue(TEXT("减速积分1000cm"),FMath::Abs(P->GetActorLocation().Y-1000)<.2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileHelixVelocityTest,
+    "GamePlatform.Combat.Projectile.Flight.HelixTotalVelocity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileHelixVelocityTest::RunTest(const FString&)
+{
+    FProjectileTestWorld F;if(!F.Initialize())return false;
+    auto* P=F.World->SpawnActor<AGamePlatformCombatProjectile>();
+    FGamePlatformCombatProjectileMotion M;M.RangeCm=4000;M.HelixRadiusCm=100;M.HelixTurnsPerSecond=1;M.Flight.bEnabled=true;
+    TestTrue(TEXT("螺旋Profile发射"),P->AuthorityInitialize(F.CastSpec(),M,FVector::ForwardVector));
+    P->Tick(1.f/120);
+    const FVector V=P->GetVelocity();const auto S=P->GetMotionSnapshot_Implementation();
+    TestTrue(TEXT("总速度包含真实横向分量"),V.Size()>1300 && FMath::Abs(V.Z)>600);
+    TestTrue(TEXT("总速仍受上限约束"),V.Size()<=1800.1);
+    TestTrue(TEXT("复制/快照/朝向一致"),FMath::Abs(S.Speed-V.Size())<.1 && FVector::DotProduct(P->GetActorForwardVector(),V.GetSafeNormal())>.999);
     return true;
 }
 #endif

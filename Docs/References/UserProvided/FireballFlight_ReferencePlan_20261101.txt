@@ -1,0 +1,127 @@
+纹理清单（全部 PNG RGBA）
+文件	作用	推荐 UE 导入选项
+T_DBA_FB_CoreFlow_RGB_1024.png	球体熔融表面三通道流动遮罩，R=明亮熔融纹路，G=大尺度变化，B=细线	sRGB=false, Compression=Default 或 Masks（若 Masks 使纹理失真则 Default）, Wrap=Repeat
+T_DBA_FB_ShellRing_RGBA_1024.png	外部旋转火焰环，可以用 Sprite 或有形网格	sRGB=true, Alpha 保留, Clamp
+T_DBA_FB_TrailBroad_RGBA_2048x512.png	宽幅主火焰 Ribbon 纹理，连续波纹	sRGB=true, Alpha 保留, Wrap U
+T_DBA_FB_TrailFilaments_RGBA_1024x256.png	细长金色火焰丝带 Ribbon 纹理	sRGB=true, Alpha 保留, Wrap U
+T_DBA_FB_Glow_RGBA_512.png	软光晕	sRGB=true, Alpha 保留, Clamp
+T_DBA_FB_Ember_RGBA_256.png	少量火星粒子	sRGB=true, Alpha 保留, Clamp
+T_DBA_FB_HeatRG_RGBA_512.png	低强度热空气扰动 R/G + A 遮罩，不直接用于 BaseColor	sRGB=false, 压缩为合适数据格式, Clamp
+T_DBA_FB_NoisePack_RGB_512.png	可平铺的 R/G/B 三种尺度噪声，用于 Panner 和 Dissolve	sRGB=false, 压缩为合适数据格式, Wrap
+T_DBA_FB_ImpactRing_RGBA_1024.png	后续击中阶段可用的环形冲击波	sRGB=true, Alpha 保留, Clamp
+T_DBA_FB_ImpactBurst_RGBA_1024.png	后续击中阶段可用的爆炸闪光	sRGB=true, Alpha 保留, Clamp
+
+
+色彩目标：黄白亮核 → 明黄 → 金黄 → 金橙，避免暗红色。辅助材质可在实例中调色，不建议每个发射器单独重建同一套材质。
+一、建议的 UE5.8 资产结构
+/Game/DivineBeasts/VFX/Skills/Fire/Fireball/
+  Textures/                 # 将本包 T_DBA_*.png 导入此目录
+  Materials/
+    M_DBA_FB_Core
+    M_DBA_FB_Shell
+    M_DBA_FB_TrailBroad
+    M_DBA_FB_TrailFilament
+    M_DBA_FB_Glow
+    M_DBA_FB_Heat
+    MI_DBA_FB_*
+  Niagara/
+    NS_DBA_Fireball_Flight
+    NE_DBA_FB_Core
+    NE_DBA_FB_Shell
+    NE_DBA_FB_TrailBroad
+    NE_DBA_FB_TrailFilament_A
+    NE_DBA_FB_TrailFilament_B
+    NE_DBA_FB_TrailFilament_C
+    NE_DBA_FB_Glow
+    NE_DBA_FB_Ember
+    NE_DBA_FB_Heat
+  Blueprints/
+    BP_DBA_FireballProjectile
+  Demo/
+    L_DBA_VFX_Fireball_Demo
+7 类视觉层对应 9 个 Emitter 实例：核心1、外壳1、宽拖尾1、丝带3、光晕1、火星1、热扰动1。丝带分 3 个 Emitter 实例便于稳定调参和避免跨粒子的 RibbonID 混线。可复用同一发射器资产，在 System 中建立三个实例并修改不同偏移和曲线。
+二、Material 制作
+M_DBA_FB_Core：三维主体；最重要
+1. 在 UE 创建 Sphere（可先使用 Engine BasicShapes Sphere），材质选择 Surface / Unlit / Opaque，避免以纯平面假装火球体积。
+2. TextureSample(T_DBA_FB_CoreFlow_RGB)：从 R/G/B 分别取熔融纹路、低频扰动和细纹。
+3. TextureCoordinate → Panner(0.06, 0.03) 采样 R/G；再用第二路 Panner(-0.035,0.065) 采样形成反向流动。核心材质应从近黄白中心过渡到外层金黄，不需要将所有像素都烤成红色。可使用 Lerp：亮色 (1.0,0.97,0.64) → 金黄 (1.0,0.68,0.07)，通过流动遮罩混合；参数为 UE 线性颜色示意，应以编辑器中显示结果为准。
+4. 使用 Fresnel 控制柔和的外缘增亮（或将 Fresnel 用于薄薄的独立外壳），避免裁切感。
+5. EmissiveColor = FireColor * FireIntensity，实例中先用 FireIntensity=4 起步；再按曝光调整。使用一个独立 ScalarParameter 控制明亮程度。
+6. 如果需要更厚的体积，可在核心外加第二个稍大的球体作为 M_DBA_FB_Shell，两球不可完全重合，防止深度冲突。
+M_DBA_FB_Shell：外层火焰环
+1. Surface / Unlit / Translucent，Two Sided 开启。若改用 AlphaComposite，需要将 Emissive 根据 Alpha 预乘，否则零透明区域也可能可见。
+2. ShellRing RGBA 的 RGB 乘以颜色参数和亮度参数连接 Emissive，A 连接 Opacity，乘以 0.45~0.8 的可调参数。
+3. 使用 2-3 个围绕球体旋转的曲面/环状网格或 Sprite 交叉放置，不能只沿摄像机平面固定一个二维圆环。
+4. 半径约为核心的 1.25 倍，转动方向略有区别；不宜使用过多面片导致排序问题。
+M_DBA_FB_TrailBroad：宽火焰 Ribbon
+1. Surface / Unlit / Translucent / Two Sided。TextureSample 指向 TrailBroad RGBA。
+2. TextureCoordinate 的 U 接 Ribbon UV，`Panner Speed X=0.25` 使纹理沿尾流方向运动。材质经由 Dynamic Parameter 或 Niagara Particle Color 调整亮度和透明度。
+3. Emissive=Texture.RGB * Color * Intensity(3~6)；`Opacity=Texture.A * ParticleColor.A * OpacityMultiplier`。
+4. 推荐宽拖尾淡黄、丝带明黄、外缘金橙，不要一条纹理中出现太多碎粒。
+5. 与 Ribbon Renderer 的 UV0 Tiling Distance（起步约 120~180 cm）配合，避免材质纹理被拖得过长且模糊。
+M_DBA_FB_TrailFilament：三条金色能量丝带
+创建 TrailBroad 的材质实例，改用 TrailFilaments 纹理，Emissive 强度适当高于宽拖尾，Opacity 略低，线宽小于宽拖尾。先以 1 个 Ribbon Emitter 配合本纹理自带的三线结构验证，再视需要增加到 2~3 个实例，并相应降低每条宽度、亮度和密度，避免丝带过密。
+M_DBA_FB_Glow：柔和光晕
+Surface/Unlit/Additive，Glow 的 RGB→Emissive，A→Opacity（再乘可调透明度）。起步避免超过屏幕局部过曝；亮核用球体承担，Glow 只负责边缘扩散。
+M_DBA_FB_Heat：可选热扰动
+建议单独开启和关闭以便性能分级。低质量或竞技模式可以完全不启用。HeatRG 作为数据通道驱动小幅 UV 偏移/折射，强度要足够低，防止像素游离、视觉浑浊。
+三、Niagara System 实施步骤
+A. 建立 NS_DBA_Fireball_Flight
+1. Content Browser → FX → Niagara System → New System from selected emitters。使用模板构建各 Emitter，保存到指定目录。
+2. 打开 NS，在 System Overview 中按下列顺序建立/命名 9 个 Emitter 实例。
+3. 暴露 System User 参数：`User.CoreDiameterCm=70`、`User.TrailLengthCm=450`、`User.ProjectileSpeedCmS=1800`、`User.FlameIntensity=4`、`User.FilamentSpreadCm=20`、`User.LODLevel=0`。
+4. 确保 Projectile 的角色模型、Mesh 和碰撞半径分别控制；不要用 Niagara 的视觉尺寸代替碰撞尺寸。
+B. NE_DBA_FB_Core（Mesh / Local Space=true）
+- 模板：Empty → CPU Sim，Emitter State 仅一次生命周期（按投射物最大存活时间设置）。
+- Emitter Update：Spawn Burst Instantaneous = 1。
+- Particle Spawn：Initialize Particle，Lifetime=3s（与 Projectile 最大寿命联动），MeshScale 依据 Sphere 实际大小设到直径约 70cm，Color=White。
+- Render：Mesh Renderer，Sphere Mesh，材质 M_DBA_FB_Core。
+- Particle Update：可添加 Scale Mesh Size / Parameter 控制极轻微呼吸（0.97~1.03），不要使球体猛烈跳动。
+- 观察要点：必须有体积、边缘光、流动纹路；没有多余火星时仍能识别为火球。
+C. NE_DBA_FB_Shell（Mesh/Sprite / Local Space=true）
+- Spawn Burst 2~3；生命周期跟核心一致。
+- Renderer：Mesh Renderer 或 Sprite Renderer，使用 M_DBA_FB_Shell。
+- 尺寸略大于核心，原则上控制在 85~110cm 外径，给外部火舌留空间。
+- Particle Update：通过 Particle Rotation / Mesh Orientation 添加相反方向的缓慢旋转，两个外壳的角速度不要完全相同。
+- 材质控制边缘淡出，避免外壳形成不自然的硬圆。
+D. NE_DBA_FB_TrailBroad（Ribbon / Local Space=false）
+最重要：世界空间拖尾。
+- Emitter Properties：Requires Persistent IDs=true（CPU Ribbon），Local Space=false。
+- Emitter Update：Spawn Rate=60 /s，随 Projectile 激活持续发射。
+- Particle Spawn：Initialize Particle；Lifetime=0.25s（初始飞行速度 1800cm/s × 0.25s ≈ 450cm），Ribbon Width=60~90cm，Color=White。
+- Particle Update：根据 Normalized Age 把宽度逐渐缩小到尾端，例如从 80cm → 50cm → 8cm；Alpha从 1 → 0.7 → 0；可加轻微低频 Curl Noise，但速度扰动要小，防止破坏连续形态。
+- Renderer：Ribbon Renderer，材质 M_DBA_FB_TrailBroad；UV0 Tiling Distance = 120~180cm 起步；Facing Mode 用 Screen 起步，按镜头视角确认是否需要 Custom Facing。
+- 关键验证：Actor 高速移动时，旧 Ribbon 粒子应留在旧世界坐标，不能跟着整个 Niagara Component 平移。
+- 如果需要不同飞行速度都保持约450cm尾长，请由 C++ / BP 计算 TrailLife=clamp(TrailLengthCm/max(SpeedCmS,1),0.12,0.45)，将其作为 User 参数传入，并映射到 Initialize Particle Lifetime。低速/静止时应单独限制拖尾长度。
+E. NE_DBA_FB_TrailFilament_A/B/C（Ribbon / Local Space=false）
+- 建议先启用 1 个 Emitter 实例（纹理已包含三条线）；如需要更多立体交织，再启用第 2、3 个实例，复用同一基础资产并设置稳定偏移。
+- 每条建议 Spawn Rate=50~60/s、Lifetime=0.18~0.28s、Ribbon Width=8~20cm。
+- 3 条从火球后半球不同角度发出：例如 +Y偏移20cm、-Y偏移20cm、+Z偏移12cm，在世界空间保留拖尾。
+- 使用缓慢三角函数摆动或低频噪声使三条线交错，不要用逐帧高频随机位置导致 Ribbon 抖动。
+- Ribbon 末端淡出，避免突然截断。需要从多个角度看到交叉关系，而不是只有摄像机正视角有效。
+F. NE_DBA_FB_Glow（Sprite / Local Space=true）
+- Burst=1；Size 从直径110~145cm 起步，随核心轻微呼吸。
+- 将 SoftGlow 材质用于 Sprite；透明度建议 0.2~0.45。面对镜头。
+- Glow 不能替代真实核心；务必在 HDR/自动曝光环境下验证不过曝。
+G. NE_DBA_FB_Ember（Sprite / Local Space=false）
+- Spawn Rate=8~15/s；Lifetime=0.18~0.38s；Sprite尺寸 3~9cm。
+- 初始化位置为火球后半部分，并施加小幅径向和逆飞行速度，减少颗粒飞溅。
+- 粒子尾端透明度归零，数量不要压过宽拖尾。
+H. NE_DBA_FB_Heat（Sprite / Local Space=true，质量档可关）
+- Burst 1~3，位于火球边缘或后侧。
+- 材质使用 HeatRG，热扰动强度非常弱。
+- 独立画质开关，优先保障竞技视角下的清晰度。
+四、BP_DBA_FireballProjectile：移动与碰撞
+1. Actor Components：Sphere Collision（根组件）、Projectile Movement、Niagara Component（NS_DBA_Fireball_Flight）。
+2. ProjectileMovement：InitialSpeed = 1800 cm/s，MaxSpeed=1800 cm/s，ProjectileGravityScale=0，RotationFollowsVelocity=true；起步 Collision Sphere Radius 30~35cm（独立于视觉半径）。
+3. 发射时从手部 Socket 获取位置和目标方向，做初始重叠检查，避免火球生成在墙内。
+4. 伤害与碰撞判断必须由服务端权威执行；Niagara 视觉层由客户端本地播放，复制生成事件/必要状态即可，避免逐粒子网络同步。
+5. 命中后先停止尾迹发射并保持旧粒子自然衰减。最简原型：禁用碰撞并停止移动，Niagara Deactivate，再延时 0.35~0.5s 销毁 Projectile。多人游戏：推荐独立的本地世界 VFX Actor / NiagaraComponent 负责尾迹寿命，不依赖服务端 Projectile 的立即销毁；单纯 DetachFromComponent 不保证组件在所属 Actor 销毁后仍存在。
+6. 在 Hit 位置播放 NS_DBA_Fireball_Impact（后续第三阶段），使用击中法线决定地面灼烧投射方向；角色击中时不要强制创建穿地灼烧。
+五、质量与性能验收
+- 不出现暗红色主体，中心为黄白色；高亮不过曝到失去球体形状。
+- 从侧面、斜侧面、跟随视角，主体保持三维球体感，拖尾长度稳定，丝带不穿帮。
+- 火球直线飞行、急转向（如后续追踪弹）、碰撞后自然淡出均无明显断裂。
+- 静止/低速时避免生成不合理的超长拖尾。
+- 在 60fps 目标下进行 GPU Visualizer / Niagara Debugger / Unreal Insights 复核；按照现有 Effect Type / Significance / Culling / Scalability 策略管理不同距离和同屏数量。
+- 检查 SSR/半透明排序和自动曝光，减少发白、边缘锯齿、过度锐化及过量的火星碎粒。

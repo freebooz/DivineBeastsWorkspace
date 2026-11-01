@@ -1,0 +1,537 @@
+# 《神兽联盟》（SSLM）通用飞行法术加速度系统实施提示词 V1.0
+
+## 一、任务目标
+
+请通过 HWebCodex，对 Unreal Engine 5.8《神兽联盟》（SSLM）项目实施通用飞行法术运动系统。
+
+GitHub 仓库：
+
+https://github.com/freebooz/DivineBeastsWorkspace
+
+项目架构：
+
+GameFoundation → MobaCommon → DivineBeasts
+
+本次任务不是单独修改火球术，而是建立一套所有投掷、发射类法术均可复用的飞行运动基础能力。
+
+核心要求：
+
+1. 统一实现初始速度、加速度、最大速度、减速度和速度曲线。
+2. 支持匀速、加速、减速、先加速后匀速及自定义速度变化。
+3. 兼容直线飞行、抛物线飞行、追踪飞行。
+4. 加速度能够独立配置、关闭和复用。
+5. 支持通过 DataAsset 配置不同法术的飞行参数。
+6. 支持 C++ 和 Blueprint 调用。
+7. 实时向 Niagara 输出速度、加速状态和飞行方向。
+8. 兼容现有技能系统、伤害系统、碰撞检测及多人游戏网络同步。
+9. 尽可能复用项目现有的公共类、组件和资产。
+10. 避免为不同技能重复编写 Tick、位移和速度计算逻辑。
+
+最终使用标准火球术进行首个完整验证，但所有基础功能必须独立于火焰技能实现。
+
+## 二、实施前审查
+
+首先通过 HWebCodex 检查本地项目连接状态、Git 工作区和现有工程架构。
+
+重点审查：
+
+- 现有 Projectile Actor 基类。
+- ProjectileMovementComponent 使用情况。
+- 现有技能基类及 Gameplay Ability System（若项目已经使用）。
+- 现有投掷、飞行、追踪技能实现。
+- 现有 Niagara 组件及 User Parameter 传参方式。
+- 现有网络同步、碰撞及伤害机制。
+- GameFoundation、MobaCommon、DivineBeasts 模块的职责边界。
+
+如果已有通用投射物基类，应优先扩展已有实现，不得无必要创建平行的第二套投射物框架。
+
+所有通用运动能力原则上应放在 MobaCommon 层；只有真正与具体游戏规则无关的基础设施才考虑放入 GameFoundation。
+
+DivineBeasts 层只保留具体技能配置和表现资产。
+
+禁止删除已有资源、清理缓存、重置 Git 工作区或覆盖未提交修改。
+
+## 三、通用组件架构
+
+推荐按以下逻辑设计，具体类名应先核对项目命名规范：
+
+```text
+MobaCommon
+│
+├── ProjectileBase
+│   ├── CollisionComponent
+│   ├── ProjectileMovementComponent
+│   ├── ProjectileFlightController
+│   └── VisualEffectComponent
+│
+├── ProjectileFlightConfig
+│
+└── ProjectileFlightProfile
+```
+
+推荐定义：
+
+`UMobaSpellProjectileMovementComponent`
+
+负责投射物的实际移动，继承或复用 `UProjectileMovementComponent`。
+
+`FSpellProjectileFlightConfig`
+
+负责统一存储飞行运动参数。
+
+`UProjectileFlightProfileDataAsset`
+
+负责管理可复用的飞行参数模板。
+
+`UMobaProjectileFlightControllerComponent`
+
+作为可选配置和控制接口，负责启动、停止、切换飞行模式以及向外提供运动状态。
+
+注意：
+
+- 实际位移只能有一个权威执行者。
+- 不允许 ProjectileMovement 和 Actor Tick 同时独立修改位置。
+- 不允许使用 SetActorLocation 与 ProjectileMovement 重复驱动同一投射物。
+- 若已有满足要求的组件，可直接扩展，不强制新增以上全部类。
+- 移动、碰撞、伤害、Niagara 视觉表现应保持职责分离。
+
+## 四、飞行运动模式
+
+定义统一飞行模式枚举：
+
+```cpp
+enum class ESpellProjectileSpeedMode : uint8
+{
+    ConstantSpeed,
+    ConstantAcceleration,
+    AccelerateThenCruise,
+    Decelerate,
+    SpeedCurve
+};
+```
+
+各模式要求如下。
+
+### 4.1 匀速飞行
+
+ConstantSpeed：
+
+- 发射时指定初始速度。
+- 后续保持速度大小不变。
+- 允许关闭加速度计算。
+- 用于普通魔法弹及不需要加速的技能。
+
+### 4.2 恒定加速
+
+ConstantAcceleration：
+
+- 支持设置初始速度。
+- 支持设置加速度，单位 cm/s²。
+- 随飞行时间逐步增加速度。
+- 速度达到最大值时不再继续增加。
+- 不允许超过最大速度限制。
+
+计算关系：
+
+```text
+Speed = InitialSpeed + Acceleration * ElapsedTime
+
+Speed = Min(Speed, MaxSpeed)
+```
+
+### 4.3 加速后匀速
+
+AccelerateThenCruise：
+
+- 发射时使用指定初始速度。
+- 在设定时间内逐渐加速。
+- 达到最大速度后进入匀速阶段。
+- 加速完成后停止额外的推进加速度。
+
+这是标准火球术推荐的默认模式。
+
+### 4.4 减速飞行
+
+Decelerate：
+
+- 以指定速度发射。
+- 在设定时间内逐渐减速。
+- 支持配置最小速度。
+- 不允许减速计算导致非预期反向运动。
+- 可用于缓慢能量弹、悬停前减速等技能。
+
+### 4.5 自定义速度曲线
+
+SpeedCurve：
+
+支持使用 Unreal CurveFloat 配置：
+
+- 起步速度。
+- 加速过程。
+- 速度峰值。
+- 减速过程。
+- 最终速度。
+
+曲线使用归一化时间输入，输出归一化速度插值系数。
+
+必须保证曲线和运动积分使用 DeltaTime 或内部运动子步进时间，不得依赖固定帧数。
+
+恒定加速度和速度曲线属于不同控制策略，不得同时叠加造成重复加速。
+
+## 五、统一参数配置
+
+建立可在编辑器中调整的运动配置结构。
+
+至少包含：
+
+```text
+FlightMode
+InitialSpeed
+MaxSpeed
+MinSpeed
+Acceleration
+Deceleration
+AccelerationDuration
+DecelerationDuration
+SpeedCurve
+GravityScale
+bEnableHoming
+HomingAcceleration
+bRotationFollowsVelocity
+bEnableSubStepping
+MaxFlightDistance
+MaxFlightTime
+bEnableSpeedBasedVFX
+```
+
+单位统一：
+
+- 速度：cm/s。
+- 加速度：cm/s²。
+- 时间：秒。
+- 距离：cm。
+
+配置必须具有默认值、参数校验及异常输入处理。
+
+速度上限必须为正数；注意 UE 原生 ProjectileMovement 的 MaxSpeed 等于0代表不限制速度，因此不能直接使用0表达禁止运动。
+
+对无效曲线、非法速度、负加速时长及零方向向量提供合理的错误处理。
+
+配置支持 DataAsset、蓝图默认值以及技能运行时覆盖。
+
+运行时修改配置时，应明确新配置是立即生效还是仅在下一次发射生效。
+
+## 六、标准火球术默认配置
+
+创建标准火球飞行配置：
+
+`DA_DBA_Fireball_Flight`
+
+建议初始参数：
+
+```text
+FlightMode = AccelerateThenCruise
+
+InitialSpeed = 1200 cm/s
+
+MaxSpeed = 1800 cm/s
+
+AccelerationDuration = 0.15 s
+
+Acceleration = 4000 cm/s²
+
+GravityScale = 0
+
+EnableHoming = false
+
+RotationFollowsVelocity = true
+
+EnableSubStepping = true
+```
+
+运动要求：
+
+1. 发射瞬间速度为1200cm/s。
+2. 在0.15秒内逐渐加速到1800cm/s。
+3. 加速完成后保持1800cm/s匀速飞行。
+4. 速度曲线可采用 Ease-Out 风格。
+5. 使用 Ease-Out 时，应根据曲线计算实际速度变化，不得直接沿用线性加速的4000cm/s²作为每一时刻的恒定加速度。
+6. 飞行期间不得发生速度突变或明显轨迹抖动。
+7. 命中时立即停止运动并触发命中事件。
+
+以上为标准火球的默认配置，不允许硬编码到所有法术的通用组件中。
+
+## 七、直线、抛物线与追踪运动兼容
+
+运动方向与速度大小应尽可能分开处理。
+
+直线模式：
+
+- 加速度沿当前飞行方向施加。
+- 保持直线运动。
+- 达到速度上限后停止推进加速。
+
+抛物线模式：
+
+- 使用 ProjectileGravityScale 控制重力。
+- 允许沿指定方向附加推进加速度。
+- 不得每帧重置完整速度向量，导致重力累计失效。
+- 应明确速度上限针对总速度还是推进速度，并保持统一规则。
+
+追踪模式：
+
+- 复用 Unreal ProjectileMovement 的追踪能力。
+- HomingAcceleration 负责转向目标。
+- FlightAcceleration 负责推进速度变化。
+- 两种加速度需要协调，不能相互覆盖。
+- 追踪目标失效时，按配置继续当前方向飞行或进入停止状态。
+
+如果需要扩展 UProjectileMovementComponent，应优先评估 ComputeAcceleration、ComputeVelocity 等引擎扩展接口，避免额外的 Actor 位移循环。
+
+## 八、Niagara 速度联动
+
+所有飞行法术必须可以将运动状态传递给 Niagara。
+
+建议统一参数命名：
+
+```text
+User.ProjectileSpeed
+User.SpeedNormalized
+User.AccelerationNormalized
+User.FlightDirection
+User.FlightPhase
+User.TrailLengthScale
+```
+
+要求：
+
+1. 速度变化时更新 Niagara 运行参数。
+2. 速度增加时允许视觉拖尾逐渐增长。
+3. 匀速阶段保持拖尾稳定。
+4. 减速时允许拖尾缩短或降低发光强度。
+5. Niagara 不得反向控制游戏权威飞行速度。
+6. 视觉效果必须可以独立关闭。
+7. 没有 Niagara 资产的投射物也必须正常移动。
+8. 参数更新只针对已声明对应 User Parameter 的 Niagara System，避免无效传参。
+
+对于标准火球：
+
+- 加速期间逐渐拉长连续火焰拖尾。
+- 进入匀速阶段后保持稳定的彗星形态。
+- 球形头部不因速度增加而明显拉伸变形。
+- 拖尾采用 World Space，保留真实运动轨迹。
+- 核心采用 Local Space，跟随投射物移动。
+- 命中后独立播放爆炸特效，原有拖尾自然衰减。
+
+不得将通用飞行组件与具体火球材质或 Niagara Emitter 直接耦合。
+
+## 九、公共接口设计
+
+提供 BlueprintCallable 接口，具体名称遵循项目已有规范。
+
+建议包括：
+
+```text
+InitializeFlight(Config)
+
+Launch(Direction)
+
+SetFlightMode(Mode)
+
+SetInitialSpeed(Value)
+
+SetMaxSpeed(Value)
+
+SetAcceleration(Value)
+
+SetDeceleration(Value)
+
+SetAccelerationDuration(Value)
+
+SetSpeedCurve(Curve)
+
+SetHomingTarget(Target)
+
+StopFlight()
+
+GetCurrentSpeed()
+
+GetCurrentAcceleration()
+
+GetNormalizedSpeed()
+
+GetFlightDirection()
+
+GetFlightPhase()
+
+GetFlightElapsedTime()
+```
+
+建议事件：
+
+```text
+OnFlightLaunched
+
+OnAccelerationStarted
+
+OnMaxSpeedReached
+
+OnDecelerationStarted
+
+OnFlightStopped
+
+OnProjectileImpact
+```
+
+事件需要支持 Blueprint 订阅。
+
+必须保证生命周期正确，所有完成型事件不会因重复碰撞或 Tick 重复触发。
+
+## 十、多人游戏与性能要求
+
+《神兽联盟》支持多人竞技，因此系统必须考虑网络同步。
+
+要求：
+
+1. 服务端负责权威运动、碰撞和伤害判定。
+2. 客户端负责主要 VFX 表现。
+3. 复用现有网络复制机制。
+4. 不允许客户端 Niagara 决定伤害或命中。
+5. 不应为每一帧速度变化单独发送 RPC。
+6. 优先同步飞行初始条件、配置、发射时刻和必要的位置修正。
+7. 网络延迟下避免客户端出现明显瞬移和拖尾断裂。
+8. 根据现有工程决定是否需要客户端预测；不得在未审查现有机制前另建预测框架。
+9. 高速投射物采用 Swept Collision，并根据需要使用运动子步进。
+10. 避免同一投射物重复命中结算。
+11. 支持最大飞行距离和生命周期限制。
+12. 支持现有对象池机制；对象复用时必须重置速度、加速时间、追踪状态及事件。
+
+不要为每个技能分别创建运动 Tick。
+
+需要验证同时存在多个投射物时的性能和稳定性。
+
+## 十一、适用范围
+
+通用加速度系统应能够被以下技能直接复用：
+
+- 标准火球、蓄力火球、连发火球。
+- 冰球、冰锥、冰霜魔法弹。
+- 毒液弹、毒雾投掷物。
+- 雷电能量弹。
+- 风刃、魔法飞刃。
+- 暗影能量弹。
+- 追踪魔法弹。
+- 物理投掷物。
+- 其他未来新增的远程飞行技能。
+
+不同技能仅需要调整配置、碰撞策略、视觉资源和伤害逻辑。
+
+不允许为不同元素法术复制粘贴相同的加速度算法。
+
+## 十二、演示关卡与验证
+
+在现有测试关卡体系中创建或扩展通用投射物演示关卡。
+
+建议名称：
+
+`L_DBA_ProjectileMotion_Demo`
+
+测试内容：
+
+**测试一：匀速**
+
+配置1500cm/s，验证整个飞行过程保持匀速。
+
+**测试二：线性加速**
+
+配置初速1200cm/s、加速度4000cm/s²、最大速度1800cm/s，验证约0.15秒达到最大速度。
+
+**测试三：自定义速度曲线**
+
+加载 Ease-Out 曲线，验证速度平滑变化并达到目标速度。
+
+**测试四：减速**
+
+验证投射物速度逐渐降低，不发生非预期反向移动。
+
+**测试五：追踪飞行**
+
+验证追踪加速度与推进加速度能够协同工作。
+
+**测试六：抛物线**
+
+验证重力生效，推进加速不覆盖竖直方向速度。
+
+**测试七：多投射物**
+
+同时生成多个不同配置的投射物，检查独立状态及性能。
+
+**测试八：Niagara 联动**
+
+使用标准火球术，验证：
+
+- 加速时拖尾增长。
+- 匀速时拖尾稳定。
+- 减速时视觉变化平滑。
+- 头部与拖尾运动连续。
+- 命中后没有突然消失或特效残留。
+
+**测试九：帧率一致性**
+
+分别以30、60、120 FPS测试，确认速度曲线、达到最大速度的时间、轨迹和最终位置在合理误差范围内一致。
+
+**测试十：多人同步**
+
+在 Dedicated Server + 多客户端环境中验证发射、运动、碰撞、命中、伤害和特效同步。
+
+## 十三、实施顺序
+
+请按照以下步骤执行：
+
+第一步：审查现有工程，确认可复用组件。
+
+第二步：确定通用运动组件和参数配置的实际落点。
+
+第三步：补充统一飞行模式和加速度计算。
+
+第四步：实现速度曲线与加速完成事件。
+
+第五步：实现直线、抛物线和追踪模式兼容。
+
+第六步：完成 Blueprint 和 C++ 接口。
+
+第七步：建立 Niagara 速度联动接口。
+
+第八步：使用现有标准火球术验证。
+
+第九步：建立可复用的运动演示场景。
+
+第十步：完成编译、自动化测试、PIE 验证和多人同步测试。
+
+第十一步：检查所有新增内容的命名、模块依赖及代码复用情况。
+
+## 十四、最终交付要求
+
+完成后输出：
+
+1. 实际修改及新增的 C++ 文件列表。
+2. 通用组件类名和模块归属。
+3. 飞行配置参数定义。
+4. 支持的运动模式。
+5. 标准火球术示例配置。
+6. Niagara 参数接口。
+7. Blueprint 使用方法。
+8. 演示关卡和测试入口。
+9. 编译及测试结果。
+10. 尚未完成的人工视觉核验项目。
+11. Git 工作区变更摘要。
+
+如有必须通过 Unreal Editor 人工完成的 Niagara 资产配置，应明确列出操作步骤，不得把未创建的资产报告为已经完成。
+
+本任务的最终验收标准：
+
+**所有投掷、发射类法术均可通过统一配置启用加速、减速、匀速或自定义速度曲线，无需重复实现飞行运动逻辑；同时保持 Niagara 视觉效果与实际飞行速度一致。**
+
+优先保证系统通用性、模块化、可维护性、多人游戏稳定性和运行性能。
+
+请按以上要求完成实际工程实施，而不是仅输出设计方案。
