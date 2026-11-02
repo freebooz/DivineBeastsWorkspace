@@ -1833,6 +1833,13 @@ bool UDivineBeastsApplicationFlowSubsystem::NotifyWorldObserved(
         return false;
     }
 
+    // 定义可能晚于World通知到达；尚未校验包身份时继续等待，不提前发布目标已加载。
+    if (!LoadingContext->HasWorldDefinition())
+    {
+        return false;
+    }
+
+    const bool bFirstObservation = !LoadingContext->HasObservedWorld();
     if (!LoadingContext->ObserveWorld(
             ObservationId,
             ExperienceId,
@@ -1843,13 +1850,19 @@ bool UDivineBeastsApplicationFlowSubsystem::NotifyWorldObserved(
         return false;
     }
 
-    if (!ObservedWorld ||
-        !Loading->ReportWorldOperable(
-            ActiveLoadingOperation,
-            *ObservedWorld).IsSuccess())
+    // 本操作使用项目自定义任务，未配置内置WorldPresence/TargetWorldPackage。
+    // 操作性由同一已校验WorldDefinition的项目Context和任务IsReadyToUse共同验证；
+    // 不能再用空的内置目标包拒绝已确认的真实World。
+    if (!LoadingContext->IsWorldOperable())
     {
         SetError(EDivineBeastsFlowError::WorldMismatch);
         return false;
+    }
+
+    if (bFirstObservation)
+    {
+        UE_LOG(LogTemp, Display, TEXT("WorldReadiness: ExpectedWorldObserved Operation=%s Package=%s"),
+            *ObservationId.ToString(), *ObservedWorld->GetOutermost()->GetName());
     }
 
     TryReportLocalFactsToSession();
@@ -1913,9 +1926,19 @@ void UDivineBeastsApplicationFlowSubsystem::TryReportLocalFactsToSession()
         return;
     }
 
-    const FGamePlatformSessionSnapshot SessionSnapshot =
-        Session->GetSnapshot();
-    if (SessionSnapshot.TransferOperationId != ActiveTransferOperationId ||
+    const FGuid ReportingOperation = ActiveTransferOperationId;
+    const TSharedPtr<FDivineBeastsProjectLoadingContext> ReportingContext = LoadingContext;
+    const TWeakObjectPtr<UGamePlatformSessionClientSubsystem> ReportingSession = Session;
+    const auto IsCurrentReport = [this, ReportingOperation, ReportingContext, ReportingSession]()
+    {
+        return ReportingSession.IsValid() && Session == ReportingSession.Get() &&
+            ActiveTransferOperationId == ReportingOperation && LoadingContext == ReportingContext &&
+            ReportingContext->IsActiveFor(ReportingOperation);
+    };
+    if (!IsCurrentReport()) { return; }
+
+    const FGamePlatformSessionSnapshot SessionSnapshot = ReportingSession->GetSnapshot();
+    if (SessionSnapshot.TransferOperationId != ReportingOperation ||
         !SessionSnapshot.Binding.IsValid())
     {
         return;
@@ -1924,19 +1947,21 @@ void UDivineBeastsApplicationFlowSubsystem::TryReportLocalFactsToSession()
     TGuardValue<bool> Guard(bSynchronizingSessionFacts, true);
     FGamePlatformResult Ignored;
 
-    if (LoadingContext->Has(DivineBeastsLoading::Fact::ExpectedWorld))
+    if (ReportingContext->Has(DivineBeastsLoading::Fact::ExpectedWorld))
     {
-        Session->ReportLocalFact(
-            ActiveTransferOperationId,
+        ReportingSession->ReportLocalFact(
+            ReportingOperation,
             EGamePlatformSessionTransferFact::TargetWorldLoaded,
             SessionSnapshot.Binding,
             Ignored);
     }
 
-    if (LoadingContext->Has(DivineBeastsLoading::Fact::CharacterBinding))
+    // ReportLocalFact同步派发Session通知，Ready/注销可在回调中释放或替换Loading上下文。
+    if (!IsCurrentReport()) { return; }
+    if (ReportingContext->Has(DivineBeastsLoading::Fact::CharacterBinding))
     {
-        Session->ReportLocalFact(
-            ActiveTransferOperationId,
+        ReportingSession->ReportLocalFact(
+            ReportingOperation,
             EGamePlatformSessionTransferFact::ControllerReady,
             SessionSnapshot.Binding,
             Ignored);
@@ -1966,9 +1991,13 @@ void UDivineBeastsApplicationFlowSubsystem::TryCompleteWorldReady()
         return;
     }
 
-    SubmitCurrentNodeEvent(
+    const FGuid CompletedOperationId = ActiveTransferOperationId;
+    if (SubmitCurrentNodeEvent(
         FDivineBeastsFlowNodes::WorldReady(),
-        FGamePlatformFlowNodeResult::Success());
+        FGamePlatformFlowNodeResult::Success()))
+    {
+        UE_LOG(LogTemp, Display, TEXT("WorldReadiness: Completed Operation=%s"), *CompletedOperationId.ToString());
+    }
 }
 
 void UDivineBeastsApplicationFlowSubsystem::FailWorldReady(
@@ -2442,6 +2471,11 @@ void UDivineBeastsApplicationFlowSubsystem::SetError(
         return;
     }
     ViewState.Error = Error;
+    if (Error != EDivineBeastsFlowError::None)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("WorldFlowError: Code=%s Step=%s Operation=%s"),
+            *ProjectErrorCode(Error).ToString(), *ViewState.CurrentStep.ToString(), *ActiveTransferOperationId.ToString());
+    }
     RefreshAllowedActions();
     BroadcastView();
 }
@@ -2642,3 +2676,8 @@ bool UDivineBeastsApplicationFlowSubsystem::RequestTrustedWorldMigration(FDivine
     if(!bAccepted){PendingTrustedMigration.Reset();PendingMigrationAuthGeneration.Invalidate();return false;}
     SetBusy(true);return true;
 }
+
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
+// 私有LoadingContext定义在本翻译单元；回归仍归Private/Tests，只编入Editor原生测试。
+#include "Tests/DivineBeastsWorldObservationTests.inl"
+#endif

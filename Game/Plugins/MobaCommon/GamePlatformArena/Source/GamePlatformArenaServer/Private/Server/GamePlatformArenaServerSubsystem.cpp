@@ -171,7 +171,12 @@ void UGamePlatformArenaServerSubsystem::TryAdmitVerifiedConnection(APlayerContro
     if (!AdmissionSubsystem->GetVerifiedAdmission(Controller, Admission)) { return; }
     const auto& Assignment = Mode->GetAssignment();
     const auto* Slot = GamePlatformArenaVerifiedAdmissionPolicy::ResolveRosterSlot(Admission, Assignment);
-    if (!Slot) { return; }
+    if (!Slot)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ArenaRosterAdmission: Rejected Match=%s ExpectedMatch=%s World=%s"),
+            *Admission.MatchId, *Assignment.MatchId, *Admission.WorldId);
+        return;
+    }
     if (const auto* Existing = AdmittedConnections.Find(&Controller))
     { if (Existing->AdmissionId == Admission.AdmissionId) { return; } }
     FGamePlatformArenaTransferTicketClaims Claims;
@@ -197,6 +202,8 @@ void UGamePlatformArenaServerSubsystem::TryAdmitVerifiedConnection(APlayerContro
     FAdmittedConnection& Binding = AdmittedConnections.FindOrAdd(&Controller);
     World->GetTimerManager().ClearTimer(Binding.AuthorityDeadlineTimer);
     Binding.AdmissionId = Admission.AdmissionId; Binding.PlayerId = Admission.PlayerId;
+    UE_LOG(LogTemp, Display, TEXT("ArenaRosterAdmission: Accepted Match=%s World=%s Phase=%d"),
+        *Assignment.MatchId, *Admission.WorldId, static_cast<int32>(Mode->GetMatchPhase()));
     const TWeakObjectPtr<APlayerController> WeakController(&Controller);
     World->GetTimerManager().SetTimer(Binding.AuthorityDeadlineTimer,
         FTimerDelegate::CreateUObject(this, &UGamePlatformArenaServerSubsystem::ExpireVerifiedConnection, WeakController, Admission.AdmissionId),

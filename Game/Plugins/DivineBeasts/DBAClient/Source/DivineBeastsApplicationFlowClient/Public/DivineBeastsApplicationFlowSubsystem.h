@@ -140,6 +140,8 @@ public:
     }
 
 private:
+    // 原生回归访问私有组合状态，不向运行时或蓝图增加准入/就绪写入口。
+    friend class FDivineBeastsWorldObservationTest;
 #if WITH_DEV_AUTOMATION_TESTS
     /** 测试只注入已有Session边界，无Online/后端，验证注销的真实离开与旧传输栅栏。 */
     friend class FDivineBeastsLogoutSessionLifetimeTest;

@@ -38,7 +38,8 @@ bool FSessionDepartureWorldTest::RunTest(const FString&)
     auto Transport = CreateGamePlatformUESessionTransport(*Instance);
     FGamePlatformSessionTransferRequest Request;
     Request.TransferOperationId = FGuid::NewGuid(); Request.Endpoint = TEXT("127.0.0.1:17881");
-    Request.TicketId = TEXT("offline-fixture-ticket"); Request.TransferTicket.Init(TEXT('x'), 64);
+    Request.TicketId = TEXT("offline-fixture-ticket");
+    Request.TransferTicket = TEXT("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
     auto& Binding = Request.ExpectedBinding;
     Binding.AssignmentId = TEXT("destination-assignment"); Binding.GameSessionId = TEXT("destination-session");
     Binding.ServerInstanceId = TEXT("destination-server"); Binding.ServerBootId = TEXT("destination-boot");

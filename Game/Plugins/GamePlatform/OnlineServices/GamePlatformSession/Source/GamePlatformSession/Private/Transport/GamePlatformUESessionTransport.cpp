@@ -105,6 +105,8 @@ public:
         }
 
         ActiveOperationId = Request.TransferOperationId;
+        DepartureWorld = World;
+        DepartureController = Controller;
         ExpectedBinding = Request.ExpectedBinding;
         TicketId = Request.TicketId;
         Credential.Reset(TicketUtf8.Length());
@@ -260,7 +262,12 @@ private:
         UWorld* World = Instance ? Instance->GetWorld() : nullptr;
         APlayerController* Controller =
             World ? World->GetFirstPlayerController() : nullptr;
-        if (!Controller || !Controller->IsLocalController())
+        // ClientTravel按帧完成。此时GI可能仍指向带有旧握手组件的出发世界；
+        // 不能向旧连接发送新目的地证明，也不能提前发布目标NetworkConnected。
+        if (!IsValid(World) || World->bIsTearingDown || World->GetGameInstance() != Instance ||
+            World == DepartureWorld.Get() || !IsValid(Controller) ||
+            Controller->IsActorBeingDestroyed() || Controller->GetWorld() != World ||
+            Controller == DepartureController.Get() || !Controller->IsLocalController())
         {
             return true;
         }
@@ -268,13 +275,16 @@ private:
         UGamePlatformAdmissionHandshakeComponent* Component =
             Controller->FindComponentByClass<
                 UGamePlatformAdmissionHandshakeComponent>();
-        if (!Component)
+        if (!IsValid(Component) || !Component->IsRegistered() ||
+            Component->GetOwner() != Controller || Component->GetWorld() != World)
         {
             return true;
         }
 
         if (!bNetworkFactSent)
         {
+            UE_LOG(LogTemp, Display, TEXT("SessionAdmissionHandshake: DestinationSelected Operation=%s World=%s"),
+                *ProbeOperationId.ToString(), *World->GetPathName());
             bNetworkFactSent = true;
             if (Callbacks.OnFact)
             {
@@ -363,6 +373,8 @@ private:
             return;
         }
 
+        UE_LOG(LogTemp, Display, TEXT("SessionAdmissionHandshake: Confirmed Operation=%s WorldId=%s"),
+            *ActiveOperationId.ToString(), *ExpectedBinding.WorldId.ToString());
         if (Callbacks.OnFact)
         {
             // AdmissionConfirmed可能是第4个可信事实，Session随即CompleteTransfer
@@ -549,6 +561,8 @@ private:
         }
 
         ActiveOperationId.Invalidate();
+        DepartureWorld.Reset();
+        DepartureController.Reset();
         ExpectedBinding = {};
         TicketId.Reset();
         Callbacks = {};
@@ -596,6 +610,9 @@ private:
     TWeakObjectPtr<UGameInstance> GameInstance;
     FGuid ActiveOperationId;
     FGamePlatformSessionConnectionBinding ExpectedBinding;
+    /** 单次旅行出发作用域，仅防止旧连接误用新证明；取消和终态共同清理，不授予准入。 */
+    TWeakObjectPtr<UWorld> DepartureWorld;
+    TWeakObjectPtr<APlayerController> DepartureController;
     FGamePlatformSessionConnectionBinding CurrentBinding;
     FString TicketId;
     TArray<uint8> Credential;

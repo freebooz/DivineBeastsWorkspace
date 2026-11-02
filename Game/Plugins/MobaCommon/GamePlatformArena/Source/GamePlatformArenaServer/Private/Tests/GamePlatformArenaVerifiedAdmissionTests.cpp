@@ -16,10 +16,13 @@ bool FGamePlatformArenaVerifiedAdmissionTest::RunTest(const FString& Parameters)
     Admission.PlayerId = Slot.PlayerId; Admission.MatchId = Assignment.MatchId; Admission.SessionId = TEXT("Session.Current");
     Admission.GameSessionId = TEXT("GameSession.Current"); Admission.AssignmentId = TEXT("Assignment.Distinct");
     Admission.ReservationId = TEXT("Reservation.Current"); Admission.ServerInstanceId = Assignment.GameServerId;
-    Admission.ServerBootId = TEXT("Boot.Current"); Admission.WorldId = TEXT("World.MainArena");
+    Admission.ServerBootId = TEXT("Boot.Current"); Admission.WorldId = TEXT("divinebeasts.world.main_arena@1");
     Admission.ExperienceId = Assignment.ExperienceId.ToString(); Admission.ProtocolVersion = TEXT("1");
     Admission.ConnectionGeneration = 1; Admission.SessionEpoch = 1; Admission.AuthorityUntil = FDateTime::UtcNow() + FTimespan::FromMinutes(5);
     TestNotNull(TEXT("合法已验证Player从可信Roster选择Character"), GamePlatformArenaVerifiedAdmissionPolicy::ResolveRosterSlot(Admission, Assignment));
+    auto OtherWorldIdentity = Admission; OtherWorldIdentity.WorldId = TEXT("test.world.arena@7");
+    TestNotNull(TEXT("中立竞技规则不绑定某个项目或旧版World命名"),
+        GamePlatformArenaVerifiedAdmissionPolicy::ResolveRosterSlot(OtherWorldIdentity, Assignment));
     auto Wrong = Admission; Wrong.MatchId = TEXT("Match.Old");
     TestNull(TEXT("同玩家旧比赛准入拒绝"), GamePlatformArenaVerifiedAdmissionPolicy::ResolveRosterSlot(Wrong, Assignment));
     Wrong = Admission; Wrong.ServerInstanceId = TEXT("OtherServer");
