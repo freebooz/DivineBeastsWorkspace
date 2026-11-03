@@ -23,6 +23,8 @@ struct FDivineBeastsCombatExecutionParameters
     float ProjectileIntervalSeconds = 0.f;
     /** 首枚延迟秒；0表示立即释放，反馈窗口不自动变成权威延时。 */
     float CastDurationSeconds = 0.f;
+    /** 成功命中存活项目怪物后施加的冻结秒数；0关闭，不影响玩家或可选表现。 */
+    float MonsterFreezeDurationSeconds = 0.f;
     /** 仅复制中立表现语义，不加载Niagara或SFX。 */
     FName PresentationStyle = NAME_None;
 };

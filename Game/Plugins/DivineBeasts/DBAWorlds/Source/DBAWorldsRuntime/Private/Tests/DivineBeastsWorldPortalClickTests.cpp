@@ -31,7 +31,7 @@ bool FDivineBeastsWorldPortalClickTest::RunTest(const FString&)
     Controller->SetPlayer(Player.Get());
     auto* Source=World->SpawnActor<ACharacter>(); Controller->Possess(Source);
     Controller->DispatchBeginPlay();
-    Controller->bWorldInputActive=true; Controller->UpdateWorldInputLocks(false);
+    Controller->GetPlayerControls()->bWorldInputActive=true; Controller->GetPlayerControls()->UpdateWorldInputLocks(false);
     FActorSpawnParameters Spawn;
     Spawn.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     auto* Gate=World->SpawnActor<ADivineBeastsArenaEntrance>(ADivineBeastsArenaEntrance::StaticClass(),FVector(200.,0.,-100.),FRotator::ZeroRotator,Spawn);
@@ -43,21 +43,21 @@ bool FDivineBeastsWorldPortalClickTest::RunTest(const FString&)
     // 夹具没有桌面指针，使用组件已有的镜头焦点模式；点击对象由真实控制器入口接收。
     Interactor->SetLocalFocusPolicy(true,false); Interactor->RefreshLocalFocus();
     if(!TestTrue(TEXT("真实平台射线已聚焦同一个250厘米内的门"),Interactor->GetCurrentFocus().TargetActor==Gate&&Interactor->GetCurrentFocus().bLocallyAvailable))return false;
-    Controller->CommitWorldPointerClick(Gate);
+    Controller->GetPlayerControls()->CommitWorldPointerClick(Gate);
     const FGuid Request=Interactor->GetLastResult().RequestId;
     TestTrue(TEXT("点门必须向平台发出真实交互请求，不能只选中"),Request.IsValid());
     TestEqual(TEXT("普通测试角色没有服务器Active资格，点击仍由权威拒绝"),Interactor->GetLastResult().Error,EGamePlatformInteractionError::InteractorNotActive);
     TestTrue(TEXT("门户不会被当作战斗选中目标"),Controller->GetSelectedWorldTarget()!=Gate);
     auto* Other=World->SpawnActor<ACharacter>(); Other->SetActorLocation(FVector(0.,400.,0.));
-    Controller->CommitWorldPointerClick(Other);
+    Controller->GetPlayerControls()->CommitWorldPointerClick(Other);
     TestTrue(TEXT("普通单位仍使用原有目标选择"),Controller->GetSelectedWorldTarget()==Other);
     TestEqual(TEXT("选择单位不发起门交互"),Interactor->GetLastResult().RequestId,Request);
     auto* OtherGate=World->SpawnActor<ADivineBeastsArenaEntrance>(ADivineBeastsArenaEntrance::StaticClass(),FVector(200.,300.,-100.),FRotator::ZeroRotator,Spawn);
     OtherGate->EntranceDefinition=Definition; OtherGate->OnConstruction(OtherGate->GetActorTransform()); OtherGate->DispatchBeginPlay();
-    Controller->CommitWorldPointerClick(OtherGate);
+    Controller->GetPlayerControls()->CommitWorldPointerClick(OtherGate);
     TestEqual(TEXT("点击另一扇门不能沿旧焦点误提交当前门"),Interactor->GetLastResult().RequestId,Request);
     Source->SetActorLocation(FVector(600.,0.,0.));
-    Controller->CommitWorldPointerClick(Gate);
+    Controller->GetPlayerControls()->CommitWorldPointerClick(Gate);
     TestEqual(TEXT("角色超出交互距离不能因可见而提交"),Interactor->GetLastResult().RequestId,Request);
     Source->SetActorLocation(FVector::ZeroVector);
     auto* Camera=World->SpawnActor<ACameraActor>(ACameraActor::StaticClass(),FVector(-1800.,0.,64.),FRotator::ZeroRotator,Spawn);
@@ -73,14 +73,14 @@ bool FDivineBeastsWorldPortalClickTest::RunTest(const FString&)
     TestFalse(TEXT("补偿镜头射线不会放宽角色到门的真实交互距离"),Interactor->GetCurrentFocus().bLocallyAvailable);
     Source->SetActorLocation(FVector::ZeroVector);
     Gate->FindComponentByClass<UGamePlatformInteractableComponent>()->SetInteractionEnabled(false);
-    Controller->CommitWorldPointerClick(Gate);
+    Controller->GetPlayerControls()->CommitWorldPointerClick(Gate);
     TestEqual(TEXT("禁用的门不发起新请求"),Interactor->GetLastResult().RequestId,Request);
     Gate->FindComponentByClass<UGamePlatformInteractableComponent>()->SetInteractionEnabled(true);
-    Controller->SetSelectedWorldTarget(nullptr);
-    Controller->bWorldGameplayInputSuspended=true;
-    Controller->CommitWorldPointerClick(Gate);
+    Controller->GetPlayerControls()->SetSelectedWorldTarget(nullptr);
+    Controller->GetPlayerControls()->bWorldGameplayInputSuspended=true;
+    Controller->GetPlayerControls()->CommitWorldPointerClick(Gate);
     TestEqual(TEXT("暂停后点击不能发起请求"),Interactor->GetLastResult().RequestId,Request);
-    Controller->CommitWorldPointerClick(Other);
+    Controller->GetPlayerControls()->CommitWorldPointerClick(Other);
     TestNull(TEXT("界面暂停时也不能改普通选择"),Controller->GetSelectedWorldTarget());
     return true;
 }

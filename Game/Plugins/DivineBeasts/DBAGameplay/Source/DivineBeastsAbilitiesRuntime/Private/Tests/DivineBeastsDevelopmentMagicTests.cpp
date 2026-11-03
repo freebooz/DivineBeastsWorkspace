@@ -17,6 +17,8 @@
 #include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Catalog/DivineBeastsHeroCatalog.h"
 #include "Characters/DivineBeastsCharacter.h"
+#include "Characters/DivineBeastsVillageWolf.h"
+#include "Tags/GamePlatformCombatTags.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
@@ -84,7 +86,7 @@ enum class EScenario : uint8
     AssetContracts, GameplayEffects, Burst, Cancel, StaleSource, CommitAvatarSwap,
     SpawnSuccessor, SpawnStaleSource, ZeroMomentum, FreshSpawnInput,
     TargetSelectionSwitch, TargetDestroyedGC, TargetAvatarChanged, Healing, FrostboltWindup, TargetRange,
-    FireballWindup
+    FireballWindup, FrostboltMonsterFreeze
 };
 
 /** 仅测试驱动真实生命周期入口，不写能力内部令牌；正常用例另外覆盖显式取消和来源换代。 */
@@ -135,6 +137,7 @@ public:
         if (OtherAvatar.IsValid()) { OtherAvatar->Destroy(); }
         if (FrozenTarget.IsValid()) { FrozenTarget->Destroy(); }
         if (AlternateTarget.IsValid()) { AlternateTarget->Destroy(); }
+        if (MonsterController.IsValid()) { MonsterController->Destroy(); }
         if (auto* Data = IGamePlatformDataService::Get(*Instance); Data && WarmupLease.IsValid())
         { Data->ReleaseResources(WarmupLease); }
         if (WarmupOwner.IsValid()) { WarmupOwner->Destroy(); }
@@ -178,6 +181,8 @@ public:
             { bCastStarted = BeginPrimaryHealing(); return !bCastStarted; }
             if (Scenario == EScenario::TargetRange)
             { bCastStarted = BeginSelectedTargetRange(); return !bCastStarted; }
+            if (Scenario == EScenario::FrostboltMonsterFreeze)
+            { bCastStarted = BeginMonsterFreeze(); return !bCastStarted; }
             if (IsDefaultCastWindupScenario())
             { bCastStarted = BeginDefaultCastWindup(); return !bCastStarted; }
             if (!BeginRealActivation()) { return true; }
@@ -198,6 +203,7 @@ public:
             if (FlightFrames < 12) return false;
             CheckSelectedTargetRangeTerminal(); return true;
         }
+        if (Scenario == EScenario::FrostboltMonsterFreeze) { return CheckMonsterFreezeFrame(); }
         if (IsDefaultCastWindupScenario()) { return CheckDefaultCastWindupFrame(); }
         if (Scenario == EScenario::Burst)
         {
@@ -270,7 +276,7 @@ private:
                 Paths.Add(FSoftObjectPath(Root + TEXT("GA_DBA_Rat_PlaceholderPrimary.GA_DBA_Rat_PlaceholderPrimary_C")));
                 Paths.Add(FSoftObjectPath(Root + TEXT("GE_DBA_Rat_PlaceholderPrimaryCooldown.GE_DBA_Rat_PlaceholderPrimaryCooldown_C")));
             }
-            if (IsDefaultCastWindupScenario())
+            if (IsDefaultCastWindupScenario() || Scenario == EScenario::FrostboltMonsterFreeze)
             {
                 const FString Spell = Scenario == EScenario::FireballWindup ? TEXT("Fireball") : TEXT("Frostbolt");
                 const FString Name = TEXT("_DBA_Rat_Placeholder") + Spell;
@@ -609,7 +615,58 @@ private:
         Pawn->AuthorityFriendlyTargetQuery().Unbind();
     }
 
-    /** 两种执行器的已保存火球/冰箭均要求0.5秒权威起手；不依据生产常量生成预期时间。 */
+    /** 真正的已保存GA、碰撞弹体及活狼，验证冻结从命中而非按键/起手开始计时。 */
+    bool BeginMonsterFreeze()
+    {
+        UWorld* World = Instance->GetWorld();
+        FActorSpawnParameters Spawn; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        auto* Monster = World->SpawnActor<ADivineBeastsVillageWolf>(FVector(650,0,1000), FRotator::ZeroRotator, Spawn);
+        MonsterController = World->SpawnActor<APlayerController>();
+        if (!Test->TestTrue(TEXT("真实怪物和控制器"), IsValid(Monster) && MonsterController.IsValid())) return false;
+        FrozenTarget = Monster;
+        MonsterController->Possess(Monster);
+        if (!Test->TestTrue(TEXT("真实怪物GAS初始化"), Monster->AuthorityInitializeWolf(200.f))) return false;
+        Monster->GetCharacterMovement()->DisableMovement();
+        Pawn->FindComponentByClass<UGamePlatformGameplayEligibilityComponent>()->SetServerPlayerActive(true);
+        auto* Combat = Pawn->GetGamePlatformCombatComponent();
+        if (!Test->TestTrue(TEXT("服务器选中真实怪物"), Combat->AuthoritySelectProjectileTarget(Monster,
+            Combat->GetCombatAvatarGeneration(), Monster->GetCombatAvatarGeneration()))) return false;
+        UClass* AbilityClass = bUsePlaceholder ? Cast<UClass>(FSoftObjectPath(TEXT("/DBAGameplay/Abilities/Placeholders/GA_DBA_Rat_PlaceholderFrostbolt.GA_DBA_Rat_PlaceholderFrostbolt_C")).ResolveObject()) : AbilityClasses[1];
+        AbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass,1));
+        Test->TestFalse(TEXT("起手前怪物未冻住"), Monster->GetGamePlatformAbilitySystemComponent()->HasMatchingGameplayTag(GamePlatformCombatTags::Control_Stun));
+        return Test->TestTrue(TEXT("真实冰箭激活"), ASC->TryActivateAbility(AbilityHandle,false));
+    }
+
+    bool CheckMonsterFreezeFrame()
+    {
+        auto* Monster = Cast<ADivineBeastsVillageWolf>(FrozenTarget.Get());
+        if (!Test->TestNotNull(TEXT("冻结回归怪物仍存活"),Monster)) return true;
+        const float Health = Monster->GetGamePlatformCombatComponent()->GetCombatHealth();
+        const bool bStunned = Monster->GetGamePlatformAbilitySystemComponent()->HasMatchingGameplayTag(GamePlatformCombatTags::Control_Stun);
+        const double Now = Instance->GetWorld()->GetTimeSeconds();
+        if (FreezeImpactSeconds < 0)
+        {
+            if (Health >= 199.9f)
+            {
+                Test->TestFalse(TEXT("命中之前不能提前冻结"),bStunned);
+                if (FlightFrames < 25) return false;
+                Test->AddError(TEXT("真实冰箭在预期时间内未命中怪物")); return true;
+            }
+            FreezeImpactSeconds = Now;
+            FreezeImpactHealth = Health;
+            Test->TestTrue(TEXT("真实冰箭伤害已结算"),Health < 200.f);
+            Test->TestTrue(TEXT("冰箭命中当帧施加冻结"),bStunned);
+        }
+        const double SinceHit = Now - FreezeImpactSeconds;
+        if (SinceHit < 0.90)
+        { Test->TestTrue(TEXT("命中后不足0.9秒仍冻结"),bStunned); return false; }
+        if (SinceHit < 1.10) return false;
+        Test->TestFalse(TEXT("命中后1.1秒冻结已自动解除"),bStunned);
+        Test->TestTrue(TEXT("冻结解除不重复结算伤害且怪物存活"),Health > 0.f && FMath::IsNearlyEqual(Health, FreezeImpactHealth));
+        return true;
+    }
+
+    /** 两种适配的已保存火球1秒、冰箭0.5秒权威起手；不依据生产常量生成预期时间。 */
     bool IsDefaultCastWindupScenario() const
     { return Scenario == EScenario::FireballWindup || Scenario == EScenario::FrostboltWindup; }
 
@@ -633,7 +690,7 @@ private:
         // 独立写明用户要求，不从待测常量反算；复制快照是施法条和动画的唯一事件输入。
         const auto* CastFacts = Pawn->FindComponentByClass<UGamePlatformAbilityCastComponent>();
         if (Test->TestNotNull(TEXT("火球/冰箭真实复制施法组件"), CastFacts))
-            Test->TestEqual(TEXT("火球/冰箭复制施法时长严格0.5秒"), CastFacts->GetCastFacts().DurationSeconds, 0.5f);
+            Test->TestEqual(TEXT("火球1秒、冰箭0.5秒的权威复制时长"), CastFacts->GetCastFacts().DurationSeconds, bFireball ? 1.f : 0.5f);
         if (WindupInterruption == EWindupInterruption::SourceDeath)
         {
             // 通过真实Combat扣血至死亡，不伪造bDead；死亡取消与到期前复查都必须禁止首次发射。
@@ -656,7 +713,7 @@ private:
     {
         if (WindupInterruption != EWindupInterruption::None)
         {
-            if (FlightFrames < 12) return false;
+            if (FlightFrames < 23) return false;
             Test->TestEqual(TEXT("死亡/更换Avatar后越过起手时限仍无晚发弹体"), Projectiles.Num(), 0);
             const auto* Spec = ASC->FindAbilitySpecFromHandle(AbilityHandle);
             const auto* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
@@ -664,23 +721,24 @@ private:
                 Test->TestFalse(TEXT("中断起手最终无残留激活"), Ability->IsActive());
             return true;
         }
-        if (FlightFrames == 9) Test->TestEqual(TEXT("起手0.45秒仍未发射"), Projectiles.Num(), 0);
-        if (FlightFrames == 11)
+        const int32 ReleaseFrame = Scenario == EScenario::FireballWindup ? 21 : 11;
+        if (FlightFrames == ReleaseFrame - 2) Test->TestEqual(TEXT("权威起手截止前不提前发射"), Projectiles.Num(), 0);
+        if (FlightFrames == ReleaseFrame)
         {
-            Test->TestEqual(TEXT("起手0.55秒恰好一枚权威火球/冰箭"), Projectiles.Num(), 1);
+            Test->TestEqual(TEXT("起手截止后一帧恰好一枚权威火球/冰箭"), Projectiles.Num(), 1);
             if (!Projectiles.IsEmpty()) Test->TestTrue(TEXT("首次释放真实经过权威初始化"), Projectiles[0].Facts.bStarted);
             ASC->RemoveActiveEffectsWithGrantedTags(WindupCooldownTags);
             Test->TestTrue(TEXT("新一轮火球/冰箭起手受理"), ASC->TryActivateAbility(AbilityHandle, false));
             ASC->CancelAbilityHandle(AbilityHandle);
         }
-        if (FlightFrames == 23)
+        if (FlightFrames == ReleaseFrame * 2 + 1)
         {
             Test->TestEqual(TEXT("取消起手没有迟到发射"), Projectiles.Num(), 1);
             ASC->RemoveActiveEffectsWithGrantedTags(WindupCooldownTags);
             Test->TestTrue(TEXT("换代前火球/冰箭起手受理"), ASC->TryActivateAbility(AbilityHandle, false));
             Pawn->GetGamePlatformCombatComponent()->ResetForNewAvatar(2);
         }
-        if (FlightFrames < 35) return false;
+        if (FlightFrames < ReleaseFrame * 3 + 3) return false;
         Test->TestEqual(TEXT("来源换代没有迟到发射"), Projectiles.Num(), 1);
         return true;
     }
@@ -1120,6 +1178,9 @@ private:
     EScenario Scenario;              // 本次用例唯一行为，不能在失败后退回另一种场景。
     bool bUsePlaceholder = false;     // 只选择已保存的真实另一执行器，不修改生成类或运行时CDO。
     EWindupInterruption WindupInterruption = EWindupInterruption::None; // 起手完成前的真实失效入口。
+    TWeakObjectPtr<AController> MonsterController;
+    double FreezeImpactSeconds = -1;
+    float FreezeImpactHealth = 0.f;
     double StartedSeconds;           // 墙钟秒，用于真实资源/初始化超时。
     TStrongObjectPtr<UGameInstance> Instance;
     TStrongObjectPtr<ULocalPlayer> LocalInputPlayer; // 仅输入回归拥有；与Controller同一夹具销毁，不触发身份认证。
@@ -1311,6 +1372,23 @@ bool FDivineBeastsPlaceholderPrimaryHealingTest::RunTest(const FString&)
 }
 
 // 两条执行器分别覆盖火球：过去仅发布0.7秒反馈且立即发射，不能由冰箭通过来代替。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentMonsterFreezeTest,
+    "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.FrostboltMonsterFreeze",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsDevelopmentMonsterFreezeTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::FrostboltMonsterFreeze)); return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlaceholderMonsterFreezeTest,
+    "DivineBeasts.Abilities.Placeholder.ServerGAS.FrostboltMonsterFreeze",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlaceholderMonsterFreezeTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(DivineBeastsDevelopmentMagicTests::FRealMagicCommand(this,
+        DivineBeastsDevelopmentMagicTests::EScenario::FrostboltMonsterFreeze,true)); return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsDevelopmentFireballWindupTest,
     "DivineBeasts.Abilities.DevelopmentMagic.ServerGAS.FireballWindup",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

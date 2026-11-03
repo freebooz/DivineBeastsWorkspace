@@ -30,7 +30,9 @@ public class DivineBeastsInputClient : ModuleRules
             "GamePlatformAbilitySystem",
             // 命中表现结束时恢复输入缓冲，依赖平台ClientOnly模块而非MOBA/项目竞技。
             "GamePlatformAnimationClient",
-            "DeveloperSettings"
+            "DeveloperSettings",
+            // 同项目唯一操控组件，不依赖竞技。
+            "DBAWorldsRuntime"
         });
     }
 }

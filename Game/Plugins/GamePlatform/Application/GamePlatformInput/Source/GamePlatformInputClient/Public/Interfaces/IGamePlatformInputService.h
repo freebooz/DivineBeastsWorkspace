@@ -38,6 +38,9 @@ public:
     /** 精确撤销状态订阅；跨 LocalPlayer、旧代次或重复撤销返回 false。 */
     virtual bool UnsubscribeInputState(const FGamePlatformInputStateSubscription& Handle) = 0;
     virtual FGamePlatformInputSnapshot GetInputSnapshot() const = 0;
+    /** 游戏线程只读查询：仅当前接收器实际绑定且活跃上下文映射/Touch来源拥有该语义时为true。
+     * 第三方适配器默认不声明接管，保留原生输入；不得以最近设备提示代替来源所有权。 */
+    virtual FGamePlatformInputSemanticOwnership GetSemanticInputOwnership(FGameplayTag SemanticTag) const { return {}; }
     /** 返回当前LocalPlayer的轻量容量/性能诊断；不包含原始按键或触摸坐标。 */
     virtual FGamePlatformInputDiagnostics GetInputDiagnostics() const = 0;
     /** 更新最近输入设备族；Touch入口会自动报告Touch，PC端可由平台/视口设备检测桥报告键鼠或手柄。 */

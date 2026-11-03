@@ -33,6 +33,7 @@ public:
     virtual FGamePlatformInputStateSubscription SubscribeInputState(TWeakObjectPtr<UObject>,TFunction<void(const FGamePlatformInputSnapshot&)>) override;
     virtual bool UnsubscribeInputState(const FGamePlatformInputStateSubscription&) override;
     virtual FGamePlatformInputSnapshot GetInputSnapshot() const override;
+    virtual FGamePlatformInputSemanticOwnership GetSemanticInputOwnership(FGameplayTag SemanticTag) const override;
     virtual FGamePlatformInputDiagnostics GetInputDiagnostics() const override;
     virtual FGamePlatformResult NotifyInputDeviceActivity(EGamePlatformInputDeviceFamily) override;
     virtual FGamePlatformResult SetAccessibilitySettings(const FGamePlatformInputAccessibilitySettings&) override;
@@ -47,6 +48,7 @@ public:
     virtual FGamePlatformResult UpdateTouchInput(const FGamePlatformInputTouchHandle&,const FInputActionValue&) override;
     virtual FGamePlatformResult EndTouchInput(const FGamePlatformInputTouchHandle&) override;
 private:
+    friend class FGamePlatformInputSemanticOwnershipTest;
     /**
      * 更新当前设备族并维护修订号/诊断计数；相同设备重复上报为O(1)无操作。
      * bCountAsActivity=false仅用于初始化，避免把初始平台默认值计入“用户设备切换”。

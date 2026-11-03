@@ -24,6 +24,7 @@ struct FGamePlatformAbilityCastFacts;
 struct FGameplayTag;
 struct FOnAttributeChangeData;
 #include "DivineBeastsRootLayout.generated.h"
+class UDivineBeastsPlayerControlsComponent;
 
 /**
  * UDivineBeastsRootLayout（神兽联盟根布局基类）。
@@ -71,7 +72,7 @@ protected:
 
 private:
     UPROPERTY(Transient) TObjectPtr<UDivineBeastsWorldHealthBarPresenter> WorldHealthBars;
-    TWeakObjectPtr<APlayerController> WorldHealthController;
+    TWeakObjectPtr<UDivineBeastsPlayerControlsComponent> WorldHealthController;
     bool bWorldHealthBarsVisible = true;
     void BindWorldHealthBars(APawn* DisplayPawn);
     void HandleFinalCameraViewChanged();

@@ -47,6 +47,7 @@ private:
     };
     TMap<TWeakObjectPtr<AGamePlatformArenaGameMode>, FWorldAssembly> WorldAssemblies;
     FDelegateHandle WorldCleanupHandle;
+    FDelegateHandle GameModeInitializedHandle;
     /** 只撤销指定世界的所有权；先从路由移除，再清GameMode借用指针和租约，允许重复调用。 */
     void ReleaseWorldAssembly(TWeakObjectPtr<AGamePlatformArenaGameMode> Mode);
     /** 世界退出及时回收桶，防止模块存活期间积累失效世界。 */

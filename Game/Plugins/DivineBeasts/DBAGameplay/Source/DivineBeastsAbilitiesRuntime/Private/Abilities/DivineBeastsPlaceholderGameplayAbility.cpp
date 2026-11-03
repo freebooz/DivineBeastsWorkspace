@@ -60,8 +60,9 @@ bool UDivineBeastsPlaceholderGameplayAbility::TryBuildCombatExecution(
     OutExecution.ProjectileCount = ProjectileCount;
     OutExecution.ProjectileIntervalSeconds = ProjectileIntervalSeconds;
     if (!PresentationStyleOverride.IsNone()) OutExecution.PresentationStyle = PresentationStyleOverride;
-    OutExecution.CastDurationSeconds = PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Fireball ||
-        PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Frostbolt ?
-        UDivineBeastsDevelopmentMagicDefinition::DefaultCastDurationSeconds : 0.f;
+    const auto Kind = PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Fireball ? EDivineBeastsDevelopmentMagicKind::Fireball :
+        (PlaceholderMode == EDivineBeastsPlaceholderAbilityMode::Frostbolt ? EDivineBeastsDevelopmentMagicKind::Frostbolt : EDivineBeastsDevelopmentMagicKind::ArcaneMissiles);
+    OutExecution.CastDurationSeconds = UDivineBeastsDevelopmentMagicDefinition::GetCastDurationSeconds(Kind, Balance.AbilityId);
+    OutExecution.MonsterFreezeDurationSeconds = UDivineBeastsDevelopmentMagicDefinition::GetMonsterFreezeDurationSeconds(Kind);
     return true;
 }

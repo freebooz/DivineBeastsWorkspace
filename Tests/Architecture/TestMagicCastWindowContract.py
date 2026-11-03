@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """火球/冰箭服务器起手与复制反馈的源码回归，不代替UE原生GAS时序验收。
 
-检查两个薄数据适配经唯一公共执行将同一个0.5秒窗口传给Cast事实与首次释放Timer，
+检查两个薄数据适配调用唯一时序规则，并经公共执行将同一窗口传给Cast事实与首次释放Timer，
 并通过故障注入证明立即发射、反馈分叉、取消清理缺失都会被拒绝。
 只读取源码，不启动编辑器、不修改资产或运行中的客户端/服务器。
 """
@@ -44,11 +44,11 @@ def cast_window_contract(definition: str, execution: str, adapter: str) -> dict[
     before_spawn = release.split("SpawnActor<", 1)[0]
     source_gate = re.sub(r"\s+", "", before_spawn)
     return {
-        "shared_half_second": bool(re.search(
-            r"DefaultCastDurationSeconds\s*=\s*0\.5f\s*;", definition)),
+        "shared_timing_rule": bool(re.search(
+            r"static\s+float\s+GetCastDurationSeconds\s*\(", definition)),
         "both_fire_and_ice_delayed": bool(re.search(
-            r"OutExecution\.CastDurationSeconds=[^;]*::Fireball\|\|[^;]*::Frostbolt\?"
-            r"UDivineBeastsDevelopmentMagicDefinition::DefaultCastDurationSeconds:0(?:\.0?)?f;",
+            r"OutExecution\.CastDurationSeconds="
+            r"UDivineBeastsDevelopmentMagicDefinition::GetCastDurationSeconds\([^;]+Balance\.AbilityId\);",
             parameters)) and all(token in compact for token in (
             "constfloatCastDurationSeconds=Execution.CastDurationSeconds;",
             "if(CastDurationSeconds>0.0f)",
@@ -77,7 +77,7 @@ class MagicCastWindowContractTests(unittest.TestCase):
         cls.abilities = [(MODULE / ("Private/Abilities/" + name + ".cpp")).read_text(encoding="utf-8-sig")
                          for name in ("DivineBeastsDevelopmentMagicAbility", "DivineBeastsPlaceholderGameplayAbility")]
 
-    def test_real_source_uses_one_half_second_authoritative_window(self):
+    def test_real_source_uses_one_authoritative_timing_rule(self):
         for ability in self.abilities:
             with self.subTest(path=ability.splitlines()[0]):
                 actual = cast_window_contract(self.definition, self.execution, ability)
@@ -85,8 +85,8 @@ class MagicCastWindowContractTests(unittest.TestCase):
 
     def test_feedback_only_fireball_change_is_rejected(self):
         for ability in self.abilities:
-            changed = ability.replace("::Fireball ||", "::Fireball &&")
-            self.assertNotEqual(changed, ability, "故障注入必须实际破坏火球/冰箭OR条件")
+            changed = ability.replace("UDivineBeastsDevelopmentMagicDefinition::GetCastDurationSeconds", "BypassCastTimingRule")
+            self.assertNotEqual(changed, ability, "故障注入必须实际绕过统一时序规则")
             self.assertFalse(cast_window_contract(self.definition, self.execution, changed)["both_fire_and_ice_delayed"])
 
     def test_different_feedback_duration_is_rejected(self):
@@ -110,11 +110,11 @@ class MagicCastWindowContractTests(unittest.TestCase):
         for ability in self.abilities:
             self.assertFalse(cast_window_contract(self.definition, before + changed, ability)["late_source_rejected_before_spawn"])
 
-    def test_non_half_second_shared_default_is_rejected(self):
-        changed = self.definition.replace("DefaultCastDurationSeconds = 0.5f", "DefaultCastDurationSeconds = 0.7f")
-        self.assertNotEqual(changed, self.definition, "故障注入必须实际破坏共享0.5秒常量")
+    def test_missing_shared_timing_rule_is_rejected(self):
+        changed = self.definition.replace("GetCastDurationSeconds(", "MissingCastDurationSeconds(")
+        self.assertNotEqual(changed, self.definition, "故障注入必须实际移除统一时序规则")
         for ability in self.abilities:
-            self.assertFalse(cast_window_contract(changed, self.execution, ability)["shared_half_second"])
+            self.assertFalse(cast_window_contract(changed, self.execution, ability)["shared_timing_rule"])
 
     def test_source_generation_change_must_be_checked_before_spawn(self):
         start = self.execution.index("::ReleaseNextProjectile()")

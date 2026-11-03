@@ -46,3 +46,17 @@ RED：完整 Editor 14eb661a-d261-47bc-807f-1de0caf39a56 通过；原生 HostLif
 复审还发现 ReportLocalFact 可以同步发布 Ready，回调会释放项目 LoadingContext。原调用返回后继续解引用成员，存在失效访问风险。修复捕获操作 ID、共享 Context 与 Session 身份，并在第一条报告返回后复核代次和存活；同一回归增加真实 Session 同步 Ready 清理场景。该子场景使用明确的离线 Transport 事实，仅验生命周期，不能作为真实认证或网络验收。
 
 用户明确允许正常关闭 PID 49836 并恢复，并要求直接完成、不要重复问询。关闭前已再次确认无脏包，记录地图镜头；216 份法术资产和已保存的 6 份小地图资产保持保护。小地图修改使原 UI 颜色报告失效，需真实 RHI 重新生成颜色证据，不能跳过发布门禁。本轮完整目标、原生 GREEN、颜色、Cook、版本门禁与真实双客户端入场证据归 Saved/Validation/ArenaEntranceRuntime20261101/WorldReady，逐项记录结果，不以准入 Confirmed 代替最终 InWorld。
+
+## 竞技场比赛名单未绑定的最终拒绝点（2026-11-02）
+
+WorldReady 修复后的真实日志显示：两位玩家进入 Village 均完成 WorldReadiness；进入 MainArena 均完成服务器确认及目标地图观察，但停留在约 4/7 的进度，尚无角色绑定、资源与项目就绪。此时不能把新手村成功推广为竞技场成功，也不能仅放宽客户端角色门禁。
+
+服务端 GamePlatformArenaServer/Private/Server/ArenaVerifiedAdmissionPolicy.h 仍将 Admission.WorldId 与旧字面量 World.MainArena 比较，实际控制面目标及客户端确认使用 divinebeasts.world.main_arena@1。唯一生产调用先经 GetVerifiedAdmission 查询当前 Controller；该查询已调用 MatchesTarget 严格核对实例、Boot、World、Experience、Protocol 和有效期。之后的旧字面量校验错误地返回空 Roster 槽位，TryAdmitVerifiedConnection 静默结束，玩家无法进入比赛名单，服务器没有进入锁定名单自动选人／Ready／出生流程。此前准备界面循环等待的推测并非本轮已证实原因，未据此改动 PreMatch 或放宽客户端权限。
+
+窄修复只移除错误的重复世界名称限制，保留真实连接的 Target 校验，以及 Match、实例、角色、体验、期限和唯一 Roster 校验；不替换为另一个项目硬编码。新增脱敏的 ArenaRosterAdmission Accepted / Rejected 日志。原生 RED 1614d739 的 3 项中只有名单边界失败，准确复现当前 canonical 及另一游戏合法世界名称被拒绝；错 World／Experience／Protocol 仍被 Target 检查拒绝。最终完整 Editor eb3f08f4、3 项 GREEN d1ca052c、完整 Server 6382e17c 与 Server Cook f50b246c 均通过。
+
+本轮只改变两个 ServerOnly 模块的私有实现和测试。与既有客户端来源 f0c16609 相比，85 个 Editor DLL 中恰两份 ServerOnly DLL 变化，其余 83 份相同；共享战斗、复制字段、契约和全部客户端输入未变。因此复用已经通过完整 Client 构建、Cook、10 项应用流程／会话回归及新颜色 RHI 的 8e638aa4 客户端包，避免无效重建。
+
+在旧竞技槽位已释放、无其他客户端、实际进程路径及启动身份一致的前提下，已受控排空并替换 Village / MainArena，保留账号和角色数据。新 Village PID 66812、Boot 9a7f13eb；新 MainArena PID 5868、Boot 98bd2962；实际双端版本门禁通过。已恢复编辑器 PID 66648 / Monolith 9316，并独立核验原地图和用户最新镜头、无脏包及不限帧状态。证据归 Saved/Validation/ArenaEntranceRuntime20261101/RosterAdmission。
+
+双客户端运行 d41b0ab5 已真实完成竞技场入场：服务器对同一比赛 step-33fda5b7bc3dd26891362825df1f3c30c312948e 接受两名玩家进入名单并进入 Countdown；客户端操作 DEDE2B224F092180604597BF0A11274C、202D964349A45A7B4721D29A8DD1CF23 分别在 UTC 14:11:23、14:11:22 完成 WorldReadiness，之后未发现 WorldFlowError、校验错误或加载超时。第一窗口原生实机图显示 InProgress、角色及 HUD，加载遮罩已退出；第二窗口截图误采到前景 Codex，明确排除，不冒充视觉证据。完整日志及绑定版本门禁的结果见 RuntimeAcceptance.json。用户随后在实际竞技场发现鼠标操控与新手村不同，另按统一操控计划修复，不属于仍卡加载界面。

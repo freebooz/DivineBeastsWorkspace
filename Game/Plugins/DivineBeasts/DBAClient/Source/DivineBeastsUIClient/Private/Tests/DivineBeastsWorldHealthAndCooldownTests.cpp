@@ -160,14 +160,14 @@ bool FDivineBeastsWorldTargetSelectionTest::RunTest(const FString&)
     Presenter->ObservedWorld = World; Presenter->LocalPlayer = Player.Get();
     Presenter->ObserveActor(First); Presenter->ObserveActor(Second);
     Presenter->ApplyHealth(First, 100.f, 100.f); Presenter->ApplyHealth(Second, 100.f, 100.f);
-    Controller->SetSelectedWorldTarget(First); // 先选择，再绑定必须读取首次快照。
-    Presenter->BindSelectionController(Controller);
+    Controller->GetPlayerControls()->SetSelectedWorldTarget(First); // 先选择，再绑定必须读取首次快照。
+    Presenter->BindSelectionController(Controller->GetPlayerControls());
     TestTrue(TEXT("静止镜头首次绑定立即突出已有目标"), Presenter->Bindings.FindChecked(First).Request.bSelected);
     TestEqual(TEXT("没有可信关系的目标使用中立金色"), Presenter->Bindings.FindChecked(First).Request.SelectionTint, FLinearColor(1.f, .73f, .18f));
     auto* Wolf = World->SpawnActor<ADivineBeastsVillageWolf>();
     TestEqual(TEXT("正式狼怪目标使用敌对红色"), Presenter->ResolveSelectionTint(Wolf), FLinearColor(1.f, .12f, .08f));
-    Presenter->BindSelectionController(Controller); // 重绑不应重复观察或重置选择。
-    Controller->SetSelectedWorldTarget(Second);
+    Presenter->BindSelectionController(Controller->GetPlayerControls()); // 重绑不应重复观察或重置选择。
+    Controller->GetPlayerControls()->SetSelectedWorldTarget(Second);
     TestFalse(TEXT("切换事件立即取消旧目标"), Presenter->Bindings.FindChecked(First).Request.bSelected);
     TestTrue(TEXT("切换事件立即突出新目标"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
     Presenter->ApplyHealth(Second, 0.f, 100.f);
@@ -175,13 +175,13 @@ bool FDivineBeastsWorldTargetSelectionTest::RunTest(const FString&)
     TestTrue(TEXT("UI不清除Gameplay失效选择意图"), Controller->GetSelectedWorldTarget() == Second);
     Presenter->ApplyHealth(Second, 100.f, 100.f);
     TestFalse(TEXT("复活属性通知不会复活旧选择"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
-    Controller->SetSelectedWorldTarget(Second);
+    Controller->GetPlayerControls()->SetSelectedWorldTarget(Second);
     TestTrue(TEXT("同Actor显式重选恢复新展示"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
     Second->OnEndPlay.Broadcast(Second, EEndPlayReason::RemovedFromWorld);
     TestFalse(TEXT("目标流送退出撤销选中引用"), Presenter->SelectedTarget.IsValid());
     Presenter->Clear();
-    TestFalse(TEXT("退出解除目标真源订阅"), Controller->OnWorldTargetChanged.IsBoundToObject(Presenter.Get()));
-    Controller->SetSelectedWorldTarget(First);
+    TestFalse(TEXT("退出解除目标真源订阅"), Controller->GetPlayerControls()->OnWorldTargetChanged.IsBoundToObject(Presenter.Get()));
+    Controller->GetPlayerControls()->SetSelectedWorldTarget(First);
     TestEqual(TEXT("退出后迟到选择不能恢复实体或旧显示"), Presenter->GetObservedCount(), 0);
     return true;
 }

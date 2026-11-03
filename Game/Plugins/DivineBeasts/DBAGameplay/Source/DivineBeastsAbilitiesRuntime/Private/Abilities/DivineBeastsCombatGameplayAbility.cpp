@@ -5,6 +5,7 @@
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Characters/DivineBeastsCharacter.h"
+#include "Characters/DivineBeastsVillageWolf.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Definitions/DivineBeastsDevelopmentMagicDefinition.h"
 #include "Engine/World.h"
@@ -63,6 +64,7 @@ void UDivineBeastsCombatGameplayAbility::ActivateAbility(
          Execution.ProjectileCount < 1 || Execution.ProjectileCount > 3 ||
          !FMath::IsFinite(Execution.ProjectileIntervalSeconds) ||
          !FMath::IsFinite(Execution.CastDurationSeconds) || Execution.CastDurationSeconds < 0.f ||
+         !FMath::IsFinite(Execution.MonsterFreezeDurationSeconds) || Execution.MonsterFreezeDurationSeconds < 0.f || Execution.MonsterFreezeDurationSeconds > 1.f ||
          ((Execution.ProjectileCount == 1 && Execution.ProjectileIntervalSeconds != 0.0f) ||
           (Execution.ProjectileCount > 1 &&
            (Execution.ProjectileIntervalSeconds < 0.05f || Execution.ProjectileIntervalSeconds > 1.0f)))))
@@ -243,6 +245,23 @@ void UDivineBeastsCombatGameplayAbility::ReleaseNextProjectile()
         ShotMotion.InitialPhaseTurns = ReleasedShots / 3.0f;
     auto* Projectile = World->SpawnActor<AGamePlatformCombatProjectile>(
         Start, Direction.Rotation(), Spawn);
+
+    if (IsValid(Projectile) && ActiveExecution.MonsterFreezeDurationSeconds > 0.f)
+    {
+        // 弹体持有纯数值规则快照，不捕获已结束的技能实例或强持有目标。
+        // 村庄狼基类也覆盖吸血鬼等当前怪物；普通玩家绝不因冰箭增加控制。
+        Projectile->OnDamageResolved().AddLambda([Duration = ActiveExecution.MonsterFreezeDurationSeconds](
+            const FGamePlatformCombatSpec& Damage, const FGamePlatformCombatResult& Result)
+        {
+            auto* Monster = Cast<ADivineBeastsVillageWolf>(Damage.Target.Get());
+            auto* SourceCombat = IsValid(Damage.Source.Get()) ? Damage.Source->FindComponentByClass<UGamePlatformCombatComponent>() : nullptr;
+            if (!Result.IsSuccess() || Result.bCausedDeath || !IsValid(Monster) || !Monster->IsWolfAlive() ||
+                Monster->IsActorBeingDestroyed() || !IsValid(SourceCombat)) return;
+            FGamePlatformCombatSpec Control = Damage;
+            Control.EventId = FGuid::NewGuid(); // 伤害/控制各有发生ID，沿用平台幂等、代次、死亡与世界校验。
+            SourceCombat->ApplyControl(Control, EGamePlatformControlType::Stun, Duration);
+        });
+    }
 
     if (Token != ActivationToken || !IsActive() || !IsValid(Source) ||
         GetAvatarActorFromActorInfo() != Source || !IsValid(Combat) ||

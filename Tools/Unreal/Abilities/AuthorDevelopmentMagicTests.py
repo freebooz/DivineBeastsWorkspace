@@ -263,13 +263,13 @@ def author():
             grants[index] = grant
             dependencies = [d for d in dependencies if str(d.get_editor_property("PrimaryAssetName")) not in (old_id, identifier)] + [primary(identifier)]
             item = unreal.DivineBeastsAbilityUIEntry(); item.set_editor_property("AbilityId", identifier); item.set_editor_property("DisplayName", unreal.Text(data["NameZh"]))
-            cast_description = "默认施法0.5秒，服务器起手完成后释放。" if name in ("Fireball", "Frostbolt") else ""
-            item.set_editor_property("Description", unreal.Text("开发伤害测试：每枚基础法术伤害" + str(data["Damage"]) + "，不消耗气势" + "，冷却" + str(data["Cooldown"]) + "秒。" + cast_description + ("三枚实际螺旋飞行，间隔0.2秒；取消停止余弹。" if data["Count"] == 3 else "服务器权威投射；未实现燃烧、冰冻或减速。") + "后续替换正式技能。"))
+            cast_description = {"Fireball": "默认施法1秒，服务器起手完成后释放。", "Frostbolt": "默认施法0.5秒，命中存活怪物后冻结1秒。"}.get(name, "")
+            item.set_editor_property("Description", unreal.Text("开发伤害测试：每枚基础法术伤害" + str(data["Damage"]) + "，不消耗气势" + "，冷却" + str(data["Cooldown"]) + "秒。" + cast_description + ("三枚实际螺旋飞行，间隔0.2秒；取消停止余弹。" if data["Count"] == 3 else "服务器权威投射；未实现燃烧或减速。") + "后续替换正式技能。"))
             item.set_editor_property("Icon", unreal.load_asset("/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_Dev" + name)); ui[index] = item
         ability_set.set_editor_property("Abilities", grants); ability_set.set_editor_property("RequiredDefinitions", dependencies)
         profile.set_editor_property("Entries", ui); save(ability_set); save(profile)
     report = {"Saved": saved, "Backup": str(backup), "FormalHeroAssetsModified": False, "ShippingEligible": False,
-              "LimitationsZh": "开发单目标投射物伤害；非正式平衡，不实现燃烧/冰冻/减速/追踪。编译保存不代表联网和人工VFX验收。"}
+              "LimitationsZh": "开发单目标投射物伤害；非正式平衡，不实现燃烧/减速；追踪沿用平台权威合同。编译保存不代表联网和人工VFX验收。"}
     (evidence / "Report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"SavedWrites": len(saved), "Report": str(evidence / "Report.json")}, ensure_ascii=False))
     return report

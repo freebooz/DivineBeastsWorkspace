@@ -10,7 +10,7 @@ enum class EDivineBeastsPlaceholderAbilityMode : uint8
 {
     Primary,       // 普通攻击：权威前向单体伤害
     Passive,       // 被动：暂不实现，禁止主动释放
-    Fireball,      // 火焰弹：默认0.5秒起手后释放单枚可选目标追踪弹体
+    Fireball,      // 火焰弹：默认1秒起手后释放单枚可选目标追踪弹体
     Frostbolt,     // 寒冰箭：默认0.5秒起手后释放单枚可选目标追踪弹体
     ArcaneMissiles, // 奥术飞弹：三枚螺旋连射弹体
     Healing        // 治疗：枚举值5，保留Primary及历史资产枚举值不迁号；输入由授权集决定。

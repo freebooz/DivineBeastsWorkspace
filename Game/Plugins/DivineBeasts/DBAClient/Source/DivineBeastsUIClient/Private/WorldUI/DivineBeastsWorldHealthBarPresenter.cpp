@@ -16,7 +16,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerState.h"
-#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Gameplay/DivineBeastsPlayerControlsComponent.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformExperienceComponent.h"
@@ -49,7 +49,7 @@ void UDivineBeastsWorldHealthBarPresenter::Initialize(ULocalPlayer* InPlayer, UW
         if (OldPawn != NewPawn) SetSelectedTarget(nullptr);
         RemoveActor(NewPawn);
         if (OldPawn && OldPawn != NewPawn && !OldPawn->IsActorBeingDestroyed()) ObserveActor(OldPawn);
-        BindSelectionController(Cast<ADivineBeastsWorldPlayerController>(Controller));
+        BindSelectionController(Controller ? Controller->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr);
         return;
     }
     Clear();
@@ -74,7 +74,7 @@ void UDivineBeastsWorldHealthBarPresenter::Initialize(ULocalPlayer* InPlayer, UW
         { if (Generation == ObservationGeneration && ObservedWorld.Get() == World) Clear(); });
     // 仅进入世界的一次性冷启动盘点；新实体和生命变化以后均来自通知，不执行定时扫描。
     for (TActorIterator<ADivineBeastsCharacter> It(InWorld); It; ++It) ObserveActor(*It);
-    BindSelectionController(Cast<ADivineBeastsWorldPlayerController>(InPlayer->GetPlayerController(InWorld)));
+    BindSelectionController(InPlayer->GetPlayerController(InWorld) ? InPlayer->GetPlayerController(InWorld)->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr);
 }
 
 void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSelectionOnly)
@@ -249,7 +249,7 @@ void UDivineBeastsWorldHealthBarPresenter::SetVisible(bool bInVisible)
     for (const auto& Actor : Actors) if (Actor.IsValid()) Publish(Actor.Get());
 }
 
-void UDivineBeastsWorldHealthBarPresenter::BindSelectionController(ADivineBeastsWorldPlayerController* Controller)
+void UDivineBeastsWorldHealthBarPresenter::BindSelectionController(UDivineBeastsPlayerControlsComponent* Controller)
 {
     if (SelectionController.Get() == Controller) return;
     if (auto* Previous = SelectionController.Get())
@@ -263,7 +263,7 @@ void UDivineBeastsWorldHealthBarPresenter::BindSelectionController(ADivineBeasts
     if (Generation != ObservationGeneration) return;
     SelectionController = Controller;
     if (!Controller || Controller->GetWorld() != ObservedWorld.Get()) return;
-    const TWeakObjectPtr<ADivineBeastsWorldPlayerController> WeakController(Controller);
+    const TWeakObjectPtr<UDivineBeastsPlayerControlsComponent> WeakController(Controller);
     SelectionHandle = Controller->OnWorldTargetChanged.AddWeakLambda(this, [this, Generation, WeakController]()
     {
         if (Generation == ObservationGeneration && WeakController.IsValid() && SelectionController == WeakController)
@@ -356,7 +356,8 @@ FLinearColor UDivineBeastsWorldHealthBarPresenter::ResolveSelectionTint(AActor* 
     FName Role;
     const auto* Pawn = Cast<APawn>(Actor);
     const auto* Player = Pawn ? Pawn->GetPlayerState<AGamePlatformPlayerStateBase>() : nullptr;
-    const auto* Controller = SelectionController.Get();
+    const auto* Controls = SelectionController.Get();
+    const auto* Controller = Controls ? Cast<APlayerController>(Controls->GetOwner()) : nullptr;
     const auto* OwnPlayer = Controller ? Controller->GetPlayerState<AGamePlatformPlayerStateBase>() : nullptr;
     const FGamePlatformId ExperienceId = Experience ? Experience->GetExperienceSnapshot().ExperienceId : FGamePlatformId();
     // 与Village服务器已批准的“玩家互为友方”一致：双方必须是当前公开准入Pawn。

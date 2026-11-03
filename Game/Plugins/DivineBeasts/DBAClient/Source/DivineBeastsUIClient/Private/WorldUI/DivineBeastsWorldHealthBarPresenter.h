@@ -10,7 +10,7 @@ class UAbilitySystemComponent;
 class USceneComponent;
 class UGamePlatformWorldUIService;
 class UGamePlatformWorldWidgetBase;
-class ADivineBeastsWorldPlayerController;
+class UDivineBeastsPlayerControlsComponent;
 class UDivineBeastsCharacterComponent;
 class AGamePlatformPlayerStateBase;
 class UDecalComponent;
@@ -63,7 +63,7 @@ private:
     void Publish(AActor* Actor);
     void RemoveActor(AActor* Actor);
     /** 本地控制器是唯一选择源；先订阅再读一次当前目标，重复同来源不会重复订阅。 */
-    void BindSelectionController(ADivineBeastsWorldPlayerController* Controller);
+    void BindSelectionController(UDivineBeastsPlayerControlsComponent* Controller);
     void RefreshSelectedTarget();
     /** 只更改本Presenter显示缓存；死亡撤销不能清除Gameplay保留的失效治疗意图。 */
     void SetSelectedTarget(AActor* Actor);
@@ -81,7 +81,7 @@ private:
     /** 世界内换Pawn时移除新自己，重新观察仍存在的旧Pawn；不再次扫描世界。 */
     TWeakObjectPtr<AActor> ExcludedLocalPawn;
     TWeakObjectPtr<UGamePlatformWorldUIService> Service;
-    TWeakObjectPtr<ADivineBeastsWorldPlayerController> SelectionController;
+    TWeakObjectPtr<UDivineBeastsPlayerControlsComponent> SelectionController;
     TWeakObjectPtr<AActor> SelectedTarget;
     int32 SelectedAvatarGeneration = 0; // 旧Actor同地址的新化身不能继承旧UI选择。
     uint64 SelectionRevision = 0; // 同一世界同步选择回调重入时，后继选择拥有显示，旧栈不得恢复。

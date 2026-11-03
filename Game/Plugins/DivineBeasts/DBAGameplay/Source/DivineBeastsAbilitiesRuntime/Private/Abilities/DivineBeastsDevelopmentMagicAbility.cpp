@@ -37,8 +37,7 @@ bool UDivineBeastsDevelopmentMagicAbility::TryBuildCombatExecution(
     OutExecution.PresentationStyle = Definition->GetPresentationStyleId();
     OutExecution.ProjectileCount = Definition->ProjectileCount;
     OutExecution.ProjectileIntervalSeconds = Definition->ProjectileIntervalSeconds;
-    OutExecution.CastDurationSeconds = Definition->MagicKind == EDivineBeastsDevelopmentMagicKind::Fireball ||
-        Definition->MagicKind == EDivineBeastsDevelopmentMagicKind::Frostbolt ?
-        UDivineBeastsDevelopmentMagicDefinition::DefaultCastDurationSeconds : 0.f;
+    OutExecution.CastDurationSeconds = UDivineBeastsDevelopmentMagicDefinition::GetCastDurationSeconds(Definition->MagicKind, Balance.AbilityId);
+    OutExecution.MonsterFreezeDurationSeconds = UDivineBeastsDevelopmentMagicDefinition::GetMonsterFreezeDurationSeconds(Definition->MagicKind);
     return true;
 }

@@ -350,19 +350,20 @@ DBA_CASTING_TEST(FDivineBeastsDirectedMissilePalmReentryTest, "DirectedMissilePa
     return true;
 }
 
-/** 火球/冰箭默认0.5秒事实必须同样铺满真实动作，不能让火球沿用固定原始速率。 */
-DBA_CASTING_TEST(FDivineBeastsCastingHalfSecondSpellsTest, "FireAndFrostHalfSecondMontage")
+/** 火球1秒、冰箭0.5秒事实必须铺满真实动作，不能沿用原始固定速率。 */
+DBA_CASTING_TEST(FDivineBeastsCastingHalfSecondSpellsTest, "FireOneSecondFrostHalfSecondMontage")
 {
     for (const bool bFrost : {false, true})
     {
         FDivineBeastsDevelopmentCastingTestFixture F(*this); if (!F.Initialize()) return false;
         const FGuid Id=FGuid::NewGuid();
-        TestTrue(TEXT("0.5秒火冰事实受理"),F.Publish(Id,bFrost,1,0.5f));
+        const float Duration = bFrost ? 0.5f : 1.f;
+        TestTrue(TEXT("火球1秒/冰箭0.5秒事实受理"),F.Publish(Id,bFrost,1,Duration));
         auto* Montage=bFrost ? F.FrostMontage.Get() : F.FireMontage.Get();
         const auto* Instance=F.Character->GetMesh()->GetAnimInstance()->GetActiveInstanceForMontage(Montage);
         if (TestNotNull(TEXT("真实火冰动作实例"),Instance))
-            TestEqual(TEXT("动作完整映射复制的0.5秒窗口"),Instance->GetPlayRate(),Montage->GetPlayLength()/0.5f);
-        TestTrue(TEXT("取消0.5秒起手"),F.Cast->CancelConfirmedCast(Id));
+            TestEqual(TEXT("动作完整映射服务器复制窗口"),Instance->GetPlayRate(),Montage->GetPlayLength()/Duration);
+        TestTrue(TEXT("取消真实起手窗口"),F.Cast->CancelConfirmedCast(Id));
         TestEqual(TEXT("取消撤销自己的表现请求"),F.LiveRequests.Num(),0);
     }
     return true;

@@ -19,5 +19,7 @@ public class DivineBeastsArenaRuntime : ModuleRules
             "DivineBeastsRuntime",
             "DivineBeastsCharactersRuntime"
         });
+        // 同项目共享操控，Village自身不依赖竞技，平台和MOBA均不认识项目组件。
+        PrivateDependencyModuleNames.Add("DBAWorldsRuntime");
     }
 }

@@ -9,6 +9,7 @@
 #include "Eligibility/DivineBeastsArenaEligibility.h"
 #include "Features/IModularFeatures.h"
 #include "Framework/GamePlatformArenaGameMode.h"
+#include "Framework/DivineBeastsArenaPlayerController.h"
 #include "GameFramework/Character.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -82,11 +83,18 @@ bool FDivineBeastsArenaServerProjectExtension::ValidateAndConfigureGameMode(
 
 FDivineBeastsArenaServerProjectExtension::FDivineBeastsArenaServerProjectExtension()
 {
+    // InitGame早于任何登录/控制器创建；不能等异步Assignment受理后才更换类。
+    GameModeInitializedHandle = FGameModeEvents::OnGameModeInitializedEvent().AddLambda([](AGameModeBase* Mode)
+    {
+        if (auto* Arena = Cast<AGamePlatformArenaGameMode>(Mode))
+            Arena->PlayerControllerClass = ADivineBeastsArenaPlayerController::StaticClass();
+    });
     WorldCleanupHandle = FWorldDelegates::OnWorldCleanup.AddRaw(this,
         &FDivineBeastsArenaServerProjectExtension::HandleWorldCleanup);
 }
 FDivineBeastsArenaServerProjectExtension::~FDivineBeastsArenaServerProjectExtension()
 {
+    FGameModeEvents::OnGameModeInitializedEvent().Remove(GameModeInitializedHandle);
     FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupHandle);
     TArray<TWeakObjectPtr<AGamePlatformArenaGameMode>> Modes;
     WorldAssemblies.GetKeys(Modes);

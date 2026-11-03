@@ -8,6 +8,7 @@
 #include "GamePlatformCombatProjectile.generated.h"
 class USphereComponent;
 class AGamePlatformCombatProjectile;
+struct FGamePlatformCombatResult;
 
 /** 最小复制事实，不含伤害数值/技能类/资产路径。来源标签含义由项目适配解释。 */
 USTRUCT(BlueprintType)
@@ -34,6 +35,10 @@ struct GAMEPLATFORMCOMBAT_API FGamePlatformCombatProjectileFacts
 DECLARE_MULTICAST_DELEGATE_TwoParams(FGamePlatformProjectileFactsChanged,
     AGamePlatformCombatProjectile*, const FGamePlatformCombatProjectileFacts&);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGamePlatformProjectileFlightEvent);
+/** 游戏线程服务器真实伤害结算结果；每枚至多一次，命中失败仍保留真实Result供项目规则判定。
+ * 不复制、不决定附加技能规则；参数只在同步回调期间有效，EndPlay撤销订阅。 */
+DECLARE_MULTICAST_DELEGATE_TwoParams(FGamePlatformProjectileDamageResolved,
+    const FGamePlatformCombatSpec&, const FGamePlatformCombatResult&);
 
 /** 直线/螺旋及显式目标弧线追踪Actor；同世界服务器拥有运动与命中，不提供客户端伤害RPC。 */
 UCLASS(Blueprintable)
@@ -71,11 +76,13 @@ public:
     bool IsFlightFinished() const { return Facts.bFinished; }
     const FGamePlatformCombatProjectileFacts& GetFlightFacts() const { return Facts; }
     FGamePlatformProjectileFactsChanged& OnFlightFactsChanged() { return FactsChanged; }
+    FGamePlatformProjectileDamageResolved& OnDamageResolved() { return DamageResolved; }
     virtual void Tick(float DeltaSeconds) override;
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 private:
+    FGamePlatformProjectileDamageResolved DamageResolved;
     /** 原生球体根，只作为复制运动附着点；权威碰撞在显式World Sweep完成，客户端禁碰撞。 */
     UPROPERTY(VisibleAnywhere) TObjectPtr<USphereComponent> CollisionRoot;
     UPROPERTY(ReplicatedUsing=OnRep_Facts) FGamePlatformCombatProjectileFacts Facts;

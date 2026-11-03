@@ -38,6 +38,7 @@
 #include "Components/WidgetSwitcher.h"
 #include "Components/Button.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Gameplay/DivineBeastsPlayerControlsComponent.h"
 #include "WorldUI/DivineBeastsWorldHealthBarPresenter.h"
 #include "WorldUI/GamePlatformWorldWidgetBase.h"
 #include "UObject/StrongObjectPtr.h"
@@ -640,8 +641,8 @@ void UDivineBeastsRootLayout::RenderCombatEffects()
 
 void UDivineBeastsRootLayout::BindWorldHealthBars(APawn* DisplayPawn)
 {
-    auto* Controller = DisplayPawn ? Cast<ADivineBeastsWorldPlayerController>(GetOwningPlayer()) : nullptr;
-    if (auto* Previous = Cast<ADivineBeastsWorldPlayerController>(WorldHealthController.Get()); Previous != Controller)
+    auto* Controller = DisplayPawn && GetOwningPlayer() ? GetOwningPlayer()->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr;
+    if (auto* Previous = WorldHealthController.Get(); Previous != Controller)
     {
         if (Previous)
         {

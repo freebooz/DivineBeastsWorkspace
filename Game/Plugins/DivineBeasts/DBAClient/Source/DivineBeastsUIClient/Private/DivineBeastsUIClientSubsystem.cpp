@@ -13,7 +13,7 @@
 #include "Input/GamePlatformUIInputPolicy.h"
 #include "CommonInputModeTypes.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
-#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Gameplay/DivineBeastsPlayerControlsComponent.h"
 #include "ViewModels/System/DivineBeastsSystemSettingsViewModel.h"
 #include "ViewModels/World/DivineBeastsWorldJournalViewModel.h"
 
@@ -76,7 +76,7 @@ void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* 
     WorldEscapeHandle.Reset();
     WorldInventoryHandle.Reset();
     WorldJournalHandle.Reset();
-    BoundMenuController = Cast<ADivineBeastsWorldPlayerController>(NewPlayerController);
+    BoundMenuController = NewPlayerController ? NewPlayerController->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr;
     if (auto* Current = BoundMenuController.Get())
     {
         WorldEscapeHandle = Current->OnWorldEscapeRequested.AddUObject(

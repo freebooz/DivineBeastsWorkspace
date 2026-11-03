@@ -6,6 +6,7 @@
 #include "Actors/GamePlatformCombatProjectile.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Components/SphereComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
@@ -87,6 +88,36 @@ bool FGamePlatformProjectileHelixTest::RunTest(const FString&)
     TestEqual(TEXT("实际Sweep命中通过平台结算一次12伤害"), Fixture.TargetCombat->GetCombatHealth(), 88.0f);
     Projectile->Tick(0.1f);
     TestEqual(TEXT("重复Tick不能重复结算"), Fixture.TargetCombat->GetCombatHealth(), 88.0f);
+    return true;
+}
+
+/** 成功伤害的属性事件可以同步销毁弹体；已受理的结算通知仍须准确完成一次。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformProjectileDamageCompletionTest,
+    "GamePlatform.Combat.Projectile.DamageCompletionSurvivesDestruction",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformProjectileDamageCompletionTest::RunTest(const FString&)
+{
+    FProjectileTestWorld Fixture;
+    if (!TestTrue(TEXT("真实碰撞/伤害世界"), Fixture.Initialize())) return false;
+    auto* Projectile = Fixture.World->SpawnActor<AGamePlatformCombatProjectile>();
+    Projectile->DispatchBeginPlay(); // 该隔离World尚未BeginPlay；必须真实进入生命周期，Destroy才会执行EndPlay。
+    auto* TargetASC = Fixture.Target->FindComponentByClass<UGamePlatformAbilitySystemComponent>();
+    int32 CompletionCount = 0;
+    bool bDamageSucceeded = false;
+    Projectile->OnDamageResolved().AddLambda([&](const FGamePlatformCombatSpec&, const FGamePlatformCombatResult& Result)
+    { ++CompletionCount; bDamageSucceeded = Result.IsSuccess(); });
+    const auto Handle = TargetASC->GetGameplayAttributeValueChangeDelegate(UGamePlatformCombatAttributeSet::GetHealthAttribute()).AddLambda(
+        [Projectile](const FOnAttributeChangeData& Data) { if (Data.NewValue < Data.OldValue) Projectile->Destroy(); });
+    FGamePlatformCombatProjectileMotion Motion; Motion.SpeedCmPerSecond = 1000.f; Motion.RangeCm = 500.f;
+    TestTrue(TEXT("真实弹体初始化"), Projectile->AuthorityInitialize(Fixture.CastSpec(), Motion, FVector::ForwardVector));
+    Projectile->Tick(0.3f);
+    TargetASC->GetGameplayAttributeValueChangeDelegate(UGamePlatformCombatAttributeSet::GetHealthAttribute()).Remove(Handle);
+    TestTrue(TEXT("真实伤害回调已销毁弹体"), Projectile->IsActorBeingDestroyed());
+    TestEqual(TEXT("伤害实际结算一次"), Fixture.TargetCombat->GetCombatHealth(), 88.f);
+    TestEqual(TEXT("同步销毁不丢失结算通知"), CompletionCount, 1);
+    TestTrue(TEXT("通知携带真实成功结果"), bDamageSucceeded);
+    Projectile->Tick(0.1f);
+    TestEqual(TEXT("重复终态不重复通知"), CompletionCount, 1);
     return true;
 }
 

@@ -79,6 +79,7 @@ bool FDivineBeastsArenaUISurfaceInventoryTest::RunTest(const FString&)
         else if (Surface.Kind == EDivineBeastsArenaUISurfaceKind::HUD)
         {
             ++HUDCount;
+            TestEqual(TEXT("竞技HUD与全游戏世界保持相同鼠标模式"),Surface.InputMode,EGamePlatformUIInputMode::GameAndUI);
         }
     }
 

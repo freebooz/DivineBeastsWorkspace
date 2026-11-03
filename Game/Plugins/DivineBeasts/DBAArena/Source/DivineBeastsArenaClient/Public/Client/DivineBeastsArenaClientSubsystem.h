@@ -96,6 +96,8 @@ private:
     /** 以下弱引用及委托只属于当前World；旅行/销毁先解绑，再接受新世界事实。 */
     TWeakObjectPtr<UWorld> ReadinessWorld;
     TWeakObjectPtr<APlayerController> ReadinessController;
+    TWeakObjectPtr<class UDivineBeastsPlayerControlsComponent> ReadinessControls;
+    TWeakObjectPtr<class AGamePlatformArenaPlayerState> ReadinessPlayer;
     TWeakObjectPtr<class AGamePlatformArenaGameState> ReadinessGameState;
     TWeakObjectPtr<class UDivineBeastsCharacterComponent> ReadinessCharacter;
     TWeakObjectPtr<class UGamePlatformGameplayEligibilityComponent> ReadinessEligibility;

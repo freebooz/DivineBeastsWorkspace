@@ -176,6 +176,14 @@ struct FGamePlatformInputSnapshot
     int32 TouchSourceCount = 0;
     FGamePlatformResult Result;
 };
+
+/** 单语义当前真实输入来源；只读本地Receiver/上下文/Touch所有权，不表示服务器资格。 */
+struct FGamePlatformInputSemanticOwnership
+{
+    bool bMappedReceiver = false;
+    bool bTouchReceiver = false;
+    bool IsOwned() const { return bMappedReceiver || bTouchReceiver; }
+};
 /**
  * LocalPlayer（本地玩家）作用域轻量诊断。
  * 只包含计数与耗时，不记录原始按键、文本、触摸坐标或玩家隐私数据；供Debug/Telemetry上层按需读取。

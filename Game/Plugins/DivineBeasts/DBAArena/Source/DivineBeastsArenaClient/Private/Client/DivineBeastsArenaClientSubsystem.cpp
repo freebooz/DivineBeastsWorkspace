@@ -16,6 +16,7 @@
 #include "Framework/GamePlatformArenaPlayerState.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
+#include "Gameplay/DivineBeastsPlayerControlsComponent.h"
 
 namespace
 {
@@ -273,6 +274,14 @@ bool UDivineBeastsArenaClientSubsystem::RequestObservedMigration(const FString& 
 
 void UDivineBeastsArenaClientSubsystem::ClearArenaReadiness()
 {
+    if (ReadinessControls.IsValid())
+    {
+        ReadinessControls->OnInputReceiverChanged.RemoveAll(this);
+        ReadinessControls->SetGameplayActive(false);
+    }
+    ReadinessControls.Reset();
+    if (ReadinessPlayer.IsValid()) ReadinessPlayer->OnArenaStatsChanged.RemoveAll(this);
+    ReadinessPlayer.Reset();
     if(ReadinessWorld.IsValid())ReadinessWorld->GameStateSetEvent.Remove(ReadinessGameStateHandle);
     if(ReadinessController.IsValid())ReadinessController->OnPossessedPawnChanged.RemoveDynamic(this,&ThisClass::HandleReadinessPawnChanged);
     if(ReadinessGameState.IsValid())ReadinessGameState->OnArenaPhaseChanged.RemoveAll(this);
@@ -299,6 +308,26 @@ void UDivineBeastsArenaClientSubsystem::RefreshArenaReadiness()
         if(Controller)Controller->OnPossessedPawnChanged.AddUniqueDynamic(this,&ThisClass::HandleReadinessPawnChanged);
     }
     auto* State=World?World->GetGameState<AGamePlatformArenaGameState>():nullptr;
+    auto* CurrentPlayer = Controller ? Controller->GetPlayerState<AGamePlatformArenaPlayerState>() : nullptr;
+    if (ReadinessPlayer.Get() != CurrentPlayer)
+    {
+        if (ReadinessPlayer.IsValid()) ReadinessPlayer->OnArenaStatsChanged.RemoveAll(this);
+        ReadinessPlayer = State ? CurrentPlayer : nullptr;
+        if (ReadinessPlayer.IsValid()) ReadinessPlayer->OnArenaStatsChanged.AddWeakLambda(this,
+            [this](AGamePlatformArenaPlayerState*) { RefreshArenaReadiness(); });
+    }
+    auto* Controls = Controller ? Controller->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr;
+    if (ReadinessControls.Get() != Controls)
+    {
+        if (ReadinessControls.IsValid())
+        {
+            ReadinessControls->OnInputReceiverChanged.RemoveAll(this);
+            ReadinessControls->SetGameplayActive(false);
+        }
+        ReadinessControls = State ? Controls : nullptr;
+        if (ReadinessControls.IsValid())
+            ReadinessControls->OnInputReceiverChanged.AddUObject(this, &ThisClass::RefreshArenaReadiness);
+    }
     if(ReadinessGameState.Get()!=State)
     {
         if(ReadinessGameState.IsValid())ReadinessGameState->OnArenaPhaseChanged.RemoveAll(this);
@@ -320,6 +349,16 @@ void UDivineBeastsArenaClientSubsystem::RefreshArenaReadiness()
         ReadinessEligibility=Eligibility;
         if(Eligibility)Eligibility->OnEligibilityChanged().AddWeakLambda(this,[this](const FGamePlatformGameplayEligibilitySnapshot&){RefreshArenaReadiness();});
     }
+    if (Controller && State)
+        if (Controls)
+        {
+            const auto* Player = Controller->GetPlayerState<AGamePlatformArenaPlayerState>();
+            // 观战Ready仅用于加载完成，不能借此打开角色运动；仍要求当前Pawn权威资格。
+            Controls->SetGameplayActive(Player && !Player->bEliminated &&
+                Player->ConnectionState == EGamePlatformArenaConnectionState::Connected &&
+                Pawn && Pawn->GetController() == Controller && Pawn->InputComponent &&
+                Character && Character->IsCharacterReady() && Eligibility && Eligibility->IsServerPlayerActiveForGameplay());
+        }
     if(ApplicationFlow)ApplicationFlow->NotifyGameplayWorldFactsChanged();
 }
 bool UDivineBeastsArenaClientSubsystem::TryObserveArenaReadiness(UWorld& World,bool& bBound,bool& bPrepared,bool& bActive)const

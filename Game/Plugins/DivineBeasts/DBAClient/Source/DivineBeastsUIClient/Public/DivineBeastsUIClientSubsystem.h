@@ -17,7 +17,7 @@ class UGamePlatformUILayerStack;
 class UGamePlatformUIManagerSubsystem;
 class UGamePlatformUIScreen;
 class UGamePlatformUIScreenDefinition;
-class ADivineBeastsWorldPlayerController;
+class UDivineBeastsPlayerControlsComponent;
 class UCommonUIActionRouterBase;
 class UGameInstance;
 class IGamePlatformDataService;
@@ -175,7 +175,7 @@ private:
     void HandleWorldInventoryRequested();
     void HandleWorldJournalRequested(FName Section);
     void SetSystemMenuVisible(bool bVisible);
-    TWeakObjectPtr<ADivineBeastsWorldPlayerController> BoundMenuController;
+    TWeakObjectPtr<UDivineBeastsPlayerControlsComponent> BoundMenuController;
     FDelegateHandle WorldEscapeHandle;
     /** 仅本地当前控制器的I键委托句柄，换控制器及退出时精确解除。 */
     FDelegateHandle WorldInventoryHandle;

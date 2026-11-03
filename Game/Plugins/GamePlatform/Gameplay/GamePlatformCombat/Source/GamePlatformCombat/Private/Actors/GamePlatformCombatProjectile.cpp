@@ -314,9 +314,16 @@ void AGamePlatformCombatProjectile::FinishFlight(const FHitResult* Hit)
             Damage.HitContext.bHasValidatedHit = true; Damage.HitContext.TraceStart = Origin;
             Damage.HitContext.TraceEnd = Hit->ImpactPoint; Damage.HitContext.ImpactPoint = Hit->ImpactPoint;
             Damage.HitContext.ImpactNormal = Hit->ImpactNormal; Damage.HitContext.ValidatedDistance = FVector::Distance(Origin, Hit->ImpactPoint);
-            SourceCombat->ApplyDamage(Damage); // 唯一防御/护盾/生命/GAS入口；拒绝也不冒充成功伤害。
+            // 结算可同步广播属性/死亡并销毁本弹体。已受理的命中通知先转移到栈上，
+            // 避免EndPlay清理成员订阅时丢失本次已成功的伤害后续规则。
+            FGamePlatformProjectileDamageResolved Completion = MoveTemp(DamageResolved);
+            const FGamePlatformCombatResult Result = SourceCombat->ApplyDamage(Damage);
+            // bFinished已在结算前置位，重复终态不能再伤害或重复附加控制。
+            // 项目可订阅真实结果，但不能把几何碰撞或可选表现当成成功伤害。
+            Completion.Broadcast(Damage, Result);
         }
     }
+    DamageResolved.Clear();
     CastSpec = {};
     HomingTarget.Reset(); bHasHomingTarget=false; HomingTargetAvatarGeneration=0;
     if (!IsActorBeingDestroyed()) { ForceNetUpdate(); OnRep_Facts(); SetLifeSpan(0.25f); }
@@ -326,6 +333,7 @@ void AGamePlatformCombatProjectile::OnRep_Facts() { DispatchFlightEvents(); Fact
 void AGamePlatformCombatProjectile::BeginPlay() { Super::BeginPlay(); OnRep_Facts(); }
 void AGamePlatformCombatProjectile::EndPlay(const EEndPlayReason::Type Reason)
 {
+    DamageResolved.Clear();
     Facts.bFinished = true; CurrentVelocity=FVector::ZeroVector;SetActorTickEnabled(false); CastSpec = {}; HomingTarget.Reset(); bHasHomingTarget=false;
     DispatchFlightEvents();
     FactsChanged.Broadcast(this, Facts); FactsChanged.Clear(); Super::EndPlay(Reason);
