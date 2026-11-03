@@ -24,7 +24,8 @@
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePlayerFrameReference.png",
       "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
       "Role": "Color",
-      "SHA256": "e8b2a2fe1bf3c9a082d9a7ba08098d38838706f8bd66adaad538a8b517899284"
+      "SHA256": "df7f9a9abb546d3193717d4892d10dd2f421ffba37ed58e1a557d5f95eb53ec5",
+      "DescriptionZh": "用户2026-11-03指定原图；Color保留RGB，AlphaMask只采线性A；两个文件均与原附件逐字节相同。"
     },
     {
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureLoginPanelReference.png",
@@ -66,7 +67,8 @@
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePlayerFrameReferenceMatte.png",
       "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReferenceMatte",
       "Role": "AlphaMask",
-      "SHA256": "d3de7bfce3d8716658cdd2659b60472bbf61ce1e5d0add6ba8d8f4a5b75d7809"
+      "SHA256": "df7f9a9abb546d3193717d4892d10dd2f421ffba37ed58e1a557d5f95eb53ec5",
+      "DescriptionZh": "用户2026-11-03指定原图；Color保留RGB，AlphaMask只采线性A；两个文件均与原附件逐字节相同。"
     },
     {
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePanelReferenceMatte.png",

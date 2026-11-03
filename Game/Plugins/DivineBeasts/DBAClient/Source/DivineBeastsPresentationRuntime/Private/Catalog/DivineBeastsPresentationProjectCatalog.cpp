@@ -195,6 +195,7 @@ FDivineBeastsPresentationProjectCatalog::BuildStarterAudioFragment(FName Categor
         { TEXT("UI.Click"), TEXT("Presentation.SSLM.Audio.UI.Click"), TEXT("presentation.dba.audio.ui.click@1") },
         { TEXT("UI.Confirm"), TEXT("Presentation.SSLM.Audio.UI.Confirm"), TEXT("presentation.dba.audio.ui.confirm@1") },
         { TEXT("UI.Cancel"), TEXT("Presentation.SSLM.Audio.UI.Cancel"), TEXT("presentation.dba.audio.ui.cancel@1") },
+        { TEXT("Spell.Fire.Cast"), TEXT("Presentation.SSLM.Audio.Spell.Fire.Cast"), TEXT("presentation.dba.audio.spell.fire.cast@1") },
         { TEXT("Spell.Frost.Cast"), TEXT("Presentation.SSLM.Audio.Spell.Frost.Cast"), TEXT("presentation.dba.audio.spell.frost.cast@1") },
         { TEXT("Spell.Frost.Impact"), TEXT("Presentation.SSLM.Audio.Spell.Frost.Impact"), TEXT("presentation.dba.audio.spell.frost.impact@1") },
         { TEXT("Spell.Fire.Impact"), TEXT("Presentation.SSLM.Audio.Spell.Fire.Impact"), TEXT("presentation.dba.audio.spell.fire.impact@1") },

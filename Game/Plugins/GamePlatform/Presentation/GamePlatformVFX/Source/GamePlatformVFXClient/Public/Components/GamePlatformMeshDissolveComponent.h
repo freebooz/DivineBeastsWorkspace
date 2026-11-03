@@ -14,7 +14,8 @@ USTRUCT(BlueprintType)
 struct GAMEPLATFORMVFXCLIENT_API FGamePlatformMeshDissolveSettings
 {
     GENERATED_BODY()
-    UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Dissolve",meta=(ClampMin="0"))
+    /** 有界表现等待0至60秒；只设置材质起点及结束事件，不轮询。 */
+    UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Dissolve",meta=(ClampMin="0",ClampMax="60"))
     float DelaySeconds=.65f;
     UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Dissolve",meta=(ClampMin="0.01"))
     float DurationSeconds=1.5f;

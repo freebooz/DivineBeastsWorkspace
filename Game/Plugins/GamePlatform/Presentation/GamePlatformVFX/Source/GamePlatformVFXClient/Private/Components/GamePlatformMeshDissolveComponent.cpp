@@ -17,7 +17,7 @@ bool UGamePlatformMeshDissolveComponent::StartDissolve(int32 InstanceGeneration,
     UWorld* World=GetWorld();AActor* Owner=GetOwner();
     if(bClosing||!World||World->bIsTearingDown||World->GetNetMode()==NM_DedicatedServer||
         !IsValid(Owner)||Owner->IsActorBeingDestroyed()||InstanceGeneration<=0||
-        !FMath::IsFinite(Settings.DelaySeconds)||Settings.DelaySeconds<0||Settings.DelaySeconds>30||
+        !FMath::IsFinite(Settings.DelaySeconds)||Settings.DelaySeconds<0||Settings.DelaySeconds>60||
         !FMath::IsFinite(Settings.DurationSeconds)||Settings.DurationSeconds<.01f||Settings.DurationSeconds>30||
         !FMath::IsFinite(Settings.EdgeStrength)||Settings.EdgeStrength<0||Settings.EdgeStrength>100||
         !FMath::IsFinite(Settings.EdgeColor.R)||!FMath::IsFinite(Settings.EdgeColor.G)||

@@ -198,6 +198,7 @@ public:
 private:
     friend class FDivineBeastsPresentationActivationRegressionTest;
     friend class FDivineBeastsDevelopmentMagicLifecycleTest;
+    friend class FDivineBeastsStarterSpellActivationTest;
     friend class FDivineBeastsHealingPresentationTest;
     // 默认村庄鸟群回归只核验本地意图与世界清理；不绕过真实内容资格或假定GPU播放。
     friend class FDivineBeastsVillageDefaultBirdsTest;
@@ -381,7 +382,7 @@ private:
     bool bWeatherAudioAttempted = false;
     /** 首批客户端音频按播放领域分包预载，UI/技能/音乐/环境任何单类失败不相互阻塞。 */
     FDivineBeastsPresentationContentPackHandle StarterAudioPack; // UI按钮三音效
-    FDivineBeastsPresentationContentPackHandle StarterSpellPack; // 原型施法三音效
+    FDivineBeastsPresentationContentPackHandle StarterSpellPack; // 标准施法/命中音效包，条目由项目目录唯一持有
     FDivineBeastsPresentationContentPackHandle StarterMusicPack; // 当前世界一段背景音乐
     FDivineBeastsPresentationContentPackHandle StarterAmbiencePack; // 新手村森林氛围
     TWeakObjectPtr<UWorld> StarterAudioWorld;

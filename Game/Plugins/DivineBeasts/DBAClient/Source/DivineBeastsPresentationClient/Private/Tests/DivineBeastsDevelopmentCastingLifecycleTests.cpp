@@ -350,15 +350,15 @@ DBA_CASTING_TEST(FDivineBeastsDirectedMissilePalmReentryTest, "DirectedMissilePa
     return true;
 }
 
-/** 火球1秒、冰箭0.5秒事实必须铺满真实动作，不能沿用原始固定速率。 */
-DBA_CASTING_TEST(FDivineBeastsCastingHalfSecondSpellsTest, "FireOneSecondFrostHalfSecondMontage")
+/** 火球3秒、冰箭0.5秒事实必须铺满真实动作，不能沿用原始固定速率。 */
+DBA_CASTING_TEST(FDivineBeastsCastingHalfSecondSpellsTest, "FireThreeSecondFrostHalfSecondMontage")
 {
     for (const bool bFrost : {false, true})
     {
         FDivineBeastsDevelopmentCastingTestFixture F(*this); if (!F.Initialize()) return false;
         const FGuid Id=FGuid::NewGuid();
-        const float Duration = bFrost ? 0.5f : 1.f;
-        TestTrue(TEXT("火球1秒/冰箭0.5秒事实受理"),F.Publish(Id,bFrost,1,Duration));
+        const float Duration = bFrost ? 0.5f : 3.f;
+        TestTrue(TEXT("火球3秒/冰箭0.5秒事实受理"),F.Publish(Id,bFrost,1,Duration));
         auto* Montage=bFrost ? F.FrostMontage.Get() : F.FireMontage.Get();
         const auto* Instance=F.Character->GetMesh()->GetAnimInstance()->GetActiveInstanceForMontage(Montage);
         if (TestNotNull(TEXT("真实火冰动作实例"),Instance))
@@ -611,5 +611,56 @@ bool FDivineBeastsCastingAudioTimingTest::RunTest(const FString&)
     F.NotifyContentActive(); TestEqual(TEXT("失活后内容通知不能复活声音"),Started,2);
     F.Platform->OnRequestObserved().Remove(Observer); F.Platform->UnregisterProvider(Provider);
     return true;
+}
+/** 每个真实Automation帧推进一次World，核对3秒音频窗口及取消去重；不伪造Timer回调。 */
+class FDivineBeastsThreeSecondFireAudioCommand final : public IAutomationLatentCommand
+{
+public:
+    explicit FDivineBeastsThreeSecondFireAudioCommand(FAutomationTestBase& InTest):Test(InTest) {}
+    ~FDivineBeastsThreeSecondFireAudioCommand() override
+    { if(F && F->Platform.IsValid()) { F->Platform->OnRequestObserved().Remove(Observer); F->Platform->UnregisterProvider(Provider); } }
+    bool Update() override
+    {
+        if(!F)
+        {
+            F=MakeUnique<FDivineBeastsDevelopmentCastingTestFixture>(Test);
+            if(!F->Initialize()) return true;
+            SoundTag=FGameplayTag::RequestGameplayTag(TEXT("Presentation.SSLM.Audio.Spell.Fire.Cast"));
+            Provider=F->Platform->RegisterProvider(TEXT("Test.FireCastAudio"),1,
+                FGamePlatformPresentationProviderHandler::CreateLambda([this](const FGamePlatformPresentationRequest& R){return R.SemanticTag==SoundTag;}));
+            Observer=F->Platform->OnRequestObserved().AddLambda([this](const FGamePlatformPresentationRequest& R,EGamePlatformPresentationSubmitResult Result)
+            {
+                if(R.SemanticTag!=SoundTag) return;
+                if(R.PredictionState==EGamePlatformPresentationPredictionState::Cancelled) ++Cancelled;
+                else if(Result==EGamePlatformPresentationSubmitResult::Submitted) ++Started;
+            });
+            F->bProviderReady=false;
+            Test.TestTrue(TEXT("真实发布3秒火球前摇"),F->Publish(FGuid::NewGuid(),false,1,3.f));
+            Test.TestEqual(TEXT("火球声音在前摇起点受理"),Started,1);
+            return false;
+        }
+        F->World->Tick(LEVELTICK_All,.05f); ++Frames;
+        if(Frames==58) { Test.TestEqual(TEXT("2.9秒仍保留自己的施法音"),Cancelled,0); Test.TestEqual(TEXT("未因重复通知重播"),Started,1); }
+        if(Frames<62) return false;
+        Test.TestEqual(TEXT("3.1秒权威窗口结束后撤销施法音"),Cancelled,1);
+        F->NotifyContentActive(); Test.TestEqual(TEXT("结束后不补播"),Started,1);
+        Test.TestTrue(TEXT("后继3秒火球前摇"),F->Publish(FGuid::NewGuid(),false,1,3.f));
+        Test.TestEqual(TEXT("后继独立起播"),Started,2);
+        Test.TestTrue(TEXT("前摇取消受理"),F->Cast->CancelConfirmedCast(F->Cast->GetCastFacts().ActivationId));
+        Test.TestEqual(TEXT("取消后立即撤销自己的音频"),Cancelled,2);
+        return true;
+    }
+private:
+    FAutomationTestBase& Test;
+    TUniquePtr<FDivineBeastsDevelopmentCastingTestFixture> F;
+    FGameplayTag SoundTag; FGuid Provider; FDelegateHandle Observer;
+    int32 Frames=0,Started=0,Cancelled=0;
+};
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsThreeSecondFireAudioTest,
+    "DivineBeasts.Presentation.DevelopmentCasting.FireThreeSecondAudioWindow",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsThreeSecondFireAudioTest::RunTest(const FString&)
+{
+    ADD_LATENT_AUTOMATION_COMMAND(FDivineBeastsThreeSecondFireAudioCommand(*this)); return true;
 }
 #endif

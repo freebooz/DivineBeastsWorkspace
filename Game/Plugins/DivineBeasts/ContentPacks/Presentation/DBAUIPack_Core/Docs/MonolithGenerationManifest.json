@@ -1369,7 +1369,9 @@
         "ActionBarPortrait",
         "ActionBarStatus"
       ],
-      "SourceRGB": "Unchanged sample; dynamic content and dark background masked in Alpha"
+      "SourceRGB": "Unchanged sample; dynamic content and dark background masked in Alpha",
+      "HistoricalRecord": true,
+      "SupersededBy": "CurrentPlayerFrame"
     },
     "FontPolicy": "Fixed existing font sizes; no ScaleBox or text scaling",
     "EditorBuild": {
@@ -2559,5 +2561,57 @@
       "Saved/Validation/HotbarOriginalRGB20261021"
     ],
     "RHIAndClientAcceptance": "SeparateEvidenceRequired"
+  },
+  "CurrentPlayerFrame": {
+    "Author": "Tools/Unreal/UI/AuthorCompactPlayerFrameUE58.py",
+    "Contract": "Tools/Unreal/UI/CompactPlayerFrame.json",
+    "Shader": "Tools/Unreal/UI/CompactPlayerFrame.hlsl",
+    "Materials": [
+      "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference",
+      "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference",
+      "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_PlayerFrameEnergyFill"
+    ],
+    "SourceSHA256": "df7f9a9abb546d3193717d4892d10dd2f421ffba37ed58e1a557d5f95eb53ec5",
+    "Canvas": [
+      232,
+      100
+    ],
+    "Frame": [
+      19.5,
+      11.5,
+      193,
+      77
+    ],
+    "Portrait": [
+      24,
+      16,
+      64,
+      64
+    ],
+    "Health": [
+      90,
+      45,
+      119,
+      12
+    ],
+    "Energy": [
+      90,
+      58,
+      119,
+      12
+    ],
+    "HUDPosition": [
+      24,
+      18
+    ],
+    "VisiblePortrait": "Current owning player character identity via existing PortraitImage; native rounded-box circle, no fixed default texture",
+    "LevelDisplayed": false,
+    "NameAndResourceUpdates": "Existing event snapshot projection; no new Tick or polling",
+    "NativeAuthoring": "Monolith materials import plus ui_query tree migration; compile/save five existing WBP; unreferenced obsolete assets deleted through engine tools",
+    "Evidence": "Saved/Validation/PlayerFrame20261103",
+    "FinalVerification": "Saved/Validation/PlayerFrame20261103/Delivery.json",
+    "ReportRule": "Freeze all plugin files before final Editor input gate. Record later reload/RHI/Cook results only in Saved evidence.",
+    "HumanVisualAcceptance": false,
+    "OnlineAdmissionVerified": false
   }
 }

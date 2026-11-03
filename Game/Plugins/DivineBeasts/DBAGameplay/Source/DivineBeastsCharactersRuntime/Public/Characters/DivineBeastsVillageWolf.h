@@ -23,8 +23,8 @@ class DIVINEBEASTSCHARACTERSRUNTIME_API ADivineBeastsVillageWolf : public ADivin
 public:
     ADivineBeastsVillageWolf();
 
-    /** 本项目怪物死亡后保留完整外观3秒，再用1.5秒消散；双端共用时间合同。 */
-    static constexpr float DeathPresentationHoldSeconds = 3.0f;
+    /** 本项目怪物死亡后保留完整外观60秒，再用1.5秒消散；双端共用时间合同。 */
+    static constexpr float DeathPresentationHoldSeconds = 60.0f;
     static constexpr float DeathDissolveDurationSeconds = 1.5f;
     /** 服务器尸体寿命覆盖完整表现，并留0.5秒复制余量；不改变14秒补充怪物的节奏。 */
     static constexpr float DeathCorpseLifetimeSeconds =

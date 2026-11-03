@@ -318,7 +318,7 @@ bool FDivineBeastsResourceValueDisplayTest::RunTest(const FString&)
     for (const TCHAR* Asset : {TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_HealthBar.WBP_DBA_UI_HealthBar_C"),
                               TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_MomentumBar.WBP_DBA_UI_MomentumBar_C"),
                               TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameHealthBar.WBP_DBA_UI_PlayerFrameHealthBar_C"),
-                              TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameMomentumBar.WBP_DBA_UI_PlayerFrameMomentumBar_C")})
+                              TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameEnergyBar.WBP_DBA_UI_PlayerFrameEnergyBar_C")})
     {
         UClass* Class = LoadClass<UGamePlatformResourceBarWidget>(nullptr, Asset);
         if (!TestNotNull(TEXT("真实资源条类"), Class)) return false;

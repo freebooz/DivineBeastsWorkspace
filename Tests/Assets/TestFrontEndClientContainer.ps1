@@ -1,4 +1,4 @@
-﻿#requires -Version 7.0
+#requires -Version 7.0
 <#
 .SYNOPSIS
 只读检查锁定引擎导出的客户端IoStore清单中是否包含前端运行必需的软引用资产。
@@ -70,11 +70,11 @@ try {
         'GamePlatformUI/Content/Input/BP_GP_UIInputData.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference.uasset',
-        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference.uasset',
+        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_PlayerFrameEnergyFill.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFramePortrait.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameStatus.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameHealthBar.uasset',
-        'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameMomentumBar.uasset',
+        'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameEnergyBar.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NatureMenuReference.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NatureAbilityReference.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NatureMinimapReference.uasset',
@@ -215,6 +215,9 @@ try {
         $audioRequired += "$audioRoot/Library/$($entry.category)/Definitions/DA_DBA_SFX_$($entry.category)_$($entry.id).uasset"
         $audioRequired += "$audioRoot/Library/$($entry.category)/Waves/$waveName.uasset"
     }
+    # 标准火球长前摇的唯一循环Cue及定义必须真实入包，不能只凭本机存在放行。
+    $audioRequired += "$audioRoot/Spells/Cues/SC_DBA_Spell_FireCast.uasset"
+    $audioRequired += "$audioRoot/Spells/Definitions/DA_DBA_SFX_Spell_FireCast.uasset"
     $audioRequired = @($audioRequired | Sort-Object -Unique)
     $required += $audioRequired
 
@@ -230,6 +233,12 @@ try {
     $required += @($spellPackages | Sort-Object -Unique | ForEach-Object { Convert-SpellPackageToContainerSuffix $_ })
     $forbiddenSuffixes = @(@($spellManifest.bindings | ForEach-Object { $_.source_system }) + @($spellManifest.retired_systems) |
         Sort-Object -Unique | ForEach-Object { Convert-SpellPackageToContainerSuffix $_ })
+    # 动态头像已接回既有事件链；禁止退休的静态肖像/旧头像气势控件重新进入发布。
+    $forbiddenSuffixes += @(
+        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_PlayerFramePortrait.uasset',
+        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference.uasset',
+        'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameMomentumBar.uasset'
+    )
     $forbidden = @($forbiddenSuffixes | Where-Object {
         $suffix = '/' + $_
         @($rows | Where-Object { $_.Filename.Replace('\','/').EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase) -and

@@ -263,7 +263,7 @@ def author():
             grants[index] = grant
             dependencies = [d for d in dependencies if str(d.get_editor_property("PrimaryAssetName")) not in (old_id, identifier)] + [primary(identifier)]
             item = unreal.DivineBeastsAbilityUIEntry(); item.set_editor_property("AbilityId", identifier); item.set_editor_property("DisplayName", unreal.Text(data["NameZh"]))
-            cast_description = {"Fireball": "默认施法1秒，服务器起手完成后释放。", "Frostbolt": "默认施法0.5秒，命中存活怪物后冻结1秒。"}.get(name, "")
+            cast_description = {"Fireball": "默认施法3秒，服务器起手完成后释放。", "Frostbolt": "默认施法0.5秒，命中存活怪物后冻结3秒。"}.get(name, "")
             item.set_editor_property("Description", unreal.Text("开发伤害测试：每枚基础法术伤害" + str(data["Damage"]) + "，不消耗气势" + "，冷却" + str(data["Cooldown"]) + "秒。" + cast_description + ("三枚实际螺旋飞行，间隔0.2秒；取消停止余弹。" if data["Count"] == 3 else "服务器权威投射；未实现燃烧或减速。") + "后续替换正式技能。"))
             item.set_editor_property("Icon", unreal.load_asset("/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_Dev" + name)); ui[index] = item
         ability_set.set_editor_property("Abilities", grants); ability_set.set_editor_property("RequiredDefinitions", dependencies)

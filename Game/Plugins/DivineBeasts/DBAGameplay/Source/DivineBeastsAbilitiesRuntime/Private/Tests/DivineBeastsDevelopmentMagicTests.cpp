@@ -103,7 +103,7 @@ struct FObservedProjectile
 };
 
 /**
- * 有界异步资源夹具：30秒墙钟超时；普通运行段12帧，火球/冰箭起手、取消、换代段35帧，每帧推进0.05秒。
+ * 有界异步资源夹具：30秒墙钟超时；普通运行段12帧，火球3秒起手的取消/换代段最多186帧，冰箭最多36帧，每帧推进0.05秒。
  * Data 自己完成资源加载；不手写 Ready、完成回调、GFrameCounter 或技能私有连发状态。
  * 返回 true 仅表示潜伏命令结束，成功与否由 Automation 的真实断言/错误决定。
  */
@@ -658,15 +658,15 @@ private:
             Test->TestTrue(TEXT("冰箭命中当帧施加冻结"),bStunned);
         }
         const double SinceHit = Now - FreezeImpactSeconds;
-        if (SinceHit < 0.90)
-        { Test->TestTrue(TEXT("命中后不足0.9秒仍冻结"),bStunned); return false; }
-        if (SinceHit < 1.10) return false;
-        Test->TestFalse(TEXT("命中后1.1秒冻结已自动解除"),bStunned);
+        if (SinceHit < 2.90)
+        { Test->TestTrue(TEXT("命中后不足2.9秒仍冻结"),bStunned); return false; }
+        if (SinceHit < 3.10) return false;
+        Test->TestFalse(TEXT("命中后3.1秒冻结已自动解除"),bStunned);
         Test->TestTrue(TEXT("冻结解除不重复结算伤害且怪物存活"),Health > 0.f && FMath::IsNearlyEqual(Health, FreezeImpactHealth));
         return true;
     }
 
-    /** 两种适配的已保存火球1秒、冰箭0.5秒权威起手；不依据生产常量生成预期时间。 */
+    /** 两种适配的已保存火球3秒、冰箭0.5秒权威起手；不依据生产常量生成预期时间。 */
     bool IsDefaultCastWindupScenario() const
     { return Scenario == EScenario::FireballWindup || Scenario == EScenario::FrostboltWindup; }
 
@@ -690,7 +690,7 @@ private:
         // 独立写明用户要求，不从待测常量反算；复制快照是施法条和动画的唯一事件输入。
         const auto* CastFacts = Pawn->FindComponentByClass<UGamePlatformAbilityCastComponent>();
         if (Test->TestNotNull(TEXT("火球/冰箭真实复制施法组件"), CastFacts))
-            Test->TestEqual(TEXT("火球1秒、冰箭0.5秒的权威复制时长"), CastFacts->GetCastFacts().DurationSeconds, bFireball ? 1.f : 0.5f);
+            Test->TestEqual(TEXT("火球3秒、冰箭0.5秒的权威复制时长"), CastFacts->GetCastFacts().DurationSeconds, bFireball ? 3.f : 0.5f);
         if (WindupInterruption == EWindupInterruption::SourceDeath)
         {
             // 通过真实Combat扣血至死亡，不伪造bDead；死亡取消与到期前复查都必须禁止首次发射。
@@ -713,7 +713,7 @@ private:
     {
         if (WindupInterruption != EWindupInterruption::None)
         {
-            if (FlightFrames < 23) return false;
+            if (FlightFrames < 63) return false;
             Test->TestEqual(TEXT("死亡/更换Avatar后越过起手时限仍无晚发弹体"), Projectiles.Num(), 0);
             const auto* Spec = ASC->FindAbilitySpecFromHandle(AbilityHandle);
             const auto* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
@@ -721,7 +721,12 @@ private:
                 Test->TestFalse(TEXT("中断起手最终无残留激活"), Ability->IsActive());
             return true;
         }
-        const int32 ReleaseFrame = Scenario == EScenario::FireballWindup ? 21 : 11;
+        const int32 ReleaseFrame = Scenario == EScenario::FireballWindup ? 61 : 11;
+        if (Scenario == EScenario::FireballWindup && FlightFrames == 50)
+        {
+            Test->TestFalse(TEXT("2秒冷却已过但3秒前摇仍禁止重入"),ASC->TryActivateAbility(AbilityHandle,false));
+            Test->TestEqual(TEXT("前摇中重复按键不能提前出弹"),Projectiles.Num(),0);
+        }
         if (FlightFrames == ReleaseFrame - 2) Test->TestEqual(TEXT("权威起手截止前不提前发射"), Projectiles.Num(), 0);
         if (FlightFrames == ReleaseFrame)
         {

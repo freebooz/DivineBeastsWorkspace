@@ -311,7 +311,7 @@ def author():
                     "未实现减速/燃烧等最终生肖效果，后续直接替换对应技能定义及执行类。")
                 if mode in ("Fireball", "Frostbolt"):
                     # 时长由原生共享常量拥有；这里只写人工可读说明，不在资产中另建计时字段。
-                    description += "默认施法1秒，服务器起手完成后释放。" if mode == "Fireball" else "默认施法0.5秒，命中存活怪物后冻结1秒。"
+                    description += "默认施法3秒，服务器起手完成后释放。" if mode == "Fireball" else "默认施法0.5秒，命中存活怪物后冻结3秒。"
             item.set_editor_property("Description", unreal.Text(description))
             icon_path = (icons[(hero, "BasicAttack" if mode == "Primary" else "Passive")]
                          if mode in ("Primary", "Passive") else MAGIC_ICONS[mode])

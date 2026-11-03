@@ -448,6 +448,7 @@ void UDivineBeastsDevelopmentCastingWorldSubsystem::UpdateCastAudio(
     const FName Name=CastName(Facts.PresentationStyleId);
     const auto Semantic=FGameplayTag::RequestGameplayTag(Name==TEXT("Frostbolt")
         ? FName(TEXT("Presentation.SSLM.Audio.Spell.Frost.Cast"))
+        : Name==TEXT("Fireball") ? FName(TEXT("Presentation.SSLM.Audio.Spell.Fire.Cast"))
         : FName(TEXT("Presentation.SSLM.AudioLibrary.Spell.ArcaneCast")),false);
     if(Name.IsNone() || !Semantic.IsValid()) return;
     FGamePlatformPresentationRequest Request;

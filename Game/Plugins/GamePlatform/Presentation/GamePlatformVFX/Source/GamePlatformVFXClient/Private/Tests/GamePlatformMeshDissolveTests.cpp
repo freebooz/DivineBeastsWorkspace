@@ -46,6 +46,15 @@ bool FGamePlatformMeshDissolveLifecycleTest::RunTest(const FString&)
     TestFalse(TEXT("迟到尸体不重播"),Mesh->IsVisible());
     Dissolve->DestroyComponent();
     TestTrue(TEXT("组件销毁归还可见性"),Mesh->IsVisible());
+    auto* LongDelay=NewObject<UGamePlatformMeshDissolveComponent>(Actor);
+    Actor->AddInstanceComponent(LongDelay);LongDelay->RegisterComponent();
+    Settings.DelaySeconds=60.f;Settings.DurationSeconds=1.5f;
+    TestTrue(TEXT("允许完整一分钟的表现等待"),LongDelay->StartDissolve(1,Settings));
+    TestEqual(TEXT("材质消散起点在60秒后"),LongDelay->MaterialStartTime,float(World->GetTimeSeconds()+60.f));
+    TestTrue(TEXT("等待时主体保留"),Mesh->IsVisible());
+    LongDelay->ResetDissolve();Settings.DelaySeconds=60.01f;
+    TestFalse(TEXT("超出有界延迟仍拒绝"),LongDelay->StartDissolve(2,Settings));
+    LongDelay->DestroyComponent();
     Actor->Destroy();World->DestroyWorld(false);
     return true;
 }

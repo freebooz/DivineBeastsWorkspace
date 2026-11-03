@@ -1,5 +1,5 @@
 // 项目客户端死亡表现回归：以真实复制字段通知驱动既有组件，不提交伤害、不连接后端、不保存资产。
-// 狼与吸血鬼必须保留三秒，再经历原有1.5秒消散；复活取消、重复通知及普通角色原规则分别验证。
+// 狼与吸血鬼必须保留60秒，再经历原有1.5秒消散；复活取消、重复通知及普通角色原规则分别验证。
 #include "Characters/DivineBeastsDeathDissolveComponent.h"
 #include "Characters/DivineBeastsVillageWolf.h"
 #include "Characters/DivineBeastsVillageVampire.h"
@@ -14,7 +14,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsMonsterDeathDissolveTimingTest,
-    "DivineBeasts.Presentation.MonsterDeath.ThreeSecondHold",
+    "DivineBeasts.Presentation.MonsterDeath.SixtySecondHold",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FDivineBeastsMonsterDeathDissolveTimingTest::RunTest(const FString&)
 {
@@ -45,18 +45,18 @@ bool FDivineBeastsMonsterDeathDissolveTimingTest::RunTest(const FString&)
         {Dead->SetPropertyValue_InContainer(Combat,bDead);Combat->OnCombatObservationChanged().Broadcast();};
         Notify(true);
         TestTrue(TEXT("死亡观察启动同一消散组件"),Dissolve->IsDissolveActive());
-        Advance(2.99f);
-        TestTrue(TEXT("死亡后2.99秒尸体仍完整可见"),Mesh->IsVisible());
-        // 同代重复观察不得重设起点，使消散在4.5秒总窗口内正常结束。
+        Advance(59.99f);
+        TestTrue(TEXT("死亡后59.99秒尸体仍完整可见"),Mesh->IsVisible());
+        // 同代重复观察不得重设起点，使消散在61.5秒总窗口内正常结束。
         Notify(true);Advance(.02f);
-        TestTrue(TEXT("3秒后开始消散而非立刻隐藏"),Mesh->IsVisible());
+        TestTrue(TEXT("60秒后开始消散而非立刻隐藏"),Mesh->IsVisible());
         Advance(1.48f);
-        TestTrue(TEXT("4.49秒仍在消散窗口"),Mesh->IsVisible());
+        TestTrue(TEXT("61.49秒仍在消散窗口"),Mesh->IsVisible());
         Advance(.02f);
-        TestFalse(TEXT("4.51秒完成隐藏且重复事件没有延长截止"),Mesh->IsVisible());
+        TestFalse(TEXT("61.51秒完成隐藏且重复事件没有延长截止"),Mesh->IsVisible());
         Notify(false);
         TestTrue(TEXT("复活恢复初始可见性"),Mesh->IsVisible());
-        Notify(true);Advance(1.f);Notify(false);Advance(5.f);
+        Notify(true);Advance(1.f);Notify(false);Advance(65.f);
         TestTrue(TEXT("等待中复活取消旧截止"),Mesh->IsVisible());
         Monster->Destroy();
     }
@@ -68,7 +68,7 @@ bool FDivineBeastsMonsterDeathDissolveTimingTest::RunTest(const FString&)
     Character->AddInstanceComponent(Dissolve);Dissolve->RegisterComponent();Dissolve->BeginPlay();
     Dead->SetPropertyValue_InContainer(Combat,true);Combat->OnCombatObservationChanged().Broadcast();
     Advance(2.14f);TestTrue(TEXT("普通角色保留原截止"),Character->GetMesh()->IsVisible());
-    Advance(.02f);TestFalse(TEXT("普通角色未被改成三秒等待"),Character->GetMesh()->IsVisible());
+    Advance(.02f);TestFalse(TEXT("普通角色未被改成60秒等待"),Character->GetMesh()->IsVisible());
     Character->Destroy();
     return true;
 }

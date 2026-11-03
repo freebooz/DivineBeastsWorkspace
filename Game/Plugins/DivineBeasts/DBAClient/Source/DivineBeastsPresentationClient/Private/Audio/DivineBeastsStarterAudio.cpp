@@ -82,7 +82,7 @@ void UDivineBeastsPresentationClientSubsystem::EnsureStarterAudioForWorld(UWorld
     };
 
     EnsureGroup(TEXT("UI"), 3, StarterAudioPack);
-    EnsureGroup(TEXT("Spell"), 3, StarterSpellPack);
+    EnsureGroup(TEXT("Spell"), 4, StarterSpellPack);
     if (bVillage)
     {
         EnsureGroup(TEXT("Music.Village"), 1, StarterMusicPack);

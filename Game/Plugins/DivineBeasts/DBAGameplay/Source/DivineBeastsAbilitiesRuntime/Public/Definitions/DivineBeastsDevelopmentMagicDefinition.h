@@ -23,10 +23,10 @@ public:
     static bool IsProjectileSpeedSupported(float SpeedCmPerSecond);
     /** 新Profile独立校验初速/上限；未启用时保留既有3000..5000常速合同。 */
     static bool IsProjectileMotionSupported(const FGamePlatformCombatProjectileMotion& Motion);
-    /** 火球1秒、冰箭0.5秒权威前摇；开发与占位适配共用，同时驱动施法反馈与首次释放Timer。
+    /** 火球3秒、冰箭0.5秒权威前摇；开发与占位适配共用，同时驱动施法反馈与首次释放Timer。
      * 已发布定向飞弹身份仍保留0.5秒，不能因复用Fireball兼容枚举而被联动修改。 */
     static float GetCastDurationSeconds(EDivineBeastsDevelopmentMagicKind Kind, FName AbilityId);
-    /** 冰箭命中当前项目怪物后冻结1秒，其它法术为0；只由服务器真实伤害结果触发。 */
+    /** 冰箭命中当前项目怪物后冻结3秒，其它法术为0；只由服务器真实伤害结果触发。 */
     static float GetMonsterFreezeDurationSeconds(EDivineBeastsDevelopmentMagicKind Kind);
     /** 项目外观语义；服务器仅复制分类身份，不加载对应表现资产。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="DivineBeasts|DevelopmentMagic")

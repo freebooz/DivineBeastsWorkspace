@@ -1,0 +1,31 @@
+{
+  "DescriptionZh": "SSLM唯一当前头像栏：原稿RGB直采，经典魔兽逻辑尺寸；只投影当前角色名称及真实生命/能量。",
+  "Canvas": [232, 100],
+  "Frame": [19.5, 11.5, 193, 77],
+  "Portrait": [24, 16, 64, 64],
+  "Name": [94, 27, 108, 16],
+  "Health": [90, 45, 119, 12],
+  "Energy": [90, 58, 119, 12],
+  "HUDPosition": [24, 18],
+  "FontSize": 10,
+  "TreeMigration": {
+    "DescriptionZh": "从旧树重建时先通过Monolith ui_query执行；先get_widget_tree，只对存在的旧节点删除、缺失的新节点添加。所有动作compile=false，最后运行作者layout并编译保存。已迁移树无需重复执行。",
+    "PlayerFramePortrait": {
+      "Remove": ["PortraitFrame", "NaturePortraitFrame", "LevelText", "HeroTotemCaption", "AuthoredPortraitImage"],
+      "AddToRootCanvas": {"PortraitCompatibility": "CanvasPanel"},
+      "MoveToRootCanvas": ["PortraitImage"],
+      "MoveToPortraitCompatibility": ["HeroTotemImage", "LevelUnavailableText"]
+    },
+    "PlayerFrameStatus": {"Remove": ["PlayerStatusFrame", "PlayerStatusHeading", "HealthBarLabel", "MomentumBarLabel", "NatureStatusFrame", "MomentumBar"]},
+    "PlayerFrameHealthBar": {"Remove": ["ResourceFrame", "ResourceCaption"]},
+    "PlayerFrameEnergyBar": {"Remove": ["ResourceFrame", "ResourceCaption"]}
+  },
+  "SourceSHA256": "df7f9a9abb546d3193717d4892d10dd2f421ffba37ed58e1a557d5f95eb53ec5",
+  "ColorTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
+  "AlphaTexture": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReferenceMatte",
+  "Materials": [
+    "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference",
+    "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference",
+    "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_PlayerFrameEnergyFill"
+  ]
+}

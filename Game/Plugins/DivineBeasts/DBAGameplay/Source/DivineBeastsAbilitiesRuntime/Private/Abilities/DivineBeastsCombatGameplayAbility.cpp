@@ -64,7 +64,7 @@ void UDivineBeastsCombatGameplayAbility::ActivateAbility(
          Execution.ProjectileCount < 1 || Execution.ProjectileCount > 3 ||
          !FMath::IsFinite(Execution.ProjectileIntervalSeconds) ||
          !FMath::IsFinite(Execution.CastDurationSeconds) || Execution.CastDurationSeconds < 0.f ||
-         !FMath::IsFinite(Execution.MonsterFreezeDurationSeconds) || Execution.MonsterFreezeDurationSeconds < 0.f || Execution.MonsterFreezeDurationSeconds > 1.f ||
+         !FMath::IsFinite(Execution.MonsterFreezeDurationSeconds) || Execution.MonsterFreezeDurationSeconds < 0.f || Execution.MonsterFreezeDurationSeconds > UDivineBeastsDevelopmentMagicDefinition::GetMonsterFreezeDurationSeconds(EDivineBeastsDevelopmentMagicKind::Frostbolt) ||
          ((Execution.ProjectileCount == 1 && Execution.ProjectileIntervalSeconds != 0.0f) ||
           (Execution.ProjectileCount > 1 &&
            (Execution.ProjectileIntervalSeconds < 0.05f || Execution.ProjectileIntervalSeconds > 1.0f)))))

@@ -10,13 +10,13 @@ float UDivineBeastsDevelopmentMagicDefinition::GetCastDurationSeconds(
 {
     // 定向飞弹保留既有权威时序；按可信数值行身份识别，不读取可选表现覆盖或客户端参数。
     if (Kind == EDivineBeastsDevelopmentMagicKind::Fireball)
-        return AbilityId.ToString().EndsWith(TEXT("_placeholder_directedmissile@1")) ? 0.5f : 1.f;
+        return AbilityId.ToString().EndsWith(TEXT("_placeholder_directedmissile@1")) ? 0.5f : 3.f;
     return Kind == EDivineBeastsDevelopmentMagicKind::Frostbolt ? 0.5f : 0.f;
 }
 float UDivineBeastsDevelopmentMagicDefinition::GetMonsterFreezeDurationSeconds(
     EDivineBeastsDevelopmentMagicKind Kind)
 {
-    return Kind == EDivineBeastsDevelopmentMagicKind::Frostbolt ? 1.f : 0.f;
+    return Kind == EDivineBeastsDevelopmentMagicKind::Frostbolt ? 3.f : 0.f;
 }
 bool UDivineBeastsDevelopmentMagicDefinition::IsProjectileSpeedSupported(float SpeedCmPerSecond)
 {
