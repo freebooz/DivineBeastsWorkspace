@@ -11,7 +11,27 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
+#include "CommonButtonBase.h"
 #include "Styling/SlateColor.h"
+
+UDivineBeastsCameraReviewWidget::UDivineBeastsCameraReviewWidget()
+{
+    // 控件树在RebuildWidget建立后，平台NativeConstruct统一应用主题并订阅变化；
+    // NativeDestruct负责解绑。这里只提供项目语义，不加载材质、不复制按钮播放器。
+    const FName ButtonNames[] = {
+        TEXT("Lens24"), TEXT("Lens35"), TEXT("Lens50"), TEXT("Lens85"),
+        TEXT("OpenAperture"), TEXT("CloseAperture"), TEXT("FocusNear"),
+        TEXT("FocusFar"), TEXT("ResetCamera")
+    };
+    for (const FName Name : ButtonNames)
+    {
+        FGamePlatformUIWidgetStyleBinding Binding;
+        Binding.WidgetName = Name;
+        Binding.StyleId = TEXT("UI.Style.Button.Secondary");
+        Binding.Kind = EGamePlatformUIStyleKind::Button;
+        ThemeBindings.Add(Binding);
+    }
+}
 
 void UDivineBeastsCameraReviewWidget::BindReviewActor(
     ADivineBeastsCinematicCameraReviewActor* Actor)
@@ -43,7 +63,20 @@ UButton* UDivineBeastsCameraReviewWidget::AddButton(
 {
     UButton* Button = WidgetTree->ConstructWidget<UButton>(
         UButton::StaticClass(), Name);
-    Button->SetBackgroundColor(FLinearColor(0.20f, 0.30f, 0.40f, 0.95f));
+    // 背景颜色由共享主题画刷唯一提供，避免旧蓝色乘色使云纹按钮再次偏色。
+    Button->SetBackgroundColor(FLinearColor::White);
+    if (InitialButtonStyleClass)
+    {
+        // 独立开发地图可能没有活动LocalPlayer主题：初始画刷仍读取同一份正式样式CDO。
+        // 这里只配置初始值，后续主题变化及生命周期继续由平台基类的唯一事件链处理。
+        const UCommonButtonStyle* InitialStyle = InitialButtonStyleClass->GetDefaultObject<UCommonButtonStyle>();
+        FButtonStyle ButtonStyle = Button->GetStyle();
+        InitialStyle->GetNormalBaseBrush(ButtonStyle.Normal);
+        InitialStyle->GetNormalHoveredBrush(ButtonStyle.Hovered);
+        InitialStyle->GetNormalPressedBrush(ButtonStyle.Pressed);
+        InitialStyle->GetDisabledBrush(ButtonStyle.Disabled);
+        Button->SetStyle(ButtonStyle);
+    }
     UTextBlock* Caption = WidgetTree->ConstructWidget<UTextBlock>(
         UTextBlock::StaticClass());
     Caption->SetText(FText::FromString(Label));
@@ -70,6 +103,11 @@ TSharedRef<SWidget> UDivineBeastsCameraReviewWidget::RebuildWidget()
     }
     if (!WidgetTree->RootWidget)
     {
+
+    // 仅此开发控件首次建立时加载一次；样式身份与正式页面一致，无新调色表或全局缓存。
+    InitialButtonStyleClass = LoadClass<UCommonButtonStyle>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Secondary.BP_DBA_ButtonStyle_Secondary_C"));
+    ensureMsgf(InitialButtonStyleClass, TEXT("镜头开发按钮缺少项目共享云纹样式"));
 
     UBorder* Background = WidgetTree->ConstructWidget<UBorder>(
         UBorder::StaticClass(), TEXT("CinematicReviewBackground"));

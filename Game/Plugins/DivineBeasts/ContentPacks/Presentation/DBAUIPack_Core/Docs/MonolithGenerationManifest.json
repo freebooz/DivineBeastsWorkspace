@@ -2613,5 +2613,95 @@
     "ReportRule": "Freeze all plugin files before final Editor input gate. Record later reload/RHI/Cook results only in Saved evidence.",
     "HumanVisualAcceptance": false,
     "OnlineAdmissionVerified": false
+  },
+  "CloudButtons213x60_20261103": {
+    "Status": "NativeSaved_ReloadVerified_VisualReviewPending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "EditorPidAtAuthoring": 52084,
+    "MonolithVersion": "0.23.0",
+    "DefaultButtonSize": [
+      213,
+      60
+    ],
+    "Assets": [
+      "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Primary",
+      "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Primary_Alpha",
+      "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Secondary",
+      "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Secondary_Alpha",
+      "/DBAUIPack_Core/UI/Materials/Buttons/M_DBA_UI_CloudButton",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Primary_Normal",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Primary_Hovered",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Primary_Pressed",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Primary_Disabled",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Secondary_Normal",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Secondary_Hovered",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Secondary_Pressed",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Secondary_Disabled",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Custom_Normal",
+      "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Primary",
+      "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Secondary",
+      "/Game/Development/UI/WBP_DBA_CloudButtonShowcase",
+      "/Game/Development/UI/BP_DBA_CloudButtonCapture"
+    ],
+    "Parents": {
+      "Styles": "CommonButtonStyle",
+      "Showcase": "UserWidget",
+      "CaptureFixture": "Actor"
+    },
+    "Actions": [
+      "run_python native import/material authoring",
+      "recompile_material",
+      "build_ui_from_spec",
+      "blueprint component authoring",
+      "native save",
+      "reload_packages",
+      "RHI ReadRenderTarget sRGB capture"
+    ],
+    "NativeAssetReadbackPassed": true,
+    "SavedReloadedPackages": 18,
+    "SourceToRHIColorPassed": true,
+    "SourceToRHIMaxLinearError": 0.00298235573270422,
+    "PointerInteractionVerified": false,
+    "ClientCookVerified": false,
+    "HumanVisualAccepted": false,
+    "Evidence": "Saved/Validation/GenericCloudButtons20261103",
+    "Screenshot": "Saved/Validation/GenericCloudButtons20261103/NativeStates_213x60_sRGB.png"
+  },
+  "AllProjectButtons20261104": {
+    "Author": "Tools/Unreal/UI/AuthorGenericCloudButtonsUE58.py:project_button_pages",
+    "Contract": "Tools/Unreal/UI/ProjectButtonBindings.json",
+    "Evidence": "Saved/Validation/AllButtons20261104",
+    "FinalVerification": "Saved/Validation/AllButtons20261104/Delivery.json",
+    "Status": "NativeSaved_ColdReloadVerified_HumanReviewPending",
+    "MonolithVersion": "0.23.0",
+    "NativeWidgetPages": 111,
+    "ButtonCount": 777,
+    "ComboBoxCount": 86,
+    "CheckBoxBackgroundCount": 2,
+    "DynamicCameraButtons": 9,
+    "DynamicCameraNoThemeRuntimeVerified": true,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "ColdReloadErrors": 0,
+    "SharedStyles": [
+      "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Primary",
+      "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Secondary"
+    ],
+    "FixedStateFixtureExcluded": "/Game/Development/UI/WBP_DBA_CloudButtonShowcase",
+    "Preserved": "Existing layout, labels, icons, commands, eligibility, focus, check glyphs and shared event-driven theme ownership",
+    "NativeEvidence": ["NativeCompile.json", "ColdReload.Verification.json", "DynamicCamera.Native.json", "NativeRegression.json", "NativePageCaptures.json"],
+    "ReportRule": "Later build, Cook and acceptance results recorded only in the Saved evidence directory",
+    "HumanVisualAccepted": false,
+    "HumanPointerInputAccepted": false
+  },
+  "PopupPanel20261103": {
+    "Author": "Tools/Unreal/UI/AuthorPopupPanelUE58.py",
+    "SharedStyle": "/DBAUIPack_Core/UI/Styles/BP_DBA_BorderStyle_Panel",
+    "Evidence": "Saved/Validation/PopupPanel20261103",
+    "Status": "NativeSaved_ColdReloadAndRHIPending",
+    "Contract": "Tools/Unreal/UI/PopupPanel.json",
+    "EditorPID": 37192,
+    "HumanVisualAccepted": false,
+    "SurfaceCount": 19
   }
 }

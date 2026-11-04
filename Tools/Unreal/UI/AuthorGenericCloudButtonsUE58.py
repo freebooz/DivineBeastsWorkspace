@@ -4,7 +4,7 @@ import json, hashlib, shutil
 import unreal as u
 
 ROOT=Path(__file__).resolve().parents[3]
-CFG=json.loads(Path(__file__).with_name("GenericCloudButtons.json").read_text(encoding="utf-8"))
+CFG=json.loads(Path(__file__).with_name("GenericCloudButtons.json").read_text(encoding="utf-8-sig"))
 OUT=ROOT/"Saved/Validation/GenericCloudButtons20261103"
 PACK=ROOT/"Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core"
 LIB=u.MaterialEditingLibrary
@@ -106,6 +106,13 @@ def materials():
     assert LIB.connect_material_property(custom,"",u.MaterialProperty.MP_EMISSIVE_COLOR)
     assert LIB.connect_material_property(alpha,"",u.MaterialProperty.MP_OPACITY)
     LIB.recompile_material(material);save(material)
+    material_instances()
+
+def material_instances():
+    context()
+    material=u.load_asset(CFG["material"]);assert isinstance(material,u.Material)
+    save(material)
+    records=json.loads((OUT/"NativeTextures.json").read_text(encoding="utf-8"))
     instances=[]
     for family in CFG["families"]:
         for state,values in CFG["states"].items():
@@ -113,10 +120,14 @@ def materials():
             inst=ensure_asset(path,u.MaterialInstanceConstant,u.MaterialInstanceConstantFactoryNew())
             LIB.set_material_instance_parent(inst,material)
             for param,mask in [("ColorTexture",False),("AlphaTexture",True)]:
-                assert LIB.set_material_instance_texture_parameter_value(inst,param,u.load_asset(texture_path(family,mask)))
+                texture=u.load_asset(texture_path(family,mask))
+                # UE5.8此编辑接口执行成功仍返回false；以引擎真实读回值验收。
+                LIB.set_material_instance_texture_parameter_value(inst,param,texture)
+                assert LIB.get_material_instance_texture_parameter_value(inst,param)==texture
             for key,value in {**values,"RecolorAmount":0.0}.items():
-                assert LIB.set_material_instance_scalar_parameter_value(inst,key,value)
-            assert LIB.set_material_instance_vector_parameter_value(inst,"FillColor",u.LinearColor(0.03,1.0,0.02,1.0) if family=="Primary" else u.LinearColor(0.02,0.65,1.0,1.0))
+                LIB.set_material_instance_scalar_parameter_value(inst,key,value)
+                assert abs(LIB.get_material_instance_scalar_parameter_value(inst,key)-value)<0.0001
+            LIB.set_material_instance_vector_parameter_value(inst,"FillColor",u.LinearColor(0.03,1.0,0.02,1.0) if family=="Primary" else u.LinearColor(0.02,0.65,1.0,1.0))
             LIB.update_material_instance(inst);save(inst);instances.append(path)
     # 一份用于展示参数的项目实例，仍共用同一母材质和执行链。
     custom_path=instance_path("Custom","Normal")
@@ -202,15 +213,20 @@ def style_showcase():
     def apply(name,family,state=None,custom=False):
         widget=u.find_object(tree,name);assert isinstance(widget,u.Button),name
         style=widget.get_editor_property("widget_style")
+        theme_style=u.get_default_object(u.EditorAssetLibrary.load_blueprint_class("/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_"+family))
+        theme_fields={"normal":"NormalBase","hovered":"NormalHovered","pressed":"NormalPressed","disabled":"Disabled"}
         for field,phase in [("normal","Normal"),("hovered","Hovered"),("pressed","Pressed"),("disabled","Disabled")]:
-            resource=u.load_asset(instance_path("Custom" if custom else family,"Normal" if custom else state or phase));assert resource
-            style.set_editor_property(field,make_brush(style.get_editor_property(field),resource))
+            if state is None and not custom:
+                style.set_editor_property(field,theme_style.get_editor_property(theme_fields[field]))
+            else:
+                resource=u.load_asset(instance_path("Custom" if custom else family,"Normal" if custom else state or phase));assert resource
+                style.set_editor_property(field,make_brush(style.get_editor_property(field),resource))
         # 保留原生按钮输入语义；静态状态行只用于四态视觉比较。
         widget.set_style(style)
         widget.set_background_color(u.LinearColor(1,1,1,1))
         widget.set_color_and_opacity(u.LinearColor(1,1,1,1))
         widget.set_is_enabled(state!="Disabled")
-        records.append({"Widget":name,"Family":family,"FixedVisualState":state,"NativeDisabled":state=="Disabled"})
+        records.append({"Widget":name,"Family":family,"FixedVisualState":state,"NativeDisabled":state=="Disabled","FromProductionStyle":state is None and not custom})
     for family in CFG["families"]:
         for state in CFG["states"]:apply("State_"+family+"_"+state,family,state)
         apply("Interactive_"+family,family)
@@ -236,4 +252,96 @@ def register_color_sources():
     data["DescriptionZh"]="第三层原稿颜色政策；彩色原稿与Alpha遮罩分别登记sRGB/线性合同、源哈希及稳定资源身份。"
     path.write_text(json.dumps(data,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     report("NativeColorManifest.json",{"AddedOrUpdated":[r["Destination"] for r in records],"Total":len(entries)})
+
+
+def project_button_pages():
+    """将唯一正式样式接入全部项目按钮；只在Monolith拥有租约的编辑器执行。
+
+    输入为已经真实盘点的ProjectButtonBindings.json。保留控件树、尺寸、文字、
+    图标、焦点、输入方法、音效及业务事件，仅修改背景状态和已有主题数据绑定。
+    普通按钮接入平台事件主题链；下拉/复选框使用同一批材质，不新增运行执行器。
+    """
+    import os
+    cfg=json.loads(Path(__file__).with_name('ProjectButtonBindings.json').read_text(encoding='utf-8-sig'))
+    out=ROOT/cfg['EvidenceDirectory']
+    actual=Path(u.Paths.convert_relative_path_to_full(u.Paths.get_project_file_path())).resolve()
+    assert actual==ROOT/'Game/DivineBeastsArena.uproject',actual
+    lease=json.loads((out/'EditorLease.json').read_text(encoding='utf-8-sig'))
+    assert lease['pid']==os.getpid() and lease['write_authorized'],'本次编辑器写入租约不匹配'
+    assert not u.EditorLoadingAndSavingUtils.get_dirty_content_packages(),'存在尚未保存的内容'
+    assert not u.EditorLoadingAndSavingUtils.get_dirty_map_packages(),'存在尚未保存的地图'
+    baseline=json.loads((out/'Before.json').read_text(encoding='utf-8'))
+    baseline={r['Asset']:r for r in baseline}
+    plugin_roots={p.stem:p.parent for p in (ROOT/'Game/Plugins').rglob('*.uplugin')}
+    snapshots=[]
+    for page in cfg['Assets']:
+        mount,relative=page['Asset'].lstrip('/').split('/',1)
+        content=ROOT/'Game/Content' if mount=='Game' else plugin_roots[mount]/'Content'
+        disk=content/(relative+'.uasset')
+        target=out/'Backups'/mount/(relative+'.uasset')
+        assert disk.is_file(),disk
+        target.parent.mkdir(parents=True,exist_ok=True)
+        if not target.exists():shutil.copy2(disk,target)
+        snapshots.append({'Asset':page['Asset'],'BeforeSHA256':hashlib.sha256(target.read_bytes()).hexdigest(),
+                          'Source':str(disk.relative_to(ROOT)),'Backup':str(target.relative_to(ROOT))})
+    (out/'Backups.json').write_text(json.dumps(snapshots,ensure_ascii=False,indent=2),encoding='utf-8')
+    common={family:u.get_default_object(u.EditorAssetLibrary.load_blueprint_class(
+        '/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_'+family)) for family in ('Primary','Secondary')}
+    mapping={'normal':'NormalBase','hovered':'NormalHovered','pressed':'NormalPressed','disabled':'Disabled'}
+    results=[]
+    for page in cfg['Assets']:
+        bp=u.load_asset(page['Asset']);assert bp,page['Asset']
+        prefix=bp.get_path_name()+':WidgetTree.'
+        nodes={w.get_name():w for w in u.ObjectIterator(u.Widget) if w.get_path_name().startswith(prefix)}
+        cdo=u.get_default_object(u.EditorAssetLibrary.load_blueprint_class(page['Asset']))
+        has_bindings=baseline[page['Asset']]['SupportsThemeBindings']
+        bindings=list(cdo.get_editor_property('theme_bindings')) if has_bindings else []
+        # 旧基类模板的PanelBackground/CloseButton等在个别HUD不存在，会使整页主题原子预检失败。
+        # 仅移除本页根本不存在的目标；存在的文字、背景及按钮规则完整保留。
+        removed=[str(b.get_editor_property('widget_name')) for b in bindings
+                 if str(b.get_editor_property('widget_name')) not in nodes]
+        bindings=[b for b in bindings if str(b.get_editor_property('widget_name')) in nodes]
+        for item in page['Controls']:
+            w=nodes[item['Name']];family=item['Family'];shared=common[family]
+            if isinstance(w,u.Button):
+                style=w.get_editor_property('widget_style')
+                for field,source in mapping.items():style.set_editor_property(field,shared.get_editor_property(source))
+                w.set_style(style);w.set_background_color(u.LinearColor(1,1,1,1))
+                if has_bindings:
+                    matches=[i for i,b in enumerate(bindings) if str(b.get_editor_property('widget_name'))==item['Name']]
+                    assert len(matches)<=1,(page['Asset'],item['Name'],'重复绑定')
+                    b=bindings[matches[0]].copy() if matches else u.GamePlatformUIWidgetStyleBinding()
+                    b.set_editor_property('widget_name',item['Name'])
+                    b.set_editor_property('style_id','UI.Style.Button.'+family)
+                    b.set_editor_property('kind',u.GamePlatformUIStyleKind.BUTTON)
+                    if matches:bindings[matches[0]]=b
+                    else:bindings.append(b)
+            elif isinstance(w,u.ComboBoxString):
+                style=w.get_editor_property('widget_style')
+                combo=style.get_editor_property('combo_button_style')
+                button=combo.get_editor_property('button_style')
+                for field,source in mapping.items():button.set_editor_property(field,shared.get_editor_property(source))
+                combo.set_editor_property('button_style',button)
+                style.set_editor_property('combo_button_style',combo)
+                w.set_editor_property('widget_style',style)
+                # 下拉选择框原生前景同时控制当前文本和箭头；新暗色内芯使用浅色保证可读。
+                w.set_editor_property('foreground_color',u.SlateColor(specified_color=u.LinearColor(1,0.94,0.78,1)))
+            elif isinstance(w,u.CheckBox):
+                style=w.get_editor_property('widget_style')
+                for field,source in [('background_image','NormalBase'),('background_hovered_image','NormalHovered'),
+                                     ('background_pressed_image','NormalPressed')]:
+                    brush=shared.get_editor_property(source).copy()
+                    size=brush.get_editor_property('image_size');size.set_editor_property('x',18);size.set_editor_property('y',18)
+                    brush.set_editor_property('image_size',size);style.set_editor_property(field,brush)
+                w.set_editor_property('widget_style',style)
+            else:raise AssertionError((page['Asset'],item['Name'],'未经审计的控件类型'))
+        if has_bindings:
+            assert len(bindings)<=128,(page['Asset'],len(bindings))
+            cdo.set_editor_property('theme_bindings',bindings)
+        u.BlueprintEditorLibrary.compile_blueprint(bp)
+        save(bp)
+        results.append({'Asset':page['Asset'],'Controls':len(page['Controls']),
+                        'RemovedMissingBindingTargets':removed,'ThemeBindings':len(bindings),'Saved':True})
+    (out/'NativeApplied.json').write_text(json.dumps(results,ensure_ascii=False,indent=2),encoding='utf-8')
+    print('PROJECT_BUTTON_PAGES_SAVED',len(results),sum(r['Controls'] for r in results))
 

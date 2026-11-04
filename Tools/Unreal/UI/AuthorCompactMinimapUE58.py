@@ -31,7 +31,7 @@ def material_assets():
         material.set_editor_property('blend_mode',u.BlendMode.BLEND_TRANSLUCENT)
         uv=LIB.create_material_expression(material,u.MaterialExpressionTextureCoordinate,-650,-200)
         values={'UV':uv}
-        for index,(name,value) in enumerate((('Diameter',206.0),('FrameWidth',4.0),('FillCenter',0.0),('Brightness',1.0))):
+        for index,(name,value) in enumerate((('Diameter',float(CONFIG['CircleSize'])),('FrameWidth',float(CONFIG['FrameWidth'])),('FillCenter',0.0),('Brightness',1.0))):
             node=LIB.create_material_expression(material,u.MaterialExpressionScalarParameter,-650,index*130)
             node.set_editor_property('parameter_name',name);node.set_editor_property('default_value',value)
             node.set_editor_property('group','Minimap');values[name]=node
@@ -56,8 +56,8 @@ def material_assets():
         assert u.EditorAssetLibrary.save_loaded_asset(material,False)
     instances=[]
     for name,parameters in (
-      ('MI_DBA_MinimapFrame',{'Diameter':206.0,'FrameWidth':4.0,'FillCenter':0.0,'Brightness':1.0}),
-      ('MI_DBA_MinimapButton',{'Diameter':22.0,'FrameWidth':1.4,'FillCenter':1.0,'Brightness':1.0})):
+      ('MI_DBA_MinimapFrame',{'Diameter':float(CONFIG['CircleSize']),'FrameWidth':float(CONFIG['FrameWidth']),'FillCenter':0.0,'Brightness':1.0}),
+      ('MI_DBA_MinimapButton',{'Diameter':float(CONFIG['ButtonSize']),'FrameWidth':1.4,'FillCenter':1.0,'Brightness':1.0})):
         asset=directory+'/'+name
         instance=u.load_asset(asset) if u.EditorAssetLibrary.does_asset_exist(asset) else None
         if instance:
@@ -65,7 +65,10 @@ def material_assets():
         else:
             instance=u.AssetToolsHelpers.get_asset_tools().create_asset(name,directory,u.MaterialInstanceConstant,u.MaterialInstanceConstantFactoryNew())
             assert instance;LIB.set_material_instance_parent(instance,material)
-            for parameter,value in parameters.items():assert LIB.set_material_instance_scalar_parameter_value(instance,parameter,value)
+            for parameter,value in parameters.items():
+                LIB.set_material_instance_scalar_parameter_value(instance,parameter,value)
+                assert abs(LIB.get_material_instance_scalar_parameter_value(instance,parameter)-value)<.0001
+            LIB.update_material_instance(instance)
             assert u.EditorAssetLibrary.save_loaded_asset(instance,False)
         instances.append(asset)
     write('MaterialAssets.json',{'Material':path,'Instances':instances,'CodeSHA256':hashlib.sha256(code.encode('utf-8')).hexdigest(),'Domain':'UI','TextureSamples':0})
@@ -90,3 +93,50 @@ def import_map():
     write('MapImport.json',{'Asset':asset,'Source':str(source),'Size':[texture.blueprint_get_size_x(),texture.blueprint_get_size_y()],
                           'SRGB':True,'CompressionNoAlpha':True,'MipMode':'SimpleAverage','RealtimeCapture':False})
     print('COMPACT_MINIMAP_REAL_MAP_SAVED')
+
+def layout_assets():
+    """当前唯一布局作者：按CompactMinimap合同调整现有资产，不重建树或缩放字体。"""
+    context()
+    widget=u.load_asset(CONFIG['Widget']);host=u.load_asset(CONFIG['Host'])
+    assert widget and host
+    tree=u.find_object(widget,'WidgetTree');host_tree=u.find_object(host,'WidgetTree')
+    def node(name):
+        value=u.find_object(tree,name)
+        assert value,name
+        return value
+    def rect(value,position,size):
+        assert isinstance(value.slot,u.CanvasPanelSlot),value.get_name()
+        value.slot.set_position(u.Vector2D(*position))
+        value.slot.set_size(u.Vector2D(*size))
+    rect(node('MapCanvas'),CONFIG['MapPosition'],[CONFIG['MapSize']]*2)
+    map_image=node('MapImage');brush=map_image.get_editor_property('brush')
+    assert brush.get_editor_property('resource_object').get_path_name().split('.')[0]==CONFIG['Texture']
+    image_size=brush.get_editor_property('image_size')
+    image_size.import_text('(X=%f,Y=%f)'%(CONFIG['MapSize'],CONFIG['MapSize']))
+    brush.set_editor_property('image_size',image_size)
+    outline=brush.get_editor_property('outline_settings')
+    outline.set_editor_property('corner_radii',u.Vector4(*([CONFIG['MapSize']/2]*4)))
+    brush.set_editor_property('outline_settings',outline);map_image.set_brush(brush)
+    rect(node('NatureMinimapFrame'),CONFIG['CirclePosition'],[CONFIG['CircleSize']]*2)
+    frame=node('NatureMinimapFrame');brush=frame.get_editor_property('brush')
+    instance=u.load_asset(CONFIG['MaterialDirectory']+'/MI_DBA_MinimapFrame')
+    assert brush.get_editor_property('resource_object')==instance
+    image_size=brush.get_editor_property('image_size')
+    image_size.import_text('(X=%f,Y=%f)'%(CONFIG['CircleSize'],CONFIG['CircleSize']))
+    brush.set_editor_property('image_size',image_size)
+    frame.set_brush(brush)
+    for parameter,value in (('Diameter',CONFIG['CircleSize']),('FrameWidth',CONFIG['FrameWidth'])):
+        LIB.set_material_instance_scalar_parameter_value(instance,parameter,float(value))
+        assert abs(LIB.get_material_instance_scalar_parameter_value(instance,parameter)-value)<.0001
+    LIB.update_material_instance(instance)
+    rect(node('MinimapHeading'),[0,0],[CONFIG['CircleSize'],20])
+    rect(node('NorthCompassBadge'),[CONFIG['CirclePosition'][0]+CONFIG['CircleSize']/2-10,CONFIG['CirclePosition'][1]+6],[20,16])
+    for name,button in CONFIG['Buttons'].items():
+        rect(node(name),button['position'],[CONFIG['ButtonSize']]*2)
+    mounted=u.find_object(host_tree,CONFIG['HostWidget']);assert mounted
+    rect(mounted,[-CONFIG['ScreenMargin'][0],CONFIG['ScreenMargin'][1]],CONFIG['WidgetSize'])
+    mounted.slot.set_auto_size(False)
+    # 锚点、交互委托、地图UV、标记归一化锚点及固定字体均保留现有值。
+    for blueprint in (widget,host):u.BlueprintEditorLibrary.compile_blueprint(blueprint)
+    for asset in (instance,widget,host):assert u.EditorAssetLibrary.save_loaded_asset(asset,False)
+    print('COMPACT_MINIMAP_LAYOUT_SAVED',CONFIG['MapSize'],CONFIG['WidgetSize'])

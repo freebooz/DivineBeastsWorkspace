@@ -111,6 +111,48 @@
       "Destination": "/DBAUIPack_Core/UI/Loading/Textures/T_DBA_UI_LoadingBar_Frame_1200x20",
       "Role": "Color",
       "SHA256": "931f568ed334bdfccb56e80b3e84bf2de8d4f95b847419f863f4008b6fea58e1"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Buttons/T_DBA_UI_CloudButton_Primary.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Primary",
+      "Role": "Color",
+      "SHA256": "e5a7af2c9347cff54f003adab45fa14f00aed78f8292bce4546a597006076a61",
+      "DescriptionZh": "213×60通用云纹按钮；Color采sRGB RGB，AlphaMask只采线性A；默认颜色直通，换色由显式材质参数控制。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Buttons/T_DBA_UI_CloudButton_Primary.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Primary_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "e5a7af2c9347cff54f003adab45fa14f00aed78f8292bce4546a597006076a61",
+      "DescriptionZh": "213×60通用云纹按钮；Color采sRGB RGB，AlphaMask只采线性A；默认颜色直通，换色由显式材质参数控制。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Buttons/T_DBA_UI_CloudButton_Secondary.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Secondary",
+      "Role": "Color",
+      "SHA256": "9c4eb3b57bfb7e93b5ac2e609580f1c5a8df0cd3d64dd55358b7026f968906b9",
+      "DescriptionZh": "213×60通用云纹按钮；Color采sRGB RGB，AlphaMask只采线性A；默认颜色直通，换色由显式材质参数控制。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Buttons/T_DBA_UI_CloudButton_Secondary.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Secondary_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "9c4eb3b57bfb7e93b5ac2e609580f1c5a8df0cd3d64dd55358b7026f968906b9",
+      "DescriptionZh": "213×60通用云纹按钮；Color采sRGB RGB，AlphaMask只采线性A；默认颜色直通，换色由显式材质参数控制。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Panels/T_DBA_UI_PopupPanel.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Panels/T_DBA_UI_PopupPanel",
+      "Role": "Color",
+      "SHA256": "58d7d2d4eef63d0bf31c7c379c5bb25b423573ff5842a0f576601c493bcb89ec",
+      "DescriptionZh": "共享木框弹窗；RGB原色与线性A分开导入，内衬按实心窗口合同处理。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Panels/T_DBA_UI_PopupPanel.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Panels/T_DBA_UI_PopupPanel_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "58d7d2d4eef63d0bf31c7c379c5bb25b423573ff5842a0f576601c493bcb89ec",
+      "DescriptionZh": "共享木框弹窗；RGB原色与线性A分开导入，内衬按实心窗口合同处理。"
     }
   ]
 }

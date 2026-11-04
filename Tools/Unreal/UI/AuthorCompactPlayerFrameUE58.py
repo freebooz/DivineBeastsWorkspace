@@ -123,7 +123,7 @@ def layout():
     compatibility=u.find_object(tree,'PortraitCompatibility');assert compatibility
     compatibility.set_visibility(u.SlateVisibility.COLLAPSED)
     name=u.find_object(tree,'PlayerName');rect(name,CONFIG['Name'],4)
-    name.set_text('');name.set_editor_property('justification',u.TextJustify.LEFT)
+    name.set_text('');name.set_editor_property('justification',u.TextJustify.CENTER)
     font=name.get_editor_property('font');font.set_editor_property('size',CONFIG['FontSize']);name.set_font(font)
     name.set_shadow_offset(u.Vector2D(1,1));name.set_shadow_color_and_opacity(u.LinearColor(0,0,0,.75))
     changed.append(bp)

@@ -1,0 +1,4890 @@
+{
+  "SchemaVersion": 1,
+  "DescriptionZh": "全部SSLM项目按钮唯一迁移清单；主次共享当前云纹材质，保留已有布局及命令。",
+  "EvidenceDirectory": "Saved/Validation/AllButtons20261104",
+  "ExcludedFixtures": [
+    "/Game/Development/UI/WBP_DBA_CloudButtonShowcase"
+  ],
+  "Assets": [
+    {
+      "Asset": "/DBAArena/UI/HUD/WBP_DBA_UI_ArenaQueueStatus",
+      "Controls": [
+        {
+          "Name": "CancelMatchmakingButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenMatchmakingButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_HeroSelection",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ConfirmHeroButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "ReadyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_MatchFoundReady",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DeclineButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReadyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Matchmaking",
+      "Controls": [
+        {
+          "Name": "AcceptChallengeButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "CancelChallengeButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "CancelMatchmakingButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ChallengeTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DeclineChallengeButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickMatchTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SendChallengeButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "StartMatchmakingButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_PostMatch",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RetryReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnWorldButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Scoreboard",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/MaterialLibrary/UI/WBP_DBA_MaterialLibraryReview",
+      "Controls": [
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/UI/WBP_DBA_PluginDemoTestScreen",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_BlueprintAutoLayout",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAArena",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAClient",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAContentPack_Common",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAFoliagePack_Core",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAFrontEndPack",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAGameplay",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Boar",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Dog",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Dragon",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Goat",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Horse",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Monkey",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Ox",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Rabbit",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Rat",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Rooster",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Snake",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAHeroPack_Tiger",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAPresentationPack_Core",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBASFXPack_Core",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAServer",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAUIPack_Core",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAWorldPack_MainArena",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAWorldPack_Village",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_DBAWorlds",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformAI",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformAbilitySystem",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformAnimation",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformApplicationFlow",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformArena",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformCamera",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformCharacter",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformCombat",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformCommerceUI",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformCore",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformData",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformDebug",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformDeveloperTools",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformEntitlement",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformEquipment",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformGameplay",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformInput",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformInteraction",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformInventory",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformLiveOps",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformLoading",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformLobby",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformLocalization",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformNavigation",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformOnline",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformPCG",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformPresentation",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformProgression",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformQuest",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformSFX",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformSave",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformServer",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformSession",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformSettings",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformSurface",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformTelemetry",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformUI",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformVFX",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformVillage",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformWater",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformWeather",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GamePlatformWorld",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_GlooPrint",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/Plugins/WBP_DBA_PluginTest_MobaPresentation",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoControls",
+      "Controls": [
+        {
+          "Name": "PanelExecuteButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PanelLaunchButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PanelOperationCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "PanelPauseButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PanelResetButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "PanelResumeButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PanelRunSelectedOperationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PanelStopButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoHub",
+      "Controls": [
+        {
+          "Name": "ControlsTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DetailTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenPluginPageButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReportTabButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WorldObservationButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoParameterRow",
+      "Controls": [
+        {
+          "Name": "ParameterBooleanInput",
+          "Kind": "CheckBox",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoReport",
+      "Controls": [
+        {
+          "Name": "PanelEvidenceButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginPortal",
+      "Controls": [
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+      "Controls": [
+        {
+          "Name": "InventoryButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PartyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "SettingsButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_Minimap",
+      "Controls": [
+        {
+          "Name": "ResetZoomButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ZoomInButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ZoomOutButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Components/WBP_DBA_CharacterChoice",
+      "Controls": [
+        {
+          "Name": "ChoiceButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Components/WBP_DBA_HeroChoice",
+      "Controls": [
+        {
+          "Name": "ChoiceButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StandardPanel",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/HUD/WBP_DBA_UI_OpenWorldHUD",
+      "Controls": [
+        {
+          "Name": "JournalButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "NoticesButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PartyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "QuestLogButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "SocialButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/HUD/WBP_DBA_UI_TrainingControls",
+      "Controls": [
+        {
+          "Name": "JournalButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "NoticesButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PartyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "QuestLogButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "SocialButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "TrainingResetButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/HUD/WBP_DBA_UI_TutorialGuidance",
+      "Controls": [
+        {
+          "Name": "JournalButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "NoticesButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PartyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "QuestLogButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "SocialButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/HUD/WBP_DBA_UI_VillageMainHUD",
+      "Controls": [
+        {
+          "Name": "JournalButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "NoticesButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PartyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "QuestLogButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "SocialButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterCreate",
+      "Controls": [
+        {
+          "Name": "BackToCharacterSelectButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "CreateButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "HeroOptions",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LogoutButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_CharacterSelect",
+      "Controls": [
+        {
+          "Name": "LogoutButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "OpenCharacterCreateButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SelectButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_ErrorReconnect",
+      "Controls": [
+        {
+          "Name": "RetryButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Inventory",
+      "Controls": [
+        {
+          "Name": "BindQuickbarButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "ClearQuickbarButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "MergeButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "MoveButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "NextPageButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "PrevPageButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_0",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_1",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_10",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_11",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_2",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_3",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_4",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_5",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_6",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_7",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_8",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuickButton_9",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RetryButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "SlotButton_0",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_1",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_10",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_11",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_12",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_13",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_14",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_15",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_16",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_17",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_18",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_19",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_2",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_20",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_21",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_22",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_23",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_24",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_25",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_26",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_27",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_28",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_29",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_3",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_30",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_31",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_4",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_5",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_6",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_7",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_8",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SlotButton_9",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SplitButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LiveOps",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "NoticesButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "NoticesList",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login",
+      "Controls": [
+        {
+          "Name": "DevelopmentAccount01Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DevelopmentAccount02Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DevelopmentAccount03Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DevelopmentAccount04Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DevelopmentAccount05Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DevelopmentAccount06Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DevelopmentAccount07Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DevelopmentAccount08Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DevelopmentAccount09Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DevelopmentAccount10Button",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LoginButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "PasswordRevealButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "PluginDevelopmentButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Quest",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuestList",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "TrackButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "UntrackButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Settings",
+      "Controls": [
+        {
+          "Name": "ApplyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "BackButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ConfirmButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "QualityCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ResolutionCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RevertButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "WindowModeCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Social",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "FriendsButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "FriendsList",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "PartyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_SystemMenu",
+      "Controls": [
+        {
+          "Name": "LogoutButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "QuitButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ResumeButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "SettingsButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_WorldJournal",
+      "Controls": [
+        {
+          "Name": "CharacterTab",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "EntryList",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "MapQuestTab",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "PartyTab",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SpellbookTab",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "TrackButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "UntrackButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyApplications",
+      "Controls": [
+        {
+          "Name": "ApproveButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RejectButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RetryCommandButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyInviteModal",
+      "Controls": [
+        {
+          "Name": "AcceptButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "DeclineButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RetryCommandButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyPanel",
+      "Controls": [
+        {
+          "Name": "ApplicationsButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "ArenaButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ConfirmDisbandCheckBox",
+          "Kind": "CheckBox",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "CopyPlayerIdButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DisbandButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "InvitationsButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "InviteButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "KickMemberButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LeavePartyButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReadyCheckButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RetryCommandButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "ToggleReadyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "TransferLeaderButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyReadyCheckModal",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ConfirmReadyButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "DeclineReadyButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RetryCommandButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PlayerContextMenu",
+      "Controls": [
+        {
+          "Name": "CloseButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "InspectCharacterButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "InviteTargetButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RequestJoinButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "RetryCommandButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoBirdFlock",
+      "Controls": [
+        {
+          "Name": "ApplyBirdCountButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "ApplyFlightModeButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "ApplyFlockingButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "ApplyGlideButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "ApplySpeciesButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "BackButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "FlightModeCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ResetButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "SpeciesCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "StartBatchButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "StopBatchButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        }
+      ]
+    },
+    {
+      "Asset": "/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoHub",
+      "Controls": [
+        {
+          "Name": "ClearFilterButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "LaunchScenarioButton",
+          "Kind": "Button",
+          "Family": "Primary"
+        },
+        {
+          "Name": "LayerFilterCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "PluginSelectorCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "RefreshButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ReturnButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ScenarioSelectorCombo",
+          "Kind": "ComboBoxString",
+          "Family": "Secondary"
+        }
+      ]
+    },
+    {
+      "Asset": "/Game/Development/PluginDemos/UI/WBP_DBA_PluginDemoOverlay",
+      "Controls": [
+        {
+          "Name": "BackButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        },
+        {
+          "Name": "ResetDemoButton",
+          "Kind": "Button",
+          "Family": "Secondary"
+        }
+      ]
+    }
+  ]
+}

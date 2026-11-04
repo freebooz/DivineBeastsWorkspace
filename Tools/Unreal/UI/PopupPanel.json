@@ -1,0 +1,394 @@
+{
+  "display_name": "SSLM 统一木框弹窗",
+  "source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Panels/T_DBA_UI_PopupPanel.png",
+  "color_texture": "/DBAUIPack_Core/UI/Textures/Panels/T_DBA_UI_PopupPanel",
+  "alpha_texture": "/DBAUIPack_Core/UI/Textures/Panels/T_DBA_UI_PopupPanel_Alpha",
+  "material": "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelNineSlice",
+  "style": "/DBAUIPack_Core/UI/Styles/BP_DBA_BorderStyle_Panel",
+  "theme": "/DBAUIPack_Core/UI/Themes/DA_DBA_UITheme_Default",
+  "source_uv_rect": [
+    0.009,
+    0.11,
+    0.991,
+    0.889
+  ],
+  "image_size": [
+    360,
+    285
+  ],
+  "margin": [
+    0.16,
+    0.22,
+    0.16,
+    0.22
+  ],
+  "body_srgb": [
+    56,
+    39,
+    23
+  ],
+  "error_srgb": [
+    139,
+    34,
+    32
+  ],
+  "showcase_sizes": [
+    [
+      320,
+      220
+    ],
+    [
+      640,
+      440
+    ],
+    [
+      1000,
+      420
+    ]
+  ],
+  "surfaces": [
+    {
+      "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_SystemMenu",
+      "background": "PanelBackground",
+      "body": [
+        "MenuTitle",
+        "EscapeHint"
+      ],
+      "error": [
+        "ErrorText"
+      ],
+      "heading": [],
+      "canvas_positions": {
+        "EscapeHint": [
+          0,
+          190
+        ]
+      }
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Settings",
+      "background": "PanelBackground",
+      "body": [
+        "AudioSectionLabel",
+        "StatusText",
+        "AudioHelpText",
+        "EffectsVolumeLabel",
+        "EffectsVolumeText",
+        "AmbientVolumeLabel",
+        "AmbientVolumeText",
+        "MusicVolumeLabel",
+        "MusicVolumeText",
+        "ResolutionComboLabel",
+        "WindowModeComboLabel",
+        "QualityComboLabel"
+      ],
+      "error": [
+        "ErrorText"
+      ],
+      "heading": [
+        "SettingsTitle"
+      ]
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Inventory",
+      "background": "InventoryFrame",
+      "body": [
+        "ItemDetailTitle",
+        "SelectedItemName",
+        "SelectedItemCount",
+        "SelectedItemDescription",
+        "PageIndicator",
+        "CapacityText",
+        "QuickbarHeading",
+        "InventoryHeading"
+      ],
+      "error": [
+        "ErrorText"
+      ],
+      "heading": [
+        "PageTitle",
+        "StatusText"
+      ],
+      "clear_fills": [
+        "HeaderBar",
+        "InventoryBackground",
+        "DetailsBackground"
+      ]
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Quest",
+      "background": "PageSurface",
+      "body": [
+        "FooterText",
+        "HeaderText",
+        "QuestDetailText"
+      ],
+      "error": [],
+      "heading": [],
+      "content_padding": [
+        24,
+        48,
+        24,
+        28
+      ]
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_WorldJournal",
+      "background": "JournalSurface",
+      "body": [
+        "DetailText",
+        "AuthorityNotice",
+        "JournalTitle",
+        "SummaryText"
+      ],
+      "error": [],
+      "heading": [],
+      "content_padding": [
+        24,
+        48,
+        24,
+        28
+      ]
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Social",
+      "background": "PageSurface",
+      "body": [
+        "FooterText",
+        "HeaderText",
+        "SocialDetailText"
+      ],
+      "error": [],
+      "heading": [],
+      "content_padding": [
+        24,
+        48,
+        24,
+        28
+      ]
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LiveOps",
+      "background": "PageSurface",
+      "body": [
+        "FooterText",
+        "HeaderText",
+        "NoticeBodyText",
+        "UnreadCountText"
+      ],
+      "error": [],
+      "heading": [],
+      "content_padding": [
+        24,
+        48,
+        24,
+        28
+      ]
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_ErrorReconnect",
+      "background": "PopupBackground",
+      "body": [
+        "FailureTitle"
+      ],
+      "error": [
+        "ErrorText"
+      ],
+      "heading": [],
+      "create_background": {
+        "parent": "FlowCanvas",
+        "size": [
+          560,
+          400
+        ],
+        "position": [
+          0,
+          10
+        ],
+        "raise": [
+          "FailureTitle",
+          "ErrorText",
+          "RetryButton"
+        ]
+      }
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StandardPanel",
+      "background": "PanelBackground",
+      "body": [
+        "PanelTitle"
+      ],
+      "error": [],
+      "heading": []
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyPanel",
+      "background": "PanelBackground",
+      "body": [
+        "DisbandConfirmationLabel",
+        "ActivityText",
+        "MemberCountText",
+        "PanelTitle",
+        "SelfPlayerIdText"
+      ],
+      "error": [
+        "CommandErrorText"
+      ],
+      "heading": []
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyInviteModal",
+      "background": "PanelBackground",
+      "body": [
+        "RemainingSecondsText",
+        "RemainingSecondsTextCaption",
+        "InviterNameText",
+        "MemberCountText",
+        "PanelTitle"
+      ],
+      "error": [
+        "CommandErrorText"
+      ],
+      "heading": []
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyReadyCheckModal",
+      "background": "PanelBackground",
+      "body": [
+        "RemainingSecondsText",
+        "RemainingSecondsTextCaption",
+        "ActivityText",
+        "PanelTitle",
+        "ReadyStatusText"
+      ],
+      "error": [
+        "CommandErrorText"
+      ],
+      "heading": []
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyApplications",
+      "background": "PanelBackground",
+      "body": [
+        "EmptyStateText",
+        "PanelTitle",
+        "PermissionText"
+      ],
+      "error": [
+        "CommandErrorText"
+      ],
+      "heading": []
+    },
+    {
+      "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PlayerContextMenu",
+      "background": "PanelBackground",
+      "body": [
+        "PanelTitle",
+        "TargetNameText"
+      ],
+      "error": [
+        "DisabledReasonText"
+      ],
+      "heading": []
+    },
+    {
+      "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Matchmaking",
+      "background": "PanelBackground",
+      "body": [
+        "ChallengeRosterText",
+        "ChallengeStatusText",
+        "ElapsedTimeText",
+        "PanelTitle",
+        "PartySummaryText",
+        "RulesText",
+        "SearchStatusText",
+        "SelectedModeText"
+      ],
+      "error": [
+        "CommandErrorText"
+      ],
+      "heading": []
+    },
+    {
+      "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_MatchFoundReady",
+      "background": "PanelBackground",
+      "body": [
+        "EntryStatusText",
+        "PanelTitle",
+        "RemainingSecondsText"
+      ],
+      "error": [
+        "CommandErrorText"
+      ],
+      "heading": []
+    },
+    {
+      "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_HeroSelection",
+      "background": "PageSurface",
+      "body": [
+        "ArenaStateText",
+        "FooterText",
+        "HeaderText",
+        "HeroSelectionStatusText",
+        "RosterText"
+      ],
+      "error": [
+        "CommandErrorText"
+      ],
+      "heading": [],
+      "content_padding": [
+        24,
+        48,
+        24,
+        28
+      ]
+    },
+    {
+      "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Scoreboard",
+      "background": "PageSurface",
+      "body": [
+        "ArenaStateText",
+        "FooterText",
+        "HeaderText",
+        "HeroSelectionStatusText",
+        "RosterText"
+      ],
+      "error": [
+        "CommandErrorText"
+      ],
+      "heading": [],
+      "content_padding": [
+        24,
+        48,
+        24,
+        28
+      ]
+    },
+    {
+      "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_PostMatch",
+      "background": "PanelBackground",
+      "body": [
+        "ModeText",
+        "PanelTitle",
+        "ResultCommitStateText",
+        "ResultTitle",
+        "ReturnStatusText"
+      ],
+      "error": [
+        "CommandErrorText"
+      ],
+      "heading": []
+    }
+  ],
+  "exclusions": [
+    "Full-screen login and character flow backgrounds",
+    "World/HUD nameplates and resource bars",
+    "Notifications without a popup window",
+    "Developer plugin demonstration UI"
+  ],
+  "heading_srgb": [
+    255,
+    231,
+    181
+  ]
+}

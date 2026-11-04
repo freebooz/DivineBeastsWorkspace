@@ -20,6 +20,7 @@
 #include "RHI.h"
 #include "ShaderCompiler.h"
 #include "CommonInputSettings.h"
+#include "CommonBorder.h"
 #include "ICommonInputModule.h" // CommonUI读取的是模块持有的运行设置实例，不是类默认对象。
 #include "Components/Image.h"
 #include "Panels/Combat/DivineBeastsPlayerStatusPanel.h"
@@ -29,6 +30,10 @@
 #include "Definitions/DivineBeastsAbilityUIProfile.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/RetainerBox.h"
+#include "Components/Border.h"
+#include "Misc/FileHelper.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 namespace DivineBeastsUIColorTests
 {
@@ -296,14 +301,32 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
         }
     }
     // 原稿面板材质还经过自定义HLSL与九宫格UV裁切，单查纹理设置不能覆盖这一环节。
-    auto* Texture=LoadObject<UTexture2D>(nullptr,TEXT("/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePanelReference"));
+    auto* Texture=LoadObject<UTexture2D>(nullptr,TEXT("/DBAUIPack_Core/UI/Textures/Panels/T_DBA_UI_PopupPanel"));
     auto* Material=LoadObject<UMaterialInterface>(nullptr,TEXT("/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePanelNineSlice"));
+    UClass* PanelStyleClass=LoadClass<UCommonBorderStyle>(nullptr,TEXT("/DBAUIPack_Core/UI/Styles/BP_DBA_BorderStyle_Panel.BP_DBA_BorderStyle_Panel_C"));
+    FSlateBrush CurrentPanelBrush;
+    if(TestNotNull(TEXT("当前公共面板样式"),PanelStyleClass))
+    {
+        PanelStyleClass->GetDefaultObject<UCommonBorderStyle>()->GetBackgroundBrush(CurrentPanelBrush);
+        TestTrue(TEXT("实际共享样式只绑定当前九宫格材质"),CurrentPanelBrush.GetResourceObject()==Material && Material);
+        TestTrue(TEXT("实际窗口使用Box九宫格"),CurrentPanelBrush.DrawAs==ESlateBrushDrawType::Box);
+    }
     FImage Source;
-    FLinearColor Actual;
-    if(TestNotNull(TEXT("实际面板材质"),Material)&&Texture&&Texture->Source.GetMipImage(Source,0)
+    FLinearColor Actual, SourceUVMin, SourceUVMax;
+    UTexture* BoundTexture = nullptr;
+    // 当前共享材质身份保留；旧自然面板已由木框替换。直接核对真实采样资源和裁切，
+    // 不再让旧源图/旧UV的成功掩盖当前窗口材质的Gamma、透明度或资源绑定错误。
+    if(TestNotNull(TEXT("当前木框面板源纹理"),Texture)
+        &&TestNotNull(TEXT("实际共享面板材质"),Material)
+        &&TestTrue(TEXT("当前材质有明确彩色源参数"),Material->GetTextureParameterValue(FHashedMaterialParameterInfo(TEXT("PanelColor")),BoundTexture))
+        &&TestTrue(TEXT("共享材质只使用当前木框源图"),BoundTexture==Texture)
+        &&TestTrue(TEXT("材质原图裁切最小值可读"),Material->GetVectorParameterValue(FHashedMaterialParameterInfo(TEXT("SourceUVMin")),SourceUVMin))
+        &&TestTrue(TEXT("材质原图裁切最大值可读"),Material->GetVectorParameterValue(FHashedMaterialParameterInfo(TEXT("SourceUVMax")),SourceUVMax))
+        &&TestTrue(TEXT("当前面板真实源像素可读"),Texture->Source.GetMipImage(Source,0))
         &&TestTrue(TEXT("实际面板材质GPU回读"),DivineBeastsUIColorTests::RenderLinear(Material,FVector2f(.5f,.6f),Actual)))
     {
-        const auto Expected=DivineBeastsUIColorTests::SampleDesign(Source,FVector2f(.5f,.565f));
+        const FVector2f SourceUV(FMath::Lerp(SourceUVMin.R,SourceUVMax.R,.5f),FMath::Lerp(SourceUVMin.G,SourceUVMax.G,.6f));
+        const auto Expected=DivineBeastsUIColorTests::SampleDesign(Source,SourceUV);
         TestTrue(*FString::Printf(TEXT("面板材质颜色无额外Gamma/乘色，actual=%s expected=%s"),*Actual.ToString(),*Expected.ToString()),
             FMath::Abs(Actual.R-Expected.R)<=.008f&&FMath::Abs(Actual.G-Expected.G)<=.008f&&FMath::Abs(Actual.B-Expected.B)<=.008f);
         TestTrue(TEXT("实心面板内部不透出场景"),Actual.A>=.99f);
@@ -665,6 +688,84 @@ bool FDivineBeastsCastBarRHIProgressTest::RunTest(const FString&)
     CastBar->ApplyCastSnapshot(State);
     TestEqual(TEXT("真实终态隐藏施法条"), CastBar->GetVisibility(), ESlateVisibility::Collapsed);
     CastBar->ClearCastSource();
+    BeginCleanup(Renderer);
+    return bPassed;
+}
+// 作者与回归共读同一覆盖清单；实际保存页面/九宫格均由原生Slate浮点RHI渲染。
+// 只读开发检查，不激活登录、组队或竞技命令，不将离屏截图当作联机验收。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPopupPanelSavedPagesTest,
+    "DivineBeasts.UI.Style.PopupPanelSavedPages",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPopupPanelSavedPagesTest::RunTest(const FString& Parameters)
+{
+    FString Json;
+    TSharedPtr<FJsonObject> Config;
+    const FString ConfigPath=FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()/TEXT("../Tools/Unreal/UI/PopupPanel.json"));
+    if(!TestTrue(TEXT("读取唯一弹窗覆盖合同"),FFileHelper::LoadFileToString(Json,*ConfigPath)
+        &&FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json),Config)&&Config.IsValid()))return false;
+    const FString StylePath=Config->GetStringField(TEXT("style"));
+    UClass* StyleClass=LoadClass<UCommonBorderStyle>(nullptr,*(StylePath+TEXT(".")+FPaths::GetBaseFilename(StylePath)+TEXT("_C")));
+    if(!TestNotNull(TEXT("共享背景真实样式类"),StyleClass))return false;
+    FSlateBrush SharedBrush;
+    StyleClass->GetDefaultObject<UCommonBorderStyle>()->GetBackgroundBrush(SharedBrush);
+    bool bPassed=TestTrue(TEXT("共享背景为Box九宫格"),SharedBrush.DrawAs==ESlateBrushDrawType::Box);
+    const auto& Surfaces=Config->GetArrayField(TEXT("surfaces"));
+    bPassed&=TestTrue(TEXT("真实弹窗覆盖清单不为空"),Surfaces.Num()>0);
+    for(const auto& Value:Surfaces)
+    {
+        const auto Row=Value->AsObject();
+        const FString Path=Row->GetStringField(TEXT("asset"));
+        const FString Name=FPaths::GetBaseFilename(Path);
+        const FString ClassPath=Path+TEXT(".")+Name+TEXT("_C");
+        UClass* Class=LoadClass<UUserWidget>(nullptr,*ClassPath);
+        if(!TestNotNull(*Name,Class)){bPassed=false;continue;}
+        TStrongObjectPtr<UUserWidget> Widget(NewObject<UUserWidget>(GetTransientPackage(),Class));
+        if(!Widget->Initialize()){bPassed=false;continue;}
+        UWidget* Background=Widget->GetWidgetFromName(FName(*Row->GetStringField(TEXT("background"))));
+        const FSlateBrush* ActualBrush=nullptr;
+        if(const auto* Border=Cast<UBorder>(Background))ActualBrush=&Border->Background;
+        else if(const auto* Image=Cast<UImage>(Background))ActualBrush=&Image->GetBrush();
+        bPassed&=TestTrue(*(Name+TEXT(" 使用唯一共享材质与Box裁切")),ActualBrush
+            &&ActualBrush->GetResourceObject()==SharedBrush.GetResourceObject()
+            &&ActualBrush->DrawAs==ESlateBrushDrawType::Box&&ActualBrush->Margin==SharedBrush.Margin);
+        const auto BackgroundAllowsChildInput=[](const UWidget* Candidate)
+        {
+            if(!Candidate)return false;
+            const auto* Panel=Cast<UPanelWidget>(Candidate);
+            if(Panel&&Panel->GetChildrenCount()>0)
+                return Candidate->GetVisibility()==ESlateVisibility::SelfHitTestInvisible;
+            return Candidate->GetVisibility()==ESlateVisibility::HitTestInvisible
+                ||Candidate->GetVisibility()==ESlateVisibility::SelfHitTestInvisible;
+        };
+        bPassed&=TestTrue(*(Name+TEXT(" 背景不截获输入且保留子控件命中")),BackgroundAllowsChildInput(Background));
+        if(auto* Panel=Cast<UPanelWidget>(Background);Panel&&Panel->GetChildrenCount()>0)
+        {
+            // 对真实瞬态页面注入错误可见性，确认门禁会拒绝连关闭按钮一起禁用的回归。
+            const ESlateVisibility Original=Background->GetVisibility();
+            Background->SetVisibility(ESlateVisibility::HitTestInvisible);
+            bPassed&=TestFalse(TEXT("含子控件的背景禁止HitTestInvisible"),BackgroundAllowsChildInput(Background));
+            Background->SetVisibility(Original);
+        }
+        const FString FileName=TEXT("PopupPanels/")+Name+TEXT(".png");
+        bPassed&=TestTrue(*(Name+TEXT(" 原生页面导出")),DivineBeastsUIColorTests::SavePagePreview(
+            *ClassPath,*FileName,FIntPoint(1280,900),*this,false));
+    }
+    auto* Renderer=new FWidgetRenderer(false,true);
+    for(const auto& Value:Config->GetArrayField(TEXT("showcase_sizes")))
+    {
+        const auto SizeArray=Value->AsArray();
+        const FIntPoint Size(int32(SizeArray[0]->AsNumber()),int32(SizeArray[1]->AsNumber()));
+        TStrongObjectPtr<UTextureRenderTarget2D> Target(NewObject<UTextureRenderTarget2D>());
+        Target->ClearColor=FLinearColor::Transparent;
+        Target->InitCustomFormat(Size.X,Size.Y,PF_FloatRGBA,true);Target->UpdateResourceImmediate(true);
+        Renderer->DrawWidget(Target.Get(),SNew(SImage).Image(&SharedBrush),FVector2D(Size),0.f);
+        FlushRenderingCommands();
+        const FString Path=FPaths::ProjectSavedDir()/TEXT("Validation/UIColorRHI/PopupPanels")/
+            FString::Printf(TEXT("NineSlice_%dx%d.png"),Size.X,Size.Y);
+        TUniquePtr<FArchive> Writer(IFileManager::Get().CreateFileWriter(*Path));
+        bPassed&=TestTrue(TEXT("九宫格真实尺寸RHI导出"),Writer&&FImageUtils::ExportRenderTarget2DAsPNG(Target.Get(),*Writer));
+        if(Writer)Writer->Close();
+    }
     BeginCleanup(Renderer);
     return bPassed;
 }
