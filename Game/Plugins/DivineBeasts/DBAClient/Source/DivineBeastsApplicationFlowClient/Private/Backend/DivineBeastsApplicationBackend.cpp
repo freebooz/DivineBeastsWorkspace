@@ -172,6 +172,18 @@ void FDivineBeastsHttpApplicationBackend::Send(
 
             EDivineBeastsFlowError Error =
                 EDivineBeastsFlowError::ProfileUnavailable;
+            if (Response.HttpStatusCode == 409)
+            {
+                TSharedPtr<FJsonObject> Body;
+                FString Code;
+                if (DeserializeObject(Response.Body, Body) &&
+                    Body->TryGetStringField(TEXT("errorCode"), Code) &&
+                    Code == TEXT("WORLD_MATCH_MIGRATION_REQUIRED"))
+                {
+                    Completion(false, FString(), EDivineBeastsFlowError::MatchMigrationRequired);
+                    return;
+                }
+            }
             switch (Response.Error)
             {
             case EGamePlatformAuthError::AuthExpired:

@@ -13,7 +13,7 @@ class FJsonObject;
 /** 后端本人状态的非秘密投影；失败保持bKnown=false，不用旧名单授予按钮资格。 */
 struct FDivineBeastsArenaQueueSnapshot
 {
-    bool bKnown=false,bServiceReady=false,bDevelopment=false,bCanCancel=false,bCanReply=false;
+    bool bKnown=false,bServiceReady=false,bDevelopment=false,bCanCancel=false,bCanReply=false,bSelfAccepted=false;
     FString Phase,TicketId,PartyId,CandidateId,RegionId,ModeId,ReasonCode;
     int64 Revision=0,CandidateRevision=0;
     FDateTime DeadlineUtc,ServerTimeUtc;
@@ -31,7 +31,7 @@ public:
     void Start();
     void Stop();
     /** 人工重试/未知命令恢复时重新建立完整快照，不自动重复业务写入。 */
-    void Resynchronize();
+    void Resynchronize(TFunction<void(bool)> FirstObservation = {});
     const FDivineBeastsArenaQueueSnapshot& GetSnapshot()const{return Snapshot;}
     FGuid GetAuthenticationGeneration()const{return AuthGeneration;}
     FSimpleMulticastDelegate Changed;
@@ -45,12 +45,16 @@ public:
     bool SupportsTicketLifecycle()const override;
     FGamePlatformArenaMatchOffer GetObservedOffer()const override;
     /** 票据只作为一次完成参数移动给应用流程，不进入Snapshot/Changed。 */
-    void RequestMigration(const FString& Direction,const FString& ClientRequestId,TFunction<void(bool,FDivineBeastsWorldAssignmentPayload)> Completion);
+    FGamePlatformOnlineRequestHandle RequestMigration(const FString& Direction, const FString& ClientRequestId,
+        TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion);
+    /** 从新鲜本人快照选择重连或赛后返回，复用迁移端点。返回仅撤销本次节点请求的函数。 */
+    TFunction<void()> RequestWorldRecovery(const FDivineBeastsWorldAssignmentSummary& Previous,
+        TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion);
 private:
     friend class FDivineBeastsArenaBackendCodecTest;
     bool DecodeCommandResponse(const FString& Body,const FString& RequestId,FDivineBeastsArenaQueueSnapshot& Out)const;
     void AuthenticationChanged(const FGamePlatformAuthSnapshot& Authentication);
-    void Observe(uint64 ExpectedGeneration);
+    void Observe(uint64 ExpectedGeneration, TFunction<void(bool)> FirstObservation = {});
     void StopRequests();
     void StopObservation();
     bool DecodeSnapshot(const TSharedPtr<FJsonObject>& Object,FDivineBeastsArenaQueueSnapshot& Out)const;

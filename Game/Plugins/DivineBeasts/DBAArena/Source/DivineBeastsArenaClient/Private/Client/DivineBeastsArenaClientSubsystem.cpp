@@ -17,46 +17,60 @@
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
 #include "Gameplay/DivineBeastsPlayerControlsComponent.h"
+#include "Gameplay/DivineBeastsWorldPlayerController.h"
 
 namespace
 {
     const FName ArenaFlowExtensionId(TEXT("DivineBeasts.Arena.ApplicationFlow"));
-
-    class FDivineBeastsArenaApplicationFlowExtension final
-        : public IDivineBeastsApplicationFlowExtension
-    {
-    public:
-        explicit FDivineBeastsArenaApplicationFlowExtension(
-            TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> InOwner)
-            : Owner(InOwner)
-        {
-        }
-
-        virtual void OnEnteredInWorld(
-            UDivineBeastsApplicationFlowSubsystem&) override
-        {
-            if (Owner.IsValid())
-            {
-                Owner->SetApplicationFlowInWorld(true);
-            }
-        }
-
-        virtual void OnLeavingInWorld(
-            UDivineBeastsApplicationFlowSubsystem&) override
-        {
-            if (Owner.IsValid())
-            {
-                Owner->SetApplicationFlowInWorld(false);
-            }
-        }
-
-    private:
-        TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> Owner;
-    public:
-        virtual bool TryObserveWorldReadiness(UWorld& World,bool& bBound,bool& bPrepared,bool& bActive)const override
-        {return Owner.IsValid()&&Owner->TryObserveArenaReadiness(World,bBound,bPrepared,bActive);}
-    };
 }
+
+class FDivineBeastsArenaApplicationFlowExtension final : public IDivineBeastsApplicationFlowExtension
+{
+public:
+    explicit FDivineBeastsArenaApplicationFlowExtension(TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> InOwner)
+        : Owner(InOwner)
+    {
+    }
+
+    virtual void OnEnteredInWorld(UDivineBeastsApplicationFlowSubsystem&) override
+    {
+        if (auto* Arena = Owner.Get())
+        {
+            Arena->SetApplicationFlowInWorld(true);
+        }
+    }
+
+    virtual void OnLeavingInWorld(UDivineBeastsApplicationFlowSubsystem&) override
+    {
+        if (auto* Arena = Owner.Get())
+        {
+            Arena->SetApplicationFlowInWorld(false);
+        }
+    }
+
+    virtual bool TryObserveWorldReadiness(UWorld& World, bool& bBound, bool& bPrepared, bool& bActive) const override
+    {
+        return Owner.IsValid() && Owner->TryObserveArenaReadiness(World, bBound, bPrepared, bActive);
+    }
+
+    virtual FDivineBeastsCancelWorldRecovery TryRequestWorldRecovery(
+        const FDivineBeastsWorldAssignmentSummary& Previous, FDivineBeastsWorldRecoveryCompletion Completion) override
+    {
+        if (auto* Arena = Owner.Get(); Arena && !Arena->bDeinitializing && Arena->OnlineMatchmaking)
+        {
+            return Arena->OnlineMatchmaking->RequestWorldRecovery(Previous, MoveTemp(Completion));
+        }
+        return {};
+    }
+
+    virtual bool RequestPostMatchReturn() override
+    {
+        return Owner.IsValid() && Owner->RequestPostMatchReturnToWorld();
+    }
+
+private:
+    TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> Owner;
+};
 
 void UDivineBeastsArenaClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
@@ -175,6 +189,12 @@ bool UDivineBeastsArenaClientSubsystem::RequestPostMatchReturnToWorld()
 TSharedPtr<IGamePlatformArenaMatchmakingAdapter> UDivineBeastsArenaClientSubsystem::GetMatchmakingAdapter()const{return OnlineMatchmaking;}
 bool UDivineBeastsArenaClientSubsystem::CanCancelObservedQueue()const{return OnlineMatchmaking&&OnlineMatchmaking->GetSnapshot().bKnown&&OnlineMatchmaking->GetSnapshot().bCanCancel;}
 bool UDivineBeastsArenaClientSubsystem::CanReturnObservedMatch()const{return !bDeinitializing&&!bMigrationPending&&bApplicationFlowInWorld&&OnlineMatchmaking&&OnlineMatchmaking->GetSnapshot().bKnown&&OnlineMatchmaking->GetSnapshot().Phase==TEXT("returning");}
+bool UDivineBeastsArenaClientSubsystem::CanRetryPostMatchReturn() const
+{
+    if (!CanRetryObservedMigration()) return false;
+    const auto& View = OnlineMatchmaking->GetSnapshot();
+    return !View.bKnown || View.Phase == TEXT("returning");
+}
 bool UDivineBeastsArenaClientSubsystem::CanRetryObservedMigration()const
 {return !bDeinitializing&&!bMigrationPending&&bApplicationFlowInWorld&&OnlineMatchmaking&&(!OnlineMatchmaking->GetSnapshot().bKnown||!MigrationError.IsEmpty());}
 bool UDivineBeastsArenaClientSubsystem::RetryObservedMigration()
@@ -187,7 +207,22 @@ bool UDivineBeastsArenaClientSubsystem::RetryObservedMigration()
     MigrationError=FText::GetEmpty();OnlineMatchmaking->Resynchronize();return true;
 }
 void UDivineBeastsArenaClientSubsystem::SetApplicationFlowInWorld(bool bInWorld)
-{bApplicationFlowInWorld=bInWorld;if(bInWorld)HandleMatchmakingChanged();}
+{
+    bApplicationFlowInWorld = bInWorld;
+    if (bInWorld)
+    {
+        HandleMatchmakingChanged();
+    }
+    else if (bMigrationPending)
+    {
+        // 另一转场或断线已被受理，旧命令回调不能接管下一世界。
+        ++MigrationGeneration;
+        bMigrationPending = false;
+        MigrationRequestId.Reset();
+        MigrationCandidateId.Reset();
+        MigrationDirection.Reset();
+    }
+}
 FText UDivineBeastsArenaClientSubsystem::GetObservedMatchmakingStatus()const
 {
     if(!MigrationError.IsEmpty())return MigrationError;
@@ -247,7 +282,24 @@ void UDivineBeastsArenaClientSubsystem::HandleMatchmakingChanged()
 {
     if(bDeinitializing||!OnlineMatchmaking)return;
     const auto Auth=OnlineMatchmaking->GetAuthenticationGeneration();
-    if(MigrationAuthGeneration!=Auth){++MigrationGeneration;bMigrationPending=false;MigrationAuthGeneration=Auth;MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();MigrationError=FText::GetEmpty();}
+    if(MigrationAuthGeneration!=Auth){++MigrationGeneration;bMigrationPending=false;MigrationAuthGeneration=Auth;MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();MigrationError=FText::GetEmpty();CapturedVillageQueueTicketId.Reset();}
+    if (bApplicationFlowInWorld && ApplicationFlow && ApplicationFlow->GetViewState().Assignment.ServerRoleId == FName(TEXT("GameServer.Role.Village")))
+    {
+        const auto& Queue = OnlineMatchmaking->GetSnapshot();
+        const bool bCanCapture = Queue.Phase == TEXT("searching") ||
+            (Queue.bSelfAccepted && (Queue.Phase == TEXT("confirmation") ||
+                Queue.Phase == TEXT("allocating") || Queue.Phase == TEXT("transferReady")));
+        if (Queue.bKnown && bCanCapture && !Queue.TicketId.IsEmpty() && Queue.TicketId != CapturedVillageQueueTicketId)
+        {
+            UWorld* SourceWorld = GetGameInstance()->GetWorld();
+            auto* Controller = SourceWorld ? Cast<ADivineBeastsWorldPlayerController>(SourceWorld->GetFirstPlayerController()) : nullptr;
+            if (Controller && Controller->IsLocalController())
+            {
+                CapturedVillageQueueTicketId = Queue.TicketId;
+                Controller->ServerCaptureVillageQueueOrigin(CapturedVillageQueueTicketId);
+            }
+        }
+    }
     OnMatchmakingStateChanged.Broadcast();
     if(bDeinitializing||!OnlineMatchmaking||!bApplicationFlowInWorld||!ApplicationFlow)return;
     const auto& View=OnlineMatchmaking->GetSnapshot();const auto World=ApplicationFlow->GetViewState();

@@ -346,7 +346,17 @@ private:
             const auto& Flight=Definition->ProjectileMotion.ResolveFlightConfig();
             if(Expected.Kind==EDivineBeastsDevelopmentMagicKind::Fireball)
             {
-                bValid &= Test->TestNotNull(Label+TEXT("唯一共享飞行Profile"),Definition->ProjectileMotion.FlightProfile.Get());
+                const UGamePlatformCombatProjectileFlightProfile* Profile = Definition->ProjectileMotion.FlightProfile.Get();
+                if (Test->TestNotNull(Label + TEXT("唯一共享飞行配置"), Profile))
+                {
+                    bValid &= Test->TestEqual(Label + TEXT("权威飞行配置归双端玩法包"),
+                        Profile->GetOutermost()->GetName(),
+                        FString(TEXT("/DBAGameplay/Abilities/ProjectileFlight/DA_DBA_Fireball_Flight")));
+                }
+                else
+                {
+                    bValid = false;
+                }
                 bValid &= Test->TestTrue(Label+TEXT("启用加速并保留原目标追踪"),Flight.bEnabled && Flight.bEnableHoming && Flight.GravityScale==0);
                 bValid &= Test->TestEqual(Label+TEXT("实际起飞速度1200"),Flight.SpeedAt(0),1200.f);
                 bValid &= Test->TestEqual(Label+TEXT("0.15秒到1800"),Flight.SpeedAt(.15f),1800.f);

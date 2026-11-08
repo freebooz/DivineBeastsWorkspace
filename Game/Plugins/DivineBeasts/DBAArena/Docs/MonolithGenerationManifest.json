@@ -1,4 +1,27 @@
 {
+  "ArenaSettlement20261108": {
+    "Tool": "Monolith MCP 0.24.0 + UE5.8",
+    "Assets": [
+      {
+        "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_PostMatch",
+        "ParentClass": "/Script/DivineBeastsArenaClient.DivineBeastsPostMatchResultScreen",
+        "ResultsList": "只读名单",
+        "ReturnButton": "退出竞技场"
+      },
+      {
+        "AssetPath": "/DBAArena/UI/Screens/WBP_DBA_UI_ArenaResultRow",
+        "ParentClass": "/Script/DivineBeastsUIClient.DivineBeastsPartyListEntry",
+        "Background": "Transparent",
+        "TextColor": "#000000FF"
+      }
+    ],
+    "CompiledSavedReloaded": true,
+    "ColdReloadEditorPid": 31120,
+    "ColdReloadEvidence": "Game/Saved/Validation/ArenaSettlement_20261108_182420/ColdMonolithReadback.json",
+    "ClientServerCookVerified": true,
+    "VersionGateEvidence": "Game/Saved/Validation/ArenaSettlement_20261108_182420/FrontEndVersionGate.json",
+    "HumanAccepted": false
+  },
   "VillageArenaPortal20261031": {
     "Tool": "Monolith MCP 0.23.0 + UE5.8",
     "MatchmakingAsset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Matchmaking",

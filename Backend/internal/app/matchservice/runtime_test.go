@@ -83,6 +83,9 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 			for index := 0; index < size*2; index++ {
 				player := fmt.Sprintf("player-%02d", index)
 				actor := matchmaking.ActorContext{PlayerID: player, SessionID: "session-" + player, CharacterID: "char-" + player, HeroDefinitionID: "hero-test", CharacterRevision: 1, SourceGameServerID: "old-village-that-no-longer-exists", SourceExperienceID: gameservercontract.ExperienceVillageTutorial}
+				if index == 0 {
+					actor.CharacterName = "白君"
+				}
 				actors = append(actors, actor)
 				if !challenge {
 					if _, err := queue.CommandMatchmaking(ctx, actor, matchmaking.Command{Action: "start", ClientRequestID: "start-" + player, ArenaModeID: mode, RegionID: "test"}); err != nil {
@@ -172,6 +175,19 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 			op, _, _ := operations.GetOperation(ctx, candidate.ID)
 			if op.Stage != "committed" || len(op.Tickets) != len(actors) {
 				t.Fatal("必须全员提交后发布")
+			}
+			assignment, found := control.GetAssignment("arena")
+			if !found {
+				t.Fatal("缺少真实控制面的比赛名单")
+			}
+			for _, row := range assignment.Roster {
+				want := ""
+				if row.PlayerID == "player-00" {
+					want = "白君"
+				}
+				if row.CharacterName != want {
+					t.Errorf("控制面名单角色名 = %q，应为 %q", row.CharacterName, want)
+				}
 			}
 			for _, actor := range actors {
 				migration, err := runtime.GetMigration(ctx, actor, matchmaking.MigrationRequest{CandidateID: candidate.ID, Direction: "arena", ClientRequestID: "entry"})

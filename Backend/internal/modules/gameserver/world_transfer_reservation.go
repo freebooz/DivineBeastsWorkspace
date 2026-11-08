@@ -51,8 +51,13 @@ func (r *Registry) PreviewWorldAllocation(req AllocationRequest, now time.Time) 
 	}
 	candidates := []Instance{}
 	for _, s := range r.instances {
-		if s.RoleID == req.RoleID && s.RegionID == req.RegionID && s.ExperienceID == req.ExperienceID && s.WorldID == req.WorldID && (s.Status == StatusReady || s.Status == StatusActive) && hasFreshWorldHeartbeat(s, now) && s.Capacity-s.CurrentPlayers-s.ReservedPlayers >= req.RequiredCapacity {
-			candidates = append(candidates, s)
+		if s.RoleID == req.RoleID && s.ExperienceID == req.ExperienceID && s.WorldID == req.WorldID && (s.Status == StatusReady || s.Status == StatusActive) && hasFreshWorldHeartbeat(s, now) && s.Capacity-s.CurrentPlayers-s.ReservedPlayers >= req.RequiredCapacity {
+			if s.ID == req.PreferredGameServerID && s.ServerBootID == req.PreferredServerBootID {
+				return s, nil
+			}
+			if s.RegionID == req.RegionID {
+				candidates = append(candidates, s)
+			}
 		}
 	}
 	if len(candidates) == 0 {

@@ -12,7 +12,8 @@ Server先验证单源排除规则及受管INI漂移，UAT成功后逐个读取�
 param([string]$EngineRoot, [switch]$Cook, [ValidateSet('Client','Server')][string]$Target = 'Client',
     [string]$EditorBuildResult,
     # 保留Foundation默认行为；新手村开发验证必须显式选配置，不在发行默认中启用候选技能。
-    [ValidateSet('FoundationStandalone','VillageServer','VillageDevelopmentServer','PluginDemoClient')][string]$CustomConfig='FoundationStandalone',
+    [ValidateSet('FoundationStandalone','DedicatedServer','VillageServer','VillageDevelopmentServer','PluginDemoClient')][string]$CustomConfig='FoundationStandalone',
+    [switch]$WithoutArena,
     [switch]$Pak,
     # 可选仅省略Stage中的PDB等调试符号，缓解磁盘不足；不改变构建模式、Cook内容或测试门禁。
     [switch]$SkipDebugSymbols,
@@ -22,13 +23,22 @@ param([string]$EngineRoot, [switch]$Cook, [ValidateSet('Client','Server')][strin
     [ValidateRange(1,86400)][int]$TimeoutSeconds = 1800, [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'FoundationTargetAssembly.psm1') -Force
 $context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Maps=$Maps; Configuration='Development'; Platform='Win64'; CustomConfig=$CustomConfig; Pak=[bool]$Pak; SkipDebugSymbols=[bool]$SkipDebugSymbols; SkipZenStore=[bool]$SkipZenStore }
 try {
     $context = New-FoundationContext "Cook-$Target" $RunId
     if (-not $Cook) { throw [IO.FileNotFoundException]::new('需显式指定-Cook。') }
     if ($CustomConfig -eq 'PluginDemoClient' -and $Target -ne 'Client') { throw 'PluginDemoClient只允许开发Client，不能用于任何服务器角色。' }
-    if ($CustomConfig -eq 'VillageDevelopmentServer' -and $Target -ne 'Server') {
-        throw 'VillageDevelopmentServer只允许专用服务器目标；客户端开发验证使用CookFrontEndClient。'
+    if ($Target -ne 'Server' -and $CustomConfig -in @('DedicatedServer','VillageServer','VillageDevelopmentServer')) {
+        throw '服务器配置只用于专用服务器目标。'
+    }
+    if ($WithoutArena) {
+        if ($Target -ne 'Server') { throw '无竞技前端Cook使用CookFrontEndClient。' }
+        if (-not $PSBoundParameters.ContainsKey('CustomConfig')) { $CustomConfig='VillageServer' }
+        if ($CustomConfig -ne 'VillageServer') { throw '无竞技专服Cook要求VillageServer配置。' }
+        if (-not $PSBoundParameters.ContainsKey('Maps')) { $Maps=@('/DBAWorldPack_Village/Maps/L_Village_Start') }
+        if ($Maps.Count -ne 1 -or $Maps[0] -cne '/DBAWorldPack_Village/Maps/L_Village_Start') { throw '无竞技专服验证只Cook正式Village地图。' }
+        $details.CustomConfig=$CustomConfig; $details.Maps=$Maps
     }
     $engine = Get-FoundationEngine $EngineRoot
     $details.EngineVersion = $engine.Version; $details.EngineRoot = $engine.Root
@@ -71,6 +81,7 @@ try {
     Assert-FoundationFile (Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe')
     $tool = Get-FoundationManagedTool $engine AutomationTool
     $lock = Enter-FoundationEngineLock $engine.Root
+    $details.TargetAssembly=Read-FoundationTargetAssembly -Workspace $context.Workspace -Target $Target -WithoutArena:$WithoutArena
     $details.CookEditorGate=Assert-FoundationCookEditorBuildResult -Workspace $context.Workspace -EngineRoot $engine.Root -BuildResultPath $EditorBuildResult
     # UE单平台-outputdir不自动附加平台；Stage仅在目录末段匹配CookPlatform时使用原路径。
     $cookDirectory = Join-Path $context.Directory "Cooked/Windows$Target"
@@ -93,22 +104,26 @@ try {
         # UE5.8 ConfigCacheIni按ArrayAdd处理独立token；不用同名Set、清数组或逗号拼接。
         $additionalCookerOptions += (' ' + ($serverPresentationPolicy.CookerArguments -join ' '))
     }
+    if ($WithoutArena) { $additionalCookerOptions += (' ' + ((Get-FoundationWithoutArenaCookArguments) -join ' ')) }
     $arguments = @($tool.Dll,'BuildCookRun',"-project=$($context.Project)","-target=DivineBeastsArena$Target",'-nop4','-unattended','-utf8output','-cook','-stage','-skipbuild','-skipbuildeditor','-platform=Win64','-clientconfig=Development','-serverconfig=Development',"-AdditionalCookerOptions=$additionalCookerOptions",'-ddc=NoZenLocalFallback',('-map=' + ($Maps -join '+')),"-CookOutputDir=$cookDirectory", "-stagingdirectory=$stageDirectory")
-    if ($CustomConfig -eq 'VillageDevelopmentServer') {
-        # Stage的AllowedConfigFiles先于收据CustomConfig目录过滤；只为显式开发发布加入两份运行INI。
-        # 不改变正式Target、DedicatedServer的Pak规则或默认发行关闭状态；其他配置没有这些白名单。
-        $developmentConfigFiles = @('DefaultGame.ini','DefaultGameplayTags.ini')
-        $details.StagedDevelopmentConfigFiles = @()
-        foreach ($configFile in $developmentConfigFiles) {
+    if ($CustomConfig -in @('VillageServer','VillageDevelopmentServer')) {
+        # 保留收据DedicatedServer的Pak规则，只精确Stage所选Village配置的实际运行层。
+        $roleConfigFiles = @('DefaultGame.ini','DefaultEngine.ini')
+        $details.RequiredRuntimeArguments = "-CustomConfig=$CustomConfig -textconfig"
+        if ($CustomConfig -eq 'VillageDevelopmentServer') {
+            $roleConfigFiles += 'DefaultGameplayTags.ini'
+            $details.RequiredDevelopmentRuntimeArguments = "-CustomConfig=$CustomConfig -DBADevelopmentSkills -textconfig"
+        }
+        $details.StagedRoleConfigFiles = @()
+        foreach ($configFile in $roleConfigFiles) {
             Assert-FoundationFile (Join-Path $context.Workspace "Game/Config/Custom/$CustomConfig/$configFile")
             $stageConfigPath = "DivineBeastsArena/Config/Custom/$CustomConfig/$configFile"
             $arguments += "-ini:Game:[Staging]:+AllowedConfigFiles=$stageConfigPath"
-            $details.StagedDevelopmentConfigFiles += $stageConfigPath
+            $details.StagedRoleConfigFiles += $stageConfigPath
         }
-        # 发布后启动还须指定这组参数；textconfig令实际进程重新读取已Stage的自定义INI层。
-        $details.RequiredDevelopmentRuntimeArguments = "-CustomConfig=$CustomConfig -DBADevelopmentSkills -textconfig"
-
+        if ($CustomConfig -eq 'VillageDevelopmentServer') { $details.StagedDevelopmentConfigFiles=$details.StagedRoleConfigFiles }
     }
+    if ($WithoutArena) { $details.RequiredRuntimeArguments += (' ' + ((Get-FoundationWithoutArenaCookArguments) -join ' ')) }
     if ($CustomConfig -eq 'PluginDemoClient') {
         # Stage需保留显式开发INI层；只白名单本任务实际存在的文件，不启用发行默认或把全部Config搬入包。
         $configFile='DefaultGame.ini'
@@ -162,7 +177,9 @@ try {
         $resourceDirectory=Join-Path $context.Directory 'ResourceOwnershipGate'
         $null=New-Item -ItemType Directory -Path $resourceDirectory
         $resourceReport=Join-Path $resourceDirectory 'ResourceOwnership.json'
-        $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments @($resourceGate,'--stage',$stageDirectory,'--unreal-pak',(Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealPak.exe'),'--profile',$CustomConfig,'--target',$Target,'--report',$resourceReport) -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
+        $resourceArguments=@($resourceGate,'--stage',$stageDirectory,'--unreal-pak',(Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealPak.exe'),'--profile',$CustomConfig,'--target',$Target,'--report',$resourceReport)
+        if ($WithoutArena) { $resourceArguments += '--without-arena' }
+        $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments $resourceArguments -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
         $details.ResourceOwnershipGateResult=$resourceResult; $details.ResourceOwnershipReport=$resourceReport
         $code=$resourceResult.ExitCode
     }

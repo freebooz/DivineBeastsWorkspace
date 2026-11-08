@@ -209,9 +209,11 @@ class ServerPresentationPolicy:
         """构造本次真源快照及固定Stage匹配表；不在逐文件审计时重复生成目录规则。"""
         self.raw = raw
         rules = raw["CookDirectories"] + raw["StageOnlyDirectories"]
+        self._editor_tools = {f"Engine/Plugins/{name}" for name in raw["StageOnlyEnginePlugins"]}
         self._stage_roots = tuple(sorted(
             {path[1:].casefold() for rule in rules for path in _package_variants(rule["PackagePath"])}
-            | {path[5:].casefold() for rule in rules for path in _source_variants(rule["SourceDirectory"])}))
+            | {path[5:].casefold() for rule in rules for path in _source_variants(rule["SourceDirectory"])}
+            | {path.casefold() for path in self._editor_tools}))
 
     def resolve_profile(self, custom_config: str) -> str:
         """只接受已登记实际Cook配置，FoundationStandalone仅映射服务器兼容调用。"""
@@ -272,6 +274,7 @@ class ServerPresentationPolicy:
         """从同一真源生成专服收据的Pak规则；只保留已确认的精确插件/内容目录。"""
         directories = {source[5:] for group in ("CookDirectories", "StageOnlyDirectories")
                        for rule in self.raw[group] for source in _source_variants(rule["SourceDirectory"])}
+        directories.update(self._editor_tools)
         lines = ["; 真源: Build/Game/ServerPresentationExclusions.json；精确目录边界，无英雄通配符。",
                  "; Common/十二英雄当前均为表现；权威定义及必要权威资源归DBAGameplay。",
                  PAK_SECTION, "bExcludeFromPaks=true", "bOverrideChunkManifest=true",
@@ -348,7 +351,7 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise PolicyError(f"无法读取规则真源: {path}: {exc}") from exc
     _closed_fields(raw, {"$schema", "SchemaVersion", "Description", "Profiles", "CookConfigProfiles",
-                         "CookDirectories", "StageOnlyDirectories"}, "规则")
+                         "CookDirectories", "StageOnlyDirectories", "StageOnlyEnginePlugins"}, "规则")
     if type(raw["SchemaVersion"]) is not int or raw["SchemaVersion"] != 1:
         raise PolicyError("只支持SchemaVersion=1")
     if raw["$schema"] != "./ServerPresentationExclusions.schema.json" or not isinstance(raw["Description"], str) or not raw["Description"].strip():
@@ -361,6 +364,10 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
     for custom, profile in raw["CookConfigProfiles"].items():
         if profile != (custom if custom in PROFILES else "DedicatedServer"):
             raise PolicyError(f"不允许重定向已有Cook profile: {custom}")
+    tools = raw["StageOnlyEnginePlugins"]
+    if (not isinstance(tools, list) or not all(isinstance(name, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name) for name in tools)
+            or len({name.casefold() for name in tools}) != len(tools)):
+        raise PolicyError("编辑器工具只接受精确且唯一的引擎插件身份")
     for group in ("CookDirectories", "StageOnlyDirectories"):
         rules = raw[group]
         if not isinstance(rules, list) or not rules:

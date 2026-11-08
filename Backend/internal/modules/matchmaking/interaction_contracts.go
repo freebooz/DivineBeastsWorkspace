@@ -45,13 +45,29 @@ func (c *Command) UnmarshalJSON(payload []byte) error {
 
 // ActorContext只在可信服务间持久，权限由Gateway从会话和已选角色验证；不包含令牌或用户密码。
 type ActorContext struct {
-	PlayerID           string `json:"playerId"`                 // 已认证玩家。
-	SessionID          string `json:"sessionId"`                // 当前认证会话，取迁移时必须相同。
-	CharacterID        string `json:"characterId"`              // 后端已选择并验证归属的持久角色。
-	HeroDefinitionID   string `json:"heroDefinitionId"`         // 后端角色对应英雄身份，不能由客户端覆盖。
-	CharacterRevision  int64  `json:"characterRevision,string"` // 读取角色的可信修订。
-	SourceGameServerID string `json:"sourceGameServerId"`       // 控制面确认的来源实例，不能接受客户端地址。
-	SourceExperienceID string `json:"sourceExperienceId"`       // 控制面确认来源体验，赛后重新分配，不复用旧地址。
+	PlayerID           string `json:"playerId"`                            // 已认证玩家。
+	SessionID          string `json:"sessionId"`                           // 当前认证会话，取迁移时必须相同。
+	CharacterID        string `json:"characterId"`                         // 后端已选择并验证归属的持久角色。
+	CharacterName      string `json:"characterName,omitempty"`             // 已选角色的公开显示名，旧匹配上下文可为空。
+	HeroDefinitionID   string `json:"heroDefinitionId"`                    // 后端角色对应英雄身份，不能由客户端覆盖。
+	CharacterRevision  int64  `json:"characterRevision,string"`            // 读取角色的可信修订。
+	SourceGameServerID string `json:"sourceGameServerId"`                  // 控制面确认的来源实例，不能接受客户端地址。
+	SourceExperienceID string `json:"sourceExperienceId"`                  // 控制面确认来源体验，赛后重新分配，不复用旧地址。
+	SourceServerBootID string `json:"sourceServerBootId,omitempty"`        // 源准入的服务器启动身份，历史报名可缺省。
+	SourceSessionEpoch uint64 `json:"sourceSessionEpoch,omitempty,string"` // 源准入代次，十进制文本保留完整精度。
+	QueueTicketID      string `json:"queueTicketId,omitempty"`             // 只由候选事务读取本人固定报名身份，供恢复可信落点。
+}
+
+// VillageQueueOriginEnrollment仅在可信控制面和Match间核对真实报名及采样来源，不包含位置坐标。
+type VillageQueueOriginEnrollment struct {
+	QueueTicketID      string `json:"queueTicketId"`
+	PlayerID           string `json:"playerId"`
+	CharacterID        string `json:"characterId"`
+	SessionID          string `json:"sessionId"`
+	SourceGameServerID string `json:"sourceGameServerId"`
+	SourceExperienceID string `json:"sourceExperienceId"`
+	SourceServerBootID string `json:"sourceServerBootId"`
+	SourceSessionEpoch uint64 `json:"sourceSessionEpoch,string"`
 }
 
 // ParticipantSnapshot只公开候选名单、分队和明确回复；不公开SessionID、隐藏分或其他玩家的准入票据。

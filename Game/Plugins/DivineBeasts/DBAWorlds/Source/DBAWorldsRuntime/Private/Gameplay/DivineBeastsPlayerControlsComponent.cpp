@@ -303,7 +303,8 @@ void UDivineBeastsPlayerControlsComponent::EndWorldJump()
 
 void UDivineBeastsPlayerControlsComponent::RequestWorldMenu()
 {
-    if (Controller()->IsLocalController() && bGameplayActive) OnWorldEscapeRequested.Broadcast();
+    // 系统菜单由应用流程校验，场内观战和倒计时也能打开。转场仍拦截旧世界输入。
+    if (Controller()->IsLocalController() && !bWorldTravelPending) OnWorldEscapeRequested.Broadcast();
 }
 
 void UDivineBeastsPlayerControlsComponent::RequestWorldInventory()

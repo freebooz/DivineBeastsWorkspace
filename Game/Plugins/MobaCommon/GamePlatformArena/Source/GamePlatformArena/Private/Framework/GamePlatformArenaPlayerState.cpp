@@ -10,13 +10,15 @@ AGamePlatformArenaPlayerState::AGamePlatformArenaPlayerState()
 void AGamePlatformArenaPlayerState::AuthorityApplyRosterIdentity(
     const FString& InPlayerId,
     const FString& InCharacterId,
-    FName InTeamId)
+    FName InTeamId,
+    const FString& InCharacterName)
 {
     if (!HasAuthority() || InPlayerId.IsEmpty() || InCharacterId.IsEmpty() || InTeamId.IsNone()) { return; }
     PlayerIdPublic = InPlayerId;
     CharacterId = InCharacterId;
     TeamId = InTeamId;
     ConnectionState = EGamePlatformArenaConnectionState::Connected;
+    SetPlayerName(InCharacterName.TrimStartAndEnd());
     ++StatsRevision;
     ForceNetUpdate();
     OnArenaStatsChanged.Broadcast(this);
@@ -78,6 +80,13 @@ void AGamePlatformArenaPlayerState::AuthoritySetForfeitState(EGamePlatformArenaF
 void AGamePlatformArenaPlayerState::OnRep_StatsRevision()
 {
     OnArenaStatsChanged.Broadcast(this);
+}
+
+void AGamePlatformArenaPlayerState::OnRep_PlayerName()
+{
+    Super::OnRep_PlayerName();
+    // Listen/Standalone的权威写入由AuthorityApplyRosterIdentity统一通知。
+    if (!HasAuthority()) { OnArenaStatsChanged.Broadcast(this); }
 }
 
 void AGamePlatformArenaPlayerState::AuthorityRestoreCompetitiveState(

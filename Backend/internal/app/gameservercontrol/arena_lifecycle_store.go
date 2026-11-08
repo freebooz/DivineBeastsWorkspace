@@ -45,19 +45,55 @@ type ArenaLifecycleStore interface {
 	GetArenaByServer(context.Context, string) (ArenaAssignmentRecord, bool, error)
 	SaveArena(context.Context, ArenaAssignmentRecord) error
 	GetPresence(context.Context, string) (PlayerPresence, bool, error)
-	SavePresence(context.Context, PlayerPresence) error
+	SavePresence(context.Context, PlayerPresence, string) error
 }
 
 // MemoryArenaLifecycleStore只供明确本地配置/单元测试，不能作为跨进程恢复证据。
 type MemoryArenaLifecycleStore struct {
-	mu       sync.RWMutex
-	matches  map[string]ArenaAssignmentRecord
-	servers  map[string]string
-	presence map[string]PlayerPresence
+	mu                  sync.RWMutex
+	matches             map[string]ArenaAssignmentRecord
+	servers             map[string]string
+	presence            map[string]PlayerPresence
+	villageQueueOrigins map[string]VillageQueueOriginRecord
 }
 
 func NewMemoryArenaLifecycleStore() *MemoryArenaLifecycleStore {
-	return &MemoryArenaLifecycleStore{matches: map[string]ArenaAssignmentRecord{}, servers: map[string]string{}, presence: map[string]PlayerPresence{}}
+	return &MemoryArenaLifecycleStore{matches: map[string]ArenaAssignmentRecord{}, servers: map[string]string{}, presence: map[string]PlayerPresence{}, villageQueueOrigins: map[string]VillageQueueOriginRecord{}}
+}
+
+func (s *MemoryArenaLifecycleStore) SaveVillageQueueOrigin(ctx context.Context, key string, record VillageQueueOriginRecord, retention time.Duration) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !record.MatchesPresence(s.presence[record.Presence.PlayerID]) {
+		return errors.New("VILLAGE_QUEUE_ORIGIN_FORBIDDEN: 源准入已被替换")
+	}
+	if _, found := s.villageQueueOrigins[key]; found {
+		return nil
+	}
+	now := record.ExpiresAtUTC.Add(-retention)
+	for id, item := range s.villageQueueOrigins {
+		if !now.Before(item.ExpiresAtUTC) {
+			delete(s.villageQueueOrigins, id)
+		}
+	}
+	if len(s.villageQueueOrigins) >= 65536 {
+		return errors.New("VILLAGE_QUEUE_ORIGIN_CAPACITY: 排队位置暂存已满")
+	}
+	s.villageQueueOrigins[key] = record
+	return nil
+}
+
+func (s *MemoryArenaLifecycleStore) GetVillageQueueOrigin(ctx context.Context, key string) (VillageQueueOriginRecord, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return VillageQueueOriginRecord{}, false, err
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	record, found := s.villageQueueOrigins[key]
+	return record, found, nil
 }
 
 // CloneArenaRecord隔离嵌套名单和结果引用；序列化失败传播，不能退化为缺失记录。
@@ -116,6 +152,9 @@ func (s *MemoryArenaLifecycleStore) SaveArena(ctx context.Context, value ArenaAs
 		if err := ValidateArenaRecordTransition(old, value); err != nil {
 			return err
 		}
+		if old.State == "resultCommitted" && value.State == old.State {
+			return nil // 同结果重复确认不推迟等待零人心跳的基准。
+		}
 	}
 	if otherID := s.servers[value.Assignment.GameServerID]; value.Assignment.GameServerID != "" && otherID != "" && otherID != id {
 		other := s.matches[otherID]
@@ -144,14 +183,23 @@ func (s *MemoryArenaLifecycleStore) GetPresence(ctx context.Context, id string) 
 }
 
 // SavePresence拒绝旧Epoch/更早签票，只有新可信准入能改变本人所在实例；相同接受事实幂等。
-func (s *MemoryArenaLifecycleStore) SavePresence(ctx context.Context, value PlayerPresence) error {
+func (s *MemoryArenaLifecycleStore) SavePresence(ctx context.Context, value PlayerPresence, sourceMatchID string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if err := ValidatePresenceTransition(s.presence[value.PlayerID], value); err != nil {
+	previous := s.presence[value.PlayerID]
+	if err := ValidatePresenceTransition(previous, value); err != nil {
 		return err
+	}
+	if value.MatchID == "" {
+		if err := ValidateWorldDeparture(previous, sourceMatchID, func(matchID string) (ArenaAssignmentRecord, bool, error) {
+			record, found := s.matches[matchID]
+			return record, found, nil
+		}); err != nil {
+			return err
+		}
 	}
 	s.presence[value.PlayerID] = value
 	return nil
@@ -196,6 +244,14 @@ func ValidateArenaRecordTransition(old, next ArenaAssignmentRecord) error {
 	allowed := map[string]map[string]bool{"active": {"active": true, "resultCommitted": true, "cancelled": true}, "resultCommitted": {"resultCommitted": true, "released": true}, "cancelled": {"cancelled": true, "released": true}, "released": {"released": true}}
 	if !allowed[old.State][next.State] {
 		return errors.New("ARENA_OPERATION_TERMINAL: 不能倒退或重激活竞技控制事实")
+	}
+	if old.Result != nil {
+		if next.Result == nil || next.Result.ResultID != old.Result.ResultID {
+			return match.ErrResultConflict
+		}
+		if _, err := old.Result.Acknowledge(next.Result.Result); err != nil {
+			return err
+		}
 	}
 	return nil
 }

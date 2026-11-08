@@ -69,8 +69,9 @@ type IssueTransferInput struct {
 
 // AllocateWorldTransferInput（世界分配并迁移输入）把常驻世界分配与TransferTicket签发组合为一个应用用例。
 type AllocateWorldTransferInput struct {
-	World    AllocateWorldInput // World（目标世界分配参数）。
-	Transfer IssueTransferInput // Transfer（玩家迁移上下文；目标Assignment字段由服务填充）。
+	World              AllocateWorldInput     // World（目标世界分配参数）。
+	Transfer           IssueTransferInput     // Transfer（玩家迁移上下文；目标Assignment字段由服务填充）。
+	VillageQueueOrigin *VillageQueueOriginRef `json:"villageQueueOrigin,omitempty"` // 仅可信Match编排传入本人本轮排队位置索引。
 }
 
 // WorldTransferResult（世界跨服结果）一次返回目标Assignment和可交给客户端的迁移票据。
@@ -87,19 +88,20 @@ type assignmentRecord struct {
 
 // Service（游戏服务器控制应用服务）组合领域服务并维护短期Assignment运行状态。
 type Service struct {
-	registry          *gameserver.Registry
-	worldAllocations  WorldAllocationStore // 返回目标先持久选择，签票未知响应保持同一意图。
-	worldAllocator    gameserver.Allocator
-	arenaAllocator    gameserver.Allocator
-	transfer          *servertransfer.Service
-	resultService     *match.ResultService
-	now               func() time.Time
-	mu                sync.RWMutex
-	assignmentChanged map[string]chan struct{} // 已认证服务器的分配通知等待；只保存当前实例通道，不持有玩家秘密。
-	assignments       map[string]assignmentRecord
-	arenaLifecycle    ArenaLifecycleStore // 可恢复竞技分配/本人位置；装配后结果提交不再提前释放实例。
-	arenaAllocationMu sync.Mutex          // 本实例分配/回收串行；跨进程意图一致性仍由共享仓储与Match持久租约保证。
-	startedAtUTC      time.Time           // 控制面重启后的有界注册恢复宽限，不能把暂未重注册直接伪造为比赛死亡。
+	registry                    *gameserver.Registry
+	worldAllocations            WorldAllocationStore // 返回目标先持久选择，签票未知响应保持同一意图。
+	worldAllocator              gameserver.Allocator
+	arenaAllocator              gameserver.Allocator
+	transfer                    *servertransfer.Service
+	resultService               *match.ResultService
+	now                         func() time.Time
+	mu                          sync.RWMutex
+	assignmentChanged           map[string]chan struct{} // 已认证服务器的分配通知等待；只保存当前实例通道，不持有玩家秘密。
+	assignments                 map[string]assignmentRecord
+	arenaLifecycle              ArenaLifecycleStore         // 可恢复竞技分配/本人位置；装配后结果提交不再提前释放实例。
+	villageQueueOriginAuthority VillageQueueOriginAuthority // Match负责报名与源资格；控制面只持有权威坐标。
+	arenaAllocationMu           sync.Mutex                  // 本实例分配/回收串行；跨进程意图一致性仍由共享仓储与Match持久租约保证。
+	startedAtUTC                time.Time                   // 控制面重启后的有界注册恢复宽限，不能把暂未重注册直接伪造为比赛死亡。
 }
 
 // NewService（创建游戏服务器控制应用服务）使用Registry同时承担世界和竞技分配，适合测试和本地开发。
@@ -259,6 +261,9 @@ func (s *Service) AllocateWorldTransfer(ctx context.Context, input AllocateWorld
 	}
 	if input.Transfer.TTL > 5*time.Minute {
 		return WorldTransferResult{}, errors.New("TRANSFER_TICKET_INVALID: TTL超过5分钟")
+	}
+	if _, err := s.authorizeWorldDeparture(ctx, input.Transfer.PlayerID, input.Transfer.SourceGameServerID); err != nil {
+		return WorldTransferResult{}, err
 	}
 	allocation, err := s.prepareWorldTransfer(ctx, input)
 	if err != nil {
@@ -455,6 +460,14 @@ func (s *Service) IssueTransferContext(ctx context.Context, input IssueTransferI
 	} else if input.MatchID != "" {
 		return servertransfer.Ticket{}, errors.New("TRANSFER_MATCH_MISMATCH: 世界迁移不应携带MatchID")
 	}
+	var sourceMatchID string
+	if assignment.World != nil {
+		var err error
+		sourceMatchID, err = s.authorizeWorldDeparture(ctx, input.PlayerID, input.SourceGameServerID)
+		if err != nil {
+			return servertransfer.Ticket{}, err
+		}
+	}
 
 	target, found := s.registry.Get(input.DestinationGameServerID)
 	if !found || target.ServerBootID == "" || target.ProtocolVersion == 0 {
@@ -467,6 +480,7 @@ func (s *Service) IssueTransferContext(ctx context.Context, input IssueTransferI
 		PlayerID:                   input.PlayerID,
 		SessionID:                  input.SessionID,
 		SourceGameServerID:         input.SourceGameServerID,
+		SourceMatchID:              sourceMatchID,
 		DestinationGameServerID:    input.DestinationGameServerID,
 		DestinationEndpoint:        record.endpoint,
 		DestinationWorldID:         input.DestinationWorldID,
@@ -489,6 +503,17 @@ func (s *Service) ValidateTransferContext(ctx context.Context, ticket servertran
 	if !found || target.ServerBootID == "" || target.ProtocolVersion == 0 {
 		return servertransfer.ValidationResult{}, errors.New("GAME_SERVER_BINDING_UNAVAILABLE: 当前目标服务器身份不存在")
 	}
+	if s.arenaLifecycle != nil && target.RoleID != gameservercontract.RoleMainArena {
+		previous, _, err := s.arenaLifecycle.GetPresence(ctx, ticket.PlayerID)
+		if err != nil {
+			return servertransfer.ValidationResult{}, err
+		}
+		if err := ValidateWorldDeparture(previous, ticket.SourceMatchID, func(matchID string) (ArenaAssignmentRecord, bool, error) {
+			return s.arenaLifecycle.GetArenaByMatch(ctx, matchID)
+		}); err != nil {
+			return servertransfer.ValidationResult{}, err
+		}
+	}
 	result, err := s.transfer.ValidateContext(ctx, servertransfer.ValidateRequest{
 		Ticket:                     ticket,
 		DestinationGameServerID:    destinationGameServerID,
@@ -504,66 +529,87 @@ func (s *Service) ValidateTransferContext(ctx context.Context, ticket servertran
 	if !found || record.assignment.AssignmentID != result.AssignmentID {
 		return servertransfer.ValidationResult{}, errors.New("TRANSFER_ASSIGNMENT_NOT_FOUND: 票据对应Assignment不存在")
 	}
+	if s.arenaLifecycle != nil {
+		if err := s.arenaLifecycle.SavePresence(ctx, PlayerPresence{PlayerID: result.PlayerID, SessionID: result.SessionID, GameServerID: destinationGameServerID, ServerBootID: target.ServerBootID, ExperienceID: result.DestinationExperienceID, WorldID: result.DestinationWorldID, MatchID: result.MatchID, TicketID: ticket.TicketID, SessionEpoch: result.SessionEpoch, IssuedAtUTC: ticket.IssuedAt, AcceptedAtUTC: s.now().UTC()}, ticket.SourceMatchID); err != nil {
+			return servertransfer.ValidationResult{}, err
+		}
+	}
 	if record.assignment.World != nil {
 		if !s.registry.FinishWorldTransfer(ticket.TicketID) {
 			_ = s.registry.CommitReservation(destinationGameServerID, 1)
 		}
-	}
-	if s.arenaLifecycle != nil {
-		if err := s.arenaLifecycle.SavePresence(ctx, PlayerPresence{PlayerID: result.PlayerID, SessionID: result.SessionID, GameServerID: destinationGameServerID, ServerBootID: target.ServerBootID, ExperienceID: result.DestinationExperienceID, WorldID: result.DestinationWorldID, MatchID: result.MatchID, TicketID: ticket.TicketID, SessionEpoch: result.SessionEpoch, IssuedAtUTC: ticket.IssuedAt, AcceptedAtUTC: s.now().UTC()}); err != nil {
-			return servertransfer.ValidationResult{}, err
+		// 落点只取本次可信分配侧记录；验证仍走原有HMAC、目标Boot、协议、Epoch和防重放链路。
+		if record.assignment.ServerRoleID == gameservercontract.RoleVillage && ticket.SourceGameServerID != "" {
+			allocation, exists, lookupErr := s.worldAllocations.GetWorldAllocation(ctx, ticket.TicketID)
+			if lookupErr == nil && exists && allocation.ReturnSpawn != nil && allocation.ReturnPlayerID == result.PlayerID &&
+				allocation.ReturnSessionID == result.SessionID && allocation.ServerBootID == target.ServerBootID &&
+				allocation.Assignment.AssignmentID == result.AssignmentID && allocation.Assignment.GameServerID == destinationGameServerID &&
+				allocation.Assignment.WorldID == result.DestinationWorldID && allocation.Assignment.ExperienceID == result.DestinationExperienceID {
+				result.ReturnSpawn = allocation.ReturnSpawn
+			}
 		}
 	}
 	return result, nil
 }
 
-// SubmitMatchResult（提交权威比赛结果）验证GameServer绑定后执行幂等结算，并在成功后释放MainArena实例。
+// SubmitMatchResult由内部兼容调用方使用；已登记竞技实例仍须匹配当前Boot。
 func (s *Service) SubmitMatchResult(ctx context.Context, result match.Result) (match.StoredResult, error) {
-	s.mu.RLock()
-	record, found := s.assignments[result.GameServerID]
-	s.mu.RUnlock()
-	if !found || record.assignment.Arena == nil {
-		return match.StoredResult{}, errors.New("GAME_SERVER_ASSIGNMENT_NOT_FOUND: GameServer没有活动比赛")
+	return s.SubmitMatchResultForBoot(ctx, result, "")
+}
+
+// SubmitMatchResultForBoot校验比赛与实例启动身份，持久确认后保留记录供同一结果重放。
+func (s *Service) SubmitMatchResultForBoot(ctx context.Context, result match.Result, bootID string) (match.StoredResult, error) {
+	if result.MatchID == "" || result.GameServerID == "" || result.ArenaModeID == "" {
+		return match.StoredResult{}, fmt.Errorf("%w: 比赛、实例和模式身份不能为空", match.ErrResultInvalid)
 	}
-	arena := record.assignment.Arena
-	if arena.MatchID != result.MatchID {
-		return match.StoredResult{}, errors.New("MATCH_RESULT_SERVER_MISMATCH: 比赛结果与GameServer绑定不一致")
-	}
-	if arena.ArenaModeID != result.ArenaModeID {
-		return match.StoredResult{}, errors.New("MATCH_RESULT_MODE_MISMATCH: 比赛结果竞技模式与Assignment不一致")
-	}
+	s.arenaAllocationMu.Lock()
+	defer s.arenaAllocationMu.Unlock()
 	if s.arenaLifecycle != nil {
 		record, found, err := s.arenaLifecycle.GetArenaByMatch(ctx, result.MatchID)
 		if err != nil {
 			return match.StoredResult{}, err
 		}
-		if !found {
-			return match.StoredResult{}, errors.New("ARENA_RECORD_NOT_FOUND: 缺少持久比赛分配")
+		arena := record.Assignment.Arena
+		if !found || arena == nil || record.Assignment.GameServerID != result.GameServerID || arena.ArenaModeID != result.ArenaModeID {
+			return match.StoredResult{}, fmt.Errorf("%w: 比赛结果与权威分配不一致", match.ErrResultInvalid)
+		}
+		instance, exists := s.registry.Get(result.GameServerID)
+		if !exists || instance.ServerBootID != record.ServerBootID || (bootID != "" && bootID != record.ServerBootID) {
+			return match.StoredResult{}, fmt.Errorf("%w: 比赛结果的服务器启动身份已变更", match.ErrResultConflict)
+		}
+		if record.Result != nil {
+			return record.Result.Acknowledge(result)
 		}
 		if err := validateResultRoster(result, record); err != nil {
+			return match.StoredResult{}, fmt.Errorf("%w: %v", match.ErrResultInvalid, err)
+		}
+		stored, err := s.resultService.Submit(ctx, result)
+		if err != nil {
 			return match.StoredResult{}, err
 		}
+		if err := s.persistArenaResult(ctx, record, stored); err != nil {
+			return match.StoredResult{}, err
+		}
+		// 实例和名单保留到真实安全迁出/故障清理。
+		return stored, nil
+	}
+
+	s.mu.RLock()
+	record, found := s.assignments[result.GameServerID]
+	s.mu.RUnlock()
+	if !found || record.assignment.Arena == nil {
+		return match.StoredResult{}, fmt.Errorf("%w: GameServer没有活动比赛", match.ErrResultInvalid)
+	}
+	arena := record.assignment.Arena
+	if arena.MatchID != result.MatchID {
+		return match.StoredResult{}, fmt.Errorf("%w: 比赛结果与GameServer绑定不一致", match.ErrResultInvalid)
+	}
+	if arena.ArenaModeID != result.ArenaModeID {
+		return match.StoredResult{}, fmt.Errorf("%w: 比赛结果竞技模式与Assignment不一致", match.ErrResultInvalid)
 	}
 	stored, err := s.resultService.Submit(ctx, result)
 	if err != nil {
 		return match.StoredResult{}, err
-	}
-	if s.arenaLifecycle != nil {
-		persisted, found, err := s.arenaLifecycle.GetArenaByMatch(ctx, result.MatchID)
-		if err != nil {
-			return match.StoredResult{}, err
-		}
-		if !found {
-			return match.StoredResult{}, errors.New("ARENA_RECORD_NOT_FOUND: 缺少持久比赛分配")
-		}
-		persisted.Result = &stored
-		persisted.State = "resultCommitted"
-		persisted.UpdatedAtUTC = s.now().UTC()
-		if err := s.arenaLifecycle.SaveArena(ctx, persisted); err != nil {
-			return match.StoredResult{}, err
-		}
-		// 实例和名单保留到真实安全迁出/故障清理；提交结果不等于玩家已经离开服务器。
-		return stored, nil
 	}
 	if err := s.arenaAllocator.Release(ctx, result.GameServerID); err != nil {
 		return match.StoredResult{}, err
@@ -572,6 +618,14 @@ func (s *Service) SubmitMatchResult(ctx context.Context, result match.Result) (m
 	delete(s.assignments, result.GameServerID)
 	s.mu.Unlock()
 	return stored, nil
+}
+
+// persistArenaResult将结果仓储已经确认的结果投影到同一控制记录；两者间失败可安全恢复。
+func (s *Service) persistArenaResult(ctx context.Context, record ArenaAssignmentRecord, stored match.StoredResult) error {
+	record.Result = &stored
+	record.State = "resultCommitted"
+	record.UpdatedAtUTC = s.now().UTC()
+	return s.arenaLifecycle.SaveArena(ctx, record)
 }
 
 func cloneServerAssignment(value gameservercontract.ServerAssignment) gameservercontract.ServerAssignment {

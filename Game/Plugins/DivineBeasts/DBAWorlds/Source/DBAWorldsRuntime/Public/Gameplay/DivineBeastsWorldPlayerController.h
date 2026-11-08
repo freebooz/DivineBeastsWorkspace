@@ -6,6 +6,7 @@ class AGamePlatformPlayerStateBase;
 class UGamePlatformExperienceComponent;
 class AGameStateBase;
 class UDivineBeastsCharacterComponent;
+DECLARE_MULTICAST_DELEGATE_OneParam(FDivineBeastsVillageQueueOriginRequested, const FString&);
 /** 世界准备/服务器资格适配器；本地操控唯一实现归PlayerControls组件。 */
 UCLASS()
 class DBAWORLDSRUNTIME_API ADivineBeastsWorldPlayerController : public AGamePlatformPlayerControllerBase
@@ -26,6 +27,11 @@ public:
     FSimpleMulticastDelegate OnFinalCameraViewChanged;
     /** 本地血条显示切换意图；偏好与UI显示归LocalPlayer客户端，不修改战斗数据。 */
     FSimpleMulticastDelegate OnWorldHealthBarsToggleRequested;
+    /** 客户端仅通知已观察的排队票据。专服准入桥独立核对角色并采集Pawn变换。 */
+    UFUNCTION(Server, Reliable)
+    void ServerCaptureVillageQueueOrigin(const FString& QueueTicketId);
+    /** 当前服务器连接的采样通知；绑定、解绑由世界准入桥管理。 */
+    FDivineBeastsVillageQueueOriginRequested OnVillageQueueOriginRequested;
 
     UDivineBeastsPlayerControlsComponent* GetPlayerControls() const { return PlayerControls; }
     AActor* GetSelectedWorldTarget() const { return PlayerControls->GetSelectedWorldTarget(); }

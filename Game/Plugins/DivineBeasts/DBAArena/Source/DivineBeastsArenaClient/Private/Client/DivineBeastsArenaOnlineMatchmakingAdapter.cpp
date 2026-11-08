@@ -3,6 +3,7 @@
 #include "GamePlatformOnlineClientSubsystem.h"
 #include "Party/GamePlatformPartyClientSubsystem.h"
 #include "Catalog/DivineBeastsArenaModeCatalog.h"
+#include "Identity/DivineBeastsProjectCatalog.h"
 #include "Engine/GameInstance.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
@@ -47,10 +48,17 @@ void FDivineBeastsArenaOnlineMatchmakingAdapter::StopObservation()
 }
 void FDivineBeastsArenaOnlineMatchmakingAdapter::Stop()
 {bStarted=false;StopRequests();if(auto* Service=Online.Get())Service->OnAuthStateChanged().Remove(AuthHandle);AuthHandle.Reset();Snapshot={};Changed.Clear();}
-void FDivineBeastsArenaOnlineMatchmakingAdapter::Resynchronize()
+void FDivineBeastsArenaOnlineMatchmakingAdapter::Resynchronize(TFunction<void(bool)> FirstObservation)
 {
-    if(!bStarted||PlayerId.IsEmpty())return;
-    StopRequests();Cursor.Empty();Failures=0;Observe(Generation);
+    if (!bStarted || PlayerId.IsEmpty())
+    {
+        if (FirstObservation) FirstObservation(false);
+        return;
+    }
+    StopRequests();
+    Cursor.Empty();
+    Failures = 0;
+    Observe(Generation, MoveTemp(FirstObservation));
 }
 bool FDivineBeastsArenaOnlineMatchmakingAdapter::DecodeCommandResponse(const FString& Body,const FString& Id,FDivineBeastsArenaQueueSnapshot& Out)const
 {
@@ -74,7 +82,25 @@ bool FDivineBeastsArenaOnlineMatchmakingAdapter::DecodeSnapshot(const TSharedPtr
     if(!Phases.Contains(Next.Phase)||(!Next.TicketId.IsEmpty()&&!Identifier(Next.TicketId))||(!Next.CandidateId.IsEmpty()&&!Identifier(Next.CandidateId))||Next.RegionId.Len()>128)return false;
     if(!Object->TryGetField(TEXT("deadlineUtc"))->IsNull()&&!Time(Object,TEXT("deadlineUtc"),Next.DeadlineUtc))return false;
     TSet<FString> Players;bool bContainsSelf=false;
-    for(const auto& Value:*Rows){const TSharedPtr<FJsonObject>* Row=nullptr;FString Player,Team;bool bAccepted=false,bReady=false;if(!Value||!Value->TryGetObject(Row)||!String(*Row,TEXT("playerId"),Player)||!Identifier(Player)||Players.Contains(Player)||!String(*Row,TEXT("teamId"),Team)||Team.Len()>128||!Boolean(*Row,TEXT("accepted"),bAccepted)||!Boolean(*Row,TEXT("ready"),bReady))return false;Players.Add(Player);bContainsSelf|=Player==PlayerId;Next.Accepted+=bAccepted?1:0;}
+    for (const auto& Value : *Rows)
+    {
+        const TSharedPtr<FJsonObject>* Row = nullptr;
+        FString Player, Team;
+        bool bAccepted = false, bReady = false;
+        if (!Value || !Value->TryGetObject(Row) || !String(*Row, TEXT("playerId"), Player) ||
+            !Identifier(Player) || Players.Contains(Player) || !String(*Row, TEXT("teamId"), Team) ||
+            Team.Len() > 128 || !Boolean(*Row, TEXT("accepted"), bAccepted) || !Boolean(*Row, TEXT("ready"), bReady))
+        {
+            return false;
+        }
+        Players.Add(Player);
+        if (Player == PlayerId)
+        {
+            bContainsSelf = true;
+            Next.bSelfAccepted = bAccepted;
+        }
+        Next.Accepted += bAccepted ? 1 : 0;
+    }
     if(Object->HasField(TEXT("challenge"))&&!Object->TryGetField(TEXT("challenge"))->IsNull())
     {
         const TSharedPtr<FJsonObject>* Invite=nullptr;auto& Challenge=Next.Challenge;
@@ -113,20 +139,33 @@ bool FDivineBeastsArenaOnlineMatchmakingAdapter::ApplySnapshot(FDivineBeastsAren
     if(Snapshot.TicketId!=Next.TicketId){CancelTicketId.Empty();CancelRequestId.Empty();}
     Snapshot=MoveTemp(Next);Changed.Broadcast();return true;
 }
-void FDivineBeastsArenaOnlineMatchmakingAdapter::Observe(uint64 Expected)
+void FDivineBeastsArenaOnlineMatchmakingAdapter::Observe(uint64 Expected, TFunction<void(bool)> FirstObservation)
 {
-    auto* Service=Online.Get();if(!bStarted||!Service||!Owner.IsValid()||PlayerId.IsEmpty()||Expected!=Generation||Observation.RequestId.IsValid())return;
+    auto* Service = Online.Get();
+    if (!bStarted || !Service || !Owner.IsValid() || PlayerId.IsEmpty() ||
+        Expected != Generation || Observation.RequestId.IsValid())
+    {
+        if (FirstObservation) FirstObservation(false);
+        return;
+    }
     auto Body=MakeShared<FJsonObject>();Body->SetStringField(TEXT("cursor"),Cursor);Body->SetNumberField(TEXT("waitMilliseconds"),Cursor.IsEmpty()?0:8000);
     FGamePlatformOnlineRequestOptions Options;Options.Owner=Owner.Get();const TWeakPtr<FDivineBeastsArenaOnlineMatchmakingAdapter> Weak=AsShared();const uint64 ExpectedObservation=ObservationGeneration;
-    Observation=Service->SendAuthenticatedRequest(Request(TEXT("/v1/matchmaking/observe"),Body,FGuid::NewGuid().ToString()),Options,[Weak,Expected,ExpectedObservation](FGamePlatformAuthenticatedResponse Response)
+    Observation=Service->SendAuthenticatedRequest(Request(TEXT("/v1/matchmaking/observe"),Body,FGuid::NewGuid().ToString()),Options,
+        [Weak, Expected, ExpectedObservation, FirstObservation = MoveTemp(FirstObservation)](FGamePlatformAuthenticatedResponse Response)
     {
         auto Self=Weak.Pin();if(!Self||!Self->bStarted||Self->Generation!=Expected||Self->ObservationGeneration!=ExpectedObservation)return;Self->Observation={};TSharedPtr<FJsonObject> Object;const TSharedPtr<FJsonObject>* View=nullptr;FString Scope,NextCursor;bool bChanged=false,bResync=false;FDivineBeastsArenaQueueSnapshot Next;
         if(Response.IsSuccess()&&Parse(Response.Body,Object)&&String(Object,TEXT("scopeId"),Scope)&&Scope==TEXT("matchmaking/")+Self->PlayerId&&String(Object,TEXT("cursor"),NextCursor)&&CursorValid(NextCursor)&&Boolean(Object,TEXT("changed"),bChanged)&&Boolean(Object,TEXT("resyncRequired"),bResync)&&Object->TryGetObjectField(TEXT("snapshot"),View)&&Self->DecodeSnapshot(*View,Next))
         {
-            const bool bNotify=!Self->Snapshot.bKnown||bChanged||bResync;Self->Cursor=NextCursor;Self->Failures=0;if(bNotify)Self->ApplySnapshot(MoveTemp(Next));
+            const bool bNotify=FirstObservation||!Self->Snapshot.bKnown||bChanged||bResync;Self->Cursor=NextCursor;Self->Failures=0;if(bNotify)Self->ApplySnapshot(MoveTemp(Next));
+            if (FirstObservation)
+            {
+                FirstObservation(Self->bStarted && Self->Generation == Expected &&
+                    Self->ObservationGeneration == ExpectedObservation);
+            }
             AsyncTask(ENamedThreads::GameThread,[Weak,Expected](){if(auto Current=Weak.Pin())Current->Observe(Expected);});return;
         }
         Self->Snapshot.bKnown=false;Self->Changed.Broadcast();
+        if (FirstObservation) FirstObservation(false);
         // 仅可恢复网络/限流故障最多四次一次性退避；非法响应/权限失败停住，不能用持续业务轮询掩盖故障。
         if(Self->Generation!=Expected||Response.IsSuccess()||++Self->Failures>4||(Response.HttpStatusCode>0&&Response.HttpStatusCode<500&&Response.HttpStatusCode!=429))return;
         Self->RetryHandle=FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Weak,Expected](float){if(auto Current=Weak.Pin())if(Current->Generation==Expected){Current->RetryHandle.Reset();Current->Observe(Expected);}return false;}),static_cast<float>(1<<(Self->Failures-1)));
@@ -205,9 +244,10 @@ EGamePlatformArenaClientFlowState FDivineBeastsArenaOnlineMatchmakingAdapter::Ge
 }
 FGamePlatformArenaMatchOffer FDivineBeastsArenaOnlineMatchmakingAdapter::GetObservedOffer()const
 {FGamePlatformArenaMatchOffer Offer;if(Snapshot.bKnown){Offer.CandidateId=Snapshot.CandidateId;Offer.Revision=Snapshot.CandidateRevision;Offer.DeadlineUtc=Snapshot.DeadlineUtc;Offer.bCanRespond=Snapshot.bCanReply;}return Offer;}
-void FDivineBeastsArenaOnlineMatchmakingAdapter::RequestMigration(const FString& Direction,const FString& Id,TFunction<void(bool,FDivineBeastsWorldAssignmentPayload)> Done)
+FGamePlatformOnlineRequestHandle FDivineBeastsArenaOnlineMatchmakingAdapter::RequestMigration(
+    const FString& Direction, const FString& Id, TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Done)
 {
-    auto* Service=Online.Get();if(!Service||!Owner.IsValid()||!Snapshot.bKnown||Snapshot.CandidateId.IsEmpty()||!Identifier(Id)||(Direction!=TEXT("arena")&&Direction!=TEXT("return"))){Done(false,{});return;}
+    auto* Service=Online.Get();if(!Service||!Owner.IsValid()||!Snapshot.bKnown||Snapshot.CandidateId.IsEmpty()||!Identifier(Id)||(Direction!=TEXT("arena")&&Direction!=TEXT("return"))){Done(false,{});return {};}
     auto Body=MakeShared<FJsonObject>();Body->SetStringField(TEXT("candidateId"),Snapshot.CandidateId);Body->SetStringField(TEXT("direction"),Direction);Body->SetStringField(TEXT("clientRequestId"),Id);
     FGamePlatformOnlineRequestOptions Options;Options.Owner=Owner.Get();const uint64 Expected=Generation;const TWeakPtr<FDivineBeastsArenaOnlineMatchmakingAdapter> Weak=AsShared();const auto Handle=MakeShared<FGamePlatformOnlineRequestHandle>();
     *Handle=Service->SendAuthenticatedRequest(Request(TEXT("/v1/matchmaking/migration"),Body,Id),Options,[Weak,Expected,Handle,Done=MoveTemp(Done)](FGamePlatformAuthenticatedResponse Response)mutable
@@ -219,4 +259,69 @@ void FDivineBeastsArenaOnlineMatchmakingAdapter::RequestMigration(const FString&
         Value.Summary.RegionId=FName(*Region);Value.Summary.ServerRoleId=FName(*Role);Value.Summary.ExperienceId=FName(*Experience);Value.Summary.WorldId=FName(*World);Value.Summary.MapId=FName(*Map);Value.Summary.ProtocolVersion=LexToString(Protocol);Value.Summary.SessionEpoch=Epoch;Done(true,MoveTemp(Value));
     });
     if(Generation==Expected)Commands.Add(*Handle);else Service->Cancel(*Handle);
+    return *Handle;
+}
+
+TFunction<void()> FDivineBeastsArenaOnlineMatchmakingAdapter::RequestWorldRecovery(
+    const FDivineBeastsWorldAssignmentSummary& Previous,
+    TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion)
+{
+    if (!bStarted || !Online.IsValid() || PlayerId.IsEmpty() || !AuthGeneration.IsValid())
+    {
+        return {};
+    }
+
+    // 观察与正常匹配共用一条订阅。仅本次取票随应用节点取消。
+    TSharedPtr<FGamePlatformOnlineRequestHandle> Operation = MakeShared<FGamePlatformOnlineRequestHandle>();
+    const TWeakPtr<FGamePlatformOnlineRequestHandle> WeakOperation = Operation;
+    const TWeakPtr<FDivineBeastsArenaOnlineMatchmakingAdapter> Weak = AsShared();
+    Resynchronize([Weak, WeakOperation, Previous, Completion = MoveTemp(Completion)](bool bObserved) mutable
+    {
+        const auto Self = Weak.Pin();
+        const auto Active = WeakOperation.Pin();
+        if (!Self || !Active)
+        {
+            return;
+        }
+        const auto& View = Self->Snapshot;
+        const bool bReturning = View.Phase == TEXT("returning");
+        if (!bObserved || !View.bKnown || View.CandidateId.IsEmpty() ||
+            (!bReturning && View.Phase != TEXT("transferReady") && View.Phase != TEXT("inMatch")))
+        {
+            Completion(false, {});
+            return;
+        }
+        *Active = Self->RequestMigration(bReturning ? TEXT("return") : TEXT("arena"),
+            FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens),
+            [WeakOperation, Previous, bReturning, Completion = MoveTemp(Completion)](
+                bool bSuccess, FDivineBeastsWorldAssignmentPayload Assignment) mutable
+            {
+                if (!WeakOperation.IsValid())
+                {
+                    return;
+                }
+                const FName ArenaRole = FDivineBeastsProjectCatalog::GetMainArenaServerRole();
+                const auto& Next = Assignment.Summary;
+                const bool bCorrectRole = bReturning ? Next.ServerRoleId != ArenaRole : Next.ServerRoleId == ArenaRole;
+                const bool bSameArena = bReturning || Previous.ServerRoleId != ArenaRole ||
+                    (Next.AssignmentId == Previous.AssignmentId && Next.GameServerId == Previous.GameServerId &&
+                        Next.ServerBootId == Previous.ServerBootId);
+                Completion(bSuccess && bCorrectRole && bSameArena, MoveTemp(Assignment));
+            });
+    });
+
+    return [Weak, Operation = MoveTemp(Operation)]() mutable
+    {
+        if (!Operation)
+        {
+            return;
+        }
+        const auto Handle = *Operation;
+        Operation.Reset();
+        if (const auto Self = Weak.Pin(); Self && Handle.RequestId.IsValid())
+        {
+            Self->Commands.RemoveAll([&Handle](const auto& Item) { return Item.RequestId == Handle.RequestId; });
+            if (auto* Service = Self->Online.Get()) Service->Cancel(Handle);
+        }
+    };
 }

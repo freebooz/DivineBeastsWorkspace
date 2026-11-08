@@ -6,6 +6,7 @@ Passed只检查RunId格式及证据路径存在，不解析证据内容、不证
 """
 from __future__ import annotations
 import json
+import os
 import re
 import sys
 from pathlib import Path, PurePosixPath, PureWindowsPath
@@ -13,6 +14,20 @@ from uuid import UUID
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "Docs/Implementation/PluginArchitectureOptimization/PluginDeliveryManifest.json"
+GENERATED_OR_ARCHIVED = {"saved", "intermediate", "binaries", "deriveddatacache", "worktrees", ".worktrees", ".git"}
+APPROVED_EDITOR_TOOLS = {"BlueprintAutoLayout", "GlooPrint"}
+
+
+def active_files(root: Path):
+    """不扫描UE生成目录、历史工作树或符号链接下的副本。"""
+    for directory, children, files in os.walk(root, followlinks=False):
+        children[:] = [name for name in children if name.casefold() not in GENERATED_OR_ARCHIVED]
+        yield from (Path(directory) / name for name in files)
+
+
+def approved_editor_tool(path: Path, plugin_root: Path) -> bool:
+    return (path.stem in APPROVED_EDITOR_TOOLS and
+            path.relative_to(plugin_root).parts == ('ThirdParty', 'Editor', path.stem, path.name))
 
 
 def validate(root: Path, manifest: dict) -> list[str]:
@@ -77,7 +92,10 @@ def validate(root: Path, manifest: dict) -> list[str]:
             errors.append(f"场景{sid}未说明阻塞")
     # 先保留全部物理描述再建身份索引；Windows不区分大小写，不能让字典覆盖隐藏副本。
     descriptor_groups: dict[str, list[Path]] = {}
-    for path in (root / "Game/Plugins").rglob("*.uplugin"):
+    plugin_root = root / "Game/Plugins"
+    for path in active_files(plugin_root):
+        if path.suffix.casefold() != '.uplugin':
+            continue
         descriptor_groups.setdefault(path.stem.casefold(), []).append(path)
     actual = {}
     for paths in descriptor_groups.values():
@@ -145,8 +163,9 @@ def validate(root: Path, manifest: dict) -> list[str]:
                 errors.append(f"{ident}/{module.get('Name')}不得把源码存在自动标记生产通过")
         if not record.get("Scenarios") or any(s not in scenarios_by_id for s in record.get("Scenarios", [])):
             errors.append(f"{ident}验收场景缺失或引用不存在")
-    if set(actual) != seen:
-        errors.append("台账漏登插件: " + ", ".join(sorted(set(actual) - seen)))
+    required = {name for name, path in actual.items() if not approved_editor_tool(path, plugin_root)}
+    if required - seen:
+        errors.append("台账漏登插件: " + ", ".join(sorted(required - seen)))
     if registry_path:
         registry = json.loads(registry_path.read_text(encoding="utf-8-sig"))
         if content != {p["Name"] for p in registry.get("ContentPacks", [])}:

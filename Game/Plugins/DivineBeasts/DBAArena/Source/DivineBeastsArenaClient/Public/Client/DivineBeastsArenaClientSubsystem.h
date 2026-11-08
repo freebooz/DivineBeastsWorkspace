@@ -57,6 +57,8 @@ public:
     TSharedPtr<IGamePlatformArenaMatchmakingAdapter> GetMatchmakingAdapter()const;
     bool CanCancelObservedQueue()const;
     bool CanReturnObservedMatch()const;
+    /** 赛后只允许补同步未知观察或重试已确认返回，不触发旧的竞技场迁入。 */
+    bool CanRetryPostMatchReturn() const;
     /** 明确人工重试只重取本人状态/准入，不重复报名、选人或改变服务器资格。 */
     bool RetryObservedMigration();
     bool CanRetryObservedMigration()const;
@@ -75,6 +77,8 @@ public:
     bool TryObserveArenaReadiness(UWorld& World,bool& bBound,bool& bPrepared,bool& bActive)const;
 
 private:
+    friend class FDivineBeastsArenaApplicationFlowExtension;
+
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsApplicationFlowSubsystem> ApplicationFlow = nullptr;
 
@@ -86,6 +90,8 @@ private:
     /** 只保存逻辑意图身份；票据只在回调栈移动给Flow。 */
     FString MigrationCandidateId,MigrationDirection,MigrationRequestId;
     FGuid MigrationAuthGeneration;
+    /** 当前认证代次中已通知源Village的报名ID；不存任何位置或准入凭据。 */
+    FString CapturedVillageQueueTicketId;
     uint64 MigrationGeneration=0;
     bool bMigrationPending=false;
     bool bDeinitializing=false;

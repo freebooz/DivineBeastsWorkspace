@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -48,6 +49,20 @@ type StoredResult struct {
 	Result   Result // Result（权威比赛结果内容）。
 }
 
+var (
+	ErrResultInvalid  = errors.New("MATCH_RESULT_INVALID")  // 请求身份、比赛约束或名单不合法。
+	ErrResultConflict = errors.New("MATCH_RESULT_CONFLICT") // 同一比赛已有不同的权威结果或启动身份。
+)
+
+// Acknowledge只确认同一比赛的同一冻结结果，供重试及已回收实例回执恢复复用。
+func (s StoredResult) Acknowledge(result Result) (StoredResult, error) {
+	if !reflect.DeepEqual(cloneResult(s.Result), cloneResult(result)) {
+		return StoredResult{}, fmt.Errorf("%w: 同一MatchID出现不同结果", ErrResultConflict)
+	}
+	s.Result = cloneResult(s.Result)
+	return s, nil
+}
+
 // IntegrationEvent（领域提交产生的跨服务事件）由基础设施层在同一数据库事务中写入Outbox。
 type IntegrationEvent struct {
 	ID          string    // ID（事件唯一ID/Outbox MessageID）。
@@ -80,19 +95,21 @@ func NewResultService(store ResultStore) *ResultService {
 	return &ResultService{store: store}
 }
 
+// ReadCommitted供控制面恢复已提交结果，避免把持久结果当成未结算而取消。
+func (s *ResultService) ReadCommitted(ctx context.Context, matchID string) (StoredResult, bool, error) {
+	return s.store.Get(ctx, matchID)
+}
+
 // Submit（提交比赛结果）同一MatchID重复提交完全相同结果时返回同一ResultID；不同结果则拒绝。
 // 如果仓储实现TransactionalResultStore，则Match.Completed事件与结果记录保证同事务提交。
 func (s *ResultService) Submit(ctx context.Context, result Result) (StoredResult, error) {
 	if result.MatchID == "" || result.GameServerID == "" || result.ArenaModeID == "" {
-		return StoredResult{}, errors.New("MatchID、GameServerID和ArenaModeID不能为空")
+		return StoredResult{}, fmt.Errorf("%w: MatchID、GameServerID和ArenaModeID不能为空", ErrResultInvalid)
 	}
 	if current, found, err := s.store.Get(ctx, result.MatchID); err != nil {
 		return StoredResult{}, err
 	} else if found {
-		if !reflect.DeepEqual(current.Result, result) {
-			return StoredResult{}, errors.New("MATCH_RESULT_CONFLICT: 同一MatchID出现不同结果")
-		}
-		return current, nil
+		return current.Acknowledge(result)
 	}
 	stored := StoredResult{ResultID: "result:" + result.MatchID, Result: cloneResult(result)}
 	event, err := matchCompletedEvent(stored)
@@ -100,10 +117,15 @@ func (s *ResultService) Submit(ctx context.Context, result Result) (StoredResult
 		return StoredResult{}, err
 	}
 	if transactional, ok := s.store.(TransactionalResultStore); ok {
-		if err := transactional.InsertWithEvent(ctx, stored, event); err != nil {
-			return StoredResult{}, err
+		err = transactional.InsertWithEvent(ctx, stored, event)
+	} else {
+		err = s.store.Insert(ctx, stored)
+	}
+	if err != nil {
+		// 提交回执可能丢失，也可能有并行的同一结果提交。仅以实际已存结果确认，保留原失败供重试。
+		if current, found, readErr := s.store.Get(ctx, result.MatchID); readErr == nil && found {
+			return current.Acknowledge(result)
 		}
-	} else if err := s.store.Insert(ctx, stored); err != nil {
 		return StoredResult{}, err
 	}
 	return stored, nil
@@ -191,6 +213,8 @@ func (s *MemoryResultStore) Event(eventID string) (IntegrationEvent, bool) {
 }
 
 func cloneResult(result Result) Result {
+	result.StartedAt = result.StartedAt.UTC()
+	result.EndedAt = result.EndedAt.UTC()
 	result.Teams = append([]TeamResult(nil), result.Teams...)
 	result.Players = append([]PlayerResult(nil), result.Players...)
 	return result

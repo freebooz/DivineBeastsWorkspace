@@ -516,6 +516,7 @@ void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
     bRestartAfterLogout = false;
 
     ReleaseCharacterCreationValidationLease();
+    CancelPendingWorldRecovery();
 
     if (Backend.IsValid())
     {
@@ -943,10 +944,15 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
 
     if (ExecutorId == FDivineBeastsFlowExecutors::RequestWorld())
     {
+        const FDivineBeastsWorldAssignmentSummary Previous = ProjectContext->GetAssignment();
+        const bool bRecoveringArena =
+            !PendingTrustedMigration.IsSet() &&
+            Previous.ServerRoleId == FDivineBeastsProjectCatalog::GetMainArenaServerRole() &&
+            Previous.ExperienceId == ProjectContext->GetTargetExperience();
         if (!Backend.IsValid() ||
             !ProjectContext->HasSelectedCharacter() ||
             ProjectContext->GetTargetExperience().IsNone() ||
-            (!PendingTrustedMigration.IsSet()&&!IsExperienceAllowedForCurrentProfile(
+            (!PendingTrustedMigration.IsSet() && !bRecoveringArena && !IsExperienceAllowedForCurrentProfile(
                 ProjectContext->GetTargetExperience())))
         {
             SetError(EDivineBeastsFlowError::ExperienceNotAllowed);
@@ -965,17 +971,19 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
         const TSharedRef<FGamePlatformFlowCompletion> SharedComplete =
             MakeShared<FGamePlatformFlowCompletion>(MoveTemp(Complete));
         TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
-        FDivineBeastsWorldAssignmentCompletion AssignmentCompletion=
-            [WeakThis, Token, SharedComplete, ExpectedExperience,
+        const FGuid Auth = Online ? Online->GetSnapshot().AuthGeneration : FGuid{};
+        auto CompleteAssignment =
+            [WeakThis, Token, SharedComplete, Auth,
              ExpectedCharacterId = Character.CharacterId](
+                 FName RequiredExperience,
                 bool bSuccess,
                 FDivineBeastsWorldAssignmentPayload Assignment,
-                EDivineBeastsFlowError Error) mutable
+                 EDivineBeastsFlowError Error)
             {
                 AsyncTask(
                     ENamedThreads::GameThread,
-                    [WeakThis, Token, SharedComplete, ExpectedExperience,
-                     ExpectedCharacterId = MoveTemp(ExpectedCharacterId),
+                    [WeakThis, Token, SharedComplete, RequiredExperience, Auth,
+                     ExpectedCharacterId,
                      bSuccess, Assignment = MoveTemp(Assignment), Error]() mutable
                     {
                         UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
@@ -994,8 +1002,10 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
                         }
 
                         FName ExpectedRole = NAME_None;
+                        const bool bFromRecovery = RequiredExperience.IsNone();
                         const bool bMappingValid =
-                            Assignment.Summary.ExperienceId == ExpectedExperience &&
+                            (bFromRecovery ? Self->IsCurrentTrustedAssignment(Assignment, Auth)
+                                : Assignment.Summary.ExperienceId == RequiredExperience) &&
                             FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(
                                 Assignment.Summary.ExperienceId,
                                 ExpectedRole) &&
@@ -1013,6 +1023,11 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
                             return;
                         }
 
+                        if (bFromRecovery)
+                        {
+                            Self->FlowContext->SetTargetExperience(
+                                Assignment.Summary.ExperienceId, Assignment.Summary.RegionId.ToString());
+                        }
                         Self->FlowContext->SetAssignment(
                             Assignment.Summary,
                             MoveTemp(Assignment.Endpoint),
@@ -1021,15 +1036,75 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
                         (*SharedComplete)(FGamePlatformFlowNodeResult::Success());
                     });
             };
-        if(PendingTrustedMigration.IsSet())
+
+        auto RequestRecovery = [WeakThis, Token, Previous, CompleteAssignment, Auth]()
+        {
+            auto* Self = WeakThis.Get();
+            if (!Self || !Self->IsCurrentToken(Token) || Self->PendingWorldRecovery)
+            {
+                return;
+            }
+            if (!Auth.IsValid() || !Self->Online || Self->Online->GetSnapshot().AuthGeneration != Auth)
+            {
+                CompleteAssignment(NAME_None, false, {}, EDivineBeastsFlowError::AuthenticationRequired);
+                return;
+            }
+            const TArray<FName> Providers = Self->ExtensionOrder;
+            for (const FName Id : Providers)
+            {
+                const auto Provider = Self->Extensions.FindRef(Id);
+                if (!Provider)
+                {
+                    continue;
+                }
+                auto Cancel = Provider->TryRequestWorldRecovery(Previous,
+                    [CompleteAssignment](bool bSuccess, FDivineBeastsWorldAssignmentPayload Assignment)
+                    {
+                        CompleteAssignment(NAME_None, bSuccess, MoveTemp(Assignment),
+                            EDivineBeastsFlowError::ReconnectExhausted);
+                    });
+                if (Cancel)
+                {
+                    if (Self->IsCurrentToken(Token))
+                    {
+                        Self->PendingWorldRecovery = MoveTemp(Cancel);
+                    }
+                    else
+                    {
+                        Cancel();
+                    }
+                    return;
+                }
+            }
+            CompleteAssignment(NAME_None, false, {}, EDivineBeastsFlowError::ReconnectExhausted);
+        };
+
+        if (PendingTrustedMigration.IsSet())
         {
             const bool bCurrent=Online&&Online->GetSnapshot().AuthGeneration==PendingMigrationAuthGeneration;
             auto Payload=MoveTemp(PendingTrustedMigration.GetValue());PendingTrustedMigration.Reset();PendingMigrationAuthGeneration.Invalidate();
-            AssignmentCompletion(bCurrent,MoveTemp(Payload),bCurrent?EDivineBeastsFlowError::None:EDivineBeastsFlowError::AuthenticationRequired);
+            CompleteAssignment(ExpectedExperience, bCurrent, MoveTemp(Payload),
+                bCurrent ? EDivineBeastsFlowError::None : EDivineBeastsFlowError::AuthenticationRequired);
+        }
+        else if (bRecoveringArena)
+        {
+            RequestRecovery();
         }
         else
         {
-            Backend->RequestWorldAssignment(Character.CharacterId,Character.CharacterRevision,ExpectedExperience,PreferredRegion,RequestId,MoveTemp(AssignmentCompletion));
+            Backend->RequestWorldAssignment(Character.CharacterId, Character.CharacterRevision,
+                ExpectedExperience, PreferredRegion, RequestId,
+                [CompleteAssignment, RequestRecovery, ExpectedExperience](
+                    bool bSuccess, FDivineBeastsWorldAssignmentPayload Assignment, EDivineBeastsFlowError Error)
+                {
+                    if (!bSuccess && Error == EDivineBeastsFlowError::MatchMigrationRequired)
+                    {
+                        // 重新登录也从比赛权威获取票据。延迟到节点栈外，避免同步重入。
+                        AsyncTask(ENamedThreads::GameThread, RequestRecovery);
+                        return;
+                    }
+                    CompleteAssignment(ExpectedExperience, bSuccess, MoveTemp(Assignment), Error);
+                });
         }
         return;
     }
@@ -1074,7 +1149,15 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
             return;
         }
 
-        FName ExperienceId = ProjectContext->GetAssignment().ExperienceId;
+        const auto& Previous = ProjectContext->GetAssignment();
+        if (Previous.ServerRoleId == FDivineBeastsProjectCatalog::GetMainArenaServerRole())
+        {
+            ProjectContext->SetTargetExperience(Previous.ExperienceId, FString());
+            Complete(FGamePlatformFlowNodeResult::Success());
+            return;
+        }
+
+        FName ExperienceId = Previous.ExperienceId;
         if (ExperienceId.IsNone() ||
             !IsExperienceAllowedForCurrentProfile(ExperienceId))
         {
@@ -1103,6 +1186,11 @@ void UDivineBeastsApplicationFlowSubsystem::FinishProjectNode(
     EGamePlatformFlowFinishReason Reason)
 {
     check(IsInGameThread());
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::RequestWorld())
+    {
+        CancelPendingWorldRecovery();
+    }
 
     // 同一时间平台只运行一个主节点；HTTP节点退出时取消尚未结束的本节点请求，
     // 已完成请求已从ActiveRequests移除，因此成功路径不会产生额外网络取消开销。
@@ -1439,29 +1527,35 @@ bool UDivineBeastsApplicationFlowSubsystem::RequestWorldAssignment(
     FName DesiredExperienceId,
     const FString& PreferredRegion)
 {
-    if (!FlowContext ||
+    if (!IsInGameThread() || ViewState.bBusy || !FlowContext ||
         !FlowContext->HasSelectedCharacter() ||
-        !IsCurrentNode(FDivineBeastsFlowNodes::InWorld()) ||
+        !IsCurrentNode(FDivineBeastsFlowNodes::InWorld()))
+    {
+        return false;
+    }
+    if (FlowContext->GetAssignment().ServerRoleId == FDivineBeastsProjectCatalog::GetMainArenaServerRole() ||
         !IsExperienceAllowedForCurrentProfile(DesiredExperienceId))
     {
         SetError(EDivineBeastsFlowError::ExperienceNotAllowed);
         return false;
     }
 
-    NotifyExtensionsLeavingWorld();
-    FlowContext->SetTargetExperience(
-        DesiredExperienceId,
-        PreferredRegion);
-
-    const bool bAccepted = SubmitCurrentNodeEvent(
+    const auto Token = GetCurrentNodeToken();
+    if (!SubmitCurrentNodeEvent(
         FDivineBeastsFlowNodes::InWorld(),
         FGamePlatformFlowNodeResult::Success(
-            FDivineBeastsFlowOutcomes::RequestWorld()));
-    if (bAccepted)
+            FDivineBeastsFlowOutcomes::RequestWorld())))
     {
-        SetBusy(true);
+        return false;
     }
-    return bAccepted;
+    // SubmitEvent只将事件入邮箱。先受理，再提交目标；拒绝或通知重入均不能覆盖此次意图。
+    FlowContext->SetTargetExperience(DesiredExperienceId, PreferredRegion);
+    SetBusy(true);
+    if (IsCurrentToken(Token))
+    {
+        NotifyExtensionsLeavingWorld();
+    }
+    return true;
 }
 
 FName UDivineBeastsApplicationFlowSubsystem::DefaultExperienceForOnboarding() const
@@ -2309,12 +2403,22 @@ void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
 
         if (IsCurrentNode(FDivineBeastsFlowNodes::InWorld()))
         {
-            NotifyExtensionsLeavingWorld();
-            SetError(EDivineBeastsFlowError::SessionDisconnected);
-            SubmitCurrentNodeEvent(
+            const auto Token = GetCurrentNodeToken();
+            if (SubmitCurrentNodeEvent(
                 FDivineBeastsFlowNodes::InWorld(),
                 FGamePlatformFlowNodeResult::Success(
-                    FDivineBeastsFlowOutcomes::Recover()));
+                    FDivineBeastsFlowOutcomes::Recover())))
+            {
+                SetBusy(true);
+                if (IsCurrentToken(Token))
+                {
+                    NotifyExtensionsLeavingWorld();
+                }
+                if (IsCurrentToken(Token))
+                {
+                    SetError(EDivineBeastsFlowError::SessionDisconnected);
+                }
+            }
             return;
         }
     }
@@ -2580,21 +2684,32 @@ void UDivineBeastsApplicationFlowSubsystem::NotifyExtensionsEnteredWorld()
 
 void UDivineBeastsApplicationFlowSubsystem::NotifyExtensionsLeavingWorld()
 {
-    for (const FName Id : ExtensionOrder)
+    const TArray<FName> Providers = ExtensionOrder;
+    for (const FName Id : Providers)
     {
-        const TSharedPtr<IDivineBeastsApplicationFlowExtension>* Extension =
-            Extensions.Find(Id);
-        if (Extension && Extension->IsValid())
+        if (const auto Extension = Extensions.FindRef(Id))
         {
-            (*Extension)->OnLeavingInWorld(*this);
+            Extension->OnLeavingInWorld(*this);
         }
     }
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::RequestPostMatchReturnToWorld()
 {
-    return RequestWorldAssignment(
-        FDivineBeastsProjectCatalog::GetOpenWorldHubExperience());
+    if (!IsInGameThread() || ViewState.bBusy || !IsCurrentNode(FDivineBeastsFlowNodes::InWorld()))
+    {
+        return false;
+    }
+    const TArray<FName> Providers = ExtensionOrder;
+    for (const FName Id : Providers)
+    {
+        const auto Extension = Extensions.FindRef(Id);
+        if (Extension && Extension->RequestPostMatchReturn())
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::RetryFailedFlow()
@@ -2611,6 +2726,7 @@ void UDivineBeastsApplicationFlowSubsystem::LogoutAndRestart()
 {
     bRestartAfterLogout = true;
     ++StartRequestGeneration;
+    CancelPendingWorldRecovery();
 
     if (Backend.IsValid())
     {
@@ -2662,19 +2778,63 @@ void UDivineBeastsApplicationFlowSubsystem::ReleaseCharacterCreationValidationLe
     if (Data && Lease.IsValid()) Data->ReleaseResources(Lease);
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::RequestTrustedWorldMigration(FDivineBeastsWorldAssignmentPayload Payload,FGuid AuthenticationGeneration)
+bool UDivineBeastsApplicationFlowSubsystem::IsCurrentTrustedAssignment(
+    const FDivineBeastsWorldAssignmentPayload& Payload, const FGuid& Auth) const
 {
-    if(!IsInGameThread()||!FlowContext||!Online||!IsCurrentNode(FDivineBeastsFlowNodes::InWorld())||!FlowContext->HasSelectedCharacter()||PendingTrustedMigration.IsSet()||!AuthenticationGeneration.IsValid()||Online->GetSnapshot().AuthGeneration!=AuthenticationGeneration)return false;
-    const auto& Assignment=Payload.Summary;FName Role;FGamePlatformId WorldId;
-    if(Assignment.CharacterId!=FlowContext->GetSelectedCharacter().CharacterId||Assignment.SessionId!=Online->GetSnapshot().SessionId||
-       !FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(Assignment.ExperienceId,Role)||Role!=Assignment.ServerRoleId||
-       !FGamePlatformId::TryParse(Assignment.WorldId.ToString(),WorldId)||Assignment.AssignmentId.IsEmpty()||Assignment.GameServerId.IsEmpty()||Assignment.GameSessionId.IsEmpty()||Assignment.ServerBootId.IsEmpty()||Assignment.SessionEpoch<=0||Payload.Endpoint.IsEmpty()||Payload.TransferTicket.IsEmpty())return false;
-    PendingMigrationAuthGeneration=AuthenticationGeneration;
-    FlowContext->SetTargetExperience(Assignment.ExperienceId,Assignment.RegionId.ToString());
-    PendingTrustedMigration=MoveTemp(Payload);NotifyExtensionsLeavingWorld();
-    const bool bAccepted=SubmitCurrentNodeEvent(FDivineBeastsFlowNodes::InWorld(),FGamePlatformFlowNodeResult::Success(FDivineBeastsFlowOutcomes::RequestWorld()));
-    if(!bAccepted){PendingTrustedMigration.Reset();PendingMigrationAuthGeneration.Invalidate();return false;}
-    SetBusy(true);return true;
+    if (!FlowContext || !FlowContext->HasSelectedCharacter() || !Online || !Auth.IsValid())
+    {
+        return false;
+    }
+    const auto Snapshot = Online->GetSnapshot();
+    const auto& Assignment = Payload.Summary;
+    FName Role;
+    FGamePlatformId WorldId;
+    return Snapshot.AuthGeneration == Auth &&
+        Assignment.CharacterId == FlowContext->GetSelectedCharacter().CharacterId &&
+        Assignment.SessionId == Snapshot.SessionId &&
+        FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(Assignment.ExperienceId, Role) &&
+        Role == Assignment.ServerRoleId &&
+        FGamePlatformId::TryParse(Assignment.WorldId.ToString(), WorldId) &&
+        !Assignment.AssignmentId.IsEmpty() && !Assignment.GameServerId.IsEmpty() &&
+        !Assignment.GameSessionId.IsEmpty() && !Assignment.ServerBootId.IsEmpty() &&
+        Assignment.SessionEpoch > 0 && !Payload.Endpoint.IsEmpty() && !Payload.TransferTicket.IsEmpty();
+}
+
+void UDivineBeastsApplicationFlowSubsystem::CancelPendingWorldRecovery()
+{
+    auto Cancel = MoveTemp(PendingWorldRecovery);
+    PendingWorldRecovery = {};
+    if (Cancel)
+    {
+        Cancel();
+    }
+}
+
+bool UDivineBeastsApplicationFlowSubsystem::RequestTrustedWorldMigration(
+    FDivineBeastsWorldAssignmentPayload Payload, FGuid AuthenticationGeneration)
+{
+    if (!IsInGameThread() || ViewState.bBusy || PendingTrustedMigration.IsSet() ||
+        !IsCurrentNode(FDivineBeastsFlowNodes::InWorld()) ||
+        !IsCurrentTrustedAssignment(Payload, AuthenticationGeneration))
+    {
+        return false;
+    }
+    const auto Token = GetCurrentNodeToken();
+    if (!SubmitCurrentNodeEvent(FDivineBeastsFlowNodes::InWorld(),
+        FGamePlatformFlowNodeResult::Success(FDivineBeastsFlowOutcomes::RequestWorld())))
+    {
+        return false;
+    }
+
+    FlowContext->SetTargetExperience(Payload.Summary.ExperienceId, Payload.Summary.RegionId.ToString());
+    PendingMigrationAuthGeneration = AuthenticationGeneration;
+    PendingTrustedMigration = MoveTemp(Payload);
+    SetBusy(true);
+    if (IsCurrentToken(Token))
+    {
+        NotifyExtensionsLeavingWorld();
+    }
+    return true;
 }
 
 #if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR

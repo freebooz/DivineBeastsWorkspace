@@ -13,9 +13,9 @@ import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
+from ValidatePluginDeliveryManifest import active_files, approved_editor_tool, validate
 
 ROOT = Path(__file__).resolve().parents[2]
-PLUGINS = ROOT / "Game/Plugins"
 DELIVERY = ROOT / "Docs/Implementation/PluginArchitectureOptimization/PluginDeliveryManifest.json"
 DEMO = ROOT / "Docs/Implementation/PluginDemos/PluginDemoManifest.json"
 OUTPUT = ROOT / "Docs/Implementation/PluginQualityAudit"
@@ -86,13 +86,16 @@ def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
 
-def layer_of(path: Path) -> str:
-    name = path.relative_to(PLUGINS).parts[0]
+def layer_of(path: Path, plugin_root: Path) -> str:
+    if approved_editor_tool(path, plugin_root):
+        return 'ExternalEditor'
+    name = path.relative_to(plugin_root).parts[0]
     return {"GamePlatform": "Platform", "MobaCommon": "Moba"}.get(name, "Project")
 
 
 def audit(root: Path, demo: dict, delivery: dict) -> dict:
-    descriptors = sorted((root / "Game/Plugins").rglob("*.uplugin"))
+    plugin_root = root / 'Game/Plugins'
+    descriptors = sorted(path for path in active_files(plugin_root) if path.suffix.casefold() == '.uplugin')
     manifest = {p["plugin_id"]: p for p in demo["plugins"]}
     listed = {p["Id"]: p for p in delivery["Plugins"]}
     features = defaultdict(list)
@@ -105,8 +108,9 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
     issues = []
     if len(actual) != len(descriptors):
         issues.append("物理插件描述存在重复身份")
-    if set(actual) != set(manifest) or set(actual) != set(listed):
-        issues.append("67份真实描述与演示/交付编目的身份集合不一致")
+    editor_tools = {name for name, path in actual.items() if approved_editor_tool(path, plugin_root)}
+    if set(actual) != set(manifest) or (set(actual) - editor_tools) != set(listed):
+        issues.append("活动插件描述与演示/交付编目的身份集合不一致")
     results = []
     module_owners = {}
     edges = {}
@@ -123,9 +127,11 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
         name = path.stem
         d = load_json(path)
         owner = path.parent
-        layer = layer_of(path)
+        layer = layer_of(path, plugin_root)
         modules = d.get("Modules", [])
-        kind = "code" if modules else "content_pack"
+        kind = 'editor_tool' if name in editor_tools else 'code' if modules else 'content_pack'
+        if kind == 'editor_tool' and (not modules or any(m.get('Type') not in ('Editor', 'EditorNoCommandlet') for m in modules)):
+            issues.append(name + ' 获批编辑器工具包含非Editor模块')
         builds = []
         for mod in modules:
             module = mod.get("Name", "")
@@ -137,11 +143,11 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
             if module in module_owners:
                 issues.append("重复模块身份：" + module)
             module_owners[module] = name
-        cpp = [p for p in owner.rglob("*.cpp") if not any(part in ("Intermediate","Binaries","Saved") for part in p.parts)]
-        headers = [p for p in owner.rglob("*.h") if not any(part in ("Intermediate","Binaries","Saved") for part in p.parts)]
+        files = list(active_files(owner))
+        cpp = [p for p in files if p.suffix.casefold() == '.cpp']
+        headers = [p for p in files if p.suffix.casefold() == '.h']
         tests = [p for p in cpp if "Tests" in p.parts]
-        assets = [p for p in owner.rglob("*") if p.is_file() and p.suffix.lower() in (".uasset",".umap")
-                  and not any(part in ("Intermediate","Binaries","Saved") for part in p.parts)]
+        assets = [p for p in files if p.suffix.casefold() in ('.uasset', '.umap')]
         maps = [p for p in assets if p.suffix.lower() == ".umap"]
         widget_files = [p for p in assets if p.stem.startswith(("WBP_","WB_","BP_UI_"))]
         candidates = []
@@ -222,7 +228,7 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
     ranks = {"Platform":0,"Moba":1,"Project":2}
     for source,deps in edges.items():
         for dep in deps:
-            if dep in actual and ranks[layer_of(actual[dep])] > ranks[layer_of(actual[source])]:
+            if dep in actual and source not in editor_tools and dep not in editor_tools and ranks[layer_of(actual[dep], plugin_root)] > ranks[layer_of(actual[source], plugin_root)]:
                 issues.append("跨层反向插件依赖："+source+" -> "+dep)
     results.sort(key=lambda r:r["pluginId"].casefold())
     return {
@@ -231,6 +237,7 @@ def audit(root: Path, demo: dict, delivery: dict) -> dict:
         "limitations":"性能候选不是实测瓶颈；地图/蓝图文件不是UE加载证明；人工签收需要独立真实证据",
         "pluginCount":len(results), "code":sum(r["kind"]=="code" for r in results),
         "content":sum(r["kind"]=="content_pack" for r in results),
+        "editorTools":len(editor_tools),
         "modules":sum(r["moduleCount"] for r in results),
         "withLocalNativeTests":sum(r["nativeTestFiles"]>0 for r in results),
         "visualRequired":sum(r["visualReviewRequired"] for r in results),
@@ -250,11 +257,11 @@ def markdown(report: dict) -> str:
     lines = [
         "# SSLM 全量插件质量与可视化人工验收审查台账",
         "",
-        "> 来源：实际工作树67个插件描述、源码、资源及正式双台账；静态盘点不替代UE编译、蓝图验收、Unreal Insights性能实测或人工签收。",
+        f"> 来源：活动工程{report['pluginCount']}个插件描述、源码、资源及正式双台账；静态盘点不替代UE编译、蓝图验收、Unreal Insights性能实测或人工签收。",
         "",
         "## 基线与处理顺序",
         "",
-        f"- 代码插件{report['code']}、内容包{report['content']}、声明模块{report['modules']}；已登记演示功能{report['demoFeatures']}、场景{report['demoScenarios']}，人工签收0。",
+        f"- 机制插件{report['code']}、内容包{report['content']}、获批编辑工具{report['editorTools']}、声明模块{report['modules']}；已登记演示功能{report['demoFeatures']}、场景{report['demoScenarios']}，人工签收0。",
         f"- 要求可视化/交互人工验证的插件{report['visualRequired']}，尚无登记操作案例的{report['visualWithoutOperationalScenario']}。功能总分母未逐项评审，不能计算真实覆盖率。",
         f"- 有本模块原生测试源码的插件{report['withLocalNativeTests']}。没有本地文件不等于项目不存在跨模块自动化测试。",
         f"- 已关联真实诊断图的插件{report['diagnosticShortcutPluginCount']}、不重复的诊断图{report['uniqueApprovedDiagnosticMapCount']}张；只是进入地图的观察入口，不计入正式演示案例和人工签收。",
@@ -291,8 +298,6 @@ def main() -> int:
     parser.add_argument("--require-production",action="store_true")
     args=parser.parse_args()
     report=audit(ROOT,load_json(DEMO),load_json(DELIVERY))
-    sys.path.insert(0,str(ROOT/"Tests/Architecture"))
-    from ValidatePluginDeliveryManifest import validate
     report["issues"].extend(validate(ROOT,load_json(DELIVERY)))
     if args.write_docs and not report["issues"]:
         OUTPUT.mkdir(parents=True,exist_ok=True)
@@ -302,7 +307,7 @@ def main() -> int:
     print(json.dumps(view,ensure_ascii=False,indent=2))
     if report["issues"]:return 1
     if args.require_production:
-        print("SSLM_PLUGIN_PRODUCTION_BLOCKED: 无67插件完整原生+人工性能签收",file=sys.stderr)
+        print("SSLM_PLUGIN_PRODUCTION_BLOCKED: 当前活动插件仍需完整原生和人工性能签收",file=sys.stderr)
         return 2
     return 0
 

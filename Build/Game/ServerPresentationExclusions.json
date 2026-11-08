@@ -13,7 +13,15 @@
     "VillageDevelopmentServer": "VillageDevelopmentServer",
     "FoundationStandalone": "DedicatedServer"
   },
+  "StageOnlyEnginePlugins": ["Fab", "Bridge"],
   "CookDirectories": [
+    {
+      "PackagePath": "/GamePlatformUI/Input",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Content/Input",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "CommonUI的输入类与返回确认动作表只服务客户端视口和控件。"
+    },
     {
       "PackagePath": "/DBAWorldPack_Village/VFX/Activities/Arena",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/VFX/Activities/Arena",

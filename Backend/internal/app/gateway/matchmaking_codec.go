@@ -12,7 +12,7 @@ import (
 func DecodeMatchmakingActorJSON(payload string) (matchmaking.ActorContext, error) {
 	var actor matchmaking.ActorContext
 	request := &http.Request{Header: make(http.Header), Body: io.NopCloser(strings.NewReader(payload))}
-	err := DecodeOnlineJSON(request, &actor, []string{"playerId", "sessionId", "characterId", "heroDefinitionId", "characterRevision", "sourceGameServerId", "sourceExperienceId"}, []string{"playerId", "sessionId", "characterId", "heroDefinitionId", "characterRevision", "sourceGameServerId", "sourceExperienceId"})
+	err := DecodeOnlineJSON(request, &actor, []string{"playerId", "sessionId", "characterId", "characterName", "heroDefinitionId", "characterRevision", "sourceGameServerId", "sourceExperienceId", "sourceServerBootId", "sourceSessionEpoch"}, []string{"playerId", "sessionId", "characterId", "heroDefinitionId", "characterRevision", "sourceGameServerId", "sourceExperienceId"})
 	return actor, err
 }
 

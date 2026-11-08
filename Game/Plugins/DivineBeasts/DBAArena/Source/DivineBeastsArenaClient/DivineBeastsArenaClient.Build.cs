@@ -30,6 +30,7 @@ public class DivineBeastsArenaClient : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "DivineBeastsApplicationFlowClient",
+            "DivineBeastsRuntime", // 迁移结果核对使用项目唯一服务器角色目录。
             // 五门只发布中立交互结果；竞技本地组合根读取入口身份，世界层不反向认识竞技UI。
             "DBAWorldsRuntime",
             "GamePlatformInteraction",

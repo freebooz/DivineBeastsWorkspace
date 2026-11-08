@@ -4,6 +4,7 @@ package grpcadapter
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	matchv1 "divinebeasts/backend/generated/proto/shared/gameplatform/match/v1"
@@ -39,7 +40,14 @@ func (s *MatchResultServer) SubmitMatchResult(ctx context.Context, req *matchv1.
 		WinningTeamID: req.GetWinningTeamId(), Teams: teams, Players: players,
 	})
 	if err != nil {
-		return &matchv1.SubmitMatchResultResponse{Accepted: false, ErrorCode: "MATCH_RESULT_REJECTED"}, nil
+		code := "MATCH_RESULT_RETRYABLE"
+		switch {
+		case errors.Is(err, match.ErrResultConflict):
+			code = "MATCH_RESULT_CONFLICT"
+		case errors.Is(err, match.ErrResultInvalid):
+			code = "MATCH_RESULT_INVALID"
+		}
+		return &matchv1.SubmitMatchResultResponse{Accepted: false, ErrorCode: code}, nil
 	}
 	return &matchv1.SubmitMatchResultResponse{Accepted: true, ResultId: stored.ResultID}, nil
 }

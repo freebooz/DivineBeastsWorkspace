@@ -25,13 +25,16 @@ param([string]$EngineRoot, [switch]$Cook,
     [string]$UIColorRHIReport,
     # 默认发行前端保持开发资源隔离；候选技能必须显式选择用户批准的开发客户端配置。
     [ValidateSet('FrontEndClient','VillageDevelopmentClient')][string]$CustomConfig='FrontEndClient',
+    [switch]$WithoutArena,
     [ValidateRange(1,86400)][int]$TimeoutSeconds=1800, [guid]$RunId=[guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'FoundationTargetAssembly.psm1') -Force
 $context=$null; $lock=$null; $code=2; $message=''; $details=@{Target='Client';CustomConfig=$CustomConfig;SkipZenStore=[bool]$SkipZenStore}
 try {
     $context=New-FoundationContext 'Cook-FrontEndClient' $RunId
     if (!$Cook) { throw [IO.FileNotFoundException]::new('需显式指定-Cook。') }
+    if ($WithoutArena -and $CustomConfig -ne 'FrontEndClient') { throw '无竞技前端Cook要求FrontEndClient配置。' }
     $engine=Get-FoundationEngine $EngineRoot
     $details.EngineVersion=$engine.Version
     $details.EngineRoot=$engine.Root
@@ -44,6 +47,7 @@ try {
     if($LASTEXITCODE -ne 0){throw '真实RHI颜色门禁未通过；拒绝发布缺失、失败或过期的UI颜色证据。'}
     $details.UIColorRHIReport=[IO.Path]::GetFullPath($UIColorRHIReport)
     $lock=Enter-FoundationEngineLock $engine.Root
+    $details.TargetAssembly=Read-FoundationTargetAssembly -Workspace $context.Workspace -Target Client -WithoutArena:$WithoutArena
     # 锁内核验，防止预检后被另一构建替换Editor DLL，再启动UAT。
     $details.CookEditorGate=Assert-FoundationCookEditorBuildResult -Workspace $context.Workspace -EngineRoot $engine.Root -BuildResultPath $EditorBuildResult
     if($ShortCookRoot -and -not $SkipZenStore){throw 'ShortCookRoot只用于显式文件Cook（SkipZenStore）。'}
@@ -79,6 +83,11 @@ try {
     if($CustomConfig -eq 'VillageDevelopmentClient'){$maps+='/DBAWorldPack_MainArena/Maps/L_DBA_MainArena'}
     $details.Maps=$maps
     $cookOptions="-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback"
+    if ($WithoutArena) {
+        $arenaOptions=(Get-FoundationWithoutArenaCookArguments) -join ' '
+        $cookOptions += (' ' + $arenaOptions)
+        $details.RequiredRuntimeArguments = $arenaOptions
+    }
     if ($SkipZenStore) { $cookOptions += ' -SkipZenStore' }
     if ($ForceNiagaraCompileOnLoad) { $cookOptions += ' -ForceDPCVars=fx.ForceCompileOnLoad=1' }
     $details.ForceNiagaraCompileOnLoad=[bool]$ForceNiagaraCompileOnLoad
@@ -201,7 +210,9 @@ try {
         $resourceDirectory=Join-Path $context.Directory 'ResourceOwnershipGate'
         $null=New-Item -ItemType Directory -Path $resourceDirectory
         $resourceReport=Join-Path $resourceDirectory 'ResourceOwnership.json'
-        $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments @($resourceGate,'--stage',$stageDirectory,'--unreal-pak',$pakTool,'--profile',$CustomConfig,'--report',$resourceReport) -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
+        $resourceArguments=@($resourceGate,'--stage',$stageDirectory,'--unreal-pak',$pakTool,'--profile',$CustomConfig,'--report',$resourceReport)
+        if ($WithoutArena) { $resourceArguments += '--without-arena' }
+        $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments $resourceArguments -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
         $details.ResourceOwnershipGateResult=$resourceResult; $details.ResourceOwnershipReport=$resourceReport
         $code=$resourceResult.ExitCode
     }

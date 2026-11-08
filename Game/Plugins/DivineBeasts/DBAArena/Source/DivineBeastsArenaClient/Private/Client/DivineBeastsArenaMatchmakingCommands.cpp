@@ -80,6 +80,7 @@ void UDivineBeastsArenaUIClientSubsystem::UnregisterMatchmakingAdapter(FGuid Reg
 
 void UDivineBeastsArenaUIClientSubsystem::ResetMatchmakingBridge()
 {
+    ClearArenaExitAction();
     ++MatchmakingCommandGeneration;
     bMatchmakingCommandPending = false;
     MatchmakingAdapter.Reset();
@@ -330,7 +331,7 @@ bool UDivineBeastsArenaUIClientSubsystem::SubmitChallengeCommand(FName Action,FN
 void UDivineBeastsArenaUIClientSubsystem::RefreshMatchmakingSource()
 {
     if(bDeinitializing)return;auto* Source=MatchmakingSource.Get();if(!Source)return;
-    if(GetAuthenticatedMatchmakingPlayerId().IsEmpty()){if(MatchmakingAdapter)ResetMatchmakingBridge();return;}
+    if(GetAuthenticatedMatchmakingPlayerId().IsEmpty()){if(MatchmakingAdapter)ResetMatchmakingBridge();else ClearArenaExitAction();return;}
     const auto Adapter=Source->GetMatchmakingAdapter();if(!Adapter)return;
     if(!MatchmakingAdapter)RegisterMatchmakingAdapter(Adapter);
     if(MatchmakingAdapter!=Adapter)return; // 独立测试/显式工具提供者拥有其注册，真实来源不越权替换。
@@ -346,5 +347,6 @@ void UDivineBeastsArenaUIClientSubsystem::RefreshMatchmakingSource()
         if(State==EGamePlatformArenaClientFlowState::Idle)MatchmakingLogicalRequestId.Empty();
         SetObservedArenaClientFlowState(State);
     }
+    RefreshArenaExitAction();
     OnMatchmakingCommandChanged.Broadcast();
 }

@@ -1,6 +1,6 @@
 {
   "fireball_definition": "/Game/Development/DivineBeasts/Abilities/MagicTests/DA_DBA_Rat_DevFireball",
-  "fireball_profile": "/DBAContentPack_Common/Gameplay/ProjectileFlight/DA_DBA_Fireball_Flight",
+  "fireball_profile": "/DBAGameplay/Abilities/ProjectileFlight/DA_DBA_Fireball_Flight",
   "demo_directory": "/Game/Development/DivineBeasts/ProjectileMotion",
   "profiles": [
     {"name":"Fireball","speed_mode":"ACCELERATE_THEN_CRUISE","initial_speed":1200,"max_speed":1800,"acceleration":4000,"acceleration_duration":0.15,"b_enable_homing":true},

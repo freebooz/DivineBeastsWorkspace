@@ -11,6 +11,7 @@
     "Profiles",
     "CookConfigProfiles",
     "CookDirectories",
+    "StageOnlyEnginePlugins",
     "StageOnlyDirectories"
   ],
   "properties": {
@@ -47,6 +48,12 @@
           "description": "受管DefaultGame.ini项目相对路径；执行器限制为该profile固定路径。"
         }
       }
+    },
+    "StageOnlyEnginePlugins": {
+      "description": "专服Stage拒绝的已确认编辑工具插件身份，保持精确路径边界。",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"}
     },
     "CookConfigProfiles": {
       "type": "object",

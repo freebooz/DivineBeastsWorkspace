@@ -58,6 +58,15 @@ int32 ADivineBeastsWorldPlayerController::GetGameplayAvatarGeneration() const
     return ASC && ASC->EvaluateActivationEligibility().IsSuccess() ? Generation : 0;
 }
 
+void ADivineBeastsWorldPlayerController::ServerCaptureVillageQueueOrigin_Implementation(const FString& QueueTicketId)
+{
+    if (!HasAuthority() || QueueTicketId.IsEmpty() || QueueTicketId.Len() > 128)
+    {
+        return;
+    }
+    OnVillageQueueOriginRequested.Broadcast(QueueTicketId);
+}
+
 void ADivineBeastsWorldPlayerController::BeginPlay()
 {
     Super::BeginPlay();

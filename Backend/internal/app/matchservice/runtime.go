@@ -129,7 +129,10 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 
 		for _, slot := range value.Candidate.Roster {
 			actor := value.Contexts[slot.PlayerID]
-			roster = append(roster, gameservercontract.RosterPlayer{PlayerID: slot.PlayerID, CharacterID: actor.CharacterID, TeamID: slot.TeamID, PartyID: value.Parties[slot.PlayerID], SlotIndex: len(roster), HeroDefinitionID: actor.HeroDefinitionID})
+			roster = append(roster, gameservercontract.RosterPlayer{
+				PlayerID: slot.PlayerID, CharacterID: actor.CharacterID, CharacterName: actor.CharacterName,
+				TeamID: slot.TeamID, PartyID: value.Parties[slot.PlayerID], SlotIndex: len(roster), HeroDefinitionID: actor.HeroDefinitionID,
+			})
 		}
 		call, cancel := context.WithDeadline(ctx, minDeadline(value.LeaseUntilUTC, value.DeadlineUTC))
 		assignment, e := r.control.AllocateMainArenaContext(call, gameservercontrol.AllocateMainArenaInput{WorldID: value.MapID, ProjectRuleRevision: value.RuleRevision, ContentRevision: value.ContentRevision, HeroCatalogRevision: value.HeroCatalogRevision, MatchID: value.MatchID, ArenaModeID: value.Candidate.ArenaModeID, MapID: value.MapID, RegionID: value.Candidate.RegionID, Roster: roster})
@@ -244,14 +247,23 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 				return e
 			}
 		}
-		if err = r.control.CancelArena(ctx, value.MatchID); err != nil {
-			return err
-		}
+		cancelErr := r.control.CancelArena(ctx, value.MatchID)
 		status, e := r.control.GetArenaStatus(ctx, value.MatchID)
 		if e != nil {
+			if cancelErr != nil {
+				return cancelErr
+			}
 			return e
 		}
-		if status.ServerAlive && status.CurrentPlayers > 0 {
+		if status.Record.Result != nil {
+			// 控制投影恢复了真正结果；沿正常返程路径收敛，不把已提交比赛误记为取消。
+			value.Result = status.Record.Result
+			value.Stage = "returning"
+			value.FaultCode = ""
+			value.DeadlineUTC = time.Time{}
+		} else if cancelErr != nil {
+			return cancelErr
+		} else if status.ServerAlive && status.CurrentPlayers > 0 {
 			value.Stage = "returning"
 			value.DeadlineUTC = time.Time{}
 		} else {
@@ -440,8 +452,15 @@ func (r *Runtime) GetMigration(ctx context.Context, actor matchmaking.ActorConte
 	if !known {
 		return matchmaking.Migration{}, errors.New("MATCH_RETURN_NOT_CONFIGURED: 来源体验缺少世界定义")
 	}
+	input := gameservercontrol.AllocateWorldTransferInput{
+		World:    gameservercontrol.AllocateWorldInput{ExperienceID: experience, WorldID: worldID, RegionID: value.Candidate.RegionID, PlayerSlots: 1},
+		Transfer: gameservercontrol.IssueTransferInput{TicketID: intent.TicketID, GameID: value.Candidate.GameID, PlayerID: actor.PlayerID, SessionID: actor.SessionID, SourceGameServerID: value.Assignment.GameServerID, TTL: 60 * time.Second},
+	}
+	if role == gameservercontract.RoleVillage && locked.QueueTicketID != "" {
+		input.VillageQueueOrigin = &gameservercontrol.VillageQueueOriginRef{QueueTicketID: locked.QueueTicketID, SourceGameServerID: locked.SourceGameServerID, SessionID: locked.SessionID, CharacterID: locked.CharacterID, SourceServerBootID: locked.SourceServerBootID, SourceSessionEpoch: locked.SourceSessionEpoch}
+	}
 	call, cancel := context.WithDeadline(ctx, value.LeaseUntilUTC)
-	result, err := r.control.AllocateWorldTransfer(call, gameservercontrol.AllocateWorldTransferInput{World: gameservercontrol.AllocateWorldInput{ExperienceID: experience, WorldID: worldID, RegionID: value.Candidate.RegionID, PlayerSlots: 1}, Transfer: gameservercontrol.IssueTransferInput{TicketID: intent.TicketID, GameID: value.Candidate.GameID, PlayerID: actor.PlayerID, SessionID: actor.SessionID, SourceGameServerID: value.Assignment.GameServerID, TTL: 60 * time.Second}})
+	result, err := r.control.AllocateWorldTransfer(call, input)
 	cancel()
 	if err != nil {
 		return matchmaking.Migration{}, err

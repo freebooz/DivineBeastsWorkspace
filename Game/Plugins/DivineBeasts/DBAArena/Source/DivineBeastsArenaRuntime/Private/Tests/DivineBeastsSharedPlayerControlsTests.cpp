@@ -89,6 +89,15 @@ bool FDivineBeastsSharedPlayerControlsTest::RunTest(const FString&)
         Controls->MouseButtonMask=3; Controls->SetGameplayActive(false);
         TestFalse(TEXT("死亡/失活关闭操控"),Controls->CanProcessWorldInput());
         TestEqual(TEXT("死亡清除拖动"),Controls->MouseButtonMask,static_cast<uint8>(0));
+        int32 MenuRequests = 0;
+        const auto MenuHandle = Controls->OnWorldEscapeRequested.AddLambda([&MenuRequests] { ++MenuRequests; });
+        Controls->RequestWorldMenu();
+        TestEqual(TEXT("失去玩法输入的观战玩家仍能请求打开系统菜单"), MenuRequests, 1);
+        Controls->SetTravelPending(true);
+        Controls->RequestWorldMenu();
+        TestEqual(TEXT("转场时不再发送旧世界菜单请求"), MenuRequests, 1);
+        Controls->SetTravelPending(false);
+        Controls->OnWorldEscapeRequested.Remove(MenuHandle);
         Controller->UnPossess(); Controls->SetGameplayActive(true);
         TestFalse(TEXT("没有当前拥有Pawn不能靠本地事实开启输入"),Controls->CanProcessWorldInput());
         if (Cast<ADivineBeastsArenaPlayerController>(Controller))

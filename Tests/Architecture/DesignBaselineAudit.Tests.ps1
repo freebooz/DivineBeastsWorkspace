@@ -157,6 +157,32 @@
         ($result.Errors -join "`n") | Should Match 'UnapprovedPlugin'
     }
 
+    It '只统计活动工程并单列获批编辑器工具' {
+        $workspaceRoot = New-DesignBaselineFixtureRoot
+        $history = Join-Path $workspaceRoot 'Game/Saved/BuildCopy'
+        $nested = Join-Path $workspaceRoot 'Game/Plugins/GamePlatform/Foundation/GamePlatformCore/Intermediate'
+        $vendor = Join-Path $workspaceRoot 'Game/Plugins/ThirdParty/Editor/BlueprintAutoLayout'
+        $null = New-Item -ItemType Directory -Path $history,$nested,(Join-Path $vendor 'Source/BlueprintAutoLayout') -Force
+        '{}' | Set-Content -LiteralPath (Join-Path $history 'Copy.uproject')
+        '{}' | Set-Content -LiteralPath (Join-Path $nested 'GamePlatformCore.uplugin')
+        '{"FileVersion":3,"Modules":[{"Name":"BlueprintAutoLayout","Type":"Editor","LoadingPhase":"Default"}]}' |
+            Set-Content -LiteralPath (Join-Path $vendor 'BlueprintAutoLayout.uplugin')
+        '// 结构夹具' | Set-Content -LiteralPath (Join-Path $vendor 'Source/BlueprintAutoLayout/BlueprintAutoLayout.Build.cs')
+        '{"FileVersion":3,"Plugins":[{"Name":"BlueprintAutoLayout","Enabled":true,"TargetAllowList":["Editor"]}]}' |
+            Set-Content -LiteralPath (Join-Path $workspaceRoot 'Game/DivineBeastsArena.uproject')
+
+        $result = Test-DesignBaselineWorkspace -WorkspaceRoot $workspaceRoot
+        ($result.Errors -join "`n") | Should BeNullOrEmpty
+        $result.PluginCounts.Baseline | Should Be 48
+        $result.PluginCounts.ApprovedEditorTools | Should Be 1
+        $result.ProjectCount | Should Be 1
+
+        '{"FileVersion":3,"Plugins":[{"Name":"BlueprintAutoLayout","Enabled":true}]}' |
+            Set-Content -LiteralPath (Join-Path $workspaceRoot 'Game/DivineBeastsArena.uproject')
+        $result = Test-DesignBaselineWorkspace -WorkspaceRoot $workspaceRoot
+        ($result.Errors -join "`n") | Should Match 'BlueprintAutoLayout.*Editor'
+    }
+
     It '已退休的GamePlatformOpenWorld重新出现时按非基线插件拒绝' {
         $workspaceRoot = New-DesignBaselineFixtureRoot
         $retiredDirectory = Join-Path $workspaceRoot 'Game/Plugins/GamePlatform/World/GamePlatformOpenWorld'

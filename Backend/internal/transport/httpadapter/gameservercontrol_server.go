@@ -3,6 +3,8 @@ package httpadapter
 import (
 	"context"
 	"crypto/subtle"
+	"errors"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -26,6 +28,24 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 	}
 	mux := http.NewServeMux()
 	registerArenaLifecycle(mux, service, internalBearerToken)
+	mux.Handle("POST /internal/v1/gameservers/village-queue-origin", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
+		serverID := strings.TrimSpace(r.Header.Get("X-Game-Server-Id"))
+		bootID := strings.TrimSpace(r.Header.Get("X-Game-Server-Boot-Id"))
+		if !requireGameServerIdentity(w, r, serverID, bootID) {
+			return
+		}
+		var input gameservercontrol.VillageQueueOriginInput
+		payload, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 8192))
+		if err != nil || gameservercontrol.DecodeRuntimeInput(string(payload), &input) != nil {
+			writeError(w, http.StatusBadRequest, "INVALID_REQUEST", nil)
+			return
+		}
+		if err = service.RecordVillageQueueOrigin(r.Context(), serverID, bootID, input); err != nil {
+			writeError(w, http.StatusConflict, "VILLAGE_QUEUE_ORIGIN_REJECTED", nil)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]bool{"accepted": true})
+	}))
 
 	mux.Handle("POST /internal/v1/gameservers/register", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
 		var req gameservercontrol.RegisterInput
@@ -131,13 +151,14 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 
 	mux.Handle("POST /internal/v1/gameservers/allocate-world-transfer", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
-			World              gameservercontrol.AllocateWorldInput `json:"world"`
-			TicketID           string                               `json:"ticketId"`
-			GameID             string                               `json:"gameId"`
-			PlayerID           string                               `json:"playerId"`
-			SessionID          string                               `json:"sessionId"`
-			SourceGameServerID string                               `json:"sourceGameServerId"`
-			TTLMilliseconds    int64                                `json:"ttlMilliseconds"`
+			World              gameservercontrol.AllocateWorldInput     `json:"world"`
+			TicketID           string                                   `json:"ticketId"`
+			GameID             string                                   `json:"gameId"`
+			PlayerID           string                                   `json:"playerId"`
+			SessionID          string                                   `json:"sessionId"`
+			SourceGameServerID string                                   `json:"sourceGameServerId"`
+			TTLMilliseconds    int64                                    `json:"ttlMilliseconds"`
+			VillageQueueOrigin *gameservercontrol.VillageQueueOriginRef `json:"villageQueueOrigin,omitempty"`
 		}
 		if err := decodeJSON(r, &req); err != nil {
 			writeError(w, http.StatusBadRequest, "BAD_REQUEST", err)
@@ -145,10 +166,15 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 		}
 		ttl := time.Duration(req.TTLMilliseconds) * time.Millisecond
 		result, err := service.AllocateWorldTransfer(r.Context(), gameservercontrol.AllocateWorldTransferInput{
-			World:    req.World,
-			Transfer: gameservercontrol.IssueTransferInput{TicketID: req.TicketID, GameID: req.GameID, PlayerID: req.PlayerID, SessionID: req.SessionID, SourceGameServerID: req.SourceGameServerID, TTL: ttl},
+			World:              req.World,
+			Transfer:           gameservercontrol.IssueTransferInput{TicketID: req.TicketID, GameID: req.GameID, PlayerID: req.PlayerID, SessionID: req.SessionID, SourceGameServerID: req.SourceGameServerID, TTL: ttl},
+			VillageQueueOrigin: req.VillageQueueOrigin,
 		})
 		if err != nil {
+			if errors.Is(err, gameservercontrol.ErrWorldMatchMigrationRequired) {
+				writeError(w, http.StatusConflict, "WORLD_MATCH_MIGRATION_REQUIRED", nil)
+				return
+			}
 			writeError(w, http.StatusConflict, "WORLD_TRANSFER_FAILED", err)
 			return
 		}
@@ -261,13 +287,16 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 			writeError(w, http.StatusConflict, "GAME_SERVER_BOOT_MISMATCH", err)
 			return
 		}
-		stored, err := service.SubmitMatchResult(r.Context(), req)
+		stored, err := service.SubmitMatchResultForBoot(r.Context(), req, serverBootID)
 		if err != nil {
-			if strings.HasPrefix(err.Error(), "MATCH_RESULT_CONFLICT:") {
+			switch {
+			case errors.Is(err, match.ErrResultConflict):
 				writeError(w, http.StatusConflict, "MATCH_RESULT_CONFLICT", nil)
-				return
+			case errors.Is(err, match.ErrResultInvalid):
+				writeError(w, http.StatusBadRequest, "MATCH_RESULT_INVALID", nil)
+			default:
+				writeError(w, http.StatusServiceUnavailable, "MATCH_RESULT_RETRYABLE", nil)
 			}
-			writeError(w, http.StatusBadRequest, "MATCH_RESULT_SUBMIT_FAILED", nil)
 			return
 		}
 		writeJSON(w, http.StatusOK, stored)

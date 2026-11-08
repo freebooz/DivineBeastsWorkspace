@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	gc "divinebeasts/backend/internal/contracts/gameserver"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -22,6 +23,7 @@ type IssueRequest struct {
 	PlayerID                   string        // PlayerID（玩家ID）。
 	SessionID                  string        // SessionID（在线会话ID）。
 	SourceGameServerID         string        // SourceGameServerID（来源服务器实例ID，首次进服可为空）。
+	SourceMatchID              string        `json:",omitempty"` // 控制面确认的终态来源比赛，签发给安全返程。
 	DestinationGameServerID    string        // DestinationGameServerID（目标服务器实例ID）。
 	DestinationEndpoint        string        // DestinationEndpoint（ClientTravel目标地址）。
 	DestinationWorldID         string        // DestinationWorldID（目标世界ID）。
@@ -41,6 +43,7 @@ type Ticket struct {
 	PlayerID                   string `json:"playerId"`                     // PlayerID（玩家ID）。
 	SessionID                  string `json:"sessionId"`                    // SessionID（在线会话ID）。
 	SourceGameServerID         string `json:"sourceGameServerId,omitempty"` // SourceGameServerID（来源服务器实例ID）。
+	SourceMatchID              string `json:"sourceMatchId,omitempty"`      // 已获准离开的来源比赛，仅返程存在并纳入HMAC。
 	DestinationGameServerID    string `json:"destinationGameServerId"`      // DestinationGameServerID（目标服务器实例ID）。
 	DestinationEndpoint        string `json:"destinationEndpoint"`          // DestinationEndpoint（目标连接地址）。
 	DestinationWorldID         string `json:"destinationWorldId"`           // DestinationWorldID（目标世界ID）。
@@ -70,16 +73,17 @@ type ValidateRequest struct {
 
 // ValidationResult（迁移验证结果）返回目标服务器建立玩家会话所需的可信上下文。
 type ValidationResult struct {
-	PlayerID                   string `json:"playerId"`                   // PlayerID（已验证玩家ID）。
-	SessionID                  string `json:"sessionId"`                  // SessionID（已验证在线会话ID）。
-	AssignmentID               string `json:"assignmentId"`               // AssignmentID（已验证目标Assignment）。
-	DestinationWorldID         string `json:"destinationWorldId"`         // DestinationWorldID（目标世界ID）。
-	DestinationExperienceID    string `json:"destinationExperienceId"`    // DestinationExperienceID（目标Experience）。
-	MatchID                    string `json:"matchId,omitempty"`          // MatchID（目标比赛ID）。
-	GameSessionID              string `json:"gameSessionId"`              // GameSessionID（已验证游戏会话绑定ID）。
-	DestinationServerBootID    string `json:"destinationServerBootId"`    // DestinationServerBootID（已验证目标服务器Boot身份）。
-	DestinationProtocolVersion uint32 `json:"destinationProtocolVersion"` // DestinationProtocolVersion（已验证协议版本）。
-	SessionEpoch               uint64 `json:"sessionEpoch"`               // SessionEpoch（已验证会话绑定代次）。
+	PlayerID                   string               `json:"playerId"`                   // PlayerID（已验证玩家ID）。
+	SessionID                  string               `json:"sessionId"`                  // SessionID（已验证在线会话ID）。
+	AssignmentID               string               `json:"assignmentId"`               // AssignmentID（已验证目标Assignment）。
+	DestinationWorldID         string               `json:"destinationWorldId"`         // DestinationWorldID（目标世界ID）。
+	DestinationExperienceID    string               `json:"destinationExperienceId"`    // DestinationExperienceID（目标Experience）。
+	MatchID                    string               `json:"matchId,omitempty"`          // MatchID（目标比赛ID）。
+	GameSessionID              string               `json:"gameSessionId"`              // GameSessionID（已验证游戏会话绑定ID）。
+	DestinationServerBootID    string               `json:"destinationServerBootId"`    // DestinationServerBootID（已验证目标服务器Boot身份）。
+	DestinationProtocolVersion uint32               `json:"destinationProtocolVersion"` // DestinationProtocolVersion（已验证协议版本）。
+	SessionEpoch               uint64               `json:"sessionEpoch"`               // SessionEpoch（已验证会话绑定代次）。
+	ReturnSpawn                *gc.WorldReturnSpawn `json:"returnSpawn,omitempty"`      // 控制面验票后附加的可信返程落点；不进入签名票据。
 }
 
 // ReplayStore（防重放状态仓储）必须以原子SET-IF-ABSENT语义消费TicketID。
@@ -202,7 +206,7 @@ func (s *Service) issueNewContext(ctx context.Context, req IssueRequest) (Ticket
 	now := s.now().UTC()
 	ticket := Ticket{
 		TicketID: req.TicketID, AssignmentID: req.AssignmentID, GameID: req.GameID, PlayerID: req.PlayerID, SessionID: req.SessionID,
-		SourceGameServerID: req.SourceGameServerID, DestinationGameServerID: req.DestinationGameServerID,
+		SourceGameServerID: req.SourceGameServerID, SourceMatchID: req.SourceMatchID, DestinationGameServerID: req.DestinationGameServerID,
 		DestinationEndpoint: req.DestinationEndpoint, DestinationWorldID: req.DestinationWorldID,
 		DestinationExperienceID: req.DestinationExperienceID, MatchID: req.MatchID,
 		GameSessionID:              gameSessionID,

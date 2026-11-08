@@ -31,6 +31,7 @@ protected:
     UFUNCTION() void StartMatchmaking();
     UFUNCTION() void CancelMatchmaking();
     UFUNCTION() void ReturnWorld();
+    UFUNCTION() void RetryReturn();
     UFUNCTION() void CloseArenaPage();
     FName SelectedMode=NAME_None;
     FText CommandFeedback;

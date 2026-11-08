@@ -9,6 +9,8 @@
 #include "Components/TextBlock.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
+#include "Framework/GamePlatformArenaPlayerState.h"
+#include "GameFramework/PlayerController.h"
 #include "Client/DivineBeastsArenaUIClientSubsystem.h"
 
 void UDivineBeastsArenaScreenBase::BindUIEvents()
@@ -19,7 +21,7 @@ void UDivineBeastsArenaScreenBase::BindUIEvents()
     if(auto* B=Cast<UButton>(GetWidgetFromName(TEXT("StartMatchmakingButton"))))B->OnClicked.AddUniqueDynamic(this,&UDivineBeastsArenaScreenBase::StartMatchmaking);
     if(auto* B=Cast<UButton>(GetWidgetFromName(TEXT("CancelMatchmakingButton"))))B->OnClicked.AddUniqueDynamic(this,&UDivineBeastsArenaScreenBase::CancelMatchmaking);
     if(auto* B=Cast<UButton>(GetWidgetFromName(TEXT("ReturnWorldButton"))))B->OnClicked.AddUniqueDynamic(this,&UDivineBeastsArenaScreenBase::ReturnWorld);
-    if(auto* B=Cast<UButton>(GetWidgetFromName(TEXT("RetryReturnButton"))))B->OnClicked.AddUniqueDynamic(this,&UDivineBeastsArenaScreenBase::ReturnWorld);
+    if(auto* B=Cast<UButton>(GetWidgetFromName(TEXT("RetryReturnButton"))))B->OnClicked.AddUniqueDynamic(this,&UDivineBeastsArenaScreenBase::RetryReturn);
     if(auto* B=Cast<UButton>(GetWidgetFromName(TEXT("CloseButton"))))B->OnClicked.AddUniqueDynamic(this,&UDivineBeastsArenaScreenBase::CloseArenaPage);
     if(auto* List=Cast<UListView>(GetWidgetFromName(TEXT("ModeList"))))List->OnItemSelectionChanged().AddUObject(this,&UDivineBeastsArenaScreenBase::ModeSelected);
 }
@@ -76,16 +78,40 @@ void UDivineBeastsArenaScreenBase::RefreshInitialState()
     if(auto* B=Cast<UButton>(GetWidgetFromName(TEXT("CancelMatchmakingButton"))))B->SetIsEnabled(Service&&Service->CanCancelMatchmaking());
     Text(TEXT("StartMatchmakingButton_Label"),FText::FromString(Client&&Client->CanRetryObservedMigration()?TEXT("重试连接"):TEXT("开始匹配")));
     const bool bCanReturn=Client&&Client->CanReturnObservedMatch();
-    for(const TCHAR* Name:{TEXT("ReturnWorldButton"),TEXT("RetryReturnButton")})if(auto* B=Cast<UButton>(GetWidgetFromName(Name)))B->SetIsEnabled(bCanReturn);
-    Text(TEXT("ResultTitle"),FText::FromString(!VM||VM->ResultSummary.EndRevision<=0?TEXT("尚无已确认比赛结果"):VM->ResultSummary.WinningTeamId.IsNone()?TEXT("比赛结束 · 平局"):TEXT("比赛结束")));
-    Text(TEXT("ReturnStatusText"),CommandFeedback);
+    if (auto* Button = Cast<UButton>(GetWidgetFromName(TEXT("ReturnWorldButton")))) Button->SetIsEnabled(bCanReturn);
+    if (ExpectedSurfaceId == FName(TEXT("UI.Screen.PostMatchResult")))
+    {
+        const auto* Owner = GetOwningPlayer();
+        const auto* LocalState = Owner ? Owner->GetPlayerState<AGamePlatformArenaPlayerState>() : nullptr;
+        const bool bHasResult = VM && VM->ResultSummary.EndRevision > 0;
+        FText ResultTitle = INVTEXT("等待比赛结果");
+        if (bHasResult)
+        {
+            const FName Winner = VM->ResultSummary.WinningTeamId;
+            if (Winner.IsNone()) ResultTitle = INVTEXT("平局");
+            else if (!LocalState || LocalState->TeamId.IsNone()) ResultTitle = INVTEXT("比赛结束");
+            else ResultTitle = Winner == LocalState->TeamId ? INVTEXT("胜利") : INVTEXT("战败");
+        }
+        const auto* Mode = VM ? FDivineBeastsArenaModeCatalog::Find(VM->ArenaModeId) : nullptr;
+        Text(TEXT("ResultTitle"), ResultTitle);
+        Text(TEXT("ModeText"), Mode ? FText::FromString(FString::Printf(TEXT("%d 对 %d"), Mode->TeamSize, Mode->TeamSize)) : FText::GetEmpty());
+        Text(TEXT("ResultCommitStateText"), bHasResult ? INVTEXT("比赛结果已确认") : FText::GetEmpty());
+        const bool bCanRetry = Client && Client->CanRetryPostMatchReturn();
+        if (auto* Button = Cast<UButton>(GetWidgetFromName(TEXT("RetryReturnButton")))) Button->SetIsEnabled(bCanRetry);
+        if (auto* RetryBounds = GetWidgetFromName(TEXT("RetryReturnButton_Bounds")))
+            RetryBounds->SetVisibility(bCanRetry ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+        FText ReturnStatus = CommandFeedback;
+        if (bCanRetry) ReturnStatus = Client->GetObservedMatchmakingStatus();
+        else if (ReturnStatus.IsEmpty() && !bCanReturn) ReturnStatus = INVTEXT("等待服务器确认返回");
+        Text(TEXT("ReturnStatusText"), ReturnStatus);
+    }
     // 英雄选择与记分板共享服务器公开名单；本轮沿用后端锁定英雄，不需要二次选人。
     Text(TEXT("ArenaStateText"),FText::FromString(VM&&!VM->MatchId.IsEmpty()
         ? FString::Printf(TEXT("比赛 %s · 模式 %s"),*VM->MatchId,*VM->ArenaModeId.ToString())
         : TEXT("尚未收到服务器确认的竞技状态")));
     FString Roster;
     if(VM)for(const auto& Row:VM->Scoreboard)
-        Roster+=FString::Printf(TEXT("%s · 队伍 %s · 英雄 %s · %s\n"),*Row.PlayerId,*Row.TeamId.ToString(),
+        Roster+=FString::Printf(TEXT("%s · 队伍 %s · 英雄 %s · %s\n"),*Row.PlayerName,*Row.TeamId.ToString(),
             *Row.HeroDefinitionId,Row.bReady?TEXT("已准备"):TEXT("未准备"));
     Text(TEXT("RosterText"),FText::FromString(Roster.IsEmpty()?TEXT("尚无已复制的公开阵容"):Roster));
     Text(TEXT("HeroSelectionStatusText"),FText::FromString(TEXT("本轮使用匹配确认时已锁定的英雄；全员进入后倒计时开始，无需再次选人。")));
@@ -95,10 +121,28 @@ void UDivineBeastsArenaScreenBase::RefreshInitialState()
     if(auto* List=Cast<UListView>(GetWidgetFromName(TEXT("ResultsList"))))
     {
         List->ClearListItems();
-        if(VM)for(const auto& Row:VM->Scoreboard)
+        if (!VM) return;
+        const auto AddRow = [this, List](const FString& Key, const FString& PlayerName, FName TeamId,
+            int32 Kills, int32 Deaths, int32 Assists, int32 Score)
         {
-            auto* Item=NewObject<UDivineBeastsPartyListItem>(this);Item->Key=Row.PlayerId;Item->Title=FText::FromString(Row.PlayerId);
-            Item->Detail=FText::FromString(FString::Printf(TEXT("队伍 %s · 击杀 %d · 死亡 %d · 助攻 %d · 得分 %d"),*Row.TeamId.ToString(),Row.Kills,Row.Deaths,Row.Assists,Row.Score));List->AddItem(Item);
+            auto* Item = NewObject<UDivineBeastsPartyListItem>(this);
+            Item->Key = Key;
+            Item->Title = PlayerName.IsEmpty() ? INVTEXT("玩家") : FText::FromString(PlayerName);
+            Item->Detail = FText::FromString(FString::Printf(TEXT("队伍 %s · 击杀 %d · 死亡 %d · 助攻 %d · 得分 %d"),
+                *TeamId.ToString(), Kills, Deaths, Assists, Score));
+            List->AddItem(Item);
+        };
+        if (ExpectedSurfaceId == FName(TEXT("UI.Screen.PostMatchResult")) && !VM->ResultSummary.Teams.IsEmpty())
+        {
+            // 结算使用服务器冻结名单。某一方先离场时另一方仍能看到完整比分。
+            for (const auto& Team : VM->ResultSummary.Teams)
+                for (const auto& Player : Team.Players)
+                    AddRow(FString(), Player.PlayerName, Team.TeamId, Player.Kills, Player.Deaths, Player.Assists, Player.Score);
+        }
+        else
+        {
+            for (const auto& Row : VM->Scoreboard)
+                AddRow(Row.PlayerId, Row.PlayerName, Row.TeamId, Row.Kills, Row.Deaths, Row.Assists, Row.Score);
         }
     }
 }
@@ -124,9 +168,17 @@ void UDivineBeastsArenaScreenBase::CancelMatchmaking()
 }
 void UDivineBeastsArenaScreenBase::ReturnWorld()
 {
-    const auto* VM=GetArenaViewModel();auto* Client=GetGameInstance()?GetGameInstance()->GetSubsystem<UDivineBeastsArenaClientSubsystem>():nullptr;
+    auto* Client=GetGameInstance()?GetGameInstance()->GetSubsystem<UDivineBeastsArenaClientSubsystem>():nullptr;
     const bool bAccepted=Client&&Client->RequestPostMatchReturnToWorld();
-    CommandFeedback=FText::FromString(bAccepted?TEXT("返回请求已交给既有应用流程，等待后端新准入"):TEXT("当前结果或流程不允许返回；未使用旧地址或旧票据"));RefreshInitialState();
+    CommandFeedback=bAccepted?INVTEXT("正在请求返回原世界…"):INVTEXT("返回暂未受理，请稍后重试");
+    if (IsActivated()) RefreshInitialState();
+}
+void UDivineBeastsArenaScreenBase::RetryReturn()
+{
+    auto* Client = GetGameInstance() ? GetGameInstance()->GetSubsystem<UDivineBeastsArenaClientSubsystem>() : nullptr;
+    const bool bAccepted = Client && Client->CanRetryPostMatchReturn() && Client->RetryObservedMigration();
+    CommandFeedback = bAccepted ? FText::GetEmpty() : INVTEXT("返回暂未受理，请稍后重试");
+    if (IsActivated()) RefreshInitialState();
 }
 void UDivineBeastsArenaScreenBase::CloseArenaPage()
 {

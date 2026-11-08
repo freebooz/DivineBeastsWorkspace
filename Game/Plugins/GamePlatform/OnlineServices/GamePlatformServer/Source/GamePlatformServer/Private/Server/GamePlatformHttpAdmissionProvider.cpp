@@ -373,6 +373,22 @@ void FGamePlatformHttpAdmissionProvider::ValidateAdmission(
             // 使用最大时间避免把仅用于一次握手的短期TransferTicket TTL误当在线会话TTL。
             Admission.AuthorityUntil = FDateTime::MaxValue();
 
+            // 可选落点损坏时仍执行正常世界出生；它不参与既有验签或准入资格判定。
+            const TSharedPtr<FJsonObject>* SpawnObject = nullptr;
+            FGamePlatformVerifiedReturnSpawn Spawn;
+            if (Json->TryGetObjectField(TEXT("returnSpawn"), SpawnObject) && SpawnObject && SpawnObject->IsValid() &&
+                (*SpawnObject)->TryGetStringField(TEXT("characterId"), Spawn.CharacterId) && !Spawn.CharacterId.IsEmpty() && Spawn.CharacterId.Len() <= 1024 &&
+                (*SpawnObject)->TryGetStringField(TEXT("mapPackage"), Spawn.MapPackage) && Spawn.MapPackage.StartsWith(TEXT("/")) && Spawn.MapPackage.Len() <= 512 &&
+                (*SpawnObject)->TryGetNumberField(TEXT("xCm"), Spawn.LocationCm.X) &&
+                (*SpawnObject)->TryGetNumberField(TEXT("yCm"), Spawn.LocationCm.Y) &&
+                (*SpawnObject)->TryGetNumberField(TEXT("zCm"), Spawn.LocationCm.Z) &&
+                (*SpawnObject)->TryGetNumberField(TEXT("yawDegrees"), Spawn.YawDegrees) &&
+                !Spawn.LocationCm.ContainsNaN() && Spawn.LocationCm.GetAbsMax() <= 100000000.0 &&
+                FMath::IsFinite(Spawn.YawDegrees) && FMath::Abs(Spawn.YawDegrees) <= 180.0)
+            {
+                Admission.ReturnSpawn = MoveTemp(Spawn);
+            }
+
             FGamePlatformServerAdmissionResult Result;
             Result.bSucceeded = Admission.IsStructurallyValid();
             Result.ErrorCode = Result.bSucceeded

@@ -194,6 +194,9 @@ void UDivineBeastsUIClientSubsystem::Deinitialize()
     if (FSlateApplication::IsInitialized()) FSlateApplication::Get().OnApplicationActivationStateChanged().Remove(SlateActivationHandle);
     ApplicationDeactivateHandle.Reset();
     SystemMenuVisibilityChanged.Clear();
+    WorldMenuActionOwner.Reset();
+    WorldMenuAction = {};
+    OnWorldMenuActionChanged.Clear();
     if (PlatformUI)
     {
         PlatformUI->OnThemeRequestFinished.RemoveDynamic(
@@ -1292,6 +1295,31 @@ void UDivineBeastsUIClientSubsystem::HandleWorldInventoryRequested()
 }
 
 void UDivineBeastsUIClientSubsystem::HandleApplicationActivationChanged(bool bActive) { if (!bActive) CloseSystemMenu(); }
+
+void UDivineBeastsUIClientSubsystem::SetWorldMenuAction(
+    APlayerController& Owner, FDivineBeastsWorldMenuAction Action)
+{
+    if (bUIShuttingDown || !GetLocalPlayer() || Owner.GetWorld() != GetWorld() ||
+        GetLocalPlayer()->GetPlayerController(GetWorld()) != &Owner) return;
+    WorldMenuActionOwner = &Owner;
+    WorldMenuAction = MoveTemp(Action);
+    OnWorldMenuActionChanged.Broadcast();
+}
+
+void UDivineBeastsUIClientSubsystem::ClearWorldMenuAction(const APlayerController* Owner)
+{
+    if (!Owner || WorldMenuActionOwner.Get() != Owner) return;
+    WorldMenuActionOwner.Reset();
+    WorldMenuAction = {};
+    OnWorldMenuActionChanged.Broadcast();
+}
+
+FDivineBeastsWorldMenuAction UDivineBeastsUIClientSubsystem::GetWorldMenuAction() const
+{
+    const APlayerController* Owner = WorldMenuActionOwner.Get();
+    return Owner && !bUIShuttingDown && GetLocalPlayer() && Owner->GetWorld() == GetWorld() &&
+        GetLocalPlayer()->GetPlayerController(GetWorld()) == Owner ? WorldMenuAction : FDivineBeastsWorldMenuAction{};
+}
 
 bool UDivineBeastsUIClientSubsystem::HandleEscapeAction()
 {

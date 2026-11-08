@@ -1,5 +1,7 @@
 ﻿Set-StrictMode -Version Latest
 
+. (Join-Path $PSScriptRoot 'ActiveUnrealFiles.ps1')
+
 # 结构基线是实施门槛而非源码能力推断；这里只检查路径、描述、模块规则和配置，不声称完成编译或运行验收。
 $script:ExpectedGamePlatformPlugins = [ordered]@{
     Foundation = @('GamePlatformCore', 'GamePlatformData')
@@ -15,6 +17,7 @@ $script:ExpectedGamePlatformPlugins = [ordered]@{
 }
 $script:ExpectedProjectPlugins = @('DBAGameplay', 'DBAWorlds', 'DBAClient', 'DBAServer', 'DBAArena')
 $script:ExpectedMobaPresentationPlugin = 'MobaPresentation'
+$script:ApprovedEditorTools = @('BlueprintAutoLayout','GlooPrint')
 $script:ExpectedDefaultConfigs = @(
     'DefaultEngine.ini', 'DefaultGame.ini', 'DefaultInput.ini', 'DefaultGameplayTags.ini',
     'DefaultGameUserSettings.ini', 'DefaultDeviceProfiles.ini', 'DefaultScalability.ini', 'DefaultEditor.ini'
@@ -52,7 +55,7 @@ function Test-DesignBaselineWorkspace {
     $projectPluginRoot = Join-Path $pluginRoot 'DivineBeasts'
     $allDescriptors = @()
     if (Test-Path -LiteralPath $pluginRoot -PathType Container) {
-        $allDescriptors = @(Get-ChildItem -LiteralPath $pluginRoot -Filter '*.uplugin' -File -Recurse -ErrorAction SilentlyContinue)
+        $allDescriptors = @(Get-ActiveUnrealFiles $pluginRoot '*.uplugin')
     }
     else {
         $errors.Add("缺少唯一插件源码根目录：Game/Plugins")
@@ -61,14 +64,14 @@ function Test-DesignBaselineWorkspace {
     $gamePlatformNames = @()
     if (Test-Path -LiteralPath $gamePlatformRoot -PathType Container) {
         $gamePlatformNames = @(
-            Get-ChildItem -LiteralPath $gamePlatformRoot -Filter '*.uplugin' -File -Recurse -ErrorAction SilentlyContinue |
+            $allDescriptors | Where-Object { $_.FullName.StartsWith($gamePlatformRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) } |
                 ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) }
         )
     }
     $projectPluginNames = @()
     if (Test-Path -LiteralPath $projectPluginRoot -PathType Container) {
         $projectPluginNames = @(
-            Get-ChildItem -LiteralPath $projectPluginRoot -Filter '*.uplugin' -File -Recurse -ErrorAction SilentlyContinue |
+            $allDescriptors | Where-Object { $_.FullName.StartsWith($projectPluginRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) } |
                 ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) }
         )
     }
@@ -85,9 +88,28 @@ function Test-DesignBaselineWorkspace {
         $expectedPluginPaths[$pluginName] = "Game/Plugins/DivineBeasts/$pluginName/$pluginName.uplugin"
     }
     $expectedPluginPaths[$script:ExpectedMobaPresentationPlugin] = 'Game/Plugins/MobaCommon/Presentation/MobaPresentation/MobaPresentation.uplugin'
+    $projectReferences = @()
+    $officialProjectPath = Join-Path $root 'Game/DivineBeastsArena.uproject'
+    if (Test-Path -LiteralPath $officialProjectPath -PathType Leaf) {
+        try {
+            $project = Get-Content -LiteralPath $officialProjectPath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+            if ($project.PSObject.Properties['Plugins']) { $projectReferences = @($project.Plugins) }
+        } catch { $errors.Add("正式工程描述无法解析：$($_.Exception.Message)") }
+    }
+    $descriptorNames = @($allDescriptors | ForEach-Object BaseName)
+    $referencedNames = @($projectReferences | ForEach-Object Name)
+    $editorToolNames = @($script:ApprovedEditorTools | Where-Object { $_ -in $descriptorNames -or $_ -in $referencedNames })
+    foreach ($tool in $editorToolNames) {
+        $expectedPluginPaths[$tool] = "Game/Plugins/ThirdParty/Editor/$tool/$tool.uplugin"
+        $references = @($projectReferences | Where-Object { $_.Name -eq $tool })
+        if ($references.Count -ne 1 -or -not $references[0].PSObject.Properties['Enabled'] -or -not $references[0].Enabled -or
+            -not $references[0].PSObject.Properties['TargetAllowList'] -or ($references[0].TargetAllowList -join '|') -cne 'Editor') {
+            $errors.Add("获批工具$tool 必须由正式工程明确限制在Editor目标。")
+        }
+    }
 
     # 内容登记只允许已审核的纯内容插件扩展48个代码／机制插件基线（水体插件已纳入2026-10-16正式身份），不能借目录存在绕过清单。
-    $baselineCount = $expectedPluginPaths.Count
+    $baselineCount = $expectedPluginPaths.Count - $editorToolNames.Count
     $contentNames = @()
     $contentRoot = Join-Path $projectPluginRoot 'ContentPacks'
     $registryPath = Join-Path $contentRoot 'ContentPackRegistry.json'
@@ -150,6 +172,10 @@ function Test-DesignBaselineWorkspace {
             continue
         }
         $descriptorModules = @(if ($descriptor.PSObject.Properties['Modules']) { $descriptor.Modules })
+        if ($pluginName -in $editorToolNames -and (-not $descriptorModules.Count -or
+                @($descriptorModules | Where-Object { -not $_.PSObject.Properties['Type'] -or $_.Type -notin @('Editor','EditorNoCommandlet') }).Count)) {
+            $errors.Add("获批工具$pluginName 的实际模块必须限定为Editor。")
+        }
         if ($pluginName -in $contentNames) {
             if (-not $descriptor.PSObject.Properties['CanContainContent'] -or -not $descriptor.CanContainContent -or $descriptorModules.Count -gt 0) {
                 $errors.Add("登记内容包必须为无源码模块的纯内容插件：$pluginName")
@@ -184,7 +210,7 @@ function Test-DesignBaselineWorkspace {
     $gameRoot = Join-Path $root 'Game'
     $projectFiles = @()
     if (Test-Path -LiteralPath $gameRoot -PathType Container) {
-        $projectFiles = @(Get-ChildItem -LiteralPath $gameRoot -Filter '*.uproject' -File -Recurse -ErrorAction SilentlyContinue)
+        $projectFiles = @(Get-ActiveUnrealFiles $gameRoot '*.uproject')
     }
     if ($projectFiles.Count -ne 1) {
         $errors.Add("正式游戏工程数量应为 1，实际为 $($projectFiles.Count)")
@@ -289,6 +315,7 @@ function Test-DesignBaselineWorkspace {
             Baseline = $baselineCount
             ContentPacks = @($contentNames | Where-Object { $actualDescriptorNames -contains $_ }).Count
             ExpectedContentPacks = $contentNames.Count
+            ApprovedEditorTools = @($editorToolNames | Where-Object { $_ -in $actualDescriptorNames }).Count
             GamePlatform = $actualGamePlatformCount
             ExpectedGamePlatform = $expectedGamePlatformCount
             Project = $actualProjectPluginCount

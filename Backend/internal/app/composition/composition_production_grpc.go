@@ -171,18 +171,20 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	if err := service.ConfigureArenaLifecycle(redisstore.NewArenaLifecycleStore(redisClient)); err != nil {
 		return err
 	}
+	service.ConfigureVillageQueueOriginAuthority(matchapi.NewVillageQueueOriginAuthority(redisstore.NewPartyRepository(redisClient, 24*time.Hour)))
 
 	dispatcher := outbox.NewDispatcherWithOptions(matchOutboxStore, natsjs.NewOutboxPublisher(publisher), func() time.Time { return time.Now().UTC() }, cfg.Name+":"+config.Getenv("POD_NAME", "unknown"), 30*time.Second, 100)
 	go func() {
 		_ = dispatcher.Run(ctx, 500*time.Millisecond, func(err error) { slog.Error("Outbox Dispatcher发布失败", "error", err) })
 	}()
 
+	internalBearer := requiredEnvGRPC("GAMESERVERCONTROL_INTERNAL_TOKEN")
 	return runGRPCHost(ctx, cfg, func(server *grpc.Server) {
 		grpcadapter.RegisterGameServerSharedServer(server, service)
-		grpcadapter.RegisterGameServerControlInternalServer(server, service, requiredEnvGRPC("GAMESERVERCONTROL_INTERNAL_TOKEN"))
+		grpcadapter.RegisterGameServerControlInternalServer(server, service, internalBearer)
 		grpcadapter.RegisterServerTransferServer(server, service, productionIDGRPC, 30*time.Second)
 		grpcadapter.RegisterMatchResultServer(server, service)
-	})
+	}, httpadapter.NewGameServerControlHandler(service, internalBearer))
 }
 
 func runGRPCHost(ctx context.Context, cfg config.ServiceConfig, register func(*grpc.Server), optionalHTTP ...http.Handler) error {

@@ -1,13 +1,17 @@
 Describe '插件模块依赖图完整性' {
     $workspaceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
     $gameRoot = Join-Path $workspaceRoot 'Game'
+    . (Join-Path $PSScriptRoot 'ActiveUnrealFiles.ps1')
+    $buildRules = @(Get-ActiveUnrealFiles (Join-Path $gameRoot 'Source') '*.Build.cs') +
+        @(Get-ActiveUnrealFiles (Join-Path $gameRoot 'Plugins') '*.Build.cs')
+    $moduleNames = @($buildRules | ForEach-Object { $_.Name -replace '\.Build\.cs$', '' })
 
     function Get-LocalModuleDependencies {
         param([Parameter(Mandatory)][string]$Path)
 
         $source = Get-Content -LiteralPath $Path -Raw
         $dependencies = New-Object 'System.Collections.Generic.List[string]'
-        $blockPattern = '(?:Public|Private|DynamicallyLoaded)DependencyModuleNames\.Add(?:Range)?\s*\((?<body>.*?)\)\s*;'
+        $blockPattern = '(?:(?:Public|Private)DependencyModuleNames|DynamicallyLoadedModuleNames)\.Add(?:Range)?\s*\((?<body>.*?)\)\s*;'
         foreach ($block in [System.Text.RegularExpressions.Regex]::Matches(
             $source,
             $blockPattern,
@@ -22,8 +26,7 @@ Describe '插件模块依赖图完整性' {
     }
 
     It '所有GamePlatform、Moba和DivineBeasts模块依赖均解析到真实构建规则' {
-        $buildRules = @(Get-ChildItem -LiteralPath $gameRoot -Filter '*.Build.cs' -File -Recurse)
-        $moduleNames = @($buildRules | ForEach-Object { $_.Name -replace '\.Build\.cs$', '' })
+        @($moduleNames | Group-Object | Where-Object Count -gt 1).Count | Should Be 0
         $unresolved = New-Object 'System.Collections.Generic.List[string]'
 
         foreach ($buildRule in $buildRules) {
@@ -40,8 +43,6 @@ Describe '插件模块依赖图完整性' {
     }
 
     It '本地插件模块依赖图不存在循环' {
-        $buildRules = @(Get-ChildItem -LiteralPath $gameRoot -Filter '*.Build.cs' -File -Recurse)
-        $moduleNames = @($buildRules | ForEach-Object { $_.Name -replace '\.Build\.cs$', '' })
         $dependenciesByModule = @{}
         foreach ($buildRule in $buildRules) {
             $moduleName = $buildRule.Name -replace '\.Build\.cs$', ''

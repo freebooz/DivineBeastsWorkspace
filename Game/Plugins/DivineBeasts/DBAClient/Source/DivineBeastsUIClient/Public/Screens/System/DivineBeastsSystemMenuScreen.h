@@ -4,6 +4,7 @@
 #include "DivineBeastsSystemMenuScreen.generated.h"
 class UButton;
 class UTextBlock;
+class UDivineBeastsUIClientSubsystem;
 
 /** 竖排游戏菜单：返回、真实系统设置、既有注销命令、正常退出；无Tick/HTTP/业务状态写入。 */
 UCLASS(Abstract, Blueprintable)
@@ -27,6 +28,9 @@ protected:
     /** 资源/命令失败反馈；不显示内部软路径或敏感认证字段。 */
     UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> ErrorText;
 private:
+    TWeakObjectPtr<UDivineBeastsUIClientSubsystem> MenuService;
+    FDelegateHandle WorldMenuActionHandle;
+    FText DefaultLogoutLabel;
     void RefreshCommands();
     UFUNCTION() void HandleResume();
     UFUNCTION() void HandleSettings();

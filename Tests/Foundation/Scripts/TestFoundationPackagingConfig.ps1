@@ -161,11 +161,12 @@ try {
         }
         $iniArguments = [string[]]@($probeArguments | Where-Object { $_ -like '-ini:Game:[[]Staging[]]:+AllowedConfigFiles=*' })
         $expectedStageFiles = @()
-        if ($case.Development) {
+        if ($case.Development -or $case.Config -eq 'VillageServer') {
             $expectedStageFiles = @(
                 "DivineBeastsArena/Config/Custom/$($case.Config)/DefaultGame.ini",
-                "DivineBeastsArena/Config/Custom/$($case.Config)/DefaultGameplayTags.ini"
+                "DivineBeastsArena/Config/Custom/$($case.Config)/DefaultEngine.ini"
             )
+            if ($case.Development) { $expectedStageFiles += "DivineBeastsArena/Config/Custom/$($case.Config)/DefaultGameplayTags.ini" }
         }
         if ($iniArguments.Count -ne $expectedStageFiles.Count) { throw "开发白名单数量错误：$($case.Entry)/$($case.Config)" }
         $receiptCustomConfig = if ($case.Target -eq 'Server') { 'DedicatedServer' } else { '' }
@@ -177,7 +178,7 @@ try {
         foreach ($expectedFile in $expectedStageFiles) {
             if ($expectedFile -notin $allowedFiles) { throw "真实UBT解析未保留白名单：$expectedFile" }
         }
-        $stagedDevelopmentFiles = @($allowedFiles | Where-Object { $_ -like 'DivineBeastsArena/Config/Custom/VillageDevelopment*/*' })
+        $stagedDevelopmentFiles = @($allowedFiles | Where-Object { $_ -like 'DivineBeastsArena/Config/Custom/Village*/*' })
         if ($stagedDevelopmentFiles.Count -ne $expectedStageFiles.Count) { throw '默认路径被注入开发配置或额外自定义文件。' }
         $developmentEnabled = $false
         $null = $stageHierarchy.GetBool('DivineBeasts.Abilities','bAllowDevelopmentAbilitySets',[ref]$developmentEnabled)
@@ -212,9 +213,31 @@ try {
         }
         $developmentStageCases += @{ Entry=$case.Entry; Target=$case.Target; CustomConfig=$case.Config; AllowedDevelopmentFiles=$stagedDevelopmentFiles; DefaultDevelopmentEnabled=$developmentEnabled }
     }
+    # 使用锁定UBT真实合并默认层及三个服务器配置；客户端仍保留其扫描与视口类。
+    $profileChecks = @()
+    foreach ($profile in @('DedicatedServer','VillageServer','VillageDevelopmentServer','FrontEndClient')) {
+        $game = [UnrealBuildTool.ConfigCache]::ReadHierarchy([UnrealBuildTool.ConfigHierarchyType]::Game,
+            $project,[UnrealBuildTool.UnrealTargetPlatform]::Win64,$profile,[string[]]@(),$null,$null)
+        $engineIni = [UnrealBuildTool.ConfigCache]::ReadHierarchy([UnrealBuildTool.ConfigHierarchyType]::Engine,
+            $project,[UnrealBuildTool.UnrealTargetPlatform]::Win64,$profile,[string[]]@(),$null,$null)
+        $types = [Collections.Generic.List[string]]::new()
+        $null = $game.GetArray('/Script/Engine.AssetManagerSettings','PrimaryAssetTypesToScan',[ref]$types)
+        $inputData = ''; $viewport = ''
+        $null = $game.GetString('/Script/CommonInput.CommonInputSettings','InputData',[ref]$inputData)
+        $null = $engineIni.GetString('/Script/Engine.Engine','GameViewportClientClassName',[ref]$viewport)
+        $hasInventoryScan = @($types | Where-Object { $_ -match 'AssetBaseClass=/Script/GamePlatformInventoryClient\.' }).Count -gt 0
+        $client = $profile -eq 'FrontEndClient'
+        $expectedViewport = if ($client) { '/Script/CommonUI.CommonGameViewportClient' } else { '/Script/Engine.GameViewportClient' }
+        $expectedInputData = if ($client) { '/GamePlatformUI/Input/BP_GP_UIInputData.BP_GP_UIInputData_C' } else { 'None' }
+        if ($hasInventoryScan -ne $client -or $viewport -cne $expectedViewport -or $inputData -cne $expectedInputData -or
+            -not @($types | Where-Object { $_ -match 'AssetBaseClass=/Script/DivineBeastsCharactersRuntime\.' }).Count) {
+            throw "真实合并后配置错配：$profile。Viewport=$viewport；InputData=$inputData；InventoryScan=$hasInventoryScan"
+        }
+        $profileChecks += @{ Profile=$profile; Viewport=$viewport; InputData=$inputData; InventoryScan=$hasInventoryScan }
+    }
     Write-FoundationResult $context 0 '3项既有数组合并、6组真实脚本参数/Stage白名单及3组服务器排除数组UBT回归通过；未执行Cook、Stage或游戏启动。' @{
         StandardExcluded=@($normalExcluded); DevelopmentExcluded=@($devExcluded); DevelopmentIncluded=@($devIncluded)
-        SentinelExcluded=@($sentinelExcluded); DevelopmentStageCases=$developmentStageCases; ServerCookCases=$serverCookCases
+        SentinelExcluded=@($sentinelExcluded); DevelopmentStageCases=$developmentStageCases; ServerCookCases=$serverCookCases; EffectivePresentationProfiles=$profileChecks
     }
     exit 0
 } catch { Write-FoundationResult $context 1 $_.Exception.Message; exit 1 }

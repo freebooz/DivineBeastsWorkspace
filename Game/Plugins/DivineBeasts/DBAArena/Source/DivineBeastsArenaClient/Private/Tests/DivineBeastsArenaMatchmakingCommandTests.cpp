@@ -147,6 +147,8 @@ bool FDivineBeastsArenaMenuDemandRegressionTest::RunTest(const FString&)
     Adapter->ObservedState=EGamePlatformArenaClientFlowState::Idle;
     Service->SetObservedArenaClientFlowState(EGamePlatformArenaClientFlowState::Idle);
     TestTrue(TEXT("确认Idle后队列HUD隐藏"),Service->ResolvePrimaryArenaSurfaceId().IsNone());
+    Service->SetObservedArenaClientFlowState(EGamePlatformArenaClientFlowState::Result);
+    TestTrue(TEXT("回到常驻世界后，迟到的返回观察不能重开旧结算"), Service->ResolvePrimaryArenaSurfaceId().IsNone());
     return true;
 }
 

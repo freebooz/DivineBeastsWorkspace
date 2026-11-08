@@ -11,6 +11,8 @@
 #include "Types/GamePlatformCombatEvent.h"
 #include "Server/DivineBeastsServerBootstrapSubsystem.h"
 #include "Gameplay/DivineBeastsWorldGameMode.h"
+#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Village/DivineBeastsVillageQueueOrigin.h"
 #include "Framework/GamePlatformPlayerStateBase.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
@@ -22,6 +24,7 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "HAL/PlatformMisc.h"
+#include "HAL/PlatformTime.h"
 #include "TimerManager.h"
 #include "UObject/Package.h"
 
@@ -113,6 +116,13 @@ void FDivineBeastsWorldCharacterAdmission::ObserveAdmissions()
 void FDivineBeastsWorldCharacterAdmission::ReleaseConnection(const TSharedPtr<FConnection>& Connection)
 {
     ReleasePawnDeath(Connection);
+    if (auto* Source = Connection->QueueOriginController.Get()) Source->OnVillageQueueOriginRequested.Remove(Connection->QueueOriginHandle);
+    if (Connection->QueueOriginRequest)
+    {
+        Connection->QueueOriginRequest->OnProcessRequestComplete().Unbind();
+        Connection->QueueOriginRequest->CancelRequest();
+        Connection->QueueOriginRequest.Reset();
+    }
     Connection->OperationId.Invalidate();
     Connection->PawnOperationId.Invalidate();
     if (Connection->Request) { Connection->Request->OnProcessRequestComplete().Unbind(); Connection->Request->CancelRequest(); Connection->Request.Reset(); }
@@ -160,7 +170,60 @@ void FDivineBeastsWorldCharacterAdmission::HandleAdmission(const APlayerControll
     if (!bAccepted) { Mode->RevokeVerifiedAdmission(*Mutable, {Verified.AdmissionId, Verified.ConnectionGeneration, Verified.SessionEpoch}); return; }
     auto Connection = MakeShared<FConnection>(); Connection->Verified = Verified; Connection->OperationId = FGuid::NewGuid();
     Connections.Add(Mutable, Connection);
+    FName Role;
+    if (auto* Source = Cast<ADivineBeastsWorldPlayerController>(Mutable);
+        Source && FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(FName(*Verified.ExperienceId), Role) &&
+        Role == FDivineBeastsProjectCatalog::GetVillageServerRole())
+    {
+        Connection->QueueOriginController = Source;
+        const TWeakPtr<FDivineBeastsWorldCharacterAdmission> WeakThis = AsShared();
+        const TWeakPtr<FConnection> WeakConnection = Connection;
+        const TWeakObjectPtr<ADivineBeastsWorldPlayerController> WeakSource = Source;
+        Connection->QueueOriginHandle = Source->OnVillageQueueOriginRequested.AddWeakLambda(Source, [WeakThis, WeakConnection, WeakSource](const FString& TicketId)
+        {
+            const auto Self = WeakThis.Pin();
+            const auto Current = WeakConnection.Pin();
+            auto* Controller = WeakSource.Get();
+            if (Self && Current && Controller) Self->RecordVillageQueueOrigin(*Controller, Current, TicketId);
+        });
+    }
     ReadProfile(*Mutable, Connection);
+}
+
+void FDivineBeastsWorldCharacterAdmission::RecordVillageQueueOrigin(ADivineBeastsWorldPlayerController& Controller,
+    const TSharedPtr<FConnection>& Connection, const FString& QueueTicketId)
+{
+    const double Now = FPlatformTime::Seconds();
+    if (!IsCurrent(&Controller, Connection) || Connection->QueueOriginRequest || QueueTicketId == Connection->LastQueueOriginTicketId ||
+        Now < Connection->NextQueueOriginReportTime || Controller.GetGameplayAvatarGeneration() <= 0 ||
+        !(QueueTicketId.StartsWith(TEXT("matchmaking-")) || QueueTicketId.StartsWith(TEXT("challenge-"))))
+    {
+        return;
+    }
+    auto* Pawn = Cast<ACharacter>(Connection->BoundPawn.Get());
+    FGamePlatformVerifiedReturnSpawn Spawn;
+    if (!Pawn || Controller.GetPawn() != Pawn || !DivineBeasts::VillageQueueOrigin::Capture(*Pawn, Connection->CharacterId, Spawn))
+    {
+        return;
+    }
+    Connection->LastQueueOriginTicketId = QueueTicketId;
+    Connection->NextQueueOriginReportTime = Now + 0.5;
+    auto Request = DivineBeasts::VillageQueueOrigin::MakeReport(Connection->Verified, QueueTicketId, Spawn);
+    if (!Request) return;
+
+    const TWeakPtr<FConnection> WeakConnection = Connection;
+    Request->OnProcessRequestComplete().BindLambda([WeakConnection](FHttpRequestPtr Finished, FHttpResponsePtr Response, bool bSucceeded)
+    {
+        const auto Current = WeakConnection.Pin();
+        if (!Current || Current->QueueOriginRequest != Finished) return;
+        Current->QueueOriginRequest.Reset();
+        if (bSucceeded && Response && Response->GetResponseCode() == 200)
+        {
+            UE_LOG(LogTemp, Display, TEXT("VillageQueueOriginRecorded"));
+        }
+    });
+    Connection->QueueOriginRequest = Request;
+    if (!Request->ProcessRequest()) Connection->QueueOriginRequest.Reset();
 }
 void FDivineBeastsWorldCharacterAdmission::RequestJson(APlayerController& Controller, const TSharedPtr<FConnection>& Connection,
     const FString& Route, TFunction<void(FString)> Completed)
@@ -308,6 +371,21 @@ void FDivineBeastsWorldCharacterAdmission::ObserveCharacterInitialization(APlaye
         || Controller.GetPawn() != Connection->BoundPawn.Get() || Identity->GetOwner() != Connection->BoundPawn.Get()) return;
     if (Identity->IsCharacterReady())
     {
+        if (!Connection->bTriedReturnSpawn)
+        {
+            Connection->bTriedReturnSpawn = true;
+            auto* Pawn = Cast<ACharacter>(Connection->BoundPawn.Get());
+            const auto& Spawn = Connection->Verified.ReturnSpawn;
+            if (Pawn && Connection->QueueOriginController.Get() == &Controller && Spawn.IsSet() && Spawn->CharacterId == Connection->CharacterId &&
+                DivineBeasts::VillageQueueOrigin::TryRestore(*Pawn, Spawn.GetValue()))
+            {
+                const FRotator Rotation(0.0, Spawn->YawDegrees, 0.0);
+                Controller.SetControlRotation(Rotation);
+                Controller.ClientSetRotation(Rotation, true);
+                UE_LOG(LogTemp, Display, TEXT("VillageQueueOriginRestored"));
+            }
+            if (!IsCurrent(&Controller, Connection)) return;
+        }
         Mode->GetWorld()->GetTimerManager().ClearTimer(Connection->InitializationTimeout);
         if (!Connection->bWasCharacterReady) UE_LOG(LogTemp, Display, TEXT("WorldCharacter ready: Pawn=%s Hero=%s Version=%d"),
             *Connection->BoundPawn->GetName(), *Identity->GetHeroDefinitionId().ToString(), Identity->GetDefinitionVersion());

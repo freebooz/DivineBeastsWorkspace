@@ -193,6 +193,7 @@ func (s *Service) CommandMatchmaking(ctx context.Context, actor matchmaking.Acto
 			}
 		}
 		if actor.SessionID != "" && actor.CharacterID != "" {
+			actor.QueueTicketID = tx.Queue.Reservations[actor.PlayerID]
 			tx.Queue.Contexts[actor.PlayerID] = actor
 		}
 		if p := tx.Parties[tx.PlayerParties[actor.PlayerID]]; p != nil {

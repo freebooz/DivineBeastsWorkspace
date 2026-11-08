@@ -2,6 +2,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Framework/GamePlatformArenaGameMode.h"
+#include "Framework/GamePlatformArenaGameState.h"
 #include "Framework/GamePlatformArenaPlayerController.h"
 #include "Framework/GamePlatformArenaPlayerState.h"
 #include "Definitions/GamePlatformArenaBuiltinModes.h"
@@ -62,7 +63,7 @@ bool FGamePlatformArenaEliminationTest::RunTest(const FString&)
             auto* Mode=Owned.Mode;Mode->DispatchBeginPlay();Owned.Lifecycle.World=Owned.World;Mode->SetGameplayLifecycleAdapter(&Owned.Lifecycle);Mode->SetHeroEligibilityProvider(&Owned.Heroes);
             auto Spec=Builtin;Spec.SelectionPolicyId=TEXT("Arena.Selection.LockedRoster");Spec.RespawnPolicyId=TEXT("Arena.Respawn.Disabled");Spec.WinConditionPolicyId=TEXT("Arena.WinCondition.SingleRoundElimination");Spec.TimeLimitSeconds=1200;
             FGamePlatformArenaAssignment Assignment;Assignment.MatchId=TEXT("Test.Elimination");Assignment.GameServerId=TEXT("Test.Server");Assignment.ArenaModeId=Spec.ArenaModeId;Assignment.MapId=Spec.MapId;Assignment.TeamSize=Spec.TeamSize;Assignment.TotalPlayers=Spec.TotalPlayers;
-            for(int32 Index=0;Index<Spec.TotalPlayers;++Index){FGamePlatformArenaRosterSlot Slot;Slot.PlayerId=FString::Printf(TEXT("Player.%d"),Index);Slot.CharacterId=FString::Printf(TEXT("Character.%d"),Index);Slot.TeamId=Index<Spec.TeamSize?TEXT("team-a"):TEXT("team-b");Slot.HeroDefinitionId=TEXT("Test.LockedHero");Slot.SlotIndex=Index;Assignment.Roster.Add(Slot);}
+            for(int32 Index=0;Index<Spec.TotalPlayers;++Index){FGamePlatformArenaRosterSlot Slot;Slot.PlayerId=FString::Printf(TEXT("Player.%d"),Index);Slot.CharacterId=FString::Printf(TEXT("Character.%d"),Index);Slot.CharacterName=Index==0?TEXT("白君"):TEXT("青衡");Slot.TeamId=Index<Spec.TeamSize?TEXT("team-a"):TEXT("team-b");Slot.HeroDefinitionId=TEXT("Test.LockedHero");Slot.SlotIndex=Index;Assignment.Roster.Add(Slot);}
             FString Error;if(!TestTrue(TEXT("五模式真实Assignment"),Mode->ApplyAssignmentWithModeSpec(Assignment,Spec,Error))){AddError(Error);return false;}
             for(const auto& Slot:Assignment.Roster)
             {
@@ -118,6 +119,31 @@ bool FGamePlatformArenaEliminationTest::RunTest(const FString&)
             TestEqual(TEXT("完整终局进入结果待提交"),Mode->GetMatchPhase(),EGamePlatformArenaMatchPhase::ResultPending);
             TestEqual(TEXT("双方同帧全灭平局，否则另一队获胜"),Mode->GetPendingResult().WinningTeamId,bDoubleWipe?NAME_None:FName(TEXT("team-b")));
             TestEqual(TEXT("淘汰结束原因"),Mode->GetPendingResult().EndReason,EGamePlatformArenaMatchEndReason::Elimination);
+            if (Spec.TeamSize == 1 && !bDoubleWipe)
+            {
+                auto* ArenaState = Mode->GetGameState<AGamePlatformArenaGameState>();
+                auto* Departing = Owned.Lifecycle.Controllers.FindRef(Assignment.Roster[0].PlayerId)->PlayerState.Get();
+                if (!TestNotNull(TEXT("结算公开GameState"), ArenaState) ||
+                    !TestNotNull(TEXT("离场的失败方PlayerState"), Departing)) { return false; }
+                TestTrue(TEXT("离场前失败方在实时PlayerArray中"), ArenaState->PlayerArray.Contains(Departing));
+                ArenaState->RemovePlayerState(Departing);
+                TestFalse(TEXT("失败方已从实时PlayerArray移除"), ArenaState->PlayerArray.Contains(Departing));
+                TestEqual(TEXT("公开结算保留两队"), ArenaState->ResultSummary.Teams.Num(), 2);
+                const auto* LosingTeam = ArenaState->ResultSummary.Teams.FindByPredicate([](const auto& Team)
+                {
+                    return Team.TeamId == TEXT("team-a");
+                });
+                if (!TestNotNull(TEXT("离场后仍有失败队结算"), LosingTeam) ||
+                    !TestEqual(TEXT("离场后仍有失败方结算行"), LosingTeam->Players.Num(), 1)) { return false; }
+                const auto& Row = LosingTeam->Players[0];
+                TestEqual(TEXT("离场后结算仍显示已选角色名"), Row.PlayerName, FString(TEXT("白君")));
+                TestEqual(TEXT("离场后结算仍显示最终死亡次数"), Row.Deaths, 1);
+                TestTrue(TEXT("公开行不含原始玩家或角色标识"), Row.PlayerId.IsEmpty() && Row.CharacterId.IsEmpty());
+                TestEqual(TEXT("提交结算仍持有玩家标识"), Mode->GetPendingResult().Teams[0].Players[0].PlayerId,
+                    Assignment.Roster[0].PlayerId);
+                TestEqual(TEXT("提交结算仍持有角色标识"), Mode->GetPendingResult().Teams[0].Players[0].CharacterId,
+                    Assignment.Roster[0].CharacterId);
+            }
         }
     }
     return true;

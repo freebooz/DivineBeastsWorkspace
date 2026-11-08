@@ -84,6 +84,9 @@ func (s *ArenaLifecycleStore) SaveArena(ctx context.Context, value gameservercon
 				if err := gameservercontrol.ValidateArenaRecordTransition(old, value); err != nil {
 					return err
 				}
+				if old.State == "resultCommitted" && value.State == old.State {
+					return nil // 幂等回执不覆盖首次控制提交的心跳基准。
+				}
 			} else if !errors.Is(err, redis.Nil) {
 				return err
 			}
@@ -148,7 +151,7 @@ func (s *ArenaLifecycleStore) GetPresence(ctx context.Context, id string) (games
 }
 
 // SavePresence原子拒绝旧准入覆盖新位置；首次写入也必须检查完整会话/Boot/Epoch。
-func (s *ArenaLifecycleStore) SavePresence(ctx context.Context, value gameservercontrol.PlayerPresence) error {
+func (s *ArenaLifecycleStore) SavePresence(ctx context.Context, value gameservercontrol.PlayerPresence, sourceMatchID string) error {
 	if _, cluster := s.client.inner.(*redis.ClusterClient); cluster {
 		return errors.New("ARENA_CLUSTER_UNSUPPORTED: 本人位置要求单逻辑写域")
 	}
@@ -170,6 +173,24 @@ func (s *ArenaLifecycleStore) SavePresence(ctx context.Context, value gameserver
 			}
 			if err := gameservercontrol.ValidatePresenceTransition(old, value); err != nil {
 				return err
+			}
+			if value.MatchID == "" {
+				if err := gameservercontrol.ValidateWorldDeparture(old, sourceMatchID, func(matchID string) (gameservercontrol.ArenaAssignmentRecord, bool, error) {
+					var record gameservercontrol.ArenaAssignmentRecord
+					raw, err := tx.Get(ctx, arenaRecordPrefix+matchID).Bytes()
+					if errors.Is(err, redis.Nil) {
+						return record, false, nil
+					}
+					if err != nil {
+						return record, false, err
+					}
+					if err := json.Unmarshal(raw, &record); err != nil {
+						return record, false, err
+					}
+					return record, true, gameservercontrol.ValidateArenaRecord(record)
+				}); err != nil {
+					return err
+				}
 			}
 			if err := ctx.Err(); err != nil {
 				return err

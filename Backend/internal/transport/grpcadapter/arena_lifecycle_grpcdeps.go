@@ -24,7 +24,7 @@ func (s *GameServerControlInternalServer) ArenaLifecycle(ctx context.Context, in
 	value, err := s.service.ExecuteRuntimeCommand(ctx, input.GetAction(), input.GetInputJson())
 	if err != nil {
 		code := strings.SplitN(err.Error(), ":", 2)[0]
-		if !strings.HasPrefix(code, "MATCH_") && !strings.HasPrefix(code, "ARENA_") && !strings.HasPrefix(code, "PLAYER_") && !strings.HasPrefix(code, "TRANSFER_") && code != "INVALID_REQUEST" {
+		if !strings.HasPrefix(code, "MATCH_") && !strings.HasPrefix(code, "ARENA_") && !strings.HasPrefix(code, "PLAYER_") && !strings.HasPrefix(code, "TRANSFER_") && code != "INVALID_REQUEST" && code != "WORLD_MATCH_MIGRATION_REQUIRED" {
 			code = "SERVICE_UNAVAILABLE"
 		}
 		return &gameservercontrolv1.ArenaLifecycleResponse{ErrorCode: code}, nil

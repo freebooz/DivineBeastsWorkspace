@@ -455,7 +455,7 @@
     "NativeTrailExtentCmAtFixture3000": "see per-run actual SimCache",
     "TrailRootWidthCm": 137.142857,
     "TrailLifetimeSeconds": "0.5 maximum; world distance <=700cm * User.TrailLengthScale; age alpha fades during final 35 percent",
-    "FlightProfile": "/DBAContentPack_Common/Gameplay/ProjectileFlight/DA_DBA_Fireball_Flight",
+    "FlightProfile": "/DBAGameplay/Abilities/ProjectileFlight/DA_DBA_Fireball_Flight",
     "InitialSpeedCmPerSecond": 1200,
     "CruiseSpeedCmPerSecond": 1800,
     "AccelerationDurationSeconds": 0.15,

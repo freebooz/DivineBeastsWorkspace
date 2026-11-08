@@ -9,6 +9,12 @@
 #include "Flow/DivineBeastsFlowTypes.h"
 #include "Extensions/DivineBeastsApplicationFlowExtension.h"
 #include "DivineBeastsApplicationFlowSubsystem.h"
+#include "API/GamePlatformApplicationFlowSubsystem.h"
+#include "Containers/Ticker.h"
+#include "Identity/DivineBeastsProjectCatalog.h"
+#include "Interfaces/GamePlatformCallbackFlowNode.h"
+#include "Misc/ScopeExit.h"
+#include "Subsystems/SubsystemCollection.h"
 
 /**
  * 验证项目层只声明稳定NodeId/ExecutorId，不再依赖旧RegisterNode/TransitionTo状态机。
@@ -168,13 +174,18 @@ namespace
         }
 
         virtual void OnLeavingInWorld(
-            UDivineBeastsApplicationFlowSubsystem&) override
+            UDivineBeastsApplicationFlowSubsystem& Flow) override
         {
             ++Left;
+            if (OnLeaving)
+            {
+                OnLeaving(Flow);
+            }
         }
 
         int32 Entered = 0;
         int32 Left = 0;
+        TFunction<void(UDivineBeastsApplicationFlowSubsystem&)> OnLeaving;
     };
 }
 
@@ -204,6 +215,68 @@ bool FDivineBeastsFlowExtensionRegistryTest::RunTest(const FString&)
     TestFalse(TEXT("重复扩展身份拒绝"), Flow->RegisterExtension(ExtensionId, Extension));
     TestTrue(TEXT("扩展注销成功"), Flow->UnregisterExtension(ExtensionId));
     TestFalse(TEXT("旧扩展身份重复注销安全失败"), Flow->UnregisterExtension(ExtensionId));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldTransferIntentTest,
+    "DivineBeasts.ApplicationFlow.WorldTransfer.AcceptedIntentWins",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDivineBeastsWorldTransferIntentTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>());
+    TStrongObjectPtr<UGamePlatformApplicationFlowSubsystem> Service(
+        NewObject<UGamePlatformApplicationFlowSubsystem>(Instance.Get()));
+    TStrongObjectPtr<UDivineBeastsApplicationFlowSubsystem> Flow(
+        NewObject<UDivineBeastsApplicationFlowSubsystem>(Instance.Get()));
+    FSubsystemCollection<UGameInstanceSubsystem> Collection;
+    Service->Initialize(Collection);
+    ON_SCOPE_EXIT { Service->Deinitialize(); };
+
+    Flow->PlatformFlow = Service.Get();
+    Flow->FlowContext = NewObject<UDivineBeastsApplicationFlowContext>(Instance.Get());
+    FDivineBeastsCharacterSummary Character;
+    Character.CharacterId = TEXT("character-intent-test");
+    Flow->FlowContext->SetSelectedCharacter(Character);
+
+    auto* Node = NewObject<UGamePlatformCallbackFlowNode>(Instance.Get());
+    Node->Bind([](const auto&, auto) {}, [](auto) {});
+    FGamePlatformFlowDefinition Definition;
+    Definition.EntryNodeId = FDivineBeastsFlowNodes::InWorld();
+    auto& Step = Definition.Steps.AddDefaulted_GetRef();
+    Step.NodeId = Definition.EntryNodeId;
+    Step.Node = Node;
+    Step.Routes.Add(FDivineBeastsFlowOutcomes::RequestWorld(), NAME_None);
+    FString Error;
+    if (!TestTrue(TEXT("配置实际流程邮箱"), Service->Configure(Definition, Error)))
+    {
+        return false;
+    }
+    Flow->ActiveFlow = Service->Start(Flow->FlowContext.Get(), Error);
+    FTSTicker::GetCoreTicker().Tick(0.01f);
+    if (!TestTrue(TEXT("世界节点已开始"), Flow->IsCurrentNode(FDivineBeastsFlowNodes::InWorld())))
+    {
+        return false;
+    }
+
+    const auto Extension = MakeShared<FTestFlowExtension>();
+    const FName First = FDivineBeastsProjectCatalog::GetVillageTutorialExperience();
+    const FName Second = FDivineBeastsProjectCatalog::GetVillageTrainingExperience();
+    bool bReentrantAccepted = false;
+    Extension->OnLeaving = [&](UDivineBeastsApplicationFlowSubsystem& Active)
+    {
+        if (Extension->Left == 1)
+        {
+            bReentrantAccepted = Active.RequestWorldAssignment(Second, TEXT("reentrant"));
+        }
+    };
+    Flow->RegisterExtension(TEXT("Test.WorldTransfer"), Extension);
+    TestTrue(TEXT("首条转场被受理"), Flow->RequestWorldAssignment(First, TEXT("first")));
+    TestFalse(TEXT("离场回调重入不得接管首条转场"), bReentrantAccepted);
+    TestFalse(TEXT("同帧重复请求被拒绝"), Flow->RequestWorldAssignment(Second, TEXT("second")));
+    TestEqual(TEXT("仅被受理的请求写入目标"), Flow->FlowContext->GetTargetExperience(), First);
+    TestEqual(TEXT("被拒绝的请求不能改写区域"), Flow->FlowContext->GetPreferredRegion(), FString(TEXT("first")));
+    TestEqual(TEXT("离场通知只发一次"), Extension->Left, 1);
     return true;
 }
 

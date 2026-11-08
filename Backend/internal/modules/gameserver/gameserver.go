@@ -62,12 +62,14 @@ type Instance struct {
 
 // AllocationRequest（服务器分配请求）按角色、体验、区域、世界与容量选择实例。
 type AllocationRequest struct {
-	RoleID           string // RoleID（目标服务器角色ID）。
-	ExperienceID     string // ExperienceID（目标体验ID）。
-	RegionID         string // RegionID（首选部署区域）。
-	WorldID          string // WorldID（目标世界ID；为空表示不限定）。
-	RequiredCapacity int    // RequiredCapacity（所需玩家容量）。
-	MatchID          string // MatchID（MainArena比赛ID，其他角色必须为空）。
+	RoleID                string // RoleID（目标服务器角色ID）。
+	ExperienceID          string // ExperienceID（目标体验ID）。
+	RegionID              string // RegionID（首选部署区域）。
+	WorldID               string // WorldID（目标世界ID；为空表示不限定）。
+	RequiredCapacity      int    // RequiredCapacity（所需玩家容量）。
+	MatchID               string // MatchID（MainArena比赛ID，其他角色必须为空）。
+	PreferredGameServerID string // 可信返程优先选择的原实例，可为空。
+	PreferredServerBootID string // 优先实例的原启动代次，必须同实例一起匹配。
 }
 
 // Registry（游戏服务器注册表）保存可快速访问的GameServer状态。

@@ -45,6 +45,7 @@ func (a *api) authenticatedMatchmakingActor(ctx context.Context, session Authent
 	for _, character := range items {
 		if character.CharacterID == profile.SelectedCharacterID && character.CharacterID != "" && character.Status == "Active" && character.CharacterRevision > 0 {
 			actor.CharacterID = character.CharacterID
+			actor.CharacterName = character.CharacterName
 			actor.HeroDefinitionID = character.HeroDefinitionID
 			actor.CharacterRevision = character.CharacterRevision
 			return actor, nil
@@ -69,7 +70,8 @@ func (a *api) commandMatchmaking(w http.ResponseWriter, r *http.Request, session
 		writeOnlineError(w, err)
 		return
 	}
-	requireCharacter := command.Action == "start" || command.Action == "reply" || command.Action == "challenge" || command.Action == "challengeReply"
+	requireCharacter := command.Action == "start" || command.Action == "reply" || command.Action == "challenge" || command.Action == "challengeReply" ||
+		(command.Action == "ready" && command.Accept)
 	actor, err := a.authenticatedMatchmakingActor(r.Context(), session, requireCharacter)
 	if err != nil {
 		writeMatchmakingError(w, err)

@@ -201,6 +201,11 @@ bool AGamePlatformArenaGameMode::ApplyAssignmentWithModeSpec(
     return Transition(EGamePlatformArenaMatchPhase::WaitingPlayers, OutError);
 }
 
+void AGamePlatformArenaGameMode::ChangeName(AController*, const FString&, bool)
+{
+    // 竞技场只在可信名册准入或重连时给PlayerState写入角色名。
+}
+
 bool AGamePlatformArenaGameMode::AdmitPlayer(
     AGamePlatformArenaPlayerState* PlayerState,
     const FGamePlatformArenaTransferTicketClaims& VerifiedTicket,
@@ -238,7 +243,7 @@ bool AGamePlatformArenaGameMode::AdmitPlayer(
         return false;
     }
 
-    PlayerState->AuthorityApplyRosterIdentity(Slot->PlayerId, Slot->CharacterId, Slot->TeamId);
+    PlayerState->AuthorityApplyRosterIdentity(Slot->PlayerId, Slot->CharacterId, Slot->TeamId, Slot->CharacterName);
     PlayerStatesById.Add(Slot->PlayerId, PlayerState);
     OutError.Reset();
     BeginHeroSelectionIfReady();
@@ -596,8 +601,16 @@ FName AGamePlatformArenaGameMode::GetOpponentTeam(FName TeamId) const
 bool AGamePlatformArenaGameMode::RequestForfeit(AGamePlatformArenaPlayerState* PlayerState, FString& OutError)
 {
     if (!HasAuthority() || PlayerState == nullptr) { OutError = TEXT("无效弃权请求。"); return false; }
-    if (PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("只有进行中的比赛可以弃权。"); return false; }
     if (!IsCurrentConnectedPlayer(PlayerState)) { OutError = TEXT("非Roster玩家不能弃权。"); return false; }
+    const auto Phase = PhaseMachine.GetPhase();
+    // 结算和弃权请求交错时保留退出意图，已冻结的胜负和统计不再写入。
+    if (Phase == EGamePlatformArenaMatchPhase::Ending || Phase == EGamePlatformArenaMatchPhase::ResultPending ||
+        Phase == EGamePlatformArenaMatchPhase::Completed)
+    {
+        OutError.Reset();
+        return true;
+    }
+    if (Phase != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("只有进行中的比赛可以弃权。"); return false; }
     PlayerState->AuthoritySetForfeitState(EGamePlatformArenaForfeitState::Accepted);
     if(IsSingleRoundElimination())
     {
@@ -663,7 +676,7 @@ bool AGamePlatformArenaGameMode::TryReconnectPlayer(
     if (Handle == nullptr || !GetWorldTimerManager().IsTimerActive(*Handle)) { OutError = TEXT("重连宽限期已结束。"); return false; }
 
     const TWeakObjectPtr<AGamePlatformArenaPlayerState> PreviousState = PlayerStatesById.FindRef(PlayerId);
-    NewPlayerState->AuthorityApplyRosterIdentity(PlayerId, Slot->CharacterId, Slot->TeamId);
+    NewPlayerState->AuthorityApplyRosterIdentity(PlayerId, Slot->CharacterId, Slot->TeamId, Slot->CharacterName);
     if (const FPlayerRecoveryState* Recovery = RecoveryStatesById.Find(PlayerId))
     {
         NewPlayerState->AuthorityRestoreCompetitiveState(
@@ -777,6 +790,7 @@ void AGamePlatformArenaGameMode::BuildPendingResult(FName WinningTeamId, EGamePl
                 PlayerResult.PlayerId = Pair.Key;
                 PlayerResult.TeamId = Slot->TeamId;
                 PlayerResult.CharacterId = Slot->CharacterId;
+                PlayerResult.PlayerName = Slot->CharacterName.TrimStartAndEnd();
                 PlayerResult.Kills = Recovery->Kills;
                 PlayerResult.Deaths = Recovery->Deaths;
                 PlayerResult.Assists = Recovery->Assists;
@@ -789,6 +803,7 @@ void AGamePlatformArenaGameMode::BuildPendingResult(FName WinningTeamId, EGamePl
             PlayerResult.PlayerId = State->PlayerIdPublic;
             PlayerResult.TeamId = State->TeamId;
             PlayerResult.CharacterId = State->CharacterId;
+            PlayerResult.PlayerName = State->GetPlayerName();
             PlayerResult.Kills = State->Kills;
             PlayerResult.Deaths = State->Deaths;
             PlayerResult.Assists = State->Assists;
@@ -819,6 +834,15 @@ bool AGamePlatformArenaGameMode::EndMatch(FName WinningTeamId, EGamePlatformAren
         Summary.WinningTeamId = WinningTeamId;
         Summary.EndReason = Reason;
         Summary.EndRevision = PendingResult.EndRevision;
+        Summary.Teams = PendingResult.Teams;
+        for (FGamePlatformArenaTeamResult& Team : Summary.Teams)
+        {
+            for (FGamePlatformArenaPlayerResult& Player : Team.Players)
+            {
+                Player.PlayerId.Reset();
+                Player.CharacterId.Reset();
+            }
+        }
         ArenaState->AuthoritySetResult(Summary);
     }
     if (!Transition(EGamePlatformArenaMatchPhase::ResultPending, OutError))

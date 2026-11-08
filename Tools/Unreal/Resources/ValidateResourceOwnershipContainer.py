@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -22,13 +23,46 @@ native_csv=module('resource_ownership_iostore',ROOT/'Build/Game/ServerPresentati
 DOC=contract.load_contract()
 PROFILES={'FrontEndClient':'Client','VillageDevelopmentClient':'Client','PluginDemoClient':'Client',
     'DedicatedServer':'Server','VillageServer':'Server','VillageDevelopmentServer':'Server','FoundationStandalone':'Server'}
+FIREBALL_FLIGHT = '/DBAGameplay/Abilities/ProjectileFlight/DA_DBA_Fireball_Flight'
+DEVELOPMENT_SKILL_PROFILES = ('VillageDevelopmentClient', 'VillageDevelopmentServer')
+ARENA_MOUNTS = ('/DBAArena', '/DBAWorldPack_MainArena', '/GamePlatformArena', '/MobaPresentation')
 
 
 def under(package,root):
     root=root.casefold();return package==root or package.startswith(root+'/')
 
 
-def validate(csv_path,profile,target=None):
+def check_native_hard_imports(log: str, report: str, anchor: str) -> None:
+    """UE先连接整组容器再筛选报告；原生空导入不会产生未解析警告。"""
+    missing = re.findall(r'LogIoStore:\s*Warning:\s*((?:Missing import|Missing Script Object for Import):[^\r\n]+)', log)
+    if missing:
+        raise ValueError('最终IoStore存在未解析硬导入：' + ' | '.join(missing[:10]))
+    if native_csv.ERROR_LOG.search(log) or 'Connecting imports and exports...' not in log:
+        raise ValueError('原生IoStore导入连接未成功完成')
+    if not re.search(r"^Package '" + re.escape(anchor) + r"' Summary\s*$", report, re.I | re.M):
+        raise ValueError('原生IoStore报告缺少真实导出锚点：' + anchor)
+
+
+def audit_native_hard_imports(containers: list[Path], unreal_pak: Path, evidence: Path, anchor: str) -> dict:
+    """只使用最终Stage容器，不读取预Stage的Cook目录或注册表。"""
+    global_containers = [path for path in containers if path.name.casefold() == 'global.utoc']
+    if len(global_containers) != 1 or any(path.parent != global_containers[0].parent for path in containers):
+        raise ValueError('导入验证要求Stage同一目录下唯一global.utoc及其全部分块')
+    report_path = evidence / 'HardImports.describe.txt'
+    log_path = evidence / 'HardImports.log'
+    with log_path.open('wb') as output:
+        run = subprocess.run([str(unreal_pak), 'IoStore', '-Describe=' + str(global_containers[0]),
+                              '-PackageFilter=' + anchor, '-DumpToFile=' + str(report_path)],
+                             stdout=output, stderr=subprocess.STDOUT, timeout=120, check=False)
+    if run.returncode:
+        raise ValueError('UnrealPak原生导入验证失败：' + str(log_path))
+    check_native_hard_imports(log_path.read_text(encoding='utf-8-sig', errors='replace'),
+                              report_path.read_text(encoding='utf-8-sig'), anchor)
+    return {'ContainerCount': len(containers), 'Anchor': anchor, 'Log': str(log_path),
+            'Describe': str(report_path), 'UnresolvedCount': 0}
+
+
+def validate(csv_path,profile,target=None,without_arena=False):
     """旧身份与禁止目录的任何载荷拒绝；运行软依赖必须唯一正长度ExportBundleData。"""
     if profile not in PROFILES:raise ValueError('未知资源发布profile')
     role=target or PROFILES[profile]
@@ -55,11 +89,16 @@ def validate(csv_path,profile,target=None):
         if any(under(package,p) for p in DOC['never_cook_roots']):
             banned |= not (profile=='PluginDemoClient' and package in demo_allowed)
         if role=='Server' and package in migrated:banned=True
+        if without_arena and any(under(package, root) for root in ARENA_MOUNTS):
+            banned = True
         if banned:forbidden.append(entry.filename)
     if not exports:raise ValueError('容器没有任何真实资源导出')
     required=[m['target'] for m in DOC['moves'] if profile=='VillageDevelopmentClient' and m['group'] in ('plants_runtime','terrain_color')]
+    if profile in DEVELOPMENT_SKILL_PROFILES:
+        required.append(FIREBALL_FLIGHT)
     missing=[p for p in required if exports[p.casefold()]!=1]
     return {'Passed':not forbidden and not missing,'Profile':profile,'Target':role,
+        'WithoutArena':without_arena,'ImportAnchor':FIREBALL_FLIGHT if profile in DEVELOPMENT_SKILL_PROFILES else next(iter(exports)),
         'RequiredCount':len(required),'MissingOrDuplicate':missing,'Forbidden':sorted(set(forbidden)),
         'GroupExportCounts':{g:sum(exports[m['target'].casefold()]>0 for m in DOC['moves'] if m['group']==g) for g in contract.GROUPS},
         'AssetExportCount':sum(exports.values()),'ContainerEvidence':[{'Csv':str(p.resolve()),'Sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths],
@@ -71,6 +110,7 @@ if __name__=='__main__':
     parser.add_argument('--stage',type=Path);parser.add_argument('--unreal-pak',type=Path)
     parser.add_argument('--profile',required=True);parser.add_argument('--report',type=Path,required=True)
     parser.add_argument('--target',choices=('Client','Server'))
+    parser.add_argument('--without-arena', action='store_true')
     args=parser.parse_args()
     try:
         paths=args.csv
@@ -90,7 +130,10 @@ if __name__=='__main__':
                 log=(proof/'stdout.log').read_text(encoding='utf-8-sig',errors='replace')+(proof/'stderr.log').read_text(encoding='utf-8-sig',errors='replace')
                 if native_csv.ERROR_LOG.search(log):raise ValueError('UnrealPak容器日志报告错误')
                 paths.append(csv_path)
-        result=validate(paths or [],args.profile,args.target)
+        result=validate(paths or [],args.profile,args.target,args.without_arena)
+        if args.stage and result['Passed']:
+            result['HardImportEvidence'] = audit_native_hard_imports(containers, args.unreal_pak.resolve(), folder,
+                                                                    result['ImportAnchor'])
     except (OSError,ValueError,subprocess.TimeoutExpired,native_csv.PolicyError) as error:result={'Passed':False,'Error':str(error),'Profile':args.profile}
     args.report.parent.mkdir(parents=True,exist_ok=True)
     args.report.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')

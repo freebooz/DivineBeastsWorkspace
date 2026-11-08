@@ -26,6 +26,15 @@ struct FUIInputConfig;
 /** 本地系统菜单整体可见性；设置子页切换不重复广播，世界控制器据此撤销鼠标拖动。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(FDivineBeastsSystemMenuVisibilityChangedNative, bool);
 
+/** 当前世界可在系统菜单的会话操作位提供一项上下文命令。仅本地表现，权限由命令接收者复核。 */
+struct FDivineBeastsWorldMenuAction
+{
+    FText Label;
+    FText Status;
+    bool bEnabled = false;
+    FSimpleDelegate Execute;
+};
+
 /** FDivineBeastsUIContractHandle（项目UI应用契约注册句柄）。 */
 USTRUCT(BlueprintType)
 struct DIVINEBEASTSUICLIENT_API FDivineBeastsUIContractHandle
@@ -101,6 +110,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
     bool CloseSystemSettings();
     FDivineBeastsSystemMenuVisibilityChangedNative& OnSystemMenuVisibilityChanged() { return SystemMenuVisibilityChanged; }
+    /** 仅接受本地玩家当前世界的控制器。世界提供者退出时用原控制器撤销。 */
+    void SetWorldMenuAction(APlayerController& Owner, FDivineBeastsWorldMenuAction Action);
+    void ClearWorldMenuAction(const APlayerController* Owner);
+    FDivineBeastsWorldMenuAction GetWorldMenuAction() const;
+    FSimpleMulticastDelegate OnWorldMenuActionChanged;
 
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI")
     FGamePlatformUIAsyncRequest OpenScreen(
@@ -200,6 +214,8 @@ private:
     bool bInventoryOpening = false;
 
     FDivineBeastsSystemMenuVisibilityChangedNative SystemMenuVisibilityChanged;
+    TWeakObjectPtr<APlayerController> WorldMenuActionOwner;
+    FDivineBeastsWorldMenuAction WorldMenuAction;
     /** 读取项目默认主题编号并交给平台UI服务；空配置兼容旧页面，失败不阻断登录。 */
     void EnsureConfiguredTheme();
     UFUNCTION()

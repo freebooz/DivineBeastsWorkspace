@@ -11,6 +11,8 @@ import (
 type MatchmakingWorldPresence struct {
 	GameServerID string // 控制面已确认当前实例。
 	ExperienceID string // 当前真实Village/OpenWorld体验，用于返回重新分配。
+	ServerBootID string // 当前准入的实例启动身份。
+	SessionEpoch uint64 // 当前准入在本人会话中的代次。
 }
 
 // MatchmakingPresencePort由同一控制面客户端实现，仅允许认证会话本人查询。
@@ -37,5 +39,7 @@ func (a *api) attachMatchmakingPresence(ctx context.Context, actor *matchmaking.
 	}
 	actor.SourceGameServerID = value.GameServerID
 	actor.SourceExperienceID = value.ExperienceID
+	actor.SourceServerBootID = value.ServerBootID
+	actor.SourceSessionEpoch = value.SessionEpoch
 	return nil
 }

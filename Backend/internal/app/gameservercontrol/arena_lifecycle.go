@@ -175,6 +175,17 @@ func (s *Service) CancelArena(ctx context.Context, matchID string) error {
 	if record.State == "resultCommitted" {
 		return errors.New("ARENA_OPERATION_TERMINAL: 已有可信结果不能改成故障取消")
 	}
+	// 结果与发件箱可能已经持久提交，控制投影的写入回执却丢失。先恢复结果，再拒绝取消。
+	stored, committed, err := s.resultService.ReadCommitted(ctx, matchID)
+	if err != nil {
+		return err
+	}
+	if committed {
+		if err := s.persistArenaResult(ctx, record, stored); err != nil {
+			return err
+		}
+		return errors.New("ARENA_OPERATION_TERMINAL: 已有可信结果不能改成故障取消")
+	}
 	record.State = "cancelled"
 	record.UpdatedAtUTC = s.now().UTC()
 	if err := s.arenaLifecycle.SaveArena(ctx, record); err != nil {

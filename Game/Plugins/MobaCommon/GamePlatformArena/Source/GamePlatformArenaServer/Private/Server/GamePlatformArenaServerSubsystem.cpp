@@ -59,6 +59,7 @@ void UGamePlatformArenaServerSubsystem::Deinitialize()
     bResultCommitted = false;
     bZeroHeartbeatRequested = false;
     bSafeDrainRequested = false;
+    if (Coordinator) { Coordinator->CancelPendingResult(); }
     if(BackendClient)BackendClient->CancelAll();
     ResultHeartbeatBaselineGeneration = 0;
     if (AdmissionSubsystem.IsValid()) { AdmissionSubsystem->OnAdmissionChanged().Remove(AdmissionChangedHandle); }
@@ -141,6 +142,15 @@ void UGamePlatformArenaServerSubsystem::OnWorldBeginPlay(UWorld& InWorld)
         });
 
     TryLoadAssignment();
+}
+
+void UGamePlatformArenaServerSubsystem::OnWorldEndPlay(UWorld& InWorld)
+{
+    // 世界开始退出即停止发起或确认结算，即使GameInstance的TimerManager还在运行。
+    bWorldStarted = false;
+    if (Coordinator) { Coordinator->CancelPendingResult(); }
+    if (BackendClient) { BackendClient->CancelAll(); }
+    Super::OnWorldEndPlay(InWorld);
 }
 
 void UGamePlatformArenaServerSubsystem::RefreshVerifiedConnections()

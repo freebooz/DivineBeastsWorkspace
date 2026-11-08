@@ -13,9 +13,15 @@ public class DivineBeastsArenaClientTarget : TargetRules
         // 不在.uproject全局启用，避免Server Target被动携带客户端Runtime组合模块。
         EnablePlugins.Add("DBAClient");
         // 正式客户端必须包含1v1~5v5 MainArena能力；竞技插件保持可选层身份，但由产品Client Target显式装配。
-        EnablePlugins.Add("DBAArena");
+        if (!DisablePlugins.Contains("DBAArena"))
+        {
+            EnablePlugins.Add("DBAArena");
+        }
         // MOBA表现语义由产品组合显式选择：读取Arena/Combat事实并提交平台中立表现请求，不进入公共DBAClient依赖闭包。
-        EnablePlugins.Add("MobaPresentation");
+        if (!DisablePlugins.Contains("MobaPresentation"))
+        {
+            EnablePlugins.Add("MobaPresentation");
+        }
         // 通用环境表面材质属于纯客户端表现能力；显式按Client Target装配，避免Dedicated Server携带材质代码与Content。
         EnablePlugins.Add("GamePlatformSurface");
         // 世界天气事实和表现模块由正式客户端装配，不能放入单纯的前端登录流程。

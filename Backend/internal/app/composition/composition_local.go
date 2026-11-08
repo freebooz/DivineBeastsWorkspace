@@ -126,6 +126,9 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	if err := service.ConfigureArenaLifecycle(gameservercontrol.NewMemoryArenaLifecycleStore()); err != nil {
 		return err
 	}
+	service.ConfigureVillageQueueOriginAuthority(httpadapter.NewMatchClient(httpadapter.ClientConfig{
+		BaseURL: config.Getenv("MATCH_SERVICE_URL", "http://127.0.0.1:8083"), BearerToken: internalBearerToken,
+	}))
 
 	// 本地Outbox Worker使用内存仓储和日志发布器，生产环境由PostgreSQL+NATS替换。
 	outboxStore := outbox.NewMemoryStore()

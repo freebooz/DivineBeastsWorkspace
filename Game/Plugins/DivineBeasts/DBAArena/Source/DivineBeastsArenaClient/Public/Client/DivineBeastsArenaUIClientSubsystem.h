@@ -9,6 +9,7 @@
 #include "DivineBeastsArenaUIClientSubsystem.generated.h"
 
 class AGamePlatformArenaGameState;
+class AGamePlatformArenaPlayerController;
 class AGamePlatformArenaPlayerState;
 class UGamePlatformArenaViewModel;
 class UGamePlatformUIManagerSubsystem;
@@ -142,6 +143,15 @@ private:
     void DisconnectMatchmakingAuthentication();
     /** GI共享匹配事件驱动本地玩家桥，不能靠页面刷新注册提供者。 */
     void RefreshMatchmakingSource();
+    /** 游戏菜单仅提交本人弃权或可信返回意图。旧世界/旧控制器不能继续请求。 */
+    AGamePlatformArenaPlayerController* GetArenaExitController() const;
+    void RefreshArenaExitAction();
+    void ClearArenaExitAction();
+    void RequestArenaMenuExit();
+    void HandleArenaMenuExitRejected();
+    TWeakObjectPtr<AGamePlatformArenaPlayerController> ArenaExitController;
+    bool bReturnAfterForfeit = false;
+    bool bArenaForfeitRejected = false;
     TWeakObjectPtr<class UDivineBeastsArenaClientSubsystem> MatchmakingSource;
     FDelegateHandle MatchmakingSourceHandle;
     FText MatchmakingCommandFeedback;

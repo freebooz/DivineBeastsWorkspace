@@ -54,7 +54,8 @@ enum class EDivineBeastsFlowError : uint8
     SessionDisconnected,
     ReconnectExhausted,
     ContractIncompatible,
-    StaleOperation
+    StaleOperation,
+    MatchMigrationRequired
 };
 
 /** EDivineBeastsFlowAction（UI允许触发的项目流程动作）。 */

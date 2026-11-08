@@ -87,6 +87,7 @@ bool FGamePlatformArenaReconnectTest::RunTest(const FString& Parameters)
     {
         FGamePlatformArenaRosterSlot Slot; Slot.PlayerId = FString::Printf(TEXT("Player.%d"), Index);
         Slot.CharacterId = FString::Printf(TEXT("Character.%d"), Index); Slot.TeamId = FName(*FString::Printf(TEXT("Team.%d"), Index));
+        if (Index == 0) { Slot.CharacterName = TEXT("白君"); }
         Slot.SlotIndex = Index; Assignment.Roster.Add(Slot);
     }
     FString Error;
@@ -103,6 +104,8 @@ bool FGamePlatformArenaReconnectTest::RunTest(const FString& Parameters)
         if (!TestTrue(TEXT("可信夹具准入"), Mode->AdmitPlayer(State, Claims, Error)))
         { AddError(Error); return false; }
     }
+    TestEqual(TEXT("首次准入使用名单角色名"), States[0]->GetPlayerName(), FString(TEXT("白君")));
+    TestTrue(TEXT("旧名单未指定角色名时公开姓名为空"), States[1]->GetPlayerName().IsEmpty());
     for (auto* State : States)
     {
         if (!TestTrue(TEXT("测试Hero选取"), Mode->RequestHeroSelection(State, TEXT("Test.Hero"), &Heroes, Error)))
@@ -135,6 +138,7 @@ bool FGamePlatformArenaReconnectTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("失败新PlayerState保持断线"), Reconnected->ConnectionState, EGamePlatformArenaConnectionState::Disconnected);
         Lifecycle.bAcceptSpawn = true;
         TestTrue(TEXT("出生受理后重连成功"), Mode->TryReconnectPlayer(Reconnected, Assignment.Roster[0].PlayerId, Error));
+        TestEqual(TEXT("重连复用原名单角色名"), Reconnected->GetPlayerName(), FString(TEXT("白君")));
         TestFalse(TEXT("成功才消费宽限"), Mode->IsPlayerAwaitingReconnect(Assignment.Roster[0].PlayerId));
         TestEqual(TEXT("两次重连都走实际出生调用"), Lifecycle.SpawnRequests, 4);
         Fixture->Cleanup(); return true;

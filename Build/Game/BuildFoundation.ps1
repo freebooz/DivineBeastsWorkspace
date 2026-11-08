@@ -19,6 +19,8 @@ param([string]$EngineRoot, [switch]$Editor, [switch]$Client, [switch]$Server,
     [switch]$UsePrecompiled,
     # UE5.8仍由UBA调度，显式关闭进程拦截以排查编译器内部崩溃；不改编译版本、优化或模块装配。
     [switch]$NoUBA,
+    # 实际关闭竞技代码和内容装配。完整Client/Server使用，标准Editor仍可作为Cook宿主。
+    [switch]$WithoutArena,
     # 仅本次构建额外装配的已有插件，供插件完整编译验收；不改正式目标默认装配。
     [ValidatePattern("^[A-Za-z][A-Za-z0-9_]*$")][string[]]$AdditionalPlugins = @(),
     # 非空时构建所列模块及必要链接依赖；记录为模块构建，不能宣称整目标/Cook完成。
@@ -29,6 +31,7 @@ param([string]$EngineRoot, [switch]$Editor, [switch]$Client, [switch]$Server,
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'FoundationBuildEvidence.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'FoundationTargetAssembly.psm1') -Force
 $context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Targets=@(); Configuration='Development'; Platform='Win64'; AdditionalPlugins=$AdditionalPlugins; OnlyModules=$OnlyModules; UsePrecompiled=[bool]$UsePrecompiled; NoUBA=[bool]$NoUBA }
 try {
     $context = New-FoundationContext Build $RunId
@@ -36,6 +39,8 @@ try {
     $details.EditorBuildEvidenceStatus = 'NoSuccessfulFullEditorTarget'
     $targets = @(); if ($Editor) { $targets += 'Editor' }; if ($Client) { $targets += 'Client' }; if ($Server) { $targets += 'Server' }
     if (-not $targets.Count) { throw [IO.FileNotFoundException]::new('需显式指定-Editor/-Client/-Server。') }
+    if ($WithoutArena -and ($Editor -or $OnlyModules.Count)) { throw '无竞技验证要求完整Client和/或Server目标。' }
+    if ($WithoutArena -and $AdditionalPlugins.Count) { throw '无竞技验证使用固定装配，请单独运行额外插件构建。' }
     $engine = Get-FoundationEngine $EngineRoot
     $details.EngineVersion = $engine.Version; $details.EngineRoot = $engine.Root
     Assert-FoundationFile $context.Project
@@ -49,6 +54,7 @@ try {
         $null = New-Item -ItemType Directory -Path $directory
         # Foundation锁只能协调本入口；UBT锁覆盖编辑器和直接工具调用，避免抢锁导致误报失败。
         $arguments = @($tool.Dll,"DivineBeastsArena$target",'Win64','Development',"-Project=$($context.Project)","-MaxParallelActions=$MaxParallelActions",'-NoHotReloadFromIDE','-WaitMutex',"-Log=$(Join-Path $directory 'UBT.log')")
+        if ($WithoutArena) { $arguments += (Get-FoundationWithoutArenaBuildArgument) }
         if ($AdditionalPlugins.Count) { $arguments += ('-EnablePlugin=' + (($AdditionalPlugins | Sort-Object -Unique) -join '+')) }
         if ($OnlyModules.Count) { $arguments += ('-Module=' + (($OnlyModules | Sort-Object -Unique) -join '+')) }
         if ($NoPCH) { $arguments += '-NoPCH' }
@@ -65,6 +71,9 @@ try {
         $result = Invoke-FoundationProcess -FilePath $tool.Executable -Arguments $arguments -WorkingDirectory (Join-Path $engine.Root 'Engine/Source') -OutputDirectory $directory -TimeoutSeconds $TimeoutSeconds -Environment $tool.Environment
         $details.Targets += @{ Target="DivineBeastsArena$target"; Result=$result; Evidence=$directory }
         if ($result.ExitCode -ne 0) { $code = $result.ExitCode; break }
+        if ($target -ne 'Editor' -and -not $OnlyModules.Count) {
+            $details.Targets[-1].TargetAssembly = Read-FoundationTargetAssembly -Workspace $context.Workspace -Target $target -WithoutArena:$WithoutArena
+        }
         if ($fullEditor) {
             try {
                 $after = Get-FoundationCompileInputInventory -Workspace $context.Workspace

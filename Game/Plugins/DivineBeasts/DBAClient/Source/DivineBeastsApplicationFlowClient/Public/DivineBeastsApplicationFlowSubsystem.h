@@ -142,6 +142,7 @@ public:
 private:
     // 原生回归访问私有组合状态，不向运行时或蓝图增加准入/就绪写入口。
     friend class FDivineBeastsWorldObservationTest;
+    friend class FDivineBeastsWorldTransferIntentTest;
 #if WITH_DEV_AUTOMATION_TESTS
     /** 测试只注入已有Session边界，无Online/后端，验证注销的真实离开与旧传输栅栏。 */
     friend class FDivineBeastsLogoutSessionLifetimeTest;
@@ -208,6 +209,9 @@ private:
 
     void NotifyExtensionsEnteredWorld();
     void NotifyExtensionsLeavingWorld();
+    /** 校验扩展取得的分配仍属于本次认证、所选角色和合法项目世界。 */
+    bool IsCurrentTrustedAssignment(const FDivineBeastsWorldAssignmentPayload& Payload, const FGuid& Auth) const;
+    void CancelPendingWorldRecovery();
 
     UGamePlatformApplicationFlowSubsystem* PlatformFlow = nullptr;
     UGamePlatformOnlineClientSubsystem* Online = nullptr;
@@ -245,6 +249,7 @@ private:
     /** 只有RequestWorld节点可消费的瞬时秘密，认证/取消/世界退出立即清理，不进入只读ViewState。 */
     TOptional<FDivineBeastsWorldAssignmentPayload> PendingTrustedMigration;
     FGuid PendingMigrationAuthGeneration;
+    FDivineBeastsCancelWorldRecovery PendingWorldRecovery;
     FDivineBeastsFlowViewState ViewState;
     FGuid ActiveTransferOperationId;
     uint64 StartRequestGeneration = 0;

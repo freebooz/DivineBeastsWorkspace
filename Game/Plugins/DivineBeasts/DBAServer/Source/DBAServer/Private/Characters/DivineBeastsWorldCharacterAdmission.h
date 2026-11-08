@@ -6,6 +6,7 @@
 #include "Interfaces/IHttpRequest.h"
 #include "TimerManager.h"
 class ADivineBeastsWorldGameMode;
+class ADivineBeastsWorldPlayerController;
 class AGamePlatformPlayerStateBase;
 class UDivineBeastsCharacterComponent;
 struct FGamePlatformCombatEvent;
@@ -67,6 +68,13 @@ private:
         bool bWasCharacterReady = false;
         bool bFailureScheduled = false;
         TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> Request;
+        /** 世界准入内绑定采样，返程首次角色Ready时只尝试一次。 */
+        TWeakObjectPtr<ADivineBeastsWorldPlayerController> QueueOriginController;
+        FDelegateHandle QueueOriginHandle;
+        FHttpRequestPtr QueueOriginRequest;
+        FString LastQueueOriginTicketId;
+        double NextQueueOriginReportTime = 0.0;
+        bool bTriedReturnSpawn = false;
     };
     /** 每次请求完成/外部通知后重验真实准入、Controller世界与操作身份；结构相同不等于授权仍有效。 */
     bool IsCurrent(APlayerController* Controller, const TSharedPtr<FConnection>& Connection) const;
@@ -76,6 +84,8 @@ private:
         TFunction<void(FString)> Completed);
     void PublishAdmission(APlayerController& Controller, const TSharedPtr<FConnection>& Connection);
     void BindSpawnedPawn(APlayerController& Controller, const TSharedPtr<FConnection>& Connection);
+    /** 仅已验证连接的当前有效Pawn可生成本轮位置；请求只收排队身份。 */
+    void RecordVillageQueueOrigin(ADivineBeastsWorldPlayerController& Controller, const TSharedPtr<FConnection>& Connection, const FString& QueueTicketId);
     /** 成功清除本Pawn截止，失败/取消或已Ready后失活撤销本连接；不会操作后继Pawn的计时器。 */
     void ObserveCharacterInitialization(APlayerController& Controller, const TSharedPtr<FConnection>& Connection);
     /** 订阅当前项目Pawn的已结算权威死亡；不使用Tick、不改变角色Ready或平台玩家生命周期。 */

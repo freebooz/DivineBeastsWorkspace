@@ -88,6 +88,9 @@ type RosterPlayer struct {
 	PartyID          string // 不可拆分原队伍；单排为空。
 	SlotIndex        int    // 整场唯一出生槽位，0至TotalPlayers-1；各队按Roster次序映射地图出生位。
 	HeroDefinitionID string // 后端已选角色对应英雄。
+
+	// 已选角色的公开显示名；省略空值以兼容旧分配记录与幂等指纹。
+	CharacterName string `json:"CharacterName,omitempty"`
 }
 
 // WorldAssignment（世界分配）描述OpenWorld/Village服务器运行和玩家跨服所需的权威目标。

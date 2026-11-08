@@ -51,6 +51,22 @@ class ConfigCoverageTests(unittest.TestCase):
                          '+MapsToCook=(FilePath="/DBAWorldPack_Village/Maps/L_Village_Start")'):
             self.assertIn(expected, text)
 
+    def test_server_profiles_remove_only_client_class_and_input_defaults(self):
+        base = ROOT / "Game/Config"
+        game = (base / "DefaultGame.ini").read_text(encoding="utf-8-sig")
+        inventory = next(line[1:] for line in game.splitlines()
+                         if line.startswith('+PrimaryAssetTypesToScan=(PrimaryAssetType="GamePlatformInventoryItemDefinition"'))
+        self.assertIn("InputData=/GamePlatformUI/Input/BP_GP_UIInputData.BP_GP_UIInputData_C", game)
+        self.assertIn("GameViewportClientClassName=/Script/CommonUI.CommonGameViewportClient",
+                      (base / "DefaultEngine.ini").read_text(encoding="utf-8-sig"))
+        for profile in PROFILES:
+            with self.subTest(profile=profile):
+                root = base / "Custom" / profile
+                self.assertIn("-" + inventory, (root / "DefaultGame.ini").read_text(encoding="utf-8-sig"))
+                self.assertIn("InputData=None", (root / "DefaultGame.ini").read_text(encoding="utf-8-sig"))
+                self.assertIn("GameViewportClientClassName=/Script/Engine.GameViewportClient",
+                              (root / "DefaultEngine.ini").read_text(encoding="utf-8-sig"))
+
 
 class PolicyBehaviorTests(unittest.TestCase):
     """真实生产API的行为夹具；修改匹配/解析/生成语义会改变断言结果。"""
@@ -309,6 +325,16 @@ class PolicyBehaviorTests(unittest.TestCase):
         # 三profile共用DedicatedServer的Pak收据，最终产物禁入集合必须一致。
         for profile in PROFILES:
             self.assertTrue(self.policy.is_forbidden("/Game/Development/DivineBeasts/Abilities/UI/Profile.uasset", profile))
+
+    def test_client_input_and_known_editor_plugins_are_rejected_from_final_server(self):
+        for profile in PROFILES:
+            with self.subTest(profile=profile):
+                self.assertIn("/GamePlatformUI/Input", self.policy.cook_paths(profile))
+                for path in ("/GamePlatformUI/Input/DT_GP_UIActions.uasset",
+                             "../../../Engine/Plugins/Fab/Fab.uplugin",
+                             "../../../Engine/Plugins/Bridge/Config/DefaultBridge.ini"):
+                    self.assertTrue(self.policy.is_forbidden(path, profile), path)
+                self.assertFalse(self.policy.is_forbidden("../../../Engine/Plugins/Editor/SpeedTreeImporter/Content/SpeedTree9/SpeedTreeMaster.uasset", profile))
 
     def test_foundation_cooker_uses_distinct_add_tokens_without_clear(self):
         args = self.policy.cooker_arguments("FoundationStandalone")

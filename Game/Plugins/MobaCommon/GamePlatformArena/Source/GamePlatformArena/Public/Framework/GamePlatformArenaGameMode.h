@@ -34,6 +34,8 @@ public:
 
     virtual void BeginPlay() override;
     virtual void Logout(AController* Exiting) override;
+    /** 拒绝引擎旅行选项和改名请求；公开角色名由可信名册准入写入。 */
+    virtual void ChangeName(AController* Controller, const FString& NewName, bool bNameChange) override;
     /** 世界退出撤销所有玩法资格与本模式Timer，再清空借用接口；不能影响其他World。 */
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 

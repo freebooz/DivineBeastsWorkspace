@@ -60,6 +60,15 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerAdmissionProof
     void ResetSensitive();
 };
 
+/** 控制面已验证返程票的可选到达位置；目标玩法仍按正式关卡、角色和实际碰撞检查。 */
+struct FGamePlatformVerifiedReturnSpawn
+{
+    FString CharacterId;
+    FString MapPackage;
+    FVector LocationCm = FVector::ZeroVector;
+    double YawDegrees = 0.0;
+};
+
 /**
  * FGamePlatformServerVerifiedAdmission（服务端验证后的非敏感准入投影）。
  * 只有可信Provider完成领取/提交并返回权威Epoch后才能创建；该结构本身不是新的认证凭据。
@@ -86,6 +95,8 @@ struct GAMEPLATFORMSERVER_API FGamePlatformServerVerifiedAdmission
     FString WorldId;
     FString ExperienceId;
     FString ProtocolVersion;
+    /** 只从目标服务器验票响应读取，客户端准入凭据不能指定。 */
+    TOptional<FGamePlatformVerifiedReturnSpawn> ReturnSpawn;
     /** 真实连接正代次与控制面会话正Epoch；旧连接/旧授权不得复用。 */
     uint64 ConnectionGeneration = 0;
     uint64 SessionEpoch = 0;

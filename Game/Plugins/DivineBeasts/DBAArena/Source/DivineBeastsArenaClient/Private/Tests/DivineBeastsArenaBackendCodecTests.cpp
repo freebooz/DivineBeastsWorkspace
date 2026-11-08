@@ -26,6 +26,18 @@ bool FDivineBeastsArenaBackendCodecTest::RunTest(const FString&)
     const auto InvitationEnvelope=[&](const FString& View){return TEXT("{\"clientRequestId\":\"challenge-command\",\"snapshot\":")+View+TEXT("}");};
     TestTrue(TEXT("指定双方邀请通过唯一解码器"),Adapter.DecodeCommandResponse(InvitationEnvelope(Invitation),TEXT("challenge-command"),Out));
     TestTrue(TEXT("本人目标保留真实回复资格及双方名单"),Out.Challenge.bPresent&&Out.Challenge.bCanReply&&Out.Challenge.TeamAPlayerIds==TArray<FString>{TEXT("player-a") }&&Out.Challenge.TeamBPlayerIds==TArray<FString>{TEXT("player-b") });
+    const FString AcceptedByOther = Invitation.Replace(
+        TEXT("\"playerId\":\"player-a\",\"teamId\":\"A\",\"accepted\":false"),
+        TEXT("\"playerId\":\"player-a\",\"teamId\":\"A\",\"accepted\":true"));
+    TestTrue(TEXT("保留队友确认计数，但本人资格只看本人行"),
+        Adapter.DecodeCommandResponse(InvitationEnvelope(AcceptedByOther), TEXT("challenge-command"), Out) &&
+        Out.Accepted == 1 && !Out.bSelfAccepted);
+    const FString AcceptedBySelf = Invitation.Replace(
+        TEXT("\"playerId\":\"player-b\",\"teamId\":\"B\",\"accepted\":false"),
+        TEXT("\"playerId\":\"player-b\",\"teamId\":\"B\",\"accepted\":true"));
+    TestTrue(TEXT("从本人行读取确认事实供队列落点采集"),
+        Adapter.DecodeCommandResponse(InvitationEnvelope(AcceptedBySelf), TEXT("challenge-command"), Out) &&
+        Out.Accepted == 1 && Out.bSelfAccepted);
     Adapter.ApplySnapshot(Out);
     TestEqual(TEXT("约战邀请保持面板阶段而非随机空闲资格"),Adapter.GetObservedState(),EGamePlatformArenaClientFlowState::Matchmaking);
     TestFalse(TEXT("双方名单不能重叠"),Adapter.DecodeCommandResponse(InvitationEnvelope(Invitation.Replace(TEXT("\"teamBPlayerIds\":[\"player-b\"]"),TEXT("\"teamBPlayerIds\":[\"player-a\"]"))),TEXT("challenge-command"),Out));

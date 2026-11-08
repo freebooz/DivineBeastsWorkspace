@@ -2,6 +2,7 @@
 #include "Client/DivineBeastsArenaUIClientSubsystem.h"
 #include "Client/DivineBeastsArenaClientSubsystem.h"
 #include "Client/GamePlatformArenaMatchmakingAdapter.h"
+#include "DivineBeastsUIClientSubsystem.h"
 #include "Social/DivineBeastsPartyUIClientSubsystem.h"
 #include "Catalog/DivineBeastsArenaModeCatalog.h"
 #include "Gameplay/DivineBeastsArenaEntrance.h"
@@ -38,6 +39,7 @@ void UDivineBeastsArenaUIClientSubsystem::Initialize(
     LastArenaSurfaceDemand = NAME_None;
 
     Collection.InitializeDependency<UGamePlatformUIManagerSubsystem>();
+    Collection.InitializeDependency<UDivineBeastsUIClientSubsystem>();
     Collection.InitializeDependency<UDivineBeastsPartyUIClientSubsystem>();
     if (auto* PartyUI=GetLocalPlayer()->GetSubsystem<UDivineBeastsPartyUIClientSubsystem>())
     {
@@ -109,6 +111,7 @@ void UDivineBeastsArenaUIClientSubsystem::PlayerControllerChanged(
 {
     Super::PlayerControllerChanged(NewPlayerController);
     if (bDeinitializing) return;
+    ClearArenaExitAction();
     BindArenaEntranceInteractor(NewPlayerController);
     ResetMatchmakingBridge();
     const uint64 Expected = ++SurfaceOperationGeneration;
@@ -166,6 +169,8 @@ bool UDivineBeastsArenaUIClientSubsystem::RefreshArenaViewFromWorld()
     ArenaViewModel->RefreshFromReplicatedState(
         GameState,
         PlayerStates);
+    if (bDeinitializing || SurfaceOperationGeneration != Expected) return false;
+    RefreshArenaExitAction();
     if (bDeinitializing || SurfaceOperationGeneration != Expected) return false;
     SyncArenaSurface();
     return true;
@@ -310,6 +315,9 @@ void UDivineBeastsArenaUIClientSubsystem::SetObservedArenaClientFlowState(
 {
     if (!bDeinitializing && IsValid(ArenaViewModel))
     {
+        // 场内界面以复制比赛阶段为准。回村后仍可能收到原比赛的返回观察，不能再弹出旧结算页。
+        if (BoundGameState.IsValid() && !ArenaViewModel->MatchId.IsEmpty()) return;
+        if (InFlowState == EGamePlatformArenaClientFlowState::Result) return;
         const auto Projected=InFlowState==EGamePlatformArenaClientFlowState::Idle&&bMatchmakingMenuRequested?
             EGamePlatformArenaClientFlowState::Matchmaking:InFlowState;
         ArenaViewModel->SetObservedClientFlowState(Projected);
@@ -832,6 +840,7 @@ void UDivineBeastsArenaUIClientSubsystem::EnsurePlayerStateBindings(
 
 void UDivineBeastsArenaUIClientSubsystem::UnbindArenaEvents()
 {
+    ClearArenaExitAction();
     if (AGamePlatformArenaGameState* GameState = BoundGameState.Get())
     {
         GameState->OnArenaPlayersChanged.RemoveAll(this);
@@ -882,6 +891,8 @@ void UDivineBeastsArenaUIClientSubsystem::HandleArenaPhaseChanged(
     EGamePlatformArenaMatchPhase MatchPhase,
     int32 Revision)
 {
+    if (MatchPhase == EGamePlatformArenaMatchPhase::Completed && GetLocalPlayer())
+        if (auto* UI = GetLocalPlayer()->GetSubsystem<UDivineBeastsUIClientSubsystem>()) UI->CloseSystemMenu();
     // 参数仅用于事件签名；ViewModel始终从GameState完整快照读取，避免事件增量状态漂移。
     RefreshArenaViewFromWorld();
 }
@@ -905,4 +916,5 @@ void UDivineBeastsArenaUIClientSubsystem::HandleArenaPlayerStatsChanged(
 {
     // 统计更新只重建最多10人的只读记分板，不重新绑定委托。
     RefreshViewModelFromBoundState();
+    RefreshArenaExitAction();
 }

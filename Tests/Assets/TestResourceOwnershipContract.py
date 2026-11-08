@@ -67,6 +67,21 @@ class ResourceOwnershipContractTests(unittest.TestCase):
         self.assertEqual(self.api.appearance_signature({'leaf':'ground_ao'}),
             self.api.appearance_signature({'leaf':'ground_AO'}))
 
+    def test_native_final_package_import_check_distinguishes_null_and_missing(self):
+        gate_file = MODULE.with_name('ValidateResourceOwnershipContainer.py')
+        spec = importlib.util.spec_from_file_location('resource_package_gate', gate_file)
+        gate = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gate)
+        anchor = '/DBAGameplay/Abilities/ProjectileFlight/DA_DBA_Fireball_Flight'
+        report = f"Package '{anchor}' Summary\nImportCount: 1\nImport 0: ''\nGlobalImportIndex: <null>\n"
+        log = 'LogIoStore: Display: Connecting imports and exports...\n'
+        gate.check_native_hard_imports(log, report, anchor)
+        missing = "LogIoStore: Warning: Missing import: 0x0 in package 0x26B1AF5F3A81CD1F '/Game/Development/DivineBeasts/Abilities/MagicTests/DA_DBA_Rat_DevFireball'"
+        with self.assertRaisesRegex(ValueError, 'DA_DBA_Rat_DevFireball'):
+            gate.check_native_hard_imports(log + missing, report, anchor)
+        with self.assertRaisesRegex(ValueError, '锚点'):
+            gate.check_native_hard_imports(log, report, '/DBAGameplay/Unrelated')
+
     def test_retired_bird_author_cannot_recreate_old_runtime_meshes(self):
         self.assertFalse((ROOT/'Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockAssets.py').exists())
         import runpy

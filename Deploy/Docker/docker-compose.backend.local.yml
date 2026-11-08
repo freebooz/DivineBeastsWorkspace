@@ -79,6 +79,7 @@ services:
     restart: unless-stopped
     environment:
       SERVICE_NAME: GameServerControlService
+      MATCH_SERVICE_URL: http://matchservice:8083
       SERVICE_PORT: "8084"
       GRPC_PORT: "9084"
       SERVICE_VERSION: local
