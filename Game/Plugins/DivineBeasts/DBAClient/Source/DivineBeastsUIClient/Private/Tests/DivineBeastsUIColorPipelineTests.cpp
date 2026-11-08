@@ -5,11 +5,17 @@
 #include "Misc/AutomationTest.h"
 #include "Engine/Texture2D.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
+#include "Engine/GameViewportClient.h"
+#include "Engine/UserInterfaceSettings.h"
 #include "Materials/MaterialInterface.h"
 #include "ImageCore.h"
 #include "RenderingThread.h"
 #include "Slate/WidgetRenderer.h"
+#include "Input/CursorReply.h"
 #include "Widgets/Images/SImage.h"
+#include "Widgets/SOverlay.h"
 #include "UObject/StrongObjectPtr.h"
 #include "TextureResource.h"
 #include "UObject/Package.h"
@@ -34,6 +40,8 @@
 #include "Misc/FileHelper.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Core/GamePlatformWidgetBase.h"
+#include "Core/GamePlatformActivatableWidgetBase.h"
 
 namespace DivineBeastsUIColorTests
 {
@@ -149,6 +157,155 @@ namespace DivineBeastsUIColorTests
         if(!bRead||Pixels.Num()!=256)return false;
         OutColor=Pixels[8*16+8].GetFloats();
         return true;
+    }
+
+    // 用实际视口读取的映射绘制光标。离屏视口没有游戏世界、网络连接或本地玩家。
+    bool VerifyCursorTheme(FAutomationTestBase& Test)
+    {
+        const FString Workspace = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT(".."));
+        FString Json;
+        TSharedPtr<FJsonObject> Config;
+        if (!Test.TestTrue(TEXT("读取当前光标资源合同"),
+            FFileHelper::LoadFileToString(Json, *(Workspace / TEXT("Tools/Unreal/UI/CursorTheme.json"))) &&
+            FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Config) && Config.IsValid())) return false;
+
+        FImage Source;
+        if (!Test.TestTrue(TEXT("读取原始光标图集像素"),
+            FImageUtils::LoadImage(*(Workspace / Config->GetStringField(TEXT("source"))), Source))) return false;
+        Source.ChangeFormat(ERawImageFormat::BGRA8, EGammaSpace::sRGB);
+
+        const auto& DrawSize = Config->GetArrayField(TEXT("display_size"));
+        const FVector2f Size(DrawSize[0]->AsNumber(), DrawSize[1]->AsNumber());
+        const float OpacityFloor = Config->GetNumberField(TEXT("opacity_floor"));
+        const UUserInterfaceSettings* Settings = GetDefault<UUserInterfaceSettings>();
+        bool bPassed = Test.TestFalse(TEXT("专用服务器不加载光标控件"), Settings->bLoadWidgetsOnDedicatedServer);
+        FWorldContext Context;
+        TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+        TStrongObjectPtr<UGameViewportClient> Viewport(NewObject<UGameViewportClient>(GEngine, GEngine->GameViewportClientClass));
+        Viewport->Init(Context, Instance.Get(), false);
+
+        constexpr int32 Extent = 112;
+        const FVector2f Center(Extent * .5f);
+        const FString Output = FPaths::ProjectSavedDir() / TEXT("Validation/UIColorRHI/Cursors");
+        IFileManager::Get().MakeDirectory(*Output, true);
+        TStrongObjectPtr<UTextureRenderTarget2D> Target(NewObject<UTextureRenderTarget2D>());
+        Target->ClearColor = FLinearColor::Transparent;
+        Target->InitCustomFormat(Extent, Extent, PF_FloatRGBA, true);
+        Target->UpdateResourceImmediate(true);
+        auto* Renderer = new FWidgetRenderer(false, true);
+        int32 ActiveCount = 0;
+
+        for (const auto& Entry : Config->GetArrayField(TEXT("states")))
+        {
+            const TSharedPtr<FJsonObject> State = Entry->AsObject();
+            const FString Id = State->GetStringField(TEXT("id"));
+            const FString Package = State->GetStringField(TEXT("widget"));
+            const FString ClassPath = Package + TEXT(".") + FPaths::GetBaseFilename(Package) + TEXT("_C");
+            UClass* Class = LoadClass<UGamePlatformWidgetBase>(nullptr, *ClassPath);
+            if (!Test.TestNotNull(*(Id + TEXT(" 已保存的平台光标控件")), Class)) { bPassed = false; continue; }
+
+            TSharedPtr<SWidget> Cursor;
+            FString CursorName;
+            if (State->TryGetStringField(TEXT("native_cursor"), CursorName))
+            {
+                ++ActiveCount;
+                const int64 Value = StaticEnum<EMouseCursor::Type>()->GetValueByNameString(CursorName);
+                if (!Test.TestTrue(*(Id + TEXT(" 原生光标类型有效")), Value != INDEX_NONE)) { bPassed = false; continue; }
+                const auto Type = static_cast<EMouseCursor::Type>(Value);
+                const FSoftClassPath* ConfiguredClass = Settings->SoftwareCursors.Find(Type);
+                bPassed &= Test.TestTrue(*(Id + TEXT(" 引擎配置绑定当前光标类")),
+                    ConfiguredClass && ConfiguredClass->ToString() == ClassPath);
+                const auto Mapped = Viewport->MapCursor(nullptr, FCursorReply::Cursor(Type));
+                if (Mapped.IsSet()) Cursor = Mapped.GetValue();
+            }
+            else if (UUserWidget* Widget = CreateWidget(Instance.Get(), Class))
+            {
+                Cursor = Widget->TakeWidget();
+            }
+            if (!Test.TestTrue(*(Id + TEXT(" 视口取得可绘制光标")), Cursor.IsValid())) { bPassed = false; continue; }
+            Cursor->SlatePrepass(1.f);
+            const auto DesiredSize = Cursor->GetDesiredSize();
+            bPassed &= Test.TestTrue(*(Id + TEXT(" 逻辑尺寸及焦点合同")),
+                FVector2D(DesiredSize.X, DesiredSize.Y).Equals(FVector2D(Size), .01) && !Cursor->SupportsKeyboardFocus());
+
+            // Slate 在鼠标坐标居中绘制软件光标；画布居中模拟这一布局，热点由已保存控件自身提供。
+            const auto Preview = SNew(SOverlay) + SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Center)
+                [Cursor.ToSharedRef()];
+            Renderer->DrawWidget(Target.Get(), Preview, FVector2D(Extent), 0.f);
+            FlushRenderingCommands();
+            if (GShaderCompilingManager) GShaderCompilingManager->FinishAllCompilation();
+            Renderer->DrawWidget(Target.Get(), Preview, FVector2D(Extent), 0.f);
+            FlushRenderingCommands();
+            TArray<FFloat16Color> Pixels;
+            if (!Test.TestTrue(*(Id + TEXT(" 读取原生Slate浮点像素")),
+                Target->GameThread_GetRenderTargetResource()->ReadFloat16Pixels(Pixels) && Pixels.Num() == Extent * Extent))
+            { bPassed = false; continue; }
+
+            const auto& Rect = State->GetArrayField(TEXT("rect_px"));
+            const auto& Hotspot = State->GetArrayField(TEXT("hotspot_px"));
+            const FVector2f CellOrigin(Rect[0]->AsNumber(), Rect[1]->AsNumber());
+            const FVector2f CellSize(Rect[2]->AsNumber(), Rect[3]->AsNumber());
+            const FVector2f IdealOrigin = Center - FVector2f(Hotspot[0]->AsNumber(), Hotspot[1]->AsNumber()) * Size / CellSize;
+            // 默认 Slate 图像将顶点对齐到设备像素。在 1:1 离屏画布上，基准采样使用相同的整数顶点。
+            const FVector2f ExpectedOrigin(FMath::RoundToFloat(IdealOrigin.X), FMath::RoundToFloat(IdealOrigin.Y));
+            FIntRect Bounds(Extent, Extent, 0, 0);
+            int32 Intersection = 0;
+            int32 Union = 0;
+            int32 ExpectedSolidSamples = 0;
+            int32 SolidSamples = 0;
+            double ColorError = 0;
+            for (int32 Y = 0; Y < Extent; ++Y)
+            {
+                for (int32 X = 0; X < Extent; ++X)
+                {
+                    const FLinearColor Actual = Pixels[Y * Extent + X].GetFloats();
+                    const FVector2f UV = (FVector2f(X + .5f, Y + .5f) - ExpectedOrigin) / Size;
+                    FLinearColor Expected = FLinearColor::Transparent;
+                    if (UV.X >= 0 && UV.Y >= 0 && UV.X < 1 && UV.Y < 1)
+                    {
+                        const FVector2f AtlasPixel = CellOrigin + FVector2f(.5f) + UV * (CellSize - FVector2f(1.f));
+                        Expected = SampleDesign(Source, AtlasPixel / FVector2f(Source.SizeX, Source.SizeY));
+                        Expected.A = FMath::Clamp((Expected.A - OpacityFloor) / (1.f - OpacityFloor), 0.f, 1.f);
+                    }
+                    const bool bActualVisible = Actual.A > .5f;
+                    const bool bExpectedVisible = Expected.A > .5f;
+                    Intersection += bActualVisible && bExpectedVisible;
+                    Union += bActualVisible || bExpectedVisible;
+                    if (bActualVisible)
+                    {
+                        Bounds.Min.X = FMath::Min(Bounds.Min.X, X);
+                        Bounds.Min.Y = FMath::Min(Bounds.Min.Y, Y);
+                        Bounds.Max.X = FMath::Max(Bounds.Max.X, X + 1);
+                        Bounds.Max.Y = FMath::Max(Bounds.Max.Y, Y + 1);
+                    }
+                    if (Expected.A > .99f)
+                    {
+                        ++ExpectedSolidSamples;
+                        if (Actual.A > .99f)
+                        {
+                            ++SolidSamples;
+                            ColorError += FMath::Max3(FMath::Abs(Actual.R - Expected.R), FMath::Abs(Actual.G - Expected.G), FMath::Abs(Actual.B - Expected.B));
+                        }
+                    }
+                }
+            }
+            const double Overlap = Union > 0 ? double(Intersection) / Union : 0;
+            const double MeanError = SolidSamples > 0 ? ColorError / SolidSamples : 1;
+            const int32 MaxVisible = FMath::Max(Bounds.Width(), Bounds.Height());
+            Test.AddInfo(FString::Printf(TEXT("光标 %s 可见 %dx%d px，轮廓重合 %.3f，平均线性RGB误差 %.4f，实心采样 %d/%d"),
+                *Id, Bounds.Width(), Bounds.Height(), Overlap, MeanError, SolidSamples, ExpectedSolidSamples));
+            bPassed &= Test.TestTrue(*(Id + TEXT(" 热点、透明轮廓与显示大小")),
+                Overlap >= .90 && MaxVisible >= 26 && MaxVisible <= 34 && Pixels[0].GetFloats().A < .005f);
+            // 细线准星的实心区域比实心图标小，以原稿的实心面积衡量采样覆盖率。
+            bPassed &= Test.TestTrue(*(Id + TEXT(" 原稿到最终Slate颜色")),
+                ExpectedSolidSamples > 0 && SolidSamples >= FMath::CeilToInt(ExpectedSolidSamples * .95f) && MeanError <= .035);
+            TUniquePtr<FArchive> Writer(IFileManager::Get().CreateFileWriter(*(Output / (Id + TEXT(".png")))));
+            bPassed &= Test.TestTrue(*(Id + TEXT(" 实际光标渲染证据保存")),
+                Writer && FImageUtils::ExportRenderTarget2DAsPNG(Target.Get(), *Writer));
+        }
+
+        BeginCleanup(Renderer);
+        return Test.TestEqual(TEXT("活动映射只包含合同声明的光标类型"), Settings->SoftwareCursors.Num(), ActiveCount) && bPassed;
     }
 }
 
@@ -339,7 +496,7 @@ bool FDivineBeastsUIColorPipelineTest::RunTest(const FString&)
         TestTrue(TEXT("登录页等比铺满且最终颜色正确"),DivineBeastsUIColorTests::SavePagePreview(
             TEXT("/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Login.WBP_DBA_UI_Login_C"),*FileName,Size,*this,true));
     }
-    return true;
+    return DivineBeastsUIColorTests::VerifyCursorTheme(*this);
 }
 
 /**
@@ -728,16 +885,42 @@ bool FDivineBeastsPopupPanelSavedPagesTest::RunTest(const FString& Parameters)
         bPassed&=TestTrue(*(Name+TEXT(" 使用唯一共享材质与Box裁切")),ActualBrush
             &&ActualBrush->GetResourceObject()==SharedBrush.GetResourceObject()
             &&ActualBrush->DrawAs==ESlateBrushDrawType::Box&&ActualBrush->Margin==SharedBrush.Margin);
-        const auto BackgroundAllowsChildInput=[](const UWidget* Candidate)
+        const auto DragSpec=Row->GetObjectField(TEXT("window_drag"));
+        const bool bDraggable=DragSpec->GetBoolField(TEXT("enabled"));
+        const FGamePlatformUIWindowDragSettings* Drag=nullptr;
+        if(const auto* Plain=Cast<UGamePlatformWidgetBase>(Widget.Get())) Drag=&Plain->WindowDrag;
+        if(const auto* Active=Cast<UGamePlatformActivatableWidgetBase>(Widget.Get())) Drag=&Active->WindowDrag;
+        bPassed&=TestNotNull(*(Name+TEXT(" 继承现有平台窗口基类")),Drag);
+        if(Drag)
+        {
+            bPassed&=TestEqual(*(Name+TEXT(" 原生拖拽开关与唯一合同一致")),Drag->bEnabled,bDraggable);
+            if(bDraggable)
+            {
+                bPassed&=TestEqual(TEXT("边界节点"),Drag->BoundsWidgetName.ToString(),DragSpec->GetStringField(TEXT("bounds")));
+                bPassed&=TestEqual(TEXT("标题高度"),Drag->HeaderHeight,float(DragSpec->GetNumberField(TEXT("header_height"))));
+                bPassed&=TestEqual(TEXT("视口内边距"),Drag->ViewportInset,float(DragSpec->GetNumberField(TEXT("viewport_inset"))));
+                const auto& Names=DragSpec->GetArrayField(TEXT("move_targets"));
+                bPassed&=TestEqual(TEXT("移动组数目"),Drag->MoveTargetWidgetNames.Num(),Names.Num());
+                for(int32 Index=0;Index<Names.Num();++Index)
+                {
+                    const FName Target(*Names[Index]->AsString());
+                    bPassed&=TestNotNull(*(Name+TEXT(" 移动节点存在 ")+Target.ToString()),Widget->GetWidgetFromName(Target));
+                    bPassed&=TestTrue(TEXT("原生移动组与合同逐项一致"),Drag->MoveTargetWidgetNames.IsValidIndex(Index)&&Drag->MoveTargetWidgetNames[Index]==Target);
+                    bPassed&=TestTrue(TEXT("全屏背景/遮罩不能加入弹窗移动组"),Target!=TEXT("WorldScrim")&&Target!=TEXT("SceneBackdrop")&&Target!=TEXT("BackdropShade"));
+                }
+            }
+        }
+        const auto BackgroundAllowsChildInput=[bDraggable](const UWidget* Candidate)
         {
             if(!Candidate)return false;
+            if(bDraggable)return Candidate->GetVisibility()==ESlateVisibility::Visible;
             const auto* Panel=Cast<UPanelWidget>(Candidate);
             if(Panel&&Panel->GetChildrenCount()>0)
                 return Candidate->GetVisibility()==ESlateVisibility::SelfHitTestInvisible;
             return Candidate->GetVisibility()==ESlateVisibility::HitTestInvisible
                 ||Candidate->GetVisibility()==ESlateVisibility::SelfHitTestInvisible;
         };
-        bPassed&=TestTrue(*(Name+TEXT(" 背景不截获输入且保留子控件命中")),BackgroundAllowsChildInput(Background));
+        bPassed&=TestTrue(*(Name+TEXT(" 背景符合输入合同且保留子控件命中")),BackgroundAllowsChildInput(Background));
         if(auto* Panel=Cast<UPanelWidget>(Background);Panel&&Panel->GetChildrenCount()>0)
         {
             // 对真实瞬态页面注入错误可见性，确认门禁会拒绝连关闭按钮一起禁用的回归。

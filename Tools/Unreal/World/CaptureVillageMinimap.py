@@ -7,9 +7,28 @@
 运行格式采用不透明RGB；不能把全零Alpha作为地图遮罩。圆窗由UI画刷独立裁剪。
 完成或异常均解除自有帧回调并销毁镜头；证据不代表实时小地图或联机验收。
 """
+from configparser import ConfigParser
+import hashlib
 import json
+import math
 from pathlib import Path
+import re
 import unreal
+
+
+def map_rect(project):
+    """读取客户端投影使用的项目配置，返回世界厘米中心和底图边长。"""
+    config = ConfigParser(interpolation=None, strict=False)
+    config.read(project / 'Config/DefaultGame.ini', encoding='utf-8-sig')
+    settings = config['/Script/DivineBeastsUIClient.DivineBeastsUISettings']
+    center = re.fullmatch(r'\(X=([^,]+),\s*Y=([^,]+)\)', settings['VillageMinimapCenterCm'])
+    if center is None:
+        raise ValueError('小地图中心须采用 (X=…,Y=…) 配置')
+    x, y = map(float, center.groups())
+    width = settings.getfloat('VillageMinimapWidthCm')
+    if not all(map(math.isfinite, (x, y, width))) or width <= 0:
+        raise ValueError('小地图中心或范围非法')
+    return x, y, width
 
 
 def capture(output_override=None):
@@ -18,15 +37,17 @@ def capture(output_override=None):
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).get_current_level()
     if not level or 'L_Village_Start' not in level.get_path_name():
         raise RuntimeError('当前关卡不是正式新手村，拒绝生成误导底图')
-    root = Path(unreal.Paths.project_dir()).resolve().parent
-    output = Path(output_override) if output_override else root / 'Saved/Validation/AnimationHUD/VillageMinimapCapture.png'
+    project = Path(unreal.Paths.project_dir()).resolve()
+    root = project.parent
+    x, y, width = map_rect(project)
+    output = Path(output_override) if output_override else project / 'Saved/Validation/AnimationHUD/VillageMinimapCapture.png'
     output = output.resolve()
     if not output.is_relative_to(root):
         raise RuntimeError('捕获输出必须位于当前工程内')
     output.parent.mkdir(parents=True, exist_ok=True)
     selection = list(actors.get_selected_level_actors())
     camera = actors.spawn_actor_from_class(unreal.SceneCapture2D,
-        unreal.Vector(0, 0, 30000), unreal.Rotator(pitch=-90, yaw=0, roll=0), transient=True)
+        unreal.Vector(x, y, 55000), unreal.Rotator(pitch=-90, yaw=0, roll=0), transient=True)
     component = camera.get_component_by_class(unreal.SceneCaptureComponent2D)
     # 使用正式创建API初始化RHI资源，避免依赖裸UObject的编辑属性副作用。
     target = unreal.RenderingLibrary.create_render_target2d(camera.get_world(), 1024, 1024,
@@ -35,7 +56,7 @@ def capture(output_override=None):
         raise RuntimeError('无法创建瞬态捕获组件或渲染目标')
     component.set_editor_property('texture_target', target)
     component.set_editor_property('projection_type', unreal.CameraProjectionMode.ORTHOGRAPHIC)
-    component.set_editor_property('ortho_width', 50400)
+    component.set_editor_property('ortho_width', width)
     component.set_editor_property('capture_source', unreal.SceneCaptureSource.SCS_FINAL_COLOR_LDR)
     component.set_editor_property('capture_every_frame', False)
     settings = []
@@ -69,7 +90,9 @@ def capture(output_override=None):
             else:
                 unreal.RenderingLibrary.export_render_target(camera.get_world(), target, str(output.parent), output.name)
                 evidence = {'level': level.get_path_name(), 'source': str(output), 'size': [1024, 1024],
-                    'extent_centimeters': 50400, 'north': '+X', 'east': '+Y', 'capture_source': 'BaseColor',
+                    'sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
+                    'center_centimeters': [x, y], 'extent_centimeters': width,
+                    'north': '+X', 'east': '+Y', 'capture_source': 'BaseColor',
                     'capture_mode': 'FinalColorLDR_Unlit', 'world_modified': False}
                 output.with_suffix('.json').write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding='utf-8')
                 print('REAL_VILLAGE_MINIMAP_CAPTURED')

@@ -2689,7 +2689,13 @@
     ],
     "FixedStateFixtureExcluded": "/Game/Development/UI/WBP_DBA_CloudButtonShowcase",
     "Preserved": "Existing layout, labels, icons, commands, eligibility, focus, check glyphs and shared event-driven theme ownership",
-    "NativeEvidence": ["NativeCompile.json", "ColdReload.Verification.json", "DynamicCamera.Native.json", "NativeRegression.json", "NativePageCaptures.json"],
+    "NativeEvidence": [
+      "NativeCompile.json",
+      "ColdReload.Verification.json",
+      "DynamicCamera.Native.json",
+      "NativeRegression.json",
+      "NativePageCaptures.json"
+    ],
     "ReportRule": "Later build, Cook and acceptance results recorded only in the Saved evidence directory",
     "HumanVisualAccepted": false,
     "HumanPointerInputAccepted": false
@@ -2697,11 +2703,73 @@
   "PopupPanel20261103": {
     "Author": "Tools/Unreal/UI/AuthorPopupPanelUE58.py",
     "SharedStyle": "/DBAUIPack_Core/UI/Styles/BP_DBA_BorderStyle_Panel",
-    "Evidence": "Saved/Validation/PopupPanel20261103",
-    "Status": "NativeSaved_ColdReloadAndRHIPending",
+    "Evidence": "Saved/Validation/PopupPanel20261104",
+    "Status": "NativeSaved_IndependentValidationInSaved",
     "Contract": "Tools/Unreal/UI/PopupPanel.json",
-    "EditorPID": 37192,
+    "EditorPID": 56268,
     "HumanVisualAccepted": false,
-    "SurfaceCount": 19
+    "SurfaceCount": 20,
+    "FinalVerification": "Saved/Validation/PopupPanel20261104/Delivery.json",
+    "ShortNotificationIncluded": true,
+    "ReportRule": "Build, Cook, current process and human acceptance results belong to the Saved evidence directory"
+  },
+  "PopupWindowDrag20261104": {
+    "Author": "Tools/Unreal/UI/AuthorPopupPanelUE58.py:window_drag",
+    "Contract": "Tools/Unreal/UI/PopupPanel.json",
+    "Implementation": "GamePlatformUIClient existing widget base classes",
+    "Evidence": "Saved/Validation/PopupDrag20261104",
+    "Status": "NativeSaved_IndependentValidationInSaved",
+    "EnabledFloatingWindows": 14,
+    "UnchangedFullScreenPages": 6,
+    "ControlsAndLayoutPreserved": true,
+    "HumanPointerInputAccepted": false,
+    "ReportRule": "Cold reload, full target build, Cook and human acceptance results recorded only in Saved evidence"
+  },
+  "ClassicSilverCursor": {
+    "Author": "Tools/Unreal/UI/AuthorCursorUE58.py",
+    "Contract": "Tools/Unreal/UI/CursorTheme.json",
+    "MonolithVersion": "0.23.0",
+    "Parent": "/Script/GamePlatformUIClient.GamePlatformWidgetBase",
+    "ControlNames": [
+      "CursorSize",
+      "CursorImage"
+    ],
+    "DisplaySize": [
+      44,
+      44
+    ],
+    "Assets": [
+      "/DBAUIPack_Core/UI/Cursors/Textures/T_DBA_CursorAtlas",
+      "/DBAUIPack_Core/UI/Cursors/Materials/M_DBA_Cursor",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Default",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Default",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Pickup",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Pickup",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Attack",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Attack",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Interact",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Interact",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Talk",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Talk",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Harvest",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Harvest",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Trade",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Trade",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Drag",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Drag",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Select",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Select",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Blocked",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Blocked"
+    ],
+    "Actions": [
+      "editor.run_python: import/author",
+      "ui.build_ui_from_spec: dry-run and create",
+      "native compile/save/readback",
+      "AssetRegistry dependency validation"
+    ],
+    "Evidence": "Game/Saved/Validation/CursorReplacement",
+    "NativeReadbackPassed": true,
+    "ReportRule": "Independent RHI, Cook and human pointer results are recorded in Saved evidence"
   }
 }

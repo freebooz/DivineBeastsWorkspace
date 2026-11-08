@@ -1,5 +1,5 @@
 """经正式Monolith执行的项目小地图材质/底图作者；不创建运行框架或修改玩法。"""
-import hashlib,json
+import hashlib,json,runpy,struct
 from pathlib import Path
 import unreal as u
 
@@ -74,14 +74,25 @@ def material_assets():
     write('MaterialAssets.json',{'Material':path,'Instances':instances,'CodeSHA256':hashlib.sha256(code.encode('utf-8')).hexdigest(),'Domain':'UI','TextureSamples':0})
     print('COMPACT_MINIMAP_MATERIALS_SAVED',len(instances)+1)
 
-def import_map():
-    context();source=OUT/'VillageMap.png';assert source.is_file()
-    # 外部像素审查先写入通过证据；源图灰色、无地形或未完成时不覆盖正式底图。
-    stats=json.loads((OUT/'CapturePixels.json').read_text(encoding='utf-8-sig'))
-    assert stats['Passed'] and stats['ColoredSamples']>40 and stats['SampleColors']>100
+def import_map(source=None, save=True):
+    context()
+    project=ROOT/'Game'
+    source=Path(source).resolve() if source else project/'Saved/Validation/AnimationHUD/VillageMinimapCapture.png'
+    assert source.is_relative_to(project/'Saved') and source.is_file()
+    capture=runpy.run_path(str(ROOT/'Tools/Unreal/World/CaptureVillageMinimap.py'))
+    x,y,width=capture['map_rect'](project)
+    metadata=json.loads(source.with_suffix('.json').read_text(encoding='utf-8'))
+    pixels=source.read_bytes()
+    assert len(pixels)>12000 and pixels[:8]==b'\x89PNG\r\n\x1a\n'
+    assert struct.unpack_from('>II',pixels,16)==(1024,1024)
+    assert metadata['level'].startswith('/DBAWorldPack_Village/Maps/L_Village_Start.')
+    assert metadata['sha256']==hashlib.sha256(pixels).hexdigest()
+    assert metadata['center_centimeters']==[x,y] and metadata['extent_centimeters']==width
+    assert metadata['north']=='+X' and metadata['east']=='+Y'
     asset=CONFIG['Texture'];task=u.AssetImportTask()
     for name,value in {'filename':str(source),'destination_path':asset.rsplit('/',1)[0],
-                       'destination_name':asset.rsplit('/',1)[1],'replace_existing':True,'automated':True,'save':False}.items():
+                       'destination_name':asset.rsplit('/',1)[1],'replace_existing':True,
+                       'replace_existing_settings':False,'automated':True,'save':False}.items():
         task.set_editor_property(name,value)
     u.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task]);texture=u.load_asset(asset);assert isinstance(texture,u.Texture2D)
     texture.set_editor_property('srgb',True)
@@ -89,10 +100,13 @@ def import_map():
     texture.set_editor_property('compression_settings',u.TextureCompressionSettings.TC_EDITOR_ICON)
     texture.set_editor_property('lod_group',u.TextureGroup.TEXTUREGROUP_UI)
     texture.set_editor_property('mip_gen_settings',u.TextureMipGenSettings.TMGS_SIMPLE_AVERAGE)
-    assert u.EditorAssetLibrary.save_loaded_asset(texture,False)
-    write('MapImport.json',{'Asset':asset,'Source':str(source),'Size':[texture.blueprint_get_size_x(),texture.blueprint_get_size_y()],
-                          'SRGB':True,'CompressionNoAlpha':True,'MipMode':'SimpleAverage','RealtimeCapture':False})
-    print('COMPACT_MINIMAP_REAL_MAP_SAVED')
+    if save:
+        assert u.EditorAssetLibrary.save_loaded_asset(texture,False)
+        write('MapImport.json',{'Asset':asset,'Source':str(source),'Size':metadata['size'],
+                              'SRGB':True,'CompressionNoAlpha':True,'MipMode':'SimpleAverage','RealtimeCapture':False,
+                              'CaptureSHA256':metadata['sha256'],'WorldRectCm':[x,y,width]})
+        print('COMPACT_MINIMAP_REAL_MAP_SAVED')
+    return texture
 
 def layout_assets():
     """当前唯一布局作者：按CompactMinimap合同调整现有资产，不重建树或缩放字体。"""

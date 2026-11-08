@@ -221,6 +221,17 @@ try {
     $audioRequired = @($audioRequired | Sort-Object -Unique)
     $required += $audioRequired
 
+    # 光标资源由同一主题合同制作；逐个核对当前客户端包中的原生控件、材质和图集。
+    $cursorTheme = Get-Content -LiteralPath (Join-Path $workspaceRoot 'Tools/Unreal/UI/CursorTheme.json') -Raw -Encoding utf8 | ConvertFrom-Json
+    $cursorPackages = @($cursorTheme.texture, $cursorTheme.material) + @($cursorTheme.states | ForEach-Object { $_.material; $_.widget })
+    if (@($cursorTheme.states).Count -eq 0 -or @($cursorPackages | Sort-Object -Unique).Count -ne $cursorPackages.Count) {
+        throw '光标主题资产合同为空或包含重复包。'
+    }
+    foreach ($package in $cursorPackages) {
+        if ($package -cnotmatch '^/DBAUIPack_Core/UI/Cursors/[A-Za-z0-9_/]+$') { throw "光标资产不在公共 UI 内容包：$package" }
+        $required += 'DBAUIPack_Core/Content' + $package.Substring('/DBAUIPack_Core'.Length) + '.uasset'
+    }
+
     # 当前VFX与退休包均从唯一合同派生；正式/开发客户端不能各自维护版本列表。
     $spellManifest = Get-Content -LiteralPath (Join-Path $workspaceRoot 'Tools/Unreal/VFX/SpellProjectiles/PresentationManifest.json') -Raw -Encoding utf8 | ConvertFrom-Json
     function Convert-SpellPackageToContainerSuffix([string]$Package) {
@@ -251,7 +262,7 @@ try {
         @($rows | Where-Object { $_.Filename.Replace('\','/').EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase) -and
             $_.ChunkType -eq 'ExportBundleData' -and $_.Platform -eq 'WindowsClient' -and [long]$_.Size -gt 0 }).Count -eq 0
     })
-    $report = [ordered]@{ Passed=($missing.Count -eq 0 -and $forbidden.Count -eq 0); RequiredCount=$required.Count; AudioRequiredCount=$audioRequired.Count; Missing=$missing; Forbidden=$forbidden; ContainerCsv=[IO.Path]::GetFullPath($ContainerCsv) }
+    $report = [ordered]@{ Passed=($missing.Count -eq 0 -and $forbidden.Count -eq 0); RequiredCount=$required.Count; AudioRequiredCount=$audioRequired.Count; CursorRequiredCount=$cursorPackages.Count; Missing=$missing; Forbidden=$forbidden; ContainerCsv=[IO.Path]::GetFullPath($ContainerCsv) }
     $json = $report | ConvertTo-Json -Depth 5
     if ($ReportPath) { $json | Set-Content -LiteralPath $ReportPath -Encoding utf8 }
     $json

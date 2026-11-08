@@ -4,6 +4,36 @@
 #include "Engine/LocalPlayer.h"
 #include "ViewModels/GamePlatformViewModelBase.h"
 #include "Styling/GamePlatformUIThemeBinding.h"
+#include "Input/GamePlatformUIWindowDrag.h"
+
+int32 UGamePlatformWidgetBase::NativePaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,
+    FSlateWindowElementList& Elements, int32 Layer, const FWidgetStyle& Style, bool bParentEnabled) const
+{
+    const int32 Result=Super::NativePaint(Args,Geometry,CullingRect,Elements,Layer,Style,bParentEnabled);
+    if(bPlatformEventsBound && WindowDragState) WindowDragState->LayoutReady(Geometry);
+    return Result;
+}
+
+FReply UGamePlatformWidgetBase::NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if(bPlatformEventsBound && WindowDrag.bEnabled && WindowDragState)
+    { const FReply Reply=WindowDragState->MouseDown(Geometry,Event); if(Reply.IsEventHandled()) return Reply; }
+    return Super::NativeOnMouseButtonDown(Geometry,Event);
+}
+FReply UGamePlatformWidgetBase::NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if(WindowDragState) { const FReply Reply=WindowDragState->MouseMove(Geometry,Event); if(Reply.IsEventHandled()) return Reply; }
+    return Super::NativeOnMouseMove(Geometry,Event);
+}
+FReply UGamePlatformWidgetBase::NativeOnMouseButtonUp(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if(WindowDragState) { const FReply Reply=WindowDragState->MouseUp(Event); if(Reply.IsEventHandled()) return Reply; }
+    return Super::NativeOnMouseButtonUp(Geometry,Event);
+}
+void UGamePlatformWidgetBase::NativeOnMouseCaptureLost(const FCaptureLostEvent& Event)
+{ if(WindowDragState) WindowDragState->CaptureLost(Event); Super::NativeOnMouseCaptureLost(Event); }
+void UGamePlatformWidgetBase::NativeOnFocusLost(const FFocusEvent& Event)
+{ if(WindowDragState) WindowDragState->Cancel(); Super::NativeOnFocusLost(Event); }
 
 void UGamePlatformWidgetBase::InitializeWidgetViewModel(
     UGamePlatformViewModelBase* InViewModel)
@@ -60,10 +90,17 @@ void UGamePlatformWidgetBase::NativeConstruct()
         if (!ThemeBinding) ThemeBinding = NewObject<UGamePlatformUIThemeBinding>(this);
         ThemeBinding->Initialize(this, ThemeBindings);
     }
+    if(bPlatformEventsBound && WindowDrag.bEnabled)
+    {
+        if(!WindowDragState) WindowDragState=NewObject<UGamePlatformUIWindowDrag>(this);
+        WindowDragState->Initialize(this,WindowDrag);
+        WindowDragState->Adapt(GetAdaptiveContext());
+    }
 }
 
 void UGamePlatformWidgetBase::NativeDestruct()
 {
+    if(WindowDragState) WindowDragState->Shutdown();
     if (bPlatformEventsBound)
     {
         UnbindUIEvents();
@@ -85,6 +122,7 @@ void UGamePlatformWidgetBase::HandleViewModelStateChanged(
 void UGamePlatformWidgetBase::HandleAdaptiveContextChanged(
     FGamePlatformUIAdaptiveContext Context)
 {
+    if(WindowDragState) WindowDragState->Adapt(Context);
     OnAdaptiveContextChanged(Context);
     BP_OnAdaptiveContextChanged(Context);
 }

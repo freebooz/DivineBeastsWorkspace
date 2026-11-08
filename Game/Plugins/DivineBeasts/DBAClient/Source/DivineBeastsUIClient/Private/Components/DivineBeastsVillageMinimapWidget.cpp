@@ -9,6 +9,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Loading/GamePlatformAssetLoader.h"
+#include "Settings/DivineBeastsUISettings.h"
 #include "UObject/Package.h"
 
 namespace
@@ -19,10 +20,14 @@ const FSoftObjectPath VillageMapTexture(TEXT("/DBAUIPack_Core/UI/Maps/T_DBA_Vill
 
 bool UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(const FVector& PositionCentimeters, FVector2D& OutUV)
 {
-    if (!FMath::IsFinite(PositionCentimeters.X) || !FMath::IsFinite(PositionCentimeters.Y)) { return false; }
+    const auto& Settings = *GetDefault<UDivineBeastsUISettings>();
+    const FVector2D LocalPosition = FVector2D(PositionCentimeters.X, PositionCentimeters.Y) - Settings.VillageMinimapCenterCm;
+    const double WidthCm = Settings.VillageMinimapWidthCm;
+    if (!FMath::IsFinite(LocalPosition.X) || !FMath::IsFinite(LocalPosition.Y) ||
+        !FMath::IsFinite(WidthCm) || WidthCm <= 0.0) { return false; }
     // 捕获镜头北向必须与此一致；保留Z独立，山地高度不扭曲平面地图。
-    OutUV = FVector2D(FMath::Clamp((PositionCentimeters.Y + 25200.0) / 50400.0, 0.0, 1.0),
-        FMath::Clamp((25200.0 - PositionCentimeters.X) / 50400.0, 0.0, 1.0));
+    OutUV = FVector2D(FMath::Clamp(0.5 + LocalPosition.Y / WidthCm, 0.0, 1.0),
+        FMath::Clamp(0.5 - LocalPosition.X / WidthCm, 0.0, 1.0));
     return true;
 }
 

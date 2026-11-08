@@ -440,11 +440,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsVillageMapProjectionTest,
 bool FDivineBeastsVillageMapProjectionTest::RunTest(const FString&)
 {
     FVector2D UV;
-    TestTrue(TEXT("地图中心有效"), UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(FVector::ZeroVector, UV));
+    const FVector VillageCenter(24800, 79000, 12200);
+    TestTrue(TEXT("地图中心有效"), UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(VillageCenter, UV));
     TestEqual(TEXT("地图中心位于图像中心"), UV, FVector2D(0.5, 0.5));
-    TestTrue(TEXT("北部边界有效"), UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(FVector(25200, 0, 0), UV));
+    TestTrue(TEXT("北部边界有效"), UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(VillageCenter + FVector(25200, 0, 0), UV));
     TestEqual(TEXT("+X北方对应图像上边"), UV, FVector2D(0.5, 0));
-    UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(FVector(0, 25200, 0), UV);
+    UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(VillageCenter + FVector(0, 25200, 0), UV);
     TestEqual(TEXT("+Y东方对应图像右边"), UV, FVector2D(1, 0.5));
     UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(FVector(-99999, -99999, 0), UV);
     TestEqual(TEXT("地图外玩家有界显示"), UV, FVector2D(0, 1));

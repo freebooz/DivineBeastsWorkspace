@@ -48,7 +48,19 @@
   ],
   "surfaces": [
     {
+      "asset": "/DBAUIPack_Core/UI/Notifications/WBP_DBA_UI_Toast",
+      "window_drag": {"enabled": true,"bounds": "ToastSurface","move_targets": ["ToastBounds"],"header_height": 40,"viewport_inset": 8},
+      "background": "ToastSurface",
+      "body": ["TitleText", "MessageText"],
+      "error": [],
+      "heading": [],
+      "content_padding": [24, 48, 24, 28],
+      "size_box_min_heights": {"ToastBounds": 160},
+      "auto_wrap_text": ["MessageText"]
+    },
+    {
       "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_SystemMenu",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["NaturePanel","MenuTitle","ResumeButton","SettingsButton","LogoutButton","QuitButton","ErrorText","EscapeHint","PanelBackground"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "MenuTitle",
@@ -67,6 +79,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Settings",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["NaturePanel","SettingsTitle","ResolutionComboLabel","ResolutionCombo","WindowModeComboLabel","WindowModeCombo","QualityComboLabel","QualityCombo","StatusText","ErrorText","ApplyButton","ConfirmButton","RevertButton","BackButton","PanelBackground","AudioSectionLabel","AudioHelpText","EffectsVolumeLabel","EffectsVolumeSlider","EffectsVolumeText","AmbientVolumeLabel","AmbientVolumeSlider","AmbientVolumeText","MusicVolumeLabel","MusicVolumeSlider","MusicVolumeText"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "AudioSectionLabel",
@@ -91,6 +104,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Inventory",
+      "window_drag": {"enabled": true,"bounds": "InventoryFrame","move_targets": ["InventoryFrame"],"header_height": 40,"viewport_inset": 8},
       "background": "InventoryFrame",
       "body": [
         "ItemDetailTitle",
@@ -117,6 +131,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Quest",
+      "window_drag": {"enabled": false},
       "background": "PageSurface",
       "body": [
         "FooterText",
@@ -134,6 +149,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_WorldJournal",
+      "window_drag": {"enabled": false},
       "background": "JournalSurface",
       "body": [
         "DetailText",
@@ -152,6 +168,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Social",
+      "window_drag": {"enabled": false},
       "background": "PageSurface",
       "body": [
         "FooterText",
@@ -169,6 +186,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_LiveOps",
+      "window_drag": {"enabled": false},
       "background": "PageSurface",
       "body": [
         "FooterText",
@@ -187,6 +205,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_ErrorReconnect",
+      "window_drag": {"enabled": true,"bounds": "PopupBackground","move_targets": ["FailureTitle","ErrorText","RetryButton","PopupBackground"],"header_height": 40,"viewport_inset": 8},
       "background": "PopupBackground",
       "body": [
         "FailureTitle"
@@ -214,6 +233,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_StandardPanel",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["PanelSize"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "PanelTitle"
@@ -223,6 +243,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyPanel",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["PanelBounds"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "DisbandConfirmationLabel",
@@ -238,6 +259,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyInviteModal",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["PanelBounds"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "RemainingSecondsText",
@@ -253,6 +275,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyReadyCheckModal",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["PanelBounds"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "RemainingSecondsText",
@@ -268,6 +291,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PartyApplications",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["PanelBounds"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "EmptyStateText",
@@ -281,6 +305,7 @@
     },
     {
       "asset": "/DBAUIPack_Core/UI/Social/WBP_DBA_PlayerContextMenu",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["PanelBounds"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "PanelTitle",
@@ -293,6 +318,7 @@
     },
     {
       "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Matchmaking",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["PanelBounds"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "ChallengeRosterText",
@@ -311,6 +337,7 @@
     },
     {
       "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_MatchFoundReady",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["PanelBounds"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "EntryStatusText",
@@ -324,6 +351,7 @@
     },
     {
       "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_HeroSelection",
+      "window_drag": {"enabled": false},
       "background": "PageSurface",
       "body": [
         "ArenaStateText",
@@ -345,6 +373,7 @@
     },
     {
       "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_Scoreboard",
+      "window_drag": {"enabled": false},
       "background": "PageSurface",
       "body": [
         "ArenaStateText",
@@ -366,6 +395,7 @@
     },
     {
       "asset": "/DBAArena/UI/Screens/WBP_DBA_UI_Arena_PostMatch",
+      "window_drag": {"enabled": true,"bounds": "PanelBackground","move_targets": ["PanelBounds"],"header_height": 40,"viewport_inset": 8},
       "background": "PanelBackground",
       "body": [
         "ModeText",
@@ -383,7 +413,7 @@
   "exclusions": [
     "Full-screen login and character flow backgrounds",
     "World/HUD nameplates and resource bars",
-    "Notifications without a popup window",
+    "Inline HUD alerts without a popup window",
     "Developer plugin demonstration UI"
   ],
   "heading_srgb": [

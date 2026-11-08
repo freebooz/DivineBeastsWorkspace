@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "theme": "ClassicSilver",
+  "display_name": "01 经典银钢",
+  "widget_parent": "/Script/GamePlatformUIClient.GamePlatformWidgetBase",
+  "source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Cursors/T_DBA_CursorAtlas.png",
+  "source_size": [
+    1983,
+    793
+  ],
+  "source_sha256": "29b5c6a52a5f6c7e9be5f2272ad4744e071e274728ebef5be97908985393c4b1",
+  "texture": "/DBAUIPack_Core/UI/Cursors/Textures/T_DBA_CursorAtlas",
+  "material": "/DBAUIPack_Core/UI/Cursors/Materials/M_DBA_Cursor",
+  "display_size": [
+    44,
+    44
+  ],
+  "opacity_floor": 0.02,
+  "hotspot_review": "PendingNativeManualReview",
+  "source_provenance": "本轮imagegen制作的十态透明图集；按已选01经典银钢方向制作。既有方案源文件下载受阻，未取得原图逐像素对照证据。",
+  "states": [
+    {
+      "id": "Default",
+      "title": "普通",
+      "rect_px": [
+        0,
+        0,
+        397,
+        397
+      ],
+      "hotspot_px": [
+        79,
+        67
+      ],
+      "native_cursor": "Default",
+      "semantics": "指向位置；使用指尖作为热点。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Default",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Default"
+    },
+    {
+      "id": "Pickup",
+      "title": "拾取",
+      "rect_px": [
+        397,
+        0,
+        396,
+        397
+      ],
+      "hotspot_px": [
+        73,
+        125
+      ],
+      "native_cursor": null,
+      "semantics": "仅在现有交互事实明确为拾取时使用；当前未新增拾取触发器。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Pickup",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Pickup"
+    },
+    {
+      "id": "Attack",
+      "title": "攻击",
+      "rect_px": [
+        793,
+        0,
+        397,
+        397
+      ],
+      "hotspot_px": [
+        59,
+        64
+      ],
+      "native_cursor": null,
+      "semantics": "仅在经过真实攻击资格判定时使用；可选目标不等于可攻击。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Attack",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Attack"
+    },
+    {
+      "id": "Interact",
+      "title": "交互",
+      "rect_px": [
+        1190,
+        0,
+        396,
+        397
+      ],
+      "hotspot_px": [
+        200,
+        200
+      ],
+      "native_cursor": "Hand",
+      "semantics": "保留现有可交互语义，齿轮中心作为热点。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Interact",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Interact"
+    },
+    {
+      "id": "Talk",
+      "title": "对话",
+      "rect_px": [
+        1586,
+        0,
+        397,
+        397
+      ],
+      "hotspot_px": [
+        84,
+        307
+      ],
+      "native_cursor": null,
+      "semantics": "仅供已有对话交互适配；当前未新增对话触发器。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Talk",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Talk"
+    },
+    {
+      "id": "Harvest",
+      "title": "采集",
+      "rect_px": [
+        0,
+        397,
+        397,
+        396
+      ],
+      "hotspot_px": [
+        72,
+        204
+      ],
+      "native_cursor": null,
+      "semantics": "仅供明确Harvest交互适配；当前未新增采集触发器。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Harvest",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Harvest"
+    },
+    {
+      "id": "Trade",
+      "title": "交易",
+      "rect_px": [
+        397,
+        397,
+        396,
+        396
+      ],
+      "hotspot_px": [
+        198,
+        198
+      ],
+      "native_cursor": null,
+      "semantics": "仅供已有交易交互适配；当前未新增交易触发器。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Trade",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Trade"
+    },
+    {
+      "id": "Drag",
+      "title": "拖拽",
+      "rect_px": [
+        793,
+        397,
+        397,
+        396
+      ],
+      "hotspot_px": [
+        198,
+        198
+      ],
+      "native_cursor": "GrabHandClosed",
+      "semantics": "原生闭合抓手类型；本任务不改变拖动输入规则。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Drag",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Drag"
+    },
+    {
+      "id": "Select",
+      "title": "目标选择",
+      "rect_px": [
+        1190,
+        397,
+        396,
+        396
+      ],
+      "hotspot_px": [
+        201,
+        190
+      ],
+      "native_cursor": "Crosshairs",
+      "semantics": "只表示可选目标，保留现有源码语义。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Select",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Select"
+    },
+    {
+      "id": "Blocked",
+      "title": "禁止",
+      "rect_px": [
+        1586,
+        397,
+        397,
+        396
+      ],
+      "hotspot_px": [
+        195,
+        193
+      ],
+      "native_cursor": "SlashedCircle",
+      "semantics": "交互不可用；圆环中心作为热点。",
+      "material": "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Blocked",
+      "widget": "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Blocked"
+    }
+  ]
+}

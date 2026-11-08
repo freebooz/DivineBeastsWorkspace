@@ -1,6 +1,6 @@
 """SSLM 唯一共享弹窗背景作者。只通过已交接的正式 UE5.8 Monolith 执行。
 
-候选阶段保留在 Saved；发布时安装到 Tools/Unreal/UI，资源写入 DBAUIPack_Core。
+唯一覆盖合同为相邻 PopupPanel.json；资源写入 DBAUIPack_Core。
 不创建业务逻辑、不操作人工客户端、不改账号/服务器、不覆盖其他任务按钮和头像。
 """
 from pathlib import Path
@@ -240,6 +240,13 @@ def assign_binding(bindings,name,key,kind):
 
 def prepare_surface(bp,item):
     found=nodes(bp)
+    # 短提示只放宽背景容器，不缩放字体；长文案沿既有宽度自然换行。
+    for name,height in item.get('size_box_min_heights',{}).items():
+        assert isinstance(found[name],u.SizeBox)
+        found[name].set_min_desired_height(float(height))
+    for name in item.get('auto_wrap_text',[]):
+        assert isinstance(found[name],u.TextBlock)
+        found[name].set_auto_wrap_text(True)
     if 'create_background' in item:
         tree=u.find_object(bp,'WidgetTree');spec=item['create_background']
         if item['background'] not in found:
@@ -254,6 +261,44 @@ def prepare_surface(bp,item):
         assert isinstance(found[name].slot,u.CanvasPanelSlot)
         found[name].slot.set_position(u.Vector2D(*pos))
     return found
+
+
+def configure_window_drag(bp,item):
+    """项目资产只声明基类移动组，不复制输入状态机或重建 WidgetTree。"""
+    spec=item['window_drag']
+    cls=u.EditorAssetLibrary.load_blueprint_class(item['asset'])
+    cdo=u.get_default_object(cls)
+    config=cdo.get_editor_property('window_drag')
+    config.set_editor_property('enabled',spec['enabled'])
+    if spec['enabled']:
+        found=nodes(bp)
+        assert spec['bounds'] in found
+        assert all(name in found for name in spec['move_targets'])
+        config.set_editor_property('bounds_widget_name',spec['bounds'])
+        config.set_editor_property('move_target_widget_names',spec['move_targets'])
+        config.set_editor_property('header_height',float(spec['header_height']))
+        config.set_editor_property('viewport_inset',float(spec['viewport_inset']))
+        # 只让底板接收空白区域鼠标；原有子控件仍先处理按钮/输入事件。
+        found[item['background']].set_visibility(u.SlateVisibility.VISIBLE)
+    cdo.set_editor_property('window_drag',config)
+
+
+def window_drag(assets=None):
+    """为现有浮动弹窗配置共享基类能力，单独执行时不重写视觉样式。"""
+    context()
+    records=[]
+    for item in CFG['surfaces']:
+        if assets is not None and item['asset'] not in assets:continue
+        bp=u.load_asset(item['asset']);assert isinstance(bp,u.WidgetBlueprint)
+        before=contract(bp,item['background'])
+        configure_window_drag(bp,item)
+        u.BlueprintEditorLibrary.compile_blueprint(bp);save(bp)
+        assert contract(bp,item['background'])==before,'拖拽配置改变了控件合同: '+item['asset']
+        cdo=u.get_default_object(u.EditorAssetLibrary.load_blueprint_class(item['asset']))
+        records.append({'Asset':item['asset'],'WindowDrag':cdo.get_editor_property('window_drag').export_text(),
+                        'Contract':before,'ContractUnchanged':True})
+    report('NativeWindowDrag.json',records)
+    print('POPUP_WINDOW_DRAG_SAVED',len(records))
 
 
 def surfaces(assets=None):
@@ -303,6 +348,7 @@ def surfaces(assets=None):
                 text.set_shadow_color_and_opacity(u.LinearColor(0,0,0,0))
                 assign_binding(bindings,name,'UI.Style.Text.Panel'+role.capitalize(),u.GamePlatformUIStyleKind.TEXT)
         cdo.set_editor_property('theme_bindings',bindings)
+        configure_window_drag(bp,item)
         assert contract(bp,item['background'])==before,'改变了控件布局/字号/输入合同: '+item['asset']
         u.BlueprintEditorLibrary.compile_blueprint(bp);save(bp)
         assert contract(bp,item['background'])==before,'编译改变了控件合同: '+item['asset']

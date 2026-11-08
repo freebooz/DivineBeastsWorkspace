@@ -153,6 +153,13 @@
       "Role": "AlphaMask",
       "SHA256": "58d7d2d4eef63d0bf31c7c379c5bb25b423573ff5842a0f576601c493bcb89ec",
       "DescriptionZh": "共享木框弹窗；RGB原色与线性A分开导入，内衬按实心窗口合同处理。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Cursors/T_DBA_CursorAtlas.png",
+      "Destination": "/DBAUIPack_Core/UI/Cursors/Textures/T_DBA_CursorAtlas",
+      "Role": "Color",
+      "SHA256": "29b5c6a52a5f6c7e9be5f2272ad4744e071e274728ebef5be97908985393c4b1",
+      "DescriptionZh": "01经典银钢鼠标指针RGBA图集。RGB按sRGB解码，线性Alpha单独用于透明度，不乘色。"
     }
   ]
 }

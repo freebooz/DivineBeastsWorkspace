@@ -7,6 +7,38 @@
 #include "ViewModels/GamePlatformViewModelBase.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Styling/GamePlatformUIThemeBinding.h"
+#include "Input/GamePlatformUIWindowDrag.h"
+
+int32 UGamePlatformActivatableWidgetBase::NativePaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,
+    FSlateWindowElementList& Elements, int32 Layer, const FWidgetStyle& Style, bool bParentEnabled) const
+{
+    const int32 Result=Super::NativePaint(Args,Geometry,CullingRect,Elements,Layer,Style,bParentEnabled);
+    if(IsActivated() && bPlatformEventsBound && WindowDragState) WindowDragState->LayoutReady(Geometry);
+    return Result;
+}
+
+FReply UGamePlatformActivatableWidgetBase::NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if(IsActivated() && bPlatformEventsBound && WindowDrag.bEnabled && WindowDragState)
+    { const FReply Reply=WindowDragState->MouseDown(Geometry,Event); if(Reply.IsEventHandled()) return Reply; }
+    return Super::NativeOnMouseButtonDown(Geometry,Event);
+}
+FReply UGamePlatformActivatableWidgetBase::NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if(WindowDragState) { const FReply Reply=WindowDragState->MouseMove(Geometry,Event); if(Reply.IsEventHandled()) return Reply; }
+    return Super::NativeOnMouseMove(Geometry,Event);
+}
+FReply UGamePlatformActivatableWidgetBase::NativeOnMouseButtonUp(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if(WindowDragState) { const FReply Reply=WindowDragState->MouseUp(Event); if(Reply.IsEventHandled()) return Reply; }
+    return Super::NativeOnMouseButtonUp(Geometry,Event);
+}
+void UGamePlatformActivatableWidgetBase::NativeOnMouseCaptureLost(const FCaptureLostEvent& Event)
+{ if(WindowDragState) WindowDragState->CaptureLost(Event); Super::NativeOnMouseCaptureLost(Event); }
+void UGamePlatformActivatableWidgetBase::NativeOnFocusLost(const FFocusEvent& Event)
+{ if(WindowDragState) WindowDragState->Cancel(); Super::NativeOnFocusLost(Event); }
+void UGamePlatformActivatableWidgetBase::NativeDestruct()
+{ if(WindowDragState) WindowDragState->Shutdown(); Super::NativeDestruct(); }
 
 void UGamePlatformActivatableWidgetBase::InitializeActivatableViewModel(
     UGamePlatformViewModelBase* InViewModel)
@@ -94,10 +126,17 @@ void UGamePlatformActivatableWidgetBase::NativeOnActivated()
         if (!ThemeBinding) ThemeBinding = NewObject<UGamePlatformUIThemeBinding>(this);
         ThemeBinding->Initialize(this, ThemeBindings);
     }
+    if(IsActivationCurrent() && WindowDrag.bEnabled)
+    {
+        if(!WindowDragState) WindowDragState=NewObject<UGamePlatformUIWindowDrag>(this);
+        WindowDragState->Initialize(this,WindowDrag);
+        WindowDragState->Adapt(GetAdaptiveContext());
+    }
 }
 
 void UGamePlatformActivatableWidgetBase::NativeOnDeactivated()
 {
+    if(WindowDragState) WindowDragState->Cancel();
     const TStrongObjectPtr<UGamePlatformActivatableWidgetBase> KeepWidget(this);
     ++ActivationGeneration;
     const TStrongObjectPtr<UGamePlatformViewModelBase> KeepPreviousViewModel(ViewModel);
@@ -141,6 +180,7 @@ void UGamePlatformActivatableWidgetBase::HandleAdaptiveContextChanged(
 {
     const uint64 VisibleGeneration = ActivationGeneration;
     if (!IsActivated() || !bPlatformEventsBound) return;
+    if(WindowDragState) WindowDragState->Adapt(Context);
     OnAdaptiveContextChanged(Context);
     if (IsActivated() && bPlatformEventsBound && ActivationGeneration == VisibleGeneration)
         BP_OnAdaptiveContextChanged(Context);

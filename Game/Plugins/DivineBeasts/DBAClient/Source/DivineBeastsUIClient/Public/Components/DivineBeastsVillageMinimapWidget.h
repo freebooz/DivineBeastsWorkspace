@@ -16,7 +16,7 @@ class DIVINEBEASTSUICLIENT_API UDivineBeastsVillageMinimapWidget : public UGameP
 public:
     /** 游戏线程绑定当前本地Pawn；空值撤销旧事件、取消加载并隐藏，重绑不会保留旧世界快照。 */
     void BindToPawn(APawn* Pawn);
-    /** 世界厘米投影到[0,1]；+X为北/+Y为东，边界中心0、尺寸50400cm；非法输入返回false且不改OutUV。 */
+    /** 按项目配置将世界厘米投影到[0,1]，+X为北、+Y为东。非法输入返回false且不改OutUV。 */
     static bool ProjectVillagePosition(const FVector& PositionCentimeters, FVector2D& OutUV);
     /** 本地显示裁剪：倍率1/2/4不改变世界坐标；围绕玩家且不越过底图边缘，圆外标记沿方位收敛到半径0.40。非法值不修改输出。 */
     static bool ProjectMapViewport(const FVector2D& MapUV, float ZoomMultiplier,
