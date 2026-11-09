@@ -1052,6 +1052,10 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
             const TArray<FName> Providers = Self->ExtensionOrder;
             for (const FName Id : Providers)
             {
+                if (!Self->IsCurrentToken(Token))
+                {
+                    return;
+                }
                 const auto Provider = Self->Extensions.FindRef(Id);
                 if (!Provider)
                 {

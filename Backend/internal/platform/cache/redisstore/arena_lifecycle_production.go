@@ -26,8 +26,12 @@ func NewArenaLifecycleStore(client *Client) *ArenaLifecycleStore {
 
 // GetArenaByMatch完整读取已确认事实；损坏记录/存储不可用不得解释为未分配。
 func (s *ArenaLifecycleStore) GetArenaByMatch(ctx context.Context, id string) (gameservercontrol.ArenaAssignmentRecord, bool, error) {
+	return readArenaByMatch(ctx, s.client.inner, id)
+}
+
+func readArenaByMatch(ctx context.Context, reader redis.Cmdable, id string) (gameservercontrol.ArenaAssignmentRecord, bool, error) {
 	var value gameservercontrol.ArenaAssignmentRecord
-	raw, err := s.client.inner.Get(ctx, arenaRecordPrefix+id).Bytes()
+	raw, err := reader.Get(ctx, arenaRecordPrefix+id).Bytes()
 	if errors.Is(err, redis.Nil) {
 		return value, false, nil
 	}
@@ -176,18 +180,7 @@ func (s *ArenaLifecycleStore) SavePresence(ctx context.Context, value gameserver
 			}
 			if value.MatchID == "" {
 				if err := gameservercontrol.ValidateWorldDeparture(old, sourceMatchID, func(matchID string) (gameservercontrol.ArenaAssignmentRecord, bool, error) {
-					var record gameservercontrol.ArenaAssignmentRecord
-					raw, err := tx.Get(ctx, arenaRecordPrefix+matchID).Bytes()
-					if errors.Is(err, redis.Nil) {
-						return record, false, nil
-					}
-					if err != nil {
-						return record, false, err
-					}
-					if err := json.Unmarshal(raw, &record); err != nil {
-						return record, false, err
-					}
-					return record, true, gameservercontrol.ValidateArenaRecord(record)
+					return readArenaByMatch(ctx, tx, matchID)
 				}); err != nil {
 					return err
 				}

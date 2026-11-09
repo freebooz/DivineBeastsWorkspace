@@ -262,6 +262,18 @@ FGamePlatformOnlineRequestHandle FDivineBeastsArenaOnlineMatchmakingAdapter::Req
     return *Handle;
 }
 
+void FDivineBeastsArenaOnlineMatchmakingAdapter::CancelMigration(const FGamePlatformOnlineRequestHandle& Handle)
+{
+    const int32 Removed = Commands.RemoveAll([&Handle](const auto& Item)
+    {
+        return Item.InstanceScopeId == Handle.InstanceScopeId && Item.RequestId == Handle.RequestId;
+    });
+    if (auto* Service = Online.Get(); Removed > 0 && Service)
+    {
+        Service->Cancel(Handle);
+    }
+}
+
 TFunction<void()> FDivineBeastsArenaOnlineMatchmakingAdapter::RequestWorldRecovery(
     const FDivineBeastsWorldAssignmentSummary& Previous,
     TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion)
@@ -320,8 +332,7 @@ TFunction<void()> FDivineBeastsArenaOnlineMatchmakingAdapter::RequestWorldRecove
         Operation.Reset();
         if (const auto Self = Weak.Pin(); Self && Handle.RequestId.IsValid())
         {
-            Self->Commands.RemoveAll([&Handle](const auto& Item) { return Item.RequestId == Handle.RequestId; });
-            if (auto* Service = Self->Online.Get()) Service->Cancel(Handle);
+            Self->CancelMigration(Handle);
         }
     };
 }

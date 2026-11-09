@@ -81,6 +81,11 @@ class ResourceOwnershipContractTests(unittest.TestCase):
             gate.check_native_hard_imports(log + missing, report, anchor)
         with self.assertRaisesRegex(ValueError, '锚点'):
             gate.check_native_hard_imports(log, report, '/DBAGameplay/Unrelated')
+        required = '/DBAGameplay/Abilities/ProjectileFlight/DA_DBA_RequiredFlight'
+        with self.assertRaisesRegex(ValueError, '缺少硬引用'):
+            gate.check_native_hard_imports(log, report, anchor, required_import=required)
+        bound = report.replace("Import 0: ''", f"Import 0: '{required}.DA_DBA_RequiredFlight'").replace('<null>', '0x0')
+        gate.check_native_hard_imports(log, bound, anchor, required_import=required)
 
     def test_retired_bird_author_cannot_recreate_old_runtime_meshes(self):
         self.assertFalse((ROOT/'Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockAssets.py').exists())

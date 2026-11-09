@@ -104,7 +104,7 @@ try {
         # UE5.8 ConfigCacheIni按ArrayAdd处理独立token；不用同名Set、清数组或逗号拼接。
         $additionalCookerOptions += (' ' + ($serverPresentationPolicy.CookerArguments -join ' '))
     }
-    if ($WithoutArena) { $additionalCookerOptions += (' ' + ((Get-FoundationWithoutArenaCookArguments) -join ' ')) }
+    if ($WithoutArena) { $additionalCookerOptions += (' ' + (Get-FoundationWithoutArenaCookerOptions)) }
     $arguments = @($tool.Dll,'BuildCookRun',"-project=$($context.Project)","-target=DivineBeastsArena$Target",'-nop4','-unattended','-utf8output','-cook','-stage','-skipbuild','-skipbuildeditor','-platform=Win64','-clientconfig=Development','-serverconfig=Development',"-AdditionalCookerOptions=$additionalCookerOptions",'-ddc=NoZenLocalFallback',('-map=' + ($Maps -join '+')),"-CookOutputDir=$cookDirectory", "-stagingdirectory=$stageDirectory")
     if ($CustomConfig -in @('VillageServer','VillageDevelopmentServer')) {
         # 保留收据DedicatedServer的Pak规则，只精确Stage所选Village配置的实际运行层。

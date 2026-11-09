@@ -1,5 +1,7 @@
 ﻿Set-StrictMode -Version Latest
 
+. (Join-Path $PSScriptRoot 'ActiveUnrealFiles.ps1')
+
 function Get-InheritanceLayerInfo {
     param(
         [Parameter(Mandatory)][string]$Path,
@@ -57,10 +59,9 @@ function Test-InheritanceBoundaries {
         }
     }
 
-    $headers = @(Get-ChildItem -LiteralPath $pluginRoot -Recurse -File -Filter '*.h' |
+    $headers = @(Get-ActiveUnrealFiles $pluginRoot '*.h' |
         Where-Object {
             $_.FullName -match '[\\/]Source[\\/]' -and
-            $_.FullName -notmatch '[\\/]Intermediate[\\/]' -and
             $_.FullName -notmatch '[\\/]Docs[\\/]Legacy[\\/]'
         })
 

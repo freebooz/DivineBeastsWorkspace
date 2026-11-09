@@ -47,6 +47,8 @@ public:
     /** 票据只作为一次完成参数移动给应用流程，不进入Snapshot/Changed。 */
     FGamePlatformOnlineRequestHandle RequestMigration(const FString& Direction, const FString& ClientRequestId,
         TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion);
+    /** 仅撤销指定取票请求，保留匹配观察及其它命令。 */
+    void CancelMigration(const FGamePlatformOnlineRequestHandle& Handle);
     /** 从新鲜本人快照选择重连或赛后返回，复用迁移端点。返回仅撤销本次节点请求的函数。 */
     TFunction<void()> RequestWorldRecovery(const FDivineBeastsWorldAssignmentSummary& Previous,
         TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion);

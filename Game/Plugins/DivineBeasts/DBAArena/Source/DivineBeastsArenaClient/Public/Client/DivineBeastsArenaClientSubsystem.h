@@ -96,8 +96,10 @@ private:
     bool bMigrationPending=false;
     bool bDeinitializing=false;
     FText MigrationError;
+    TFunction<void()> CancelMigrationRequest;
     void HandleMatchmakingChanged();
     bool RequestObservedMigration(const FString& Direction);
+    void CancelObservedMigration();
 
     /** 以下弱引用及委托只属于当前World；旅行/销毁先解绑，再接受新世界事实。 */
     TWeakObjectPtr<UWorld> ReadinessWorld;

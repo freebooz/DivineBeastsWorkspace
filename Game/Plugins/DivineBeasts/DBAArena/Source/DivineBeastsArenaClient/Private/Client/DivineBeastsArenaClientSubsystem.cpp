@@ -115,7 +115,7 @@ void UDivineBeastsArenaClientSubsystem::Deinitialize()
 {
     FCoreUObjectDelegates::PostLoadMapWithWorld.Remove(ReadinessMapHandle);FWorldDelegates::OnWorldCleanup.Remove(ReadinessCleanupHandle);ClearArenaReadiness();
     if(PartySource.IsValid())PartySource->OnChanged().Remove(PartyChangedHandle);PartySource.Reset();PartyChangedHandle.Reset();
-    bDeinitializing=true;++MigrationGeneration;bMigrationPending=false;MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();
+    bDeinitializing=true;CancelObservedMigration();MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();
     if(OnlineMatchmaking){OnlineMatchmaking->Changed.Remove(MatchmakingChangedHandle);OnlineMatchmaking->Stop();OnlineMatchmaking.Reset();}
     MatchmakingChangedHandle.Reset();OnMatchmakingStateChanged.Clear();
     if (ApplicationFlow && FlowExtension)
@@ -216,8 +216,7 @@ void UDivineBeastsArenaClientSubsystem::SetApplicationFlowInWorld(bool bInWorld)
     else if (bMigrationPending)
     {
         // 另一转场或断线已被受理，旧命令回调不能接管下一世界。
-        ++MigrationGeneration;
-        bMigrationPending = false;
+        CancelObservedMigration();
         MigrationRequestId.Reset();
         MigrationCandidateId.Reset();
         MigrationDirection.Reset();
@@ -282,7 +281,7 @@ void UDivineBeastsArenaClientSubsystem::HandleMatchmakingChanged()
 {
     if(bDeinitializing||!OnlineMatchmaking)return;
     const auto Auth=OnlineMatchmaking->GetAuthenticationGeneration();
-    if(MigrationAuthGeneration!=Auth){++MigrationGeneration;bMigrationPending=false;MigrationAuthGeneration=Auth;MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();MigrationError=FText::GetEmpty();CapturedVillageQueueTicketId.Reset();}
+    if(MigrationAuthGeneration!=Auth){CancelObservedMigration();MigrationAuthGeneration=Auth;MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();MigrationError=FText::GetEmpty();CapturedVillageQueueTicketId.Reset();}
     if (bApplicationFlowInWorld && ApplicationFlow && ApplicationFlow->GetViewState().Assignment.ServerRoleId == FName(TEXT("GameServer.Role.Village")))
     {
         const auto& Queue = OnlineMatchmaking->GetSnapshot();
@@ -315,13 +314,36 @@ bool UDivineBeastsArenaClientSubsystem::RequestObservedMigration(const FString& 
     MigrationError=FText::GetEmpty();bMigrationPending=true;const uint64 Expected=++MigrationGeneration;const FGuid Auth=OnlineMatchmaking->GetAuthenticationGeneration();
     const TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> Weak(this);OnMatchmakingStateChanged.Broadcast();
     if(bDeinitializing||!OnlineMatchmaking||Expected!=MigrationGeneration||OnlineMatchmaking->GetAuthenticationGeneration()!=Auth)return false;
-    OnlineMatchmaking->RequestMigration(Direction,MigrationRequestId,[Weak,Expected,Auth](bool bSuccess,FDivineBeastsWorldAssignmentPayload Payload)mutable
+    const auto Adapter = OnlineMatchmaking;
+    const auto Request = Adapter->RequestMigration(Direction,MigrationRequestId,[Weak,Expected,Auth](bool bSuccess,FDivineBeastsWorldAssignmentPayload Payload)mutable
     {
         auto* Self=Weak.Get();if(!Self||Self->bDeinitializing||Self->MigrationGeneration!=Expected||!Self->OnlineMatchmaking||Self->OnlineMatchmaking->GetAuthenticationGeneration()!=Auth)return;
         Self->bMigrationPending=false;
+        Self->CancelMigrationRequest = {};
         if(!bSuccess||!Self->ApplicationFlow||!Self->ApplicationFlow->RequestTrustedWorldMigration(MoveTemp(Payload),Auth))Self->MigrationError=FText::FromString(TEXT("连接尚未确认，请重试；不会复用旧地址进入"));
         Self->OnMatchmakingStateChanged.Broadcast();
-    });return true;
+    });
+    if (Request.RequestId.IsValid() && bMigrationPending && Expected == MigrationGeneration)
+    {
+        const TWeakPtr<FDivineBeastsArenaOnlineMatchmakingAdapter> WeakAdapter = Adapter;
+        CancelMigrationRequest = [WeakAdapter, Request]()
+        {
+            if (const auto Current = WeakAdapter.Pin()) Current->CancelMigration(Request);
+        };
+    }
+    return true;
+}
+
+void UDivineBeastsArenaClientSubsystem::CancelObservedMigration()
+{
+    ++MigrationGeneration;
+    bMigrationPending = false;
+    auto Cancel = MoveTemp(CancelMigrationRequest);
+    CancelMigrationRequest = {};
+    if (Cancel)
+    {
+        Cancel();
+    }
 }
 
 void UDivineBeastsArenaClientSubsystem::ClearArenaReadiness()

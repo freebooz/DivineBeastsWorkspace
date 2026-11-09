@@ -9,8 +9,14 @@ function Get-FoundationWithoutArenaBuildArgument {
 
 function Get-FoundationWithoutArenaCookArguments {
     '-DisablePlugins=' + ($script:ArenaPlugins -join ',')
-    '-ini:Game:[/Script/UnrealEd.ProjectPackagingSettings]:+DirectoriesToNeverCook=(Path=/DBAWorldPack_MainArena)'
-    '-ini:Game:[/Script/Engine.AssetManagerSettings]:+DirectoriesToExclude=(Path=/DBAWorldPack_MainArena)'
+    # FDirectoryPath的反射导入要求字符串引号。空的资产扫描排除路径会匹配全部包。
+    '-ini:Game:[/Script/UnrealEd.ProjectPackagingSettings]:+DirectoriesToNeverCook=(Path="/DBAWorldPack_MainArena")'
+    '-ini:Game:[/Script/Engine.AssetManagerSettings]:+DirectoriesToExclude=(Path="/DBAWorldPack_MainArena")'
+}
+
+function Get-FoundationWithoutArenaCookerOptions {
+    # AdditionalCookerOptions 会由 UAT 再转交给子进程，内层属性引号需要保留到 UE 配置解析器。
+    ((Get-FoundationWithoutArenaCookArguments) -join ' ').Replace('"', '\"')
 }
 
 function Assert-FoundationTargetAssembly {
@@ -45,4 +51,4 @@ function Read-FoundationTargetAssembly {
     $proof
 }
 
-Export-ModuleMember -Function Get-FoundationWithoutArenaBuildArgument,Get-FoundationWithoutArenaCookArguments,Assert-FoundationTargetAssembly,Read-FoundationTargetAssembly
+Export-ModuleMember -Function Get-FoundationWithoutArenaBuildArgument,Get-FoundationWithoutArenaCookArguments,Get-FoundationWithoutArenaCookerOptions,Assert-FoundationTargetAssembly,Read-FoundationTargetAssembly

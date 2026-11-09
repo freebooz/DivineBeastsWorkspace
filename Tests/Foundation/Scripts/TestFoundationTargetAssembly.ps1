@@ -10,9 +10,14 @@ if ($compileOption -cne ('-DisablePlugin=' + ($expectedArena -join '+'))) {
 }
 $cookOptions = @(Get-FoundationWithoutArenaCookArguments)
 if (($cookOptions -join ' ') -cnotmatch '-DisablePlugins=DBAArena,DBAWorldPack_MainArena,GamePlatformArena,MobaPresentation' -or
-    ($cookOptions -join ' ') -cnotmatch '\+DirectoriesToExclude=\(Path=/DBAWorldPack_MainArena\)' -or
-    ($cookOptions -join ' ') -cnotmatch '\+DirectoriesToNeverCook=\(Path=/DBAWorldPack_MainArena\)') {
-    throw 'Cook与运行参数必须同时排除竞技插件、烘焙路径和资产扫描。'
+    ($cookOptions -join ' ') -cnotmatch '\+DirectoriesToExclude=\(Path="/DBAWorldPack_MainArena"\)' -or
+    ($cookOptions -join ' ') -cnotmatch '\+DirectoriesToNeverCook=\(Path="/DBAWorldPack_MainArena"\)') {
+    throw 'Cook与运行参数必须同时排除竞技插件、烘焙路径和资产扫描，并保留FDirectoryPath反射需要的引号。'
+}
+$nestedCookOptions = Get-FoundationWithoutArenaCookerOptions
+if ($nestedCookOptions -cnotmatch '\+DirectoriesToExclude=\(Path=\\"/DBAWorldPack_MainArena\\"\)' -or
+    $nestedCookOptions -cnotmatch '\+DirectoriesToNeverCook=\(Path=\\"/DBAWorldPack_MainArena\\"\)') {
+    throw 'UAT转发的内层参数必须保留反斜杠引号，确保传到UE配置解析器时引号仍在。'
 }
 
 $baseReceipt = @{ TargetName='DivineBeastsArenaServer'; TargetType='Server'; Platform='Win64'; Configuration='Development' }

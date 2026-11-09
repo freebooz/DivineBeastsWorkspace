@@ -23,7 +23,7 @@ native_csv=module('resource_ownership_iostore',ROOT/'Build/Game/ServerPresentati
 DOC=contract.load_contract()
 PROFILES={'FrontEndClient':'Client','VillageDevelopmentClient':'Client','PluginDemoClient':'Client',
     'DedicatedServer':'Server','VillageServer':'Server','VillageDevelopmentServer':'Server','FoundationStandalone':'Server'}
-FIREBALL_FLIGHT = '/DBAGameplay/Abilities/ProjectileFlight/DA_DBA_Fireball_Flight'
+FLIGHT_CONTRACT = ROOT / 'Tools/Unreal/Combat/ProjectileFlightProfiles.json'
 DEVELOPMENT_SKILL_PROFILES = ('VillageDevelopmentClient', 'VillageDevelopmentServer')
 ARENA_MOUNTS = ('/DBAArena', '/DBAWorldPack_MainArena', '/GamePlatformArena', '/MobaPresentation')
 
@@ -32,18 +32,28 @@ def under(package,root):
     root=root.casefold();return package==root or package.startswith(root+'/')
 
 
-def check_native_hard_imports(log: str, report: str, anchor: str) -> None:
+def check_native_hard_imports(log: str, report: str, anchor: str, required_import: str | None = None) -> None:
     """UE先连接整组容器再筛选报告；原生空导入不会产生未解析警告。"""
     missing = re.findall(r'LogIoStore:\s*Warning:\s*((?:Missing import|Missing Script Object for Import):[^\r\n]+)', log)
     if missing:
         raise ValueError('最终IoStore存在未解析硬导入：' + ' | '.join(missing[:10]))
     if native_csv.ERROR_LOG.search(log) or 'Connecting imports and exports...' not in log:
         raise ValueError('原生IoStore导入连接未成功完成')
-    if not re.search(r"^Package '" + re.escape(anchor) + r"' Summary\s*$", report, re.I | re.M):
+    summaries = list(re.finditer(r"^Package '([^']+)' Summary[ \t]*$", report, re.I | re.M))
+    matches = [index for index, summary in enumerate(summaries) if summary[1].casefold() == anchor.casefold()]
+    if len(matches) != 1:
         raise ValueError('原生IoStore报告缺少真实导出锚点：' + anchor)
+    if required_import:
+        index = matches[0]
+        end = summaries[index + 1].start() if index + 1 < len(summaries) else len(report)
+        section = report[summaries[index].end():end]
+        dependency = r"^[ \t]*Import \d+: '" + re.escape(required_import) + r"\.[^']+'[ \t]*\r?\n[ \t]*GlobalImportIndex: 0x[0-9a-f]+[ \t]*$"
+        if not re.search(dependency, section, re.I | re.M):
+            raise ValueError(f'最终IoStore锚点缺少硬引用：{anchor} -> {required_import}')
 
 
-def audit_native_hard_imports(containers: list[Path], unreal_pak: Path, evidence: Path, anchor: str) -> dict:
+def audit_native_hard_imports(containers: list[Path], unreal_pak: Path, evidence: Path,
+                              anchor: str, required_import: str | None) -> dict:
     """只使用最终Stage容器，不读取预Stage的Cook目录或注册表。"""
     global_containers = [path for path in containers if path.name.casefold() == 'global.utoc']
     if len(global_containers) != 1 or any(path.parent != global_containers[0].parent for path in containers):
@@ -52,14 +62,15 @@ def audit_native_hard_imports(containers: list[Path], unreal_pak: Path, evidence
     log_path = evidence / 'HardImports.log'
     with log_path.open('wb') as output:
         run = subprocess.run([str(unreal_pak), 'IoStore', '-Describe=' + str(global_containers[0]),
-                              '-PackageFilter=' + anchor, '-DumpToFile=' + str(report_path)],
+                              '-PackageFilter=' + anchor, '-DumpToFile=' + str(report_path), '-stdout',
+                              '-abslog=' + str(evidence / 'HardImports.engine.log')],
                              stdout=output, stderr=subprocess.STDOUT, timeout=120, check=False)
     if run.returncode:
         raise ValueError('UnrealPak原生导入验证失败：' + str(log_path))
     check_native_hard_imports(log_path.read_text(encoding='utf-8-sig', errors='replace'),
-                              report_path.read_text(encoding='utf-8-sig'), anchor)
+                              report_path.read_text(encoding='utf-8-sig'), anchor, required_import)
     return {'ContainerCount': len(containers), 'Anchor': anchor, 'Log': str(log_path),
-            'Describe': str(report_path), 'UnresolvedCount': 0}
+            'Describe': str(report_path), 'UnresolvedCount': 0, 'RequiredImport': required_import}
 
 
 def validate(csv_path,profile,target=None,without_arena=False):
@@ -94,11 +105,19 @@ def validate(csv_path,profile,target=None,without_arena=False):
         if banned:forbidden.append(entry.filename)
     if not exports:raise ValueError('容器没有任何真实资源导出')
     required=[m['target'] for m in DOC['moves'] if profile=='VillageDevelopmentClient' and m['group'] in ('plants_runtime','terrain_color')]
+    import_anchor = next(iter(exports))
+    required_import = None
     if profile in DEVELOPMENT_SKILL_PROFILES:
-        required.append(FIREBALL_FLIGHT)
+        flight = json.loads(FLIGHT_CONTRACT.read_text(encoding='utf-8-sig'))
+        import_anchor = flight.get('fireball_definition', '')
+        required_import = flight.get('fireball_profile', '')
+        if (not re.fullmatch(r'/Game/Development/DivineBeasts/Abilities/MagicTests/[A-Za-z0-9_]+', import_anchor) or
+                not re.fullmatch(r'/DBAGameplay/Abilities/ProjectileFlight/[A-Za-z0-9_]+', required_import)):
+            raise ValueError('火球权威飞行配置合同的包路径无效')
+        required.extend((import_anchor, required_import))
     missing=[p for p in required if exports[p.casefold()]!=1]
     return {'Passed':not forbidden and not missing,'Profile':profile,'Target':role,
-        'WithoutArena':without_arena,'ImportAnchor':FIREBALL_FLIGHT if profile in DEVELOPMENT_SKILL_PROFILES else next(iter(exports)),
+        'WithoutArena':without_arena,'ImportAnchor':import_anchor,'RequiredImport':required_import,
         'RequiredCount':len(required),'MissingOrDuplicate':missing,'Forbidden':sorted(set(forbidden)),
         'GroupExportCounts':{g:sum(exports[m['target'].casefold()]>0 for m in DOC['moves'] if m['group']==g) for g in contract.GROUPS},
         'AssetExportCount':sum(exports.values()),'ContainerEvidence':[{'Csv':str(p.resolve()),'Sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths],
@@ -133,7 +152,7 @@ if __name__=='__main__':
         result=validate(paths or [],args.profile,args.target,args.without_arena)
         if args.stage and result['Passed']:
             result['HardImportEvidence'] = audit_native_hard_imports(containers, args.unreal_pak.resolve(), folder,
-                                                                    result['ImportAnchor'])
+                                                                    result['ImportAnchor'], result['RequiredImport'])
     except (OSError,ValueError,subprocess.TimeoutExpired,native_csv.PolicyError) as error:result={'Passed':False,'Error':str(error),'Profile':args.profile}
     args.report.parent.mkdir(parents=True,exist_ok=True)
     args.report.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')

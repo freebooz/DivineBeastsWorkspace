@@ -67,6 +67,18 @@ class ConfigCoverageTests(unittest.TestCase):
                 self.assertIn("GameViewportClientClassName=/Script/Engine.GameViewportClient",
                               (root / "DefaultEngine.ini").read_text(encoding="utf-8-sig"))
 
+    def test_village_profiles_exclude_native_water_render_actors(self):
+        """只有明确的Village Cook边界剥离纯渲染WaterBody，保留权威水域和其他服务器角色。"""
+        base = ROOT / "Game/Config"
+        for profile in ("VillageServer", "VillageDevelopmentServer", "DedicatedServer"):
+            with self.subTest(profile=profile):
+                engine = (base / "Custom" / profile / "DefaultEngine.ini").read_text(encoding="utf-8-sig")
+                cooker = re.search(r"^\[/Script/UnrealEd.CookerSettings\]\n([^\[]*)", engine, re.M).group(1)
+                exclusions = re.findall(r"^\+ClassesExcludedOnDedicatedServer=(\w+)$", cooker, re.M)
+                self.assertEqual(exclusions.count("WaterBody"), int(profile != "DedicatedServer"))
+                self.assertNotIn("GamePlatformWaterRegion", exclusions)
+                self.assertNotIn("GamePlatformWaterPhysicsVolume", exclusions)
+
 
 class PolicyBehaviorTests(unittest.TestCase):
     """真实生产API的行为夹具；修改匹配/解析/生成语义会改变断言结果。"""

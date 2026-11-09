@@ -85,7 +85,7 @@ try {
     $cookOptions="-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback"
     if ($WithoutArena) {
         $arenaOptions=(Get-FoundationWithoutArenaCookArguments) -join ' '
-        $cookOptions += (' ' + $arenaOptions)
+        $cookOptions += (' ' + (Get-FoundationWithoutArenaCookerOptions))
         $details.RequiredRuntimeArguments = $arenaOptions
     }
     if ($SkipZenStore) { $cookOptions += ' -SkipZenStore' }
