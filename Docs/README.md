@@ -12,6 +12,7 @@
 - [V4.0设计规格](Implementation/SSLM_ArtDirectionV4_Design_20261111.md) 与 [V4.0实施计划](Implementation/SSLM_ArtDirectionV4_ImplementationPlan_20261111.md)：版本治理、Lighting Lab扩展任务和后续原生资产验收顺序。
 - [SSLM Lighting Lab L1—L8全量实施路线与验收任务书](Implementation/SSLM_LightingLab_L1-L8_ExecutionRoadmap_20261111.md)：按光照、材质、地形、植被、水体、战斗可读性、天气时间、平台回归顺序定义输入、交付证据和放行门禁。
 - [L2 Painterly PBR材质样板区实施规格](Implementation/SSLM_L2_PainterlyPBR_MaterialLookDev_20261111.md)：继承现有材质三层所有权、命名质量门禁、PBR通道和覆盖层物理规则，定义10类材质样板、M01—M08固定机位及UE5.8技术/视觉验收。
+- [L3山水地形、山体与峭壁艺术化实施规格](Implementation/SSLM_L3_TerrainCliffLandscape_20261111.md)：定义Gaea高度图/Mask合同、Landscape十层PBR、Nanite岩石、RVT真实写入采样、游戏可达性、固定机位和GPU/冷重载验收。
 - [V4.0视觉审核矩阵](../Tools/Unreal/World/SSLM_ArtDirectionV4_ReviewMatrix_V1.json)：八大艺术体系检查项、证据类型、验收状态和否决条件；仅为审核矩阵，不是UE数据资产。
 - [SSLM全局美术配色策略与色彩设计规范 V3.0（历史版本）](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)：保留原始sRGB色彩基线和历史决策，当前全局艺术方向以V4.0为准。
 - [SSLM参考颜色语义索引 V3.0](Art/SSLMColorRegistry_V3.json)：41项初始屏幕sRGB参考色与8项待审核的战斗功能色语义；派生候选数据，不是UE数据资产。
