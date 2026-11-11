@@ -140,3 +140,8 @@ L1—L8按依赖顺序推进，不把八项理解为八个互不相关的演示�
 - 首要执行任务仍为家中PC运行L1 V1：同步已合并代码、执行离线测试、UE5.8 preflight、create_lab、独立Editor cold_audit、PIE和Profiler。
 - 在L1实际运行前，可以并行整理L2—L8资产清单、设计卡和性能指标，但不得创建依赖未验证L1参数的正式材质/天气资产。
 - 每阶段完成后更新ReviewMatrix状态和证据路径；云端状态更新必须引用真实Saved/Validation证据和人工签收记录。
+
+
+## L2专项执行文件
+
+L2详细合同见Docs/Implementation/SSLM_L2_PainterlyPBR_MaterialLookDev_20261111.md。执行时必须复用现有MaterialNamingAndQualityPolicy、MaterialOwnershipAndContracts、MaterialLayerCompositionPolicy和Surface作者工具；不得建立平行材质插件/母版。L1未批准前仅允许源纹理清单、通道审计和候选LookDev准备，材质最终验收保持阻断。
