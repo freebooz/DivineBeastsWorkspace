@@ -50,11 +50,13 @@
 **Files:**
 - Create: Docs/Implementation/SSLM_ArtDirectionV4_ImplementationPlan_20261111.md
 - Modify: Docs/Implementation/SSLM_LightingLab_Design_20261111.md
+- Create: Tools/Unreal/World/SSLM_ArtDirectionV4_ReviewMatrix_V1.json
 
 - [ ] **Step 1:** 明确现有Lighting Lab V1只覆盖L1光照/曝光/GI/阴影基线。
 - [ ] **Step 2:** 登记L2材质样板、L3地形峭壁、L4植被群落、L5水体岸线、L6角色战斗镜头、L7天气时间、L8画质平台回归。
 - [ ] **Step 3:** 为每个任务定义输入资产、固定镜头、检查项、证据格式、目标设备和人工审核角色。
 - [ ] **Step 4:** 不修改现有Lighting Lab V1运行脚本/参数，待家中PC完成首次原生执行后再决定扩展接口。
+- [ ] **Step 5:** 将八大艺术体系的检查项、证据类型、验收状态和否决条件维护在ReviewMatrix JSON；该矩阵仅供审核工具读取，不是UE DataAsset。
 
 ### Task 3: 全局入口与历史版本治理
 
