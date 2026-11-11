@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """SSLM Lighting Lab PIE对照入口。
 
-复用既有VillageMorningPIEReviewUE的天气、地表绑定和固定相机。
+复用既有VillageMorningPIEReviewUE的地图白名单、地表绑定和固定相机；不重新应用天气预设。
 GI模式仅在PIE中尝试设置CVar，并以读回值决定支持状态；不写项目INI。
 """
 import re
