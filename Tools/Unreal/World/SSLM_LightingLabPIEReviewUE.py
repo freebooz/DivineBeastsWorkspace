@@ -4,6 +4,7 @@
 复用既有VillageMorningPIEReviewUE的地图白名单、地表绑定和固定相机；不重新应用天气预设。
 GI模式仅在PIE中尝试设置CVar，并以读回值决定支持状态；不写项目INI。
 """
+import json
 import re
 import sys
 from pathlib import Path
@@ -37,6 +38,9 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
         if evidence_path.exists():
             raise AssertionError("PIE证据已存在，拒绝覆盖：" + str(evidence_path))
     pie.setup(run, quality, view)
+    assert setup_path.exists(), "既有PIE助手未生成Setup证据"
+    setup_report = json.loads(setup_path.read_text(encoding="utf-8"))
+    landscape = setup_report["landscape"]
     world = pie.game()
     camera = pie.set_camera(view)
     viewport = u.WidgetLayoutLibrary.get_viewport_size(world)
