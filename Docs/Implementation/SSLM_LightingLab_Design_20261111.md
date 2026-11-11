@@ -47,8 +47,8 @@
 ## 6. 技术架构
 
 - **配置层：** `Tools/Unreal/World/SSLM_LightingLab_V1.json`，定义六套光照候选、五档阴影角、三档质量、三种GI对照、固定镜头及证据输出位置。
-- **UE作者层：** `SSLM_LightingLabUE58.py`，通过既有`ReviewVillageMorningEnvironmentUE.py`复用引擎版本检查、正式地图哈希、地图几何保护、SaveAs、保存及冷重载辅助；作者只对开发副本写入。
-- **PIE审核层：** `SSLM_LightingLabPIEReviewUE.py`，复用既有`VillageMorningPIEReviewUE.py`的PIE地图白名单、地表绑定和固定相机；PIE显式应用已验证的Clear天气定义作为中性天气/风场基线，再读取光照候选实际回值。GI对照仅在PIE运行时尝试设置CVar并读取回值，项目INI不被改写。
+- **UE作者层：** `SSLM_LightingLabUE58.py`，通过既有`ReviewVillageMorningEnvironmentUE.py`复用引擎版本检查、正式地图哈希、地图几何保护、SaveAs、保存及冷重载辅助；作者只对开发副本写入。预检要求本机已有上一轮Monolith生成的Nanite槽位映射证据；缺失时在创建输出目录前停止，绝不按数组顺序猜测。
+- **PIE审核层：** `SSLM_LightingLabPIEReviewUE.py`，复用既有`VillageMorningPIEReviewUE.py`的PIE地图白名单、地表绑定和固定相机；预检复用上一轮Monolith已回读的`NativeNaniteBindings.json`，在几何一致保护下为实验副本派生映射；PIE显式应用已验证的Clear天气定义作为中性天气/风场基线，再读取光照候选实际回值。GI对照仅在PIE运行时尝试设置CVar并读取回值，项目INI不被改写。
 - **离线测试层：** `Tests/Assets/TestSSLM_LightingLab.py`，校验配置、脚本语法、预设数量、阴影角、质量/GI合同和正式资产保护约束。
 - **证据层：** `Saved/Validation/SSLM_LightingLab20261111/`，属于开发PC上的可重建运行证据，不提交虚构的UE二进制资产。
 
