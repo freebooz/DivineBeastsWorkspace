@@ -37,14 +37,18 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
     for command in ["t.MaxFPS 0", "r.VSync 0", "r.DynamicRes.OperationMode 0", "r.ScreenPercentage 100", "r.GPUCsvStatsEnabled 1"]:
         u.SystemLibrary.execute_console_command(world, command)
     camera = pie.set_camera(view)
-    pie.CAMERA = camera
     landscape = pie.bind_landscape(world)
     viewport = u.WidgetLayoutLibrary.get_viewport_size(world)
     mode = config["gi_modes"][gi_mode]
     required_names = list(mode["requires"])
     expected_names = list(mode["expected"])
     command_names = [item[0] for item in mode["commands"]]
-    names = sorted(set(required_names + expected_names + command_names))
+    observed_names = [
+        "r.DynamicGlobalIlluminationMethod", "r.ReflectionMethod",
+        "r.RayTracing", "r.Lumen.HardwareRayTracing"
+    ]
+    quality_names = [name for name in quality_settings if name != "scalability"]
+    names = sorted(set(required_names + expected_names + command_names + observed_names + quality_names))
     before = _read_cvars(names)
 
     requirements_met = all(before[name] == int(value) for name, value in mode["requires"].items())
@@ -58,6 +62,11 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
     expected_met = requirements_met and all(
         after[name] == int(value) for name, value in mode["expected"].items()
     )
+    quality_readback = {name: after[name] for name in quality_names}
+    quality_readback_passed = all(
+        after[name] == int(value) for name, value in quality_settings.items()
+        if name != "scalability"
+    )
     if gi_mode == "Baseline":
         status = "observed"
     elif not requirements_met:
@@ -67,8 +76,12 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
     else:
         status = "readback_mismatch"
 
-    # 复用既有快照，保留实际雾、方向光、相机、天气风和基础GI CVar读值。
-    pie.snapshot("LightingLab_" + gi_mode)
+    # 每次运行使用唯一证据名；先保存既有快照，再写入摘要报告，避免互相覆盖。
+    snapshot_suffix = "LightingLabSnapshot_" + gi_mode
+    report_name = run + "_LightingLab_" + gi_mode + "_Report.json"
+    report_path = lab.author.OUT / report_name
+    assert not report_path.exists(), "PIE报告已存在，拒绝覆盖：" + str(report_path)
+    pie.snapshot(snapshot_suffix)
     report = {
         "status": status,
         "run": run,
@@ -79,6 +92,8 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
         "commands_applied": commands_applied,
         "requirements_met": requirements_met,
         "expected_readback_passed": expected_met,
+        "quality_readback": quality_readback,
+        "quality_readback_passed": quality_readback_passed,
         "cvars_before": before,
         "cvars_after": after,
         "world": world.get_path_name(),
@@ -90,6 +105,6 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
         "formal_merge_approved": False,
         "project_ini_modified": False
     }
-    lab.author.write(run + "_LightingLab_" + gi_mode + ".json", report)
+    lab.author.write(report_name, report)
     print("SSLM_LIGHTING_LAB_PIE " + str(report))
     return report
