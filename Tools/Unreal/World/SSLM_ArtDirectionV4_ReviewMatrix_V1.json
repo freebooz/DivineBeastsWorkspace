@@ -258,6 +258,14 @@
         "evidence_paths",
         "reviewer",
         "review_date"
+      ],
+      "implementation_spec": "Docs/Implementation/SSLM_L2_PainterlyPBR_MaterialLookDev_20261111.md",
+      "preflight_constraints": [
+        "reuse_existing_material_ownership_and_quality_contracts",
+        "do_not_create_parallel_material_plugin_or_master",
+        "revalidate_asset_registry_before_using_historical_inventory",
+        "L1_approved_lighting_and_exposure_required_for_final_lookdev_signoff",
+        "no_native_uasset_claim_without_UE5.8_editor_save_compile_and_cold_reload"
       ]
     },
     {
