@@ -300,6 +300,16 @@
         "evidence_paths",
         "reviewer",
         "review_date"
+      ],
+      "implementation_spec": "Docs/Implementation/SSLM_L3_TerrainCliffLandscape_20261111.md",
+      "preflight_constraints": [
+        "reuse_existing_terrain_pbr_and_material_function_pipeline",
+        "preserve_formal_village_map_and_shared_material_identity",
+        "revalidate_asset_registry_and_historical_terrain_evidence_before_execution",
+        "Gaea_height_and_masks_require_versioned_manifest_hash_and_UE_coordinate_mapping",
+        "RVT_requires_real_writer_reader_assets_and_cold_reload_evidence",
+        "Nanite_rocks_require_fallback_collision_navigation_and_target_device_profile",
+        "L1_Lighting_and_L2_material_candidates_must_not_be_marked_approved_without_gates"
       ]
     },
     {
