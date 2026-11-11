@@ -112,6 +112,36 @@
 - 固定美术审核场景须记录UE5.8版本、平台/RHI、渲染分辨率、Lumen（动态全局光照）、Directional Light（方向光）、Sky Light（天空光）、Sky Atmosphere（天空大气）、Exponential Height Fog（高度雾）、Post Process Volume（后处理体积）、Tone Mapping（色调映射）、Exposure（曝光）、White Balance（白平衡）、Bloom及是否自动曝光。
 - 优先固定曝光比对参考，再检查清晨/黄昏/夜间、天气和自动曝光；PC与移动端可用不同渲染实现，但低、中、高、史诗画质必须保持颜色语义、角色轮廓与危险区辨识。评审使用真实游戏摄像机，而不只以静态材质球判断。
 
+### 8.1 全场景柔和艺术光照原则（2026-11-11新增）
+
+**强制目标：所有SSLM场景的整体光照必须柔和、自然、舒适，并突出光影本身的艺术美感。** 适用于Village、OpenWorld、MainArena以及所有未来地图、室内外空间、昼夜天气、过场和观战镜头。柔和不是无阴影、无方向、低对比或一味提亮；画面必须保留主光方向、体积塑形、接触关系、空间层次和视觉焦点。目标是“柔而不平、亮而不曝、暗而有细节、雾而不糊”。
+
+1. **主光柔和但有方向。** 室外以Directional Light建立太阳/月光方向，优先通过太阳高度角、方位角、光源角和色温塑造山体、树冠、建筑与角色。阴天/云层可形成更宽、更均匀的主光；清晨/黄昏可用低角度柔光形成山脊轮廓、树冠透光和水面高光。不得用多个无来源强光把所有表面照平。
+2. **阴影保留形体。** 阴影应有柔和半影和自然接触关系：远离接触点可逐渐变软，物体与地面接触处仍应清晰；避免全局硬黑、统一模糊或完全取消阴影。Directional Light的Source Angle/Source Soft Angle、局部光源Source Radius/Rect尺寸是控制阴影软硬的重要参数；在Nanite与动态阴影工作流中，优先评估Virtual Shadow Maps（VSM）及Shadow Map Ray Tracing（SMRT）。Source Angle必须按场景尺度和镜头测试，不设全项目单一固定值；首轮可对照0.5357°、1°、2°、3°、4°，比较半影、接触细节、噪声、阴影畸变与GPU成本。不要为了更软而无限增大光源角或盲目提高采样数。
+3. **环境补光不抹平明暗。** 使用Sky Light捕获天空/远景环境光，结合Lumen或项目当前已验证的间接光照路径提供反弹光和颜色渗透。树荫、峭壁背光面、建筑檐下和角色阴影区应保留纹理与轮廓；补光不能强到消除主光方向和接触阴影。Lumen能提供多次漫反射反弹与间接阴影，但启用前必须核对工程当前GI/Reflection配置、目标GPU、场景实例重叠和目标平台成本；不得把Lumen写成现有项目已启用的事实。
+4. **局部轮廓光克制使用。** 对重要山脊、古树、建筑入口、英雄轮廓和探索目标，可用真实环境反射、局部暖光或有限轮廓光建立焦点。局部灯优先少量、低强度、有明确空间理由；大范围投影阴影的动态灯数量必须受控。主竞技场不能因柔光而削弱英雄/敌方轮廓、技能弹道、危险区和地面路径辨识。
+5. **空气透视分层而非全屏浓雾。** Exponential Height Fog作为全局基础，利用高度衰减和与天空/主光协调的散射颜色塑造远近层次；Local Fog Volumes用于湖面、山谷、瀑布、林间低洼等局部区域，使用径向衰减避免硬边；Volumetric Fog只在需要真实体积光、局部雾影且目标平台预算允许时启用。中低档优先保留高度雾/局部雾的空气透视，不强求体积光束。禁止用高密度均匀雾遮盖地形、植被、材质或远景缺陷。
+6. **曝光稳定、色彩克制。** 美术对照和性能截图必须使用可复现的固定曝光；正式游戏若采用Auto Exposure，应限定Min/Max范围、适应速度和局部曝光强度，避免从室内到室外或从阴影到阳光时画面突然闪亮/变暗。Local Exposure用于保护高光与阴影细节，不能把明暗关系压成灰雾。先校准灯光、PBR材质、白平衡和曝光，再用Color Grading做少量全局、阴影、中间调和高光修正；Film设置作为项目整体基线，不随地图任意变化。禁止以高Exposure Bias、Gain、强Bloom、LUT或全屏Tint补偿错误材质。
+7. **按生境建立光照预设。** 每个主要生境/地图可拥有清晨、晴天、阴天、黄昏、夜间、雨雪等独立Lighting/Weather Profile，定义主光方向与强度、天空补光、阴影软硬、曝光范围、白平衡、雾层和色彩分级。配置可以不同，但都必须满足“柔和、有方向、有层次、舒适悦目”的全局原则；不得将新手村湖山的青碧晨雾参数机械复制到雪山、沙漠、遗迹、室内或竞技场。
+8. **性能按画质分级。** 高画质可在目标硬件允许时组合Lumen、VSM/SMRT与局部Volumetric Fog；中档减少体积雾范围/采样和动态阴影负担；低档/移动端使用平台支持的简化阴影、天空补光、非体积局部雾或高度雾。具体功能支持以UE5.8 Rendering Features Reference及实际设备为准；不得假设VSM、Lumen或体积雾在所有移动端均可用。避免大量重叠动态灯、无必要的投影阴影、过多透明雾层和高强度体积散射。
+
+### 8.2 SSLM场景光照制作与验收流程
+
+1. **先做中性基准。** 使用中性灰/标准材质、固定曝光、统一色彩管理和目标分辨率，确认灯光能正确表现材质；先检查Unlit/Base Color，再检查Lit结果，避免把材质过暗/过亮误判为光照问题。
+2. **单独建立主光。** 暂时关闭不必要的局部灯和后处理，只调整Directional Light方向、色温、强度与Source Angle，先让山体、岩壁、树木和角色产生清晰体积。
+3. **加入天空与间接补光。** 调整Sky Light与当前GI方案，确保阴影面仍有细节，但不能冲掉主光方向；检查水面、浅色石材、雪地和植被的反射是否过曝或串色。
+4. **加入雾和局部光。** 先用轻量高度雾确定远近关系，再逐个增加Local Fog Volume；只有在确实需要体积阴影/光束时再启用Volumetric Fog，并用同镜头开关对照GPU成本。
+5. **最后做曝光和色彩分级。** 曝光必须基于真实场景亮度校准；先修正曝光，再修正白平衡与Color Grading，禁止使用Bloom/色偏遮盖问题。
+6. **做镜头、画质与玩法复核。** 每个主要区域至少检查全景、玩家高度、中近景、战斗视角；检查日间/阴天/晨昏或实际支持天气，并在高/中/低目标画质和真实目标设备上比较。记录曝光直方图、亮部剪切、暗部细节、半影噪声、雾重投影拖影、GPU/CPU帧时间和显存；交付真实截图/视频及人工签收结论。
+
+### 8.3 新手村既有光照工作状态与使用限制
+
+- [新手村晨间光照与环境雾隔离审核](../Implementation/VillageMorningEnvironment_20261025.md)记录了晴朗、薄雾、晨雾三套隔离候选、固定机位截图和性能采样；该报告明确P5人工审核及正式合入待批准，候选参数不是已批准的全局光照配置。
+- [新手村阴天光照与增强风力](../Implementation/VillageOvercastLighting_20261025.md)记录了正式新手村的阴天灯光基线，以及因地面泛白将曝光补偿由+2.5 EV修正为+1.0 EV的单地图变更。该+1.0 EV只属于该地图当时的校准结果，不是所有场景统一曝光值。
+- 后续场景光照调整必须先读取当前正式地图和天气配置、区分正式资产与隔离候选，并保留回退点；不得直接复制历史候选参数或把旧性能数据当作当前机器/当前版本的验收结果。
+
+
+
 ## 九、区域氛围和生态预设
 
 所有区域均遵循第1.1节的山水画式场景构图目标，并按地域地貌、生态和玩法功能形成差异；不得把新手村参考图机械复制为全游戏唯一模板。
@@ -172,7 +202,13 @@
 - [标准色值与语义派生索引](SSLMColorRegistry_V3.json)：41项屏幕色值+8项待定功能语义；不是UE数据资产。
 - [十层地形/PCG执行计划](../Implementation/TerrainGaeaMultiLayerPCGExecutionPlan_20261011.md)、[201项通用材质函数索引](../Implementation/Materials/MaterialFunctionLibraryIndex.md)、[Surface材质制作规范](../../Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Docs/AssetAuthoring.md)；沿用其资产路径、耦合边界和真实验收定义。
 - [自然远古UI定稿](../Implementation/NatureUIFinalTheme.md)、[UI纹理规范](../Implementation/UITextureVisualPolicy.md)、[UI颜色链路](../Implementation/UIColorPipeline.md)、[技能栏2026-10-18交付记录](../../Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/Docs/SkillBarDelivery_20261018.md)；原稿审批与编辑器实际制作仍属于各专项。
+- [UE5.8 Directional Lights](https://dev.epicgames.com/documentation/unreal-engine/directional-lights-in-unreal-engine)、[Virtual Shadow Maps](https://dev.epicgames.com/documentation/unreal-engine/virtual-shadow-maps-in-unreal-engine)、[Shadowing](https://dev.epicgames.com/documentation/unreal-engine/shadowing-in-unreal-engine)：方向光源角、VSM/SMRT软阴影与性能控制。
+- [UE5.8 Lumen GI与反射](https://dev.epicgames.com/documentation/unreal-engine/lumen-global-illumination-and-reflections-in-unreal-engine)、[Sky Lights](https://dev.epicgames.com/documentation/unreal-engine/sky-lights-in-unreal-engine)：间接反弹光、天空捕获和环境补光。
+- [UE5.8 Exponential Height Fog](https://dev.epicgames.com/documentation/unreal-engine/exponential-height-fog-in-unreal-engine)、[Local Fog Volumes](https://dev.epicgames.com/documentation/unreal-engine/local-fog-volumes-in-unreal-engine)、[Volumetric Fog](https://dev.epicgames.com/documentation/unreal-engine/volumetric-fog-in-unreal-engine)：全局高度雾、局部雾体和体积光照的适用边界。
+- [UE5.8 Auto Exposure](https://dev.epicgames.com/documentation/unreal-engine/auto-exposure-in-unreal-engine)、[Color Grading与Filmic Tonemapper](https://dev.epicgames.com/documentation/unreal-engine/color-grading-and-the-filmic-tonemapper-in-unreal-engine)、[Rendering Features Reference](https://dev.epicgames.com/documentation/unreal-engine/rendering-features-reference)：曝光、电影化色调映射和跨平台功能支持。
+- [Epic Games：Artist 02 Light a Scene](https://dev.epicgames.com/documentation/unreal-engine/artist-02-light-a-scene)：光照对情绪、视觉焦点和玩法引导的作用。
+- [GDC：Invisible Intuition—Lighting Tips to Guide Players and Set the Mood](https://gdcvault.com/play/1025529/Level-Design-Workshop-Invisible-Intuition)：关卡光照对氛围、可读性与自然引导的设计参考。
 - [十二生肖VFX核心规范](../Architecture/SSLM十二生肖技能VFX性能与视觉质量规范.md)；保留原有预算、三层表现及性能门禁。
 - [AGENTS.md（SSLM全局工程规则）](../../AGENTS.md)与[Docs/README.md（正式文档入口）](../README.md)登记本规范路径；新增或修改素材时**优先引用本文最新批准版本，不各写一份同义色板**。
 
-**最终准则：以东方山水画式景观构图为全域审美目标，以V3.0明快自然配色为色彩基线，以《王者荣耀》经典峡谷自然环境配色方法为参考，以东方神话为美术辨识，以PBR和真实光照为质感根基，并以战斗公平、实时性能和真实场景人工审核为不可越过的质量门禁。**
+**最终准则：以东方山水画式景观构图为全域审美目标，以柔和、自然、有方向、有层次的艺术光照塑造空间与情绪，以V3.0明快自然配色为色彩基线，以东方神话为美术辨识，以PBR和真实光照为质感根基，并以战斗公平、实时性能和真实场景人工审核为不可越过的质量门禁。**
