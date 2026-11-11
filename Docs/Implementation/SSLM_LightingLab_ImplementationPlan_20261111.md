@@ -92,7 +92,7 @@
 - Modify: `Docs/README.md`
 - Modify: `Docs/CHANGELOG.md`
 
-- [ ] **Step 1: 登记新增脚本、配置、测试、设计和计划的准确路径与职责**。
+- [ ] **Step 1: 登记新增脚本、配置、测试、设计和计划的准确路径与职责**，并将开发地图目录加入DefaultGame NeverCook与三服务器AllServers排除合同。
 - [ ] **Step 2: 更新Docs正式索引和变更记录**，明确云端源码完成与原生UE执行待家中PC之间的状态边界。
 - [ ] **Step 3: 回读所有新增文件和索引引用**，检查链接、文件名、JSON解析、Python语法及离线测试结果。
 - [ ] **Step 4: 在功能分支提交并创建Pull Request**，不直接合并main。
@@ -102,4 +102,5 @@
 - 运行：`python Tests/Assets/TestSSLM_LightingLab.py`
 - 运行：`python -m py_compile Tools/Unreal/World/SSLM_LightingLabUE58.py Tools/Unreal/World/SSLM_LightingLabPIEReviewUE.py`
 - 检查：`git diff --check`
+- 离线测试同时核对`Game/Config/DefaultGame.ini` NeverCook、`Build/Game/ServerPresentationExclusions.json` AllServers规则和开发目录标记文件。
 - 开发PC原生门禁：UE5.8编辑器/Monolith运行`preflight → create_lab → 独立Editor重启 → cold_audit → PIE setup/snapshot`；真实GPU和人工视觉结果单独记录。
