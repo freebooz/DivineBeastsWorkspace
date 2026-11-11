@@ -59,6 +59,9 @@ def main():
     assert "pie.setup(" not in pie_source
     assert "execute_console_command" in pie_source
     assert "get_console_variable_int_value" in pie_source
+    assert "pie.CAMERA = camera" not in pie_source
+    assert "LightingLabSnapshot_" in pie_source
+    assert "_Report.json" in pie_source
     assert "DefaultEngine.ini" not in pie_source
     print("SSLM Lighting Lab offline contract: PASS")
 
