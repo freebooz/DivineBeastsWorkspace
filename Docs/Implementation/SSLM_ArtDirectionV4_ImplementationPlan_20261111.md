@@ -22,6 +22,8 @@
 - [ ] 检查路线图与V4.0主规范的八大艺术体系、L1—L8一致。
 
 ## Task 2：L1—L8原生实施准备
+- [ ] L2详细合同见Docs/Implementation/SSLM_L2_PainterlyPBR_MaterialLookDev_20261111.md；优先复用现有Surface材质资产、函数和作者工具，不建立平行材质插件/母版。
+- [ ] L1未完成原生验证和人工批准前，L2只进行纹理来源/通道审计和候选LookDev准备，不批准正式材质。
 - [ ] 家中PC首先完成L1：preflight、create_lab、冷重载、PIE、固定机位、Profiler和人工审核。
 - [ ] L2—L8可并行整理候选资产清单和设计卡，但不得把未通过的L1候选写成正式基线。
 - [ ] 每阶段原生创建、保存、冷重载和证据回读通过后，更新ReviewMatrix状态。
