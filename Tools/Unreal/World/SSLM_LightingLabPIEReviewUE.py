@@ -5,6 +5,12 @@
 GI模式仅在PIE中尝试设置CVar，并以读回值决定支持状态；不写项目INI。
 """
 import re
+import sys
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 import unreal as u
 import SSLM_LightingLabUE58 as lab
