@@ -63,6 +63,9 @@ def main():
     assert "sys.path.insert(0, str(SCRIPT_DIR))" in pie_source
     for required in ("author.check_formal()", "author.geometry_equal", "author.save_review", "author.load_formal_and_copy"):
         assert required in author_source, required
+    assert "NativeNaniteBindings.json" in author_source
+    assert "L_Village_Baseline_Overcast" in author_source
+    assert "禁止猜测槽位映射" in author_source
     assert "post_process_unchanged" in author_source
     assert "get_editor_property(\"intensity\")" in author_source
     assert "get_editor_property(\"fog_density\")" in author_source
