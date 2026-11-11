@@ -128,7 +128,13 @@ def _apply_profile_to_current_map(key, config):
     assert abs(actual_rotation.yaw - original.yaw) < 0.01, "太阳方位角意外变化"
     assert abs(actual_rotation.roll - original.roll) < 0.01, "太阳Roll意外变化"
 
-    sky_component.set_intensity(base_sky_intensity * float(profile["sky_intensity_multiplier"]))
+    expected_sun_intensity = base_sun_intensity * float(profile["sun_intensity_multiplier"])
+    expected_sky_intensity = base_sky_intensity * float(profile["sky_intensity_multiplier"])
+    sky_component.set_intensity(expected_sky_intensity)
+    assert abs(float(sun_component.get_editor_property("intensity")) - expected_sun_intensity) <= max(0.01, expected_sun_intensity * 0.001), "方向光强度写入回读失败"
+    assert abs(float(sky_component.get_editor_property("intensity")) - expected_sky_intensity) <= max(0.01, expected_sky_intensity * 0.001), "天空光强度写入回读失败"
+    assert abs(float(sun_component.get_editor_property("light_source_angle")) - source_angle) < 0.001, "Source Angle写入回读失败"
+    assert abs(float(sun_component.get_editor_property("temperature")) - float(profile["temperature_kelvin"])) < 0.1, "色温写入回读失败"
 
     fog_component.set_editor_property("fog_density", float(profile["fog_density"]))
     fog_component.set_editor_property("fog_height_falloff", float(profile["height_falloff"]))
@@ -143,6 +149,8 @@ def _apply_profile_to_current_map(key, config):
     fog_component.set_editor_property("volumetric_fog_near_fade_in_distance", 400.0)
     fog_component.set_editor_property("volumetric_fog_scattering_distribution", float(profile["volumetric_scattering"]))
     fog_component.set_editor_property("volumetric_fog_extinction_scale", float(profile["volumetric_extinction_scale"]))
+    assert abs(float(fog_component.get_editor_property("fog_density")) - float(profile["fog_density"])) < 0.0001, "高度雾密度写入回读失败"
+    assert bool(fog_component.get_editor_property("enable_volumetric_fog")) == bool(profile["volumetric_enabled"]), "体积雾开关写入回读失败"
 
     layout = author.spatial_layout()
     second_fog = fog_component.get_editor_property("second_fog_data")
