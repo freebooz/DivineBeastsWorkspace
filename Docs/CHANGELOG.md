@@ -1,5 +1,12 @@
 # 变更记录
 
+## 2026-11-11｜SSLM全场景柔和艺术光照策略与UE5.8实现方法增补
+
+- 用户明确要求所有场景光照柔和，并突出光影效果的艺术美感。本次将其纳入全局强制原则：柔而不平、亮而不曝、暗而有细节、雾而不糊；保留主光方向、体积塑形、接触阴影、空间层次和玩法可读性。
+- 基于Epic Games UE5.8官方资料，补充Directional Light Source Angle/Source Soft Angle、VSM/SMRT半影与接触硬化、Sky Light与Lumen间接光、Exponential Height Fog/Local Fog Volumes/Volumetric Fog、曝光与Local Exposure、Filmic Tonemapper/Color Grading、跨平台画质分级及实际镜头验收方法。
+- 明确新手村既有晨间晴朗/薄雾/晨雾方案仍是隔离候选，P5人工审核及正式合入待批准；阴天地图+1.0 EV是单地图校准结果，不得推广为全项目曝光常量。
+- 同步更新AGENTS.md、全局美术主规范和Docs/README.md。本轮只更新Markdown策略文档，不修改UE地图、灯光、后处理、材质或雾效二进制资产，不宣称场景视觉或GPU性能已经验收。
+
 ## 2026-11-11｜新手村湖边群山与峭壁专属美术基准确认
 
 - 用户明确将2026-11-11提供的山水场景图指定为SSLM新手村湖边群山、湖岸峭壁及周边山体的专属美术基准。
