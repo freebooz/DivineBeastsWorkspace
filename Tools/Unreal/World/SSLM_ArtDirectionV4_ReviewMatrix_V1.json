@@ -190,5 +190,278 @@
       "target_device_performance_unverified",
       "human_signoff_missing"
     ]
-  }
+  },
+  "execution_roadmap": "Docs/Implementation/SSLM_LightingLab_L1-L8_ExecutionRoadmap_20261111.md",
+  "phases": [
+    {
+      "id": "L1",
+      "title": "光照与曝光基线",
+      "status": "candidate_cloud_code_native_validation_pending",
+      "inputs": [
+        "LightingLab V1六套光照候选",
+        "Source Angle五档",
+        "GI/画质对照"
+      ],
+      "deliverables": [
+        "固定机位A/B截图",
+        "CVar回读",
+        "冷重载报告",
+        "GPU/CPU数据",
+        "美术签收"
+      ],
+      "acceptance_gate": "正式地图哈希不变、冷重载通过、目标PC性能与人工审核通过",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L2",
+      "title": "Painterly PBR材质样板",
+      "status": "planned",
+      "inputs": [
+        "L1批准光照/曝光",
+        "现有材质和纹理源文件"
+      ],
+      "deliverables": [
+        "材质源清单",
+        "BaseColor/Normal/ORM通道审查",
+        "材质实例参数表",
+        "Shader/纹理内存报告",
+        "LookDev截图"
+      ],
+      "acceptance_gate": "PBR通道和色彩空间正确、近中远细节协调、目标设备成本通过",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L3",
+      "title": "地形与峭壁",
+      "status": "planned",
+      "inputs": [
+        "L1光照基线",
+        "L2材质候选",
+        "Gaea高度图/Mask和Landscape资产"
+      ],
+      "deliverables": [
+        "地形构图图",
+        "坡度/高度/曲率Mask",
+        "Nanite/RVT证据",
+        "碰撞导航审核",
+        "GPU/内存报告"
+      ],
+      "acceptance_gate": "地质与构图可信、岩土水岸融合自然、碰撞/导航有效",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L4",
+      "title": "植被生态群落",
+      "status": "planned",
+      "inputs": [
+        "L1光照基线",
+        "L2树皮/叶片/地表材质",
+        "L3地形生态Mask",
+        "SpeedTree源资产"
+      ],
+      "deliverables": [
+        "生态分布图",
+        "乔灌草密度规则",
+        "ISM/HISM/Landscape Grass/PCG对照",
+        "过绘/WPO/阴影/LOD报告",
+        "视线截图"
+      ],
+      "acceptance_gate": "物种分布自然、路径和战斗视线清楚、性能成本通过",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L5",
+      "title": "水体与岸线",
+      "status": "planned",
+      "inputs": [
+        "L1光照基线",
+        "L2湿岩/岸线材质",
+        "L3湖盆岸线",
+        "UE WaterBody资产"
+      ],
+      "deliverables": [
+        "深浅水截图",
+        "岸线湿润/泡沫截图",
+        "反射透明性能报告",
+        "水下可读性测试",
+        "游泳交互审核"
+      ],
+      "acceptance_gate": "水陆过渡自然、无关键透明排序问题、玩法和GPU成本通过",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L6",
+      "title": "角色与战斗可读性",
+      "status": "planned",
+      "inputs": [
+        "L1批准光照",
+        "L2-L5环境候选",
+        "英雄/VFX/HUD资产"
+      ],
+      "deliverables": [
+        "战斗镜头截图和视频",
+        "灰度/色觉辅助",
+        "敌我轮廓测试",
+        "AOE/弹道/交互遮挡报告"
+      ],
+      "acceptance_gate": "敌我与技能信息清楚、无不公平视野、玩法负责人签收",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L7",
+      "title": "天气与时间色彩脚本",
+      "status": "planned",
+      "inputs": [
+        "L1光照基线",
+        "L2-L6已验收环境候选",
+        "现有天气状态架构"
+      ],
+      "deliverables": [
+        "同机位时段天气对照",
+        "区域色彩脚本",
+        "曝光/白平衡切换记录",
+        "天气集成报告"
+      ],
+      "acceptance_gate": "曝光色彩变化稳定、区域识别保持、天气系统唯一真源",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L8",
+      "title": "画质与平台回归",
+      "status": "planned",
+      "inputs": [
+        "L1-L7验收候选",
+        "已确认的目标硬件/平台矩阵"
+      ],
+      "deliverables": [
+        "平台能力矩阵",
+        "High/Medium/Low回退表",
+        "GPU/CPU/显存流送报告",
+        "视觉一致性截图",
+        "最终签收"
+      ],
+      "acceptance_gate": "所有已确认平台满足批准预算和玩法可读性、回退质量获批",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    }
+  ]
 }
