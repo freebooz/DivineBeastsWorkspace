@@ -5,6 +5,7 @@
 正式地图只读；任何哈希、几何、未保存包或编辑器状态不符均立即停止。
 所有参数是待实机校准候选，不是正式天气/光照DataAsset。
 """
+import hashlib
 import json
 import os
 import sys
@@ -75,8 +76,22 @@ def preflight():
     for key in config["presets"]:
         package = author.package_file(config["review_root"] + "/Maps/L_" + key)
         assert not package.exists(), "目标实验地图已存在，拒绝覆盖：" + str(package)
+
+    # 复用上一轮已经由Monolith原生反射确认的Nanite槽位映射。
+    # 地图作者后续会验证几何/组件身份一致；若旧证据缺失或基线键不匹配，预检在创建输出目录前停止。
+    binding_source = ROOT / "Saved/Validation/VillageMorningEnvironment20261025/NativeNaniteBindings.json"
+    assert binding_source.exists(), "缺少上一轮NativeNaniteBindings.json；请先在UE5.8/Monolith完成Nanite源组件顺序审核，禁止猜测槽位映射"
+    binding_data = json.loads(binding_source.read_text(encoding="utf-8"))
+    binding_key = "L_Village_Baseline_Overcast"
+    assert binding_key in binding_data and isinstance(binding_data[binding_key], dict) and binding_data[binding_key], "旧Nanite映射缺少基准关卡条目"
+    binding_sha256 = hashlib.sha256(binding_source.read_bytes()).hexdigest()
+
     report = author.audit(config["evidence"]["author_baseline"])
     assert report["formal_sha256"], "正式地图SHA-256采集失败"
+    derived_bindings = dict(binding_data)
+    for key in config["presets"]:
+        derived_bindings["L_" + key] = binding_data[binding_key]
+    author.write("NativeNaniteBindings.json", derived_bindings)
     author.write("LightingLab_Preflight.json", {
         "status": "preflight_passed",
         "formal_map": author.FORMAL,
@@ -86,6 +101,10 @@ def preflight():
         "review_root": config["review_root"],
         "profile_count": len(config["profiles"]),
         "preset_count": len(config["presets"]),
+        "nanite_binding_source": str(binding_source),
+        "nanite_binding_source_sha256": binding_sha256,
+        "nanite_binding_source_map": binding_key,
+        "nanite_binding_derived_maps": len(config["presets"]),
         "formal_map_unchanged": True
     })
     return report
