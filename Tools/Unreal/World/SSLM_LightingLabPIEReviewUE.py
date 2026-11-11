@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """SSLM Lighting Lab PIE对照入口。
 
-复用既有VillageMorningPIEReviewUE的地图白名单、地表绑定和固定相机；不重新应用天气预设。
+复用既有VillageMorningPIEReviewUE的地图白名单、Clear天气基线、地表绑定和固定相机。
 GI模式仅在PIE中尝试设置CVar，并以读回值决定支持状态；不写项目INI。
 """
 import json
@@ -106,6 +106,8 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
         "landscape": landscape,
         "viewport": [viewport.x, viewport.y],
         "weather_policy": "existing_clear_weather_preset_applied",
+        "gi_execution_verified": False,
+        "validation_scope": "CVar readback only; actual render path, GPU cost and visual quality require separate UE5.8 evidence",
         "formal_merge_approved": False,
         "project_ini_modified": False
     }
