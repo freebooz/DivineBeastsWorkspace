@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "id": "SSLM_ArtDirectionV4_ReviewMatrix",
+  "version": "1.0",
+  "status": "design_review_matrix_not_ue_asset",
+  "source_policy": "Docs/Art/SSLM全局美术艺术指导与视觉质量规范_V4.0.md",
+  "lighting_lab": {
+    "current_phase": "L1_lighting_exposure_baseline",
+    "current_v1_scope": [
+      "six_lighting_profiles",
+      "five_source_angle_samples",
+      "three_quality_tiers",
+      "three_gi_modes",
+      "five_fixed_camera_views"
+    ],
+    "pending_phases": [
+      "L2_material_lookdev",
+      "L3_terrain_cliffs",
+      "L4_foliage_biomes",
+      "L5_water_shoreline",
+      "L6_character_combat_readability",
+      "L7_weather_time",
+      "L8_platform_scalability"
+    ],
+    "note": "现有Lighting Lab V1云端代码已合并main；原生地图/PIE/GPU/人工验收需在开发PC完成。"
+  },
+  "systems": [
+    {
+      "id": "A1",
+      "name": "山水构图与景观叙事",
+      "checks": [
+        "主景/次景/前景/远景层次",
+        "视觉锚点与视线通廊",
+        "留白与可达路线",
+        "玩家镜头与战斗镜头构图"
+      ],
+      "evidence": [
+        "fixed_camera_screenshots",
+        "gameplay_video",
+        "art_review"
+      ]
+    },
+    {
+      "id": "A2",
+      "name": "形态语言与轮廓节奏",
+      "checks": [
+        "大中小三级形态",
+        "地貌/建筑/植被轮廓差异",
+        "地质与结构逻辑",
+        "角色与背景轮廓分离"
+      ],
+      "evidence": [
+        "silhouette_sheet",
+        "scene_screenshots",
+        "art_review"
+      ]
+    },
+    {
+      "id": "A3",
+      "name": "柔和艺术光照与明暗塑形",
+      "checks": [
+        "主光方向",
+        "半影与接触阴影",
+        "天空/间接补光",
+        "曝光稳定",
+        "雾层不遮挡玩法"
+      ],
+      "evidence": [
+        "lighting_lab_capture",
+        "cvar_readback",
+        "gpu_cpu_profile",
+        "art_review"
+      ]
+    },
+    {
+      "id": "A4",
+      "name": "区域色彩脚本",
+      "checks": [
+        "主色/辅色/点缀色",
+        "时段/天气色彩变化",
+        "战斗语义色稳定",
+        "灰度与色觉辅助"
+      ],
+      "evidence": [
+        "color_script",
+        "fixed_exposure_capture",
+        "color_accessibility_review"
+      ]
+    },
+    {
+      "id": "A5",
+      "name": "艺术化PBR材质",
+      "checks": [
+        "BaseColor/Normal/ORM正确",
+        "粗糙度与金属度合理",
+        "大中小细节频率",
+        "sRGB/Linear正确",
+        "材质采样与过绘"
+      ],
+      "evidence": [
+        "material_settings",
+        "shader_complexity",
+        "lookdev_capture",
+        "asset_validation"
+      ]
+    },
+    {
+      "id": "A6",
+      "name": "自然生态与生物群落",
+      "checks": [
+        "地形/水分/坡向分布逻辑",
+        "乔灌草层级",
+        "密度与留白",
+        "LOD/风动/实例化",
+        "视线和战斗空间"
+      ],
+      "evidence": [
+        "biome_distribution",
+        "foliage_counts",
+        "overdraw_profile",
+        "gameplay_capture"
+      ]
+    },
+    {
+      "id": "A7",
+      "name": "水体/建筑/道具融合",
+      "checks": [
+        "水深/反射/折射/泡沫",
+        "岸线湿润过渡",
+        "建筑落位与结构逻辑",
+        "碰撞/导航/交互"
+      ],
+      "evidence": [
+        "water_capture",
+        "shoreline_capture",
+        "collision_nav_test",
+        "art_review"
+      ]
+    },
+    {
+      "id": "A8",
+      "name": "战斗可读性与镜头艺术",
+      "checks": [
+        "英雄/敌人轮廓",
+        "技能/危险范围辨识",
+        "路径/交互可见",
+        "色觉辅助",
+        "多人叠加与公平视野"
+      ],
+      "evidence": [
+        "combat_capture",
+        "grayscale_capture",
+        "color_vision_review",
+        "gameplay_signoff"
+      ]
+    }
+  ],
+  "acceptance": {
+    "states": [
+      "not_started",
+      "candidate",
+      "technical_pass",
+      "art_review_pending",
+      "accepted",
+      "rejected"
+    ],
+    "required_context": [
+      "ue_version",
+      "map_or_asset_path",
+      "camera",
+      "fov",
+      "resolution",
+      "quality_tier",
+      "platform",
+      "rhi",
+      "weather_time",
+      "exposure",
+      "lighting_profile",
+      "gpu_cpu_memory_metrics",
+      "reviewer",
+      "review_date"
+    ],
+    "veto_conditions": [
+      "critical_gameplay_information_occluded",
+      "unreadable_enemy_or_skill",
+      "uncontrolled_overexposure_or_black_crush",
+      "invalid_pbr_or_color_space",
+      "unsupported_feature_without_fallback",
+      "native_asset_cold_reload_failed",
+      "target_device_performance_unverified",
+      "human_signoff_missing"
+    ]
+  }
+}
