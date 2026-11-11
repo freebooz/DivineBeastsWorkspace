@@ -187,6 +187,12 @@ def _apply_profile_to_current_map(key, config):
         }
         for property_name, value in settings.items():
             local_component.set_editor_property(property_name, value)
+        assert abs(float(local_component.get_editor_property("radial_fog_extinction")) - radial) < 0.0001, "局部径向雾写入回读失败"
+        assert abs(float(local_component.get_editor_property("height_fog_extinction")) - height) < 0.0001, "局部高度雾写入回读失败"
+
+    assert bool(sun_component.get_editor_property("use_temperature")) is True, "方向光色温开关回读失败"
+    assert abs(float(fog_component.get_editor_property("fog_max_opacity")) - float(profile["max_opacity"])) < 0.001, "雾最大不透明度回读失败"
+    assert abs(float(fog_component.get_editor_property("start_distance")) - float(profile["start_cm"])) < 0.1, "雾起始距离回读失败"
 
     # 后处理曝光、白平衡、色彩分级、AO和Bloom继承正式地图基线；作者不主动改动。
     baseline_post = [
@@ -225,6 +231,7 @@ def create_lab():
     else:
         author.idle()
         author.check_formal()
+        assert (author.OUT / "LightingLab_Preflight.json").exists(), "缺少完整预检报告；拒绝从不完整现场继续"
     created = []
     for key in config["presets"]:
         destination = config["review_root"] + "/Maps/L_" + key
@@ -250,6 +257,7 @@ def cold_audit():
     config = configure()
     author.idle()
     baseline = author.check_formal()
+    assert (author.OUT / "LightingLab_AuthoringSummary.json").exists(), "缺少作者阶段汇总，不能执行冷重载审核"
     assert os.getpid() != int(baseline["pid"]), "必须重启Editor后执行冷重载审核"
     results = []
     for key in config["presets"]:
