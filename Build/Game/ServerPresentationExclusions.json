@@ -13,7 +13,10 @@
     "VillageDevelopmentServer": "VillageDevelopmentServer",
     "FoundationStandalone": "DedicatedServer"
   },
-  "StageOnlyEnginePlugins": ["Fab", "Bridge"],
+  "StageOnlyEnginePlugins": [
+    "Fab",
+    "Bridge"
+  ],
   "CookDirectories": [
     {
       "PackagePath": "/GamePlatformUI/Input",
@@ -364,6 +367,13 @@
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "已独立的纯表现开发审核目录；不排除其他开发资源。"
+    },
+    {
+      "PackagePath": "/Game/Development/LightingLab",
+      "SourceDirectory": "Game/Content/Development/LightingLab",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "SSLM独立艺术光照实验室的审核地图与灯光对照资源仅供UE5.8 Editor/PIE；不含服务器权威逻辑，必须从三种专用服务器Cook排除。"
     },
     {
       "PackagePath": "/DBAHeroPack_Rat/UI/Portraits",
