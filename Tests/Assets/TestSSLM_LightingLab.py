@@ -68,6 +68,8 @@ def main():
     assert "get_editor_property(\"fog_density\")" in author_source
     assert "project_ini_modified" in pie_source
     assert "existing_clear_weather_preset_applied" in pie_source
+    assert "gi_execution_verified" in pie_source
+    assert "actual render path" in pie_source
     assert "apply_weather_preset_on_authority" not in pie_source
     assert "pie.setup(run, quality, view)" in pie_source
     assert "execute_console_command" in pie_source
