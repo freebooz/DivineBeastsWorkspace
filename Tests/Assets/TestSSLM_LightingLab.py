@@ -59,6 +59,8 @@ def main():
         ast.parse(source, filename=str(path))
     author_source = AUTHOR.read_text(encoding="utf-8")
     pie_source = PIE.read_text(encoding="utf-8")
+    assert "sys.path.insert(0, str(SCRIPT_DIR))" in author_source
+    assert "sys.path.insert(0, str(SCRIPT_DIR))" in pie_source
     for required in ("author.check_formal()", "author.geometry_equal", "author.save_review", "author.load_formal_and_copy"):
         assert required in author_source, required
     assert "post_process_unchanged" in author_source
