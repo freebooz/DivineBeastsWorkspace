@@ -31,8 +31,11 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
     # 既有PIE助手显式应用已验证的Clear天气定义，固定天气/风场基线，再设置质量与固定相机。
     # Clear是测试基线；不同光照profile只在保存的隔离地图上改变，不创建第二套天气链。
     setup_path = lab.author.OUT / (run + "_Setup.json")
-    if setup_path.exists():
-        raise AssertionError("PIE Setup证据已存在，拒绝覆盖：" + str(setup_path))
+    snapshot_path = lab.author.OUT / (run + "_LightingLabSnapshot_" + gi_mode + ".json")
+    report_path = lab.author.OUT / (run + "_LightingLab_" + gi_mode + "_Report.json")
+    for evidence_path in (setup_path, snapshot_path, report_path):
+        if evidence_path.exists():
+            raise AssertionError("PIE证据已存在，拒绝覆盖：" + str(evidence_path))
     pie.setup(run, quality, view)
     world = pie.game()
     camera = pie.set_camera(view)
@@ -52,7 +55,7 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
 
     requirements_met = all(before[name] == int(value) for name, value in mode["requires"].items())
     commands_applied = False
-    if requirements_met:
+    if requirements_met and mode["commands"]:
         for name, value in mode["commands"]:
             u.SystemLibrary.execute_console_command(world, name + " " + str(int(value)))
         commands_applied = True
@@ -78,8 +81,6 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
     # 每次运行使用唯一证据名；先保存既有快照，再写入摘要报告，避免互相覆盖。
     snapshot_suffix = "LightingLabSnapshot_" + gi_mode
     report_name = run + "_LightingLab_" + gi_mode + "_Report.json"
-    report_path = lab.author.OUT / report_name
-    assert not report_path.exists(), "PIE报告已存在，拒绝覆盖：" + str(report_path)
     pie.snapshot(snapshot_suffix)
     report = {
         "status": status,
