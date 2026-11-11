@@ -145,3 +145,8 @@ L1—L8按依赖顺序推进，不把八项理解为八个互不相关的演示�
 ## L2专项执行文件
 
 L2详细合同见Docs/Implementation/SSLM_L2_PainterlyPBR_MaterialLookDev_20261111.md。执行时必须复用现有MaterialNamingAndQualityPolicy、MaterialOwnershipAndContracts、MaterialLayerCompositionPolicy和Surface作者工具；不得建立平行材质插件/母版。L1未批准前仅允许源纹理清单、通道审计和候选LookDev准备，材质最终验收保持阻断。
+
+
+### L3专项执行文件
+
+L3详细合同见`Docs/Implementation/SSLM_L3_TerrainCliffLandscape_20261111.md`。该规格继承既有十层Landscape PBR、Gaea高度/Mask、Nanite岩石、RVT和Terrain Function Integration历史实现与阻断记录；不得把历史候选资产存在视为当前完整通过。正式Village地图、共享材质和服务器合同保持保护，RVT必须有真实写入/采样及冷重载证据。
