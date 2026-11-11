@@ -1,5 +1,14 @@
 # 变更记录
 
+## 2026-11-11｜SSLM全局美术艺术指导与视觉质量规范 V4.0
+
+- 将V3.0已确认的明快自然色彩、山水画式场景构图、新手村湖边群山与峭壁专属基准、全场景柔和艺术光照作为V4.0继承基线。
+- 新增八大艺术体系：山水构图、形态语言、柔和光照、区域色彩脚本、艺术化PBR、自然生态、水体建筑融合、战斗视觉可读性；新增五项高级技术：Painterly PBR、Regional Color Script、Art-directed Lighting、Multi-scale Detail、Visual Readability。
+- 新增区域艺术指导卡、UE5.8技术边界、六维视觉验收与否决条件、性能诊断方法和资产生产流程。
+- 将Lighting Lab与V4.0建立L1—L8关系：L1为现有V1光照/曝光/GI/阴影候选；L2—L8为材质、地形峭壁、植被、水体、战斗镜头、天气时间和平台回归待扩展任务。
+- V3.0保留为历史色彩基线；AGENTS.md、Docs/README.md和目录规划将V4.0登记为当前唯一全局美术权威规范。
+- 本轮仅修改策略、设计、实施计划和审核矩阵文档；未修改正式UE地图、材质、植被、水体、灯光或后处理二进制资产，未宣称原生测试、性能和人工美术验收已通过。
+
 ## 2026-11-11｜SSLM Lighting Lab独立艺术光照实验室云端代码
 - 将`/Game/Development/LightingLab`加入`Game/Config/DefaultGame.ini`的NeverCook及`Build/Game/ServerPresentationExclusions.json`的AllServers排除；新增内容目录README作为路径标记，不创建或伪造UE二进制资产。
 - 预检要求复用上一轮Monolith原生回读的`Saved/Validation/VillageMorningEnvironment20261025/NativeNaniteBindings.json`，按地图几何一致保护派生实验地图键；文件缺失或基准键不匹配时在创建实验输出目录前停止，禁止猜测Nanite材质槽顺序。
