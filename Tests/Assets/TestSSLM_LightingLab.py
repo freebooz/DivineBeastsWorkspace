@@ -8,6 +8,9 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "Tools/Unreal/World/SSLM_LightingLab_V1.json"
 AUTHOR = ROOT / "Tools/Unreal/World/SSLM_LightingLabUE58.py"
 PIE = ROOT / "Tools/Unreal/World/SSLM_LightingLabPIEReviewUE.py"
+DEFAULT_GAME = ROOT / "Game/Config/DefaultGame.ini"
+SERVER_EXCLUSIONS = ROOT / "Build/Game/ServerPresentationExclusions.json"
+CONTENT_MARKER = ROOT / "Game/Content/Development/LightingLab/README.md"
 
 
 def main():
@@ -20,6 +23,12 @@ def main():
     assert config["output_relative"].startswith("Saved/Validation/")
     assert config["exposure_policy"]["mode"] == "inherit_formal_baseline"
     assert config["exposure_policy"]["assert_post_process_unchanged"] is True
+    assert CONTENT_MARKER.exists(), "Lighting Lab开发目录说明缺失"
+    assert 'DirectoriesToNeverCook=(Path="/Game/Development/LightingLab")' in DEFAULT_GAME.read_text(encoding="utf-8")
+    exclusions = json.loads(SERVER_EXCLUSIONS.read_text(encoding="utf-8"))
+    lighting_exclusion = next(item for item in exclusions["CookDirectories"] if item["PackagePath"] == "/Game/Development/LightingLab")
+    assert lighting_exclusion["Profiles"] == "AllServers"
+    assert lighting_exclusion["Availability"] == "Present"
 
     assert set(config["profiles"]) == {
         "SoftDaylight", "MorningWarm", "OvercastDiffuse",
