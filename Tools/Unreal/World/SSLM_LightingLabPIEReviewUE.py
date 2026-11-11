@@ -28,23 +28,16 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
     assert view in config["camera"]["views"], "未知固定视角：" + view
     assert gi_mode in config["gi_modes"], "未知GI模式：" + gi_mode
 
-    # 复用既有PIE地图白名单、固定镜头和地表绑定，但不重新应用Clear天气；
-    # 每份Lighting Lab副本继承同一正式地图天气快照，避免天气投影覆盖作者候选。
-    pie.CAMERA = None
-    pie.HELD.clear()
-    pie.RUN = run
+    # 既有PIE助手显式应用已验证的Clear天气定义，固定天气/风场基线，再设置质量与固定相机。
+    # Clear是测试基线；不同光照profile只在保存的隔离地图上改变，不创建第二套天气链。
+    setup_path = lab.author.OUT / (run + "_Setup.json")
+    if setup_path.exists():
+        raise AssertionError("PIE Setup证据已存在，拒绝覆盖：" + str(setup_path))
+    pie.setup(run, quality, view)
     world = pie.game()
-    quality_settings = config["quality"][quality]
-    for group in ["ViewDistance", "AntiAliasing", "Shadow", "GlobalIllumination", "Reflection", "PostProcess", "Texture", "Effects", "Foliage", "Shading"]:
-        u.SystemLibrary.execute_console_command(world, "sg." + group + "Quality " + str(quality_settings["scalability"]))
-    for cvar_name, value in quality_settings.items():
-        if cvar_name != "scalability":
-            u.SystemLibrary.execute_console_command(world, cvar_name + " " + str(value))
-    for command in ["t.MaxFPS 0", "r.VSync 0", "r.DynamicRes.OperationMode 0", "r.ScreenPercentage 100", "r.GPUCsvStatsEnabled 1"]:
-        u.SystemLibrary.execute_console_command(world, command)
     camera = pie.set_camera(view)
-    landscape = pie.bind_landscape(world)
     viewport = u.WidgetLayoutLibrary.get_viewport_size(world)
+    quality_settings = config["quality"][quality]
     mode = config["gi_modes"][gi_mode]
     required_names = list(mode["requires"])
     expected_names = list(mode["expected"])
@@ -107,7 +100,7 @@ def setup(run, quality="High", view="LakeShore", gi_mode="Baseline"):
         "camera": camera,
         "landscape": landscape,
         "viewport": [viewport.x, viewport.y],
-        "weather_policy": "inherit_saved_map_weather_no_runtime_weather_preset_applied",
+        "weather_policy": "existing_clear_weather_preset_applied",
         "formal_merge_approved": False,
         "project_ini_modified": False
     }
