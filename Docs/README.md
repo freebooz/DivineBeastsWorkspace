@@ -8,7 +8,10 @@
 
 
 - [SSLM统一艺术光照实验室（Lighting Lab）设计规格](Implementation/SSLM_LightingLab_Design_20261111.md) 与 [实施计划](Implementation/SSLM_LightingLab_ImplementationPlan_20261111.md)：独立开发关卡、六套柔和艺术光照候选、阴影角扫描、三档质量/GI对照及UE5.8真实验收边界；云端代码不冒充原生地图资产，开发目录已登记NeverCook及三服务器排除，预检复用已有Monolith Nanite槽位映射证据。
-- [SSLM全局美术配色策略与色彩设计规范 V3.0](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)：全局美术与色彩唯一权威文档；2026-11-11增补“一景一幅山水画、一帧一幅视觉作品”的全域场景审美原则，并确定Village湖边群山与峭壁专属基准图；本轮继续加入全场景柔和艺术光照、UE5.8光影/间接光/雾效/曝光/色彩分级方法及分级性能验收要求。
+- [SSLM全局美术艺术指导与视觉质量规范 V4.0](Art/SSLM全局美术艺术指导与视觉质量规范_V4.0.md)：当前全局美术唯一权威规范，继承V3.0色彩基线，新增八大艺术体系、五项高级技术、区域艺术指导卡、UE5.8实现边界、Lighting Lab L1—L8映射及六维视觉验收/否决条件。
+- [V4.0设计规格](Implementation/SSLM_ArtDirectionV4_Design_20261111.md) 与 [V4.0实施计划](Implementation/SSLM_ArtDirectionV4_ImplementationPlan_20261111.md)：版本治理、Lighting Lab扩展任务和后续原生资产验收顺序。
+- [V4.0视觉审核矩阵](../Tools/Unreal/World/SSLM_ArtDirectionV4_ReviewMatrix_V1.json)：八大艺术体系检查项、证据类型、验收状态和否决条件；仅为审核矩阵，不是UE数据资产。
+- [SSLM全局美术配色策略与色彩设计规范 V3.0（历史版本）](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)：保留原始sRGB色彩基线和历史决策，当前全局艺术方向以V4.0为准。
 - [SSLM参考颜色语义索引 V3.0](Art/SSLMColorRegistry_V3.json)：41项初始屏幕sRGB参考色与8项待审核的战斗功能色语义；派生候选数据，不是UE数据资产。
 - [SSLM十层地形纹理及材质V3.0真实审查与整改](Implementation/TerrainColorV3ComplianceReview_20261018.md)：已有V3色彩候选并获用户授权覆盖正式地形基础色；10层基础色已UE5.8原位重导入并独立冷重载10/10，泥土Dirt阻断解决；Village地图未修改，共享母材质已按新手村纹理轰炸和V3默认草地要求合法更新，六态D3D12像素有效性、正式Village三景别真实截图及服务器/客户端Cook通过，游戏客户端软纹理/完整地貌/GPU耗时与人工美术验收仍待完成。
 
