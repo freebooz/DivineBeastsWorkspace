@@ -91,6 +91,9 @@
 - Modify: `Docs/Architecture/解决方案总体目录规划说明_V1.3.0.md`
 - Modify: `Docs/README.md`
 - Modify: `Docs/CHANGELOG.md`
+- Modify: `Game/Config/DefaultGame.ini`
+- Modify: `Build/Game/ServerPresentationExclusions.json`
+- Create: `Game/Content/Development/LightingLab/README.md`
 
 - [ ] **Step 1: 登记新增脚本、配置、测试、设计和计划的准确路径与职责**，并将开发地图目录加入DefaultGame NeverCook与三服务器AllServers排除合同。
 - [ ] **Step 2: 更新Docs正式索引和变更记录**，明确云端源码完成与原生UE执行待家中PC之间的状态边界。
