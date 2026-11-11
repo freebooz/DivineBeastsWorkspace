@@ -19,7 +19,7 @@
 - 八大艺术体系：山水构图、形态语言、柔和光照、区域色彩脚本、艺术化PBR、自然生态、水体建筑融合、战斗视觉可读性。
 - 五项高级技术：Painterly PBR、Regional Color Script、Art-directed Lighting、Multi-scale Detail、Visual Readability。
 - UE5.8实现方法：Lumen/VSM/SMRT/天空大气/雾效/RVT/Nanite/PCG/SpeedTree/水体/性能分析。
-- Lighting Lab映射：L1光照曝光基线为当前V1范围；L2—L8为后续扩展任务，分别覆盖材质、地形峭壁、植被、水体、战斗镜头、天气时间和多平台性能。
+- Lighting Lab映射：L1光照曝光基线为当前V1范围；L2—L8为后续扩展任务，分别覆盖材质、地形峭壁、植被、水体、战斗镜头、天气时间和多平台性能。 同步维护Tools/Unreal/World/SSLM_ArtDirectionV4_ReviewMatrix_V1.json，记录八大体系检查项、证据类型和否决条件；该文件不是UE DataAsset。
 - 区域艺术指导卡、统一视觉验收等级、否决条件和资产生产流程。
 
 ## 4. 非目标
