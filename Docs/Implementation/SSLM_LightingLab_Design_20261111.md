@@ -65,4 +65,4 @@
 
 ## 8. 实施交付边界
 
-本次云端实施交付源代码、配置、离线测试、设计/执行计划及目录索引。真实`.umap`副本、UE参数回读、PIE截图、GPU数据和人工签收必须由家中开发PC的UE5.8编辑器与Monolith MCP执行后再登记；本次云端提交不得宣称这些原生验收已完成。
+本次云端实施交付源代码、配置、离线测试、设计/执行计划及目录索引，并将`/Game/Development/LightingLab`加入`Game/Config/DefaultGame.ini`的NeverCook与`Build/Game/ServerPresentationExclusions.json`的AllServers排除。`Game/Content/Development/LightingLab/README.md`只保留目录所有权说明。真实`.umap`副本、UE参数回读、PIE截图、GPU数据和人工签收必须由家中开发PC的UE5.8编辑器与Monolith MCP执行后再登记；本次云端提交不得宣称这些原生验收已完成。
