@@ -67,9 +67,9 @@ def main():
     assert "get_editor_property(\"intensity\")" in author_source
     assert "get_editor_property(\"fog_density\")" in author_source
     assert "project_ini_modified" in pie_source
-    assert "inherit_saved_map_weather_no_runtime_weather_preset_applied" in pie_source
+    assert "existing_clear_weather_preset_applied" in pie_source
     assert "apply_weather_preset_on_authority" not in pie_source
-    assert "pie.setup(" not in pie_source
+    assert "pie.setup(run, quality, view)" in pie_source
     assert "execute_console_command" in pie_source
     assert "get_console_variable_int_value" in pie_source
     assert "pie.CAMERA = camera" not in pie_source
