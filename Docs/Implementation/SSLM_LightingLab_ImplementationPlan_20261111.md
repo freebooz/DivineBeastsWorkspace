@@ -4,7 +4,7 @@
 
 **Goal:** 在UE5.8项目中建立不触碰正式地图的SSLM独立艺术光照实验室，支持六种光照候选、阴影/GI/画质对照和真实证据采集。
 
-**Architecture:** 以JSON作为编辑器作者输入，新增UE Python作者入口和PIE审核入口；复用现有Village晨间光雾作者及PIE助手的地图哈希、几何保护、固定相机、地表绑定和天气应用能力。所有原生地图副本只由UE5.8 Editor SaveAs生成，云端不伪造二进制资产。
+**Architecture:** 以JSON作为编辑器作者输入，新增UE Python作者入口和PIE审核入口；复用现有Village晨间光雾作者及PIE助手的地图哈希、几何保护、固定相机和地表绑定能力，PIE继承副本保存的天气快照，不重新应用天气预设。所有原生地图副本只由UE5.8 Editor SaveAs生成，云端不伪造二进制资产。
 
 **Tech Stack:** Unreal Engine 5.8 Editor Python、Monolith MCP、Python 3标准库、JSON、GitHub。
 
@@ -78,7 +78,7 @@
 - 质量档：High、Medium、Low；视角：Entry、PeachWoodland、LakeShore、LakesideHut、LowWoodland。
 
 - [ ] **Step 1: 编写PIE合同静态测试**，确保只接受实验地图白名单、只运行时设置CVar、不写INI。
-- [ ] **Step 2: 实现PIE初始化复用**，使用既有Clear天气定义和固定相机，不创建第二套天气/地表绑定链。
+- [ ] **Step 2: 实现PIE初始化复用**，复用既有PIE地图白名单、固定相机和地表绑定；不重新应用Clear天气，统一继承副本保存的天气快照，避免天气投影覆盖候选灯光。
 - [ ] **Step 3: 实现GI模式设置及读回**。硬件光追未启用时标记Unsupported；命令未生效时标记ReadbackMismatch；不将未支持能力当作失败的光照候选。
 - [ ] **Step 4: 记录质量、GI模式、CVar前后值、地图、相机、天气、引擎版本和时间戳**。
 - [ ] **Step 5: 执行离线合同测试**；真实PIE截图、GPU Profiler和性能采样在开发PC执行。
