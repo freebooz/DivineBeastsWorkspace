@@ -1,6 +1,7 @@
 # 变更记录
 
 ## 2026-11-11｜SSLM Lighting Lab独立艺术光照实验室云端代码
+- 将`/Game/Development/LightingLab`加入`Game/Config/DefaultGame.ini`的NeverCook及`Build/Game/ServerPresentationExclusions.json`的AllServers排除；新增内容目录README作为路径标记，不创建或伪造UE二进制资产。
 
 - 按用户批准的方案A，在独立功能分支建立SSLM Lighting Lab设计规格、实施计划、六套光照候选与五档Source Angle配置、UE5.8隔离关卡作者、PIE质量/GI对照入口和离线合同测试。
 - 作者复用既有新手村晨间环境审核工具的正式地图哈希、几何保护、SaveAs和保存回读机制；实验地图只允许位于`/Game/Development/LightingLab`，正式地图、后处理曝光/色彩、项目INI及运行时天气合同保持不变。
