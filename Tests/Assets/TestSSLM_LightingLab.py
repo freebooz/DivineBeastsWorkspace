@@ -53,6 +53,8 @@ def main():
     for required in ("author.check_formal()", "author.geometry_equal", "author.save_review", "author.load_formal_and_copy"):
         assert required in author_source, required
     assert "post_process_unchanged" in author_source
+    assert "get_editor_property(\"intensity\")" in author_source
+    assert "get_editor_property(\"fog_density\")" in author_source
     assert "project_ini_modified" in pie_source
     assert "inherit_saved_map_weather_no_runtime_weather_preset_applied" in pie_source
     assert "apply_weather_preset_on_authority" not in pie_source
