@@ -78,7 +78,7 @@
 - 质量档：High、Medium、Low；视角：Entry、PeachWoodland、LakeShore、LakesideHut、LowWoodland。
 
 - [ ] **Step 1: 编写PIE合同静态测试**，确保只接受实验地图白名单、只运行时设置CVar、不写INI。
-- [ ] **Step 2: 实现PIE初始化复用**，复用既有PIE地图白名单、固定相机和地表绑定；不重新应用Clear天气，统一继承副本保存的天气快照，避免天气投影覆盖候选灯光。
+- [ ] **Step 2: 实现PIE初始化复用**，复用既有PIE地图白名单、固定相机和地表绑定，并显式应用既有Clear天气定义作为中性天气/风场基线；PIE后读取灯光与雾效回值，确认天气投影没有破坏候选对照。
 - [ ] **Step 3: 实现GI模式设置及读回**。硬件光追未启用时标记Unsupported；命令未生效时标记ReadbackMismatch；不将未支持能力当作失败的光照候选。
 - [ ] **Step 4: 记录质量、GI模式、CVar前后值、地图、相机、天气、引擎版本和时间戳**。
 - [ ] **Step 5: 执行离线合同测试**；真实PIE截图、GPU Profiler和性能采样在开发PC执行。
