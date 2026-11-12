@@ -355,16 +355,19 @@
         "L1光照基线",
         "L2湿岩/岸线材质",
         "L3湖盆岸线",
-        "UE WaterBody资产"
+        "UE WaterBody资产",
+        "用户确认的清澈翡翠青绿静水视觉基准",
+        "现有GamePlatformWater/GamePlatformSurface资产合同"
       ],
       "deliverables": [
-        "深浅水截图",
-        "岸线湿润/泡沫截图",
+        "湖泊全景/近岸浅水/中浅水/深水/水下/Gameplay Camera六类截图",
+        "浅水可见底与水下岩层结构证据",
+        "深水吸收渐变与柔和环境反射对照",
+        "岸线湿润/泡沫/水生植物截图",
         "反射透明性能报告",
-        "水下可读性测试",
-        "游泳交互审核"
+        "游泳潜水与水下可读性测试"
       ],
-      "acceptance_gate": "水陆过渡自然、无关键透明排序问题、玩法和GPU成本通过",
+      "acceptance_gate": "浅水可见真实底部结构、深水自然加深但不发黑、反射不遮挡水下、静水波动低幅缓慢、岸线过渡自然；WaterBody/游泳潜水合同完整，目标设备GPU成本和人工视觉验收通过",
       "required_context": [
         "ue_version",
         "map_or_asset_path",
@@ -380,6 +383,32 @@
         "evidence_paths",
         "reviewer",
         "review_date"
+      ],
+      "implementation_spec": "Docs/Implementation/Water/SSLM_ClearEmeraldLake_ArtDirection_20261112.md",
+      "reference_provenance": {
+        "type": "user_supplied_reference_image",
+        "date": "2026-11-12",
+        "source_sha256": "d3ae75216c8d903746a35e2af6f5191da274db74c0bf963fb447fbb03034fe64",
+        "dimensions": "1280x731",
+        "repository_binary": "not_included_in_this_docs_only_change"
+      },
+      "visual_baseline": [
+        "shallow_water_transparent_with_visible_real_bottom",
+        "underwater_rock_layers_remain_readable_in_shallow_and_mid_shallow_depth",
+        "emerald_cyan_green_depth_gradient",
+        "deep_water_darkens_gradually_without_black_crush",
+        "soft_environment_reflections_do_not_hide_underwater_content",
+        "low_amplitude_low_frequency_slow_surface_ripples",
+        "layered_shallow_shore_shelves_wet_rocks_gravel_and_sparse_aquatic_plants",
+        "static_lake_baseline_does_not_define_river_or_waterfall_dynamics"
+      ],
+      "preflight_constraints": [
+        "reuse_existing_water_system_gameplatformwater_and_gameplatformsurface_ownership",
+        "preserve_existing_water_material_parent_and_waterbody_swim_dive_underwater_contracts",
+        "do_not_create_parallel_water_plugin_runtime_or_duplicate_master_material",
+        "no_final_numeric_water_material_parameters_without_fixed_exposure_ue58_calibration_and_art_review",
+        "do_not_modify_formal_village_water_assets_before_isolated_l5_acceptance_and_explicit_integration_approval",
+        "no_native_asset_claim_without_ue58_editor_save_compile_cold_reload_and_target_device_evidence"
       ]
     },
     {

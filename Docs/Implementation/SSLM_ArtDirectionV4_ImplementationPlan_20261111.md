@@ -9,6 +9,7 @@
 ## 全局约束
 - 现行唯一艺术规范：Docs/Art/SSLM全局美术艺术指导与视觉质量规范_V4.0.md。
 - L1—L8具体输入、输出、门禁和里程碑见Execution Roadmap。
+- L5静水专项合同：Docs/Implementation/Water/SSLM_ClearEmeraldLake_ArtDirection_20261112.md；用户参考图SHA-256与视觉验收条件登记在该专项及V4.0主规范中。
 - 不修改正式地图、材质、植被、水体、灯光、后处理或运行时天气资产，除非阶段证据通过并另行批准集成。
 - 不创建或伪造.umap/.uasset；原生资产只能由UE5.8 Editor/Monolith生成。
 - Nanite Foliage、GPU PCG、Lumen Hardware、Volumetric Fog等按目标设备实测，Beta/Experimental不得默认成为正式路径。
@@ -25,6 +26,7 @@
 - [ ] L2详细合同见Docs/Implementation/SSLM_L2_PainterlyPBR_MaterialLookDev_20261111.md；优先复用现有Surface材质资产、函数和作者工具，不建立平行材质插件/母版。
 - [ ] L1未完成原生验证和人工批准前，L2只进行纹理来源/通道审计和候选LookDev准备，不批准正式材质。
 - [ ] L3详细合同见Docs/Implementation/SSLM_L3_TerrainCliffLandscape_20261111.md；复用既有Gaea/十层PBR/Nanite/RVT流程，不修改正式Village地图或共享材质。
+- [ ] L5按清澈翡翠静水基准验证浅水可见底、深水渐变、柔和反射、低幅波动和近岸融合；复用既有Water/Surface所有权，不创建平行水体实现。
 - [ ] 家中PC首先完成L1：preflight、create_lab、冷重载、PIE、固定机位、Profiler和人工审核。
 - [ ] L2—L8可并行整理候选资产清单和设计卡，但不得把未通过的L1候选写成正式基线。
 - [ ] 每阶段原生创建、保存、冷重载和证据回读通过后，更新ReviewMatrix状态。
