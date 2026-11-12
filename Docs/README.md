@@ -11,6 +11,7 @@
 
 - [SSLM统一艺术光照实验室（Lighting Lab）设计规格](Implementation/SSLM_LightingLab_Design_20261111.md) 与 [实施计划](Implementation/SSLM_LightingLab_ImplementationPlan_20261111.md)：独立开发关卡、六套柔和艺术光照候选、阴影角扫描、三档质量/GI对照及UE5.8真实验收边界；云端代码不冒充原生地图资产，开发目录已登记NeverCook及三服务器排除，预检复用已有Monolith Nanite槽位映射证据。
 - [SSLM全局美术艺术指导与视觉质量规范 V4.0](Art/SSLM全局美术艺术指导与视觉质量规范_V4.0.md)：当前全局美术唯一权威规范，继承V3.0色彩基线，新增八大艺术体系、五项高级技术、区域艺术指导卡、UE5.8实现边界、Lighting Lab L1—L8映射及六维视觉验收/否决条件。
+- [SSLM教程配图与技术示意图规范 V1.0](Art/SSLM_Tutorial_Illustration_Policy_V1.0.md)：所有神兽联盟教程优先使用ChatGPT Image原创配图；真实软件界面、节点连线和参数须以实际版本核验，外部图片必须标注来源。
 - [清澈翡翠湖泊与静水深潭艺术指导专项](Implementation/Water/SSLM_ClearEmeraldLake_ArtDirection_20261112.md)：V4.0下属L5水体专项，登记用户确认的静水视觉基准、参考来源哈希、UE5.8实现边界和六类固定验收视角；不代表原生水体资产已完成。
 - [V4.0设计规格](Implementation/SSLM_ArtDirectionV4_Design_20261111.md) 与 [V4.0实施计划](Implementation/SSLM_ArtDirectionV4_ImplementationPlan_20261111.md)：版本治理、Lighting Lab扩展任务和后续原生资产验收顺序。
 - [SSLM Lighting Lab L1—L8全量实施路线与验收任务书](Implementation/SSLM_LightingLab_L1-L8_ExecutionRoadmap_20261111.md)：按光照、材质、地形、植被、水体、战斗可读性、天气时间、平台回归顺序定义输入、交付证据和放行门禁。
