@@ -249,6 +249,14 @@ FDivineBeastsUIViewState UDivineBeastsApplicationUIAdapter::BuildViewState(
         ? NSLOCTEXT("DivineBeastsUI","RequestingWorld","正在申请世界实例，请稍候")
         : FText::FromString(FlowState.LoadingSummary);
     Result.Loading.Progress = bWorldLoading ? FlowState.LoadingProgress01 : -1.0f;
+    if (bWorldLoading && FlowState.LoadingObservationId.IsValid() &&
+        !FlowState.WorldEntryPresentation.Stage.IsEmpty())
+    {
+        Result.Loading.Stage = FlowState.WorldEntryPresentation.Stage;
+        Result.Loading.Presentation.bShowWorld = true;
+        Result.Loading.Presentation.CountdownDeadlineServerTime =
+            FlowState.WorldEntryPresentation.CountdownDeadlineServerTime;
+    }
 
     Result.World.ExperienceId = FlowState.Assignment.ExperienceId;
     Result.World.WorldId = FlowState.Assignment.WorldId;

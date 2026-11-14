@@ -157,6 +157,20 @@ bool FDivineBeastsLoadingTravelViewModelReplacementTest::RunTest(const FString&)
     TestEqual(TEXT("失活后不能被后台变化覆盖"), Progress->GetPercent(), 0.65f);
     Screen->ActivateWidget();
     TestEqual(TEXT("重新显示读取最新完整快照"), Progress->GetPercent(), 0.9f);
+    FGamePlatformUILoadingPresentation Preparation;
+    Preparation.bShowWorld = true;
+    Preparation.CountdownDeadlineServerTime = 15.0;
+    TestTrue(TEXT("已准入的准备阶段与加载进度一起发布"),
+        Service->UpdatePresentationToken(Token, UpdatedStage, 0.9f, Preparation));
+    TestTrue(TEXT("相同文本和进度下仍刷新可见场景"), Incoming->GetLoadingSnapshot().Presentation.bShowWorld);
+    TestEqual(TEXT("保留服务端倒计时终点"), Incoming->GetLoadingSnapshot().Presentation.CountdownDeadlineServerTime, 15.0);
+    const auto OtherToken = Service->AcquireToken(UpdatedStage, 0.9f);
+    TestFalse(TEXT("另一加载事务仍在运行时保持遮罩"), Incoming->GetLoadingSnapshot().Presentation.bShowWorld);
+    TestEqual(TEXT("另一事务遮罩期间停止旧倒计时"), Incoming->GetLoadingSnapshot().Presentation.CountdownDeadlineServerTime, 0.0);
+    Service->ReleaseToken(OtherToken);
+    TestTrue(TEXT("只剩已准入的准备事务时恢复场景"), Incoming->GetLoadingSnapshot().Presentation.bShowWorld);
+    Service->UpdateToken(Token, UpdatedStage, 0.9f);
+    TestFalse(TEXT("普通加载更新清除已过期的准备状态"), Incoming->GetLoadingSnapshot().Presentation.bShowWorld);
     return true;
 }
 

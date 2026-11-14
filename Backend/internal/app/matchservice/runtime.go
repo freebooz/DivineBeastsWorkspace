@@ -117,6 +117,19 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 		value, e = r.operations.SaveOperation(ctx, value, r.now(), 20*time.Second)
 		return e
 	}
+	// 从本轮队列快照开始，只发布已持久化的阶段变化。提交失败时，下轮重新对照队列阶段。
+	projectedPhase := candidate.Phase
+	project := func() error {
+		phase := map[string]string{"allocating": matchmaking.PhaseAllocating, "signing": matchmaking.PhaseAllocating, "committed": matchmaking.PhaseTransferReady, "inMatch": matchmaking.PhaseInMatch, "returning": matchmaking.PhaseReturning, "completed": matchmaking.PhaseCompleted, "cancelled": matchmaking.PhaseFailed}[value.Stage]
+		if phase == "" || phase == projectedPhase {
+			return nil
+		}
+		if err := r.queue.CommitCandidatePhase(ctx, value.ID, phase, value.FaultCode, value.DeadlineUTC); err != nil {
+			return err
+		}
+		projectedPhase = phase
+		return nil
+	}
 	if (value.Stage == "allocating" || value.Stage == "signing") && !r.now().Before(value.DeadlineUTC) {
 		value.Stage = "rollingBack"
 		value.FaultCode = "MATCH_ALLOCATION_TIMEOUT"
@@ -187,7 +200,7 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 			return err
 		}
 	}
-	if err = r.project(ctx, value); err != nil {
+	if err = project(); err != nil {
 		return err
 	}
 	if value.Stage == "committed" || value.Stage == "inMatch" || value.Stage == "returning" {
@@ -222,7 +235,7 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 			}
 		}
 		if value.Stage == "returning" && (!status.ServerAlive || (status.CurrentPlayers == 0 && !status.HeartbeatAtUTC.Before(status.Record.UpdatedAtUTC))) {
-			if err = r.project(ctx, value); err != nil {
+			if err = project(); err != nil {
 				return err
 			}
 			if err = r.control.FinalizeArena(ctx, value.MatchID); err != nil {
@@ -276,16 +289,7 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 			return err
 		}
 	}
-	return r.project(ctx, value)
-}
-
-// project在PG提交后发布无秘密阶段；崩溃后可重复，队列事务的严格前进检查拒绝迟到倒退。
-func (r *Runtime) project(ctx context.Context, value Operation) error {
-	phase := map[string]string{"allocating": matchmaking.PhaseAllocating, "signing": matchmaking.PhaseAllocating, "committed": matchmaking.PhaseTransferReady, "inMatch": matchmaking.PhaseInMatch, "returning": matchmaking.PhaseReturning, "completed": matchmaking.PhaseCompleted, "cancelled": matchmaking.PhaseFailed}[value.Stage]
-	if phase == "" {
-		return nil
-	}
-	return r.queue.CommitCandidatePhase(ctx, value.ID, phase, value.FaultCode, value.DeadlineUTC)
+	return project()
 }
 
 func minDeadline(a, b time.Time) time.Time {

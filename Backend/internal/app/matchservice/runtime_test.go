@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -26,6 +27,29 @@ type interruptedControl struct {
 	failPlayer string
 	lost       bool
 	lostReturn bool
+}
+
+type candidateProjectionProbe struct {
+	matchservice.CandidateStore
+	failedPhase  string
+	lostAckPhase string
+	phases       []string
+}
+
+func (p *candidateProjectionProbe) CommitCandidatePhase(ctx context.Context, id, phase, reason string, deadline time.Time) error {
+	p.phases = append(p.phases, phase)
+	if phase == p.failedPhase {
+		p.failedPhase = ""
+		return errors.New("测试注入：持久步骤后的候选投影未提交")
+	}
+	if err := p.CandidateStore.CommitCandidatePhase(ctx, id, phase, reason, deadline); err != nil {
+		return err
+	}
+	if phase == p.lostAckPhase {
+		p.lostAckPhase = ""
+		return errors.New("测试注入：候选投影已提交后的未知响应")
+	}
+	return nil
 }
 
 func (c *interruptedControl) IssueTransferContext(ctx context.Context, input gameservercontrol.IssueTransferInput) (servertransfer.Ticket, error) {
@@ -165,16 +189,45 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 				t.Fatal("部分签票不允许任何玩家取票")
 			}
 			// 构造新运行器实例，证明无需进程内缓存即可恢复；每次真实控制分配仍使用同一MatchID。
-			runtime, err = matchservice.NewRuntime(operations, queue, fault, matchservice.RuntimeConfig{MapID: settings.MapID, ContentRevision: settings.ContentRevision, RuleRevision: 1, HeroCatalogRevision: 1}, nextID)
-			if err != nil {
-				t.Fatal(err)
+			projection := &candidateProjectionProbe{CandidateStore: queue, failedPhase: matchmaking.PhaseTransferReady}
+			newWorker := func() *matchservice.Runtime {
+				t.Helper()
+				worker, err := matchservice.NewRuntime(operations, projection, fault, matchservice.RuntimeConfig{MapID: settings.MapID, ContentRevision: settings.ContentRevision, RuleRevision: 1, HeroCatalogRevision: 1}, nextID)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return worker
 			}
-			if err = runtime.ProcessCandidate(ctx, candidate); err != nil {
-				t.Fatal(err)
+			runtime = newWorker()
+			if err = runtime.ProcessCandidate(ctx, candidate); err == nil {
+				t.Fatal("测试必须遇到已持久步骤但投影未提交")
 			}
 			op, _, _ := operations.GetOperation(ctx, candidate.ID)
 			if op.Stage != "committed" || len(op.Tickets) != len(actors) {
 				t.Fatal("必须全员提交后发布")
+			}
+			candidate, _, _, err = queue.ReadCandidateContext(ctx, candidate.ID)
+			if err != nil || candidate.Phase != matchmaking.PhaseAllocating {
+				t.Fatalf("失败的投影不能发布阶段: %s %v", candidate.Phase, err)
+			}
+			projection.phases = nil
+			runtime = newWorker()
+			if err = runtime.ProcessCandidate(ctx, candidate); err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(projection.phases, []string{matchmaking.PhaseTransferReady}) {
+				t.Errorf("持久阶段追平只需一次投影，实际 %v", projection.phases)
+			}
+			observed, _, _, err := queue.ReadCandidateContext(ctx, candidate.ID)
+			if err != nil || observed.Phase != matchmaking.PhaseTransferReady {
+				t.Fatalf("下一轮必须看见已持久投影: %s %v", observed.Phase, err)
+			}
+			projection.phases = nil
+			if err = runtime.ProcessCandidate(ctx, observed); err != nil {
+				t.Fatal(err)
+			}
+			if len(projection.phases) != 0 {
+				t.Errorf("已观察到的未变阶段不应重发，实际 %v", projection.phases)
 			}
 			assignment, found := control.GetAssignment("arena")
 			if !found {
@@ -227,12 +280,18 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 				t.Fatal("新票也必须只能消费一次")
 			}
 			// 新会话在committed汇合前消费恢复票，不能因仍比较旧会话而永远停在入场阶段。
-			if err = runtime.ProcessCandidate(ctx, candidate); err != nil {
-				t.Fatal(err)
+			projection.lostAckPhase = matchmaking.PhaseInMatch
+			if err = runtime.ProcessCandidate(ctx, observed); err == nil {
+				t.Fatal("测试必须遇到局内投影已提交但响应未知")
 			}
-			state, _ = queue.ReadMatchmakingState(ctx, actors[0].PlayerID)
-			if state.State != matchmaking.PhaseInMatch {
-				t.Fatal("全部真实准入后才进入局内", state.State)
+			candidate, _, _, err = queue.ReadCandidateContext(ctx, candidate.ID)
+			if err != nil || candidate.Phase != matchmaking.PhaseInMatch {
+				t.Fatalf("全部真实准入后才持久投影局内: %s %v", candidate.Phase, err)
+			}
+			projection.phases = nil
+			runtime = newWorker()
+			if err = runtime.ProcessCandidate(ctx, candidate); err != nil || len(projection.phases) != 0 {
+				t.Fatalf("替换工作器读取已提交的局内投影后不应重发: %v %v", projection.phases, err)
 			}
 			result := match.Result{EndReason: "Elimination", EndRevision: 1, MatchID: op.MatchID, ArenaModeID: mode, GameServerID: "arena", StartedAt: time.Now().Add(-time.Minute), EndedAt: time.Now(), WinningTeamID: "team-a", Teams: []match.TeamResult{{TeamID: "team-a", Won: true}, {TeamID: "team-b"}}}
 			for _, slot := range op.Assignment.Roster {

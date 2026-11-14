@@ -151,7 +151,7 @@ void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSel
         Binding.TransformSource = Root;
         Binding.TransformHandle = Root->TransformUpdated.AddWeakLambda(this,
             [this, Generation, WeakActor](USceneComponent*, EUpdateTransformFlags, ETeleportType)
-            { if (Generation == ObservationGeneration && WeakActor.IsValid()) Publish(WeakActor.Get()); });
+            { if (Generation == ObservationGeneration && WeakActor.IsValid()) Publish(WeakActor.Get(), true); });
     }
     // 已移除远古石灵独立LifeState；狼怪与玩家都从平台GAS属性读客户端复制真值。
     if (auto* ASC = Actor->FindComponentByClass<UGamePlatformAbilitySystemComponent>())
@@ -186,7 +186,7 @@ void UDivineBeastsWorldHealthBarPresenter::ApplyHealth(AActor* Actor, float Heal
     Publish(Actor);
 }
 
-void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor)
+void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor, bool bLocationOnly)
 {
     // Travel销毁Pawn时仍可能同步触发控制器关系通知；旧World开始退出后禁止再创建UMG实例。
     UWorld* World = ObservedWorld.Get();
@@ -195,7 +195,7 @@ void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor)
     if (Controller && Controller->GetPawn() == Actor) { RemoveActor(Actor); return; }
     auto* Binding = Bindings.Find(Actor);
     if (!Binding) return;
-    if (IsPlayerCharacterCandidate(Actor))
+    if (!bLocationOnly && IsPlayerCharacterCandidate(Actor))
     {
         const auto* State = Binding->PlayerState.Get();
         const FString Name = State ? State->GetPlayerName() : FString();
@@ -216,24 +216,42 @@ void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor)
             return;
         }
     }
-    Binding->Request.SelectionTint = ResolveSelectionTint(Actor);
-    FVector Origin, Extent; Actor->GetActorBounds(true, Origin, Extent);
-    Binding->Request.WorldLocation = Origin + FVector(0, 0, Extent.Z + 24.f);
-    if (const auto* Character = Cast<ACharacter>(Actor))
+    const auto* Character = Cast<ACharacter>(Actor);
+    const auto* Capsule = Character ? Character->GetCapsuleComponent() : nullptr;
+    if (IsValid(Capsule) && Capsule->IsRegistered())
     {
         // 导入外观的碰撞Bounds可能把名称板抬到远处目标血条上；胶囊是稳定锚点。
         // 无血条NPC只显示选中提示，放低半个胶囊高度，避开其后方怪物的血条。
-        if (const auto* Capsule = Character->GetCapsuleComponent())
-            Binding->Request.WorldLocation = Capsule->GetComponentLocation() +
-                FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight() *
-                    (Binding->bSelectionOnly ? 0.5f : 1.0f) + 24.f);
+        Binding->Request.WorldLocation = Capsule->GetComponentLocation() +
+            FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight() *
+                (Binding->bSelectionOnly ? 0.5f : 1.0f) + 24.f);
     }
-    Binding->Request.bDisplayRequested = (bVisible && Binding->Request.Resource.MaximumValue > 0.f) || Binding->Request.bSelected;
+    else
+    {
+        FVector Origin, Extent;
+        Actor->GetActorBounds(true, Origin, Extent);
+        Binding->Request.WorldLocation = Origin + FVector(0, 0, Extent.Z + 24.f);
+    }
+    if (!bLocationOnly)
+    {
+        Binding->Request.SelectionTint = ResolveSelectionTint(Actor);
+        Binding->Request.bDisplayRequested = (bVisible && Binding->Request.Resource.MaximumValue > 0.f) || Binding->Request.bSelected;
+    }
+
+    const FGuid RequestId = Binding->Request.RequestId;
+    const uint64 Generation = ObservationGeneration;
     if (SelectedTarget.Get() == Actor) RefreshSelectionRing();
-    auto* UI = Service.Get(); if (!UI) return;
+    auto* UI = Service.Get();
+    Binding = Bindings.Find(Actor);
+    if (!UI || Generation != ObservationGeneration || !Binding || Binding->Request.RequestId != RequestId) return;
+    if (bLocationOnly)
+    {
+        if (!UI->UpdateWorldUILocation(RequestId, Binding->Request.WorldLocation)) Publish(Actor);
+        return;
+    }
     // 重建来源在Travel之后由新代次负责；注册失败时保留缓存，后续真实事件可重试。
     const auto Request = Binding->Request;
-    if (!UI->UpdateWorldUI(Request.RequestId, Request)) UI->RegisterWorldUI(Request, WidgetClass);
+    if (!UI->UpdateWorldUI(RequestId, Request)) UI->RegisterWorldUI(Request, WidgetClass);
 }
 
 void UDivineBeastsWorldHealthBarPresenter::RefreshProjection()

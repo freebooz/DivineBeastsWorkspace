@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Engine/TimerHandle.h"
 #include "Screens/DivineBeastsLoadingScreen.h"
 #include "DivineBeastsLoadingTravelScreen.generated.h"
 
 class UDivineBeastsLoadingViewModel;
+class AGameStateBase;
 class UTextBlock;
 class UProgressBar;
 
@@ -37,6 +39,8 @@ protected:
     virtual void RefreshInitialState() override;
     /** 平台唯一订阅完成页面代次过滤后通知；Revision为状态序号，PageGeneration为当前VM页面代次。 */
     virtual void OnViewModelStateChanged(int32 Revision, int32 PageGeneration) override;
+    virtual void NativeOnDeactivated() override;
+    virtual void NativeDestruct() override;
 
 private:
     /** 仅激活页且当前VM仍拥有PageGeneration时展示真实阶段文本；过期/失活直接忽略。
@@ -45,6 +49,18 @@ private:
      */
     UFUNCTION()
     void RefreshLoadingPresentation(int32 Revision, int32 PageGeneration);
+    void SetWorldBackdrop(bool bShowWorld);
+    void UpdateCountdownText();
+    void StopCountdown();
+
+    TOptional<float> InitialSceneOpacity;
+    TOptional<float> InitialShadeOpacity;
+    TWeakObjectPtr<UWorld> CountdownWorld;
+    TWeakObjectPtr<AGameStateBase> CountdownClock;
+    FTimerHandle CountdownTimer;
+    double CountdownDeadlineServerTime = 0.0;
+    FText CountdownStage;
+
     UPROPERTY(meta=(BindWidget))
     TObjectPtr<UTextBlock> StageText = nullptr;
     /** 平台真实进度的显示投影；未知值仅使用Slate自身流动动画，不建立业务Ticker。 */

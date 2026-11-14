@@ -48,6 +48,15 @@ protected:
     void BP_OnWorldUIRecycled();
 
 private:
+    friend class UGamePlatformWorldUIService;
+    void UpdateWorldUILocation(const FVector& WorldLocation) { WorldUIRequest.WorldLocation = WorldLocation; }
+
     UPROPERTY(Transient)
     FGamePlatformWorldUIRequest WorldUIRequest;
+
+    /** 新Slate实例及会改变尺寸的内容需要即时预排版，普通投影使用现有DesiredSize。 */
+    TWeakPtr<SWidget> MeasuredSlate;
+    bool bNeedsImmediateLayout = true;
+    /** 可见性或Slate布局回调同步重入时，旧投影不能修改回收后复用的控件。 */
+    uint64 ProjectionRevision = 0;
 };

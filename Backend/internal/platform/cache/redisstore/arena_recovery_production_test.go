@@ -12,6 +12,7 @@ import (
 	"divinebeasts/backend/internal/modules/match"
 	"divinebeasts/backend/internal/modules/party"
 	"divinebeasts/backend/internal/modules/servertransfer"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -104,9 +105,16 @@ func TestRedisArenaRecovery(t *testing.T) {
 		}
 	}
 	returnInput := gameservercontrol.AllocateWorldTransferInput{World: gameservercontrol.AllocateWorldInput{ExperienceID: contracts.ExperienceVillageTutorial, WorldID: nonce + "-world", RegionID: "test", PlayerSlots: 1}, Transfer: gameservercontrol.IssueTransferInput{TicketID: nonce + "-return", GameID: "divine-beasts", PlayerID: issue.PlayerID, SessionID: issue.SessionID, TTL: time.Minute}}
-	returned, err := svc.AllocateWorldTransfer(ctx, returnInput)
-	if err != nil {
+	if _, err := svc.AllocateWorldTransfer(ctx, returnInput); !errors.Is(err, gameservercontrol.ErrWorldMatchMigrationRequired) {
+		t.Fatalf("活跃竞技场必须拒绝普通世界分配: %v", err)
+	}
+	if err := svc.CancelArena(ctx, nonce); err != nil {
 		t.Fatal(err)
+	}
+	returnInput.Transfer.SourceGameServerID = nonce
+	returned, err := svc.AllocateWorldTransfer(ctx, returnInput)
+	if err != nil || returned.Ticket.SourceMatchID != nonce {
+		t.Fatalf("故障取消后必须取得绑定来源比赛的返程票: %v", err)
 	}
 	for _, v := range villages {
 		if err := recovered.Register(v); err != nil {

@@ -9,6 +9,7 @@ class IDivineBeastsApplicationFlowExtension;
 class IGamePlatformArenaMatchmakingAdapter;
 class FDivineBeastsArenaOnlineMatchmakingAdapter;
 class UDivineBeastsApplicationFlowSubsystem;
+struct FDivineBeastsWorldEntryPresentation;
 
 /** 本人认证代次下的约战只读快照；无准入秘密，不授予客户端名单或比赛权威。 */
 struct DIVINEBEASTSARENACLIENT_API FDivineBeastsArenaChallengeView
@@ -74,7 +75,8 @@ public:
     FSimpleMulticastDelegate OnMatchmakingStateChanged;
     /** 真实世界/Controller/Pawn复制事件触发；页面不拥有这些订阅，也不查询业务Tick。 */
     void RefreshArenaReadiness();
-    bool TryObserveArenaReadiness(UWorld& World,bool& bBound,bool& bPrepared,bool& bActive)const;
+    bool TryObserveArenaReadiness(UWorld& World, bool& bBound, bool& bPrepared, bool& bActive,
+        FDivineBeastsWorldEntryPresentation& Presentation) const;
 
 private:
     friend class FDivineBeastsArenaApplicationFlowExtension;

@@ -60,7 +60,8 @@ private:
     void ObserveActor(AActor* Actor, bool bSelectionOnly = false);
     void ApplyHealth(AActor* Actor, float Health, float Maximum);
     void ReadPlayerHealth(AActor* Actor);
-    void Publish(AActor* Actor);
+    /** 位置通知只移动已注册控件；首次注册和内容事件继续提交完整快照。 */
+    void Publish(AActor* Actor, bool bLocationOnly = false);
     void RemoveActor(AActor* Actor);
     /** 本地控制器是唯一选择源；先订阅再读一次当前目标，重复同来源不会重复订阅。 */
     void BindSelectionController(UDivineBeastsPlayerControlsComponent* Controller);

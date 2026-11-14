@@ -179,6 +179,21 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsWorldAssignmentPayload
     FString TransferTicket;
 };
 
+/** 目标世界的只读准备提示。截止时间使用该世界的服务器秒钟，0 表示没有倒计时。 */
+USTRUCT(BlueprintType)
+struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsWorldEntryPresentation
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly) FText Stage;
+    UPROPERTY(BlueprintReadOnly) double CountdownDeadlineServerTime = 0.0;
+
+    bool IsEquivalent(const FDivineBeastsWorldEntryPresentation& Other) const
+    {
+        return Stage.EqualTo(Other.Stage) && CountdownDeadlineServerTime == Other.CountdownDeadlineServerTime;
+    }
+};
+
 /** FDivineBeastsFlowViewState（UI只读流程投影）。 */
 USTRUCT(BlueprintType)
 struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsFlowViewState
@@ -205,6 +220,8 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsFlowViewState
     UPROPERTY(BlueprintReadOnly) float LoadingProgress01 = -1.0f;
     /** 本次世界切换的回调身份；异步完成通知必须原样携带，旧操作不能推进新屏障。 */
     UPROPERTY(BlueprintReadOnly) FGuid LoadingObservationId;
+    /** 仅发布本次操作已获准入且匹配实际目标地图的场景提示。 */
+    UPROPERTY(BlueprintReadOnly) FDivineBeastsWorldEntryPresentation WorldEntryPresentation;
     UPROPERTY(BlueprintReadOnly) FString ConnectionSummary;
     UPROPERTY(BlueprintReadOnly) FDivineBeastsWorldAssignmentSummary Assignment;
 };

@@ -48,9 +48,10 @@ public:
         }
     }
 
-    virtual bool TryObserveWorldReadiness(UWorld& World, bool& bBound, bool& bPrepared, bool& bActive) const override
+    virtual bool TryObserveWorldReadiness(UWorld& World, bool& bBound, bool& bPrepared, bool& bActive,
+        FDivineBeastsWorldEntryPresentation& Presentation) const override
     {
-        return Owner.IsValid() && Owner->TryObserveArenaReadiness(World, bBound, bPrepared, bActive);
+        return Owner.IsValid() && Owner->TryObserveArenaReadiness(World, bBound, bPrepared, bActive, Presentation);
     }
 
     virtual FDivineBeastsCancelWorldRecovery TryRequestWorldRecovery(
@@ -78,7 +79,14 @@ void UDivineBeastsArenaClientSubsystem::Initialize(
     Super::Initialize(Collection);
     bDeinitializing=false;
     ReadinessMapHandle=FCoreUObjectDelegates::PostLoadMapWithWorld.AddWeakLambda(this,[this](UWorld* World){if(World&&World->GetGameInstance()==GetGameInstance())RefreshArenaReadiness();});
-    ReadinessCleanupHandle=FWorldDelegates::OnWorldCleanup.AddWeakLambda(this,[this](UWorld* World,bool,bool){if(ReadinessWorld.Get()==World)ClearArenaReadiness();});
+    ReadinessCleanupHandle = FWorldDelegates::OnWorldCleanup.AddWeakLambda(this, [this](UWorld* World, bool, bool)
+    {
+        if (World && ReadinessWorld.Get() == World)
+        {
+            ClearArenaReadiness();
+            if (ApplicationFlow) ApplicationFlow->NotifyWorldEntryWorldRemoved(*World);
+        }
+    });
     Collection.InitializeDependency<UGamePlatformOnlineClientSubsystem>();
     Collection.InitializeDependency<UGamePlatformPartyClientSubsystem>();
     Collection.InitializeDependency<UDivineBeastsApplicationFlowSubsystem>();
@@ -435,9 +443,30 @@ void UDivineBeastsArenaClientSubsystem::RefreshArenaReadiness()
         }
     if(ApplicationFlow)ApplicationFlow->NotifyGameplayWorldFactsChanged();
 }
-bool UDivineBeastsArenaClientSubsystem::TryObserveArenaReadiness(UWorld& World,bool& bBound,bool& bPrepared,bool& bActive)const
+bool UDivineBeastsArenaClientSubsystem::TryObserveArenaReadiness(UWorld& World, bool& bBound, bool& bPrepared,
+    bool& bActive, FDivineBeastsWorldEntryPresentation& Presentation) const
 {
     if(bDeinitializing||ReadinessWorld.Get()!=&World||!ReadinessGameState.IsValid()||!ReadinessController.IsValid()||!ReadinessController->IsLocalController())return false;
+    const AGamePlatformArenaGameState& State = *ReadinessGameState.Get();
+    switch (State.MatchPhase)
+    {
+    case EGamePlatformArenaMatchPhase::HeroSelection:
+    case EGamePlatformArenaMatchPhase::ReadyCheck:
+        Presentation.Stage = NSLOCTEXT("DivineBeastsArena", "WaitingForParticipants", "已进入竞技场，等待参赛者准备");
+        break;
+    case EGamePlatformArenaMatchPhase::Countdown:
+        Presentation.Stage = NSLOCTEXT("DivineBeastsArena", "StartCountdown", "竞技场开战倒计时");
+        if (FMath::IsFinite(State.PhaseDeadlineServerTime) && State.PhaseDeadlineServerTime > 0.0)
+        {
+            Presentation.CountdownDeadlineServerTime = State.PhaseDeadlineServerTime;
+        }
+        break;
+    case EGamePlatformArenaMatchPhase::InProgress:
+        Presentation.Stage = NSLOCTEXT("DivineBeastsArena", "SynchronizingParticipant", "正在同步参赛角色");
+        break;
+    default:
+        break;
+    }
     const auto* Controller=ReadinessController.Get();const APawn* Pawn=Controller->GetPawn();
     const auto* Player=Controller->GetPlayerState<AGamePlatformArenaPlayerState>();
     if(!Player||Player->ConnectionState!=EGamePlatformArenaConnectionState::Connected)return true;

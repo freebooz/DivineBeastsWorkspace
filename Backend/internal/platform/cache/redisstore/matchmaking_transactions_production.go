@@ -18,6 +18,8 @@ import (
 
 const matchmakingStateKey = "matchmaking:atomic-state:v1" // 受同一事务保护的有界队列；不能与旧request索引混用。
 
+const matchmakingReadBatchSize = 256
+
 // ReadMatchmaking返回独立持久值；损坏状态不恢复为空成功，禁止因此重复给玩家报名。
 func (r *PartyRepository) ReadMatchmaking(ctx context.Context) (*matchmaking.QueueState, error) {
 	if err := r.requirePartyIndex(ctx); err != nil {
@@ -96,40 +98,24 @@ func (r *PartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs, playe
 				}
 			}
 			// 先WATCH并解析可信成员索引，再加载双方真实Party；调用方不能猜测目标队伍ID。
-			for player := range players {
-				key := partyMemberPrefix + player
-				if err := connection.Watch(ctx, key).Err(); err != nil {
-					return err
-				}
-				id, err := connection.Get(ctx, key).Result()
-				if err != nil && !errors.Is(err, redis.Nil) {
-					return err
-				}
+			memberParties, err := readWatchedMatchmakingValues(ctx, connection, partyMemberPrefix, players)
+			if err != nil {
+				return err
+			}
+			for _, id := range memberParties {
 				if id != "" {
 					parties[id] = true
 				}
 			}
 			tx := &matchapi.MatchmakingTransaction{Queue: state, Parties: map[string]*party.Party{}, PlayerParties: map[string]string{}}
 			originals := map[string]*party.Party{}
-			ids := []string{}
-			for id := range parties {
-				ids = append(ids, id)
+			partyValues, err := readWatchedMatchmakingValues(ctx, connection, partyKeyPrefix, parties)
+			if err != nil {
+				return err
 			}
-			sort.Strings(ids)
-			for _, id := range ids {
-				key := partyKeyPrefix + id
-				if err := connection.Watch(ctx, key).Err(); err != nil {
-					return err
-				}
-				raw, err := connection.Get(ctx, key).Bytes()
-				if errors.Is(err, redis.Nil) {
-					continue
-				}
-				if err != nil {
-					return err
-				}
+			for id, raw := range partyValues {
 				var p party.Party
-				if err := json.Unmarshal(raw, &p); err != nil {
+				if err := json.Unmarshal([]byte(raw), &p); err != nil {
 					return err
 				}
 				if p.ID != id {
@@ -141,16 +127,12 @@ func (r *PartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs, playe
 					players[player] = true
 				}
 			}
+			memberParties, err = readWatchedMatchmakingValues(ctx, connection, partyMemberPrefix, players)
+			if err != nil {
+				return err
+			}
 			for player := range players {
-				key := partyMemberPrefix + player
-				if err := connection.Watch(ctx, key).Err(); err != nil {
-					return err
-				}
-				id, err := connection.Get(ctx, key).Result()
-				if err != nil && !errors.Is(err, redis.Nil) {
-					return err
-				}
-				tx.PlayerParties[player] = id
+				tx.PlayerParties[player] = memberParties[player]
 			}
 			if err := mutation(tx); err != nil {
 				return err
@@ -197,20 +179,10 @@ func (r *PartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs, playe
 			if !queueChanged && len(changedParties) == 0 {
 				return nil
 			}
-			if queueChanged {
-				for _, q := range []*matchmaking.QueueState{before, state} {
-					for _, challenge := range q.Challenges {
-						for _, actor := range challenge.PlayerIDs() {
-							actors[actor] = true
-						}
-					}
-					for _, entry := range q.Entries {
-						for _, actor := range entry.Ticket.PartyMemberIDs {
-							actors[actor] = true
-						}
-					}
-				}
-			}
+			matchapi.AddMatchmakingObserverChanges(before, state, actors, func(id string) bool {
+				_, changed := changedParties[id]
+				return changed
+			})
 			if err := ctx.Err(); err != nil {
 				return err
 			}
@@ -240,6 +212,51 @@ func (r *PartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs, playe
 		}
 	}
 	return errors.New("MATCH_REVISION_CONFLICT: 匹配事务竞争，请重新同步")
+}
+
+// readWatchedMatchmakingValues在同一事务连接上分批WATCH再读取，保留前序批次的监听直到原子提交。
+func readWatchedMatchmakingValues(ctx context.Context, connection *redis.Tx, prefix string, scope map[string]bool) (map[string]string, error) {
+	ids := make([]string, 0, len(scope))
+	for id := range scope {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	values := make(map[string]string, len(ids))
+	for start := 0; start < len(ids); start += matchmakingReadBatchSize {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		batch := ids[start:min(start+matchmakingReadBatchSize, len(ids))]
+		keys := make([]string, len(batch))
+		for index, id := range batch {
+			keys[index] = prefix + id
+		}
+		if err := connection.Watch(ctx, keys...).Err(); err != nil {
+			return nil, err
+		}
+		reads := make([]*redis.StringCmd, len(keys))
+		// 普通管线保留WATCH，逐个GET保留WRONGTYPE等错误，缺失值单独处理。
+		_, err := connection.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+			for index, key := range keys {
+				reads[index] = pipe.Get(ctx, key)
+			}
+			return nil
+		})
+		if err != nil && !errors.Is(err, redis.Nil) {
+			return nil, err
+		}
+		for index, read := range reads {
+			value, err := read.Result()
+			if errors.Is(err, redis.Nil) {
+				continue
+			}
+			if err != nil {
+				return nil, err
+			}
+			values[batch[index]] = value
+		}
+	}
+	return values, nil
 }
 
 var _ matchapi.AtomicMatchmakingRepository = (*PartyRepository)(nil)

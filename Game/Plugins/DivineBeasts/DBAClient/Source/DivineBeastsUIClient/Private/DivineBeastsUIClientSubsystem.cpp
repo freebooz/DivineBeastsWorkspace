@@ -906,16 +906,18 @@ void UDivineBeastsUIClientSubsystem::SyncLoadingService()
     {
         if (!LoadingToken.IsValid())
         {
-            LoadingToken = LoadingService->AcquireToken(
+            LoadingToken = LoadingService->AcquirePresentationToken(
                 ViewState.Loading.Stage,
-                ViewState.Loading.Progress);
+                ViewState.Loading.Progress,
+                ViewState.Loading.Presentation);
         }
         else
         {
-            LoadingService->UpdateToken(
+            LoadingService->UpdatePresentationToken(
                 LoadingToken,
                 ViewState.Loading.Stage,
-                ViewState.Loading.Progress);
+                ViewState.Loading.Progress,
+                ViewState.Loading.Presentation);
         }
     }
     else if (LoadingToken.IsValid())

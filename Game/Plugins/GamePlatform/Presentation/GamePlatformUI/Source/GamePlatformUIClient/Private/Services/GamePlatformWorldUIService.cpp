@@ -44,23 +44,24 @@ void UGamePlatformWorldUIService::SetRootLayout(
     RootLayout = InRootLayout;
     // Construct可能在服务获知新Root前将实例挂到旧层。只迁移入口时已有身份；
     // 强引用保留Widget，外部解绑/换Root后的旧栈不能复活已取消的实例。
-    TArray<FGuid> Ids; ActiveWidgets.GetKeys(Ids);
-    for (const FGuid& Id : Ids)
+    TArray<TPair<FGuid, uint64>> Registrations;
+    Registrations.Reserve(ActiveWidgets.Num());
+    for (const auto& Pair : ActiveWidgets) Registrations.Emplace(Pair.Key, Pair.Value.Registration);
+    for (const auto& Pair : Registrations)
     {
         if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
-        const auto* Weak = ActiveWidgets.Find(Id);
-        TStrongObjectPtr<UGamePlatformWorldWidgetBase> Widget(Weak ? Weak->Get() : nullptr);
-        if (!Widget.IsValid()) { ActiveWidgets.Remove(Id); continue; }
+        const auto* Active = FindRegistration(Pair.Key, Pair.Value);
+        if (!Active) continue;
+        TStrongObjectPtr<UGamePlatformWorldWidgetBase> Widget(Active->Widget.Get());
+        if (!Widget.IsValid()) { ActiveWidgets.Remove(Pair.Key); continue; }
         Widget->RemoveFromParent();
         if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
-        Weak = ActiveWidgets.Find(Id);
-        if (!Weak || Weak->Get() != Widget.Get()) continue;
+        if (!FindRegistration(Pair.Key, Pair.Value)) continue;
         const bool bAttached = NewRoot.IsValid() && NewRoot->AddWorldProjectionWidget(Widget.Get());
         // AddChild也可能同步触发用户回调；先核对代次和身份，再操作当前槽或回收失败实例。
         if (Generation != RootLayoutGeneration || RootLayout != NewRoot.Get()) return;
-        Weak = ActiveWidgets.Find(Id);
-        if (!Weak || Weak->Get() != Widget.Get()) continue;
-        if (!bAttached) { ActiveWidgets.Remove(Id); RecycleWidget(Widget.Get()); continue; }
+        if (!FindRegistration(Pair.Key, Pair.Value)) continue;
+        if (!bAttached) { ActiveWidgets.Remove(Pair.Key); RecycleWidget(Widget.Get()); continue; }
         if (auto* Slot = Cast<UOverlaySlot>(Widget->Slot))
         { Slot->SetHorizontalAlignment(HAlign_Left); Slot->SetVerticalAlignment(VAlign_Top); }
     }
@@ -73,7 +74,7 @@ FGuid UGamePlatformWorldUIService::RegisterWorldUI(
     FGamePlatformWorldUIRequest Request,
     TSubclassOf<UGamePlatformWorldWidgetBase> WidgetClass)
 {
-    if (!Request.IsValid() ||
+    if (bClearing || !Request.IsValid() ||
         !WidgetClass ||
         WidgetClass->HasAnyClassFlags(CLASS_Abstract) ||
         !IsValid(RootLayout) ||
@@ -87,64 +88,71 @@ FGuid UGamePlatformWorldUIService::RegisterWorldUI(
         Request.RequestId = FGuid::NewGuid();
     }
 
-    if (ActiveWidgets.Contains(Request.RequestId))
+    const uint64 Generation = RootLayoutGeneration;
+    TStrongObjectPtr<UGamePlatformUILayerStack> Root(RootLayout.Get());
+    const auto CanAttach = [&]()
     {
+        return Generation == RootLayoutGeneration && IsValid(Root.Get()) && RootLayout == Root.Get() &&
+            ActiveWidgets.Num() < MaxActiveWorldWidgets && !ActiveWidgets.Contains(Request.RequestId);
+    };
+    if (!CanAttach()) return FGuid();
+
+    TStrongObjectPtr<UGamePlatformWorldWidgetBase> Widget(AcquireWidget(WidgetClass));
+    if (!Widget.IsValid()) return FGuid();
+
+    if (CanAttach()) Widget->ApplyWorldUIRequest(Request);
+    if (!CanAttach() || !Root->AddWorldProjectionWidget(Widget.Get()) || !CanAttach())
+    {
+        RecycleWidget(Widget.Get(), Generation == RootLayoutGeneration);
         return FGuid();
     }
 
-    UGamePlatformWorldWidgetBase* Widget =
-        AcquireWidget(WidgetClass);
-    if (!IsValid(Widget))
-    {
-        return FGuid();
-    }
-
-    Widget->ApplyWorldUIRequest(Request);
-    if (!RootLayout->AddWorldProjectionWidget(Widget))
-    {
-        RecycleWidget(Widget);
-        return FGuid();
-    }
-
-    ActiveWidgets.Add(Request.RequestId, Widget);
+    const uint64 Registration = ++NextRegistration;
+    ActiveWidgets.Add(Request.RequestId, FActiveWorldWidget{Widget.Get(), Registration});
     if (auto* Slot = Cast<UOverlaySlot>(Widget->Slot))
     { Slot->SetHorizontalAlignment(HAlign_Left); Slot->SetVerticalAlignment(VAlign_Top); }
     BindProjectionEvents();
     RefreshProjection(Request.RequestId);
-    return Request.RequestId;
+    return FindRegistration(Request.RequestId, Registration) ? Request.RequestId : FGuid();
 }
 
 bool UGamePlatformWorldUIService::UpdateWorldUI(
     FGuid RequestId,
     FGamePlatformWorldUIRequest Request)
 {
-    TWeakObjectPtr<UGamePlatformWorldWidgetBase>* WidgetPtr =
-        ActiveWidgets.Find(RequestId);
-    UGamePlatformWorldWidgetBase* Widget =
-        WidgetPtr ? WidgetPtr->Get() : nullptr;
-    if (!IsValid(Widget))
+    const auto* Active = ActiveWidgets.Find(RequestId);
+    TStrongObjectPtr<UGamePlatformWorldWidgetBase> Widget(Active ? Active->Widget.Get() : nullptr);
+    if (!Widget.IsValid())
     {
         return false;
     }
 
+    const uint64 Registration = Active->Registration;
+    const uint64 Generation = RootLayoutGeneration;
     Request.RequestId = RequestId;
     Widget->ApplyWorldUIRequest(Request);
+    if (Generation == RootLayoutGeneration && FindRegistration(RequestId, Registration))
+        RefreshProjection(RequestId);
+    return true;
+}
+
+bool UGamePlatformWorldUIService::UpdateWorldUILocation(FGuid RequestId, const FVector& WorldLocation)
+{
+    const auto* Active = ActiveWidgets.Find(RequestId);
+    auto* Widget = Active ? Active->Widget.Get() : nullptr;
+    if (!IsValid(Widget)) return false;
+
+    Widget->UpdateWorldUILocation(WorldLocation);
     RefreshProjection(RequestId);
     return true;
 }
 
 bool UGamePlatformWorldUIService::UnregisterWorldUI(FGuid RequestId)
 {
-    TWeakObjectPtr<UGamePlatformWorldWidgetBase>* WidgetPtr =
-        ActiveWidgets.Find(RequestId);
-    if (!WidgetPtr)
-    {
-        return false;
-    }
+    FActiveWorldWidget Active;
+    if (!ActiveWidgets.RemoveAndCopyValue(RequestId, Active)) return false;
 
-    UGamePlatformWorldWidgetBase* Widget = WidgetPtr->Get();
-    ActiveWidgets.Remove(RequestId);
-    RecycleWidget(Widget);
+    RecycleWidget(Active.Widget.Get());
     if (ActiveWidgets.IsEmpty())
     {
         UnbindProjectionEvents();
@@ -185,16 +193,14 @@ UGamePlatformWorldWidgetBase* UGamePlatformWorldUIService::AcquireWidget(
 }
 
 void UGamePlatformWorldUIService::RecycleWidget(
-    UGamePlatformWorldWidgetBase* Widget)
+    UGamePlatformWorldWidgetBase* Widget, bool bAllowPooling)
 {
-    if (!IsValid(Widget))
-    {
-        return;
-    }
-
+    TStrongObjectPtr<UGamePlatformWorldWidgetBase> RetainedWidget(Widget);
+    if (!RetainedWidget.IsValid()) return;
+    const uint64 Generation = RootLayoutGeneration;
     Widget->RemoveFromParent();
     Widget->ResetWorldUIState();
-    if (PooledWidgets.Num() < MaxPooledWorldWidgets)
+    if (bAllowPooling && Generation == RootLayoutGeneration && PooledWidgets.Num() < MaxPooledWorldWidgets)
     {
         PooledWidgets.Add(Widget);
     }
@@ -220,6 +226,7 @@ void UGamePlatformWorldUIService::HandleViewportResized(FViewport* Viewport, uin
 
 void UGamePlatformWorldUIService::RefreshProjection(FGuid OnlyRequestId)
 {
+    const uint64 Generation = RootLayoutGeneration;
     APlayerController* PlayerController =
         IsValid(LocalPlayer)
             ? LocalPlayer->GetPlayerController(GetServiceWorld())
@@ -234,77 +241,75 @@ void UGamePlatformWorldUIService::RefreshProjection(FGuid OnlyRequestId)
             ? PlayerController->PlayerCameraManager->GetCameraLocation()
             : FVector::ZeroVector;
 
-    int32 ViewportWidth = 0;
-    int32 ViewportHeight = 0;
-    PlayerController->GetViewportSize(
-        ViewportWidth,
-        ViewportHeight);
+    FIntPoint ViewportSize = FIntPoint::ZeroValue;
+    PlayerController->GetViewportSize(ViewportSize.X, ViewportSize.Y);
 
-    TArray<FGuid> StaleIds;
-    // 投影通知可能同步注销；遍历身份快照并每次重新查弱引用，避免迭代器失效。
-    TArray<FGuid> Ids; ActiveWidgets.GetKeys(Ids);
-    for (const FGuid& Id : Ids)
+    if (OnlyRequestId.IsValid())
     {
-        if (OnlyRequestId.IsValid() && Id != OnlyRequestId) continue;
-        const auto* WeakWidget = ActiveWidgets.Find(Id);
-        UGamePlatformWorldWidgetBase* Widget = WeakWidget ? WeakWidget->Get() : nullptr;
-        if (!IsValid(Widget))
-        {
-            StaleIds.Add(Id);
-            continue;
-        }
-
-        const FGamePlatformWorldUIRequest& Request =
-            Widget->GetWorldUIRequest();
-        const float Distance =
-            FVector::Distance(
-                CameraLocation,
-                Request.WorldLocation);
-
-        bool bVisible = Request.bDisplayRequested &&
-            (Request.MaxVisibleDistance <= 0.0f || Distance <= Request.MaxVisibleDistance);
-
-        FVector2D ScreenPosition = FVector2D::ZeroVector;
-        if (bVisible)
-        {
-            bVisible =
-                PlayerController->ProjectWorldLocationToScreen(
-                    Request.WorldLocation,
-                    ScreenPosition,
-                    true);
-        }
-
-        if (bVisible &&
-            Request.bClampToViewport &&
-            ViewportWidth > 0 &&
-            ViewportHeight > 0)
-        {
-            ScreenPosition.X = FMath::Clamp(
-                ScreenPosition.X,
-                0.0,
-                static_cast<double>(ViewportWidth));
-            ScreenPosition.Y = FMath::Clamp(
-                ScreenPosition.Y,
-                0.0,
-                static_cast<double>(ViewportHeight));
-        }
-
-        Widget->SetProjectedState(
-            ScreenPosition,
-            bVisible,
-            Distance);
+        if (const auto* Active = ActiveWidgets.Find(OnlyRequestId))
+            ProjectWidget(OnlyRequestId, *Active, *PlayerController, CameraLocation, ViewportSize, Generation);
     }
-
-    for (const FGuid& StaleId : StaleIds)
+    else
     {
-        ActiveWidgets.Remove(StaleId);
+        // 同步投影通知可能注销并立即用相同ID及池对象重新注册。快照只处理入口时的注册代次。
+        TArray<TPair<FGuid, uint64>> Registrations;
+        Registrations.Reserve(ActiveWidgets.Num());
+        for (const auto& Pair : ActiveWidgets) Registrations.Emplace(Pair.Key, Pair.Value.Registration);
+        for (const auto& Pair : Registrations)
+        {
+            if (Generation != RootLayoutGeneration || !IsValid(PlayerController)) break;
+            if (const auto* Active = FindRegistration(Pair.Key, Pair.Value))
+                ProjectWidget(Pair.Key, *Active, *PlayerController, CameraLocation, ViewportSize, Generation);
+        }
     }
 
     if (ActiveWidgets.IsEmpty()) UnbindProjectionEvents();
 }
 
+void UGamePlatformWorldUIService::ProjectWidget(FGuid RequestId, FActiveWorldWidget Active,
+    const APlayerController& PlayerController, const FVector& CameraLocation, FIntPoint ViewportSize, uint64 LayoutGeneration)
+{
+    TStrongObjectPtr<UGamePlatformWorldWidgetBase> Widget(Active.Widget.Get());
+    if (!Widget.IsValid())
+    {
+        ActiveWidgets.Remove(RequestId);
+        return;
+    }
+
+    const auto& Request = Widget->GetWorldUIRequest();
+    const FVector WorldLocation = Request.WorldLocation;
+    const float Distance = FVector::Distance(CameraLocation, WorldLocation);
+    const bool bClampToViewport = Request.bClampToViewport;
+    bool bVisible = Request.bDisplayRequested &&
+        (Request.MaxVisibleDistance <= 0.0f || Distance <= Request.MaxVisibleDistance);
+    FVector2D ScreenPosition = FVector2D::ZeroVector;
+    if (bVisible)
+    {
+        const uint64 Revision = Widget->ProjectionRevision;
+        bVisible = PlayerController.ProjectWorldLocationToScreen(WorldLocation, ScreenPosition, true);
+        // PostProcessWorldToScreen允许调用方覆盖，回来后不能写入已注销或换Root的控件。
+        if (LayoutGeneration != RootLayoutGeneration || Widget->ProjectionRevision != Revision ||
+            !FindRegistration(RequestId, Active.Registration)) return;
+    }
+    if (bVisible && bClampToViewport && ViewportSize.X > 0 && ViewportSize.Y > 0)
+    {
+        ScreenPosition.X = FMath::Clamp(ScreenPosition.X, 0.0, static_cast<double>(ViewportSize.X));
+        ScreenPosition.Y = FMath::Clamp(ScreenPosition.Y, 0.0, static_cast<double>(ViewportSize.Y));
+    }
+    Widget->SetProjectedState(ScreenPosition, bVisible, Distance);
+}
+
+const UGamePlatformWorldUIService::FActiveWorldWidget* UGamePlatformWorldUIService::FindRegistration(
+    FGuid RequestId, uint64 Registration) const
+{
+    const auto* Active = ActiveWidgets.Find(RequestId);
+    return Active && Active->Registration == Registration ? Active : nullptr;
+}
+
 void UGamePlatformWorldUIService::Clear()
 {
+    if (bClearing) return;
+    TGuardValue<bool> Clearing(bClearing, true);
     ++RootLayoutGeneration;
     TArray<FGuid> RequestIds;
     ActiveWidgets.GetKeys(RequestIds);

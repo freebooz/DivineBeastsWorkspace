@@ -133,6 +133,8 @@ public:
 
     /** 可选世界的Pawn/资源/复制事实事件入口；只有当前受信Session的同一世界才会采纳快照。 */
     void NotifyGameplayWorldFactsChanged() { ObserveCurrentGameplayWorld(); }
+    /** 当前目标世界清理时撤销本次操作的准备画面，迟到的其他世界事件不影响当前操作。 */
+    void NotifyWorldEntryWorldRemoved(UWorld& World);
 
     FDivineBeastsFlowViewStateChangedNative& OnViewStateChanged()
     {

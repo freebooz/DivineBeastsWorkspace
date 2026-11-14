@@ -25,10 +25,11 @@ public:
     virtual void OnLeavingInWorld(
         UDivineBeastsApplicationFlowSubsystem& Flow) = 0;
 
-    /** 可选世界提供者只读采集本世界的真实绑定/必要资源/服务器激活事实。
+    /** 可选世界提供者只读采集真实绑定、必要资源、服务器激活事实及本世界的准备提示。
      * false表示不拥有该世界；true仍须由Flow独立核对Session准入和真实WorldDefinition。
      * 变化由提供者通知Flow，不能在此启动轮询、授予资格或提前完成加载。 */
-    virtual bool TryObserveWorldReadiness(UWorld& World, bool& bPawnBound, bool& bResourcesPrepared, bool& bGameplayActive) const { return false; }
+    virtual bool TryObserveWorldReadiness(UWorld& World, bool& bPawnBound, bool& bResourcesPrepared,
+        bool& bGameplayActive, FDivineBeastsWorldEntryPresentation& Presentation) const { return false; }
 
     /** 从权威扩展取得新准入。返回空函数表示本扩展未受理，核心仍校验角色、会话和目标。 */
     virtual FDivineBeastsCancelWorldRecovery TryRequestWorldRecovery(

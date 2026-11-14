@@ -15,6 +15,26 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformLoadingToken
     bool IsValid() const { return Id.IsValid(); }
 };
 
+/** 单个加载事务可提供的可选画面提示。多个加载事务并发时保守保持遮罩。 */
+USTRUCT(BlueprintType)
+struct GAMEPLATFORMUICLIENT_API FGamePlatformUILoadingPresentation
+{
+    GENERATED_BODY()
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI|Loading")
+    bool bShowWorld = false;
+
+    /** 当前世界的服务端秒钟。0 表示无倒计时，归零仅改变显示。 */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI|Loading")
+    double CountdownDeadlineServerTime = 0.0;
+
+    bool IsEquivalent(const FGamePlatformUILoadingPresentation& Other) const
+    {
+        return bShowWorld == Other.bShowWorld &&
+            CountdownDeadlineServerTime == Other.CountdownDeadlineServerTime;
+    }
+};
+
 USTRUCT(BlueprintType)
 struct GAMEPLATFORMUICLIENT_API FGamePlatformUILoadingSnapshot
 {
@@ -32,6 +52,9 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformUILoadingSnapshot
     /** 小于0表示权威进度未知，UI不得伪造0~100。 */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI|Loading")
     float Progress = -1.0f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI|Loading")
+    FGamePlatformUILoadingPresentation Presentation;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
@@ -56,6 +79,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="UI|Loading")
     bool UpdateToken(FGamePlatformLoadingToken Token, FText Stage, float Progress = -1.0f);
 
+    /** 与既有蓝图接口共用同一令牌聚合，供游戏线程上的项目加载适配器提交只读画面提示。 */
+    FGamePlatformLoadingToken AcquirePresentationToken(FText Stage, float Progress,
+        FGamePlatformUILoadingPresentation Presentation);
+    bool UpdatePresentationToken(FGamePlatformLoadingToken Token, FText Stage, float Progress,
+        FGamePlatformUILoadingPresentation Presentation);
+
     UFUNCTION(BlueprintCallable, Category="UI|Loading")
     bool ReleaseToken(FGamePlatformLoadingToken Token);
 
@@ -73,6 +102,7 @@ private:
     {
         FText Stage;
         float Progress = -1.0f;
+        FGamePlatformUILoadingPresentation Presentation;
         uint64 Sequence = 0;
     };
 

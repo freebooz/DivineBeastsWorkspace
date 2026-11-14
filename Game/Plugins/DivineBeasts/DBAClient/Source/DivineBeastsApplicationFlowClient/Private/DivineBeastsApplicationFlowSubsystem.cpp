@@ -134,6 +134,8 @@ class FDivineBeastsProjectLoadingContext final
             return true;
         }
 
+        bool IsObservedWorld(const UWorld& World) const { return ObservedWorld.Get() == &World; }
+
         bool IsWorldOperable() const
         {
             UGameInstance* Owner = Instance.Get();
@@ -1741,6 +1743,7 @@ UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment()
     ActiveTransferOperationId = FGuid::NewGuid();
     FlowContext->SetLoadingObservationId(ActiveTransferOperationId);
     ViewState.LoadingObservationId = ActiveTransferOperationId;
+    ViewState.WorldEntryPresentation = {};
 
     LoadingContext = MakeShared<FDivineBeastsProjectLoadingContext>(
         *GetGameInstance(),
@@ -2004,12 +2007,21 @@ bool UDivineBeastsApplicationFlowSubsystem::MarkLoadingFactReady(
         !TryGetReadinessFact(TaskId, Fact) ||
         Fact == DivineBeastsLoading::Fact::SessionAdmission ||
         Fact == DivineBeastsLoading::Fact::ExpectedWorld ||
-        Fact == DivineBeastsLoading::Fact::ExpectedExperience ||
-        !LoadingContext->Observe(ObservationId, Fact))
+        Fact == DivineBeastsLoading::Fact::ExpectedExperience)
     {
         return false;
     }
 
+    const bool bFirstObservation = !LoadingContext->Has(Fact);
+    if (!LoadingContext->Observe(ObservationId, Fact))
+    {
+        return false;
+    }
+    if (bFirstObservation)
+    {
+        UE_LOG(LogTemp, Display, TEXT("WorldReadiness: FactObserved Operation=%s Task=%s"),
+            *ObservationId.ToString(), *TaskId.ToString());
+    }
     TryCompleteWorldReady();
     return true;
 }
@@ -2124,6 +2136,7 @@ bool UDivineBeastsApplicationFlowSubsystem::ReleaseLoadingOperation()
 
     ViewState.LoadingObservationId.Invalidate();
     ViewState.LoadingProgress01 = -1.0f;
+    ViewState.WorldEntryPresentation = {};
     ActiveTransferOperationId.Invalidate();
 
     bool bSuccess = true;
@@ -2437,11 +2450,12 @@ void UDivineBeastsApplicationFlowSubsystem::ObserveCurrentGameplayWorld()
     if(bObservingGameplayFacts)return;
     TGuardValue<bool> Guard(bObservingGameplayFacts,true);
     if(!Session || !ActiveTransferOperationId.IsValid() || !LoadingContext.IsValid())return;
+    const FGuid ObservationId = ActiveTransferOperationId;
     const auto S=Session->GetSnapshot();
     UWorld* World=GetGameInstance()->GetWorld();
     auto* LocalController=World?World->GetFirstPlayerController():nullptr;
     auto* Controller=Cast<ADivineBeastsWorldPlayerController>(LocalController);
-    if(!LocalController || !LocalController->IsLocalController() || S.TransferOperationId!=ActiveTransferOperationId || !S.bAdmissionConfirmed)return;
+    if(!LocalController || !LocalController->IsLocalController() || S.TransferOperationId!=ObservationId || !S.bAdmissionConfirmed)return;
     if(ObservedWorldController.Get()!=Controller)
     {
         if(ObservedWorldController.IsValid())ObservedWorldController->OnLocalWorldFactsChanged.RemoveAll(this);
@@ -2449,6 +2463,7 @@ void UDivineBeastsApplicationFlowSubsystem::ObserveCurrentGameplayWorld()
         if(Controller)Controller->OnLocalWorldFactsChanged.AddUObject(this,&ThisClass::ObserveCurrentGameplayWorld);
     }
     bool bPawnBound=false,bResourcesPrepared=false,bGameplayActive=false;
+    FDivineBeastsWorldEntryPresentation Presentation;
     if(Controller)
     {
         bPawnBound=Controller->IsLocalPawnBound();bResourcesPrepared=Controller->AreLocalResourcesPrepared();bGameplayActive=Controller->IsWorldGameplayActive();
@@ -2460,27 +2475,56 @@ void UDivineBeastsApplicationFlowSubsystem::ObserveCurrentGameplayWorld()
         for(const FName Id:ExtensionOrder)
         {
             const auto* Extension=Extensions.Find(Id);
-            if(Extension&&Extension->IsValid()&&(*Extension)->TryObserveWorldReadiness(*World,bPawnBound,bResourcesPrepared,bGameplayActive))
+            if(Extension&&Extension->IsValid()&&(*Extension)->TryObserveWorldReadiness(*World,
+                bPawnBound,bResourcesPrepared,bGameplayActive,Presentation))
             {if(bOwned)return;bOwned=true;}
         }
         if(!bOwned)return;
     }
-    const auto& A=ViewState.Assignment;
+    const FName WorldId = ViewState.Assignment.WorldId;
+    const FName ExperienceId = ViewState.Assignment.ExperienceId;
     if(!LoadingContext->HasWorldDefinition() || !World->HasBegunPlay())return;
     auto* Service=IGamePlatformWorldService::Get(*World);
     if(Service && Service->GetReadiness().Context.AuthorityKind==EGamePlatformWorldAuthority::Unbound)
     {
         // 本值来自当前经服务器握手确认的Session，不从界面或URL接受任意世界身份。
         FGamePlatformWorldContext C;
-        if(!FGamePlatformId::TryParse(A.WorldId.ToString(),C.WorldId) || !FGamePlatformId::TryParse(A.ExperienceId.ToString()+TEXT("@1"),C.ExperienceId))return;
-        C.ServerInstanceId=A.GameServerId; C.ServerStartGeneration=1; C.AuthorityKind=EGamePlatformWorldAuthority::SessionProjection;
-        const FPrimaryAssetId Id(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),A.WorldId);
+        if(!FGamePlatformId::TryParse(WorldId.ToString(),C.WorldId) || !FGamePlatformId::TryParse(ExperienceId.ToString()+TEXT("@1"),C.ExperienceId))return;
+        C.ServerInstanceId=ViewState.Assignment.GameServerId; C.ServerStartGeneration=1; C.AuthorityKind=EGamePlatformWorldAuthority::SessionProjection;
+        const FPrimaryAssetId Id(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),WorldId);
         Service->InitializeBoundWorld(Id,C);
     }
-    NotifyWorldObserved(ActiveTransferOperationId,A.ExperienceId,A.WorldId,World);
-    if(bPawnBound)NotifyCharacterBindingReady(ActiveTransferOperationId);
-    if(bResourcesPrepared)NotifyGameplayDataReady(ActiveTransferOperationId);
-    if(bGameplayActive)NotifyProjectReadiness(ActiveTransferOperationId);
+    // 只有本次已准入、已验证的世界能露出准备场景。通知可同步完成或取消转场。
+    if (ActiveTransferOperationId != ObservationId ||
+        !NotifyWorldObserved(ObservationId, ExperienceId, WorldId, World) ||
+        ActiveTransferOperationId != ObservationId)
+    {
+        return;
+    }
+    const bool bPresentationChanged = !ViewState.WorldEntryPresentation.IsEquivalent(Presentation);
+    if (bPresentationChanged)
+    {
+        UE_LOG(LogTemp, Display, TEXT("WorldReadiness: EntryPresentationChanged Operation=%s DeadlineServerTime=%.3f"),
+            *ObservationId.ToString(), Presentation.CountdownDeadlineServerTime);
+        ViewState.WorldEntryPresentation = MoveTemp(Presentation);
+    }
+    if(bPawnBound)NotifyCharacterBindingReady(ObservationId);
+    if(bResourcesPrepared)NotifyGameplayDataReady(ObservationId);
+    if(bGameplayActive)NotifyProjectReadiness(ObservationId);
+    if (bPresentationChanged && ActiveTransferOperationId == ObservationId)
+    {
+        BroadcastView();
+    }
+}
+
+void UDivineBeastsApplicationFlowSubsystem::NotifyWorldEntryWorldRemoved(UWorld& World)
+{
+    if (LoadingContext && LoadingContext->IsActiveFor(ActiveTransferOperationId) &&
+        LoadingContext->IsObservedWorld(World) && !ViewState.WorldEntryPresentation.Stage.IsEmpty())
+    {
+        ViewState.WorldEntryPresentation = {};
+        BroadcastView();
+    }
 }
 
 void UDivineBeastsApplicationFlowSubsystem::HandleLoadingSnapshot(

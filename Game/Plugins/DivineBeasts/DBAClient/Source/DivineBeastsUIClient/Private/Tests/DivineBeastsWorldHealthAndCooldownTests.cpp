@@ -23,6 +23,7 @@
 #include "Components/TextBlock.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
 #include "Framework/GamePlatformPlayerStateBase.h"
+#include "Widgets/SWidget.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldHealthResourceTest,
     "DivineBeasts.UI.World.HealthBar.ResourceEventProjection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -71,6 +72,12 @@ bool FDivineBeastsWorldHealthResourceTest::RunTest(const FString&)
     const float Scale = UWidgetLayoutLibrary::GetViewportScale(Widget.Get());
     TestTrue(TEXT("首投影按DPI居中并置于目标上方"), Widget->GetRenderTransform().Translation.Equals(
         FVector2D(500, 300) / FMath::Max(Scale, .001f) - FVector2D(80, 44), .01));
+    // 标记Slate的下一次预排版；只改变屏幕位置时不应抢先递归排版整棵名称板。
+    NameplateSlate->MarkPrepassAsDirty();
+    Widget->SetProjectedState(FVector2D(600, 350), true, 100.f);
+    TestTrue(TEXT("可见名称板的纯位移保留Slate排版待处理状态"), NameplateSlate->NeedsPrepass());
+    TestTrue(TEXT("纯位移立即更新居中位置"), Widget->GetRenderTransform().Translation.Equals(
+        FVector2D(600, 350) / FMath::Max(Scale, .001f) - FVector2D(80, 44), .01));
     Widget->SetProjectedState(FVector2D::ZeroVector, false, 100.f);
     Widget->SetProjectedState(FVector2D(700, 400), true, 100.f);
     TestTrue(TEXT("隐藏后重显立即重新排版定位"), Widget->GetRenderTransform().Translation.Equals(
@@ -220,6 +227,79 @@ bool FDivineBeastsWorldHealthBarRootReadyTest::RunTest(const FString&)
     TestTrue(TEXT("原请求身份仍可明确注销"), UI->UnregisterWorldUI(Request.RequestId));
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldProjectionReentrancyTest,
+    "DivineBeasts.UI.World.HealthBar.ProjectionReentrancy", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsWorldProjectionReentrancyTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
+    UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    World->InitializeActorsForPlay(FURL());
+    auto* Controller = World->SpawnActor<APlayerController>();
+    TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine));
+    Controller->SetPlayer(Player.Get());
+    auto* RootClass = LoadClass<UGamePlatformUILayerStack>(nullptr, TEXT("/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout.WBP_DBA_UI_RootLayout_C"));
+    auto* BarClass = LoadClass<UGamePlatformWorldWidgetBase>(nullptr, TEXT("/DBAUIPack_Core/UI/World/WBP_DBA_WorldHealthBar.WBP_DBA_WorldHealthBar_C"));
+    if (!TestNotNull(TEXT("真实Root类"), RootClass) || !TestNotNull(TEXT("真实血条类"), BarClass)) return false;
+    TStrongObjectPtr<UGamePlatformUILayerStack> Root(CreateWidget<UGamePlatformUILayerStack>(Controller, RootClass));
+    if (!TestNotNull(TEXT("真实Root实例"), Root.Get())) return false;
+    const TSharedRef<SWidget> RootSlate = Root->TakeWidget();
+    auto* Layer = Cast<UOverlay>(Root->GetWidgetFromName(TEXT("WorldProjectionLayer")));
+    if (!TestNotNull(TEXT("真实投影层"), Layer)) return false;
+    TStrongObjectPtr<UGamePlatformWorldUIService> UI(NewObject<UGamePlatformWorldUIService>());
+    UI->Initialize(Player.Get());
+    ON_SCOPE_EXIT { UI->Deinitialize(); };
+    UI->SetRootLayout(Root.Get());
+
+    FGamePlatformWorldUIRequest First, Second;
+    First.RequestId = FGuid::NewGuid();
+    First.SurfaceKey = TEXT("ProjectionReentrancyTest");
+    First.bDisplayRequested = false;
+    Second = First;
+    Second.RequestId = FGuid::NewGuid();
+    if (!TestEqual(TEXT("注册第一个名称板"), UI->RegisterWorldUI(First, BarClass), First.RequestId) ||
+        !TestEqual(TEXT("注册第二个名称板"), UI->RegisterWorldUI(Second, BarClass), Second.RequestId)) return false;
+    auto* FirstWidget = Cast<UGamePlatformWorldWidgetBase>(Layer->GetChildAt(0));
+    auto* SecondWidget = Cast<UGamePlatformWorldWidgetBase>(Layer->GetChildAt(1));
+    if (!TestNotNull(TEXT("第一个名称板"), FirstWidget) || !TestNotNull(TEXT("第二个名称板"), SecondWidget)) return false;
+    FirstWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+    SecondWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+    UI->RefreshProjection(First.RequestId);
+    TestTrue(TEXT("单实体投影只隐藏本次请求的名称板"), FirstWidget->GetVisibility() == ESlateVisibility::Collapsed);
+    TestTrue(TEXT("单实体投影不触碰其他实体"), SecondWidget->GetVisibility() == ESlateVisibility::HitTestInvisible);
+    FirstWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+    // 两个回调以先触发者为准，验证全量投影不会处理同GUID、同池对象的后继注册。
+    UGamePlatformWorldWidgetBase* Replacement = nullptr;
+    FGuid ReplacementId;
+    auto Replace = [&](ESlateVisibility Visibility, const FGamePlatformWorldUIRequest& Request, UGamePlatformWorldWidgetBase* Previous)
+    {
+        if (Visibility != ESlateVisibility::Collapsed || ReplacementId.IsValid()) return;
+        ReplacementId = Request.RequestId;
+        TestTrue(TEXT("投影过程中可同步注销"), UI->UnregisterWorldUI(Request.RequestId));
+        TestEqual(TEXT("投影过程中可用相同GUID重新注册"), UI->RegisterWorldUI(Request, BarClass), Request.RequestId);
+        Replacement = Cast<UGamePlatformWorldWidgetBase>(Layer->GetChildAt(Layer->GetChildrenCount() - 1));
+        if (TestEqual(TEXT("后继注册复用池中的相同控件"), Replacement, Previous) && Replacement)
+            Replacement->SetVisibility(ESlateVisibility::HitTestInvisible);
+    };
+    const auto FirstHandle = FirstWidget->OnNativeVisibilityChanged.AddLambda([&](ESlateVisibility Visibility)
+    { Replace(Visibility, Second, SecondWidget); });
+    const auto SecondHandle = SecondWidget->OnNativeVisibilityChanged.AddLambda([&](ESlateVisibility Visibility)
+    { Replace(Visibility, First, FirstWidget); });
+    ON_SCOPE_EXIT
+    {
+        FirstWidget->OnNativeVisibilityChanged.Remove(FirstHandle);
+        SecondWidget->OnNativeVisibilityChanged.Remove(SecondHandle);
+    };
+    UI->RefreshProjection();
+    if (!TestNotNull(TEXT("全量刷新触发同步替换"), Replacement)) return false;
+    TestTrue(TEXT("旧全量快照不向后继注册写入可见性"), Replacement->GetVisibility() == ESlateVisibility::HitTestInvisible);
+    TestEqual(TEXT("同步替换保持两项独立注册"), Layer->GetChildrenCount(), 2);
+    return true;
+}
+
 // 角色先到、PlayerState后到、名称复制/修改及控制权切换均走真实事件；不读取后端或模拟网络准入。
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlayerNameplateEventsTest,
     "DivineBeasts.UI.World.HealthBar.PlayerNamesAndSelfExclusion", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

@@ -14,12 +14,19 @@ FGamePlatformLoadingToken UGamePlatformLoadingScreenService::AcquireToken(
     FText Stage,
     float Progress)
 {
+    return AcquirePresentationToken(MoveTemp(Stage), Progress, {});
+}
+
+FGamePlatformLoadingToken UGamePlatformLoadingScreenService::AcquirePresentationToken(
+    FText Stage, float Progress, FGamePlatformUILoadingPresentation Presentation)
+{
     FGamePlatformLoadingToken Token;
     Token.Id = FGuid::NewGuid();
 
     FTokenState& State = Tokens.Add(Token.Id);
     State.Stage = MoveTemp(Stage);
     State.Progress = NormalizeProgress(Progress);
+    State.Presentation = Presentation;
     State.Sequence = NextSequence++;
 
     // 只在事务状态变化时重建快照，避免 UI 读取阶段重复遍历 Token。
@@ -33,6 +40,13 @@ bool UGamePlatformLoadingScreenService::UpdateToken(
     FText Stage,
     float Progress)
 {
+    return UpdatePresentationToken(Token, MoveTemp(Stage), Progress, {});
+}
+
+bool UGamePlatformLoadingScreenService::UpdatePresentationToken(
+    FGamePlatformLoadingToken Token, FText Stage, float Progress,
+    FGamePlatformUILoadingPresentation Presentation)
+{
     FTokenState* State = Tokens.Find(Token.Id);
     if (!Token.IsValid() || !State)
     {
@@ -41,6 +55,7 @@ bool UGamePlatformLoadingScreenService::UpdateToken(
 
     State->Stage = MoveTemp(Stage);
     State->Progress = NormalizeProgress(Progress);
+    State->Presentation = Presentation;
     State->Sequence = NextSequence++;
     RebuildSnapshot();
     BroadcastSnapshot();
@@ -92,6 +107,10 @@ void UGamePlatformLoadingScreenService::RebuildSnapshot()
             BestSequence = Pair.Value.Sequence;
             CachedSnapshot.Stage = Pair.Value.Stage;
             CachedSnapshot.Progress = Pair.Value.Progress;
+            if (CachedSnapshot.ActiveTokenCount == 1 && Pair.Value.Presentation.bShowWorld)
+            {
+                CachedSnapshot.Presentation = Pair.Value.Presentation;
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import (
 	"divinebeasts/backend/internal/modules/party"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"sort"
 	"time"
 )
@@ -70,7 +71,6 @@ func (r *MemoryPartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs,
 	if err := ValidateMatchmakingTransaction(tx); err != nil {
 		return err
 	}
-	changed := map[string]bool{}
 	changedParties := map[string]*party.Party{}
 	for id, next := range tx.Parties {
 		previous := r.items[id]
@@ -84,11 +84,6 @@ func (r *MemoryPartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs,
 		newBytes, _ := json.Marshal(next)
 		if string(oldBytes) != string(newBytes) {
 			changedParties[id] = next.Clone()
-			if previous.Revision != next.Revision {
-				for player := range next.Members {
-					changed[player] = true
-				}
-			}
 		}
 	}
 	// 全部队伍及队列通过验证后才提交，禁止遍历中途发现错误留下部分已发布更新。
@@ -98,21 +93,17 @@ func (r *MemoryPartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs,
 		r.publishPartyChangesLocked(previous, next)
 	}
 	after, _ := json.Marshal(queue)
-	if string(before) != string(after) {
-		// 预留被释放的玩家也要通知，不能只扫描新状态中的活跃成员。
-		for _, state := range []*matchmaking.QueueState{original, queue} {
-			for _, challenge := range state.Challenges {
-				for _, player := range challenge.PlayerIDs() {
-					changed[player] = true
-				}
-			}
-			for _, entry := range state.Entries {
-				for _, player := range entry.Ticket.PartyMemberIDs {
-					changed[player] = true
-				}
-			}
-		}
+	queueChanged := string(before) != string(after)
+	if queueChanged {
 		r.queue = queue
+	}
+	changed := map[string]bool{}
+	if queueChanged || len(changedParties) > 0 {
+		AddMatchmakingObserverChanges(original, queue, changed, func(id string) bool {
+			return changedParties[id] != nil
+		})
+	}
+	if queueChanged || len(changed) > 0 {
 		notification := &party.Party{Members: map[string]party.Member{}}
 		for player := range changed {
 			notification.Members[player] = party.Member{PlayerID: player}
@@ -120,6 +111,62 @@ func (r *MemoryPartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs,
 		r.publishPartyChangesLocked(nil, notification)
 	}
 	return nil
+}
+
+// AddMatchmakingObserverChanges收集快照可能变化的旧、新玩家，包括候选局部确认和历史移除。
+// 回执和可信角色上下文不进入玩家快照。工作器的提交唤醒由仓储独立保留。
+func AddMatchmakingObserverChanges(before, after *matchmaking.QueueState, actors map[string]bool, partyChanged func(string) bool) {
+	addEntryActors := func(entry matchmaking.QueueEntry) {
+		for _, player := range entry.Ticket.PartyMemberIDs {
+			actors[player] = true
+		}
+	}
+	visitChangedMatchmakingValues(before.Entries, after.Entries, addEntryActors)
+	// 无候选时从当前Party投影准备标记。历史票据可能还包含已离队的观察者。
+	for _, entry := range after.Entries {
+		if id := entry.Ticket.PartyID; id != "" && partyChanged(id) {
+			if _, hasCandidate := after.Candidates[entry.CandidateID]; !hasCandidate {
+				addEntryActors(entry)
+			}
+		}
+	}
+	visitChangedMatchmakingValues(before.Challenges, after.Challenges, func(challenge matchmaking.Challenge) {
+		for _, player := range challenge.PlayerIDs() {
+			actors[player] = true
+		}
+	})
+	visitChangedMatchmakingValues(before.Candidates, after.Candidates, func(candidate matchmaking.Candidate) {
+		for _, slot := range candidate.Roster {
+			actors[slot.PlayerID] = true
+		}
+	})
+	for player, id := range before.Reservations {
+		if after.Reservations[player] != id {
+			actors[player] = true
+		}
+	}
+	for player, id := range after.Reservations {
+		if before.Reservations[player] != id {
+			actors[player] = true
+		}
+	}
+}
+
+func visitChangedMatchmakingValues[T any](before, after map[string]T, visit func(T)) {
+	for id, previous := range before {
+		current, found := after[id]
+		if !found || !reflect.DeepEqual(previous, current) {
+			visit(previous)
+			if found {
+				visit(current)
+			}
+		}
+	}
+	for id, current := range after {
+		if _, found := before[id]; !found {
+			visit(current)
+		}
+	}
 }
 
 // SamePartyMembers阻止队列事务绕开成员唯一索引与邀请授权；准备/模式/锁定变化不改变成员身份。
