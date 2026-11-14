@@ -1,0 +1,11 @@
+﻿Category,ChineseName,Owner,CurrentEvidence,Action,ReviewScene,Status
+Trees,树木,DBAFoliagePack_Core,3 个现有网格,保留原型与来源标识；分类展示垂柳及蓝花楹；核对风、轴心和 LOD,TreeGallery,复用现有包
+Shrubs,灌木,DBAFoliagePack_Core,无独立灌木分类模型,先核实可复用模型，再补有授权的真实来源,ShrubGrassGallery,先检查后补充
+Grass,草与蕨类,DBAFoliagePack_Core,26 个现有网格,复用蕨类与供应商草；检查 Alpha、风、实例化,ShrubGrassGallery,复用现有包
+Flowers,花卉地被,DBAFoliagePack_Core,12 个供应商网格,通过引用分类，不复制 Vendor 资产,FlowerGallery,复用现有包
+Rocks,岩石,DBAEnvironmentPackCore,新手村有技术原型,正式岩石批次齐备后注册新包；原型不冒充正式库存,RockGallery,拟建包，当前未创建
+Ground,公共地表,DBAEnvironmentPackCore,已有 Surface 中立材质能力,复用平台函数；公共纹理和地表网格归项目包，世界地形留原位,MaterialCalibration,拟建包，当前未创建
+Buildings,整栋建筑,DBAArchitecturePackCore,新手村有草屋,保持世界专属资产原位；新的可复用建筑具备来源、尺寸和碰撞后注册,BuildingGallery,拟建包，当前未创建
+Components,模块构件,DBAArchitecturePackCore,存在门/栏/桥原型,墙、门、窗、屋顶、柱、楼梯按真实开口、吸附与材质槽制作,ComponentGallery,拟建包，当前未创建
+Props,环境道具,DBAEnvironmentPackCore,待逐项分类,只拥有外观模型/材质；交互权威继续归既有玩法插件,PropGallery,拟建包，当前未创建
+Materials,材质基准,原所有者；中立函数归 GamePlatformSurface,已存在材质库,固定曝光、sRGB、通道、SSS、位移及参数来源校验,MaterialCalibration,复用，不建第二套材质框架

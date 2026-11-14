@@ -1,0 +1,68 @@
+{
+  "AuditDate": "2026-11-14",
+  "Evidence": "current disk, plugin descriptors and existing demo manifest; not live UE acceptance",
+  "PluginCount": 70,
+  "Layers": {
+    "DivineBeasts": 25,
+    "GamePlatform": 41,
+    "MobaCommon": 2,
+    "ThirdParty": 2
+  },
+  "CodePlugins": 48,
+  "ThirdPartyPlugins": 2,
+  "RegisteredContentPacks": 20,
+  "ManifestPlugins": 70,
+  "PluginsMissingFromManifest": [],
+  "ManifestMissingDescriptors": [],
+  "ExistingTestPages": 70,
+  "MissingTestPages": [],
+  "PluginsWithAnyScenarioMap": 47,
+  "PluginsWithSoleOwnerDeclaredMap": 6,
+  "PluginsWithoutScenarioMap": [
+    "DBAArena",
+    "DBAGameplay",
+    "DBAServer",
+    "DBAWorlds",
+    "GamePlatformApplicationFlow",
+    "GamePlatformInput",
+    "GamePlatformLoading",
+    "GamePlatformLocalization",
+    "GamePlatformSave",
+    "GamePlatformSettings",
+    "GamePlatformLobby",
+    "GamePlatformVillage",
+    "GamePlatformOnline",
+    "GamePlatformServer",
+    "GamePlatformSession",
+    "GamePlatformCommerceUI",
+    "GamePlatformEntitlement",
+    "GamePlatformEquipment",
+    "GamePlatformInventory",
+    "GamePlatformLiveOps",
+    "GamePlatformProgression",
+    "GamePlatformArena",
+    "MobaPresentation"
+  ],
+  "MapFiles": 71,
+  "DevelopmentMapFiles": 67,
+  "ScenarioMapPaths": 11,
+  "MissingScenarioMaps": [],
+  "RegisteredFeatures": 288,
+  "RegisteredScenarios": 211,
+  "FeatureImplementation": {
+    "partial": 284,
+    "implemented": 4
+  },
+  "FeatureIntegration": {
+    "registered": 198,
+    "unregistered": 81,
+    "wired": 4,
+    "blocked": 5
+  },
+  "FeatureRun": {
+    "idle": 288
+  },
+  "FeatureReview": {
+    "not_reviewed": 288
+  }
+}
