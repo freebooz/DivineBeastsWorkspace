@@ -1,5 +1,35 @@
 # 变更记录
 
+## 2026-11-11｜SSLM Lighting Lab独立艺术光照实验室云端代码
+- 将`/Game/Development/LightingLab`加入`Game/Config/DefaultGame.ini`的NeverCook及`Build/Game/ServerPresentationExclusions.json`的AllServers排除；新增内容目录README作为路径标记，不创建或伪造UE二进制资产。
+- 预检要求复用上一轮Monolith原生回读的`Saved/Validation/VillageMorningEnvironment20261025/NativeNaniteBindings.json`，按地图几何一致保护派生实验地图键；文件缺失或基准键不匹配时在创建实验输出目录前停止，禁止猜测Nanite材质槽顺序。
+
+- 按用户批准的方案A，在独立功能分支建立SSLM Lighting Lab设计规格、实施计划、六套光照候选与五档Source Angle配置、UE5.8隔离关卡作者、PIE质量/GI对照入口和离线合同测试。
+- 作者复用既有新手村晨间环境审核工具的正式地图哈希、几何保护、SaveAs和保存回读机制；实验地图只允许位于`/Game/Development/LightingLab`，正式地图、后处理曝光/色彩、项目INI及运行时天气合同保持不变。
+- Lumen Hardware仅在硬件光追前置条件满足且CVar读回一致时报告可用；不支持时记录Unsupported。所有配置值均为候选参数，不是已批准的全局光照默认值。
+- 本次云端交付不创建或伪造`.umap`/`.uasset`；真实地图副本、PIE截图、GPU数据、独立Editor冷重载和人工视觉签收需由家中UE5.8开发PC运行Monolith后完成。
+
+## 2026-11-11｜SSLM全场景柔和艺术光照策略与UE5.8实现方法增补
+
+- 用户明确要求所有场景光照柔和，并突出光影效果的艺术美感。本次将其纳入全局强制原则：柔而不平、亮而不曝、暗而有细节、雾而不糊；保留主光方向、体积塑形、接触阴影、空间层次和玩法可读性。
+- 基于Epic Games UE5.8官方资料，补充Directional Light Source Angle/Source Soft Angle、VSM/SMRT半影与接触硬化、Sky Light与Lumen间接光、Exponential Height Fog/Local Fog Volumes/Volumetric Fog、曝光与Local Exposure、Filmic Tonemapper/Color Grading、跨平台画质分级及实际镜头验收方法。
+- 明确新手村既有晨间晴朗/薄雾/晨雾方案仍是隔离候选，P5人工审核及正式合入待批准；阴天地图+1.0 EV是单地图校准结果，不得推广为全项目曝光常量。
+- 同步更新AGENTS.md、全局美术主规范和Docs/README.md。本轮只更新Markdown策略文档，不修改UE地图、灯光、后处理、材质或雾效二进制资产，不宣称场景视觉或GPU性能已经验收。
+
+## 2026-11-11｜新手村湖边群山与峭壁专属美术基准确认
+
+- 用户明确将2026-11-11提供的山水场景图指定为SSLM新手村湖边群山、湖岸峭壁及周边山体的专属美术基准。
+- 基准用于统一奇峻峰林、自然陡壁、山体层叠、山腰森林、近中远景构图、湖岸与水面关系、松树前景框景、远景暖光建筑及山谷光雾效果。
+- 明确该图只适用于Village对应场景，不作为OpenWorld、MainArena或其他地图的统一地貌模板；所有地图继续遵循“一景一幅山水画”的全局审美原则，并按自身生态与玩法建立区域基准。
+- 同步修订AGENTS.md、全局美术主规范及Docs/README.md。本次修改策略文档，不修改UE地形、峭壁模型、材质、植被、灯光或地图二进制资产；图像源为用户本轮对话上传的参考图，未另行提交图像二进制文件。
+
+## 2026-11-11｜SSLM全局场景山水画式审美策略增补
+
+- 根据用户提供的山水场景参考图，将“每一个游戏画面都应像一幅山水画，整体爽心悦目”确立为SSLM全域场景审美目标，强调“一景一幅山水画、一帧一幅视觉作品”。
+- 在现有全局美术主规范中补充近中远景层次、视觉锚点、构图留白、峰林与水岸地貌、青碧水体、自然植被、柔和光雾、暖色建筑焦点等执行原则；明确借鉴空间层次和东方意境，不照搬参考图的具体地形或偏暗蓝绿色调。
+- 规则适用于Village、OpenWorld、MainArena及后续全部场景，同时保留V3.0明快自然配色、战斗可读性、公平性、UE5.8实时性能和真实游戏镜头人工验收要求。
+- 同步更新根目录AGENTS.md、全局美术主规范及Docs/README.md。本次仅修改Markdown策略文档，不修改UE地图、材质、植被、灯光或其他二进制资产；不代表实际场景已经完成视觉改造或验收。
+
 ## 2026-10-18｜十层地形PBR对V3.0配色规范实物审查与原生整改
 
 - 按全局规范审查10份2048²真实扫描BaseColor源，发现草地偏黄褐、土路/林地土/碎石坡过暗等问题；在第三层DBAPresentationPack_Core保留40张原PBR来源，新增10份独立V3校色源、10份UE Texture2D、1份十层母材质、4份MI和独立开发审核地图，真实UE5.8三阶段地图制作与独立冷重载通过。
