@@ -95,7 +95,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAContentPackCommonUi.svg"
+      "Page": "Pages/DBAContentPackCommonLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Boar",
@@ -187,7 +187,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackBoarUi.svg"
+      "Page": "Pages/DBAHeroPackBoarLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Dog",
@@ -279,7 +279,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackDogUi.svg"
+      "Page": "Pages/DBAHeroPackDogLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Dragon",
@@ -371,7 +371,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackDragonUi.svg"
+      "Page": "Pages/DBAHeroPackDragonLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Goat",
@@ -463,7 +463,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackGoatUi.svg"
+      "Page": "Pages/DBAHeroPackGoatLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Horse",
@@ -555,7 +555,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackHorseUi.svg"
+      "Page": "Pages/DBAHeroPackHorseLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Monkey",
@@ -647,7 +647,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackMonkeyUi.svg"
+      "Page": "Pages/DBAHeroPackMonkeyLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Ox",
@@ -739,7 +739,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackOxUi.svg"
+      "Page": "Pages/DBAHeroPackOxLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Rabbit",
@@ -831,7 +831,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackRabbitUi.svg"
+      "Page": "Pages/DBAHeroPackRabbitLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Rat",
@@ -923,7 +923,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackRatUi.svg"
+      "Page": "Pages/DBAHeroPackRatLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Rooster",
@@ -1015,7 +1015,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackRoosterUi.svg"
+      "Page": "Pages/DBAHeroPackRoosterLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Snake",
@@ -1107,7 +1107,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackSnakeUi.svg"
+      "Page": "Pages/DBAHeroPackSnakeLayout.svg"
     },
     {
       "Plugin": "DBAHeroPack_Tiger",
@@ -1199,7 +1199,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/DBAHeroPackTigerUi.svg"
+      "Page": "Pages/DBAHeroPackTigerLayout.svg"
     },
     {
       "Plugin": "DBAFoliagePack_Core",
@@ -1290,7 +1290,7 @@
         "道路排除距离 / cm",
         "建筑排除距离 / cm"
       ],
-      "Page": "Pages/DBAFoliagePackCoreUi.svg"
+      "Page": "Pages/DBAFoliagePackCoreLayout.svg"
     },
     {
       "Plugin": "DBAFrontEndPack",
@@ -1382,7 +1382,7 @@
         "通知与首次快照",
         "隐藏与解绑"
       ],
-      "Page": "Pages/DBAFrontEndPackUi.svg"
+      "Page": "Pages/DBAFrontEndPackLayout.svg"
     },
     {
       "Plugin": "DBAPresentationPack_Core",
@@ -1476,7 +1476,7 @@
         "Fixed Bounds",
         "粒子数 / GPU（未测）"
       ],
-      "Page": "Pages/DBAPresentationPackCoreUi.svg"
+      "Page": "Pages/DBAPresentationPackCoreLayout.svg"
     },
     {
       "Plugin": "DBASFXPack_Core",
@@ -1567,7 +1567,7 @@
         "并发 / 生命周期",
         "取消与停止"
       ],
-      "Page": "Pages/DBASFXPackCoreUi.svg"
+      "Page": "Pages/DBASFXPackCoreLayout.svg"
     },
     {
       "Plugin": "DBAUIPack_Core",
@@ -1660,7 +1660,7 @@
         "通知与首次快照",
         "隐藏与解绑"
       ],
-      "Page": "Pages/DBAUIPackCoreUi.svg"
+      "Page": "Pages/DBAUIPackCoreLayout.svg"
     },
     {
       "Plugin": "DBAWorldPack_MainArena",
@@ -1752,7 +1752,7 @@
         "结算与返回",
         "版本与复制合同"
       ],
-      "Page": "Pages/DBAWorldPackMainArenaUi.svg"
+      "Page": "Pages/DBAWorldPackMainArenaLayout.svg"
     },
     {
       "Plugin": "DBAWorldPack_Village",
@@ -1844,7 +1844,7 @@
         "退出与释放",
         "实例隔离"
       ],
-      "Page": "Pages/DBAWorldPackVillageUi.svg"
+      "Page": "Pages/DBAWorldPackVillageLayout.svg"
     },
     {
       "Plugin": "DBAArena",
@@ -1881,7 +1881,7 @@
         "结算与返回",
         "版本与复制合同"
       ],
-      "Page": "Pages/DBAArenaUi.svg"
+      "Page": "Pages/DBAArenaLayout.svg"
     },
     {
       "Plugin": "DBAClient",
@@ -1955,7 +1955,7 @@
         "旧回调隔离",
         "结束与清理"
       ],
-      "Page": "Pages/DBAClientUi.svg"
+      "Page": "Pages/DBAClientLayout.svg"
     },
     {
       "Plugin": "DBAGameplay",
@@ -1995,7 +1995,7 @@
         "取消 / 世界退出",
         "客户端表现状态"
       ],
-      "Page": "Pages/DBAGameplayUi.svg"
+      "Page": "Pages/DBAGameplayLayout.svg"
     },
     {
       "Plugin": "DBAServer",
@@ -2032,7 +2032,7 @@
         "超时与取消",
         "凭据状态（不显示值）"
       ],
-      "Page": "Pages/DBAServerUi.svg"
+      "Page": "Pages/DBAServerLayout.svg"
     },
     {
       "Plugin": "DBAWorlds",
@@ -2069,7 +2069,7 @@
         "退出与释放",
         "实例隔离"
       ],
-      "Page": "Pages/DBAWorldsUi.svg"
+      "Page": "Pages/DBAWorldsLayout.svg"
     },
     {
       "Plugin": "GamePlatformApplicationFlow",
@@ -2183,7 +2183,7 @@
         "旧回调隔离",
         "结束与清理"
       ],
-      "Page": "Pages/GamePlatformApplicationFlowUi.svg"
+      "Page": "Pages/GamePlatformApplicationFlowLayout.svg"
     },
     {
       "Plugin": "GamePlatformInput",
@@ -2404,7 +2404,7 @@
         "通知与首次快照",
         "隐藏与解绑"
       ],
-      "Page": "Pages/GamePlatformInputUi.svg"
+      "Page": "Pages/GamePlatformInputLayout.svg"
     },
     {
       "Plugin": "GamePlatformLoading",
@@ -2482,7 +2482,7 @@
         "旧回调隔离",
         "结束与清理"
       ],
-      "Page": "Pages/GamePlatformLoadingUi.svg"
+      "Page": "Pages/GamePlatformLoadingLayout.svg"
     },
     {
       "Plugin": "GamePlatformLocalization",
@@ -2513,7 +2513,7 @@
         "通知与首次快照",
         "隐藏与解绑"
       ],
-      "Page": "Pages/GamePlatformLocalizationUi.svg"
+      "Page": "Pages/GamePlatformLocalizationLayout.svg"
     },
     {
       "Plugin": "GamePlatformSave",
@@ -2590,7 +2590,7 @@
         "失败 / 取消",
         "本次资源回收"
       ],
-      "Page": "Pages/GamePlatformSaveUi.svg"
+      "Page": "Pages/GamePlatformSaveLayout.svg"
     },
     {
       "Plugin": "GamePlatformSettings",
@@ -2729,7 +2729,7 @@
         "通知与首次快照",
         "隐藏与解绑"
       ],
-      "Page": "Pages/GamePlatformSettingsUi.svg"
+      "Page": "Pages/GamePlatformSettingsLayout.svg"
     },
     {
       "Plugin": "GamePlatformDebug",
@@ -2826,7 +2826,7 @@
         "失败 / 取消",
         "本次资源回收"
       ],
-      "Page": "Pages/GamePlatformDebugUi.svg"
+      "Page": "Pages/GamePlatformDebugLayout.svg"
     },
     {
       "Plugin": "GamePlatformDeveloperTools",
@@ -2879,7 +2879,7 @@
         "失败 / 取消",
         "本次资源回收"
       ],
-      "Page": "Pages/GamePlatformDeveloperToolsUi.svg"
+      "Page": "Pages/GamePlatformDeveloperToolsLayout.svg"
     },
     {
       "Plugin": "GamePlatformTelemetry",
@@ -2947,7 +2947,7 @@
         "失败 / 取消",
         "本次资源回收"
       ],
-      "Page": "Pages/GamePlatformTelemetryUi.svg"
+      "Page": "Pages/GamePlatformTelemetryLayout.svg"
     },
     {
       "Plugin": "GamePlatformCore",
@@ -3015,7 +3015,7 @@
         "失败 / 取消",
         "本次资源回收"
       ],
-      "Page": "Pages/GamePlatformCoreUi.svg"
+      "Page": "Pages/GamePlatformCoreLayout.svg"
     },
     {
       "Plugin": "GamePlatformData",
@@ -3100,7 +3100,7 @@
         "取消 / 卸载",
         "本次引用者"
       ],
-      "Page": "Pages/GamePlatformDataUi.svg"
+      "Page": "Pages/GamePlatformDataLayout.svg"
     },
     {
       "Plugin": "GamePlatformLobby",
@@ -3131,7 +3131,7 @@
         "退出与释放",
         "实例隔离"
       ],
-      "Page": "Pages/GamePlatformLobbyUi.svg"
+      "Page": "Pages/GamePlatformLobbyLayout.svg"
     },
     {
       "Plugin": "GamePlatformVillage",
@@ -3162,7 +3162,7 @@
         "退出与释放",
         "实例隔离"
       ],
-      "Page": "Pages/GamePlatformVillageUi.svg"
+      "Page": "Pages/GamePlatformVillageLayout.svg"
     },
     {
       "Plugin": "GamePlatformAbilitySystem",
@@ -3219,7 +3219,7 @@
         "取消 / 世界退出",
         "客户端表现状态"
       ],
-      "Page": "Pages/GamePlatformAbilitySystemUi.svg"
+      "Page": "Pages/GamePlatformAbilitySystemLayout.svg"
     },
     {
       "Plugin": "GamePlatformAI",
@@ -3275,7 +3275,7 @@
         "取消 / 目标失效",
         "结束与回收"
       ],
-      "Page": "Pages/GamePlatformAIUi.svg"
+      "Page": "Pages/GamePlatformAILayout.svg"
     },
     {
       "Plugin": "GamePlatformAnimation",
@@ -3353,7 +3353,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/GamePlatformAnimationUi.svg"
+      "Page": "Pages/GamePlatformAnimationLayout.svg"
     },
     {
       "Plugin": "GamePlatformCharacter",
@@ -3406,7 +3406,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/GamePlatformCharacterUi.svg"
+      "Page": "Pages/GamePlatformCharacterLayout.svg"
     },
     {
       "Plugin": "GamePlatformCombat",
@@ -3465,7 +3465,7 @@
         "取消 / 世界退出",
         "客户端表现状态"
       ],
-      "Page": "Pages/GamePlatformCombatUi.svg"
+      "Page": "Pages/GamePlatformCombatLayout.svg"
     },
     {
       "Plugin": "GamePlatformGameplay",
@@ -3520,7 +3520,7 @@
         "取消 / 世界退出",
         "客户端表现状态"
       ],
-      "Page": "Pages/GamePlatformGameplayUi.svg"
+      "Page": "Pages/GamePlatformGameplayLayout.svg"
     },
     {
       "Plugin": "GamePlatformQuest",
@@ -3571,7 +3571,7 @@
         "失败 / 取消",
         "本次资源回收"
       ],
-      "Page": "Pages/GamePlatformQuestUi.svg"
+      "Page": "Pages/GamePlatformQuestLayout.svg"
     },
     {
       "Plugin": "GamePlatformOnline",
@@ -3759,7 +3759,7 @@
         "超时与取消",
         "凭据状态（不显示值）"
       ],
-      "Page": "Pages/GamePlatformOnlineUi.svg"
+      "Page": "Pages/GamePlatformOnlineLayout.svg"
     },
     {
       "Plugin": "GamePlatformServer",
@@ -3903,7 +3903,7 @@
         "超时与取消",
         "凭据状态（不显示值）"
       ],
-      "Page": "Pages/GamePlatformServerUi.svg"
+      "Page": "Pages/GamePlatformServerLayout.svg"
     },
     {
       "Plugin": "GamePlatformSession",
@@ -3968,7 +3968,7 @@
         "超时与取消",
         "凭据状态（不显示值）"
       ],
-      "Page": "Pages/GamePlatformSessionUi.svg"
+      "Page": "Pages/GamePlatformSessionLayout.svg"
     },
     {
       "Plugin": "GamePlatformCommerceUI",
@@ -4160,7 +4160,7 @@
         "失败 / 取消",
         "只读结果快照"
       ],
-      "Page": "Pages/GamePlatformCommerceUIUi.svg"
+      "Page": "Pages/GamePlatformCommerceUILayout.svg"
     },
     {
       "Plugin": "GamePlatformEntitlement",
@@ -4343,7 +4343,7 @@
         "失败 / 取消",
         "只读结果快照"
       ],
-      "Page": "Pages/GamePlatformEntitlementUi.svg"
+      "Page": "Pages/GamePlatformEntitlementLayout.svg"
     },
     {
       "Plugin": "GamePlatformEquipment",
@@ -4436,7 +4436,7 @@
         "LOD / Bounds",
         "碰撞与根运动"
       ],
-      "Page": "Pages/GamePlatformEquipmentUi.svg"
+      "Page": "Pages/GamePlatformEquipmentLayout.svg"
     },
     {
       "Plugin": "GamePlatformInventory",
@@ -4717,7 +4717,7 @@
         "失败 / 取消",
         "只读结果快照"
       ],
-      "Page": "Pages/GamePlatformInventoryUi.svg"
+      "Page": "Pages/GamePlatformInventoryLayout.svg"
     },
     {
       "Plugin": "GamePlatformLiveOps",
@@ -4902,7 +4902,7 @@
         "失败 / 取消",
         "只读结果快照"
       ],
-      "Page": "Pages/GamePlatformLiveOpsUi.svg"
+      "Page": "Pages/GamePlatformLiveOpsLayout.svg"
     },
     {
       "Plugin": "GamePlatformProgression",
@@ -4972,7 +4972,7 @@
         "失败 / 取消",
         "本次资源回收"
       ],
-      "Page": "Pages/GamePlatformProgressionUi.svg"
+      "Page": "Pages/GamePlatformProgressionLayout.svg"
     },
     {
       "Plugin": "GamePlatformCamera",
@@ -5067,7 +5067,7 @@
         "遮挡与过渡",
         "恢复本次修改"
       ],
-      "Page": "Pages/GamePlatformCameraUi.svg"
+      "Page": "Pages/GamePlatformCameraLayout.svg"
     },
     {
       "Plugin": "GamePlatformPresentation",
@@ -5197,7 +5197,7 @@
         "Fixed Bounds",
         "粒子数 / GPU（未测）"
       ],
-      "Page": "Pages/GamePlatformPresentationUi.svg"
+      "Page": "Pages/GamePlatformPresentationLayout.svg"
     },
     {
       "Plugin": "GamePlatformSFX",
@@ -5366,7 +5366,7 @@
         "并发 / 生命周期",
         "取消与停止"
       ],
-      "Page": "Pages/GamePlatformSFXUi.svg"
+      "Page": "Pages/GamePlatformSFXLayout.svg"
     },
     {
       "Plugin": "GamePlatformSurface",
@@ -5622,7 +5622,7 @@
         "次表面 / Opacity",
         "位移 / cm"
       ],
-      "Page": "Pages/GamePlatformSurfaceUi.svg"
+      "Page": "Pages/GamePlatformSurfaceLayout.svg"
     },
     {
       "Plugin": "GamePlatformUI",
@@ -5688,7 +5688,7 @@
         "通知与首次快照",
         "隐藏与解绑"
       ],
-      "Page": "Pages/GamePlatformUIUi.svg"
+      "Page": "Pages/GamePlatformUILayout.svg"
     },
     {
       "Plugin": "GamePlatformVFX",
@@ -5835,7 +5835,7 @@
         "Fixed Bounds",
         "粒子数 / GPU（未测）"
       ],
-      "Page": "Pages/GamePlatformVFXUi.svg"
+      "Page": "Pages/GamePlatformVFXLayout.svg"
     },
     {
       "Plugin": "GamePlatformInteraction",
@@ -5912,7 +5912,7 @@
         "取消 / 目标失效",
         "结束与回收"
       ],
-      "Page": "Pages/GamePlatformInteractionUi.svg"
+      "Page": "Pages/GamePlatformInteractionLayout.svg"
     },
     {
       "Plugin": "GamePlatformNavigation",
@@ -6012,7 +6012,7 @@
         "取消 / 目标失效",
         "结束与回收"
       ],
-      "Page": "Pages/GamePlatformNavigationUi.svg"
+      "Page": "Pages/GamePlatformNavigationLayout.svg"
     },
     {
       "Plugin": "GamePlatformPCG",
@@ -6110,7 +6110,7 @@
         "道路排除距离 / cm",
         "建筑排除距离 / cm"
       ],
-      "Page": "Pages/GamePlatformPCGUi.svg"
+      "Page": "Pages/GamePlatformPCGLayout.svg"
     },
     {
       "Plugin": "GamePlatformWater",
@@ -6206,7 +6206,7 @@
         "积雪 / 湿润状态",
         "World 归属"
       ],
-      "Page": "Pages/GamePlatformWaterUi.svg"
+      "Page": "Pages/GamePlatformWaterLayout.svg"
     },
     {
       "Plugin": "GamePlatformWeather",
@@ -6293,7 +6293,7 @@
         "积雪 / 湿润状态",
         "World 归属"
       ],
-      "Page": "Pages/GamePlatformWeatherUi.svg"
+      "Page": "Pages/GamePlatformWeatherLayout.svg"
     },
     {
       "Plugin": "GamePlatformWorld",
@@ -6346,7 +6346,7 @@
         "退出与释放",
         "实例隔离"
       ],
-      "Page": "Pages/GamePlatformWorldUi.svg"
+      "Page": "Pages/GamePlatformWorldLayout.svg"
     },
     {
       "Plugin": "GamePlatformArena",
@@ -6386,7 +6386,7 @@
         "结算与返回",
         "版本与复制合同"
       ],
-      "Page": "Pages/GamePlatformArenaUi.svg"
+      "Page": "Pages/GamePlatformArenaLayout.svg"
     },
     {
       "Plugin": "MobaPresentation",
@@ -6423,7 +6423,7 @@
         "结算与返回",
         "版本与复制合同"
       ],
-      "Page": "Pages/MobaPresentationUi.svg"
+      "Page": "Pages/MobaPresentationLayout.svg"
     },
     {
       "Plugin": "BlueprintAutoLayout",
@@ -6573,7 +6573,7 @@
         "执行 / Undo",
         "外部修改冲突"
       ],
-      "Page": "Pages/BlueprintAutoLayoutUi.svg"
+      "Page": "Pages/BlueprintAutoLayoutLayout.svg"
     },
     {
       "Plugin": "GlooPrint",
@@ -6635,7 +6635,7 @@
         "执行 / Undo",
         "外部修改冲突"
       ],
-      "Page": "Pages/GlooPrintUi.svg"
+      "Page": "Pages/GlooPrintLayout.svg"
     },
     {
       "Plugin": "ResourceTreeGallery",
@@ -6675,7 +6675,7 @@
         "建筑排除距离 / cm"
       ],
       "ResourceMount": "/DBAFoliagePack_Core/Foliage/Trees",
-      "Page": "Pages/TreeGalleryUi.svg"
+      "Page": "Pages/TreeGalleryLayout.svg"
     },
     {
       "Plugin": "ResourceShrubGrassGallery",
@@ -6715,7 +6715,7 @@
         "建筑排除距离 / cm"
       ],
       "ResourceMount": "/DBAFoliagePack_Core/Foliage/Grass",
-      "Page": "Pages/ShrubGrassGalleryUi.svg"
+      "Page": "Pages/ShrubGrassGalleryLayout.svg"
     },
     {
       "Plugin": "ResourceFlowerGallery",
@@ -6755,7 +6755,7 @@
         "建筑排除距离 / cm"
       ],
       "ResourceMount": "/DBAFoliagePack_Core/Foliage/Flowers",
-      "Page": "Pages/FlowerGalleryUi.svg"
+      "Page": "Pages/FlowerGalleryLayout.svg"
     },
     {
       "Plugin": "ResourceRockGallery",
@@ -6795,7 +6795,7 @@
         "接地与混合"
       ],
       "ResourceMount": "/DBAEnvironmentPackCore/Rocks",
-      "Page": "Pages/RockGalleryUi.svg"
+      "Page": "Pages/RockGalleryLayout.svg"
     },
     {
       "Plugin": "ResourceBuildingGallery",
@@ -6835,7 +6835,7 @@
         "材质槽 / LOD"
       ],
       "ResourceMount": "/DBAArchitecturePackCore/Buildings",
-      "Page": "Pages/BuildingGalleryUi.svg"
+      "Page": "Pages/BuildingGalleryLayout.svg"
     },
     {
       "Plugin": "ResourceComponentGallery",
@@ -6875,7 +6875,7 @@
         "材质槽 / LOD"
       ],
       "ResourceMount": "/DBAArchitecturePackCore/Components",
-      "Page": "Pages/ComponentGalleryUi.svg"
+      "Page": "Pages/ComponentGalleryLayout.svg"
     },
     {
       "Plugin": "ResourcePropGallery",
@@ -6915,7 +6915,7 @@
         "材质槽 / LOD"
       ],
       "ResourceMount": "/DBAEnvironmentPackCore/Props",
-      "Page": "Pages/PropGalleryUi.svg"
+      "Page": "Pages/PropGalleryLayout.svg"
     },
     {
       "Plugin": "ResourceMaterialCalibration",
@@ -6955,7 +6955,7 @@
         "位移 / cm"
       ],
       "ResourceMount": "/GamePlatformSurface",
-      "Page": "Pages/MaterialCalibrationUi.svg"
+      "Page": "Pages/MaterialCalibrationLayout.svg"
     }
   ]
 }

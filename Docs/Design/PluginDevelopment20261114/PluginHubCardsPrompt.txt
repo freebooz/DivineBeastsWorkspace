@@ -1,0 +1,26 @@
+Edit the supplied SSLM plugin HUB image into a PURE CARD INTERFACE. Keep its premium smooth dark teal jade, warm polished champagne-gold trim, elegant small logo, beautiful fantasy thumbnails, ivory typography, and restrained mountain background. Completely redesign the layout, not merely hide a few labels. Flat front-facing finished UI concept, full frame widescreen 16:9.
+
+CRITICAL: NO LEFT SIDEBAR, NO DIRECTORY TREE, NO CATEGORY NAVIGATION, NO SEARCH FIELD, NO SEARCH ICON, NO FILTER DROPDOWNS, NO LIST VIEW SWITCH, NO RIGHT DETAIL PANE. No directory paths. No large central scenic panel. The ENTIRE main body is evenly spaced plugin CARDS.
+
+Header is compact: on the left the tasteful jade emblem and exact title "SSLM · 插件工作台". Small subtitle "点击卡片，进入插件". Top right has a small amber "设计稿 · 待确认" badge and a compact sea-blue "返回登录" button. Do not replace the deleted search with any other navigation toolbar.
+
+Display EXACTLY TWELVE large cards in FOUR EQUAL COLUMNS and THREE ROWS, using the full width between modest outer margins. Consistent card size and spacing, lightly beveled polished jade borders with thin gold accents. The top 65% of each card contains a rich purpose-specific image, the bottom 35% contains a small icon, readable Chinese title, modest exact English plugin identity, and small neutral "待检查" status. The entire card is clickable. Add only a subtle small arrow at its lower right. No large individual enter buttons. First card shows a tasteful gold hover border; the others are calm and refined. No big sidebar-style divider surrounding any column.
+
+The 12 cards in reading order:
+1. "程序化场景" / "GamePlatformPCG": lush hillside forest and winding footpath.
+2. "材质与表面" / "GamePlatformSurface": four material spheres, jade, stone, wood, snow.
+3. "视觉特效" / "GamePlatformVFX": a controlled golden fireball and clear ice crystals.
+4. "界面与主题" / "GamePlatformUI": exquisite emerald green and sea-blue fantasy buttons.
+5. "水体系统" / "GamePlatformWater": turquoise lake with natural soft shoreline.
+6. "天气系统" / "GamePlatformWeather": soft mist, rain and snow over scenery.
+7. "音频系统" / "GamePlatformSFX": elegant teal audio waveform.
+8. "世界与区域" / "GamePlatformWorld": graceful isometric Chinese fantasy village.
+9. "AI 与行为" / "GamePlatformAI": humanoid agents and a few subtle route waypoints.
+10. "角色与动画" / "GamePlatformAnimation": refined armored warrior motion poses.
+11. "战斗系统" / "GamePlatformCombat": two small warriors in readable action, restrained gold and ice magic.
+12. "植物资源包" / "DBAFoliagePack_Core": willow foliage, ferns, flowers.
+
+Bottom: a slim unobtrusive pagination strip, left "共 70 个插件", centered "‹   1   2   3   4   5   6   ›", page 1 highlighted jade, right "设计示意 · 非 UE 实机截图".
+Pagination is the only way to browse the remaining cards in this visual concept. Do not show category counts, a directory, search, favorites menu, recent-use menu, statistics panels, detail inspector, charts, or runtime performance numbers. Do not put all 70 items on one screen. The first page shows 12 cards and six pages cover 70.
+
+High quality game interface texture: smooth translucent jade, broad continuous soft highlights, delicate tasteful gold metal, understated leaf/cloud corners, low-contrast fine natural texture. NO grain, rough noise, oversharpening, scratches, excessive ornamentation, oversized borders or tiny unreadable text. Keep exact Chinese captions legible, consistent baseline, enough space so the English identifier never overlaps the status pill. Preserve the original professional fantasy game style while making the card grid the sole visual and interaction focus.

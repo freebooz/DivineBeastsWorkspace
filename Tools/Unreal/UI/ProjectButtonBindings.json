@@ -3777,21 +3777,6 @@
       ]
     },
     {
-      "Asset": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginPortal",
-      "Controls": [
-        {
-          "Name": "LayerFilterCombo",
-          "Kind": "ComboBoxString",
-          "Family": "Secondary"
-        },
-        {
-          "Name": "RefreshButton",
-          "Kind": "Button",
-          "Family": "Secondary"
-        }
-      ]
-    },
-    {
       "Asset": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
       "Controls": [
         {

@@ -1,0 +1,53 @@
+Use case: ui-mockup.
+Create a polished, production-quality visual design image for the Chinese fantasy game SSLM (神兽联盟): one unified PLUGIN HUB, the sole menu entry point for all 70 existing plugins. This is a high fidelity UI concept for human review, not an actual engine screenshot. One complete, front-facing flat interface, widescreen 16:9, ideally 1920x1080 or larger. Fill the canvas edge to edge; no monitor, browser chrome or perspective.
+
+VISUAL STYLE:
+Refined Chinese fantasy game interface, restrained translucent dark teal and black jade panels, warm champagne-gold polished bevels, thin but tactile frames, elegant tiny leaf/flowing cloud accents confined to corners. Emerald jade primary buttons, sea-blue secondary buttons, ivory type. Smooth polished surfaces, broad continuous soft highlights, subtle low-contrast natural texture. Absolutely no grain, gritty noise, scratched metal, hard sharpened edges, fragmented highlights, giant ornaments or large empty hero scene. Quiet distant Chinese mountains and clouds only as a faint background. Highly usable desktop developer UI with restrained game character. Consistent precise spacing, crisp readable Simplified Chinese. Small decorative icons, large useful card area.
+
+LAYOUT:
+Header about 8% height: left small tasteful jade emblem then exact title "SSLM · 插件开发中心"; smaller subtitle "统一入口 · 调试与资源审核". Middle wide search field "搜索插件、功能或资源…". Right a small amber pill "设计稿 · 待确认" and a modest button "返回登录".
+Body has left sidebar 15% width, main catalog 58%, right detail pane 27%, neat gaps and aligned edges. Bottom slim status bar, never covering cards.
+
+LEFT sidebar:
+Label "插件目录".
+Selected row "全部插件 70".
+Below EXACT rows with small fine icons:
+"平台插件 41"
+"MOBA 插件 2"
+"项目插件 5"
+"资源内容包 20"
+"编辑器工具 2"
+Then separator and "我的收藏", "最近使用".
+A restrained small note near bottom "独立场景 · 统一入口".
+These counts are mutually exclusive categories and must be accurate.
+
+CENTER:
+Toolbar heading "全部插件", small view buttons "卡片" (selected) and "列表", compact filter "全部状态".
+Show NINE cards in a balanced 3-column by 3-row grid. Each card contains a small beautiful visual thumbnail in its upper part, a readable Chinese title, smaller exact English plugin identity, a small neutral status pill "待检查", and a tiny favorite star. Cards can be selected, NOT nine giant enter buttons. The first card is selected with clear golden fine border and softly lit jade base.
+Card 1 title "程序化场景"; identity "GamePlatformPCG"; thumbnail a hillside forest with a winding path and orderly/random tree scatter.
+Card 2 "材质与表面"; "GamePlatformSurface"; thumbnail four tactile jade/stone/wood/snow material spheres.
+Card 3 "视觉特效"; "GamePlatformVFX"; thumbnail a contained gold-orange fireball and crystalline blue ice.
+Card 4 "界面与主题"; "GamePlatformUI"; thumbnail elegant small green and sea-blue game buttons.
+Card 5 "水体系统"; "GamePlatformWater"; thumbnail a tranquil lake with natural shoreline.
+Card 6 "天气系统"; "GamePlatformWeather"; thumbnail mist, rain and falling snow over small scenery.
+Card 7 "音频系统"; "GamePlatformSFX"; thumbnail subtle teal sound wave, not stock headphones.
+Card 8 "世界与区域"; "GamePlatformWorld"; thumbnail a small isometric fantasy village.
+Card 9 "植物资源包"; "DBAFoliagePack_Core"; thumbnail graceful willow, ferns and flowers.
+Below the grid a restrained pagination control: "显示 1–9 / 70" and page buttons "1  2  3  …  8".
+
+RIGHT detail pane:
+Small label "插件详情".
+Title "程序化场景" and small "GamePlatformPCG".
+Medium landscape preview showing hillside trees, paths and a road exclusion corridor, richly rendered but contained within the pane.
+Under it section "主要功能" and three short neat rows:
+"固定种子散布"
+"坡度与区域过滤"
+"道路与建筑排除"
+Then clear modest status rows "场景：待加载" and "运行：未执行".
+At bottom one wide elegant EMERALD JADE primary button "进入插件工作台" with a small play arrow. Underneath two compact sea-blue secondary buttons "查看文档" and "收藏插件". The primary action has priority and enough breathing room.
+
+BOTTOM status bar:
+Left exact text "70 个插件 · 48 个代码插件 · 20 个内容包 · 2 个编辑器工具".
+Right "界面设计示意 · 非 UE 实机截图".
+Do not show invented successful performance measurements, live connection confirmations, fake completed tests, counters of ready plugins, or claim all plugin native review maps are already implemented.
+Keep all panels within frame. Every label aligned, every card consistent. This should look like a beautiful, finished professional game development hub that is easy to scan, not a dashboard with charts or an empty scenic loading screen.

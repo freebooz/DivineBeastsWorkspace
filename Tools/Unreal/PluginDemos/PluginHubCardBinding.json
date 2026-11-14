@@ -1,0 +1,677 @@
+{
+  "format_version": 1,
+  "asset_path": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginPortalCard",
+  "graph_name": "OnListItemObjectSet",
+  "graph_type": "function",
+  "nodes": [
+    {
+      "id": "K2Node_FunctionEntry_0",
+      "class": "K2Node_FunctionEntry",
+      "title": "OnListItemObjectSet",
+      "pos": [
+        0,
+        0
+      ],
+      "pins": [
+        {
+          "id": "12D4A1A046CE8230FE8EDCB1C70E61C2",
+          "name": "then",
+          "direction": "output",
+          "type": "exec",
+          "connected_to": [
+            "K2Node_DynamicCast_0.execute"
+          ]
+        },
+        {
+          "id": "E50F4E7C4A64832BE14988B34CDD9ACA",
+          "name": "ListItemObject",
+          "direction": "output",
+          "type": "object:Object",
+          "connected_to": [
+            "K2Node_DynamicCast_0.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K2Node_DynamicCast_0",
+      "class": "K2Node_DynamicCast",
+      "title": "Cast To DivineBeastsDemoMenuItem",
+      "pos": [
+        260,
+        0
+      ],
+      "pins": [
+        {
+          "id": "C6481F1147E9A03513E707A78B68ED1E",
+          "name": "execute",
+          "direction": "input",
+          "type": "exec",
+          "connected_to": [
+            "K2Node_FunctionEntry_0.then"
+          ]
+        },
+        {
+          "id": "C2F155754CA92A4468E73DB6FEE8DCAE",
+          "name": "then",
+          "direction": "output",
+          "type": "exec",
+          "connected_to": [
+            "K2Node_CallFunction_3.execute"
+          ]
+        },
+        {
+          "id": "5D34311C47C963A0C7D1C6A6A3AE68C8",
+          "name": "CastFailed",
+          "direction": "output",
+          "type": "exec",
+          "connected_to": []
+        },
+        {
+          "id": "97CA333D4846748B6CDD1CA7215300CC",
+          "name": "Object",
+          "direction": "input",
+          "type": "object:Object",
+          "connected_to": [
+            "K2Node_FunctionEntry_0.ListItemObject"
+          ]
+        },
+        {
+          "id": "75DEA79C414A3D36C3C634A7BDD284EF",
+          "name": "AsDivine Beasts Demo Menu Item",
+          "direction": "output",
+          "type": "object:DivineBeastsDemoMenuItem",
+          "connected_to": [
+            "K2Node_VariableGet_6.self"
+          ]
+        }
+      ],
+      "cast_class": "DivineBeastsDemoMenuItem"
+    },
+    {
+      "id": "K2Node_VariableGet_0",
+      "class": "K2Node_VariableGet",
+      "title": "Get CardTitles",
+      "pos": [
+        530,
+        200
+      ],
+      "pins": [
+        {
+          "id": "1CFC03384C3943F5D2698B8B510262A6",
+          "name": "CardTitles",
+          "direction": "output",
+          "type": "map:name",
+          "connected_to": [
+            "K2Node_CallFunction_0.TargetMap"
+          ]
+        }
+      ],
+      "variable_name": "CardTitles",
+      "is_self_context": true
+    },
+    {
+      "id": "K2Node_VariableGet_1",
+      "class": "K2Node_VariableGet",
+      "title": "Get CardDescriptions",
+      "pos": [
+        530,
+        460
+      ],
+      "pins": [
+        {
+          "id": "488E88924913E94AF0898E98080F3F61",
+          "name": "CardDescriptions",
+          "direction": "output",
+          "type": "map:name",
+          "connected_to": [
+            "K2Node_CallFunction_1.TargetMap"
+          ]
+        }
+      ],
+      "variable_name": "CardDescriptions",
+      "is_self_context": true
+    },
+    {
+      "id": "K2Node_VariableGet_3",
+      "class": "K2Node_VariableGet",
+      "title": "Get CardTitleText",
+      "pos": [
+        1530,
+        200
+      ],
+      "pins": [
+        {
+          "id": "2ED1716947790F8331C8DF8D9E79ACC7",
+          "name": "CardTitleText",
+          "direction": "output",
+          "type": "object:TextBlock",
+          "connected_to": [
+            "K2Node_CallFunction_3.self"
+          ]
+        }
+      ],
+      "variable_name": "CardTitleText",
+      "is_self_context": true
+    },
+    {
+      "id": "K2Node_VariableGet_4",
+      "class": "K2Node_VariableGet",
+      "title": "Get CardDescriptionText",
+      "pos": [
+        1530,
+        460
+      ],
+      "pins": [
+        {
+          "id": "5AADBFA3418BC3D46A0520B59358BA9C",
+          "name": "CardDescriptionText",
+          "direction": "output",
+          "type": "object:TextBlock",
+          "connected_to": [
+            "K2Node_CallFunction_4.self"
+          ]
+        }
+      ],
+      "variable_name": "CardDescriptionText",
+      "is_self_context": true
+    },
+    {
+      "id": "K2Node_VariableGet_5",
+      "class": "K2Node_VariableGet",
+      "title": "Get CardImage",
+      "pos": [
+        1530,
+        720
+      ],
+      "pins": [
+        {
+          "id": "4EE9EA6445B43E25640B578A2EEE1208",
+          "name": "CardImage",
+          "direction": "output",
+          "type": "object:Image",
+          "connected_to": [
+            "K2Node_CallFunction_7.self"
+          ]
+        }
+      ],
+      "variable_name": "CardImage",
+      "is_self_context": true
+    },
+    {
+      "id": "K2Node_CallFunction_0",
+      "class": "K2Node_CallFunction",
+      "title": "Find",
+      "pos": [
+        820,
+        200
+      ],
+      "function": "Map_Find",
+      "function_class": "BlueprintMapLibrary",
+      "pins": [
+        {
+          "id": "D824DC5A4F5EAA0BDBBE8FB5C483C3C9",
+          "name": "TargetMap",
+          "direction": "input",
+          "type": "map:name",
+          "is_reference": true,
+          "is_const": true,
+          "connected_to": [
+            "K2Node_VariableGet_0.CardTitles"
+          ]
+        },
+        {
+          "id": "5022B16A46356D5A0F25C4B95B0D4D7C",
+          "name": "Key",
+          "direction": "input",
+          "type": "name",
+          "is_reference": true,
+          "is_const": true,
+          "connected_to": [
+            "K2Node_VariableGet_6.Identity"
+          ]
+        },
+        {
+          "id": "508F236049DC66C76DE56CA1B0B8E7CF",
+          "name": "Value",
+          "direction": "output",
+          "type": "text",
+          "connected_to": [
+            "K2Node_CallFunction_3.InText"
+          ]
+        },
+        {
+          "id": "BF1289104720C24591CE0989913590A9",
+          "name": "ReturnValue",
+          "direction": "output",
+          "type": "bool",
+          "default_value": "false",
+          "connected_to": []
+        }
+      ]
+    },
+    {
+      "id": "K2Node_CallFunction_1",
+      "class": "K2Node_CallFunction",
+      "title": "Find",
+      "pos": [
+        820,
+        460
+      ],
+      "function": "Map_Find",
+      "function_class": "BlueprintMapLibrary",
+      "pins": [
+        {
+          "id": "9A42EC8345FC39A3CC1071A6590DF04B",
+          "name": "TargetMap",
+          "direction": "input",
+          "type": "map:name",
+          "is_reference": true,
+          "is_const": true,
+          "connected_to": [
+            "K2Node_VariableGet_1.CardDescriptions"
+          ]
+        },
+        {
+          "id": "6B00AE704861307193CAF999E5171FE4",
+          "name": "Key",
+          "direction": "input",
+          "type": "name",
+          "is_reference": true,
+          "is_const": true,
+          "connected_to": [
+            "K2Node_VariableGet_6.Identity"
+          ]
+        },
+        {
+          "id": "DEE6BD7E41FE37355D94F5AEC42B555F",
+          "name": "Value",
+          "direction": "output",
+          "type": "text",
+          "connected_to": [
+            "K2Node_CallFunction_4.InText"
+          ]
+        },
+        {
+          "id": "BA41081342737824B25659A834C885E5",
+          "name": "ReturnValue",
+          "direction": "output",
+          "type": "bool",
+          "default_value": "false",
+          "connected_to": []
+        }
+      ]
+    },
+    {
+      "id": "K2Node_CallFunction_3",
+      "class": "K2Node_CallFunction",
+      "title": "SetText (Text)\n目标是文本",
+      "pos": [
+        1150,
+        0
+      ],
+      "function": "SetText",
+      "function_class": "TextBlock",
+      "pins": [
+        {
+          "id": "71A2FE764ECDB9885056338FC846FAC3",
+          "name": "execute",
+          "direction": "input",
+          "type": "exec",
+          "connected_to": [
+            "K2Node_DynamicCast_0.then"
+          ]
+        },
+        {
+          "id": "C6ACCD344A7737AFB24A8D9DBEF1C31A",
+          "name": "then",
+          "direction": "output",
+          "type": "exec",
+          "connected_to": [
+            "K2Node_CallFunction_4.execute"
+          ]
+        },
+        {
+          "id": "4CC21EF14B0BC4FDCC9CB9A1AD72AB1D",
+          "name": "self",
+          "direction": "input",
+          "type": "object:TextBlock",
+          "connected_to": [
+            "K2Node_VariableGet_3.CardTitleText"
+          ]
+        },
+        {
+          "id": "4677769E4A3E4FA554C54E97983D03AB",
+          "name": "InText",
+          "direction": "input",
+          "type": "text",
+          "connected_to": [
+            "K2Node_CallFunction_0.Value"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K2Node_CallFunction_4",
+      "class": "K2Node_CallFunction",
+      "title": "SetText (Text)\n目标是文本",
+      "pos": [
+        1530,
+        0
+      ],
+      "function": "SetText",
+      "function_class": "TextBlock",
+      "pins": [
+        {
+          "id": "368BB6CC43244F4C12C76BA307423AC9",
+          "name": "execute",
+          "direction": "input",
+          "type": "exec",
+          "connected_to": [
+            "K2Node_CallFunction_3.then"
+          ]
+        },
+        {
+          "id": "8A3FF4504EB4343C4EAA3D91CE094015",
+          "name": "then",
+          "direction": "output",
+          "type": "exec",
+          "connected_to": [
+            "K2Node_CallFunction_7.execute"
+          ]
+        },
+        {
+          "id": "70913E8C4F628E5F6725DDBBCABE2514",
+          "name": "self",
+          "direction": "input",
+          "type": "object:TextBlock",
+          "connected_to": [
+            "K2Node_VariableGet_4.CardDescriptionText"
+          ]
+        },
+        {
+          "id": "47DA27924E3394A7BF560E8C2AA3092B",
+          "name": "InText",
+          "direction": "input",
+          "type": "text",
+          "connected_to": [
+            "K2Node_CallFunction_1.Value"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K2Node_VariableGet_6",
+      "class": "K2Node_VariableGet",
+      "title": "Get Identity",
+      "pos": [
+        520,
+        80
+      ],
+      "pins": [
+        {
+          "id": "A2B0271A4734DECE67886C852D7D4275",
+          "name": "Identity",
+          "direction": "output",
+          "type": "name",
+          "default_value": "None",
+          "connected_to": [
+            "K2Node_CallFunction_0.Key",
+            "K2Node_CallFunction_1.Key",
+            "K2Node_CallFunction_6.Key"
+          ]
+        },
+        {
+          "id": "5698659C4878ABE759CED084439633D0",
+          "name": "self",
+          "direction": "input",
+          "type": "object:DivineBeastsDemoMenuItem",
+          "connected_to": [
+            "K2Node_DynamicCast_0.AsDivine Beasts Demo Menu Item"
+          ]
+        }
+      ],
+      "variable_name": "Identity",
+      "variable_class": "DivineBeastsDemoMenuItem"
+    },
+    {
+      "id": "K2Node_VariableGet_7",
+      "class": "K2Node_VariableGet",
+      "title": "Get CardImages",
+      "pos": [
+        530,
+        720
+      ],
+      "pins": [
+        {
+          "id": "CBFF1B4C4742F0FF6C932D9BA2E2678E",
+          "name": "CardImages",
+          "direction": "output",
+          "type": "map:name",
+          "connected_to": [
+            "K2Node_CallFunction_6.TargetMap"
+          ]
+        }
+      ],
+      "variable_name": "CardImages",
+      "is_self_context": true
+    },
+    {
+      "id": "K2Node_CallFunction_6",
+      "class": "K2Node_CallFunction",
+      "title": "Find",
+      "pos": [
+        820,
+        720
+      ],
+      "function": "Map_Find",
+      "function_class": "BlueprintMapLibrary",
+      "pins": [
+        {
+          "id": "6F6B34FE4DAF24AF5A9EB49E7F21B89C",
+          "name": "TargetMap",
+          "direction": "input",
+          "type": "map:name",
+          "is_reference": true,
+          "is_const": true,
+          "connected_to": [
+            "K2Node_VariableGet_7.CardImages"
+          ]
+        },
+        {
+          "id": "675343E64FF828B6F5A78FB7C541C180",
+          "name": "Key",
+          "direction": "input",
+          "type": "name",
+          "is_reference": true,
+          "is_const": true,
+          "connected_to": [
+            "K2Node_VariableGet_6.Identity"
+          ]
+        },
+        {
+          "id": "0899C9E94EB58989854775B319D0F265",
+          "name": "Value",
+          "direction": "output",
+          "type": "object:Texture2D",
+          "connected_to": [
+            "K2Node_CallFunction_7.Texture"
+          ]
+        },
+        {
+          "id": "AB39854C4DE59077E469659535B29AEA",
+          "name": "ReturnValue",
+          "direction": "output",
+          "type": "bool",
+          "default_value": "false",
+          "connected_to": []
+        }
+      ]
+    },
+    {
+      "id": "K2Node_CallFunction_7",
+      "class": "K2Node_CallFunction",
+      "title": "Set Brush from Texture\n目标是图像",
+      "pos": [
+        1910,
+        0
+      ],
+      "function": "SetBrushFromTexture",
+      "function_class": "Image",
+      "pins": [
+        {
+          "id": "81995C63495C68B1BB0CBE94FD0C2472",
+          "name": "execute",
+          "direction": "input",
+          "type": "exec",
+          "connected_to": [
+            "K2Node_CallFunction_4.then"
+          ]
+        },
+        {
+          "id": "516855DB4737A19E0DC76B9AD09F4969",
+          "name": "then",
+          "direction": "output",
+          "type": "exec",
+          "connected_to": []
+        },
+        {
+          "id": "6BF616AA43C5D7D9BB2510B919A15F67",
+          "name": "self",
+          "direction": "input",
+          "type": "object:Image",
+          "connected_to": [
+            "K2Node_VariableGet_5.CardImage"
+          ]
+        },
+        {
+          "id": "625FA7C44C38D878CCBE2BB1B29C1967",
+          "name": "Texture",
+          "direction": "input",
+          "type": "object:Texture2D",
+          "connected_to": [
+            "K2Node_CallFunction_6.Value"
+          ]
+        },
+        {
+          "id": "071B0F644EE9A414D8872A8FF2DFA8B8",
+          "name": "bMatchSize",
+          "direction": "input",
+          "type": "bool",
+          "default_value": "true",
+          "connected_to": []
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from_node": "K2Node_FunctionEntry_0",
+      "from_pin": "then",
+      "to_node": "K2Node_DynamicCast_0",
+      "to_pin": "execute"
+    },
+    {
+      "from_node": "K2Node_FunctionEntry_0",
+      "from_pin": "ListItemObject",
+      "to_node": "K2Node_DynamicCast_0",
+      "to_pin": "Object"
+    },
+    {
+      "from_node": "K2Node_DynamicCast_0",
+      "from_pin": "then",
+      "to_node": "K2Node_CallFunction_3",
+      "to_pin": "execute"
+    },
+    {
+      "from_node": "K2Node_DynamicCast_0",
+      "from_pin": "AsDivine Beasts Demo Menu Item",
+      "to_node": "K2Node_VariableGet_6",
+      "to_pin": "self"
+    },
+    {
+      "from_node": "K2Node_VariableGet_0",
+      "from_pin": "CardTitles",
+      "to_node": "K2Node_CallFunction_0",
+      "to_pin": "TargetMap"
+    },
+    {
+      "from_node": "K2Node_VariableGet_1",
+      "from_pin": "CardDescriptions",
+      "to_node": "K2Node_CallFunction_1",
+      "to_pin": "TargetMap"
+    },
+    {
+      "from_node": "K2Node_VariableGet_3",
+      "from_pin": "CardTitleText",
+      "to_node": "K2Node_CallFunction_3",
+      "to_pin": "self"
+    },
+    {
+      "from_node": "K2Node_VariableGet_4",
+      "from_pin": "CardDescriptionText",
+      "to_node": "K2Node_CallFunction_4",
+      "to_pin": "self"
+    },
+    {
+      "from_node": "K2Node_VariableGet_5",
+      "from_pin": "CardImage",
+      "to_node": "K2Node_CallFunction_7",
+      "to_pin": "self"
+    },
+    {
+      "from_node": "K2Node_CallFunction_0",
+      "from_pin": "Value",
+      "to_node": "K2Node_CallFunction_3",
+      "to_pin": "InText"
+    },
+    {
+      "from_node": "K2Node_CallFunction_1",
+      "from_pin": "Value",
+      "to_node": "K2Node_CallFunction_4",
+      "to_pin": "InText"
+    },
+    {
+      "from_node": "K2Node_CallFunction_3",
+      "from_pin": "then",
+      "to_node": "K2Node_CallFunction_4",
+      "to_pin": "execute"
+    },
+    {
+      "from_node": "K2Node_CallFunction_4",
+      "from_pin": "then",
+      "to_node": "K2Node_CallFunction_7",
+      "to_pin": "execute"
+    },
+    {
+      "from_node": "K2Node_VariableGet_6",
+      "from_pin": "Identity",
+      "to_node": "K2Node_CallFunction_0",
+      "to_pin": "Key"
+    },
+    {
+      "from_node": "K2Node_VariableGet_6",
+      "from_pin": "Identity",
+      "to_node": "K2Node_CallFunction_1",
+      "to_pin": "Key"
+    },
+    {
+      "from_node": "K2Node_VariableGet_6",
+      "from_pin": "Identity",
+      "to_node": "K2Node_CallFunction_6",
+      "to_pin": "Key"
+    },
+    {
+      "from_node": "K2Node_VariableGet_7",
+      "from_pin": "CardImages",
+      "to_node": "K2Node_CallFunction_6",
+      "to_pin": "TargetMap"
+    },
+    {
+      "from_node": "K2Node_CallFunction_6",
+      "from_pin": "Value",
+      "to_node": "K2Node_CallFunction_7",
+      "to_pin": "Texture"
+    }
+  ]
+}

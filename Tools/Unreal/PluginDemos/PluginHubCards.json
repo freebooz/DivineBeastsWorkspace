@@ -1,0 +1,503 @@
+{
+  "Schema": 1,
+  "Purpose": "PresentationOnly",
+  "IdentitySource": "Docs/Implementation/PluginDemos/PluginDemoManifest.json",
+  "Columns": 3,
+  "Pagination": false,
+  "CardWidth": 580,
+  "CardHeight": 360,
+  "ThumbnailAspect": "16:9",
+  "Artwork": "用途插画，不代表运行或审核通过",
+  "Cards": [
+    {
+      "PluginId": "BlueprintAutoLayout",
+      "Title": "蓝图自动布局",
+      "Description": "整理蓝图节点布局，检查排列与连线可读性。",
+      "Image": "Tools/Unreal/PluginDemos/Art/BlueprintAutoLayout.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubBlueprintAutoLayout"
+    },
+    {
+      "PluginId": "DBAArena",
+      "Title": "项目竞技流程",
+      "Description": "检查SSLM竞技装配、模式配置与比赛入口。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAArena.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAArena"
+    },
+    {
+      "PluginId": "DBAClient",
+      "Title": "项目客户端装配",
+      "Description": "检查SSLM客户端界面、输入与表现装配。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAClient.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAClient"
+    },
+    {
+      "PluginId": "DBAContentPack_Common",
+      "Title": "公共角色资源",
+      "Description": "浏览通用角色模型、动画和共享内容。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAContentPackCommon.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAContentPackCommon"
+    },
+    {
+      "PluginId": "DBAFoliagePack_Core",
+      "Title": "植物资源包",
+      "Description": "浏览树木、灌木与草类，检查材质和植被配置。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAFoliagePackCore.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAFoliagePackCore"
+    },
+    {
+      "PluginId": "DBAFrontEndPack",
+      "Title": "登录与选角场景",
+      "Description": "浏览登录与选角内容，检查镜头和界面组合。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAFrontEndPack.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAFrontEndPack"
+    },
+    {
+      "PluginId": "DBAGameplay",
+      "Title": "项目技能与战斗",
+      "Description": "检查项目技能定义与战斗映射，保留服务器裁决。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAGameplay.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAGameplay"
+    },
+    {
+      "PluginId": "DBAHeroPack_Boar",
+      "Title": "亥猪英雄资源",
+      "Description": "浏览亥猪英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackBoar.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackBoar"
+    },
+    {
+      "PluginId": "DBAHeroPack_Dog",
+      "Title": "戌狗英雄资源",
+      "Description": "浏览戌狗英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackDog.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackDog"
+    },
+    {
+      "PluginId": "DBAHeroPack_Dragon",
+      "Title": "辰龙英雄资源",
+      "Description": "浏览辰龙英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackDragon.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackDragon"
+    },
+    {
+      "PluginId": "DBAHeroPack_Goat",
+      "Title": "未羊英雄资源",
+      "Description": "浏览未羊英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackGoat.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackGoat"
+    },
+    {
+      "PluginId": "DBAHeroPack_Horse",
+      "Title": "午马英雄资源",
+      "Description": "浏览午马英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackHorse.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackHorse"
+    },
+    {
+      "PluginId": "DBAHeroPack_Monkey",
+      "Title": "申猴英雄资源",
+      "Description": "浏览申猴英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackMonkey.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackMonkey"
+    },
+    {
+      "PluginId": "DBAHeroPack_Ox",
+      "Title": "丑牛英雄资源",
+      "Description": "浏览丑牛英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackOx.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackOx"
+    },
+    {
+      "PluginId": "DBAHeroPack_Rabbit",
+      "Title": "卯兔英雄资源",
+      "Description": "浏览卯兔英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackRabbit.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackRabbit"
+    },
+    {
+      "PluginId": "DBAHeroPack_Rat",
+      "Title": "子鼠英雄资源",
+      "Description": "浏览子鼠英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackRat.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackRat"
+    },
+    {
+      "PluginId": "DBAHeroPack_Rooster",
+      "Title": "酉鸡英雄资源",
+      "Description": "浏览酉鸡英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackRooster.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackRooster"
+    },
+    {
+      "PluginId": "DBAHeroPack_Snake",
+      "Title": "巳蛇英雄资源",
+      "Description": "浏览巳蛇英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackSnake.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackSnake"
+    },
+    {
+      "PluginId": "DBAHeroPack_Tiger",
+      "Title": "寅虎英雄资源",
+      "Description": "浏览寅虎英雄的模型、技能图标与专属表现资源。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAHeroPackTiger.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAHeroPackTiger"
+    },
+    {
+      "PluginId": "DBAPresentationPack_Core",
+      "Title": "公共表现资源",
+      "Description": "浏览公共法术特效与表现定义，检查资源引用。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAPresentationPackCore.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAPresentationPackCore"
+    },
+    {
+      "PluginId": "DBASFXPack_Core",
+      "Title": "公共音频资源",
+      "Description": "试听公共环境和战斗音频，检查资源与声音配置。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBASFXPackCore.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBASFXPackCore"
+    },
+    {
+      "PluginId": "DBAServer",
+      "Title": "项目专服装配",
+      "Description": "查看项目专服装配、角色配置与启动资格。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAServer.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAServer"
+    },
+    {
+      "PluginId": "DBAUIPack_Core",
+      "Title": "公共界面资源",
+      "Description": "浏览公共控件、玉石主题、字体和界面纹理。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAUIPackCore.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAUIPackCore"
+    },
+    {
+      "PluginId": "DBAWorldPack_MainArena",
+      "Title": "主竞技场资源",
+      "Description": "浏览竞技场地图与内容，检查场景资源引用。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAWorldPackMainArena.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAWorldPackMainArena"
+    },
+    {
+      "PluginId": "DBAWorldPack_Village",
+      "Title": "新手村资源",
+      "Description": "浏览新手村场景与内容，保留现有手工设计。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAWorldPackVillage.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAWorldPackVillage"
+    },
+    {
+      "PluginId": "DBAWorlds",
+      "Title": "项目世界装配",
+      "Description": "检查项目世界定义、出生配置与地图装配。",
+      "Image": "Tools/Unreal/PluginDemos/Art/DBAWorlds.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAWorlds"
+    },
+    {
+      "PluginId": "GamePlatformAI",
+      "Title": "AI 行为",
+      "Description": "观察行为决策、目标选择与移动，验证中止和恢复。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformAI.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformAI"
+    },
+    {
+      "PluginId": "GamePlatformAbilitySystem",
+      "Title": "技能与资格",
+      "Description": "检查施法资格、消耗与冷却，验证取消和失败。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformAbilitySystem.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformAbilitySystem"
+    },
+    {
+      "PluginId": "GamePlatformAnimation",
+      "Title": "动画与动作",
+      "Description": "预览角色动作、挂点和过渡，核对动画播放状态。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformAnimation.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformAnimation"
+    },
+    {
+      "PluginId": "GamePlatformApplicationFlow",
+      "Title": "应用流程",
+      "Description": "查看应用主流程，验证进入、取消和恢复路径。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformApplicationFlow.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformApplicationFlow"
+    },
+    {
+      "PluginId": "GamePlatformArena",
+      "Title": "通用竞技规则",
+      "Description": "检查通用竞技模式、队伍配置与比赛流程。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformArena.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformArena"
+    },
+    {
+      "PluginId": "GamePlatformCamera",
+      "Title": "镜头与画面",
+      "Description": "调节镜头位置与视角，检查跟随和过渡。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformCamera.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformCamera"
+    },
+    {
+      "PluginId": "GamePlatformCharacter",
+      "Title": "角色能力",
+      "Description": "检查角色生成、能力组件与状态切换。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformCharacter.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformCharacter"
+    },
+    {
+      "PluginId": "GamePlatformCombat",
+      "Title": "战斗与权威结果",
+      "Description": "检查权威伤害、治疗与投射物，核对战斗结果。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformCombat.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformCombat"
+    },
+    {
+      "PluginId": "GamePlatformCommerceUI",
+      "Title": "交易界面",
+      "Description": "预览交易控件与操作反馈，验证真实资格显示。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformCommerceUI.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformCommerceUI"
+    },
+    {
+      "PluginId": "GamePlatformCore",
+      "Title": "核心身份与版本",
+      "Description": "查看稳定身份、版本与基础契约的诊断信息。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformCore.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformCore"
+    },
+    {
+      "PluginId": "GamePlatformData",
+      "Title": "资源加载与租约",
+      "Description": "检查资源发现、加载与租约，验证失败和释放。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformData.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformData"
+    },
+    {
+      "PluginId": "GamePlatformDebug",
+      "Title": "调试观察",
+      "Description": "查看开发诊断与状态，定位运行异常。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformDebug.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformDebug"
+    },
+    {
+      "PluginId": "GamePlatformDeveloperTools",
+      "Title": "资源与架构校验",
+      "Description": "核查资源归属、引用和架构规则，查看校验报告。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformDeveloperTools.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformDeveloperTools"
+    },
+    {
+      "PluginId": "GamePlatformEntitlement",
+      "Title": "权益资格",
+      "Description": "检查权益资格与状态通知，验证拒绝和失效。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformEntitlement.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformEntitlement"
+    },
+    {
+      "PluginId": "GamePlatformEquipment",
+      "Title": "装备与挂点",
+      "Description": "检查装备槽位、挂点和外观同步。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformEquipment.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformEquipment"
+    },
+    {
+      "PluginId": "GamePlatformGameplay",
+      "Title": "玩法状态",
+      "Description": "检查玩法状态、规则组合与生命周期。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformGameplay.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformGameplay"
+    },
+    {
+      "PluginId": "GamePlatformInput",
+      "Title": "输入与焦点",
+      "Description": "检查键鼠与手柄输入、焦点移动和设备切换。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformInput.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformInput"
+    },
+    {
+      "PluginId": "GamePlatformInteraction",
+      "Title": "交互与资格",
+      "Description": "检查交互对象、距离与资格反馈。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformInteraction.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformInteraction"
+    },
+    {
+      "PluginId": "GamePlatformInventory",
+      "Title": "背包与物品",
+      "Description": "检查背包、物品数量与变化通知。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformInventory.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformInventory"
+    },
+    {
+      "PluginId": "GamePlatformLiveOps",
+      "Title": "运营活动",
+      "Description": "检查活动配置、开放条件与运行状态。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformLiveOps.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformLiveOps"
+    },
+    {
+      "PluginId": "GamePlatformLoading",
+      "Title": "加载与转场",
+      "Description": "查看加载反馈与转场，检查进度、取消和失败。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformLoading.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformLoading"
+    },
+    {
+      "PluginId": "GamePlatformLobby",
+      "Title": "常驻世界大厅体验",
+      "Description": "检查常驻世界大厅体验和入口，不创建独立服务器角色。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformLobby.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformLobby"
+    },
+    {
+      "PluginId": "GamePlatformLocalization",
+      "Title": "本地化",
+      "Description": "检查中文与多语言文本、格式和语言切换。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformLocalization.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformLocalization"
+    },
+    {
+      "PluginId": "GamePlatformNavigation",
+      "Title": "导航与寻路",
+      "Description": "查看寻路与移动状态，检查障碍、取消和恢复。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformNavigation.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformNavigation"
+    },
+    {
+      "PluginId": "GamePlatformOnline",
+      "Title": "在线服务",
+      "Description": "检查在线服务连接、请求失败与重试状态。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformOnline.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformOnline"
+    },
+    {
+      "PluginId": "GamePlatformPCG",
+      "Title": "程序化场景",
+      "Description": "生成森林与植被，控制密度、坡度和区域避让。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformPCG.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformPCG"
+    },
+    {
+      "PluginId": "GamePlatformPresentation",
+      "Title": "表现语义",
+      "Description": "核对表现语义、内容映射与失败回退。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformPresentation.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformPresentation"
+    },
+    {
+      "PluginId": "GamePlatformProgression",
+      "Title": "角色成长",
+      "Description": "检查角色成长、进度变化与状态反馈。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformProgression.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformProgression"
+    },
+    {
+      "PluginId": "GamePlatformQuest",
+      "Title": "任务与进度",
+      "Description": "检查任务目标、进度通知与完成反馈。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformQuest.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformQuest"
+    },
+    {
+      "PluginId": "GamePlatformSFX",
+      "Title": "音效与空间声场",
+      "Description": "试听环境与技能音效，检查音量、衰减和空间声场。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformSFX.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformSFX"
+    },
+    {
+      "PluginId": "GamePlatformSave",
+      "Title": "存档与恢复",
+      "Description": "检查存档读取、写入与恢复，使用隔离测试数据。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformSave.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformSave"
+    },
+    {
+      "PluginId": "GamePlatformServer",
+      "Title": "专服控制与准入",
+      "Description": "查看专服注册、就绪与准入，操作前核验执行资格。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformServer.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformServer"
+    },
+    {
+      "PluginId": "GamePlatformSession",
+      "Title": "会话与世界迁移",
+      "Description": "检查会话建立、断线恢复与世界迁移。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformSession.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformSession"
+    },
+    {
+      "PluginId": "GamePlatformSettings",
+      "Title": "设置与偏好",
+      "Description": "调节声音与画面偏好，检查应用和恢复默认值。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformSettings.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformSettings"
+    },
+    {
+      "PluginId": "GamePlatformSurface",
+      "Title": "表面与材质",
+      "Description": "预览材质层次，调节颜色、粗糙度与表面细节。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformSurface.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformSurface"
+    },
+    {
+      "PluginId": "GamePlatformTelemetry",
+      "Title": "遥测与诊断",
+      "Description": "查看运行事件与诊断数据，检查采集生命周期。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformTelemetry.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformTelemetry"
+    },
+    {
+      "PluginId": "GamePlatformUI",
+      "Title": "界面与主题",
+      "Description": "预览通用控件与主题，检查布局和交互状态。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformUI.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformUI"
+    },
+    {
+      "PluginId": "GamePlatformVFX",
+      "Title": "粒子与特效",
+      "Description": "查看法术与环境特效，调整形态、色彩和表现。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformVFX.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformVFX"
+    },
+    {
+      "PluginId": "GamePlatformVillage",
+      "Title": "教学与训练体验",
+      "Description": "检查新手教学、训练流程与体验切换。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformVillage.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformVillage"
+    },
+    {
+      "PluginId": "GamePlatformWater",
+      "Title": "水域与水面",
+      "Description": "调节湖泊与河流，预览水面、岸线与水下表现。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformWater.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformWater"
+    },
+    {
+      "PluginId": "GamePlatformWeather",
+      "Title": "天气与环境",
+      "Description": "预览晴雨雪雾，调整光照、强度和天气过渡。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformWeather.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformWeather"
+    },
+    {
+      "PluginId": "GamePlatformWorld",
+      "Title": "世界生命周期",
+      "Description": "检查世界上下文、区域加载与进入退出生命周期。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GamePlatformWorld.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformWorld"
+    },
+    {
+      "PluginId": "GlooPrint",
+      "Title": "蓝图整理与注释",
+      "Description": "整理蓝图排版和注释，保持现有执行逻辑。",
+      "Image": "Tools/Unreal/PluginDemos/Art/GlooPrint.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGlooPrint"
+    },
+    {
+      "PluginId": "MobaPresentation",
+      "Title": "MOBA 表现语义",
+      "Description": "检查竞技事实到表现语义的转换与去重。",
+      "Image": "Tools/Unreal/PluginDemos/Art/MobaPresentation.png",
+      "Texture": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubMobaPresentation"
+    }
+  ]
+}

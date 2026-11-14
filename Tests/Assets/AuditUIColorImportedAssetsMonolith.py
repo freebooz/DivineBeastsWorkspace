@@ -26,7 +26,7 @@ def main():
     if not ui_roots:
         raise RuntimeError("UI审计目标范围不能为空")
     for ui_root in ui_roots:
-        if ui_root == "/DBAUIPack_Core/UI/":
+        if ui_root in ("/DBAUIPack_Core/UI/", "/DBAUIPack_Core/Development/PluginDemos/Textures/"):
             continue
         mount = ui_root.split("/")[1] if isinstance(ui_root, str) and ui_root.startswith("/") else ""
         descriptor = root / "Game/Plugins/DivineBeasts/ContentPacks/Heroes" / mount / (mount + ".uplugin")
