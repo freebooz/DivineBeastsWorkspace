@@ -1,6 +1,8 @@
-# 工作空间文档
+# 《神兽联盟王者争霸》（简称《神兽联盟》）工作空间文档
 
-更新日期：2026-11-11。以下分别列出现行规范、实施文档与历史来源；不能用目录规划或聊天中的完成描述替代真实验证结果。
+项目身份：正式名称《神兽联盟王者争霸》；中文简称《神兽联盟》；项目代号SSLM；UE工程身份DivineBeastsArena；工作空间/仓库DivineBeastsWorkspace。
+
+更新日期：2026-11-12。以下分别列出现行规范、实施文档与历史来源；不能用目录规划或聊天中的完成描述替代真实验证结果。
 
 ## 现行规则与规划
 
@@ -8,7 +10,15 @@
 
 
 - [SSLM统一艺术光照实验室（Lighting Lab）设计规格](Implementation/SSLM_LightingLab_Design_20261111.md) 与 [实施计划](Implementation/SSLM_LightingLab_ImplementationPlan_20261111.md)：独立开发关卡、六套柔和艺术光照候选、阴影角扫描、三档质量/GI对照及UE5.8真实验收边界；云端代码不冒充原生地图资产，开发目录已登记NeverCook及三服务器排除，预检复用已有Monolith Nanite槽位映射证据。
-- [SSLM全局美术配色策略与色彩设计规范 V3.0](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)：全局美术与色彩唯一权威文档；2026-11-11增补“一景一幅山水画、一帧一幅视觉作品”的全域场景审美原则，并确定Village湖边群山与峭壁专属基准图；本轮继续加入全场景柔和艺术光照、UE5.8光影/间接光/雾效/曝光/色彩分级方法及分级性能验收要求。
+- [SSLM全局美术艺术指导与视觉质量规范 V4.0](Art/SSLM全局美术艺术指导与视觉质量规范_V4.0.md)：当前全局美术唯一权威规范，继承V3.0色彩基线，新增八大艺术体系、五项高级技术、区域艺术指导卡、UE5.8实现边界、Lighting Lab L1—L8映射及六维视觉验收/否决条件。
+- [SSLM教程配图与技术示意图规范 V1.0](Art/SSLM_Tutorial_Illustration_Policy_V1.0.md)：所有神兽联盟教程优先使用ChatGPT Image原创配图；真实软件界面、节点连线和参数须以实际版本核验，外部图片必须标注来源。
+- [清澈翡翠湖泊与静水深潭艺术指导专项](Implementation/Water/SSLM_ClearEmeraldLake_ArtDirection_20261112.md)：V4.0下属L5水体专项，登记用户确认的静水视觉基准、参考来源哈希、UE5.8实现边界和六类固定验收视角；不代表原生水体资产已完成。
+- [V4.0设计规格](Implementation/SSLM_ArtDirectionV4_Design_20261111.md) 与 [V4.0实施计划](Implementation/SSLM_ArtDirectionV4_ImplementationPlan_20261111.md)：版本治理、Lighting Lab扩展任务和后续原生资产验收顺序。
+- [SSLM Lighting Lab L1—L8全量实施路线与验收任务书](Implementation/SSLM_LightingLab_L1-L8_ExecutionRoadmap_20261111.md)：按光照、材质、地形、植被、水体、战斗可读性、天气时间、平台回归顺序定义输入、交付证据和放行门禁。
+- [L2 Painterly PBR材质样板区实施规格](Implementation/SSLM_L2_PainterlyPBR_MaterialLookDev_20261111.md)：继承现有材质三层所有权、命名质量门禁、PBR通道和覆盖层物理规则，定义10类材质样板、M01—M08固定机位及UE5.8技术/视觉验收。
+- [L3山水地形、山体与峭壁艺术化实施规格](Implementation/SSLM_L3_TerrainCliffLandscape_20261111.md)：定义Gaea高度图/Mask合同、Landscape十层PBR、Nanite岩石、RVT真实写入采样、游戏可达性、固定机位和GPU/冷重载验收。
+- [V4.0视觉审核矩阵](../Tools/Unreal/World/SSLM_ArtDirectionV4_ReviewMatrix_V1.json)：八大艺术体系检查项、证据类型、验收状态和否决条件；仅为审核矩阵，不是UE数据资产。
+- [SSLM全局美术配色策略与色彩设计规范 V3.0（历史版本）](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)：保留原始sRGB色彩基线和历史决策，当前全局艺术方向以V4.0为准。
 - [SSLM参考颜色语义索引 V3.0](Art/SSLMColorRegistry_V3.json)：41项初始屏幕sRGB参考色与8项待审核的战斗功能色语义；派生候选数据，不是UE数据资产。
 - [SSLM十层地形纹理及材质V3.0真实审查与整改](Implementation/TerrainColorV3ComplianceReview_20261018.md)：已有V3色彩候选并获用户授权覆盖正式地形基础色；10层基础色已UE5.8原位重导入并独立冷重载10/10，泥土Dirt阻断解决；Village地图未修改，共享母材质已按新手村纹理轰炸和V3默认草地要求合法更新，六态D3D12像素有效性、正式Village三景别真实截图及服务器/客户端Cook通过，游戏客户端软纹理/完整地貌/GPU耗时与人工美术验收仍待完成。
 

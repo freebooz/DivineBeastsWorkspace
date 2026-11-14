@@ -66,3 +66,19 @@
 ## 8. 实施交付边界
 
 本次云端实施交付源代码、配置、离线测试、设计/执行计划及目录索引，并将`/Game/Development/LightingLab`加入`Game/Config/DefaultGame.ini`的NeverCook与`Build/Game/ServerPresentationExclusions.json`的AllServers排除。`Game/Content/Development/LightingLab/README.md`只保留目录所有权说明。真实`.umap`副本、UE参数回读、PIE截图、GPU数据和人工签收必须由家中开发PC的UE5.8编辑器与Monolith MCP执行后再登记；本次云端提交不得宣称这些原生验收已完成。
+
+
+## 9. 与SSLM全局美术规范V4.0的关系
+
+V4.0将Lighting Lab定位为艺术指导的原生验证载体之一，而不是只服务于光照数值的孤立工具。现有V1仍只覆盖L1光照/曝光/GI/阴影候选；不改变现有脚本和参数合同，后续按独立任务扩展：
+
+- **L1（现有V1范围）：** 六套光照候选、五档Source Angle、GI/质量对照、固定镜头和性能证据。
+- **L2（待扩展）：** 材质LookDev样板，覆盖草、泥土、岩石、木材、金属、湿面和雪；检查PBR通道、色彩空间、Shader Complexity与细节频率。
+- **L3（待扩展）：** 地形与峭壁，检查Landscape层混合、Nanite岩层、RVT融合、山体轮廓和近中远景。
+- **L4（待扩展）：** SpeedTree/竹叶簇/樱花树/芭蕉树、Landscape Grass与PCG群落，检查密度、视线留白、风动、阴影和过绘。
+- **L5（待扩展）：** 湖泊/岸线/河流/瀑布，检查水深、反射、泡沫、湿岩、岸线融合和透明过绘。
+- **L6（待扩展）：** 角色与战斗镜头，检查英雄轮廓、敌我辨识、技能危险区、多人叠加和战斗公平。
+- **L7（待扩展）：** 天气与时间，使用同机位比较清晨、晴天、阴天、黄昏、夜间和雨雪，记录曝光、白平衡、雾和天空状态。
+- **L8（待扩展）：** High/Medium/Low及目标平台回归，记录GPU/CPU/内存、流送、画质回退和缺陷。
+
+L2—L8目前属于设计与实施任务，不代表已有原生测试区或资产已创建。所有新增测试区仍必须在UE5.8 Editor/Monolith真实创建、保存、冷重载，并继续遵守Lighting Lab NeverCook与三服务器排除规则。

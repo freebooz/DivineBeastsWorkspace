@@ -1,0 +1,514 @@
+{
+  "schema_version": 1,
+  "id": "SSLM_ArtDirectionV4_ReviewMatrix",
+  "version": "1.0",
+  "status": "design_review_matrix_not_ue_asset",
+  "source_policy": "Docs/Art/SSLM全局美术艺术指导与视觉质量规范_V4.0.md",
+  "lighting_lab": {
+    "current_phase": "L1_lighting_exposure_baseline",
+    "current_v1_scope": [
+      "six_lighting_profiles",
+      "five_source_angle_samples",
+      "three_quality_tiers",
+      "three_gi_modes",
+      "five_fixed_camera_views"
+    ],
+    "pending_phases": [
+      "L2_material_lookdev",
+      "L3_terrain_cliffs",
+      "L4_foliage_biomes",
+      "L5_water_shoreline",
+      "L6_character_combat_readability",
+      "L7_weather_time",
+      "L8_platform_scalability"
+    ],
+    "note": "现有Lighting Lab V1云端代码已合并main；原生地图/PIE/GPU/人工验收需在开发PC完成。"
+  },
+  "systems": [
+    {
+      "id": "A1",
+      "name": "山水构图与景观叙事",
+      "checks": [
+        "主景/次景/前景/远景层次",
+        "视觉锚点与视线通廊",
+        "留白与可达路线",
+        "玩家镜头与战斗镜头构图"
+      ],
+      "evidence": [
+        "fixed_camera_screenshots",
+        "gameplay_video",
+        "art_review"
+      ]
+    },
+    {
+      "id": "A2",
+      "name": "形态语言与轮廓节奏",
+      "checks": [
+        "大中小三级形态",
+        "地貌/建筑/植被轮廓差异",
+        "地质与结构逻辑",
+        "角色与背景轮廓分离"
+      ],
+      "evidence": [
+        "silhouette_sheet",
+        "scene_screenshots",
+        "art_review"
+      ]
+    },
+    {
+      "id": "A3",
+      "name": "柔和艺术光照与明暗塑形",
+      "checks": [
+        "主光方向",
+        "半影与接触阴影",
+        "天空/间接补光",
+        "曝光稳定",
+        "雾层不遮挡玩法"
+      ],
+      "evidence": [
+        "lighting_lab_capture",
+        "cvar_readback",
+        "gpu_cpu_profile",
+        "art_review"
+      ]
+    },
+    {
+      "id": "A4",
+      "name": "区域色彩脚本",
+      "checks": [
+        "主色/辅色/点缀色",
+        "时段/天气色彩变化",
+        "战斗语义色稳定",
+        "灰度与色觉辅助"
+      ],
+      "evidence": [
+        "color_script",
+        "fixed_exposure_capture",
+        "color_accessibility_review"
+      ]
+    },
+    {
+      "id": "A5",
+      "name": "艺术化PBR材质",
+      "checks": [
+        "BaseColor/Normal/ORM正确",
+        "粗糙度与金属度合理",
+        "大中小细节频率",
+        "sRGB/Linear正确",
+        "材质采样与过绘"
+      ],
+      "evidence": [
+        "material_settings",
+        "shader_complexity",
+        "lookdev_capture",
+        "asset_validation"
+      ]
+    },
+    {
+      "id": "A6",
+      "name": "自然生态与生物群落",
+      "checks": [
+        "地形/水分/坡向分布逻辑",
+        "乔灌草层级",
+        "密度与留白",
+        "LOD/风动/实例化",
+        "视线和战斗空间"
+      ],
+      "evidence": [
+        "biome_distribution",
+        "foliage_counts",
+        "overdraw_profile",
+        "gameplay_capture"
+      ]
+    },
+    {
+      "id": "A7",
+      "name": "水体/建筑/道具融合",
+      "checks": [
+        "水深/反射/折射/泡沫",
+        "岸线湿润过渡",
+        "建筑落位与结构逻辑",
+        "碰撞/导航/交互"
+      ],
+      "evidence": [
+        "water_capture",
+        "shoreline_capture",
+        "collision_nav_test",
+        "art_review"
+      ]
+    },
+    {
+      "id": "A8",
+      "name": "战斗可读性与镜头艺术",
+      "checks": [
+        "英雄/敌人轮廓",
+        "技能/危险范围辨识",
+        "路径/交互可见",
+        "色觉辅助",
+        "多人叠加与公平视野"
+      ],
+      "evidence": [
+        "combat_capture",
+        "grayscale_capture",
+        "color_vision_review",
+        "gameplay_signoff"
+      ]
+    }
+  ],
+  "acceptance": {
+    "states": [
+      "not_started",
+      "candidate",
+      "technical_pass",
+      "art_review_pending",
+      "accepted",
+      "rejected"
+    ],
+    "required_context": [
+      "ue_version",
+      "map_or_asset_path",
+      "camera",
+      "fov",
+      "resolution",
+      "quality_tier",
+      "platform",
+      "rhi",
+      "weather_time",
+      "exposure",
+      "lighting_profile",
+      "gpu_cpu_memory_metrics",
+      "reviewer",
+      "review_date"
+    ],
+    "veto_conditions": [
+      "critical_gameplay_information_occluded",
+      "unreadable_enemy_or_skill",
+      "uncontrolled_overexposure_or_black_crush",
+      "invalid_pbr_or_color_space",
+      "unsupported_feature_without_fallback",
+      "native_asset_cold_reload_failed",
+      "target_device_performance_unverified",
+      "human_signoff_missing"
+    ]
+  },
+  "execution_roadmap": "Docs/Implementation/SSLM_LightingLab_L1-L8_ExecutionRoadmap_20261111.md",
+  "phases": [
+    {
+      "id": "L1",
+      "title": "光照与曝光基线",
+      "status": "candidate_cloud_code_native_validation_pending",
+      "inputs": [
+        "LightingLab V1六套光照候选",
+        "Source Angle五档",
+        "GI/画质对照"
+      ],
+      "deliverables": [
+        "固定机位A/B截图",
+        "CVar回读",
+        "冷重载报告",
+        "GPU/CPU数据",
+        "美术签收"
+      ],
+      "acceptance_gate": "正式地图哈希不变、冷重载通过、目标PC性能与人工审核通过",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L2",
+      "title": "Painterly PBR材质样板",
+      "status": "planned",
+      "inputs": [
+        "L1批准光照/曝光",
+        "现有材质和纹理源文件"
+      ],
+      "deliverables": [
+        "材质源清单",
+        "BaseColor/Normal/ORM通道审查",
+        "材质实例参数表",
+        "Shader/纹理内存报告",
+        "LookDev截图"
+      ],
+      "acceptance_gate": "PBR通道和色彩空间正确、近中远细节协调、目标设备成本通过",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ],
+      "implementation_spec": "Docs/Implementation/SSLM_L2_PainterlyPBR_MaterialLookDev_20261111.md",
+      "preflight_constraints": [
+        "reuse_existing_material_ownership_and_quality_contracts",
+        "do_not_create_parallel_material_plugin_or_master",
+        "revalidate_asset_registry_before_using_historical_inventory",
+        "L1_approved_lighting_and_exposure_required_for_final_lookdev_signoff",
+        "no_native_uasset_claim_without_UE5.8_editor_save_compile_and_cold_reload"
+      ]
+    },
+    {
+      "id": "L3",
+      "title": "地形与峭壁",
+      "status": "planned",
+      "inputs": [
+        "L1光照基线",
+        "L2材质候选",
+        "Gaea高度图/Mask和Landscape资产"
+      ],
+      "deliverables": [
+        "地形构图图",
+        "坡度/高度/曲率Mask",
+        "Nanite/RVT证据",
+        "碰撞导航审核",
+        "GPU/内存报告"
+      ],
+      "acceptance_gate": "地质与构图可信、岩土水岸融合自然、碰撞/导航有效",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ],
+      "implementation_spec": "Docs/Implementation/SSLM_L3_TerrainCliffLandscape_20261111.md",
+      "preflight_constraints": [
+        "reuse_existing_terrain_pbr_and_material_function_pipeline",
+        "preserve_formal_village_map_and_shared_material_identity",
+        "revalidate_asset_registry_and_historical_terrain_evidence_before_execution",
+        "Gaea_height_and_masks_require_versioned_manifest_hash_and_UE_coordinate_mapping",
+        "RVT_requires_real_writer_reader_assets_and_cold_reload_evidence",
+        "Nanite_rocks_require_fallback_collision_navigation_and_target_device_profile",
+        "L1_Lighting_and_L2_material_candidates_must_not_be_marked_approved_without_gates"
+      ]
+    },
+    {
+      "id": "L4",
+      "title": "植被生态群落",
+      "status": "planned",
+      "inputs": [
+        "L1光照基线",
+        "L2树皮/叶片/地表材质",
+        "L3地形生态Mask",
+        "SpeedTree源资产"
+      ],
+      "deliverables": [
+        "生态分布图",
+        "乔灌草密度规则",
+        "ISM/HISM/Landscape Grass/PCG对照",
+        "过绘/WPO/阴影/LOD报告",
+        "视线截图"
+      ],
+      "acceptance_gate": "物种分布自然、路径和战斗视线清楚、性能成本通过",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L5",
+      "title": "水体与岸线",
+      "status": "planned",
+      "inputs": [
+        "L1光照基线",
+        "L2湿岩/岸线材质",
+        "L3湖盆岸线",
+        "UE WaterBody资产",
+        "用户确认的清澈翡翠青绿静水视觉基准",
+        "现有GamePlatformWater/GamePlatformSurface资产合同"
+      ],
+      "deliverables": [
+        "湖泊全景/近岸浅水/中浅水/深水/水下/Gameplay Camera六类截图",
+        "浅水可见底与水下岩层结构证据",
+        "深水吸收渐变与柔和环境反射对照",
+        "岸线湿润/泡沫/水生植物截图",
+        "反射透明性能报告",
+        "游泳潜水与水下可读性测试"
+      ],
+      "acceptance_gate": "浅水可见真实底部结构、深水自然加深但不发黑、反射不遮挡水下、静水波动低幅缓慢、岸线过渡自然；WaterBody/游泳潜水合同完整，目标设备GPU成本和人工视觉验收通过",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ],
+      "implementation_spec": "Docs/Implementation/Water/SSLM_ClearEmeraldLake_ArtDirection_20261112.md",
+      "reference_provenance": {
+        "type": "user_supplied_reference_image",
+        "date": "2026-11-12",
+        "source_sha256": "d3ae75216c8d903746a35e2af6f5191da274db74c0bf963fb447fbb03034fe64",
+        "dimensions": "1280x731",
+        "repository_binary": "not_included_in_this_docs_only_change"
+      },
+      "visual_baseline": [
+        "shallow_water_transparent_with_visible_real_bottom",
+        "underwater_rock_layers_remain_readable_in_shallow_and_mid_shallow_depth",
+        "emerald_cyan_green_depth_gradient",
+        "deep_water_darkens_gradually_without_black_crush",
+        "soft_environment_reflections_do_not_hide_underwater_content",
+        "low_amplitude_low_frequency_slow_surface_ripples",
+        "layered_shallow_shore_shelves_wet_rocks_gravel_and_sparse_aquatic_plants",
+        "static_lake_baseline_does_not_define_river_or_waterfall_dynamics"
+      ],
+      "preflight_constraints": [
+        "reuse_existing_water_system_gameplatformwater_and_gameplatformsurface_ownership",
+        "preserve_existing_water_material_parent_and_waterbody_swim_dive_underwater_contracts",
+        "do_not_create_parallel_water_plugin_runtime_or_duplicate_master_material",
+        "no_final_numeric_water_material_parameters_without_fixed_exposure_ue58_calibration_and_art_review",
+        "do_not_modify_formal_village_water_assets_before_isolated_l5_acceptance_and_explicit_integration_approval",
+        "no_native_asset_claim_without_ue58_editor_save_compile_cold_reload_and_target_device_evidence"
+      ]
+    },
+    {
+      "id": "L6",
+      "title": "角色与战斗可读性",
+      "status": "planned",
+      "inputs": [
+        "L1批准光照",
+        "L2-L5环境候选",
+        "英雄/VFX/HUD资产"
+      ],
+      "deliverables": [
+        "战斗镜头截图和视频",
+        "灰度/色觉辅助",
+        "敌我轮廓测试",
+        "AOE/弹道/交互遮挡报告"
+      ],
+      "acceptance_gate": "敌我与技能信息清楚、无不公平视野、玩法负责人签收",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L7",
+      "title": "天气与时间色彩脚本",
+      "status": "planned",
+      "inputs": [
+        "L1光照基线",
+        "L2-L6已验收环境候选",
+        "现有天气状态架构"
+      ],
+      "deliverables": [
+        "同机位时段天气对照",
+        "区域色彩脚本",
+        "曝光/白平衡切换记录",
+        "天气集成报告"
+      ],
+      "acceptance_gate": "曝光色彩变化稳定、区域识别保持、天气系统唯一真源",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    },
+    {
+      "id": "L8",
+      "title": "画质与平台回归",
+      "status": "planned",
+      "inputs": [
+        "L1-L7验收候选",
+        "已确认的目标硬件/平台矩阵"
+      ],
+      "deliverables": [
+        "平台能力矩阵",
+        "High/Medium/Low回退表",
+        "GPU/CPU/显存流送报告",
+        "视觉一致性截图",
+        "最终签收"
+      ],
+      "acceptance_gate": "所有已确认平台满足批准预算和玩法可读性、回退质量获批",
+      "required_context": [
+        "ue_version",
+        "map_or_asset_path",
+        "camera",
+        "fov",
+        "resolution",
+        "quality_tier",
+        "platform",
+        "rhi",
+        "weather_time",
+        "exposure",
+        "gpu_cpu_memory_metrics",
+        "evidence_paths",
+        "reviewer",
+        "review_date"
+      ]
+    }
+  ]
+}
