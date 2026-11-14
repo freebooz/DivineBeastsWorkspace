@@ -19,7 +19,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/DBAArena.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAArena",
-      "SHA256": "948cf7c028a4394ed668c8f867fdefb6033e744db348f766bc6aef5b3961fe00"
+      "SHA256": "3b7b8d3ca504726a1e9a1d04be1f8a0a5b4a7d2f4b07fde523aa1092c9702bcd"
     },
     {
       "PluginId": "DBAClient",
@@ -40,14 +40,14 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/DBAFoliagePackCore.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAFoliagePackCore",
-      "SHA256": "cc11101f45de66f98eb0955809d7e09e691584a744bcda69d7531888c085ce74"
+      "SHA256": "276f8cecf65ae0eea47318222bd28098c766c6489088ef083012256d8d8a342e"
     },
     {
       "PluginId": "DBAFrontEndPack",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/DBAFrontEndPack.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAFrontEndPack",
-      "SHA256": "febbb09ddf36686829bee44b3c697b23fd5c4c50d53088af15a19d2b53794067"
+      "SHA256": "d4d3c04af02a330e2a325647e0cac01a3148595a54bff59773344ce92797d4c6"
     },
     {
       "PluginId": "DBAGameplay",
@@ -166,7 +166,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/DBAUIPackCore.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubDBAUIPackCore",
-      "SHA256": "a962f7d0c4eb38ea478465c0db2508217b6907a9f041a1e063dba982210a8208"
+      "SHA256": "b57e002b9cca36b485b867f672ecdbeaa6bf2c65b8ad975367d2cacef664add7"
     },
     {
       "PluginId": "DBAWorldPack_MainArena",
@@ -194,7 +194,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformAI.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformAI",
-      "SHA256": "e0f6bcca735500f3e731b4f8c25833befdc247670588d11d47ea150eeade5dfa"
+      "SHA256": "06bf3db393ac7439d660f55bab783c2a4f377447448ab2dbf4422ff7dd5c31dc"
     },
     {
       "PluginId": "GamePlatformAbilitySystem",
@@ -208,7 +208,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformAnimation.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformAnimation",
-      "SHA256": "01022e641b2daa939757e989774bf1779a00ea595a307f535f6a9130ea870412"
+      "SHA256": "62e74c386423a4b66f71766fe7d9728c400106c43ecf9aeaf8c6342097b4171a"
     },
     {
       "PluginId": "GamePlatformApplicationFlow",
@@ -222,14 +222,14 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformArena.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformArena",
-      "SHA256": "574e7859110d12bec7473641618542c58f4abdb9d4ec2c98d0c022ed090d1594"
+      "SHA256": "d28fbe7e3957e7f93f8bf44d94b748b64c7deb49b918b70931196c48994f5c17"
     },
     {
       "PluginId": "GamePlatformCamera",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformCamera.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformCamera",
-      "SHA256": "7a5011cc6a5ba212946abc79b7bc58abddea8cf644079773861ef4d768e6b3eb"
+      "SHA256": "11e915284b5f4188ea165cb7fdd3d3461b7688a3fd073c470962c895ed5abb1d"
     },
     {
       "PluginId": "GamePlatformCharacter",
@@ -264,28 +264,28 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformData.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformData",
-      "SHA256": "05c82d14fc11ebd74412290e7dd76d6eae530a4a593946c637fcc1d1e05e3a22"
+      "SHA256": "e0fa6e13d5d1d6a7af87ed4cccc3538e566593d46d496ba7f9afdf192a1dbc83"
     },
     {
       "PluginId": "GamePlatformDebug",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformDebug.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformDebug",
-      "SHA256": "64303b6871a17ad411ba19c60629685cd2ba7d611183514bab475f146076e1e6"
+      "SHA256": "38b71127bd10cbc855bb39a55cd2c62524056be4506e75295e0de41f0b3a632b"
     },
     {
       "PluginId": "GamePlatformDeveloperTools",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformDeveloperTools.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformDeveloperTools",
-      "SHA256": "4d62da05c6094a105ad794c70e222536b3372dd537833003339b3512108a49b3"
+      "SHA256": "7a2108d4c1a49f052799cec0093d2f59d31a03f537763ae44c9948032e044fa3"
     },
     {
       "PluginId": "GamePlatformEntitlement",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformEntitlement.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformEntitlement",
-      "SHA256": "6f00171c51838cacb85f00f05364706a669ab607bfa4357858c8bdc4845e3e72"
+      "SHA256": "8f34af1ce3bfd2ee03bb704ac988afa2ec226f2cc7dd50bcf5512fd9ced7ec7c"
     },
     {
       "PluginId": "GamePlatformEquipment",
@@ -313,7 +313,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformInteraction.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformInteraction",
-      "SHA256": "1248c91019218f0a99f7b7206cb375adae442879e5c4b633b1c36270c89d273f"
+      "SHA256": "9a4abb25fc5e53efcf6530b605a01ffca01d4bcb38f6be0536297eac7a61e7c4"
     },
     {
       "PluginId": "GamePlatformInventory",
@@ -327,7 +327,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformLiveOps.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformLiveOps",
-      "SHA256": "328568436b6a003ad2aa86dd91815fe2f28067a82f881cc6e2fbfdb8a21b372f"
+      "SHA256": "acdfdbea93b367b297f07ee94f4840c0f897adc8de98d73edc4b37451cbb4130"
     },
     {
       "PluginId": "GamePlatformLoading",
@@ -341,7 +341,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformLobby.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformLobby",
-      "SHA256": "657a3b7bd44626d91824325e71709a62decffb7b412f4031486e39af65af36c6"
+      "SHA256": "18c3a5afa36adad2692715584abd7bded586825af2f69944e9d2c91bba889725"
     },
     {
       "PluginId": "GamePlatformLocalization",
@@ -355,14 +355,14 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformNavigation.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformNavigation",
-      "SHA256": "94f23926f9e2c552beb6338588a760cee6f2bf5e62166c3d5763906aa5250c5b"
+      "SHA256": "74f73bd6e6bafc393f2d4239108e7af273fbd30191cabf907da7e4c17455cf38"
     },
     {
       "PluginId": "GamePlatformOnline",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformOnline.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformOnline",
-      "SHA256": "c9d30c2ac8045b9eac2823d0bf371ea270cba057c807505cf406711cc7b29599"
+      "SHA256": "dcee1933f6db063b1fb069d0b8f5e11a2d3b1410258439efc66f8e5cf0fb346f"
     },
     {
       "PluginId": "GamePlatformPCG",
@@ -383,7 +383,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformProgression.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformProgression",
-      "SHA256": "7772370af8ffdb3b17478076e4753725c176cec3fcdd31b20739e7df701c1fcd"
+      "SHA256": "ac1ba9c0eea2dd3540dd2ff399193e180c3e55ad3d2af1f4bbbf907ef6e0f930"
     },
     {
       "PluginId": "GamePlatformQuest",
@@ -411,7 +411,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformServer.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformServer",
-      "SHA256": "5e3592d7c45d6580ee7dfa4d44534c2acd68617935366afde42f860b2582c752"
+      "SHA256": "e60808f9058f1834c9950b5bb9ca584dfe71f3b656885f288867d72c44f519d2"
     },
     {
       "PluginId": "GamePlatformSession",
@@ -453,35 +453,35 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformVFX.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformVFX",
-      "SHA256": "b71dafb4aa4cebcc431d477a5dffa42526fe2d85293ed50a2316a6bc4a9b1306"
+      "SHA256": "cff14f97fd79fcab9a437f458ce1d67c413f6b069b76d298a2efd617fa9ba494"
     },
     {
       "PluginId": "GamePlatformVillage",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformVillage.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformVillage",
-      "SHA256": "336042d6c3e795a66d9c108026ac401c8350241e9e15642fe16595cfce0f661b"
+      "SHA256": "d5055e07b718e655b050c75714438059b9ad1fe5bca24e3fa87eef1263c9e547"
     },
     {
       "PluginId": "GamePlatformWater",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformWater.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformWater",
-      "SHA256": "77529b63c949d182cc57acc2f061dcd4cd79aabb262a8b70314291db66d668d0"
+      "SHA256": "ca0a3e54ffab6d4da1db838be476bc835d5e2baeed6222a843ec01d32632fb1a"
     },
     {
       "PluginId": "GamePlatformWeather",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformWeather.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformWeather",
-      "SHA256": "eeb033318a71ab1f42bbd488a1c62b5695ce3bafac1043ced0cf674a1192c591"
+      "SHA256": "c559c7b44b3654c8411a18278510320efe651e4fcaa8581cdcba8a1c2a808457"
     },
     {
       "PluginId": "GamePlatformWorld",
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/GamePlatformWorld.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubGamePlatformWorld",
-      "SHA256": "9f9e851a952b2c32fa6f94042c1fd88979fd1fc3a709e12162d180fcc7a0bd0e"
+      "SHA256": "7499d90815760fd4027415e8ea308f500c47babae947520001673ec851f2535b"
     },
     {
       "PluginId": "GlooPrint",
@@ -495,7 +495,7 @@
       "Role": "Color",
       "Source": "Tools/Unreal/PluginDemos/Art/MobaPresentation.png",
       "Destination": "/DBAUIPack_Core/Development/PluginDemos/Textures/Plugins/TPluginHubMobaPresentation",
-      "SHA256": "313f3ac03c0da104b301049419fed3224214af761cf8a85b1daf199a4bd50e72"
+      "SHA256": "b69ead4b63bf671c19288b1d443e2f182c2640b8c8520ccad01c6bf5536a2ca0"
     }
   ]
 }
