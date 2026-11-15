@@ -87,5 +87,6 @@
 - 正式本地启动器在读取快速登录账号前检查 Client／Server 构建、双端 Cook/Stage、战斗指纹和实际 Village／MainArena 实例。构建证明合同的 40 个隔离用例通过。两端完整增量构建共用 `fadc90ef-be2d-462e-9696-f7997eaaf84c`，战斗指纹一致。
 - `.inl` 及 DBAClient 模块门禁回归通过，实时头文件扫描覆盖 2,130 处引用、零缺失。两份误入仓库的本地产物已移回 `Saved`。两份 Water 同名地图经原生核对，分别是开发演示与诊断地图，需在迁移时同步更新各自的正式消费者。
 - 正式 `L_Village_Start` 复用现有 Landscape 实例。按当地湖面与山顶高程归一化，岩石约在 254–280 米完成过渡，积雪约在 365–391 米完成高程过渡，坡度控制陡壁积雪，手绘道路和耕地得到保护。Monolith 编译、保存、重载并回读既有地图绑定和材质链接。基色截图及原生证据位于 `Saved/Validation/SSLMRemediation20261115/NativeEditor`。
-- 专服 Cook/Stage、服务器表现剥离及资源归属门禁通过。以本次制品启动的 Village 和 MainArena 已由实际控制面确认 `Ready`。两个空服各采集 14 个约 2 秒区间，Village 平均占 9.45% 的单核 CPU、工作集 323.0 MiB，MainArena 分别为 2.04% 和 295.8 MiB。原始样本见 `Saved/Validation/SSLMRemediation20261115/ServerIdleProcesses.csv`。
-- 完整实机验收仍需取得客户端 Cook/Stage、两客户端竞技入场／退场／返程、画面审核以及负载下客户端、专服与后端性能。旧包、单帧和 PIE 样本保留原验证范围。
+- 专服 Cook/Stage、服务器表现剥离及资源归属门禁通过。以本次制品启动的 Village 和 MainArena 已由实际控制面确认 `Ready`。两个无人在线的专服各采集 14 个约 2 秒区间，Village 平均占 9.45% 的单核 CPU、工作集 323.0 MiB，MainArena 分别为 2.04% 和 295.8 MiB。Village 日志记录该次布置受安全区、间距、NavMesh 及地形条件限制，实际生成 147 只狼。原始样本见 `Saved/Validation/SSLMRemediation20261115/ServerIdleProcesses.csv`。
+- 客户端 Cook/Stage 首次缺少 5 个系统的同次编译记录，并将 ShaderCompileWorker 启动耗时误判为编译问题。修正后全部 15 个 Niagara 系统取得同次编译记录，真实 IoStore 门禁通过，并读到两份新手村材质的非空导出。Client Cook `b9a47eb4-424a-4d22-9a00-cbc87b5356ac` 与 Server Cook `ea086d8f-21a9-48d7-a1fe-1609597ddbe5` 战斗指纹一致。
+- 完整实机验收仍需两客户端竞技入场／退场／返程、画面审核以及负载下客户端、专服与后端性能。旧包、单帧和 PIE 样本保留原验证范围。
