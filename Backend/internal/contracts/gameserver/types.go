@@ -175,6 +175,9 @@ func (a Assignment) Validate() error {
 	return nil
 }
 
+// ArenaServerAssignmentID把已确认的MatchID映射到专服任务和准入共同使用的身份。
+func ArenaServerAssignmentID(matchID string) string { return "match:" + matchID }
+
 // ServerAssignment（统一服务器任务）供Dedicated Server查询自身运行上下文。
 // WorldAssignment用于OpenWorld/Village；ArenaAssignment用于MainArena，二者只允许一个非空。
 type ServerAssignment struct {

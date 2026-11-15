@@ -2110,6 +2110,33 @@ void UDivineBeastsApplicationFlowSubsystem::TryCompleteWorldReady()
     }
 }
 
+bool UDivineBeastsApplicationFlowSubsystem::TryRecoverArenaEntry()
+{
+    if (!FlowContext || !Online || !ActiveTransferOperationId.IsValid()) { return false; }
+    const auto& Assignment = FlowContext->GetAssignment();
+    const auto Auth = Online->GetSnapshot();
+    const auto Token = GetCurrentNodeToken();
+    if (!Token.IsValid() || (Token.NodeId != FDivineBeastsFlowNodes::TransferWorld() &&
+        Token.NodeId != FDivineBeastsFlowNodes::WorldReady()) ||
+        Assignment.ServerRoleId != FDivineBeastsProjectCatalog::GetMainArenaServerRole() ||
+        Assignment.AssignmentId.IsEmpty() || !Auth.AuthGeneration.IsValid() ||
+        Auth.SessionId.IsEmpty() || Auth.SessionId != Assignment.SessionId)
+    {
+        return false;
+    }
+    if (ArenaEntryRecoveryToken.Handle.ScopeId == Token.Handle.ScopeId &&
+        ArenaEntryRecoveryToken.Handle.RunId == Token.Handle.RunId && ArenaEntryRecoveryToken.NodeGeneration == Token.NodeGeneration)
+    {
+        return true;
+    }
+    if (!SubmitCurrentNodeEvent(Token.NodeId, FGamePlatformFlowNodeResult::Success(FDivineBeastsFlowOutcomes::Recover())))
+    {
+        return false;
+    }
+    ArenaEntryRecoveryToken = Token;
+    return true;
+}
+
 void UDivineBeastsApplicationFlowSubsystem::FailWorldReady(
     EDivineBeastsFlowError Error)
 {
@@ -2405,6 +2432,7 @@ void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
 
     if (IsSessionFailureState(Snapshot.State))
     {
+        if (TryRecoverArenaEntry()) { return; }
         if (IsCurrentNode(FDivineBeastsFlowNodes::TransferWorld()))
         {
             SetError(EDivineBeastsFlowError::AdmissionFailed);
@@ -2481,6 +2509,7 @@ void UDivineBeastsApplicationFlowSubsystem::ObserveCurrentGameplayWorld()
         }
         if(!bOwned)return;
     }
+    if (Presentation.bTrustedReturnAvailable && TryRecoverArenaEntry()) { return; }
     const FName WorldId = ViewState.Assignment.WorldId;
     const FName ExperienceId = ViewState.Assignment.ExperienceId;
     if(!LoadingContext->HasWorldDefinition() || !World->HasBegunPlay())return;

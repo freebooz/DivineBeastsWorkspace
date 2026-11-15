@@ -265,6 +265,8 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SpawnPlayer(
     // 保存值而非跨初始化广播借用TMap元素，其他玩家重入出生可能使Map重新分配。
     const int32 SpawnGeneration = ++ExpectedGeneration;
     SpawnGenerations.Add(PlayerId, SpawnGeneration);
+    // 开局出生已经验证归属；在角色初始化广播前登记，终止事务才能撤回半完成的实体。
+    if (ExpectedPhase == EGamePlatformArenaMatchPhase::Countdown) { SpawnedPawns.Add(PlayerId, Character); }
 
     FGamePlatformCharacterInitializationContext Context;
     Context.CharacterId = State->CharacterId;
@@ -478,6 +480,23 @@ bool FDivineBeastsArenaGameplayLifecycleAdapter::SetPlayerGameplayActive(const F
         OutReason.Reset(); return true;
     }
     OutReason = TEXT("未找到本装配自有且当前受控的Roster Pawn。"); return false;
+}
+
+void FDivineBeastsArenaGameplayLifecycleAdapter::RollbackPlayerStart(const FString& PlayerId)
+{
+    check(IsInGameThread());
+    auto* Mode = GameMode.Get();
+    if (!Mode || !Mode->HasAuthority() || !Mode->IsGameplayLifecycleAdapter(this, Mode->GetGameplayLifecycleBindingId()) ||
+        (Mode->GetMatchPhase() != EGamePlatformArenaMatchPhase::Aborted && Mode->GetMatchPhase() != EGamePlatformArenaMatchPhase::Failed))
+    {
+        return;
+    }
+    TWeakObjectPtr<APawn> OwnedPawn;
+    if (SpawnedPawns.RemoveAndCopyValue(PlayerId, OwnedPawn) && OwnedPawn.IsValid() && OwnedPawn->GetWorld() == Mode->GetWorld())
+    {
+        UnbindPawnDeath(PlayerId);
+        OwnedPawn->Destroy();
+    }
 }
 
 bool FDivineBeastsArenaGameplayLifecycleAdapter::CaptureRespawnContext(

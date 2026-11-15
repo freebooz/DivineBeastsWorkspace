@@ -20,16 +20,22 @@ public:
     TMap<FString,AGamePlatformArenaPlayerController*> Controllers;
     TMap<FString,APawn*> Pawns;
     int32 Spawns=0,Respawns=0,Restores=0,InactiveCalls=0;
+    FString FailSpawnFor;
     bool CapturePlayerGameplayOwnership(const FString& Player,FGamePlatformArenaGameplayOwnership& Out)const override
     {Out={};if(auto* Pawn=Pawns.FindRef(Player)){Out.Pawn=Pawn;Out.AvatarGeneration=1;return true;}return false;}
     bool SpawnPlayer(const FString& Player,FName,FName,FString& Error)override
     {
+        if (Player == FailSpawnFor) { Error = TEXT("测试出生失败"); return false; }
         auto* Controller=Controllers.FindRef(Player);if(!World||!Controller){Error=TEXT("测试控制器缺失");return false;}
         auto* Pawn=World->SpawnActor<APawn>();if(!Pawn){Error=TEXT("测试Pawn创建失败");return false;}
         Controller->Possess(Pawn);Pawns.Add(Player,Pawn);++Spawns;Error.Reset();return true;
     }
     bool SetPlayerGameplayActive(const FString& Player,bool bActive,FString& Error)override
     {if(!bActive)++InactiveCalls;Error.Reset();return Pawns.Contains(Player);}
+    void RollbackPlayerStart(const FString& Player) override
+    {
+        if (APawn* Pawn = Pawns.FindRef(Player)) { Pawns.Remove(Player); Pawn->Destroy(); }
+    }
     bool RequestRespawn(const FString&,FName,FName,float,FString& Error)override
     {++Respawns;Error=TEXT("单局测试禁止复活");return false;}
     bool RestorePlayerConnection(const FString& Player,FString& Error)override
@@ -145,6 +151,87 @@ bool FGamePlatformArenaEliminationTest::RunTest(const FString&)
                     Assignment.Roster[0].CharacterId);
             }
         }
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGamePlatformArenaStartAbortTest, "GamePlatform.Arena.Lifecycle.StartAbort",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FGamePlatformArenaStartAbortTest::RunTest(const FString&)
+{
+    for (const bool bDisconnect : {false, true})
+    {
+        FEliminationWorldOwner Owned;
+        const auto Initialization = UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(false)
+            .CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
+        Owned.World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &Initialization);
+        if (!TestNotNull(TEXT("开局回归世界"), Owned.World)) return false;
+        Owned.World->InitializeActorsForPlay(FURL());
+        Owned.Mode = Owned.World->SpawnActor<AGamePlatformArenaGameMode>();
+        if (!TestNotNull(TEXT("权威Arena GameMode"), Owned.Mode)) return false;
+        auto& Mode = *Owned.Mode;
+        Mode.DispatchBeginPlay();
+        Owned.Lifecycle.World = Owned.World;
+        Mode.SetGameplayLifecycleAdapter(&Owned.Lifecycle);
+        Mode.SetHeroEligibilityProvider(&Owned.Heroes);
+
+        auto Spec = FGamePlatformArenaBuiltinModes::GetAll()[0];
+        Spec.SelectionPolicyId = TEXT("Arena.Selection.LockedRoster");
+        FGamePlatformArenaAssignment Assignment;
+        Assignment.MatchId = TEXT("test-arena-start");
+        Assignment.GameServerId = TEXT("test-arena-server");
+        Assignment.ArenaModeId = Spec.ArenaModeId;
+        Assignment.MapId = Spec.MapId;
+        Assignment.TeamSize = Spec.TeamSize;
+        Assignment.TotalPlayers = Spec.TotalPlayers;
+        for (int32 Index = 0; Index < Spec.TotalPlayers; ++Index)
+        {
+            auto& Slot = Assignment.Roster.AddDefaulted_GetRef();
+            Slot.PlayerId = FString::Printf(TEXT("player-%d"), Index);
+            Slot.CharacterId = FString::Printf(TEXT("character-%d"), Index);
+            Slot.TeamId = Index < Spec.TeamSize ? TEXT("team-a") : TEXT("team-b");
+            Slot.HeroDefinitionId = TEXT("Test.LockedHero");
+            Slot.SlotIndex = Index;
+        }
+        FString Error;
+        if (!TestTrue(TEXT("接受有效分配"), Mode.ApplyAssignmentWithModeSpec(Assignment, Spec, Error))) return false;
+        for (const auto& Slot : Assignment.Roster)
+        {
+            auto* Controller = Owned.World->SpawnActor<AGamePlatformArenaPlayerController>();
+            auto* State = Owned.World->SpawnActor<AGamePlatformArenaPlayerState>();
+            if (!Controller || !State) return false;
+            Controller->PlayerState = State;
+            State->SetOwner(Controller);
+            Owned.Lifecycle.Controllers.Add(Slot.PlayerId, Controller);
+            FGamePlatformArenaTransferTicketClaims Claims;
+            Claims.PlayerId = Slot.PlayerId;
+            Claims.CharacterId = Slot.CharacterId;
+            Claims.MatchId = Assignment.MatchId;
+            Claims.DestinationServerId = Assignment.GameServerId;
+            Claims.bConsumed = true;
+            Claims.ExpiresAtUtc = FDateTime::UtcNow() + FTimespan::FromMinutes(1);
+            if (!TestTrue(TEXT("已验证名册准入"), Mode.AdmitPlayer(State, Claims, Error))) return false;
+        }
+        TestEqual(TEXT("已进入开战倒计时"), Mode.GetMatchPhase(), EGamePlatformArenaMatchPhase::Countdown);
+        int32 Notices = 0;
+        int32 Results = 0;
+        Mode.OnResultPending().AddLambda([&Results](const FGamePlatformArenaMatchResult&) { ++Results; });
+        Mode.OnMatchStartAborted().AddLambda([&](EGamePlatformArenaStartAbortReason Reason)
+        {
+            ++Notices;
+            TestEqual(TEXT("广播权威终止原因"), Reason, bDisconnect
+                ? EGamePlatformArenaStartAbortReason::PlayerDisconnected : EGamePlatformArenaStartAbortReason::SpawnFailed);
+            TestEqual(TEXT("通知前已撤回半成品出生"), Owned.Lifecycle.Pawns.Num(), 0);
+        });
+        if (bDisconnect) { Mode.MarkPlayerDisconnected(Assignment.Roster.Last().PlayerId); }
+        else { Owned.Lifecycle.FailSpawnFor = Assignment.Roster.Last().PlayerId; }
+        Mode.StartMatchFromCountdown();
+        Mode.StartMatchFromCountdown();
+        TestEqual(TEXT("终止进入权威终态"), Mode.GetMatchPhase(), bDisconnect
+            ? EGamePlatformArenaMatchPhase::Aborted : EGamePlatformArenaMatchPhase::Failed);
+        TestEqual(TEXT("倒计时断线不出生，部分出生失败后不继续"), Owned.Lifecycle.Spawns, bDisconnect ? 0 : 1);
+        TestEqual(TEXT("每场只通知一次"), Notices, 1);
+        TestEqual(TEXT("开局终止不创建胜负结果"), Results, 0);
     }
     return true;
 }

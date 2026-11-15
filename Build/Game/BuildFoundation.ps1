@@ -62,6 +62,9 @@ try {
         if ($UsePrecompiled) { $arguments += '-UsePrecompiled' }
         if ($NoUBA) { $arguments += '-NoUBA' }
         $fullEditor = $target -eq 'Editor' -and $OnlyModules.Count -eq 0
+        $pairedTarget = $target -ne 'Editor' -and -not $OnlyModules.Count -and -not $WithoutArena -and
+            -not $AdditionalPlugins.Count -and -not $UsePrecompiled
+        if ($pairedTarget) { $battleInput = Get-FoundationBattleInputSHA256 -Workspace $context.Workspace }
         if ($fullEditor) {
             # 快照在真实进程之前完成；失败只留下不合格的诊断清单，不允许事后给旧DLL补证。
             $before = Get-FoundationCompileInputInventory -Workspace $context.Workspace
@@ -73,6 +76,14 @@ try {
         if ($result.ExitCode -ne 0) { $code = $result.ExitCode; break }
         if ($target -ne 'Editor' -and -not $OnlyModules.Count) {
             $details.Targets[-1].TargetAssembly = Read-FoundationTargetAssembly -Workspace $context.Workspace -Target $target -WithoutArena:$WithoutArena
+            if ($pairedTarget) {
+                if ((Get-FoundationBattleInputSHA256 -Workspace $context.Workspace) -cne $battleInput) {
+                    throw "完整 $target 构建期间战斗合同变化。"
+                }
+                $exe = Join-Path $context.Workspace "Game/Binaries/Win64/DivineBeastsArena$target.exe"
+                $details.Targets[-1].BattleInputSHA256 = $battleInput
+                $details.Targets[-1].ExecutableSHA256 = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash
+            }
         }
         if ($fullEditor) {
             try {

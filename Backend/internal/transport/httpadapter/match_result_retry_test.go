@@ -47,7 +47,9 @@ func (s *transientResultStore) InsertWithEvent(ctx context.Context, result match
 func TestMatchResultHTTPRecoversAndReplaysAcknowledgementAfterRelease(t *testing.T) {
 	ctx := context.Background()
 	store := &transientResultStore{MemoryResultStore: match.NewMemoryResultStore(), fail: true}
-	service := gameservercontrol.NewService(gameserver.NewRegistry(), servertransfer.NewService([]byte("01234567890123456789012345678901"), time.Now), match.NewResultService(store), time.Now)
+	controlNow := time.Now().UTC()
+	clock := func() time.Time { return controlNow }
+	service := gameservercontrol.NewService(gameserver.NewRegistry(), servertransfer.NewService([]byte("01234567890123456789012345678901"), clock), match.NewResultService(store), clock)
 	projection := &transientResultProjection{MemoryArenaLifecycleStore: gameservercontrol.NewMemoryArenaLifecycleStore(), fail: true}
 	if err := service.ConfigureArenaLifecycle(projection); err != nil {
 		t.Fatal(err)
@@ -105,6 +107,9 @@ func TestMatchResultHTTPRecoversAndReplaysAcknowledgementAfterRelease(t *testing
 	if response := post(result, registration.ServerBootID); response.Code != http.StatusServiceUnavailable {
 		t.Errorf("lost control projection status = %d, want 503", response.Code)
 	}
+	if err := service.ReportArenaStartAbort(ctx, gameservercontrol.ArenaStartAbortInput{MatchID: assignment.MatchID, GameServerID: registration.GameServerID, ServerBootID: registration.ServerBootID, Reason: "spawn_failed"}); !errors.Is(err, gameservercontrol.ErrArenaStartAbortConflict) {
+		t.Errorf("start abort can neither replace nor hide an already durable result: %v", err)
+	}
 	if err := service.CancelArena(ctx, assignment.MatchID); err == nil {
 		t.Fatal("fault cancellation overrode an already durable result")
 	}
@@ -115,7 +120,11 @@ func TestMatchResultHTTPRecoversAndReplaysAcknowledgementAfterRelease(t *testing
 	if first.Code != http.StatusOK {
 		t.Fatalf("retry status = %d", first.Code)
 	}
+	controlNow = controlNow.Add(time.Second)
 	if err := service.Heartbeat(registration.GameServerID, 0, gameserver.StatusActive); err != nil {
+		t.Fatal(err)
+	}
+	if err := service.ReportServerDrain(registration.GameServerID, registration.ServerBootID); err != nil {
 		t.Fatal(err)
 	}
 	if err := service.FinalizeArena(ctx, assignment.MatchID); err != nil {

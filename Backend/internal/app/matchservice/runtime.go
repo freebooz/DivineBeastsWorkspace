@@ -22,7 +22,7 @@ type CandidateStore interface {
 	CommitCandidatePhase(context.Context, string, string, string, time.Time) error
 }
 
-// RuntimeControl使用有Context的真实控制面调用；所有网络请求必须受工作步骤租约截止时间约束。
+// RuntimeControl使用有Context的真实控制面调用；产生副作用的请求必须受工作步骤租约截止时间约束。
 type RuntimeControl interface {
 	AllocateMainArenaContext(context.Context, gameservercontrol.AllocateMainArenaInput) (gameservercontract.Assignment, error)
 	IssueTransferContext(context.Context, gameservercontrol.IssueTransferInput) (servertransfer.Ticket, error)
@@ -175,7 +175,7 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 			}
 			actor := value.Contexts[slot.PlayerID]
 			call, cancel := context.WithDeadline(ctx, minDeadline(value.LeaseUntilUTC, value.DeadlineUTC))
-			ticket, e := r.control.IssueTransferContext(call, gameservercontrol.IssueTransferInput{TicketID: value.TicketIDs[slot.PlayerID], AssignmentID: "match:" + value.MatchID, GameID: value.Candidate.GameID, PlayerID: slot.PlayerID, SessionID: actor.SessionID, SourceGameServerID: actor.SourceGameServerID, DestinationGameServerID: value.Assignment.GameServerID, DestinationWorldID: value.MapID, DestinationExperienceID: gameservercontract.ExperienceMainArenaMain, MatchID: value.MatchID, TTL: 60 * time.Second})
+			ticket, e := r.control.IssueTransferContext(call, gameservercontrol.IssueTransferInput{TicketID: value.TicketIDs[slot.PlayerID], AssignmentID: gameservercontract.ArenaServerAssignmentID(value.MatchID), GameID: value.Candidate.GameID, PlayerID: slot.PlayerID, SessionID: actor.SessionID, SourceGameServerID: actor.SourceGameServerID, DestinationGameServerID: value.Assignment.GameServerID, DestinationWorldID: value.MapID, DestinationExperienceID: gameservercontract.ExperienceMainArenaMain, MatchID: value.MatchID, TTL: 60 * time.Second})
 			cancel()
 			if e != nil {
 				return e
@@ -223,6 +223,9 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 		} else if value.Stage != "returning" && (status.Record.State == "cancelled" || !status.ServerAlive || ((value.Stage == "committed" || value.Stage == "inMatch") && !value.DeadlineUTC.IsZero() && !r.now().Before(value.DeadlineUTC))) {
 			value.Stage = "rollingBack"
 			value.FaultCode = "MATCH_ENTRY_FAILED"
+			if status.Record.StartAbortReason != "" {
+				value.FaultCode = "MATCH_START_ABORTED"
+			}
 			if err = save(); err != nil {
 				return err
 			}
@@ -234,7 +237,7 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 				return err
 			}
 		}
-		if value.Stage == "returning" && (!status.ServerAlive || (status.CurrentPlayers == 0 && !status.HeartbeatAtUTC.Before(status.Record.UpdatedAtUTC))) {
+		if value.Stage == "returning" && (!status.ServerAlive || status.CanFinalizeLiveArena()) {
 			if err = project(); err != nil {
 				return err
 			}
@@ -276,7 +279,7 @@ func (r *Runtime) ProcessCandidate(ctx context.Context, candidate matchmaking.Ca
 			value.DeadlineUTC = time.Time{}
 		} else if cancelErr != nil {
 			return cancelErr
-		} else if status.ServerAlive && status.CurrentPlayers > 0 {
+		} else if (status.ServerAlive && status.CurrentPlayers > 0) || hasArenaPresence(status, "") {
 			value.Stage = "returning"
 			value.DeadlineUTC = time.Time{}
 		} else {
@@ -323,6 +326,39 @@ func migrationForTicket(ticket servertransfer.Ticket, character, mapID, region, 
 	return matchmaking.Migration{AssignmentID: ticket.AssignmentID, GameServerID: ticket.DestinationGameServerID, ServerRoleID: role, ExperienceID: ticket.DestinationExperienceID, WorldID: ticket.DestinationWorldID, MapID: mapID, RegionID: region, TicketID: ticket.TicketID, CharacterID: character, SessionID: ticket.SessionID, GameSessionID: ticket.GameSessionID, ServerBootID: ticket.DestinationServerBootID, ProtocolVersion: ticket.DestinationProtocolVersion, SessionEpoch: ticket.SessionEpoch, Endpoint: ticket.DestinationEndpoint, TransferTicket: string(payload)}, nil
 }
 
+// hasArenaPresence核对真实准入位置；空玩家身份仅供编排器判断是否有任何人尚未返程。
+func hasArenaPresence(status gameservercontrol.ArenaStatus, playerID string) bool {
+	if status.Record.Assignment.Arena == nil || status.Record.ServerBootID == "" {
+		return false
+	}
+	for _, presence := range status.Presences {
+		if (playerID == "" || presence.PlayerID == playerID) && presence.MatchID == status.Record.Assignment.Arena.MatchID && presence.GameServerID == status.Record.Assignment.GameServerID && presence.ServerBootID == status.Record.ServerBootID {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *Runtime) activeArenaStatus(ctx context.Context, value Operation) (gameservercontrol.ArenaStatus, error) {
+	status, err := r.control.GetArenaStatus(ctx, value.MatchID)
+	if err != nil {
+		return status, err
+	}
+	if !status.ServerAlive || status.Record.State != "active" || status.Record.ServerBootID == "" || status.Record.Assignment.Arena == nil || status.Record.Assignment.Arena.MatchID != value.MatchID || value.Assignment == nil || status.Record.Assignment.GameServerID != value.Assignment.GameServerID {
+		return status, errors.New("MATCH_MIGRATION_EXPIRED: 原竞技实例已结束或失效")
+	}
+	return status, nil
+}
+
+// initialArenaTicket只读已提交的原票；同玩家已有恢复意图时，不能发回可能被撤销的旧票。
+func initialArenaTicket(value Operation, actor matchmaking.ActorContext, now time.Time) (servertransfer.Ticket, bool) {
+	ticket, found := value.Tickets[actor.PlayerID]
+	_, reconnecting := value.Reconnects[actor.PlayerID]
+	return ticket, found && !reconnecting && ticket.TicketID != "" && ticket.TicketID == value.TicketIDs[actor.PlayerID] &&
+		ticket.PlayerID == actor.PlayerID && ticket.SessionID == actor.SessionID && actor.SessionID == value.Contexts[actor.PlayerID].SessionID &&
+		ticket.Signature != "" && ticket.MatchID == value.MatchID && now.Before(ticket.ExpiresAt)
+}
+
 // GetMigration严格按本人、锁定角色和已提交步骤取票；返回必须重新分配来源体验，不复用历史地址。
 func (r *Runtime) GetMigration(ctx context.Context, actor matchmaking.ActorContext, request matchmaking.MigrationRequest) (matchmaking.Migration, error) {
 	proposal, err := r.proposal(ctx, request.CandidateID)
@@ -332,6 +368,20 @@ func (r *Runtime) GetMigration(ctx context.Context, actor matchmaking.ActorConte
 	locked, member := proposal.Contexts[actor.PlayerID]
 	if !member || locked.CharacterID != actor.CharacterID || locked.HeroDefinitionID != actor.HeroDefinitionID {
 		return matchmaking.Migration{}, errors.New("MATCH_FORBIDDEN: 不是本局锁定角色")
+	}
+	if request.SourceAssignmentID != "" && (request.Direction != "return" || proposal.Assignment == nil || gameservercontract.ArenaServerAssignmentID(proposal.MatchID) != request.SourceAssignmentID) {
+		return matchmaking.Migration{}, errors.New("MATCH_PHASE_CONFLICT: 原竞技分配与候选不一致")
+	}
+	if request.Direction == "arena" && proposal.Stage == "committed" && r.now().Before(proposal.DeadlineUTC) {
+		if ticket, found := initialArenaTicket(proposal, actor, r.now()); found {
+			status, statusErr := r.activeArenaStatus(ctx, proposal)
+			if statusErr != nil {
+				return matchmaking.Migration{}, statusErr
+			}
+			if ticket.DestinationServerBootID == status.Record.ServerBootID && ticket.DestinationGameServerID == status.Record.Assignment.GameServerID && !hasArenaPresence(status, actor.PlayerID) && r.now().Before(ticket.ExpiresAt) && r.now().Before(proposal.DeadlineUTC) {
+				return migrationForTicket(ticket, actor.CharacterID, proposal.MapID, proposal.Candidate.RegionID, gameservercontract.RoleMainArena)
+			}
+		}
 	}
 	value, err := r.operations.ClaimOperation(ctx, proposal, r.nextID("migration"), r.now(), 20*time.Second)
 	if err != nil {
@@ -349,27 +399,16 @@ func (r *Runtime) GetMigration(ctx context.Context, actor matchmaking.ActorConte
 		if value.Stage != "committed" && value.Stage != "inMatch" {
 			return matchmaking.Migration{}, errors.New("MATCH_PHASE_CONFLICT: 尚未全员提交")
 		}
-		call, cancel := context.WithDeadline(ctx, value.LeaseUntilUTC)
-		status, statusErr := r.control.GetArenaStatus(call, value.MatchID)
-		cancel()
+		status, statusErr := r.activeArenaStatus(ctx, value)
 		if statusErr != nil {
 			return matchmaking.Migration{}, statusErr
 		}
-		if !status.ServerAlive || status.Record.State != "active" || status.Record.ServerBootID == "" {
-			return matchmaking.Migration{}, errors.New("MATCH_MIGRATION_EXPIRED: 原竞技实例已结束或失效")
-		}
 		ticket, found := value.Tickets[actor.PlayerID]
-		admitted := false
-		for _, presence := range status.Presences {
-			if presence.PlayerID == actor.PlayerID && presence.MatchID == value.MatchID && presence.ServerBootID == status.Record.ServerBootID {
-				admitted = true
-			}
-		}
-		if found && !admitted && ticket.SessionID == actor.SessionID && r.now().Before(ticket.ExpiresAt) {
-			return migrationForTicket(ticket, actor.CharacterID, value.MapID, value.Candidate.RegionID, gameservercontract.RoleMainArena)
-		}
 		if value.Stage == "committed" && !r.now().Before(value.DeadlineUTC) {
 			return matchmaking.Migration{}, errors.New("MATCH_MIGRATION_EXPIRED: 首次全员入场预算已尽")
+		}
+		if initial, usable := initialArenaTicket(value, actor, r.now()); usable && initial.DestinationServerBootID == status.Record.ServerBootID && initial.DestinationGameServerID == status.Record.Assignment.GameServerID && !hasArenaPresence(status, actor.PlayerID) {
+			return migrationForTicket(initial, actor.CharacterID, value.MapID, value.Candidate.RegionID, gameservercontract.RoleMainArena)
 		}
 		// 新认证会话只能恢复同一锁定角色。新票不授予重生：原服务器仍校验原连接、60秒窗口和淘汰状态。
 		if value.Reconnects == nil {
@@ -404,8 +443,8 @@ func (r *Runtime) GetMigration(ctx context.Context, actor matchmaking.ActorConte
 				return matchmaking.Migration{}, err
 			}
 		}
-		call, cancel = context.WithDeadline(ctx, value.LeaseUntilUTC)
-		fresh, issueErr := r.control.IssueTransferContext(call, gameservercontrol.IssueTransferInput{TicketID: intent.TicketID, AssignmentID: "match:" + value.MatchID, GameID: value.Candidate.GameID, PlayerID: actor.PlayerID, SessionID: actor.SessionID, SourceGameServerID: locked.SourceGameServerID, DestinationGameServerID: value.Assignment.GameServerID, DestinationWorldID: value.MapID, DestinationExperienceID: gameservercontract.ExperienceMainArenaMain, MatchID: value.MatchID, TTL: 60 * time.Second})
+		call, cancel := context.WithDeadline(ctx, value.LeaseUntilUTC)
+		fresh, issueErr := r.control.IssueTransferContext(call, gameservercontrol.IssueTransferInput{TicketID: intent.TicketID, AssignmentID: gameservercontract.ArenaServerAssignmentID(value.MatchID), GameID: value.Candidate.GameID, PlayerID: actor.PlayerID, SessionID: actor.SessionID, SourceGameServerID: locked.SourceGameServerID, DestinationGameServerID: value.Assignment.GameServerID, DestinationWorldID: value.MapID, DestinationExperienceID: gameservercontract.ExperienceMainArenaMain, MatchID: value.MatchID, TTL: 60 * time.Second})
 		cancel()
 		if issueErr != nil {
 			return matchmaking.Migration{}, issueErr
@@ -419,8 +458,21 @@ func (r *Runtime) GetMigration(ctx context.Context, actor matchmaking.ActorConte
 		_, err = r.operations.SaveOperation(ctx, value, r.now(), 20*time.Second)
 		return migration, err
 	}
-	if request.Direction != "return" || value.Stage != "returning" {
+	if request.Direction != "return" || (value.Stage != "returning" && value.Stage != "completed") {
 		return matchmaking.Migration{}, errors.New("MATCH_PHASE_CONFLICT: 可信结果或故障清理尚未确认")
+	}
+	if value.Stage == "completed" {
+		// 实例回收后只允许尚留在原竞技准入位置的本人恢复；新会话不会继承旧票，只能重新签发同一锁定角色。
+		status, statusErr := r.control.GetArenaStatus(ctx, value.MatchID)
+		if statusErr != nil {
+			return matchmaking.Migration{}, statusErr
+		}
+		if status.Record.State != "released" || !hasArenaPresence(status, actor.PlayerID) {
+			return matchmaking.Migration{}, errors.New("MATCH_PHASE_CONFLICT: 本人没有待恢复的竞技准入")
+		}
+		if !r.now().Before(status.Record.UpdatedAtUTC.Add(matchmaking.TerminalRetention)) {
+			return matchmaking.Migration{}, errors.New("MATCH_MIGRATION_EXPIRED: 返程恢复窗口已结束")
+		}
 	}
 	intent, found := value.Returns[actor.PlayerID]
 	if found && intent.ClientRequestID == request.ClientRequestID {

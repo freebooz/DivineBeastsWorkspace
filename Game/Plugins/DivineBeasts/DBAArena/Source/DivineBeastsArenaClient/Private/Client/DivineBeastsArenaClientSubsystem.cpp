@@ -18,6 +18,7 @@
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
 #include "Gameplay/DivineBeastsPlayerControlsComponent.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Identity/DivineBeastsProjectCatalog.h"
 
 namespace
 {
@@ -196,12 +197,17 @@ bool UDivineBeastsArenaClientSubsystem::RequestPostMatchReturnToWorld()
 
 TSharedPtr<IGamePlatformArenaMatchmakingAdapter> UDivineBeastsArenaClientSubsystem::GetMatchmakingAdapter()const{return OnlineMatchmaking;}
 bool UDivineBeastsArenaClientSubsystem::CanCancelObservedQueue()const{return OnlineMatchmaking&&OnlineMatchmaking->GetSnapshot().bKnown&&OnlineMatchmaking->GetSnapshot().bCanCancel;}
-bool UDivineBeastsArenaClientSubsystem::CanReturnObservedMatch()const{return !bDeinitializing&&!bMigrationPending&&bApplicationFlowInWorld&&OnlineMatchmaking&&OnlineMatchmaking->GetSnapshot().bKnown&&OnlineMatchmaking->GetSnapshot().Phase==TEXT("returning");}
+bool UDivineBeastsArenaClientSubsystem::CanReturnObservedMatch() const
+{
+    return !bDeinitializing && !bMigrationPending && bApplicationFlowInWorld && OnlineMatchmaking && ApplicationFlow &&
+        ApplicationFlow->GetViewState().Assignment.ServerRoleId == FDivineBeastsProjectCatalog::GetMainArenaServerRole() &&
+        FDivineBeastsArenaOnlineMatchmakingAdapter::CanRequestReturn(OnlineMatchmaking->GetSnapshot(), true);
+}
 bool UDivineBeastsArenaClientSubsystem::CanRetryPostMatchReturn() const
 {
     if (!CanRetryObservedMigration()) return false;
     const auto& View = OnlineMatchmaking->GetSnapshot();
-    return !View.bKnown || View.Phase == TEXT("returning");
+    return !View.bKnown || FDivineBeastsArenaOnlineMatchmakingAdapter::CanRequestReturn(View, true);
 }
 bool UDivineBeastsArenaClientSubsystem::CanRetryObservedMigration()const
 {return !bDeinitializing&&!bMigrationPending&&bApplicationFlowInWorld&&OnlineMatchmaking&&(!OnlineMatchmaking->GetSnapshot().bKnown||!MigrationError.IsEmpty());}
@@ -210,7 +216,7 @@ bool UDivineBeastsArenaClientSubsystem::RetryObservedMigration()
     if(!CanRetryObservedMigration())return false;
     if(!OnlineMatchmaking->GetSnapshot().bKnown){OnlineMatchmaking->Resynchronize();return true;}
     const auto Phase=OnlineMatchmaking->GetSnapshot().Phase;
-    if(Phase==TEXT("returning"))return RequestObservedMigration(TEXT("return"));
+    if(CanReturnObservedMatch())return RequestObservedMigration(TEXT("return"));
     if(Phase==TEXT("transferReady")||Phase==TEXT("inMatch"))return RequestObservedMigration(TEXT("arena"));
     MigrationError=FText::GetEmpty();OnlineMatchmaking->Resynchronize();return true;
 }
@@ -308,6 +314,10 @@ void UDivineBeastsArenaClientSubsystem::HandleMatchmakingChanged()
         }
     }
     OnMatchmakingStateChanged.Broadcast();
+    if (!bDeinitializing && !bApplicationFlowInWorld && ApplicationFlow)
+    {
+        ApplicationFlow->NotifyGameplayWorldFactsChanged();
+    }
     if(bDeinitializing||!OnlineMatchmaking||!bApplicationFlowInWorld||!ApplicationFlow)return;
     const auto& View=OnlineMatchmaking->GetSnapshot();const auto World=ApplicationFlow->GetViewState();
     if(View.bKnown&&(View.Phase==TEXT("transferReady")||View.Phase==TEXT("inMatch"))&&World.Assignment.ServerRoleId!=FName(TEXT("GameServer.Role.MainArena"))&&!bMigrationPending&&MigrationError.IsEmpty())RequestObservedMigration(TEXT("arena"));
@@ -323,7 +333,8 @@ bool UDivineBeastsArenaClientSubsystem::RequestObservedMigration(const FString& 
     const TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> Weak(this);OnMatchmakingStateChanged.Broadcast();
     if(bDeinitializing||!OnlineMatchmaking||Expected!=MigrationGeneration||OnlineMatchmaking->GetAuthenticationGeneration()!=Auth)return false;
     const auto Adapter = OnlineMatchmaking;
-    const auto Request = Adapter->RequestMigration(Direction,MigrationRequestId,[Weak,Expected,Auth](bool bSuccess,FDivineBeastsWorldAssignmentPayload Payload)mutable
+    const FString SourceAssignmentId = Direction == TEXT("return") ? ApplicationFlow->GetViewState().Assignment.AssignmentId : FString();
+    auto Cancel = Adapter->RequestMigration(Direction,MigrationRequestId,SourceAssignmentId,[Weak,Expected,Auth](bool bSuccess,FDivineBeastsWorldAssignmentPayload Payload)mutable
     {
         auto* Self=Weak.Get();if(!Self||Self->bDeinitializing||Self->MigrationGeneration!=Expected||!Self->OnlineMatchmaking||Self->OnlineMatchmaking->GetAuthenticationGeneration()!=Auth)return;
         Self->bMigrationPending=false;
@@ -331,13 +342,13 @@ bool UDivineBeastsArenaClientSubsystem::RequestObservedMigration(const FString& 
         if(!bSuccess||!Self->ApplicationFlow||!Self->ApplicationFlow->RequestTrustedWorldMigration(MoveTemp(Payload),Auth))Self->MigrationError=FText::FromString(TEXT("连接尚未确认，请重试；不会复用旧地址进入"));
         Self->OnMatchmakingStateChanged.Broadcast();
     });
-    if (Request.RequestId.IsValid() && bMigrationPending && Expected == MigrationGeneration)
+    if (Cancel && bMigrationPending && Expected == MigrationGeneration)
     {
-        const TWeakPtr<FDivineBeastsArenaOnlineMatchmakingAdapter> WeakAdapter = Adapter;
-        CancelMigrationRequest = [WeakAdapter, Request]()
-        {
-            if (const auto Current = WeakAdapter.Pin()) Current->CancelMigration(Request);
-        };
+        CancelMigrationRequest = MoveTemp(Cancel);
+    }
+    else if (Cancel)
+    {
+        Cancel();
     }
     return true;
 }
@@ -470,6 +481,16 @@ bool UDivineBeastsArenaClientSubsystem::TryObserveArenaReadiness(UWorld& World, 
     const auto* Controller=ReadinessController.Get();const APawn* Pawn=Controller->GetPawn();
     const auto* Player=Controller->GetPlayerState<AGamePlatformArenaPlayerState>();
     if(!Player||Player->ConnectionState!=EGamePlatformArenaConnectionState::Connected)return true;
+    const bool bTerminalPhase = State.MatchPhase == EGamePlatformArenaMatchPhase::Failed ||
+        State.MatchPhase == EGamePlatformArenaMatchPhase::Aborted ||
+        State.MatchPhase == EGamePlatformArenaMatchPhase::ResultPending || State.MatchPhase == EGamePlatformArenaMatchPhase::Completed;
+    if (bTerminalPhase && OnlineMatchmaking && ApplicationFlow && !State.MatchIdPublic.IsEmpty())
+    {
+        const auto& Assignment = ApplicationFlow->GetViewState().Assignment;
+        Presentation.bTrustedReturnAvailable = Assignment.AssignmentId == TEXT("match:") + State.MatchIdPublic &&
+            !Assignment.CharacterId.IsEmpty() && Assignment.CharacterId == Player->CharacterId &&
+            FDivineBeastsArenaOnlineMatchmakingAdapter::CanRequestReturn(OnlineMatchmaking->GetSnapshot(), true);
+    }
     // 淘汰者恢复的是观战连接，不能为了满足加载屏障重新生成角色或补满资源。
     const bool bSpectating=Player->bEliminated&&!Player->CharacterId.IsEmpty();
     bBound=bSpectating||(Pawn&&Pawn->GetWorld()==&World&&Pawn->GetController()==Controller&&Pawn->InputComponent);

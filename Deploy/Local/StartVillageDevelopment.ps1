@@ -8,6 +8,7 @@
 param([Parameter(Mandatory)][string]$ServerExe,
     [Parameter(Mandatory)][string]$ControlBaseUrl,
     [Parameter(Mandatory)][string]$PlayerDataBaseUrl,
+    [guid]$ServerCookRunId,
     [string]$RegionId='us-west',[ValidateRange(1024,65535)][int]$Port=17781,
     [switch]$DevelopmentArena,[switch]$DevelopmentMonsters,
     # 仅打开AI事件日志，用于核对真实巡逻位移；不改变AI配置或行为。
@@ -33,6 +34,13 @@ $taskControl=[uri]$ControlBaseUrl
 if($taskControl.Scheme-ne'http'-or!$taskControl.IsLoopback-or$taskControl.UserInfo-or$taskControl.Query-or$taskControl.Fragment){throw '控制面必须是无凭据回环HTTP地址。'}
 $taskToken=[Environment]::GetEnvironmentVariable('GAMESERVERCONTROL_INTERNAL_TOKEN','Process')
 if([string]::IsNullOrWhiteSpace($taskToken)){throw '缺少父进程内部控制凭据。'}
+$taskBuildVersion = 'PartyArena.Development.20261015.1'
+if ($PSBoundParameters.ContainsKey('ServerCookRunId')) {
+    Import-Module (Join-Path $taskRoot 'Build/Game/LocalValidationPackageEvidence.psm1')
+    $taskPackage = Read-LocalValidationCookPackage $taskRoot $ServerCookRunId Server
+    if ($taskPackage.Executable -ine $taskExe) { throw 'Village ServerExe 与指定 Cook 制品不同。' }
+    $taskBuildVersion = $taskPackage.BuildVersion
+}
 $taskInfo=$null;$taskEnvironment=$null;$taskChild=$null
 try {
 Import-Module (Join-Path $PSScriptRoot 'LocalPlayerDataEnvironment.psm1') -Force
@@ -48,7 +56,7 @@ $taskInfo.UseShellExecute=$false;$taskInfo.CreateNoWindow=$true;$taskInfo.Window
 $taskEnvironment=@{
     GAME_SERVER_ID=$taskServerId;GAME_SERVER_BOOT_ID=$taskBoot;GAME_SERVER_WORLD_ID='divinebeasts.world.village_tutorial@1'
     GAME_SERVER_REGION_ID=$RegionId;GAME_SERVER_CLUSTER_ID='local-development';GAME_SERVER_NODE_ID=$env:COMPUTERNAME
-    GAME_SERVER_BUILD_VERSION='PartyArena.Development.20261015.1';GAME_SERVER_PUBLIC_ENDPOINT="127.0.0.1:$Port"
+    GAME_SERVER_BUILD_VERSION=$taskBuildVersion;GAME_SERVER_PUBLIC_ENDPOINT="127.0.0.1:$Port"
     GAME_SERVER_CAPACITY='20';GAME_SERVER_PROTOCOL_VERSION='1';DBA_SERVER_PROFILE_ROOT=(Join-Path $taskRoot 'Deploy/Server')
     GAMESERVERCONTROL_BASE_URL=$ControlBaseUrl;GAMESERVERCONTROL_INTERNAL_TOKEN=$taskToken
 }
@@ -72,7 +80,8 @@ if($RunCookedPlaceholderSerializationTests){
 }
 $taskChild=[Diagnostics.Process]::Start($taskInfo)
 $taskRecord=[pscustomobject]@{PID=$taskChild.Id;StartUtcTicks=$taskChild.StartTime.ToUniversalTime().Ticks.ToString();Exe=$taskExe;
-    ServerId=$taskServerId;BootId=$taskBoot;Port=$Port;Log=$taskLog;PlayerDataConfigured=$true;PlayerAdmissionVerified=$false;AIMovementDiagnostics=[bool]$AIMovementDiagnostics;GroundSnowReview=[bool]$GroundSnowReview}
+    ServerId=$taskServerId;BootId=$taskBoot;Port=$Port;Log=$taskLog;BuildVersion=$taskBuildVersion;ControlBaseUrl=$ControlBaseUrl.TrimEnd('/');
+    PlayerDataConfigured=$true;PlayerAdmissionVerified=$false;AIMovementDiagnostics=[bool]$AIMovementDiagnostics;GroundSnowReview=[bool]$GroundSnowReview}
 $taskRecord|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $taskDirectory 'Server.json') -Encoding utf8
 $taskRecord|ConvertTo-Json
 } catch {

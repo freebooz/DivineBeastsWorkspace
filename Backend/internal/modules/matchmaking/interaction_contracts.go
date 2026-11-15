@@ -126,9 +126,10 @@ type Observation struct {
 
 // MigrationRequest只选择本人比赛和方向，永远不接受客户端目标地址/ServerID/票据内容。
 type MigrationRequest struct {
-	CandidateID     string `json:"candidateId"`     // 本人已确认候选。
-	Direction       string `json:"direction"`       // arena或return。
-	ClientRequestID string `json:"clientRequestId"` // 同一逻辑迁移重试沿用。
+	SourceAssignmentID string `json:"sourceAssignmentId,omitempty"` // 返程恢复可提交原竞技分配身份用于一致性检查。
+	CandidateID        string `json:"candidateId"`                  // 本人已确认候选。
+	Direction          string `json:"direction"`                    // arena或return。
+	ClientRequestID    string `json:"clientRequestId"`              // 同一逻辑迁移重试沿用。
 }
 
 // Migration仅交给Flow/Loading/Session，不写UI状态或日志；字段沿用已有世界进入合同。

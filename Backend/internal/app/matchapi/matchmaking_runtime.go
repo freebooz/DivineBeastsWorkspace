@@ -5,6 +5,7 @@ import (
 	"context"
 	"divinebeasts/backend/internal/modules/matchmaking"
 	"errors"
+	"time"
 )
 
 // MatchmakingRuntime由MatchService正式组合根注入，拥有跨服务步骤恢复、签票/撤销及安全返回。
@@ -35,6 +36,9 @@ func (s *Service) GetMatchmakingMigration(ctx context.Context, actor matchmaking
 	if !validMatchID(actor.PlayerID) || !validMatchID(actor.SessionID) || !validMatchID(actor.CharacterID) || !validMatchID(request.CandidateID) || !validMatchID(request.ClientRequestID) || (request.Direction != "arena" && request.Direction != "return") {
 		return matchmaking.Migration{}, errors.New("MATCH_COMMAND_INVALID: 迁移身份或方向无效")
 	}
+	if request.SourceAssignmentID != "" && (request.Direction != "return" || !validMatchID(request.SourceAssignmentID)) {
+		return matchmaking.Migration{}, errors.New("MATCH_COMMAND_INVALID: 原竞技分配身份仅用于返程")
+	}
 	if s.matchmakingRuntime == nil {
 		return matchmaking.Migration{}, errors.New("MATCH_RUNTIME_NOT_CONFIGURED: 真实迁移编排未装配")
 	}
@@ -56,6 +60,16 @@ func (s *Service) GetMatchmakingMigration(ctx context.Context, actor matchmaking
 	}
 	if !member {
 		return matchmaking.Migration{}, errors.New("MATCH_FORBIDDEN: 只能取本人迁移")
+	}
+	if request.Direction == "return" && candidate.Phase == matchmaking.PhaseCompleted {
+		if queue.Reservations[actor.PlayerID] != "" {
+			return matchmaking.Migration{}, errors.New("MATCH_PHASE_CONFLICT: 本人已有新报名或比赛")
+		}
+		if !time.Now().UTC().Before(candidate.UpdatedAtUTC.Add(matchmaking.TerminalRetention)) {
+			return matchmaking.Migration{}, errors.New("MATCH_MIGRATION_EXPIRED: 返程恢复窗口已结束")
+		}
+		// 已完成候选不再锁定队列的全局玩家上下文；Runtime按持久Operation复核本局锁定角色和实际准入位置。
+		return s.matchmakingRuntime.GetMigration(ctx, actor, request)
 	}
 	locked, found := queue.Contexts[actor.PlayerID]
 	if !found || locked.CharacterID != actor.CharacterID || locked.HeroDefinitionID != actor.HeroDefinitionID {

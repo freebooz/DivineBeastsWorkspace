@@ -45,6 +45,7 @@ public:
         FString& OutReason) override;
 
     virtual bool SetPlayerGameplayActive(const FString& PlayerId, bool bActive, FString& OutReason) override;
+    virtual void RollbackPlayerStart(const FString& PlayerId) override;
 
     /** true仅代表自有Timer受理；零秒也NextTick，后续真实出生失败明确记录且保持Inactive。 */
     virtual bool RequestRespawn(

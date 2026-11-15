@@ -22,6 +22,7 @@ type ArenaAssignmentRecord struct {
 	State                   string                              // active/resultCommitted/cancelled/released。
 	UpdatedAtUTC            time.Time                           // 控制面实际写入时间。
 	Result                  *match.StoredResult                 // 已持久可信结果，未完成时为nil；故障取消不能伪造胜负。
+	StartAbortReason        string                              // 原Boot报告的开战失败原因；保存首次事实，释放后保留。
 }
 
 // PlayerPresence是成功消费准入后的控制事实；不由客户端坐标/Actor名称或队伍UI推断。
@@ -193,7 +194,12 @@ func (s *MemoryArenaLifecycleStore) SavePresence(ctx context.Context, value Play
 	if err := ValidatePresenceTransition(previous, value); err != nil {
 		return err
 	}
-	if value.MatchID == "" {
+	if value.MatchID != "" {
+		record, found := s.matches[value.MatchID]
+		if err := ValidateArenaAdmission(record, found, value.GameServerID, value.ServerBootID); err != nil {
+			return err
+		}
+	} else {
 		if err := ValidateWorldDeparture(previous, sourceMatchID, func(matchID string) (ArenaAssignmentRecord, bool, error) {
 			record, found := s.matches[matchID]
 			return record, found, nil
@@ -226,6 +232,9 @@ func ValidateArenaRecord(v ArenaAssignmentRecord) error {
 	if v.State == "resultCommitted" && v.Result == nil {
 		return errors.New("ARENA_RECORD_INVALID: 结果阶段缺少可信结果")
 	}
+	if v.StartAbortReason != "" && (!validArenaStartAbortReason(v.StartAbortReason) || v.Result != nil || (v.State != "cancelled" && v.State != "released")) {
+		return errors.New("ARENA_RECORD_INVALID: 开战失败与比赛终态不一致")
+	}
 	return nil
 }
 
@@ -241,6 +250,9 @@ func ValidateArenaRecordTransition(old, next ArenaAssignmentRecord) error {
 	if old.InputFingerprint != next.InputFingerprint || old.Assignment.AssignmentID != next.Assignment.AssignmentID || old.Assignment.GameServerID != next.Assignment.GameServerID || old.ServerBootID != next.ServerBootID {
 		return errors.New("ARENA_IDEMPOTENCY_CONFLICT: 分配意图或实例代次改变")
 	}
+	if old.StartAbortReason != next.StartAbortReason && (old.StartAbortReason != "" || old.State != "active" || next.State != "cancelled") {
+		return ErrArenaStartAbortConflict
+	}
 	allowed := map[string]map[string]bool{"active": {"active": true, "resultCommitted": true, "cancelled": true}, "resultCommitted": {"resultCommitted": true, "released": true}, "cancelled": {"cancelled": true, "released": true}, "released": {"released": true}}
 	if !allowed[old.State][next.State] {
 		return errors.New("ARENA_OPERATION_TERMINAL: 不能倒退或重激活竞技控制事实")
@@ -252,6 +264,14 @@ func ValidateArenaRecordTransition(old, next ArenaAssignmentRecord) error {
 		if _, err := old.Result.Acknowledge(next.Result.Result); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// ValidateArenaAdmission要求旧签发票据消费时仍绑定活动竞技分配与同一Boot；持久位置提交重复核验。
+func ValidateArenaAdmission(record ArenaAssignmentRecord, found bool, serverID, bootID string) error {
+	if !found || record.State != "active" || record.Assignment.GameServerID != serverID || record.ServerBootID != bootID {
+		return errors.New("ARENA_OPERATION_TERMINAL: 竞技准入不再有效")
 	}
 	return nil
 }

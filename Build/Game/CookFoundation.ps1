@@ -83,6 +83,12 @@ try {
     $lock = Enter-FoundationEngineLock $engine.Root
     $details.TargetAssembly=Read-FoundationTargetAssembly -Workspace $context.Workspace -Target $Target -WithoutArena:$WithoutArena
     $details.CookEditorGate=Assert-FoundationCookEditorBuildResult -Workspace $context.Workspace -EngineRoot $engine.Root -BuildResultPath $EditorBuildResult
+    $pairedCook = $Target -ceq 'Server' -and $CustomConfig -ceq 'VillageDevelopmentServer' -and $Maps.Count -eq 2
+    if ($pairedCook) {
+        Import-Module (Join-Path $PSScriptRoot 'FoundationBuildEvidence.psm1')
+        Import-Module (Join-Path $PSScriptRoot 'LocalValidationPackageEvidence.psm1')
+        $battleInput = Get-FoundationBattleInputSHA256 -Workspace $context.Workspace -CookRelevantCompileSHA256 $details.CookEditorGate.CookRelevantCompileSHA256
+    }
     # UE单平台-outputdir不自动附加平台；Stage仅在目录末段匹配CookPlatform时使用原路径。
     $cookDirectory = Join-Path $context.Directory "Cooked/Windows$Target"
     if ($SkipZenStore) {
@@ -182,6 +188,13 @@ try {
         $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments $resourceArguments -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
         $details.ResourceOwnershipGateResult=$resourceResult; $details.ResourceOwnershipReport=$resourceReport
         $code=$resourceResult.ExitCode
+    }
+    if ($code -eq 0 -and $pairedCook) {
+        $csv = @(Get-ChildItem -LiteralPath $auditDirectory -Recurse -File -Filter 'Container.csv' |
+            Where-Object DirectoryName -Match 'DivineBeastsArena-WindowsServer\.utoc$')
+        if ($csv.Count -ne 1) { throw '缺少唯一 Server 主容器导出清单。' }
+        $details.LocalValidationPackage = Complete-LocalValidationCookProof -Workspace $context.Workspace -StageDirectory $stageDirectory `
+            -Target Server -ContainerCsv $csv[0].FullName -BattleInputSHA256 $battleInput
     }
     $message = if ($Target -eq 'Server') { '实际UAT Cook/Stage及服务器表现产物门禁结束；结果见独立容器证据，不代表运行或联机通过。' }
         else { '实际UAT客户端开发地图Cook/Stage结束；不代表运行通过。' }

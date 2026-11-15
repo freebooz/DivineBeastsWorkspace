@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Client/GamePlatformArenaMatchmakingAdapter.h"
 #include "Types/GamePlatformOnlineRequests.h"
+#include "GamePlatformOnlineClientSubsystem.h"
 #include "Containers/Ticker.h"
 #include "Flow/DivineBeastsFlowTypes.h"
 #include "Client/DivineBeastsArenaClientSubsystem.h"
@@ -44,16 +45,58 @@ public:
     EGamePlatformArenaClientFlowState GetObservedState()const override;
     bool SupportsTicketLifecycle()const override;
     FGamePlatformArenaMatchOffer GetObservedOffer()const override;
+    /** 本人已知候选的返程方向。已完成状态只供之前实际分配到竞技场的玩家恢复。 */
+    static bool CanRequestReturn(const FDivineBeastsArenaQueueSnapshot& View, bool bPreviousArena);
     /** 票据只作为一次完成参数移动给应用流程，不进入Snapshot/Changed。 */
-    FGamePlatformOnlineRequestHandle RequestMigration(const FString& Direction, const FString& ClientRequestId,
-        TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion);
-    /** 仅撤销指定取票请求，保留匹配观察及其它命令。 */
-    void CancelMigration(const FGamePlatformOnlineRequestHandle& Handle);
+    TFunction<void()> RequestMigration(const FString& Direction, const FString& ClientRequestId,
+        const FString& SourceAssignmentId, TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion);
     /** 从新鲜本人快照选择重连或赛后返回，复用迁移端点。返回仅撤销本次节点请求的函数。 */
     TFunction<void()> RequestWorldRecovery(const FDivineBeastsWorldAssignmentSummary& Previous,
         TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion);
 private:
     friend class FDivineBeastsArenaBackendCodecTest;
+    enum class EMigrationResult : uint8 { Success, Failed, ArenaExpired };
+    enum class ERecoveryAction : uint8 { Wait, Fail, Arena, Return };
+    struct FMigrationOperation
+    {
+        FGamePlatformAuthenticatedRequest Request;
+        FString CandidateId;
+        bool bReturning = false;
+        bool bAllowsCompletedReturn = false;
+        TFunction<void(EMigrationResult, FDivineBeastsWorldAssignmentPayload)> Completion;
+        FGamePlatformOnlineRequestHandle HttpRequest;
+        FTSTicker::FDelegateHandle RetryHandle;
+        double RetryDeadline = 0.0;
+        float RetryDelay = 0.1f;
+    };
+    struct FWorldRecoveryOperation
+    {
+        FDivineBeastsWorldAssignmentSummary Previous;
+        FString CandidateId;
+        FString RequestId;
+        double Deadline = 0.0;
+        bool bPreviousArena = false;
+        bool bWaitingForReturn = false;
+        bool bRequestPending = false;
+        bool bReturning = false;
+        FTSTicker::FDelegateHandle DeadlineHandle;
+        TFunction<void()> CancelMigration;
+        TFunction<void(bool, FDivineBeastsWorldAssignmentPayload)> Completion;
+    };
+    static bool IsMigrationError(const FGamePlatformAuthenticatedResponse& Response, const TCHAR* Code);
+    static bool IsRetryableArenaMigration(const FGamePlatformAuthenticatedResponse& Response, double Now, double Deadline);
+    static double GetMigrationRetryDeadline(const FDivineBeastsArenaQueueSnapshot& View, double Now);
+    static ERecoveryAction GetRecoveryAction(const FDivineBeastsArenaQueueSnapshot& View, const FString& CandidateId,
+        bool bPreviousArena, bool bWaitingForReturn);
+    TFunction<void()> RequestMigrationInternal(const FString& Direction, const FString& RequestId, const FString& SourceAssignmentId,
+        TFunction<void(EMigrationResult, FDivineBeastsWorldAssignmentPayload)> Completion, double RecoveryDeadline = 0.0);
+    void SendMigrationAttempt(const TSharedRef<FMigrationOperation>& Operation, bool bRetry = false);
+    void CancelActiveMigration();
+    void AdvanceWorldRecovery();
+    void FinishWorldRecovery(bool bSuccess, FDivineBeastsWorldAssignmentPayload Assignment = {});
+    void CancelWorldRecovery();
+    TSharedPtr<FMigrationOperation> ActiveMigration;
+    TSharedPtr<FWorldRecoveryOperation> ActiveRecovery;
     bool DecodeCommandResponse(const FString& Body,const FString& RequestId,FDivineBeastsArenaQueueSnapshot& Out)const;
     void AuthenticationChanged(const FGamePlatformAuthSnapshot& Authentication);
     void Observe(uint64 ExpectedGeneration, TFunction<void(bool)> FirstObservation = {});

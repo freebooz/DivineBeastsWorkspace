@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: 平台组队匹配生命周期
-  version: 1.1.0
+  version: 1.2.0
   description: 1v1至5v5单人/不可拆分队伍的准备、报名、固定对手约战邀请、逐人确认、本人事件观察及受控迁移。约战接受后直接复用同一候选和分配链，不进入随机搜索。会话和角色由Gateway验证，不信任正文主体。
 security: [{ bearerAuth: [] }]
 paths:
@@ -58,7 +58,7 @@ paths:
             application/json:
               schema: { $ref: 'gateway.openapi.yaml#/components/schemas/DivineBeastsWorldEntryResponse' }
         '401': { description: 当前会话与已验证参赛者不符 }
-        '409': { description: 全员签票、可信结果或返回分配尚未完成，不能复用旧地址/旧票据 }
+        '409': { description: 比赛阶段、分配或返程恢复资格冲突。MATCH_OPERATION_BUSY 为短时写入租约占用，可保留原请求身份并在当前迁移期限内重试。 }
         '503': { description: 分配或恢复服务不可用 }
 components:
   securitySchemes:
@@ -159,5 +159,6 @@ components:
       required: [candidateId, direction, clientRequestId]
       properties:
         candidateId: { type: string, minLength: 1, maxLength: 128, description: 本人已确认比赛身份 }
-        direction: { type: string, enum: [arena, return], description: 进入/恢复同一竞技场，或请求后端重新分配安全返回；新票不授予重生，60秒重连与淘汰由原服务器裁定，不接受目标地址 }
+        direction: { type: string, enum: [arena, return], description: 进入/恢复同一竞技场，或在可信结果或取消后请求后端重新分配来源体验。实例释放后仍停留在原竞技准入位置的锁定角色可在15分钟内恢复。 }
         clientRequestId: { type: string, minLength: 1, maxLength: 128, description: 稳定迁移请求身份，重试沿用 }
+        sourceAssignmentId: { type: string, minLength: 1, maxLength: 128, description: 返程时可用于复核客户端保留的原竞技分配身份。 }

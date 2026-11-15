@@ -178,7 +178,18 @@ func (s *ArenaLifecycleStore) SavePresence(ctx context.Context, value gameserver
 			if err := gameservercontrol.ValidatePresenceTransition(old, value); err != nil {
 				return err
 			}
-			if value.MatchID == "" {
+			if value.MatchID != "" {
+				if err := tx.Watch(ctx, arenaRecordPrefix+value.MatchID).Err(); err != nil {
+					return err
+				}
+				record, found, err := readArenaByMatch(ctx, tx, value.MatchID)
+				if err != nil {
+					return err
+				}
+				if err := gameservercontrol.ValidateArenaAdmission(record, found, value.GameServerID, value.ServerBootID); err != nil {
+					return err
+				}
+			} else {
 				if err := gameservercontrol.ValidateWorldDeparture(old, sourceMatchID, func(matchID string) (gameservercontrol.ArenaAssignmentRecord, bool, error) {
 					return readArenaByMatch(ctx, tx, matchID)
 				}); err != nil {

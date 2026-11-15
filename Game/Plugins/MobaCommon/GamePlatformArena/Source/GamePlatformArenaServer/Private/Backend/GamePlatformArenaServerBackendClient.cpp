@@ -1,6 +1,7 @@
 #include "Backend/GamePlatformArenaServerBackendClient.h"
 
 #include "Dom/JsonObject.h"
+#include "Framework/GamePlatformArenaGameMode.h"
 #include "HttpModule.h"
 #include "GenericPlatform/GenericPlatformHttp.h"
 #include "Interfaces/IHttpRequest.h"
@@ -10,6 +11,18 @@
 
 namespace
 {
+    const TCHAR* WireStartAbortReason(EGamePlatformArenaStartAbortReason Reason)
+    {
+        switch (Reason)
+        {
+        case EGamePlatformArenaStartAbortReason::PreMatchTimeout: return TEXT("pre_match_timeout");
+        case EGamePlatformArenaStartAbortReason::PlayerDisconnected: return TEXT("player_disconnected");
+        case EGamePlatformArenaStartAbortReason::SpawnFailed: return TEXT("spawn_failed");
+        case EGamePlatformArenaStartAbortReason::StartupFailed: return TEXT("startup_failed");
+        }
+        return nullptr;
+    }
+
     TSharedPtr<FJsonObject> ParseJsonObject(const FString& Body)
     {
         TSharedPtr<FJsonObject> Object;
@@ -183,6 +196,63 @@ void FGamePlatformArenaServerBackendClient::SubmitMatchResult(
         });
     TrackRequest(Request);
     if (!Request->ProcessRequest()) { Requests.Remove(Request);Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("MatchResult request did not start.")); }
+}
+
+void FGamePlatformArenaServerBackendClient::SubmitMatchStartAbort(const FGamePlatformArenaAssignment& Assignment,
+    EGamePlatformArenaStartAbortReason Reason, TFunction<void(EGamePlatformArenaSubmitStatus, const FString&)> InCompletion)
+{
+    const auto Completed = MakeShared<bool>(false);
+    const auto Complete = [Completed, Done = MoveTemp(InCompletion)](EGamePlatformArenaSubmitStatus Status, const FString& Error)
+    {
+        if (*Completed) { return; }
+        *Completed = true;
+        Done(Status, Error);
+    };
+    const TCHAR* ReasonValue = WireStartAbortReason(Reason);
+    if (!Config.IsValid() || Assignment.MatchId.IsEmpty() || Assignment.GameServerId != Config.GameServerId || !ReasonValue)
+    {
+        Complete(EGamePlatformArenaSubmitStatus::TerminalFailure, TEXT("Invalid MainArena start abort identity or reason."));
+        return;
+    }
+    auto Body = MakeShared<FJsonObject>();
+    Body->SetStringField(TEXT("matchId"), Assignment.MatchId);
+    Body->SetStringField(TEXT("gameServerId"), Config.GameServerId);
+    Body->SetStringField(TEXT("serverBootId"), Config.ServerBootId);
+    Body->SetStringField(TEXT("reason"), ReasonValue);
+    const TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+    Request->SetVerb(TEXT("POST"));
+    Request->SetURL(MakeUrl(TEXT("/internal/v1/gameservers/match-start-abort")));
+    ApplyCommonHeaders(Request);
+    Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
+    Request->SetContentAsString(SerializeJson(Body));
+    Request->OnProcessRequestComplete().BindLambda([Complete](FHttpRequestPtr, FHttpResponsePtr Response, bool bSucceeded)
+    {
+        const int32 Code = Response.IsValid() ? Response->GetResponseCode() : 0;
+        if (Code == 409)
+        {
+            Complete(EGamePlatformArenaSubmitStatus::Conflict, TEXT("MainArena start abort conflict."));
+            return;
+        }
+        if (Code >= 400 && Code < 500 && Code != 408 && Code != 429)
+        {
+            Complete(EGamePlatformArenaSubmitStatus::TerminalFailure, FString::Printf(TEXT("MainArena start abort HTTP %d."), Code));
+            return;
+        }
+        const auto Json = bSucceeded && Code == 200 ? ParseJsonObject(Response->GetContentAsString()) : nullptr;
+        bool bAccepted = false;
+        if (Json && Json->HasTypedField<EJson::Boolean>(TEXT("accepted")) && Json->TryGetBoolField(TEXT("accepted"), bAccepted) && bAccepted)
+        {
+            Complete(EGamePlatformArenaSubmitStatus::Committed, FString());
+            return;
+        }
+        Complete(EGamePlatformArenaSubmitStatus::RetryableFailure, FString::Printf(TEXT("MainArena start abort unconfirmed HTTP %d."), Code));
+    });
+    TrackRequest(Request);
+    if (!Request->ProcessRequest())
+    {
+        Requests.Remove(Request);
+        Complete(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("MainArena start abort request did not start."));
+    }
 }
 
 void FGamePlatformArenaServerBackendClient::CancelAll()

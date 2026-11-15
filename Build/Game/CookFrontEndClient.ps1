@@ -50,6 +50,11 @@ try {
     $details.TargetAssembly=Read-FoundationTargetAssembly -Workspace $context.Workspace -Target Client -WithoutArena:$WithoutArena
     # 锁内核验，防止预检后被另一构建替换Editor DLL，再启动UAT。
     $details.CookEditorGate=Assert-FoundationCookEditorBuildResult -Workspace $context.Workspace -EngineRoot $engine.Root -BuildResultPath $EditorBuildResult
+    if ($CustomConfig -eq 'VillageDevelopmentClient') {
+        Import-Module (Join-Path $PSScriptRoot 'FoundationBuildEvidence.psm1')
+        Import-Module (Join-Path $PSScriptRoot 'LocalValidationPackageEvidence.psm1')
+        $battleInput = Get-FoundationBattleInputSHA256 -Workspace $context.Workspace -CookRelevantCompileSHA256 $details.CookEditorGate.CookRelevantCompileSHA256
+    }
     if($ShortCookRoot -and -not $SkipZenStore){throw 'ShortCookRoot只用于显式文件Cook（SkipZenStore）。'}
     $cookDirectory=Join-Path $context.Directory 'Cooked/WindowsClient'
     if ($SkipZenStore) {
@@ -215,6 +220,10 @@ try {
         $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments $resourceArguments -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
         $details.ResourceOwnershipGateResult=$resourceResult; $details.ResourceOwnershipReport=$resourceReport
         $code=$resourceResult.ExitCode
+    }
+    if ($code -eq 0 -and $CustomConfig -eq 'VillageDevelopmentClient') {
+        $details.LocalValidationPackage = Complete-LocalValidationCookProof -Workspace $context.Workspace -StageDirectory $stageDirectory `
+            -Target Client -ContainerCsv $csv -BattleInputSHA256 $battleInput
     }
     $message='实际客户端Cook/Stage和IoStore资源门禁结束；仍须验证认证、UI交互与网络准入。'
 } catch [IO.FileNotFoundException] { $code=2; $message=$_.Exception.Message }

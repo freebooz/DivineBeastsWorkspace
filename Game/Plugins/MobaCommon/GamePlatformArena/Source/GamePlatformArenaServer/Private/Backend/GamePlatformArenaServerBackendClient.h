@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Arena/GamePlatformArenaTypes.h"
 
+enum class EGamePlatformArenaStartAbortReason : uint8;
+
 /** EGamePlatformArenaSubmitStatus（比赛结果提交状态）。 */
 enum class EGamePlatformArenaSubmitStatus : uint8
 {
@@ -49,6 +51,10 @@ public:
     /** 游戏线程提交冻结结果，完成回调区分终止响应与结果仍未知的响应。 */
     virtual void SubmitMatchResult(
         const FGamePlatformArenaMatchResult& Result,
+        TFunction<void(EGamePlatformArenaSubmitStatus Status, const FString& Error)> Completion);
+
+    /** 以当前注册实例与Boot提交权威开局终止；成功确认不包含比赛结果。 */
+    void SubmitMatchStartAbort(const FGamePlatformArenaAssignment& Assignment, EGamePlatformArenaStartAbortReason Reason,
         TFunction<void(EGamePlatformArenaSubmitStatus Status, const FString& Error)> Completion);
 
 private:

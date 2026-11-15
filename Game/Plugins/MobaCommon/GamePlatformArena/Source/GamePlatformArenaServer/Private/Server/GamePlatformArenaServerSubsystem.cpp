@@ -16,6 +16,15 @@
 #include "TimerManager.h"
 #include "HAL/PlatformMisc.h"
 
+namespace
+{
+bool IsStartAborted(const AGamePlatformArenaGameMode& Mode)
+{
+    const auto Phase = Mode.GetMatchPhase();
+    return Phase == EGamePlatformArenaMatchPhase::Aborted || Phase == EGamePlatformArenaMatchPhase::Failed;
+}
+}
+
 bool UGamePlatformArenaServerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
     const UWorld* World = Cast<UWorld>(Outer);
@@ -47,21 +56,25 @@ void UGamePlatformArenaServerSubsystem::Deinitialize()
     if (UWorld* World = GetWorld())
     {
         World->GetTimerManager().ClearTimer(AssignmentRetryTimer);
+        World->GetTimerManager().ClearTimer(StartAbortRetryTimer);
         World->GetTimerManager().ClearTimer(SafeDrainTimer);
     }
     if (auto* Mode = ObservedArenaMode.Get())
     {
         // 先解除结果通知，再取消HTTP：后端迟到的结果不得唤醒旧World的排空流程。
         Mode->OnResultPending().Remove(ResultPendingHandle);
+        Mode->OnMatchStartAborted().Remove(StartAbortedHandle);
     }
     ResultPendingHandle.Reset();
+    StartAbortedHandle.Reset();
+    StartAbortReason.Reset();
     ObservedArenaMode.Reset();
-    bResultCommitted = false;
+    bTerminalConfirmed = false;
     bZeroHeartbeatRequested = false;
     bSafeDrainRequested = false;
     if (Coordinator) { Coordinator->CancelPendingResult(); }
     if(BackendClient)BackendClient->CancelAll();
-    ResultHeartbeatBaselineGeneration = 0;
+    TerminalHeartbeatBaselineGeneration = 0;
     if (AdmissionSubsystem.IsValid()) { AdmissionSubsystem->OnAdmissionChanged().Remove(AdmissionChangedHandle); }
     if (auto* World = GetWorld())
     {
@@ -89,6 +102,7 @@ void UGamePlatformArenaServerSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     ObservedArenaMode = ArenaGameMode;
     const TWeakObjectPtr<AGamePlatformArenaGameMode> WeakArenaMode(ArenaGameMode);
     const TWeakObjectPtr<UGamePlatformArenaServerSubsystem> WeakSelf(this);
+    StartAbortedHandle = ArenaGameMode->OnMatchStartAborted().AddUObject(this, &ThisClass::ReportMatchStartAborted);
     ResultPendingHandle = ArenaGameMode->OnResultPending().AddWeakLambda(
         this,
         [WeakSelf, WeakArenaMode](const FGamePlatformArenaMatchResult&)
@@ -120,24 +134,7 @@ void UGamePlatformArenaServerSubsystem::OnWorldBeginPlay(UWorld& InWorld)
                         UE_LOG(LogTemp, Warning, TEXT("MainArena result committed but match phase is not Completed."));
                         return;
                     }
-                    // 先冻结历史成功心跳的代次；不能让开赛前的0人回执授权当前比赛退出。
-                    if (auto* Lifecycle = Current->LifecycleSubsystem.Get())
-                    {
-                        Current->ResultHeartbeatBaselineGeneration = Lifecycle->GetIssuedOperationGeneration();
-                    }
-                    else
-                    {
-                        UE_LOG(LogTemp, Error, TEXT("MainArena result committed without server lifecycle; defer shutdown."));
-                        return;
-                    }
-                    Current->bResultCommitted = true;
-                    // 只在后端结果终态后短期检查玩家是否真实离开；不使用逐帧Tick，不强制踢人。
-                    Current->GetWorld()->GetTimerManager().SetTimer(
-                        Current->SafeDrainTimer, Current,
-                        &UGamePlatformArenaServerSubsystem::TryFinishArenaDrain,
-                        5.0f, true);
-                    Current->TryFinishArenaDrain();
-                    UE_LOG(LogTemp, Log, TEXT("MainArena result committed; waiting for zero live players before Agones drain."));
+                    Current->BeginConfirmedDrain(*CurrentMode);
                 });
         });
 
@@ -148,6 +145,7 @@ void UGamePlatformArenaServerSubsystem::OnWorldEndPlay(UWorld& InWorld)
 {
     // 世界开始退出即停止发起或确认结算，即使GameInstance的TimerManager还在运行。
     bWorldStarted = false;
+    InWorld.GetTimerManager().ClearTimer(StartAbortRetryTimer);
     if (Coordinator) { Coordinator->CancelPendingResult(); }
     if (BackendClient) { BackendClient->CancelAll(); }
     Super::OnWorldEndPlay(InWorld);
@@ -235,20 +233,88 @@ void UGamePlatformArenaServerSubsystem::ExpireVerifiedConnection(TWeakObjectPtr<
 
 void UGamePlatformArenaServerSubsystem::HandleLifecycleChanged(const FGamePlatformServerLifecycleSnapshot&){TryLoadAssignment();}
 
+void UGamePlatformArenaServerSubsystem::ReportMatchStartAborted(EGamePlatformArenaStartAbortReason Reason)
+{
+    if (!bWorldStarted || StartAbortReason.IsSet()) { return; }
+    StartAbortReason = Reason;
+    SubmitStartAbortAttempt();
+}
+
+void UGamePlatformArenaServerSubsystem::SubmitStartAbortAttempt()
+{
+    UWorld* World = GetWorld();
+    auto* Mode = ObservedArenaMode.Get();
+    auto* Lifecycle = LifecycleSubsystem.Get();
+    const auto Backend = BackendClient;
+    if (!bWorldStarted || !World || World->bIsTearingDown || !Mode || World->GetAuthGameMode() != Mode ||
+        !Lifecycle || !Backend || !StartAbortReason.IsSet() || bTerminalConfirmed || !IsStartAborted(*Mode) ||
+        Backend->GetConfig().ServerBootId != Lifecycle->GetRegisteredServerBootId())
+    {
+        return;
+    }
+    Backend->SubmitMatchStartAbort(Mode->GetAssignment(), StartAbortReason.GetValue(),
+        [Weak = TWeakObjectPtr<UGamePlatformArenaServerSubsystem>(this), WeakMode = TWeakObjectPtr<AGamePlatformArenaGameMode>(Mode),
+            MatchId = Mode->GetAssignment().MatchId, BootId = Backend->GetConfig().ServerBootId]
+        (EGamePlatformArenaSubmitStatus Status, const FString& Error)
+        {
+            auto* Self = Weak.Get();
+            auto* Current = WeakMode.Get();
+            auto* CurrentWorld = Self ? Self->GetWorld() : nullptr;
+            auto* CurrentLifecycle = Self ? Self->LifecycleSubsystem.Get() : nullptr;
+            if (!Self || !Self->bWorldStarted || !CurrentWorld || CurrentWorld->bIsTearingDown || !Current ||
+                CurrentWorld->GetAuthGameMode() != Current || !CurrentLifecycle ||
+                CurrentLifecycle->GetRegisteredServerBootId() != BootId || Current->GetAssignment().MatchId != MatchId ||
+                !IsStartAborted(*Current))
+            {
+                return;
+            }
+            if (Status == EGamePlatformArenaSubmitStatus::Committed)
+            {
+                Self->BeginConfirmedDrain(*Current);
+            }
+            else if (Status == EGamePlatformArenaSubmitStatus::RetryableFailure)
+            {
+                const float Delay = Self->NextStartAbortRetrySeconds;
+                Self->NextStartAbortRetrySeconds = FMath::Min(Delay * 2.0f, 32.0f);
+                CurrentWorld->GetTimerManager().SetTimer(Self->StartAbortRetryTimer, Self, &ThisClass::SubmitStartAbortAttempt, Delay, false);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("MainArena start abort was not confirmed: %s"), *Error);
+            }
+        });
+}
+
+void UGamePlatformArenaServerSubsystem::BeginConfirmedDrain(AGamePlatformArenaGameMode& Mode)
+{
+    auto* Lifecycle = LifecycleSubsystem.Get();
+    auto* World = GetWorld();
+    if (bTerminalConfirmed || !World || !Lifecycle || !BackendClient || &Mode != ObservedArenaMode.Get() ||
+        BackendClient->GetConfig().GameServerId != Mode.GetAssignment().GameServerId ||
+        BackendClient->GetConfig().ServerBootId != Lifecycle->GetRegisteredServerBootId())
+    {
+        return;
+    }
+    TerminalHeartbeatBaselineGeneration = Lifecycle->GetIssuedOperationGeneration();
+    bTerminalConfirmed = true;
+    World->GetTimerManager().SetTimer(SafeDrainTimer, this, &ThisClass::TryFinishArenaDrain, 5.0f, true);
+    TryFinishArenaDrain();
+}
+
 // 服务器空人回收纯安全门禁：结果、阶段和实例身份必须均为真实权威，
 // UI关闭、玩家状态副本或单次心跳零人不能独立授权Agones终止。
 bool UGamePlatformArenaServerSubsystem::CanRequestSafeDrain(
-    bool bResultConfirmed, bool bMatchCompleted,
+    bool bTerminalConfirmed, bool bTerminalPhase,
     bool bSameGameServer, bool bHasLivePlayerControllers)
 {
-    return bResultConfirmed && bMatchCompleted && bSameGameServer && !bHasLivePlayerControllers;
+    return bTerminalConfirmed && bTerminalPhase && bSameGameServer && !bHasLivePlayerControllers;
 }
 
 void UGamePlatformArenaServerSubsystem::TryFinishArenaDrain()
 {
     check(IsInGameThread());
     UWorld* World = GetWorld();
-    if (!bWorldStarted || !bResultCommitted || !World || World->bIsTearingDown ||
+    if (!bWorldStarted || !bTerminalConfirmed || !World || World->bIsTearingDown || !BackendClient ||
         World->GetNetMode() != NM_DedicatedServer)
     {
         return;
@@ -273,9 +339,10 @@ void UGamePlatformArenaServerSubsystem::TryFinishArenaDrain()
             break;
         }
     }
-    if (!CanRequestSafeDrain(bResultCommitted,
-        Mode->GetMatchPhase() == EGamePlatformArenaMatchPhase::Completed,
-        !MatchGameServerId.IsEmpty() && MatchGameServerId == Snapshot.GameServerId,
+    if (!CanRequestSafeDrain(bTerminalConfirmed,
+        StartAbortReason.IsSet() ? IsStartAborted(*Mode) : Mode->GetMatchPhase() == EGamePlatformArenaMatchPhase::Completed,
+        !MatchGameServerId.IsEmpty() && MatchGameServerId == Snapshot.GameServerId &&
+            BackendClient->GetConfig().ServerBootId == Lifecycle->GetRegisteredServerBootId(),
         bHasLiveControllers))
     {
         return;
@@ -319,7 +386,7 @@ void UGamePlatformArenaServerSubsystem::TryFinishArenaDrain()
     // 必须先获得结果提交后的零人心跳真正成功回执；发送成功仅表示HTTP已开始。
     const bool bConfirmedZeroAfterResult =
         Lifecycle->GetLastAcknowledgedHeartbeatPlayers() == 0 &&
-        Lifecycle->GetLastAcknowledgedHeartbeatGeneration() > ResultHeartbeatBaselineGeneration;
+        Lifecycle->GetLastAcknowledgedHeartbeatGeneration() > TerminalHeartbeatBaselineGeneration;
     if (!bConfirmedZeroAfterResult)
     {
         // 5秒下一轮重试暂时失败的零心跳；不把请求发送、旧ACK或网络未知结果作为授权。

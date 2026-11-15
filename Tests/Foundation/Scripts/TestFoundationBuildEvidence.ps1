@@ -36,6 +36,7 @@ function New-Fixture {
         Write-FixtureFile (Join-Path $workspace $path) "fixture input: $path"
     }
     Write-FixtureJson (Join-Path $workspace 'Game/Plugins/Fixture/Fixture.uplugin') @{FileVersion=3;Modules=@(@{Name='FixtureRuntime';Type='Runtime'})}
+    Write-FixtureFile (Join-Path $workspace 'Shared/Generated/Cpp/GamePlatform/Fixture.generated.hpp') '// UE 实际消费的共享生成头夹具'
     # Source中的描述文件只是测试输入，不能使递归再次按插件根剪除。
     foreach($path in @('Game/Source/DivineBeastsArena/Private/SourceFixture.uplugin','Game/Plugins/Fixture/Source/FixtureRuntime/Private/SourceFixture.uplugin')) {
         Write-FixtureJson (Join-Path $workspace $path) @{FileVersion=3;Modules=@()}
@@ -151,12 +152,16 @@ try {
     }
     Case 'CompileInputScopeIncludesCppHeadersRulesDescriptorsConfig' { param($f)
         $paths=@($f.ProofArgs.Before.Entries.Path)
-        foreach($suffix in @('Test.cpp','Test.h','DivineBeastsArena.Build.cs','DivineBeastsArenaEditor.Target.cs','Fixture.uplugin','DivineBeastsArena.uproject','DefaultEngine.ini','Resources.rc')) {
+        foreach($suffix in @('Test.cpp','Test.h','DivineBeastsArena.Build.cs','DivineBeastsArenaEditor.Target.cs','Fixture.uplugin','DivineBeastsArena.uproject','DefaultEngine.ini','Resources.rc','Shared/Generated/Cpp/GamePlatform/Fixture.generated.hpp')) {
             Assert-Contract (@($paths | Where-Object { $_.EndsWith($suffix,[StringComparison]::Ordinal) }).Count -gt 0) "清单遗漏$suffix"
         }
     }
     Case 'GeneratedAndAssetChangesExcluded' { param($f)
         foreach($path in @('Game/Content/Fixture.txt','Game/Intermediate/Generated.h','Game/Plugins/Fixture/Intermediate/Generated.h','Game/Saved/Log.txt','Game/DerivedDataCache/Cache.txt')) { Write-FixtureFile (Join-Path $f.Workspace $path) 'excluded' }
+        $null=Assert-Fixture $f
+    }
+    Case 'SharedGeneratedCppChangesInvalidateEditorProof' -Reject { param($f)
+        Write-FixtureFile (Join-Path $f.Workspace 'Shared/Generated/Cpp/GamePlatform/Fixture.generated.hpp') '// 共享生成输入已变化'
         $null=Assert-Fixture $f
     }
     Case 'OnlyModulesResultRejected' -Reject { param($f) $f.Build.OnlyModules=@('FixtureRuntime'); Write-FixtureJson $f.ResultPath $f.Build; $null=Assert-Fixture $f }

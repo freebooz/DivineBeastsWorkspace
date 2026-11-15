@@ -9,6 +9,7 @@
 param([Parameter(Mandatory)][string]$ServerExe,
     [Parameter(Mandatory)][string]$ControlBaseUrl,
     [Parameter(Mandatory)][string]$PlayerDataBaseUrl,
+    [guid]$ServerCookRunId,
     [string]$RegionId='us-west',[ValidateRange(1,8)][int]$Count=1,
     [ValidateRange(1024,65520)][int]$FirstPort=17881,[guid]$RunId=[guid]::NewGuid())
 Set-StrictMode -Version Latest
@@ -30,6 +31,25 @@ if(Test-Path -LiteralPath $taskDirectory){throw '拒绝覆盖既有池证据。'
 $null=New-Item -ItemType Directory -Path $taskDirectory
 $taskHeaders=@{Authorization='Bearer '+$taskToken}
 $taskSlots=@()
+$taskPreviousSnapshot=$null
+$taskUseCookProof=$PSBoundParameters.ContainsKey('ServerCookRunId')
+if ($taskUseCookProof) { Import-Module (Join-Path $taskRoot 'Build/Game/LocalValidationPackageEvidence.psm1') }
+@{PID=$PID;StartUtcTicks=(Get-Process -Id $PID).StartTime.ToUniversalTime().Ticks.ToString();RunId=$RunId.ToString('D');
+    Count=$Count;FirstPort=$FirstPort;ControlBaseUrl=$ControlBaseUrl.TrimEnd('/');ScriptPath=$PSCommandPath} | ConvertTo-Json |
+    Set-Content -LiteralPath (Join-Path $taskDirectory 'Supervisor.json') -Encoding utf8
+function Retire-OwnedArena($Slot){
+    # 控制面 Release 把空闲槽还原成可分配 Ready，换代前须排空旧 Boot。
+    $headers=$taskHeaders.Clone();$headers['X-Game-Server-Id']=$Slot.ServerId;$headers['X-Game-Server-Boot-Id']=$Slot.BootId
+    $body=@{gameServerId=$Slot.ServerId}|ConvertTo-Json -Compress
+    try {
+        $response=Invoke-WebRequest -Method Post -Uri ($ControlBaseUrl.TrimEnd('/')+'/internal/v1/gameservers/drain') -Headers $headers `
+            -ContentType 'application/json' -Body $body -TimeoutSec 3 -NoProxy -MaximumRedirection 0 -SkipHttpErrorCheck
+        $reply=$response.Content | ConvertFrom-Json -AsHashtable
+        return ($response.StatusCode -eq 200 -and $reply.accepted -eq $true) -or
+            ($response.StatusCode -eq 409 -and $reply.errorCode -ceq 'GAME_SERVER_BOOT_MISMATCH')
+    } catch { return $false }
+    finally { $headers.Clear() }
+}
 function Stop-OwnedArena($Slot){
     $taskChild=Get-Process -Id $Slot.PID -ErrorAction SilentlyContinue
     if($taskChild-and $taskChild.StartTime.ToUniversalTime().Ticks.ToString()-ceq $Slot.StartUtcTicks-and $taskChild.Path-ieq $taskExe){
@@ -39,6 +59,12 @@ function Stop-OwnedArena($Slot){
     }
 }
 function Start-OwnedArena([int]$Index,[int]$Generation,[int]$Failures){
+    $taskBuildVersion='MainArena.Development.20261015.1'
+    if ($taskUseCookProof) {
+        $taskPackage=Read-LocalValidationCookPackage $taskRoot $ServerCookRunId Server
+        if ($taskPackage.Executable -ine $taskExe) { throw 'MainArena ServerExe 与指定 Cook 制品不同。' }
+        $taskBuildVersion=$taskPackage.BuildVersion
+    }
     $taskServerId="mainarena-local-$($RunId.ToString('N'))-$Index-$Generation"
     $taskBoot=[guid]::NewGuid().ToString('D')
     $taskPort=$FirstPort+$Index
@@ -50,14 +76,14 @@ function Start-OwnedArena([int]$Index,[int]$Generation,[int]$Failures){
     $taskEnvironment=@{
         GAME_SERVER_ID=$taskServerId;GAME_SERVER_BOOT_ID=$taskBoot;GAME_SERVER_WORLD_ID='divinebeasts.world.main_arena@1'
         GAME_SERVER_REGION_ID=$RegionId;GAME_SERVER_CLUSTER_ID='local-development';GAME_SERVER_NODE_ID=$env:COMPUTERNAME
-        GAME_SERVER_BUILD_VERSION='MainArena.Development.20261015.1';GAME_SERVER_PUBLIC_ENDPOINT="127.0.0.1:$taskPort"
+        GAME_SERVER_BUILD_VERSION=$taskBuildVersion;GAME_SERVER_PUBLIC_ENDPOINT="127.0.0.1:$taskPort"
         GAME_SERVER_CAPACITY='10';GAME_SERVER_PROTOCOL_VERSION='1';DBA_SERVER_PROFILE_ROOT=(Join-Path $taskRoot 'Deploy/Server')
         GAMESERVERCONTROL_BASE_URL=$ControlBaseUrl;GAMESERVERCONTROL_INTERNAL_TOKEN=$taskToken
     }
     foreach($taskName in $taskEnvironment.Keys){$taskInfo.Environment[$taskName]=[string]$taskEnvironment[$taskName]}
     foreach($taskArgument in @('/DBAWorldPack_MainArena/Maps/L_DBA_MainArena','-ServerRole=MainArena','-CustomConfig=VillageDevelopmentServer','-DBADevelopmentArena','-DBADevelopmentSkills','-textconfig','-server','-nullrhi','-nosound','-unattended','-nosplash','-nosteam',"-port=$taskPort",'-MULTIHOME=127.0.0.1',"-abslog=$taskLog")){$taskInfo.ArgumentList.Add($taskArgument)}
     $taskChild=[Diagnostics.Process]::Start($taskInfo)
-    [pscustomobject]@{Index=$Index;Generation=$Generation;Failures=$Failures;PID=$taskChild.Id;StartUtcTicks=$taskChild.StartTime.ToUniversalTime().Ticks.ToString();Exe=$taskExe;ServerId=$taskServerId;BootId=$taskBoot;Port=$taskPort;Log=$taskLog;MatchId='';State='Starting'}
+    [pscustomobject]@{Index=$Index;Generation=$Generation;Failures=$Failures;PID=$taskChild.Id;StartUtcTicks=$taskChild.StartTime.ToUniversalTime().Ticks.ToString();Exe=$taskExe;ServerId=$taskServerId;BootId=$taskBoot;Port=$taskPort;Log=$taskLog;BuildVersion=$taskBuildVersion;MatchId='';State='Starting'}
 }
 try{
     foreach($taskIndex in 0..($Count-1)){$taskSlots+=Start-OwnedArena $taskIndex 1 0}
@@ -65,7 +91,10 @@ try{
         foreach($taskSlot in $taskSlots){
             $taskChild=Get-Process -Id $taskSlot.PID -ErrorAction SilentlyContinue
             $taskReplace=$null-eq$taskChild
-            if($taskReplace){$taskSlot.Failures++;if($taskSlot.Failures-ge5){throw '本地竞技进程连续失败五次；查看本池日志。'}}
+            if($taskReplace){
+                $taskReplace=Retire-OwnedArena $taskSlot
+                if($taskReplace){$taskSlot.Failures++;if($taskSlot.Failures-ge5){throw '本地竞技进程连续失败五次；查看本池日志。'}}
+            }
             else{
                 try{
                     if(-not $taskSlot.MatchId){
@@ -75,7 +104,9 @@ try{
                     }else{
                         $taskBody=@{matchId=$taskSlot.MatchId}|ConvertTo-Json -Compress
                         $taskStatus=Invoke-RestMethod -Method Post -Uri ($ControlBaseUrl.TrimEnd('/')+'/internal/v1/arena/status') -Headers $taskHeaders -ContentType 'application/json' -Body $taskBody -TimeoutSec 3
-                        if($taskStatus.Record.State-eq'released'-and $taskStatus.CurrentPlayers-eq0){Stop-OwnedArena $taskSlot;$taskReplace=$true;$taskSlot.Failures=0}
+                        if($taskStatus.Record.State-eq'released'-and $taskStatus.CurrentPlayers-eq0-and (Retire-OwnedArena $taskSlot)){
+                            Stop-OwnedArena $taskSlot;$taskReplace=$true;$taskSlot.Failures=0
+                        }
                     }
                 }catch{
                     # 尚未注册/分配或控制面短暂失联时保留实例，不按本地超时擅自回收仍有玩家的进程。
@@ -84,7 +115,21 @@ try{
             }
             if($taskReplace){$taskNew=Start-OwnedArena $taskSlot.Index ($taskSlot.Generation+1) $taskSlot.Failures;foreach($taskProperty in $taskNew.PSObject.Properties){$taskSlot.($taskProperty.Name)=$taskProperty.Value}}
         }
-        $taskSlots|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $taskDirectory 'Pool.json') -Encoding utf8
+        $taskSnapshot=ConvertTo-Json -InputObject @($taskSlots) -Depth 5
+        if ($taskSnapshot -cne $taskPreviousSnapshot) {
+            $taskPoolFile=Join-Path $taskDirectory 'Pool.json'
+            $taskPendingFile=Join-Path $taskDirectory 'Pool.pending.json'
+            Set-Content -LiteralPath $taskPendingFile -Encoding utf8 -Value $taskSnapshot
+            for ($attempt=1;$attempt -le 5;$attempt++) {
+                try { [IO.File]::Move($taskPendingFile,$taskPoolFile,$true); break }
+                catch {
+                    $code=$_.Exception.GetBaseException().HResult -band 0xffff
+                    if ($attempt -eq 5 -or $code -notin 32,33) { throw }
+                    Start-Sleep -Milliseconds 50
+                }
+            }
+            $taskPreviousSnapshot=$taskSnapshot
+        }
         Start-Sleep -Seconds 3
     }
-}finally{foreach($taskSlot in $taskSlots){Stop-OwnedArena $taskSlot};$taskToken=$null;$taskHeaders.Clear()}
+}finally{foreach($taskSlot in $taskSlots){$null=Retire-OwnedArena $taskSlot;Stop-OwnedArena $taskSlot};$taskToken=$null;$taskHeaders.Clear()}

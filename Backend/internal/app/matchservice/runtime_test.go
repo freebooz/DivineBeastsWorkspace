@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -77,10 +78,12 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 		size := scenario%5 + 1
 		bFault := scenario%10 >= 5
 		challenge := scenario >= 10
+		stoppedAfterResult := scenario == 0 || scenario == 4
+		abortReason := map[int]string{5: "player_disconnected", 9: "spawn_failed"}[scenario]
 		t.Run(fmt.Sprintf("%dv%d-fault-%t-challenge-%t", size, size, bFault, challenge), func(t *testing.T) {
 			ctx := context.Background()
-			counter := 0
-			nextID := func(prefix string) string { counter++; return fmt.Sprintf("%s-%d", prefix, counter) }
+			var counter atomic.Int64
+			nextID := func(prefix string) string { return fmt.Sprintf("%s-%d", prefix, counter.Add(1)) }
 			repo := matchapi.NewMemoryPartyRepository()
 			queue := matchapi.NewService(repo, matchapi.NewMemoryTicketRepository(), nextID)
 			mode := "Arena.Mode.Team" + strconv.Itoa(size) + "v" + strconv.Itoa(size)
@@ -91,11 +94,14 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 			if err := queue.ConfigureMatchmaking(settings); err != nil {
 				t.Fatal(err)
 			}
-			control := gameservercontrol.NewService(gameserver.NewRegistry(), servertransfer.NewService([]byte("01234567890123456789012345678901"), func() time.Time { return time.Now().UTC() }), match.NewResultService(match.NewMemoryResultStore()), func() time.Time { return time.Now().UTC() })
+			controlNow := time.Now().UTC()
+			controlClock := func() time.Time { return controlNow }
+			control := gameservercontrol.NewService(gameserver.NewRegistry(), servertransfer.NewService([]byte("01234567890123456789012345678901"), controlClock), match.NewResultService(match.NewMemoryResultStore()), controlClock)
 			if err := control.ConfigureArenaLifecycle(gameservercontrol.NewMemoryArenaLifecycleStore()); err != nil {
 				t.Fatal(err)
 			}
-			for _, registration := range []gameservercontrol.RegisterInput{{GameID: "divine-beasts", GameServerID: "arena", ServerBootID: "arena-boot", ServerRoleID: gameservercontract.RoleMainArena, ExperienceID: gameservercontract.ExperienceMainArenaMain, RegionID: "test", WorldID: "World.MainArena", PublicEndpoint: "127.0.0.1:17782", BuildVersion: "test-only", ProtocolVersion: 1, Capacity: 10}, {GameID: "divine-beasts", GameServerID: "new-village", ServerBootID: "village-boot", ServerRoleID: gameservercontract.RoleVillage, ExperienceID: gameservercontract.ExperienceVillageTutorial, RegionID: "test", WorldID: "divinebeasts.world.village_tutorial@1", PublicEndpoint: "127.0.0.1:17781", BuildVersion: "test-only", ProtocolVersion: 1, Capacity: 20}} {
+			arenaRegistration := gameservercontrol.RegisterInput{GameID: "divine-beasts", GameServerID: "arena", ServerBootID: "arena-boot", ServerRoleID: gameservercontract.RoleMainArena, ExperienceID: gameservercontract.ExperienceMainArenaMain, RegionID: "test", WorldID: "World.MainArena", PublicEndpoint: "127.0.0.1:17782", BuildVersion: "test-only", ProtocolVersion: 1, Capacity: 10}
+			for _, registration := range []gameservercontrol.RegisterInput{arenaRegistration, {GameID: "divine-beasts", GameServerID: "new-village", ServerBootID: "village-boot", ServerRoleID: gameservercontract.RoleVillage, ExperienceID: gameservercontract.ExperienceVillageTutorial, RegionID: "test", WorldID: "divinebeasts.world.village_tutorial@1", PublicEndpoint: "127.0.0.1:17781", BuildVersion: "test-only", ProtocolVersion: 1, Capacity: 20}} {
 				if err := control.Register(registration); err != nil {
 					t.Fatal(err)
 				}
@@ -199,6 +205,9 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 				return worker
 			}
 			runtime = newWorker()
+			if err := queue.AttachMatchmakingRuntime(runtime); err != nil {
+				t.Fatal(err)
+			}
 			if err = runtime.ProcessCandidate(ctx, candidate); err == nil {
 				t.Fatal("测试必须遇到已持久步骤但投影未提交")
 			}
@@ -233,6 +242,7 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 			if !found {
 				t.Fatal("缺少真实控制面的比赛名单")
 			}
+			serverAssignment, _ := control.GetServerAssignment("arena")
 			for _, row := range assignment.Roster {
 				want := ""
 				if row.PlayerID == "player-00" {
@@ -240,6 +250,39 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 				}
 				if row.CharacterName != want {
 					t.Errorf("控制面名单角色名 = %q，应为 %q", row.CharacterName, want)
+				}
+			}
+			if scenario == 0 || scenario == 4 {
+				// 另一工作者持有真实操作租约时，全员仍可并发读取已提交且尚未消费的首次票。
+				lease, err := operations.ClaimOperation(ctx, op, "race-worker", time.Now(), 20*time.Second)
+				if err != nil {
+					t.Fatal(err)
+				}
+				start := make(chan struct{})
+				results := make(chan error, len(actors))
+				for _, actor := range actors {
+					go func() {
+						<-start
+						value, err := queue.GetMatchmakingMigration(ctx, actor, matchmaking.MigrationRequest{CandidateID: candidate.ID, Direction: "arena", ClientRequestID: "concurrent"})
+						if err == nil && value.TicketID != op.TicketIDs[actor.PlayerID] {
+							err = errors.New("首次只读请求返回了错误的票据")
+						}
+						results <- err
+					}()
+				}
+				close(start)
+				for range actors {
+					if err := <-results; err != nil {
+						t.Errorf("首次取票不应争用写租约: %v", err)
+					}
+				}
+				changedSession := actors[0]
+				changedSession.SessionID = "new-session"
+				if _, err := queue.GetMatchmakingMigration(ctx, changedSession, matchmaking.MigrationRequest{CandidateID: candidate.ID, Direction: "arena", ClientRequestID: "fresh"}); !errors.Is(err, matchservice.ErrOperationBusy) {
+					t.Errorf("新签票必须仍受写租约保护: %v", err)
+				}
+				if err := operations.ReleaseOperation(ctx, op.ID, lease.LeaseOwner, lease.Fence); err != nil {
+					t.Fatal(err)
 				}
 			}
 			for _, actor := range actors {
@@ -297,23 +340,63 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 			for _, slot := range op.Assignment.Roster {
 				result.Players = append(result.Players, match.PlayerResult{PlayerID: slot.PlayerID, TeamID: slot.TeamID, CharacterID: slot.CharacterID})
 			}
-			if bFault {
+			if abortReason != "" {
+				if abortReason == "player_disconnected" {
+					if err = control.Heartbeat("arena", 0, gameserver.StatusActive); err != nil {
+						t.Fatal(err)
+					}
+				}
+				if err = control.ReportArenaStartAbort(ctx, gameservercontrol.ArenaStartAbortInput{MatchID: op.MatchID, GameServerID: "arena", ServerBootID: arenaRegistration.ServerBootID, Reason: abortReason}); err != nil {
+					t.Fatal("实际专服开战失败报告未接受", err)
+				}
+			} else if bFault {
 				if err = control.CancelArena(ctx, op.MatchID); err != nil {
 					t.Fatal(err)
 				}
 			} else if _, err = control.SubmitMatchResult(ctx, result); err != nil {
 				t.Fatal(err)
 			}
+			if stoppedAfterResult {
+				arenaRegistration.ServerBootID = "restarted-arena-boot"
+				if err := control.Register(arenaRegistration); err != nil {
+					t.Fatal(err)
+				}
+			}
 			if err = runtime.ProcessCandidate(ctx, candidate); err != nil {
 				t.Fatal(err)
 			}
+			if abortReason != "" {
+				state, err := queue.ReadMatchmakingState(ctx, actors[0].PlayerID)
+				if err != nil || state.State != matchmaking.PhaseReturning || state.ReasonCode != "MATCH_START_ABORTED" {
+					t.Fatalf("健康实例报告开战失败应立即进入真实返程: %s %s %v", state.State, state.ReasonCode, err)
+				}
+				aborted, _, err := operations.GetOperation(ctx, candidate.ID)
+				if err != nil || aborted.Result != nil {
+					t.Fatalf("开战失败不应产生比赛结果: %v", err)
+				}
+			}
+			if stoppedAfterResult {
+				state, err := queue.ReadMatchmakingState(ctx, actors[0].PlayerID)
+				if err != nil || state.State != matchmaking.PhaseCompleted || state.CandidateID != candidate.ID {
+					t.Fatalf("已结算实例失效后应完成释放并保留候选身份: %s %v", state.State, err)
+				}
+				wrongCharacter := actors[0]
+				wrongCharacter.CharacterID = "different-character"
+				if _, err := queue.GetMatchmakingMigration(ctx, wrongCharacter, matchmaking.MigrationRequest{CandidateID: candidate.ID, Direction: "return", ClientRequestID: "wrong-character"}); err == nil {
+					t.Fatal("完成阶段不能允许另一角色签返回票")
+				}
+				if _, err := queue.GetMatchmakingMigration(ctx, actors[0], matchmaking.MigrationRequest{CandidateID: candidate.ID, Direction: "return", ClientRequestID: "wrong-assignment", SourceAssignmentID: "match:different"}); err == nil {
+					t.Fatal("完成阶段不能使用另一局旧分配签返回票")
+				}
+			}
 			for _, actor := range actors {
-				migration, err := runtime.GetMigration(ctx, actor, matchmaking.MigrationRequest{CandidateID: candidate.ID, Direction: "return", ClientRequestID: "return-1"})
+				request := matchmaking.MigrationRequest{CandidateID: candidate.ID, Direction: "return", ClientRequestID: "return-1", SourceAssignmentID: serverAssignment.AssignmentID}
+				migration, err := queue.GetMatchmakingMigration(ctx, actor, request)
 				if err != nil && !fault.lostReturn {
 					t.Fatal(err)
 				}
 				if err != nil {
-					migration, err = runtime.GetMigration(ctx, actor, matchmaking.MigrationRequest{CandidateID: candidate.ID, Direction: "return", ClientRequestID: "return-1"})
+					migration, err = queue.GetMatchmakingMigration(ctx, actor, request)
 				}
 				if err != nil {
 					t.Fatal("返回未知响应必须恢复原稳定意图", err)
@@ -326,8 +409,18 @@ func TestRuntimeFiveModesAndSafeReturn(t *testing.T) {
 				if _, err = control.ValidateTransferContext(ctx, ticket, migration.GameServerID); err != nil {
 					t.Fatal(err)
 				}
+				if stoppedAfterResult {
+					request.ClientRequestID = "already-returned"
+					if _, err := queue.GetMatchmakingMigration(ctx, actor, request); err == nil {
+						t.Fatal("已返回的角色不能再次签旧竞技候选的返程票")
+					}
+				}
 			}
+			controlNow = controlNow.Add(time.Second)
 			if err = control.Heartbeat("arena", 0, gameserver.StatusActive); err != nil {
+				t.Fatal(err)
+			}
+			if err = control.ReportServerDrain("arena", arenaRegistration.ServerBootID); err != nil {
 				t.Fatal(err)
 			}
 			if err = runtime.ProcessCandidate(ctx, candidate); err != nil {

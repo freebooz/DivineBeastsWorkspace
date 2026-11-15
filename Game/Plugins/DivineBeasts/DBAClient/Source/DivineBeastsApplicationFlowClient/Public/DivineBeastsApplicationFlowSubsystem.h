@@ -191,6 +191,9 @@ private:
     bool MarkLoadingFactReady(FGuid ObservationId, FName TaskId);
     bool ReleaseLoadingOperation();
     void TryCompleteWorldReady();
+    /** 仅当前竞技分配和认证可以从世界进入阶段转到既有恢复路由。 */
+    bool TryRecoverArenaEntry();
+    FGamePlatformFlowNodeToken ArenaEntryRecoveryToken;
     /** 把已经发生的本地World/Controller事实同步给Session；带重入保护，不轮询。 */
     void TryReportLocalFactsToSession();
     void FailWorldReady(EDivineBeastsFlowError Error);

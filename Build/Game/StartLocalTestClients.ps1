@@ -6,20 +6,30 @@
 复用既有RunFrontEndClients；核对同一工作空间的Compose身份及显式网关端口后，
 仅从正在运行的identityservice取得已有账号种子，通过当前进程/子进程环境传递。
 不打印或落盘口令、不重建后端、不重置档案、不自动认证；普通发行入口保持原默认。
-调用方须先完成Client/Server构建、Cook/Stage及战斗版本门禁。本工具只修复验证启动配置。
+在读取测试账号前，按本次构建、Cook 和服务器运行 ID 核验实际双端战斗版本及全部分配候选。
 从后台启动本脚本时将stdout/stderr重定向至本次Saved证据文件，防止游戏日志刷屏。
 #>
 param([Parameter(Mandatory)][string]$ClientExe,
     [Parameter(Mandatory)][string]$GatewayUrl,
+    [Parameter(Mandatory)][guid]$ClientBuildRunId,
+    [Parameter(Mandatory)][guid]$ServerBuildRunId,
+    [Parameter(Mandatory)][guid]$ClientCookRunId,
+    [Parameter(Mandatory)][guid]$ServerCookRunId,
+    [Parameter(Mandatory)][guid]$VillageRunId,
+    [Parameter(Mandatory)][guid]$ArenaPoolRunId,
     [string]$ComposeProject='sslm-validation-8238653a',
     [ValidateRange(1,4)][int]$Count=2,
     [guid]$RunId=[guid]::NewGuid())
 $ErrorActionPreference='Stop'
 $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 Import-Module (Join-Path $PSScriptRoot 'FrontEndClientGateway.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'LocalValidationVersionGate.psm1') -Force
 $taskGateway=[uri](Resolve-FrontEndClientGatewayUrl -GatewayUrl $GatewayUrl)
 if(!$taskGateway.IsLoopback){throw '测试账号验证启动器只允许本机网关'}
 
+$taskProof = Assert-LocalValidationVersionGate -Workspace $taskRoot -ClientExe $ClientExe -Gateway $taskGateway -ComposeProject $ComposeProject `
+    -ClientBuildRunId $ClientBuildRunId -ServerBuildRunId $ServerBuildRunId -ClientCookRunId $ClientCookRunId -ServerCookRunId $ServerCookRunId `
+    -VillageRunId $VillageRunId -ArenaPoolRunId $ArenaPoolRunId
 function Read-LocalValidationContainer([string]$Service){
     <# 必须是当前Compose项目、当前工作空间的唯一运行服务，避免读取另一套账号环境。 #>
     # 只读运行容器标签，不重新解析Compose文件；后者会要求与此查询无关的控制令牌插值。
@@ -36,9 +46,6 @@ function Read-LocalValidationContainer([string]$Service){
 $taskIdentity=$null;$taskSeed=$null
 $taskPrevious=[Environment]::GetEnvironmentVariable('DIVINEBEASTS_DEV_LOGIN_ACCOUNTS_JSON','Process')
 try{
-    $taskGatewayContainer=Read-LocalValidationContainer 'gatewayservice'
-    $taskPorts=@($taskGatewayContainer.HostConfig.PortBindings.'8080/tcp')
-    if($taskPorts.Count-ne1-or[int]$taskPorts[0].HostPort-ne$taskGateway.Port){throw '显式网关不属于当前账号环境'}
     $taskIdentity=Read-LocalValidationContainer 'identityservice'
     $taskValues=@($taskIdentity.Config.Env|Where-Object {$_.StartsWith('DIVINEBEASTS_DEV_LOGIN_ACCOUNTS_JSON=')})
     if($taskValues.Count-ne1){throw '现有身份服务缺少完整测试账号种子'}
@@ -46,6 +53,10 @@ try{
     try{$taskAccounts=@(ConvertFrom-Json -InputObject $taskSeed -AsHashtable)}
     catch{throw '测试账号种子格式无效'}
     if($taskAccounts.Count-ne10){throw '必须提供既有完整十账号配置'}
+    Assert-LocalValidationLaunchStillCurrent -Workspace $taskRoot -Proof $taskProof
+    $taskProofDirectory = Join-Path $taskRoot "Saved/Validation/LocalValidationVersionGate/$RunId"
+    $null = New-Item -ItemType Directory -Path $taskProofDirectory
+    $taskProof | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskProofDirectory 'result.json') -Encoding utf8
     [Environment]::SetEnvironmentVariable('DIVINEBEASTS_DEV_LOGIN_ACCOUNTS_JSON',$taskSeed,'Process')
     # 账号配置只传当前新客户端；实际启动器继续做字段、唯一性、口令非空的完整校验。
     # 同时显式启用测试账号开关，普通启动器会清理旧凭据，不能只设置父环境而漏掉此开关。

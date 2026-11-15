@@ -28,6 +28,10 @@ func DecodeMatchmakingCommandJSON(payload string) (matchmaking.Command, error) {
 func DecodeMatchmakingMigrationJSON(payload string) (matchmaking.MigrationRequest, error) {
 	var command matchmaking.MigrationRequest
 	request := &http.Request{Header: make(http.Header), Body: io.NopCloser(strings.NewReader(payload))}
-	err := DecodeOnlineJSON(request, &command, []string{"candidateId", "direction", "clientRequestId"}, []string{"candidateId", "direction", "clientRequestId"})
+	err := decodeMatchmakingMigration(request, &command)
 	return command, err
+}
+
+func decodeMatchmakingMigration(r *http.Request, command *matchmaking.MigrationRequest) error {
+	return DecodeOnlineJSON(r, command, []string{"candidateId", "direction", "clientRequestId", "sourceAssignmentId"}, []string{"candidateId", "direction", "clientRequestId"})
 }

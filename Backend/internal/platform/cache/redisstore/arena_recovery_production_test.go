@@ -108,6 +108,33 @@ func TestRedisArenaRecovery(t *testing.T) {
 	if _, err := svc.AllocateWorldTransfer(ctx, returnInput); !errors.Is(err, gameservercontrol.ErrWorldMatchMigrationRequired) {
 		t.Fatalf("活跃竞技场必须拒绝普通世界分配: %v", err)
 	}
+	lateIssue := issue
+	lateIssue.TicketID += "-late"
+	lateIssue.PlayerID = input.Roster[1].PlayerID
+	lateIssue.SessionID += "-late"
+	lateTicket, err := svc.IssueTransferContext(ctx, lateIssue)
+	if err != nil {
+		t.Fatal(err)
+	}
+	abort := gameservercontrol.ArenaStartAbortInput{MatchID: nonce, GameServerID: reg.GameServerID, ServerBootID: reg.ServerBootID, Reason: "spawn_failed"}
+	if err := svc.ReportArenaStartAbort(ctx, abort); err != nil {
+		t.Fatal(err)
+	}
+	if err := recovered.ReportArenaStartAbort(ctx, abort); err != nil {
+		t.Fatalf("共享Redis中的开战失败必须可跨服务幂等确认: %v", err)
+	}
+	if _, err := recovered.ValidateTransferContext(ctx, lateTicket, nonce); err == nil {
+		t.Error("外部同Boot控制服务不应接受终止前已签发的票据")
+	}
+	// 模拟已通过前置检查并消费、但控制面取消先于最终位置写入的交错顺序。
+	latePresence := gameservercontrol.PlayerPresence{PlayerID: lateIssue.PlayerID, SessionID: lateIssue.SessionID, GameServerID: reg.GameServerID, ServerBootID: reg.ServerBootID, ExperienceID: reg.ExperienceID, WorldID: lateTicket.DestinationWorldID, MatchID: nonce, TicketID: lateTicket.TicketID, SessionEpoch: lateTicket.SessionEpoch, IssuedAtUTC: lateTicket.IssuedAt, AcceptedAtUTC: time.Now().UTC()}
+	if err := NewArenaLifecycleStore(second).SavePresence(ctx, latePresence, ""); err == nil {
+		t.Fatal("实际Redis事务必须拒绝终态后的迟到位置写入")
+	}
+	status, err := recovered.GetArenaStatus(ctx, nonce)
+	if err != nil || status.Record.State != "cancelled" || status.Record.StartAbortReason != "spawn_failed" || status.Record.Result != nil {
+		t.Fatalf("共享Redis应保留首次终止原因且没有比赛结果: %v", err)
+	}
 	if err := svc.CancelArena(ctx, nonce); err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +176,7 @@ func TestRedisArenaRecovery(t *testing.T) {
 	}
 	defer first.inner.Del(context.Background(), "gameserver:world-transfer:"+returnInput.Transfer.TicketID, "transfer:issued:"+returnInput.Transfer.TicketID, transferReplayKeyPrefix+returnInput.Transfer.TicketID, partyKeyPrefix+p.ID, partyMemberPrefix+p.LeaderPlayerID, partyChangesPrefix+p.LeaderPlayerID)
 	// 仅清本测试生成的已知键；不使用FLUSHDB、通配扫描或删除其它会话记录。
-	keys := []string{arenaRecordPrefix + nonce, arenaRecordPrefix + input.MatchID, arenaServerIndexPrefix + nonce, playerPresencePrefix + issue.PlayerID, "transfer:issued:" + issue.TicketID, transferReplayKeyPrefix + issue.TicketID}
+	keys := []string{arenaRecordPrefix + nonce, arenaRecordPrefix + input.MatchID, arenaServerIndexPrefix + nonce, playerPresencePrefix + issue.PlayerID, playerPresencePrefix + lateIssue.PlayerID, "transfer:issued:" + issue.TicketID, "transfer:issued:" + lateIssue.TicketID, transferReplayKeyPrefix + issue.TicketID}
 	if err := first.inner.Del(ctx, keys...).Err(); err != nil {
 		t.Fatal(err)
 	}

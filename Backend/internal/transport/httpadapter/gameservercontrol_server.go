@@ -28,6 +28,8 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 	}
 	mux := http.NewServeMux()
 	registerArenaLifecycle(mux, service, internalBearerToken)
+	registerArenaStartAbort(mux, service, internalBearerToken)
+	registerServerValidationInventory(mux, service, internalBearerToken)
 	mux.Handle("POST /internal/v1/gameservers/village-queue-origin", requireGameServerControlBearer(internalBearerToken, func(w http.ResponseWriter, r *http.Request) {
 		serverID := strings.TrimSpace(r.Header.Get("X-Game-Server-Id"))
 		bootID := strings.TrimSpace(r.Header.Get("X-Game-Server-Boot-Id"))
@@ -123,12 +125,8 @@ func NewGameServerControlHandler(service *gameservercontrol.Service, internalBea
 		if !requireGameServerIdentity(w, r, req.GameServerID, serverBootID) {
 			return
 		}
-		if err := service.ValidateServerBoot(req.GameServerID, serverBootID); err != nil {
+		if err := service.ReportServerDrain(req.GameServerID, serverBootID); err != nil {
 			writeError(w, http.StatusConflict, "GAME_SERVER_BOOT_MISMATCH", err)
-			return
-		}
-		if err := service.Drain(req.GameServerID); err != nil {
-			writeError(w, http.StatusBadRequest, "GAME_SERVER_DRAIN_FAILED", err)
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"accepted": true})

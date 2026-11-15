@@ -148,6 +148,9 @@ func (s *Service) RegisterContext(ctx context.Context, input RegisterInput) erro
 	if !ok || roleForExperience != input.ServerRoleID {
 		return errors.New("GAME_SERVER_EXPERIENCE_INVALID: ExperienceID与ServerRoleID不匹配")
 	}
+	// 与竞技分配、终止和释放串行，防止同名新Boot在旧比赛核验与副作用之间替换实例。
+	s.arenaAllocationMu.Lock()
+	defer s.arenaAllocationMu.Unlock()
 	previous, hadPrevious := s.registry.Get(input.GameServerID)
 	if hadPrevious && previous.ServerBootID != input.ServerBootID {
 		// 相同GameServerID进入新Boot时，旧Assignment必须立即失效；
@@ -185,6 +188,13 @@ func (s *Service) SetReady(gameServerID string) error { return s.registry.SetRea
 
 // Drain（排空GameServer）禁止实例接受新的玩家或比赛分配。
 func (s *Service) Drain(gameServerID string) error { return s.registry.Drain(gameServerID) }
+
+// ReportServerDrain只供通过Boot身份认证的HTTP实例上报，内部取消和释放不产生此回执。
+func (s *Service) ReportServerDrain(gameServerID, serverBootID string) error {
+	s.arenaAllocationMu.Lock()
+	defer s.arenaAllocationMu.Unlock()
+	return s.registry.DrainRequestedForBoot(gameServerID, serverBootID, s.now().UTC())
+}
 
 // ValidateServerBoot（校验服务器Boot身份）用于所有由具体Dedicated Server发起的内部控制面请求。
 // 同GameServerID发生重启后，旧进程持有的内部Bearer不能越过Boot栅栏操作新实例。
@@ -353,7 +363,7 @@ func (s *Service) AllocateMainArenaContext(ctx context.Context, input AllocateMa
 	if worldID == "" {
 		worldID = "World.MainArena"
 	}
-	assignmentID := "match:" + input.MatchID
+	assignmentID := gameservercontract.ArenaServerAssignmentID(input.MatchID)
 	serverAssignment := gameservercontract.ServerAssignment{AssignmentID: assignmentID, ServerRoleID: gameservercontract.RoleMainArena, ExperienceID: gameservercontract.ExperienceMainArenaMain, WorldID: worldID, RegionID: input.RegionID, GameServerID: allocated.ID, Arena: &assignment}
 	if err := serverAssignment.Validate(); err != nil {
 		_ = s.arenaAllocator.Release(ctx, allocated.ID)
@@ -503,15 +513,25 @@ func (s *Service) ValidateTransferContext(ctx context.Context, ticket servertran
 	if !found || target.ServerBootID == "" || target.ProtocolVersion == 0 {
 		return servertransfer.ValidationResult{}, errors.New("GAME_SERVER_BINDING_UNAVAILABLE: 当前目标服务器身份不存在")
 	}
-	if s.arenaLifecycle != nil && target.RoleID != gameservercontract.RoleMainArena {
-		previous, _, err := s.arenaLifecycle.GetPresence(ctx, ticket.PlayerID)
-		if err != nil {
-			return servertransfer.ValidationResult{}, err
-		}
-		if err := ValidateWorldDeparture(previous, ticket.SourceMatchID, func(matchID string) (ArenaAssignmentRecord, bool, error) {
-			return s.arenaLifecycle.GetArenaByMatch(ctx, matchID)
-		}); err != nil {
-			return servertransfer.ValidationResult{}, err
+	if s.arenaLifecycle != nil {
+		if target.RoleID == gameservercontract.RoleMainArena {
+			record, found, err := s.arenaLifecycle.GetArenaByMatch(ctx, ticket.MatchID)
+			if err != nil {
+				return servertransfer.ValidationResult{}, err
+			}
+			if err := ValidateArenaAdmission(record, found, destinationGameServerID, target.ServerBootID); err != nil {
+				return servertransfer.ValidationResult{}, err
+			}
+		} else {
+			previous, _, err := s.arenaLifecycle.GetPresence(ctx, ticket.PlayerID)
+			if err != nil {
+				return servertransfer.ValidationResult{}, err
+			}
+			if err := ValidateWorldDeparture(previous, ticket.SourceMatchID, func(matchID string) (ArenaAssignmentRecord, bool, error) {
+				return s.arenaLifecycle.GetArenaByMatch(ctx, matchID)
+			}); err != nil {
+				return servertransfer.ValidationResult{}, err
+			}
 		}
 	}
 	result, err := s.transfer.ValidateContext(ctx, servertransfer.ValidateRequest{

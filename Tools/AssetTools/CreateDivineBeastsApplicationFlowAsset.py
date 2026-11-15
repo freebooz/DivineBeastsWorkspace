@@ -5,7 +5,7 @@
 
 约束：
 - 仅操作 /DBAClient/Definitions/DA_DivineBeastsApplicationFlow。
-- 已存在资产只校验，不自动覆盖人工修改。
+- 已存在资产默认只校验；经明确迁移调用只增加竞技入场恢复边。
 - 必须使用真实 UGamePlatformFlowDefinition 反射类，不生成伪 .uasset。
 - 资产不保存账号凭据、Endpoint、TransferTicket 等敏感数据。
 """
@@ -17,6 +17,11 @@ CLASS_PATH = "/Script/GamePlatformApplicationFlow.GamePlatformFlowDefinition"
 LOGICAL_NAMESPACE = "divinebeasts.application"
 LOGICAL_NAME = "main"
 LOGICAL_VERSION = 1
+ARENA_ENTRY_RECOVERY_NODES = {
+    "DBA.Flow.TransferWorld": ("DBA.Flow.Executor.TransferWorld", "DBA.Flow.WorldReady"),
+    "DBA.Flow.WorldReady": ("DBA.Flow.Executor.WorldReady", "DBA.Flow.InWorld"),
+}
+RECOVERY_NODE = "DBA.Flow.Recovering"
 
 
 def require(value, message):
@@ -60,8 +65,8 @@ def expected_values():
         node("DBA.Flow.ValidateSelection", "DBA.Flow.Executor.ValidateSelection", 30, "DBA.Flow.ResolveExperience"),
         node("DBA.Flow.ResolveExperience", "DBA.Flow.Executor.ResolveExperience", 5, "DBA.Flow.RequestWorld"),
         node("DBA.Flow.RequestWorld", "DBA.Flow.Executor.RequestWorld", 45, "DBA.Flow.TransferWorld"),
-        node("DBA.Flow.TransferWorld", "DBA.Flow.Executor.TransferWorld", 60, "DBA.Flow.WorldReady"),
-        node("DBA.Flow.WorldReady", "DBA.Flow.Executor.WorldReady", 180, "DBA.Flow.InWorld"),
+        node("DBA.Flow.TransferWorld", "DBA.Flow.Executor.TransferWorld", 60, "DBA.Flow.WorldReady", {"Recover": RECOVERY_NODE}),
+        node("DBA.Flow.WorldReady", "DBA.Flow.Executor.WorldReady", 180, "DBA.Flow.InWorld", {"Recover": RECOVERY_NODE}),
         # InWorld完全事件驱动；24小时仅作为单次客户端会话失控保护，不用于业务轮询。
         node(
             "DBA.Flow.InWorld",
@@ -83,7 +88,7 @@ def expected_values():
     }
 
 
-def read_asset_values(asset):
+def read_asset_values(asset, include_all_node_fields=False):
     """读取磁盘资产当前值，只用于校验，不进行隐式规范化。"""
     result = {
         "entry_node_id": str(asset.get_editor_property("entry_node_id")),
@@ -94,19 +99,24 @@ def read_asset_values(asset):
         "nodes": [],
     }
     for item in asset.get_editor_property("nodes"):
-        result["nodes"].append(
-            {
-                "node_id": str(item.get_editor_property("node_id")),
-                "executor_id": str(item.get_editor_property("executor_id")),
-                "input_definition_id": "",
-                "timeout_seconds": float(item.get_editor_property("timeout_seconds")),
-                "next_node_id": str(item.get_editor_property("next_node_id")),
-                "routes": {
-                    str(key): str(value)
-                    for key, value in item.get_editor_property("routes").items()
-                },
-            }
-        )
+        node_values = {
+            "node_id": str(item.get_editor_property("node_id")),
+            "executor_id": str(item.get_editor_property("executor_id")),
+            "input_definition_id": "",
+            "timeout_seconds": float(item.get_editor_property("timeout_seconds")),
+            "next_node_id": str(item.get_editor_property("next_node_id")),
+            "routes": {
+                str(key): str(value)
+                for key, value in item.get_editor_property("routes").items()
+            },
+        }
+        if include_all_node_fields:
+            identity = item.get_editor_property("input_definition_id")
+            asset_type = identity.get_editor_property("primary_asset_type")
+            node_values["input_definition_id"] = (
+                str(asset_type.get_editor_property("name")), str(identity.get_editor_property("primary_asset_name")))
+            node_values["wait_for_user_input"] = bool(item.get_editor_property("wait_for_user_input"))
+        result["nodes"].append(node_values)
     return result
 
 
@@ -164,6 +174,79 @@ def write_new_asset(unreal, asset):
     asset.set_editor_property("max_immediate_cycle_transitions",
                               values["max_immediate_cycle_transitions"])
     asset.set_editor_property("nodes", reflected_nodes)
+
+
+def plan_arena_entry_recovery(values):
+    """核对既有权威图，只计算须补的两条边。"""
+    nodes = values["nodes"]
+    by_name = {item["node_id"]: item for item in nodes}
+    require(len(by_name) == len(nodes), "流程存在重复节点")
+    recovery = by_name.get(RECOVERY_NODE)
+    require(recovery and recovery["executor_id"] == "DBA.Flow.Executor.Recovering"
+            and recovery["next_node_id"] == "DBA.Flow.RequestWorld", "现有Recovering合同已变化")
+    missing = []
+    for name, (executor_id, next_node_id) in ARENA_ENTRY_RECOVERY_NODES.items():
+        source = by_name.get(name)
+        require(source and source["executor_id"] == executor_id and source["next_node_id"] == next_node_id,
+                f"{name} 的现有执行器或默认分支已变化")
+        current = source["routes"].get("Recover")
+        require(current in (None, RECOVERY_NODE), f"{name} 已有不同的 Recover 分支，保留现有值")
+        if current is None:
+            missing.append(name)
+    return missing
+
+
+def _flow_asset(unreal):
+    flow_class = unreal.load_class(None, CLASS_PATH)
+    require(flow_class is not None, "UGamePlatformFlowDefinition反射类未加载")
+    asset = unreal.EditorAssetLibrary.load_asset(ASSET_PACKAGE)
+    require(asset is not None and asset.get_class() == flow_class, "现有正式流程资产缺失或类型不符")
+    validate_identity(asset)
+    return asset
+
+
+def verify_arena_entry_recovery():
+    """可从新编辑器或冷重载后调用，确认真实资产中的恢复边。"""
+    import unreal
+
+    values = read_asset_values(_flow_asset(unreal))
+    require(not plan_arena_entry_recovery(values), "正式流程资产缺少竞技入场恢复边")
+    return {name: RECOVERY_NODE for name in ARENA_ENTRY_RECOVERY_NODES}
+
+
+def migrate_arena_entry_recovery():
+    """仅更新已受审查的缺失分支，保留既有字段和所有其他节点。"""
+    import unreal
+
+    asset = _flow_asset(unreal)
+    expected = read_asset_values(asset, include_all_node_fields=True)
+    missing = set(plan_arena_entry_recovery(expected))
+    if not missing:
+        return {"asset": ASSET_PACKAGE, "changed": [], "routes": verify_arena_entry_recovery()}
+
+    nodes = list(asset.get_editor_property("nodes"))
+    node_type = unreal.GamePlatformFlowNodeDefinition
+    for index, previous in enumerate(nodes):
+        name = str(previous.get_editor_property("node_id"))
+        if name not in missing:
+            continue
+        routes = dict(previous.get_editor_property("routes").items())
+        routes[unreal.Name("Recover")] = unreal.Name(RECOVERY_NODE)
+        nodes[index] = node_type(
+            node_id=previous.get_editor_property("node_id"),
+            executor_id=previous.get_editor_property("executor_id"),
+            input_definition_id=previous.get_editor_property("input_definition_id"),
+            timeout_seconds=previous.get_editor_property("timeout_seconds"),
+            next_node_id=previous.get_editor_property("next_node_id"),
+            routes=routes,
+            wait_for_user_input=previous.get_editor_property("wait_for_user_input"),
+        )
+        expected["nodes"][index]["routes"]["Recover"] = RECOVERY_NODE
+    asset.set_editor_property("nodes", nodes)
+    require(read_asset_values(asset, include_all_node_fields=True) == expected,
+            "迁移改变了恢复边之外的流程设置，禁止保存")
+    require(unreal.EditorAssetLibrary.save_loaded_asset(asset, only_if_is_dirty=False), "保存竞技入场恢复边失败")
+    return {"asset": ASSET_PACKAGE, "changed": sorted(missing), "routes": verify_arena_entry_recovery()}
 
 
 def main():

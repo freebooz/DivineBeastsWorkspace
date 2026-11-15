@@ -51,6 +51,45 @@ bool FDivineBeastsArenaBackendCodecTest::RunTest(const FString&)
     FGamePlatformAuthSnapshot NewAuthentication;NewAuthentication.AuthGeneration=FGuid::NewGuid();
     Adapter.AuthenticationChanged(NewAuthentication);
     TestTrue(TEXT("认证换代立即撤销旧邀请及迟到回包代次"),!Adapter.GetSnapshot().bKnown&&!Adapter.GetSnapshot().Challenge.bPresent&&Adapter.Generation>OldGeneration);
+
+    FGamePlatformAuthenticatedResponse Busy;
+    Busy.HttpStatusCode = 409;
+    Busy.Body = TEXT(R"({"errorCode":"MATCH_OPERATION_BUSY","retryable":true})");
+    TestTrue(TEXT("竞技取票仅在有给定业务期限时重试临时写入冲突"), Adapter.IsRetryableArenaMigration(Busy, 10.0, 12.0));
+    TestFalse(TEXT("期限已到不再发出重试"), Adapter.IsRetryableArenaMigration(Busy, 12.0, 12.0));
+    Busy.Body = TEXT(R"({"errorCode":"MATCH_PHASE_CONFLICT","retryable":true})");
+    TestFalse(TEXT("相同 HTTP 状态的持久业务冲突不重试"), Adapter.IsRetryableArenaMigration(Busy, 10.0, 12.0));
+    FDivineBeastsArenaQueueSnapshot Finished;
+    Finished.bKnown = true;
+    Finished.CandidateId = TEXT("candidate-1");
+    Finished.Phase = TEXT("completed");
+    TestTrue(TEXT("竞技实例失联后的已完成状态仍走返程方向"), Adapter.CanRequestReturn(Finished, true));
+    TestEqual(TEXT("无入场截止时间的已完成返程也有有限重试窗口"), Adapter.GetMigrationRetryDeadline(Finished, 10.0), 15.0);
+    Finished.ServerTimeUtc = FDateTime(2026, 11, 15);
+    Finished.DeadlineUtc = Finished.ServerTimeUtc + FTimespan::FromSeconds(2.0);
+    TestEqual(TEXT("竞赛时限近于重试预算时使用竞赛时限"), Adapter.GetMigrationRetryDeadline(Finished, 10.0), 12.0);
+    TestFalse(TEXT("非竞技旧分配不能以已完成匹配恢复"), Adapter.CanRequestReturn(Finished, false));
+    Finished.CandidateId.Empty();
+    TestFalse(TEXT("无原候选身份时不得发出返程请求"), Adapter.CanRequestReturn(Finished, true));
+
+    using ERecoveryAction = FDivineBeastsArenaOnlineMatchmakingAdapter::ERecoveryAction;
+    FDivineBeastsArenaQueueSnapshot Recovery;
+    Recovery.bKnown = true;
+    Recovery.CandidateId = TEXT("original");
+    Recovery.Phase = TEXT("inMatch");
+    TestTrue(TEXT("首次向原候选请求重连"), Adapter.GetRecoveryAction(Recovery, TEXT("original"), true, false) == ERecoveryAction::Arena);
+    Busy.Body = TEXT(R"({"errorCode":"MATCH_MIGRATION_EXPIRED"})");
+    TestTrue(TEXT("原竞技票失效时等待真实返程投影"), Adapter.IsMigrationError(Busy, TEXT("MATCH_MIGRATION_EXPIRED")) &&
+        Adapter.GetRecoveryAction(Recovery, TEXT("original"), true, true) == ERecoveryAction::Wait);
+    Recovery.Phase = TEXT("returning");
+    TestTrue(TEXT("同一候选的新返程投影直接触发返程"), Adapter.GetRecoveryAction(Recovery, TEXT("original"), true, true) == ERecoveryAction::Return);
+    Recovery.Phase = TEXT("completed");
+    TestTrue(TEXT("原竞技实例回收后的完成投影也允许返程"), Adapter.GetRecoveryAction(Recovery, TEXT("original"), true, true) == ERecoveryAction::Return);
+    TestTrue(TEXT("候选换代后不使用新候选返程"), Adapter.GetRecoveryAction(Recovery, TEXT("other"), true, true) == ERecoveryAction::Fail);
+    Recovery.Phase = TEXT("failed");
+    TestTrue(TEXT("失败投影终止等待"), Adapter.GetRecoveryAction(Recovery, TEXT("original"), true, true) == ERecoveryAction::Fail);
+    Busy.Body = TEXT(R"({"errorCode":"MATCH_FORBIDDEN"})");
+    TestFalse(TEXT("永久业务拒绝不触发等待返程"), Adapter.IsMigrationError(Busy, TEXT("MATCH_MIGRATION_EXPIRED")));
     return true;
 }
 #endif

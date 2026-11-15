@@ -187,6 +187,8 @@ struct DIVINEBEASTSAPPLICATIONFLOWCLIENT_API FDivineBeastsWorldEntryPresentation
 
     UPROPERTY(BlueprintReadOnly) FText Stage;
     UPROPERTY(BlueprintReadOnly) double CountdownDeadlineServerTime = 0.0;
+    /** 当前已准入世界的权威结束通知与后端返程状态均已到达。 */
+    bool bTrustedReturnAvailable = false;
 
     bool IsEquivalent(const FDivineBeastsWorldEntryPresentation& Other) const
     {

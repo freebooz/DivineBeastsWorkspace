@@ -8,7 +8,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1')
-$script:InputScope = 'FoundationProjectCompileInputs-v2'
+$script:InputScope = 'FoundationProjectCompileInputs-v3'
 $script:ExcludedPluginRootDirectories = @('Binaries','Intermediate','Saved','DerivedDataCache','Content','SourceArt','.git','.vs','.idea')
 
 function Get-FBEPath([string]$Path) {
@@ -86,7 +86,8 @@ function Get-FoundationCompileInputInventory {
     $entries=[Collections.Generic.List[object]]::new()
     $entries.Add((Get-FBEFile $workspacePath $project -Nonempty))
     $pending=[Collections.Generic.Stack[object]]::new()
-    foreach($relative in @('Game/Source','Game/Plugins','Game/Config','Game/Build')) {
+    $inputRoots = @('Game/Source','Game/Plugins','Game/Config','Game/Build','Shared/Generated/Cpp')
+    foreach($relative in $inputRoots) {
         $directory=Resolve-FBEPath $workspacePath $relative
         if (Test-Path -LiteralPath $directory -PathType Container) {
             $pending.Push([pscustomobject]@{Path=$directory;PluginTree=($relative -eq 'Game/Plugins');SourceTree=($relative -eq 'Game/Source')})
@@ -106,7 +107,7 @@ function Get-FoundationCompileInputInventory {
         }
     }
     $array=@($entries.ToArray() | Sort-Object Path -CaseSensitive)
-    [pscustomobject]@{SchemaVersion=1;Scope=$script:InputScope;Workspace=$workspacePath;CapturedAtUtc=[DateTime]::UtcNow.ToString('O');FileCount=$array.Count;SHA256=(Get-FBEHash $array $script:InputScope);Entries=$array;Roots=@('Game/DivineBeastsArena.uproject','Game/Source','Game/Plugins','Game/Config','Game/Build');ExcludedPluginRootDirectoryNames=$script:ExcludedPluginRootDirectories;ExclusionBoundary='Plugin roots only; Source subtrees, project Config and Build are fully traversed.';Limitations='Endpoint project-source inventory; excludes project/plugin asset and generated output roots, engine source, SDK and external input roots.'}
+    [pscustomobject]@{SchemaVersion=1;Scope=$script:InputScope;Workspace=$workspacePath;CapturedAtUtc=[DateTime]::UtcNow.ToString('O');FileCount=$array.Count;SHA256=(Get-FBEHash $array $script:InputScope);Entries=$array;Roots=@('Game/DivineBeastsArena.uproject')+$inputRoots;ExcludedPluginRootDirectoryNames=$script:ExcludedPluginRootDirectories;ExclusionBoundary='Plugin roots only; Source, project Config/Build and generated C++ contracts are fully traversed.';Limitations='Endpoint project-source inventory; excludes project/plugin assets, engine source, SDK and external input roots.'}
 }
 function Save-FoundationCompileInputInventory {
     param([Parameter(Mandatory)][string]$Workspace,[Parameter(Mandatory)]$Inventory,[Parameter(Mandatory)][string]$Path)
@@ -227,6 +228,32 @@ function Get-FBECookRelevantInputHash($Inventory) {
         'Game/Build/WindowsServer/FileOpenOrder/EditorOpenOrder.log')
     Get-FBEHash @($Inventory.Entries | Where-Object { $_.Path -cnotin $generated }) 'FoundationCookEditorInputs-v1'
 }
+
+function Get-FoundationBattleInputSHA256 {
+    param([Parameter(Mandatory)][string]$Workspace, [ValidatePattern('^[A-F0-9]{64}$')][string]$CookRelevantCompileSHA256)
+    # 整个编译输入覆盖反射与复制代码。在此基础上加入跨语言契约和实际竞技/村庄权威定义。
+    if (-not $CookRelevantCompileSHA256) {
+        $CookRelevantCompileSHA256 = Get-FBECookRelevantInputHash (Get-FoundationCompileInputInventory -Workspace $Workspace)
+    }
+    $paths = @('Shared/Contracts','Deploy/Server/Village','Deploy/Server/MainArena',
+        'Game/Plugins/DivineBeasts/DBAGameplay/Content',
+        'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Definitions',
+        'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_MainArena/Content/Definitions')
+    $optionalPaths = @('Game/Content/Development/DivineBeasts/Abilities',
+        'Game/Content/Development/DivineBeasts/Characters/Definitions')
+    foreach ($path in $optionalPaths) {
+        if (Test-Path -LiteralPath (Resolve-FBEPath $Workspace $path) -PathType Container) { $paths += $path }
+    }
+    $entries = foreach ($path in $paths) {
+        $root = Resolve-FBEPath $Workspace $path
+        if (-not (Test-Path -LiteralPath $root -PathType Container)) { throw "本地联调战斗合同缺少输入目录：$path" }
+        foreach ($item in Get-ChildItem -LiteralPath $root -Recurse -File -Force) {
+            Get-FBEFile $Workspace $item.FullName
+        }
+    }
+    $shared = Get-FBEHash @($entries) 'FoundationBattleContentAndContracts-v1'
+    [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes("$CookRelevantCompileSHA256`n$shared")))
+}
 function Assert-FoundationEditorBuildResult {
     <# 入口门禁：缺少参数/结果文件为NotExecuted；已提供但错误、陈旧或不合格的证据为Failed。
        在启动UE前同步验证；成功返回可写入测试result的关联摘要，不启动或停止任何进程。 #>
@@ -276,7 +303,7 @@ function Assert-FoundationEditorBuildResult {
         # 结果文件在门禁期间变化也拒绝；单个文件指纹读取拒绝写入，调用者在测试结束再复核。
         $finalRecord=Get-FBEFile $workspacePath $resultPath -Nonempty
         if ($finalRecord.SHA256 -cne $resultRecord.SHA256) { throw '验证期间Build结果变化。' }
-        [pscustomobject]@{BuildRunId=$id.ToString('D');BuildResultPath=$resultPath;BuildResultSHA256=$resultRecord.SHA256;InputSHA256=$current.SHA256;InputFileCount=$current.FileCount;ArtifactSHA256=$products.SHA256;ProjectDllCount=@($products.Files | Where-Object { $_.Path.EndsWith('.dll',[StringComparison]::OrdinalIgnoreCase) }).Count;VerifiedModules=@($RequiredModules);VerifiedModuleFiles=$verifiedModuleFiles;Scope=$script:InputScope}
+        [pscustomobject]@{BuildRunId=$id.ToString('D');BuildResultPath=$resultPath;BuildResultSHA256=$resultRecord.SHA256;InputSHA256=$current.SHA256;CookRelevantCompileSHA256=(Get-FBECookRelevantInputHash $current);InputFileCount=$current.FileCount;ArtifactSHA256=$products.SHA256;ProjectDllCount=@($products.Files | Where-Object { $_.Path.EndsWith('.dll',[StringComparison]::OrdinalIgnoreCase) }).Count;VerifiedModules=@($RequiredModules);VerifiedModuleFiles=$verifiedModuleFiles;Scope=$script:InputScope}
     } catch { throw [InvalidOperationException]::new("完整Editor构建证据拒绝：$($_.Exception.Message)",$_.Exception) }
 }
-Export-ModuleMember -Function Get-FoundationCompileInputInventory,Save-FoundationCompileInputInventory,New-FoundationEditorBuildEvidence,Assert-FoundationEditorBuildResult
+Export-ModuleMember -Function Get-FoundationCompileInputInventory,Save-FoundationCompileInputInventory,New-FoundationEditorBuildEvidence,Assert-FoundationEditorBuildResult,Get-FoundationBattleInputSHA256

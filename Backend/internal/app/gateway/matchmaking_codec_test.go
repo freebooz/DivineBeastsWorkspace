@@ -3,6 +3,9 @@ package gateway
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -53,5 +56,24 @@ func TestChallengeCommandStrictDecode(t *testing.T) {
 		if _, err := DecodeMatchmakingCommandJSON(payload); err == nil {
 			t.Fatalf("非法命令被接受: %s", payload)
 		}
+	}
+}
+
+func TestMatchmakingMigrationPreservesOriginalAssignment(t *testing.T) {
+	request, err := DecodeMatchmakingMigrationJSON(`{"candidateId":"candidate","direction":"return","clientRequestId":"recovery","sourceAssignmentId":"match:original"}`)
+	if err != nil || request.SourceAssignmentID != "match:original" {
+		t.Fatalf("original assignment did not survive the matchmaking envelope: %v", err)
+	}
+}
+
+func TestMatchmakingMigrationBusyErrorAllowsSameRequestRetry(t *testing.T) {
+	response := httptest.NewRecorder()
+	writeMatchmakingError(response, errors.New("MATCH_OPERATION_BUSY: held by another worker"))
+	var body struct {
+		Code      string `json:"errorCode"`
+		Retryable bool   `json:"retryable"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || response.Code != http.StatusConflict || body.Code != "MATCH_OPERATION_BUSY" || !body.Retryable {
+		t.Fatalf("public retry signal lost: status=%d code=%s error=%v", response.Code, body.Code, err)
 	}
 }

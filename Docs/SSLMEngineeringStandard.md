@@ -251,9 +251,11 @@ Go任务可在后端目录运行 go test ./...（全部包测试）、go vet ./.
 ### 本地人工验证与快速登录
 
 1. 启动本地人工验证前，先确认 Village 与 MainArena 实际进程就绪且完成控制面注册，核对 Client/Server 完整构建、Cook/Stage、战斗版本和复制合同。
-2. 使用 Build/Game/StartLocalTestClients.ps1 启动本地验证客户端。先核对同一工作空间的 Compose 与网关，从运行中的 identityservice 读取现有十个测试账号，并以进程环境和开发开关交给客户端。凭据不得记录到命令行、文件、日志及对话。由用户点击按钮，并走真实登录链路。
-3. 交付前在实际登录页核对十个快捷按钮可用，回读 t.MaxFPS=0、r.VSync=0。分别记录登录页面就绪、真实地图准入与人工玩法验收。
-4. Codex 对话使用本地工具与直接 Monolith 操作项目，HWebCodex 禁用。人工及性能验证不设置正数帧率限制或 VSync 锁帧，不覆盖玩家持久化偏好。
+2. 使用 `Build/Game/BuildFoundation.ps1` 完成 Editor、Client 和 Server 完整增量构建。前端用 `Build/Game/CookFrontEndClient.ps1 -Cook -CustomConfig VillageDevelopmentClient`，专服用 `Build/Game/CookFoundation.ps1 -Cook -Target Server -Pak -CustomConfig VillageDevelopmentServer`，为专服通过 `-Maps` 同时指定 `/DBAWorldPack_Village/Maps/L_Village_Start` 与 `/DBAWorldPack_MainArena/Maps/L_DBA_MainArena`。双端 Cook 绑定同一 `-EditorBuildResult`。当前验证需要在这些入口生成的战斗指纹、真实进程记录及 Stage 制品摘要。
+3. 启动 `Deploy/Local/StartVillageDevelopment.ps1` 时指定 `-ServerCookRunId` 和 `-DevelopmentArena`，以独立 `pwsh -File` 启动 `Deploy/Local/RunMainArenaPool.ps1` 时指定同一个 `-ServerCookRunId`。两个入口都提供显式 `-RunId`、`-ServerExe`、`-ControlBaseUrl` 与 `-PlayerDataBaseUrl`。池中各代次向同一 Compose 控制面注册其实际启动的包版本。
+4. 使用 `Build/Game/StartLocalTestClients.ps1`，传入本次 Stage 的 `-ClientExe`、回环 `-GatewayUrl`、`-ClientBuildRunId`、`-ServerBuildRunId`、`-ClientCookRunId`、`-ServerCookRunId`、`-VillageRunId` 与 `-ArenaPoolRunId`。同次完整 Client/Server 构建可以共用一个 Build RunId。脚本要求该 Compose 控制面支持经过内部认证的实例清单，核对实际运行的 Village 与 MainArena 全池、当前证据及两端战斗合同后，从 `identityservice` 读取现有十个测试账号。凭据只经进程环境转交，用户点击快捷按钮后走真实登录链路。
+5. `Saved/Validation/LocalValidationVersionGate/<客户端 RunId>/result.json` 记录通过的启动门禁。交付前在实际登录页核对十个快捷按钮可用，回读 `t.MaxFPS=0`、`r.VSync=0`。分别记录登录页面就绪、真实地图准入与人工玩法验收。
+6. Codex 对话使用本地工具与直接 Monolith 操作项目，HWebCodex 禁用。人工及性能验证不设置正数帧率限制或 VSync 锁帧，不覆盖玩家持久化偏好。
 
 <a id="product"></a>
 

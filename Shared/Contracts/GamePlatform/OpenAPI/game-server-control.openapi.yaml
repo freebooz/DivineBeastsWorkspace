@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   title: 游戏平台游戏服务器控制内部接口（Game Server Control API）
-  version: 1.1.0
+  version: 1.2.0
   description: |
-    GameServerControlService 的当前内部 HTTP 控制面契约，覆盖专用服务器注册、心跳、就绪、排空、常驻世界与主竞技场分配、迁移票据和权威比赛结果提交。
+    GameServerControlService 的当前内部 HTTP 控制面契约，覆盖专用服务器注册、心跳、就绪、排空、常驻世界与主竞技场分配、迁移票据、开战失败报告和权威比赛结果提交。
     所有路径仅供受信任的 Backend 服务、编排适配器或 Dedicated Server 使用，不能通过公网 Gateway、浏览器客户端或 UE 游戏客户端直接调用。HTTP 适配器对部分请求按 Go 字段名大小写不敏感解码；本规格统一给出 lowerCamelCase 请求字段。
     register/heartbeat/ready/drain 还必须携带 GAMESERVERCONTROL_INTERNAL_TOKEN Bearer 令牌，并提供与请求体 GameServerID 完全一致的 X-Game-Server-Id。Bearer 令牌为部署共享凭据，不代表每实例独立认证；生产部署必须在受限网络上使用经批准的 TLS 终止点。
     当前世界/竞技分配响应由未标注 JSON Tag 的内部 DTO 直接编码，因此响应字段为 PascalCase；这是已实现的线协议，后续变更必须同时做兼容迁移与契约版本评审。
@@ -163,6 +163,21 @@ paths:
               schema: { $ref: '#/components/schemas/InternalApiError' }
         '401': { $ref: '#/components/responses/UnauthorizedInternalRequest' }
         '403': { $ref: '#/components/responses/GameServerIdentityMismatch' }
+  /internal/v1/gameservers/validation-inventory:
+    get:
+      tags: [运维]
+      operationId: getGameServerValidationInventory
+      summary: 查询本地人工验证的控制面服务器实例
+      description: 返回当前控制面登记的新手村和主竞技场候选及其实际Boot、构建、状态与最近心跳，调用方据此验证本地启动记录。
+      security:
+        - GameServerControlBearer: []
+      responses:
+        '200':
+          description: 当前验证实例列表；无实例时返回空数组。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GameServerValidationInventoryResponse' }
+        '401': { $ref: '#/components/responses/UnauthorizedInternalRequest' }
   /internal/v1/gameservers/allocate-world:
     post:
       tags: [分配与迁移]
@@ -335,6 +350,48 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/InternalApiError' }
+  /internal/v1/gameservers/match-start-abort:
+    post:
+      tags: [服务器生命周期]
+      operationId: reportArenaMatchStartAbort
+      summary: 原主竞技场专服报告开战前终止
+      description: 仅接受分配到本局的当前专服Boot。保存首次取消原因，关闭新准入并等待安全迁出；同局同Boot同原因重试返回相同确认。
+      security:
+        - GameServerControlBearer: []
+      parameters:
+        - $ref: '#/components/parameters/GameServerIdentityHeader'
+        - name: X-Game-Server-Boot-Id
+          in: header
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArenaMatchStartAbortRequest' }
+      responses:
+        '200':
+          description: 已持久确认取消；已接受的玩家由匹配服务按锁定角色处理安全返程。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AcceptedResponse' }
+        '400':
+          description: 请求字段或取消原因无效。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+        '401': { $ref: '#/components/responses/UnauthorizedInternalRequest' }
+        '403': { $ref: '#/components/responses/GameServerIdentityMismatch' }
+        '409':
+          description: ARENA_START_ABORT_CONFLICT，分配、Boot或已冻结的结束事实冲突。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
+        '503':
+          description: ARENA_START_ABORT_RETRYABLE，控制面暂未确认持久结果。使用同一报告重试。
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InternalApiError' }
   /internal/v1/gameservers/match-result:
     post:
       tags: [权威比赛结果]
@@ -423,6 +480,36 @@ components:
       required: [accepted]
       properties:
         accepted: { type: boolean, const: true, description: 控制请求已被当前服务接受。 }
+    ArenaMatchStartAbortRequest:
+      type: object
+      additionalProperties: false
+      required: [matchId, gameServerId, serverBootId, reason]
+      properties:
+        matchId: { type: string, minLength: 1, maxLength: 128, description: 控制面已分配的比赛身份。 }
+        gameServerId: { type: string, minLength: 1, maxLength: 128, description: 本局实际专服实例身份，须与请求头相同。 }
+        serverBootId: { type: string, minLength: 1, maxLength: 128, description: 原主竞技场实例启动代次，须与请求头相同。 }
+        reason: { type: string, enum: [pre_match_timeout, player_disconnected, spawn_failed, startup_failed], description: 开战前失败的权威原因。 }
+    GameServerValidationInventoryResponse:
+      type: object
+      additionalProperties: false
+      required: [instances]
+      properties:
+        instances:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [gameServerId, serverBootId, serverRoleId, experienceId, publicEndpoint, buildVersion, protocolVersion, status, heartbeatUtc]
+            properties:
+              gameServerId: { type: string, description: 控制面登记的服务器身份。 }
+              serverBootId: { type: string, description: 当前启动代次。 }
+              serverRoleId: { type: string, description: 新手村或主竞技场角色。 }
+              experienceId: { type: string, description: 控制面登记的体验。 }
+              publicEndpoint: { type: string, description: 注册的公网连接端点。 }
+              buildVersion: { type: string, description: 实例登记的构建版本。 }
+              protocolVersion: { type: integer, format: uint32, minimum: 1, description: 实例登记的通信版本。 }
+              status: { type: string, description: 当前控制面实例状态。 }
+              heartbeatUtc: { type: string, format: date-time, description: 实例最近登记或心跳时间。 }
     RegisterGameServerRequest:
       type: object
       additionalProperties: false
