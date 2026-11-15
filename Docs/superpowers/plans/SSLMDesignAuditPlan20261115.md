@@ -83,8 +83,9 @@
 
 ## 执行记录
 
-- 竞技修复补齐并行取首次入场票、开战失败的终止上报、竞技实例失联后的返程票恢复。正式应用流程资产增加两条 `Recover` 路由。Go 定向测试、真实 Postgres 2／10 请求并发和 Redis 持久化回归通过。本机 Compose 的五项后端服务已核对就绪。
+- 竞技修复补齐并行取首次入场票、开战失败的终止上报、竞技实例失联后的返程票恢复。正式应用流程资产增加两条 `Recover` 路由。Go 定向测试、真实 Postgres 2／10 请求并发和 Redis 持久化回归通过。UE 原生的 `StartAbort`、`FiveModeSingleRoundElimination`、`CommandEnvelope` 三项通过。本机 Compose 的五项后端服务已核对就绪。
 - 正式本地启动器在读取快速登录账号前检查 Client／Server 构建、双端 Cook/Stage、战斗指纹和实际 Village／MainArena 实例。构建证明合同的 40 个隔离用例通过。两端完整增量构建共用 `fadc90ef-be2d-462e-9696-f7997eaaf84c`，战斗指纹一致。
 - `.inl` 及 DBAClient 模块门禁回归通过，实时头文件扫描覆盖 2,130 处引用、零缺失。两份误入仓库的本地产物已移回 `Saved`。两份 Water 同名地图经原生核对，分别是开发演示与诊断地图，需在迁移时同步更新各自的正式消费者。
 - 正式 `L_Village_Start` 复用现有 Landscape 实例。按当地湖面与山顶高程归一化，岩石约在 254–280 米完成过渡，积雪约在 365–391 米完成高程过渡，坡度控制陡壁积雪，手绘道路和耕地得到保护。Monolith 编译、保存、重载并回读既有地图绑定和材质链接。基色截图及原生证据位于 `Saved/Validation/SSLMRemediation20261115/NativeEditor`。
-- 完整实机验收仍需取得双端 Cook/Stage、两客户端竞技入场／退场／返程、画面审核以及性能采样。旧包、单帧和 PIE 样本保留原验证范围。
+- 专服 Cook/Stage、服务器表现剥离及资源归属门禁通过。以本次制品启动的 Village 和 MainArena 已由实际控制面确认 `Ready`。两个空服各采集 14 个约 2 秒区间，Village 平均占 9.45% 的单核 CPU、工作集 323.0 MiB，MainArena 分别为 2.04% 和 295.8 MiB。原始样本见 `Saved/Validation/SSLMRemediation20261115/ServerIdleProcesses.csv`。
+- 完整实机验收仍需取得客户端 Cook/Stage、两客户端竞技入场／退场／返程、画面审核以及负载下客户端、专服与后端性能。旧包、单帧和 PIE 样本保留原验证范围。
