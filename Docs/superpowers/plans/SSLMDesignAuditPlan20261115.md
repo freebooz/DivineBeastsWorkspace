@@ -89,4 +89,4 @@
 - 正式 `L_Village_Start` 复用现有 Landscape 实例。按当地湖面与山顶高程归一化，岩石约在 254–280 米完成过渡，积雪约在 365–391 米完成高程过渡，坡度控制陡壁积雪，手绘道路和耕地得到保护。Monolith 编译、保存、重载并回读既有地图绑定和材质链接。基色截图及原生证据位于 `Saved/Validation/SSLMRemediation20261115/NativeEditor`。
 - 专服 Cook/Stage、服务器表现剥离及资源归属门禁通过。以本次制品启动的 Village 和 MainArena 已由实际控制面确认 `Ready`。两个无人在线的专服各采集 14 个约 2 秒区间，Village 平均占 9.45% 的单核 CPU、工作集 323.0 MiB，MainArena 分别为 2.04% 和 295.8 MiB。Village 日志记录该次布置受安全区、间距、NavMesh 及地形条件限制，实际生成 147 只狼。原始样本见 `Saved/Validation/SSLMRemediation20261115/ServerIdleProcesses.csv`。
 - 客户端 Cook/Stage 首次缺少 5 个系统的同次编译记录，并将 ShaderCompileWorker 启动耗时误判为编译问题。修正后全部 15 个 Niagara 系统取得同次编译记录，真实 IoStore 门禁通过，并读到两份新手村材质的非空导出。Client Cook `b9a47eb4-424a-4d22-9a00-cbc87b5356ac` 与 Server Cook `ea086d8f-21a9-48d7-a1fe-1609597ddbe5` 战斗指纹一致。
-- 完整实机验收仍需两客户端竞技入场／退场／返程、画面审核以及负载下客户端、专服与后端性能。旧包、单帧和 PIE 样本保留原验证范围。
+- 本地启动 `bd311146-48bf-4595-8004-36514bf419bd` 的运行中双端门禁通过。两个实际登录页都显示十个测试账号快捷按钮，引擎日志回读 `t.MaxFPS=0`、`r.VSync=0`。一个客户端通过专服连接启动 `L_Village_Start`，客户端地图日志与专服 `Join succeeded` 对上。两个客户端随后由视口正常退出，竞技入场／退场／返程、正式游戏镜头的视觉验收及负载性能采样待完成。
