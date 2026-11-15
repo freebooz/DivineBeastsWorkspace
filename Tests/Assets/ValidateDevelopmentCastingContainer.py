@@ -55,7 +55,7 @@ def validate_cook_shaders(csv_path, cook_log_path=None):
     if log_path is not None and (log_path.parent != log_directory or not log_path.is_file()):
         errors.append('Cook日志不属于当前容器的UATLogs或文件不存在')
     result = {'Passed': False, 'CookLog': str(log_path) if log_path else None,
-              'Errors': errors, 'ShaderDiagnostics': [], 'CompiledStages': [],
+              'Errors': errors, 'ShaderDiagnostics': [], 'ShaderWorkerPerformanceWarnings': [], 'CompiledStages': [],
               'MissingStages': compile_systems(), 'CookCompleted': False}
     if errors:
         return result
@@ -71,11 +71,17 @@ def validate_cook_shaders(csv_path, cook_log_path=None):
         r'LogShaderCompilers?:\s+(?:Warning:|Error:)|'
         r'(?:error [A-Z]\d{4}:|error: use of undeclared identifier|Failed to compile.*shader)',
         re.IGNORECASE)
+    # UE5.8 只在启动 ShaderCompileWorker 的墙钟耗时达到阈值时记这一行。
+    worker_launch_timing = re.compile(
+        r'(?:LogInit: Display: )?LogShaderCompilers: Warning: Performance Warning: '
+        r'It took [0-9]+\.[0-9]+ seconds to launch [0-9]+ ShaderCompileWorkers')
     for number, line in enumerate(lines, 1):
         match = compiled_pattern.search(line)
         if match:
             compiled.add(match.group(1))
-        if shader_diagnostics.search(line):
+        if worker_launch_timing.fullmatch(line.strip()):
+            result['ShaderWorkerPerformanceWarnings'].append({'Line': number, 'Message': line})
+        elif shader_diagnostics.search(line):
             result['ShaderDiagnostics'].append({'Line': number, 'Message': line})
     result['CompiledStages'] = [stage for stage in compile_systems() if stage in compiled]
     result['MissingStages'] = [stage for stage in compile_systems() if stage not in compiled]

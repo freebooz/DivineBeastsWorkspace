@@ -62,6 +62,18 @@ class IceArrowCookShaderTest(unittest.TestCase):
     def test_shader_compiler_error_rejected(self):
         self.assertFalse(self.check("LogShaderCompilers: Error: Shader compile failed")["Passed"])
 
+    def test_shader_worker_launch_timing_is_reported_without_failing(self):
+        warning = ("LogShaderCompilers: Warning: Performance Warning: It took "
+                   "12.197187 seconds to launch 10 ShaderCompileWorkers")
+        result = self.check(warning + "\nLogInit: Display: " + warning)
+        self.assertTrue(result["Passed"])
+        self.assertEqual(2, len(result["CookShaders"]["ShaderWorkerPerformanceWarnings"]))
+
+    def test_shader_worker_warning_with_compile_failure_rejected(self):
+        self.assertFalse(self.check(
+            "LogShaderCompilers: Warning: Performance Warning: It took 12.197187 seconds to launch "
+            "10 ShaderCompileWorkers. Failed to compile material shader")["Passed"])
+
     def test_missing_stage_evidence_rejected(self):
         self.assertFalse(self.check(missing_stage="/DBAPresentationPack_Core/VFX/SpellProjectiles/Niagara/NS_DBA_FrostboltFlight")["Passed"])
 

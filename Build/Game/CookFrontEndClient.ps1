@@ -17,7 +17,7 @@ param([string]$EngineRoot, [switch]$Cook,
     [switch]$SkipDebugSymbols=$true,
     # Zen服务实际不可用时显式回退原生文件Cook输出；不关闭IoStore、DDC或现有发布门禁。
     [switch]$SkipZenStore,
-    # 仅在需要同次Cook逐系统编译证据时显式启用；不清理DDC或改运行配置。
+    # VillageDevelopmentClient 发布门禁要求同次编译证据，此选项也可为其他前端配置开启。
     [switch]$ForceNiagaraCompileOnLoad,
     # 文件Cook遇到深层资产名超过260字符时，显式使用独占短输出目录；不改变资产身份或跳过检查。
     [string]$ShortCookRoot,
@@ -94,8 +94,9 @@ try {
         $details.RequiredRuntimeArguments = $arenaOptions
     }
     if ($SkipZenStore) { $cookOptions += ' -SkipZenStore' }
-    if ($ForceNiagaraCompileOnLoad) { $cookOptions += ' -ForceDPCVars=fx.ForceCompileOnLoad=1' }
-    $details.ForceNiagaraCompileOnLoad=[bool]$ForceNiagaraCompileOnLoad
+    $compileNiagaraForCook = $ForceNiagaraCompileOnLoad -or $CustomConfig -ceq 'VillageDevelopmentClient'
+    if ($compileNiagaraForCook) { $cookOptions += ' -ForceDPCVars=fx.ForceCompileOnLoad=1' }
+    $details.ForceNiagaraCompileOnLoad=$compileNiagaraForCook
     # 复用工程已有DDC；UE5.8编辑器设置可覆盖环境/命令行，三处限定同一工程内目录。
     $cookLocalCacheDirectory=Join-Path $context.Workspace 'Game/DerivedDataCache'
     $cookOptions+=(' -LocalDataCachePath="'+$cookLocalCacheDirectory+'" -ini:EditorSettings:/Script/UnrealEd.EditorSettings:LocalDerivedDataCache=(Path="'+$cookLocalCacheDirectory+'")')
