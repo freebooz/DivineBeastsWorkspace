@@ -5,7 +5,7 @@
 ## 现场与边界
 
 - 正式工作树 `E:/poject/feebooz/DivineBeastsWorkspace`，main；UE源码为5.8.0、CL0。现场未提交代码包含Online、Session及Loading工作，按所有者保留。
-- 正式规范为 `Game/Plugins/插件开发规范.md` 与 `Docs/Architecture/解决方案总体规划.md`；`OverallPlan.md`不存在。
+- 正式规范为 `Docs/SSLMEngineeringStandard.md#plugins` 与 `Docs/SSLMEngineeringStandard.md#architecture`；`OverallPlan.md`不存在。
 - Session目前没有公开服务或可消费的真实快照，只有内部状态内核；SessionWorld真实联调保持未执行，World不包含Session私有头，不补造会话分配。
 - 三个历史空插件描述保留原位；正式UE目标仍有扫描阻断。当前Foundation无真实地图资产，不伪造二进制。
 

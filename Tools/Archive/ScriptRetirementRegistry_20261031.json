@@ -79,5 +79,8 @@
         "details": "Retain the bound profile and realized graph plus independent cold-read receipts. Recurring native authoring remains in Build/Game/TestPluginWorldHost.ps1 WorldAuthoringLive; any future rebinding needs a new baseline rather than replaying this receipt."
       }
     }
-  ]
+  ],
+  "removedFromWorktreeUTCDate": "2026-11-15",
+  "archiveGitCommit": "a48afb4fe70062c262dcd21f1a415fe80221fdf0",
+  "archiveRecovery": "The archive field records the historical Git path. The retired scripts are absent from worktree; read exact bytes at archiveGitCommit for audit."
 }

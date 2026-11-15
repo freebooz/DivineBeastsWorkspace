@@ -82,8 +82,8 @@ Game/Plugins/GamePlatform/World/GamePlatformPCG
 全局架构仍以：
 
 - `AGENTS.md（工程规则）`
-- `Game/Plugins/插件开发规范.md`
-- `Docs/Architecture/解决方案总体规划.md`
+- `Docs/SSLMEngineeringStandard.md#plugins`
+- `Docs/SSLMEngineeringStandard.md#architecture`
 - `Docs/Architecture/游戏端插件清单设计.md`
 
 为上位约束。

@@ -36,7 +36,7 @@
 
 日期：2026-10-18；工作空间：DivineBeastsWorkspace；虚幻引擎 UE5.8；当前分支 main。所属：地形/材质/环境色彩专项，不覆盖正式地图。
 
-**总论：原有十种地表扫描基础色与[全局V3.0配色规范](../Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)存在明显差异。已经真实派生十层候选纹理、新建十张UE纹理、1份母材质、4份MI以及独立审核Landscape；独立UE冷重载通过，但六态D3D12截图均为黑帧，最终视觉质量、性能、人工美术验收暂未通过。**
+**总论：原有十种地表扫描基础色与[全局V3.0配色规范](../SSLMEngineeringStandard.md#art)存在明显差异。已经真实派生十层候选纹理、新建十张UE纹理、1份母材质、4份MI以及独立审核Landscape；独立UE冷重载通过，但六态D3D12截图均为黑帧，最终视觉质量、性能、人工美术验收暂未通过。**
 
 ## 一、十层原始色值与V3候选对照
 
@@ -94,4 +94,4 @@
 
 **本次阶段结论：十层颜色整改候选=已实际创建；PBR源/材质合同与独立地图UE回读=通过；离屏截图六态视觉门禁=不通过；真人审美合规与GPU帧率、RVT/PCG衔接、Cook=待完成。**
 
-参考：[2026-10-17十层函数化材质实施记录](TerrainMaterialFunctionIntegration_20261017.md)；[2026-10-16十层正式扫描PBR记录](TerrainProductionPBRExecution_20261016.md)；[当前V3全局色板主规范](../Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)。
+参考：[2026-10-17十层函数化材质实施记录](TerrainMaterialFunctionIntegration_20261017.md)；[2026-10-16十层正式扫描PBR记录](TerrainProductionPBRExecution_20261016.md)；[当前V3全局色板主规范](../SSLMEngineeringStandard.md#art)。

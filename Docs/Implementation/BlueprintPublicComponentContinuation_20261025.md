@@ -1,6 +1,6 @@
 # SSLM 公共组件基类优先优化实施记录（2026-10-25续行）
 
-> 正式工程：`DivineBeastsWorkspace/Game/DivineBeastsArena.uproject`（神兽联盟工程）。本轮通用能力约束已补充到 [《三层类继承与扩展规范》](../Architecture/三层类继承与扩展规范.md) 第九章，此文仅记录执行，不建立竞争规范。
+> 正式工程：`DivineBeastsWorkspace/Game/DivineBeastsArena.uproject`（神兽联盟工程）。本轮通用能力约束已补充到 [《三层类继承与扩展规范》](../SSLMEngineeringStandard.md#inheritance) 第九章，此文仅记录执行，不建立竞争规范。
 
 ## 一、本轮实际修改
 

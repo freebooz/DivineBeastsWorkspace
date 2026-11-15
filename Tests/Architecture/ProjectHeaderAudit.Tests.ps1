@@ -32,6 +32,15 @@ Describe '项目源码引用的自有头文件存在性' {
         $report.CheckedIncludes | Should Be 2
     }
 
+    It '索引项目内联文件并核对内联文件自身的引用' {
+        Set-Content -LiteralPath (Join-Path $source 'Consumer.cpp') -Value @('#include "DivineBeastsImplementation.inl"', '#include "DivineBeastsMissing.inl"')
+        Set-Content -LiteralPath (Join-Path $source 'DivineBeastsImplementation.inl') -Value '#include "GamePlatformMissingFromInline.h"'
+        $report = Test-ProjectOwnedHeaders -WorkspaceRoot $root
+        $report.Passed | Should Be $false
+        $report.CheckedIncludes | Should Be 3
+        ($report.Findings.Include -join ',') | Should Be 'DivineBeastsMissing.inl,GamePlatformMissingFromInline.h'
+    }
+
     It '忽略注释中旧示例但不忽略真正的条件编译引用' {
         Set-Content -LiteralPath (Join-Path $source 'Consumer.cpp') -Value @('/*', '#include "GamePlatformCommented.h"', '*/', '// #include "GamePlatformCommented.h"', '#if WITH_DEV_AUTOMATION_TESTS', '#include "GamePlatformTestService.h"', '#endif')
         $report = Test-ProjectOwnedHeaders -WorkspaceRoot $root

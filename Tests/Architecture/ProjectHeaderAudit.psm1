@@ -67,8 +67,9 @@ function Test-ProjectOwnedHeaders {
     $mainSource = Join-Path $root 'Game/Source'
     $consumerRoots = @($projectPlugins)
     if (Test-Path -LiteralPath $mainSource -PathType Container) { $consumerRoots += $mainSource }
+    $headerExtensions = @('.h','.hpp','.inl')
     $sources = @(Get-ChildItem -LiteralPath $consumerRoots -Recurse -File -ErrorAction Stop |
-        Where-Object { $_.FullName -match '[\\/]Source[\\/]' -and $_.Extension -in @('.cpp','.h','.hpp') } |
+        Where-Object { $_.FullName -match '[\\/]Source[\\/]' -and ($_.Extension -eq '.cpp' -or $_.Extension -in $headerExtensions) } |
         Sort-Object FullName)
     if ($sources.Count -eq 0) { throw "项目插件目录中没有可审计的C++源码：$projectPlugins" }
 
@@ -76,13 +77,13 @@ function Test-ProjectOwnedHeaders {
     $indexRoots = @($plugins)
     if (Test-Path -LiteralPath $mainSource -PathType Container) { $indexRoots += $mainSource }
     foreach ($file in (Get-ChildItem -LiteralPath $indexRoots -Recurse -File -ErrorAction Stop |
-        Where-Object { $_.FullName -match '[\\/]Source[\\/]' -and $_.Extension -in @('.h','.hpp') })) {
+        Where-Object { $_.FullName -match '[\\/]Source[\\/]' -and $_.Extension -in $headerExtensions })) {
         $null = $headerNames.Add($file.Name)
     }
     $generated = Join-Path $root 'Shared/Generated/Cpp'
     if (Test-Path -LiteralPath $generated -PathType Container) {
         foreach ($file in (Get-ChildItem -LiteralPath $generated -Recurse -File -ErrorAction Stop |
-            Where-Object { $_.Extension -in @('.h','.hpp') })) {
+            Where-Object { $_.Extension -in $headerExtensions })) {
             $null = $headerNames.Add($file.Name)
         }
     }

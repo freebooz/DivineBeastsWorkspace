@@ -22,7 +22,7 @@
 - 共用公共母材质保持不变。仅在独立审核目录复制并扩展确有缺失的材质接口。
 - 所有离线Bake、缓存、原生证据和后续Cook/Stage均在当前工程目录内；本轮计划及纯内容制作不触发C++全量构建/清缓存。
 - 本次不清理、保存或覆盖其它任务的脏包和手工地图。开始原生制作前再次核对工作分支、输入指纹、编辑器身份及其它任务。
-- 颜色遵循[全局配色V3.0](../../Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)，性能遵循[项目Niagara规范](../../Architecture/SSLM十二生肖技能VFX性能与视觉质量规范.md)。
+- 颜色遵循[全局配色V3.0](../../SSLMEngineeringStandard.md#art)，性能遵循[项目Niagara规范](../../SSLMEngineeringStandard.md#vfx)。
 
 ## Review Focus
 

@@ -233,7 +233,7 @@ Go测试放对应包，生产Redis／PostgreSQL适配必须用真实依赖的集
 
 ## 参考与规范
 
-- [工程规则](../../../AGENTS.md)、[总体规划](../../Architecture/解决方案总体规划.md)、[插件开发规范](../../../Game/Plugins/插件开发规范.md)、[三层继承规范](../../Architecture/三层类继承与扩展规范.md)。
-- [UI纹理视觉规范](../../Implementation/UITextureVisualPolicy.md)、[竞技分配与准入](../../../Game/Plugins/MobaCommon/GamePlatformArena/Docs/AssignmentAndAdmission.md)。
+- [工程规则](../../../AGENTS.md)、[总体规划](../../SSLMEngineeringStandard.md#architecture)、[插件开发规范](../../SSLMEngineeringStandard.md#plugins)、[三层继承规范](../../SSLMEngineeringStandard.md#inheritance)。
+- [UI纹理视觉规范](../../SSLMEngineeringStandard.md#ui)、[竞技分配与准入](../../../Game/Plugins/MobaCommon/GamePlatformArena/Docs/AssignmentAndAdmission.md)。
 - [暴雪官方练习赛说明](https://worldofwarcraft.blizzard.com/en-gb/news/12953018/warlords-of-draenor-pvp-update)：只作为单人或朋友组队参加练习赛的交互参考，不引入历史版本的全部规则。
 - [暴雪官方HUD说明](https://worldofwarcraft.blizzard.com/en-gb/news/23837944/get-into-the-grid-of-things-with-the-updated-ui-and-hud)：参考信息布局与调整体验，不复制资产，不承诺复刻其所有扩展功能。

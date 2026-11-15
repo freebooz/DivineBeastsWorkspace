@@ -1,3 +1,3 @@
 # GamePlatformLocalization
 
-当前为二期预留模块壳，不得作为本地化已实现或生产启用的证明。现行职责与依赖边界见 `Docs/Architecture/游戏端核心要求.md`、`Docs/Architecture/游戏端插件系统P0收敛审计.md` 与 `Game/Plugins/插件开发规范.md`；旧四服务器文档不再作为执行基线。
+当前为二期预留模块壳，不得作为本地化已实现或生产启用的证明。现行职责与依赖边界见 `Docs/SSLMEngineeringStandard.md#product`、`Docs/Architecture/游戏端插件系统P0收敛审计.md` 与 `Docs/SSLMEngineeringStandard.md#plugins`；旧四服务器文档不再作为执行基线。

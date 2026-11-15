@@ -87,26 +87,17 @@ class ResourceOwnershipContractTests(unittest.TestCase):
         bound = report.replace("Import 0: ''", f"Import 0: '{required}.DA_DBA_RequiredFlight'").replace('<null>', '0x0')
         gate.check_native_hard_imports(log, bound, anchor, required_import=required)
 
-    def test_retired_bird_author_cannot_recreate_old_runtime_meshes(self):
-        self.assertFalse((ROOT/'Tools/Unreal/VFX/BirdFlock/AuthorBirdFlockAssets.py').exists())
-        import runpy
-        with self.assertRaisesRegex(RuntimeError,'已退休'):
-            runpy.run_path(str(ROOT/'Tools/Archive/Resources/20261031/AuthorBirdFlockAssets.py'),run_name='__main__')
-
-    def test_completed_recovery_and_legacy_validator_are_outside_active_tools(self):
-        for path in ('Tools/Unreal/Terrain/ResumeTerrainV3FormalCover.ps1','Tools/Unreal/VFX/BirdFlock/ValidateBirdFlockAssets.py'):
-            self.assertFalse((ROOT/path).exists())
-            self.assertTrue((ROOT/'Tools/Archive/Resources/20261031'/Path(path).name).is_file())
-
-    def test_project_archives_reject_before_unreal_import_or_callback_registration(self):
-        import json,runpy
-        rows=json.loads((ROOT/'Tools/Archive/ScriptRetirementRegistry_20261031.json').read_text(encoding='utf-8'))['scripts']
+    def test_retired_project_scripts_are_absent_and_traceable_in_git(self):
+        import json
+        registry=json.loads((ROOT/'Tools/Archive/ScriptRetirementRegistry_20261031.json').read_text(encoding='utf-8'))
+        self.assertRegex(registry['archiveGitCommit'],r'^[0-9a-f]{40}$')
+        rows=registry['scripts']
         self.assertEqual(len(rows),7)
         for row in rows:
-            self.assertFalse((ROOT/row['source']).exists())
-            if row['archive'].endswith('.py'):
-                with self.subTest(path=row['archive']),self.assertRaisesRegex(RuntimeError,'已退休'):
-                    runpy.run_path(str(ROOT/row['archive']),run_name='__main__')
+            with self.subTest(path=row['source']):
+                self.assertFalse((ROOT/row['source']).exists())
+                self.assertFalse((ROOT/row['archive']).exists())
+                self.assertRegex(row['archivedSha256'],r'^[0-9a-f]{64}$')
 
 
 if __name__ == '__main__':

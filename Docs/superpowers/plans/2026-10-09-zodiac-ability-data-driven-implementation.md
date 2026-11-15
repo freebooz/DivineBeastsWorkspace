@@ -81,7 +81,7 @@
 
 责任：现有代码插件与 Docs（文档）；只读审查优先。
 
-1. 读取全部实际生效 `AGENTS.md`（工程规则）、`Game/Plugins/插件开发规范.md`（插件规范），清点当前 branch/head/dirty（分支/提交/工作树变更）与并行任务，列出不得覆盖的目标文件。
+1. 读取全部实际生效 `AGENTS.md`（工程规则）、`Docs/SSLMEngineeringStandard.md#plugins`（插件规范），清点当前 branch/head/dirty（分支/提交/工作树变更）与并行任务，列出不得覆盖的目标文件。
 2. 用 UE5.8 Editor（虚幻编辑器）AssetRegistry（资产注册表）复核 12 个 Hero Definition 的主资产 ID、实际字段、引用和 Cook（资源烘焙）范围；不得因文件存在即声称资产值正确。
 3. 再核实 GAS `GiveAbility`（实际授予）、`AbilitySet`（集合）、`ASC`（能力组件）和角色 `Spawn`（生成）装配边界；对照项目输入 `Primary/Slot1~4`（主攻击/四技能槽）与 Widget 层既有状态字段。
 4. 核查 DBAGameplay/DBAClient/DBAServer/DBAArena 的模块依赖图；确定新增 `DivineBeastsAbilitiesRuntime`（技能运行模块）的最小必需依赖，避免循环或多余模块。核查主资产逻辑 ID 注册与类别扫描。

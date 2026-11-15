@@ -8,7 +8,7 @@
 
 **Tech Stack：** 当前锁定 UE 5.8、Monolith MCP、C++、UMG、AssetRegistry、原生内容插件、现有 PowerShell 构建与 Cook 入口。
 
-**Spec：** [设计规格](DesignSpec.md)、[命名规范](NamingStandard.md)、[审查报告](AuditReport.md)、[逐关卡设计](Review.html)。完整路径与现有能力清单见 LevelCatalog.json、PluginMatrix.csv、MeshInventory.csv。
+**Spec：** [设计规格](DesignSpec.md)、[命名规范](../../SSLMEngineeringStandard.md#naming)、[审查报告](AuditReport.md)、[逐关卡设计](Review.html)。完整路径与现有能力清单见 LevelCatalog.json、PluginMatrix.csv、MeshInventory.csv。
 
 ## 全局约束
 

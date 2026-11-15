@@ -2,7 +2,7 @@
 
 ## 范围与标准
 
-以 `AGENTS.md`、`Game/Plugins/插件开发规范.md` 和 `Tests/Architecture/TestEnglishProjectNames.ps1` 为现行规范。技术身份 `DivineBeastsWorkspace` / `DivineBeastsArena` / `DBA` / `GamePlatform` 保持不变，`SSLM` 仅作为项目展示代号。项目目录和非文档文件名使用英文 ASCII，文档名可用中文，插件 FriendlyName 为英文。UE `.uasset/.umap` 若需要重命名，必须经过引擎原生 Rename、引用/重定向审计，不可直接更改磁盘文件名。
+以 `AGENTS.md`、`Docs/SSLMEngineeringStandard.md#plugins` 和 `Tests/Architecture/TestEnglishProjectNames.ps1` 为现行规范。技术身份 `DivineBeastsWorkspace` / `DivineBeastsArena` / `DBA` / `GamePlatform` 保持不变，`SSLM` 仅作为项目展示代号。项目目录和非文档文件名使用英文 ASCII，文档名可用中文，插件 FriendlyName 为英文。UE `.uasset/.umap` 若需要重命名，必须经过引擎原生 Rename、引用/重定向审计，不可直接更改磁盘文件名。
 
 初次扫描 `TestEnglishProjectNames.ps1` 检查 **636,030** 项路径和 **70** 个活动插件描述，发现 **30** 项违规。对 11,290 条 Git 已跟踪路径额外检查：未发现路径大小写冲突，未发现带空格的已跟踪 UE 资产文件名。本次不把静态名称检查当成 UE Shader、Client/Server Cook 或运行时通过。
 

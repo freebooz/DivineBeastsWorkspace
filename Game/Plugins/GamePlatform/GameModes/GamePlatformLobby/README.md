@@ -7,8 +7,8 @@
 只有未来形成可跨游戏复用且不能由 World／ApplicationFlow／UI／Party 等现有能力表达的“非权威大厅体验机制”时，才允许补实现；否则应在明确基线变更和引用迁移后退休。
 
 现行规则：
-- [游戏端核心要求](../../../../../Docs/Architecture/游戏端核心要求.md)
+- [游戏端核心要求](../../../../../Docs/SSLMEngineeringStandard.md#product)
 - [插件系统P0收敛审计](../../../../../Docs/Architecture/游戏端插件系统P0收敛审计.md)
-- [插件开发规范](../../../插件开发规范.md)
+- [插件开发规范](../../../../../Docs/SSLMEngineeringStandard.md#plugins)
 
 本插件当前不得标记 G1～G5 完成，不得作为生产启用能力。

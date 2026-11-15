@@ -1,14 +1,16 @@
 # 工作空间文档
 
-更新日期：2026-11-11。以下分别列出现行规范、实施文档与历史来源；不能用目录规划或聊天中的完成描述替代真实验证结果。
+更新日期：2026-11-15。以下分别列出现行规范、实施文档与历史来源；不能用目录规划或聊天中的完成描述替代真实验证结果。
 
 ## 现行规则与规划
+
+- [SSLM 统一工程规范](SSLMEngineeringStandard.md)汇总现行产品、架构、插件、命名、UI、美术与验证要求。
 
 - [新手村地形纹理轰炸与王者峡谷式V3配色原生改造](Implementation/VillageTerrainTextureBombingV3_20261018.md)：2026-10-18真实UE5.8将Village共享Landscape母材质由55节点改为81节点，三路原生Texture Bombing、低中画质/移动端回退及独立UE冷重载与共享地图依赖门禁已通过；256×256绿色默认Texture2D已真实导入并绑定两处地面参数，独立UE进程冷重载、Village地图资源隔离通过；已修复原生摄影机方向与世界二次加载导致的黑帧，独立十层六态D3D12像素检查6/6通过；正式Village三景别GPU非黑且原地图SHA不变，VillageServer与VillageDevelopmentClient真实Cook/Stage和容器资源审计通过；客户端2K动态纹理实际使用、GPU耗时/FPS及整体人工美术仍待验。
 
 
 - [SSLM统一艺术光照实验室（Lighting Lab）设计规格](Implementation/SSLM_LightingLab_Design_20261111.md) 与 [实施计划](Implementation/SSLM_LightingLab_ImplementationPlan_20261111.md)：独立开发关卡、六套柔和艺术光照候选、阴影角扫描、三档质量/GI对照及UE5.8真实验收边界；云端代码不冒充原生地图资产，开发目录已登记NeverCook及三服务器排除，预检复用已有Monolith Nanite槽位映射证据。
-- [SSLM全局美术配色策略与色彩设计规范 V3.0](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)：全局美术与色彩唯一权威文档；2026-11-11增补“一景一幅山水画、一帧一幅视觉作品”的全域场景审美原则，并确定Village湖边群山与峭壁专属基准图；本轮继续加入全场景柔和艺术光照、UE5.8光影/间接光/雾效/曝光/色彩分级方法及分级性能验收要求。
+- [SSLM全局美术配色策略与色彩设计规范 V3.0](SSLMEngineeringStandard.md#art)：全局美术与色彩唯一权威文档；2026-11-11增补“一景一幅山水画、一帧一幅视觉作品”的全域场景审美原则，并确定Village湖边群山与峭壁专属基准图；本轮继续加入全场景柔和艺术光照、UE5.8光影/间接光/雾效/曝光/色彩分级方法及分级性能验收要求。
 - [SSLM参考颜色语义索引 V3.0](Art/SSLMColorRegistry_V3.json)：41项初始屏幕sRGB参考色与8项待审核的战斗功能色语义；派生候选数据，不是UE数据资产。
 - [SSLM十层地形纹理及材质V3.0真实审查与整改](Implementation/TerrainColorV3ComplianceReview_20261018.md)：已有V3色彩候选并获用户授权覆盖正式地形基础色；10层基础色已UE5.8原位重导入并独立冷重载10/10，泥土Dirt阻断解决；Village地图未修改，共享母材质已按新手村纹理轰炸和V3默认草地要求合法更新，六态D3D12像素有效性、正式Village三景别真实截图及服务器/客户端Cook通过，游戏客户端软纹理/完整地貌/GPU耗时与人工美术验收仍待完成。
 
@@ -23,17 +25,17 @@
 
 
 - [全局工程规则](../AGENTS.md)：命名、中文注释、分层、权限及验证规则。
-- [游戏端核心要求](Architecture/游戏端核心要求.md)：UE5.8客户端与Dedicated Server的插件化、复用、解耦、端侧权威、独立演示和人工审核核心基线。
-- [业务后端核心要求](Backend/业务后端核心要求.md)：Go业务控制面的领域模块化、五薄入口、跨游戏复用、UE权威边界、契约治理、一致性、安全和真实验收核心基线。
-- [解决方案总体规划](Architecture/解决方案总体规划.md)：既有产品基线与分期交付；46+N插件、三角色及可选竞技按已批准三层方案实施。
+- [游戏端核心要求](SSLMEngineeringStandard.md#product)：UE5.8客户端与Dedicated Server的插件化、复用、解耦、端侧权威、独立演示和人工审核核心基线。
+- [业务后端核心要求](SSLMEngineeringStandard.md#backend)：Go业务控制面的领域模块化、五薄入口、跨游戏复用、UE权威边界、契约治理、一致性、安全和真实验收核心基线。
+- [解决方案总体规划](SSLMEngineeringStandard.md#architecture)：现行三层装配、三角色、可选竞技与分期交付。
 - [解决方案总体目录规划说明](Architecture/解决方案总体目录规划说明_V1.3.0.md)：正式路径、中文职责和目录维护要求。
 - [设计基线整合实施规格草案](Architecture/设计基线整合实施规格草案.md)：已批准并修订为46+N的插件、三角色服务器及旧实现迁移目标；尚非实施结果。
 - [设计基线整合实施计划](Architecture/设计基线整合实施计划.md)：历史执行记录；旧四DBA及45上限已被新方案替代，历史证据不回写。
 - [游戏端插件三层架构实施规划](Architecture/游戏端插件三层架构实施规划.md)：本次授权方案、迁移清单、依赖边界、内容登记、回退与实际验证限制。
-- [三层类继承与扩展规范](Architecture/三层类继承与扩展规范.md)：GamePlatform、MobaCommon与DivineBeasts之间的继承、接口、组件和数据扩展边界。
+- [三层类继承与扩展规范](SSLMEngineeringStandard.md#inheritance)：GamePlatform、MobaCommon与DivineBeasts之间的继承、接口、组件和数据扩展边界。
 - [游戏端插件系统P0收敛审计](Architecture/游戏端插件系统P0收敛审计.md)：P0-1～P0-9真实审计、Definition迁移矩阵、三层继承门禁、VFX扩展点、Online/Session阻断、3A表现规格、Review Harness与Phase 1执行顺序。
-- [游戏端插件清单设计](Architecture/游戏端插件清单设计.md)：当前46个代码／机制插件的层级、分类、模块端侧、已实现功能、成熟状态、验证资料和后续完善重点主台账；现行40个GamePlatform稳定身份包含新增GamePlatformSurface，GamePlatformOpenWorld继续保持退休。
-- [插件开发规范](../Game/Plugins/插件开发规范.md)：UE 插件依赖、生命周期和交付门禁。
+- [游戏端插件清单设计](Architecture/游戏端插件清单设计.md)：当时46个代码／机制插件的层级、分类、模块端侧、已实现功能、成熟状态、验证资料和后续完善重点主台账；现行40个GamePlatform稳定身份包含新增GamePlatformSurface，GamePlatformOpenWorld继续保持退休。
+- [插件开发规范](SSLMEngineeringStandard.md#plugins)：UE 插件依赖、生命周期和交付门禁。
 - [十二生肖技能数据驱动实施计划](superpowers/plans/2026-10-09-zodiac-ability-data-driven-implementation.md)：按现行三层与五个 DBA 代码插件规范，分阶段建设真实技能授权、数值配置、图标与技能栏自动初始化；当前仅为计划，非功能完成证明。
 - [十二生肖技能数据驱动实施记录](Implementation/十二生肖技能数据驱动实施记录_20261009.md)：2026-10-09 新增技能数据定义、GAS 授权/所有者复制、客户端视图及竞技出生接口的真实代码变更，明确实际静态检查、UE/Monolith 阻断与未交付的正式技能/图标/蓝图。
 - [十二生肖技能主数据及资源缺口清单](Implementation/ZodiacAbilityAssetInventory.json)：12 个稳定英雄编号和现存英雄定义文件的机器可读清单，未批准技能名称、伤害数据、技能图标和真实授权均显式为空或待验证。

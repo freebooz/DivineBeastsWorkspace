@@ -38,7 +38,7 @@
 
 ## 2026-10-18｜SSLM全局环境与UI美术配色策略V3.0文档整合
 
-- 新增[全局色彩主规范](Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)及[41色参考/8功能状态派生索引](Art/SSLMColorRegistry_V3.json)，建立生态地面/岩石/植被/水域/建筑/生肖/VFX/UI/光照的统一色彩语义和人工审核门禁；全部HEX是初始sRGB屏幕参考，非UE线性材质输入和第三方官方取色。
+- 新增[全局色彩主规范](SSLMEngineeringStandard.md#art)及[41色参考/8功能状态派生索引](Art/SSLMColorRegistry_V3.json)，建立生态地面/岩石/植被/水域/建筑/生肖/VFX/UI/光照的统一色彩语义和人工审核门禁；全部HEX是初始sRGB屏幕参考，非UE线性材质输入和第三方官方取色。
 - 对齐现行GamePlatform三层边界；五行候选仅作艺术视觉语言，不恢复已取消的五行战斗规则；新增生命绿/能量蓝/独立暖金气势/施法亮玉青规范，明确历史蓝气势蓝图/原稿尚待实际迁移和人工确认。
 - 同步AGENTS、正式文档入口、目录规划及材质/PCG/VFX/UI专项引用；不修改既有.uasset/.umap及正式地图，不开展UE编译、GPU压测或人工签收，文档落盘不代表资源已验收。
 
@@ -261,7 +261,7 @@
 
 ## 2026-09-27｜三层类继承与扩展规范
 
-- 新增 `Docs/Architecture/三层类继承与扩展规范.md`，明确 `GamePlatform（平台基类） → MobaCommon（MOBA可选扩展） → DivineBeasts（项目派生）` 的单向继承与依赖边界。
+- 新增 `Docs/SSLMEngineeringStandard.md#inheritance`，明确 `GamePlatform（平台基类） → MobaCommon（MOBA可选扩展） → DivineBeasts（项目派生）` 的单向继承与依赖边界。
 - 规定公共/通用领域优先建立稳定基类、接口或Definition；纯内容差异使用DataAsset实例，运行时协作优先接口、组件、Provider和组合，避免机械深继承。
 - 明确VFX、角色、世界、竞技、UI/ViewModel等推荐继承链，并要求后续在GamePlatformDeveloperTools增加Inheritance Boundary Validation（三层继承边界校验）。
 
@@ -290,7 +290,7 @@
 
 ## 2026-09-27｜业务后端核心要求基线
 
-- 新增 `Docs/Backend/业务后端核心要求.md`，统一 Go 业务控制面的领域模块化、五薄入口、跨游戏复用、UE Dedicated Server 权威边界、共享契约、数据一致性、安全、可观测与真实验收要求。
+- 新增 `Docs/SSLMEngineeringStandard.md#backend`，统一 Go 业务控制面的领域模块化、五薄入口、跨游戏复用、UE Dedicated Server 权威边界、共享契约、数据一致性、安全、可观测与真实验收要求。
 - 明确当前单团队优先采用单 Go Module（Go模块）+ 清晰领域边界，只有在独立扩缩容、故障隔离、数据所有权或发布边界明确时才增加新服务，避免无意义微服务膨胀。
 - `Docs/Backend/业务服务说明.md` 增加核心基线入口；同步维护工作空间文档索引与总体目录规划说明。
 - `Backend/DirectoryTree_CN_V1.1.0.md` 增加业务后端核心要求入口，确保从后端源码目录开展开发时也能直接定位现行核心基线。
@@ -303,7 +303,7 @@
 
 ## 2026-09-27｜游戏端核心要求基线
 
-- 新增 `Docs/Architecture/游戏端核心要求.md`，统一客户端与 Dedicated Server 的插件化、多项目复用、独立解耦、边界定义、独立演示、人工审核、端侧权威、三服务器角色、1v1～5v5、GAS、数据驱动和真实验收核心要求。
+- 新增 `Docs/SSLMEngineeringStandard.md#product`，统一客户端与 Dedicated Server 的插件化、多项目复用、独立解耦、边界定义、独立演示、人工审核、端侧权威、三服务器角色、1v1～5v5、GAS、数据驱动和真实验收核心要求。
 - 明确当前单团队开发采用“按职责/复用/端侧/生命周期/测试边界适度拆分”，禁止机械拆分空插件。
 - 修正文档入口及总体目录规划中仍存在的“当前四角色”表述为现行三角色；历史变更记录中的旧阶段事实保留，不回写伪造历史。
 

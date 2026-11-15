@@ -1,10 +1,10 @@
 # 插件文档入口
 
-正式的插件开发规范位于 [插件开发规范.md](插件开发规范.md)。
+正式的插件开发规范位于 [统一工程规范的插件章](../../Docs/SSLMEngineeringStandard.md#plugins)。
 当前插件名称、功能、模块端侧和实现状态主清单见 [游戏端插件清单设计](../../Docs/Architecture/游戏端插件清单设计.md)。
 
 本文件仅作为兼容性入口，不承载规范正文。插件目录、模块、依赖、VFX、测试和交付要求以正式规范为准。
 
-现行归属为GamePlatform（39个跨游戏插件）、MobaCommon（GamePlatformArena与MobaPresentation）、DivineBeasts（5个项目代码插件及按需内容）。GamePlatformOpenWorld空壳仍保持退休；GamePlatformSurface作为Presentation通用环境表面材质插件加入正式基线。现有40个GamePlatform稳定身份，代码／机制总计46个，真实内容另计N。
+现行代码或机制基线包括 41 个 GamePlatform 平台插件、GamePlatformArena 与 MobaPresentation 两个 MOBA 插件、五个 DBA 项目代码插件。登记内容包和第三方编辑器工具另计。GamePlatformOpenWorld 保持退休。
 
 实施与验证见[三层架构实施规划](../../Docs/Architecture/游戏端插件三层架构实施规划.md)；内容归属与登记见[内容包说明](DivineBeasts/ContentPacks/README.md)；可选竞技见[DBAArena](DivineBeasts/DBAArena/README.md)。当前目录归位不代表主工程已启用全部插件或通过UE构建。

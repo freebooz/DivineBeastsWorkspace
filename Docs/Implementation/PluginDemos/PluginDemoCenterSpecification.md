@@ -14,7 +14,7 @@
 
 本规格覆盖开发演示编目、UI、关卡复用、调用适配、生命周期、证据和人工签收；不扩展插件的业务规则，不把演示系统变成第二套玩法执行器、资产管理器或后端。发现业务功能缺失时登记到对应插件整改项，禁止在演示层以假逻辑补齐。
 
-规范来源：根 `AGENTS.md`、[解决方案总体规划](../../Architecture/解决方案总体规划.md)、[插件开发规范](../../../Game/Plugins/插件开发规范.md)、[整合与交付说明](../GamePlatformAuditRemediation/整合与交付说明_2026-10-09.md)、[UI 纹理视觉规范](../UITextureVisualPolicy.md)、[颜色链路规范](../UIColorPipeline.md)。发生冲突时以现行工程规则和用户最新明确指令为准。
+规范来源：根 `AGENTS.md`、[解决方案总体规划](../../SSLMEngineeringStandard.md#architecture)、[插件开发规范](../../SSLMEngineeringStandard.md#plugins)、[整合与交付说明](../GamePlatformAuditRemediation/整合与交付说明_2026-10-09.md)、[UI 纹理视觉规范](../../SSLMEngineeringStandard.md#ui)、[颜色链路规范](../UIColorPipeline.md)。发生冲突时以现行工程规则和用户最新明确指令为准。
 
 范围包含现有 47 个代码插件及 18 个内容包。内容包属于项目层内部，不是第四逻辑层；外部引擎插件不是本次逐插件交付范围，其依赖和版本仍须记录。后续新增或退休插件必须重新扫描并更新编目，不把本次数量写成运行时上限。
 

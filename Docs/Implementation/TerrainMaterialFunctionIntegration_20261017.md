@@ -2,7 +2,7 @@
 
 工程：`DivineBeastsWorkspace/Game/DivineBeastsArena.uproject`，引擎：锁定 Unreal Engine 5.8（虚幻引擎）。
 
-**2026-10-18颜色规范增量（保留本文件历史函数实现结论）**：V3.0参考色见[唯一全局色板](../Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)，实际扫描十层整改/UE原生V3候选与**失败的黑帧GPU审核门禁**见[专项目录及实物记录](TerrainColorV3ComplianceReview_20261018.md)。本文件保持既有八处MF调用及RVT未验结论，不能用新基础色资产存在替代正式地形或人工签收。
+**2026-10-18颜色规范增量（保留本文件历史函数实现结论）**：V3.0参考色见[唯一全局色板](../SSLMEngineeringStandard.md#art)，实际扫描十层整改/UE原生V3候选与**失败的黑帧GPU审核门禁**见[专项目录及实物记录](TerrainColorV3ComplianceReview_20261018.md)。本文件保持既有八处MF调用及RVT未验结论，不能用新基础色资产存在替代正式地形或人工签收。
 
 ## 一、实际缺口及改造范围
 

@@ -4,7 +4,7 @@
 
 ## 规范、所有权与同步
 
-- 依据[SSLM全局美术配色规范V3.0](../../Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md)及[界面纹理规范](../../Implementation/UITextureVisualPolicy.md)。自然岩石、木材、植物保持自然材质；玉石与鎏金用于UI或有明确含义的人工器物。不得把品牌色铺满整个生态场景。
+- 依据[SSLM全局美术配色规范V3.0](../../SSLMEngineeringStandard.md#art)及[界面纹理规范](../../SSLMEngineeringStandard.md#ui)。自然岩石、木材、植物保持自然材质；玉石与鎏金用于UI或有明确含义的人工器物。不得把品牌色铺满整个生态场景。
 - 机制沿用GamePlatformUI，项目视觉归DBAUIPack_Core，DBAClient沿用已有开发页路由。没有增加播放器、运行框架或业务目录；正式游戏地图未修改。
 - 本轮按用户要求先推送、后拉取，提交94455b98完成同步，HEAD与origin/main当时为0/0。随后25张重绘及相关原生纹理属于新制作内容，不能用先前同步结果证明这些新改动已推送。
 - 源图位于Tools/Unreal/PluginDemos/Art；70项唯一映射与SHA256见PluginHubImages.json。逐图原因、前后哈希和重绘提示词见本目录CoverArtAudit.json。原始25张源图及70张原生纹理备份在Saved/Validation/PluginHubCards20261114/ArtBackup，不覆盖原备份。

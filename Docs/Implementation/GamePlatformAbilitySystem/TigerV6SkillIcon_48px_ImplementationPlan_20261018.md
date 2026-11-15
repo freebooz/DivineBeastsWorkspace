@@ -1,7 +1,7 @@
 # SSLM 寅虎 V6 八技能 48×48 图标制作、UE5.8导入与技能栏接入计划
 
 > 2026-10-18。基于真实 DivineBeastsWorkspace 工程源码与历史技能 V6 审查稿；性质为生产方案/资源导入清单，不代表原画、48图、UE资产或HUD验收完成。
-> 唯一美术规范：`Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md`，配合`Docs/Implementation/UITextureVisualPolicy.md`、`AGENTS.md`；禁止引入旧五行伤害/破元/共鸣/王印规则。
+> 唯一美术规范：`Docs/SSLMEngineeringStandard.md#art`，配合`Docs/SSLMEngineeringStandard.md#ui`、`AGENTS.md`；禁止引入旧五行伤害/破元/共鸣/王印规则。
 
 ## 1. 冻结权威身份与工程现状
 

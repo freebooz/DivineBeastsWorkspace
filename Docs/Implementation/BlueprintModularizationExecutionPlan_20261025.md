@@ -73,7 +73,7 @@
 
 ## 六、M5 公用组件基类优先改造（2026-10-25 同日续行）
 
-本阶段按用户“所有通用功能均考虑设计为公用组件基类”的要求执行，详见 [公共组件优化实施记录](BlueprintPublicComponentContinuation_20261025.md)；长期唯一规范已增补至 [三层类继承与扩展规范](../Architecture/三层类继承与扩展规范.md) 第九章。
+本阶段按用户“所有通用功能均考虑设计为公用组件基类”的要求执行，详见 [公共组件优化实施记录](BlueprintPublicComponentContinuation_20261025.md)；长期唯一规范已增补至 [三层类继承与扩展规范](../SSLMEngineeringStandard.md#inheritance) 第九章。
 
 - [x] 平台已有 `UGamePlatformComponentWidget`（公共组件）及 `UGamePlatformSlotWidget`（公共槽位基类），选择扩展现有实现，不再新建平行槽位UObject类型。
 - [x] 平台槽位公共化了状态等价、命名控件显示与不持有业务真源的展示值；项目背包 `FDivineBeastsInventoryCellPresenter`（背包展示适配器）和技能栏 `FDivineBeastsAbilityBarProjectionDiff`（技能栏差异比较）都已改为实际消费公共能力。
