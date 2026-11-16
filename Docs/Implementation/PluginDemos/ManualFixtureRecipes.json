@@ -1,0 +1,232 @@
+{
+  "status": "exact_native_author_recipe_assets_not_created_by_T04",
+  "sample_widget_class": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginDemoContextSample.WBP_DBA_PluginDemoContextSample_C",
+  "input": {
+    "class": "/Script/GamePlatformInputClient.GamePlatformInputProfileDefinition",
+    "asset": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Input/DA_DBA_ManualInputProfile.DA_DBA_ManualInputProfile",
+    "logical_id": {
+      "namespace": "divinebeasts.manual.input",
+      "name": "profile",
+      "version": 1
+    },
+    "data_version": {
+      "schema_version": 1,
+      "content_revision": 1
+    },
+    "required_definitions": [],
+    "contexts": [
+      {
+        "name": "Gameplay",
+        "context": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Input/IMC_DBA_ManualGameplay.IMC_DBA_ManualGameplay",
+        "allow_sharing": false
+      }
+    ],
+    "actions": [
+      {
+        "asset": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Input/IA_DBA_ManualMove.IA_DBA_ManualMove",
+        "value_type": "Axis2D",
+        "descriptor": {
+          "semantic_id_tag": "Platform.Input.Move",
+          "unit": "NormalizedAxis",
+          "value_type": "Axis2D",
+          "channel_mask": 1,
+          "value_policy": "MoveAxis"
+        },
+        "triggers": [],
+        "modifiers": []
+      },
+      {
+        "asset": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Input/IA_DBA_ManualMenu.IA_DBA_ManualMenu",
+        "value_type": "Boolean",
+        "descriptor": {
+          "semantic_id_tag": "Platform.Input.Menu",
+          "unit": "Boolean",
+          "value_type": "Boolean",
+          "channel_mask": 8,
+          "value_policy": "Passthrough"
+        },
+        "triggers": [],
+        "modifiers": []
+      },
+      {
+        "asset": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Input/IA_DBA_ManualCancel.IA_DBA_ManualCancel",
+        "value_type": "Boolean",
+        "descriptor": {
+          "semantic_id_tag": "Platform.Input.Cancel",
+          "unit": "Boolean",
+          "value_type": "Boolean",
+          "channel_mask": 8,
+          "value_policy": "Passthrough"
+        },
+        "triggers": [],
+        "modifiers": []
+      },
+      {
+        "asset": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Input/IA_DBA_ManualConfirm.IA_DBA_ManualConfirm",
+        "value_type": "Boolean",
+        "descriptor": {
+          "semantic_id_tag": "Platform.Input.Confirm",
+          "unit": "Boolean",
+          "value_type": "Boolean",
+          "channel_mask": 8,
+          "value_policy": "Passthrough"
+        },
+        "triggers": [],
+        "modifiers": []
+      }
+    ],
+    "profile_settings": {
+      "analog_dead_zone": 0.2,
+      "touch_analog_dead_zone": 0.12,
+      "look_degrees_per_count": 0.1,
+      "look_degrees_per_second": 90,
+      "enable_keyboard_mouse": true,
+      "enable_gamepad": true,
+      "enable_touch": true
+    },
+    "mappings": [
+      {
+        "action": "IA_DBA_ManualMove",
+        "key": "W",
+        "modifiers": [
+          {
+            "class": "/Script/EnhancedInput.InputModifierSwizzleAxis",
+            "order": "YXZ"
+          }
+        ]
+      },
+      {
+        "action": "IA_DBA_ManualMove",
+        "key": "S",
+        "modifiers": [
+          {
+            "class": "/Script/EnhancedInput.InputModifierNegate",
+            "b_x": true,
+            "b_y": false,
+            "b_z": false
+          },
+          {
+            "class": "/Script/EnhancedInput.InputModifierSwizzleAxis",
+            "order": "YXZ"
+          }
+        ]
+      },
+      {
+        "action": "IA_DBA_ManualMove",
+        "key": "D",
+        "modifiers": []
+      },
+      {
+        "action": "IA_DBA_ManualMove",
+        "key": "A",
+        "modifiers": [
+          {
+            "class": "/Script/EnhancedInput.InputModifierNegate",
+            "b_x": true,
+            "b_y": false,
+            "b_z": false
+          }
+        ]
+      },
+      {
+        "action": "IA_DBA_ManualMenu",
+        "key": "Tab",
+        "modifiers": []
+      },
+      {
+        "action": "IA_DBA_ManualCancel",
+        "key": "Escape",
+        "modifiers": []
+      },
+      {
+        "action": "IA_DBA_ManualConfirm",
+        "key": "K",
+        "modifiers": [],
+        "player_mappable_key_settings": {
+          "name": "ManualConfirm",
+          "display_name": "人工确认",
+          "display_category": "SSLM人工测试",
+          "class": "/Script/EnhancedInput.PlayerMappableKeySettings",
+          "ownership": "Instanced child of the IMC mapping, not standalone duplicate rule asset"
+        },
+        "key_slot": 0,
+        "setting_behavior": "OverrideSettings"
+      }
+    ],
+    "native_checks": [
+      "每个Action为真实UInputAction，ValueType与Descriptor一致；所有引用进Input AssetBundle",
+      "Profile.ValidateDefinition成功，唯一逻辑ID经AssetRegistry/中央Data扫描可解析",
+      "实际增强输入组件归同LP且无平台OwnedBinding；不接管游戏已有Profile/映射",
+      "所有文件由Monolith创建、编译、保存、重载，Cook结果另证；原生IA/IMC不使用伪文本资产"
+    ]
+  },
+  "flow": {
+    "class": "/Script/GamePlatformApplicationFlow.GamePlatformFlowDefinition",
+    "asset": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Flow/DA_DBA_ManualFlow.DA_DBA_ManualFlow",
+    "logical_id": {
+      "namespace": "divinebeasts.manual.flow",
+      "name": "interaction",
+      "version": 1
+    },
+    "data_version": {
+      "schema_version": 1,
+      "content_revision": 1
+    },
+    "entry_node_id": "ManualWait",
+    "nodes": [
+      {
+        "node_id": "ManualWait",
+        "executor_id": "ManualWaitExecutor",
+        "timeout_seconds": 30,
+        "wait_for_user_input": true,
+        "next_node_id": "None",
+        "routes": {
+          "Accept": "None"
+        }
+      }
+    ],
+    "allow_cycles": false,
+    "required_definitions": []
+  },
+  "equipment": {
+    "class": "/Script/GamePlatformEquipmentClient.GamePlatformEquipmentVisualDefinition",
+    "asset": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Equipment/DA_DBA_ManualEquipmentVisual.DA_DBA_ManualEquipmentVisual",
+    "equipment_visual_id": "ManualVisual",
+    "visual_type": "StaticMesh",
+    "static_mesh": "/Engine/BasicShapes/Cube.Cube",
+    "socket_name": "hand_r",
+    "relative_transform": {
+      "translation_cm": [
+        0,
+        0,
+        0
+      ],
+      "rotation_deg": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ]
+    },
+    "material_overrides": [],
+    "avatar_mesh": "/DBAContentPack_Common/Mannequins/DBA/Meshes/SKM_Manny_Simple.SKM_Manny_Simple",
+    "socket_contract": "使用现有Manny真实hand_r骨骼作为命名挂接点；USkeletalMeshComponent.DoesSocketExist接受有效骨骼。经Monolith重载核对hand_r后才能登记正常资源，不修改共享Skeleton/mesh。",
+    "negative_visual_asset": "/Engine/BasicShapes/Cube.Cube",
+    "preview_actor_location_cm": [
+      200,
+      0,
+      0
+    ],
+    "preview_camera_requirement": "独立样板地图相机须能看到世界坐标(200,0,0)的Manny与右手附件；根负责相机/样板可视摆位，不能以资源存在替代截图。",
+    "native_checks": [
+      "AvatarMesh真实USkeletalMesh、hand_r存在",
+      "VisualAsset真实EquipmentVisualDefinition，ID=ManualVisual SocketName=hand_r",
+      "Cube只作为定义错误类型输入；作为定义内部StaticMesh是正常有效资源",
+      "BindVisual前中央Data租约Succeeded；Stop附件数与自有租约归零"
+    ]
+  }
+}

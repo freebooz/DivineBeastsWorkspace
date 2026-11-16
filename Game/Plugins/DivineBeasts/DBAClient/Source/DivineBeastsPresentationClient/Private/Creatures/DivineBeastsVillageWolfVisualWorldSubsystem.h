@@ -24,25 +24,30 @@ private:
     /** 观察的复制狼Actor弱集合，避免跨世界持有对象。 */
     TSet<TWeakObjectPtr<ADivineBeastsVillageWolf>> ObservedWolves;
     FDelegateHandle SpawnHandle;
-    FGamePlatformDataLease VisualLease;
-    FSoftObjectPath WolfMeshPath;
-    FSoftObjectPath WolfAnimPath;
-    /** 经实际模型边界校准的纯客户端导入比例/朝向，不修改权威胶囊或导航代理。 */
-    float WolfMeshScale = 1.0f;
-    float WolfMeshYawDegrees = 0.0f;
+    /** 两种怪物共享观察与生命周期，但各自持有独立的内容包租约。 */
+    struct FCreatureVisual
+    {
+        FGamePlatformDataLease Lease;
+        FSoftObjectPath MeshPath;
+        FSoftObjectPath AnimPath;
+        float Scale = 1.0f;
+        float YawDegrees = 0.0f;
+        bool bReady = false;
+        bool bLoading = false;
+        /** 每类怪物在本世界最多申请一次资源，失败后由下一世界重新建立资格。 */
+        bool bHasLoadAttempted = false;
+        /** 缺失配置按怪物类别只提示一次，避免复制实体批量生成时刷屏。 */
+        bool bHasLoggedMissingAssets = false;
+    };
+    FCreatureVisual WolfVisual;
+    FCreatureVisual VampireVisual;
     FGuid Operation;
-    bool bReady = false;
-    bool bLoading = false;
-    /** 每个World最多申请一次同组Fab软资源；失败关闭，不随20只狼重复请求。 */
-    bool bVisualLoadAttempted = false;
-    /** 缺失或未审核的客户端资源只输出一次提示，避免大规模狼群刷屏。 */
-    bool bMissingVisualLogged = false;
     bool bClosing = false;
 
     /** 只识别真实复制Actor；该调用可能发生在BeginPlay或迟到生成事件中。 */
     void ObserveActor(AActor* Spawned);
     /** 唯一GamePlatformData加载，不允许直接StreamableManager旁路。 */
-    void BeginLoadVisuals();
+    void BeginLoadVisuals(bool bVampire);
     /** 租约及世界代次核对后向本地Mesh组件应用外观。 */
     void ApplyVisual(ADivineBeastsVillageWolf& Wolf);
     /** Actor退出时只删除观察，不Destroy复制Actor或卸载其他人的租约。 */

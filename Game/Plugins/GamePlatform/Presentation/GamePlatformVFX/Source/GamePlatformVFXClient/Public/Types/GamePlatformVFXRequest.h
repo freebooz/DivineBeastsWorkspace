@@ -70,6 +70,10 @@ struct GAMEPLATFORMVFXCLIENT_API FGamePlatformVFXRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX")
     bool bAllowFallback = true;
 
+    /** 仅已确认的表现结束允许自然收尾；普通取消默认立即清理，不影响权威Actor寿命。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="VFX")
+    bool bAllowNaturalCompletion = false;
+
     /** Composite内部递归深度；外部正常请求保持0。 */
     UPROPERTY(Transient)
     int32 CompositeDepth = 0;

@@ -16,14 +16,14 @@ try {
     $build=@{BuildResultSHA256='a'*64;InputSHA256='b'*64;ArtifactSHA256='c'*64}
     $started=[DateTime]::UtcNow
     $process=@{ProcessId=123;StartTimeUtc=$started.ToString('O');FilePath=(Join-Path $engine 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe');Arguments=@((Join-Path $workspace 'Game/DivineBeastsArena.uproject'),'-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',"-FoundationRunId=$id",'-ExecCmds=Automation RunTests DivineBeasts.PluginDemos',"-ReportExportPath=$(Join-Path $workspace "$directory/Demo/Automation")")}
-    $result=@{Operation='PluginDemoTests';RunId=$id;Suite='Demo';Status='Passed';ExitCode=0;UEExecuted=$true;BuildExecuted=$false;BuildEvidence=$build;BuildEvidenceAfter=$build;ValidatedTests=8;
+    $result=@{Operation='PluginDemoTests';RunId=$id;Suite='Demo';Status='Passed';ExitCode=0;UEExecuted=$true;BuildExecuted=$false;BuildEvidence=$build;BuildEvidenceAfter=$build;ValidatedTests=$policy.Tests.Count;
         Suites=@(@{Name='Demo';Evidence=(Join-Path $workspace "$directory/Demo");Result=@{ExitCode=0;ProcessId=123;StartTimeTicks=$started.Ticks;TimedOut=$false;Cleaned=$true}})}
     $automationPath=Join-Path $workspace "$directory/Demo/Automation/index.json"; $resultPath=Join-Path $workspace "$directory/result.json"
     Save-Fixture $automationPath @{tests=$tests}
     $result.AutomationReportSHA256=(Get-FileHash -LiteralPath $automationPath -Algorithm SHA256).Hash
     Save-Fixture (Join-Path $workspace "$directory/Demo/process.json") $process; Save-Fixture $resultPath $result
     function Read-Fixture{Read-PluginDemoNativeReport -Workspace $workspace -EngineRoot $engine -ResultPath $resultPath -Suite Demo}
-    $read=Read-Fixture; Require ($read.Cases.Count -eq 8 -and $read.Files.Count -eq 3) '完整实际文件链未被消费。'
+    $read=Read-Fixture; Require ($read.Cases.Count -eq $policy.Tests.Count -and $read.Files.Count -eq 3) '完整实际文件链未被消费。'
     # 固定目录有报告不证明它由当前process导出；必须绑定唯一真实ReportExportPath。
     foreach($variant in @('missing','duplicate','other')) {
         $changed=$process|ConvertTo-Json -Depth 20|ConvertFrom-Json -AsHashtable
@@ -44,7 +44,7 @@ try {
     Save-Fixture $resultPath $changed; Reject {Read-Fixture}; Save-Fixture $resultPath $result
     Save-Fixture $automationPath @{tests=$tests+@{fullTestPath='Other.Unrelated';state='Fail'}}
     $result.AutomationReportSHA256=(Get-FileHash -LiteralPath $automationPath -Algorithm SHA256).Hash; Save-Fixture $resultPath $result
-    Require ((Read-Fixture).Cases.Count -eq 8) '组外失败项污染独立Demo证明。'
+    Require ((Read-Fixture).Cases.Count -eq $policy.Tests.Count) '组外失败项污染独立Demo证明。'
     foreach($field in @('UEExecuted','ExitCode','Suite','AutomationReportSHA256')) {
         $changed=$result|ConvertTo-Json -Depth 20|ConvertFrom-Json -AsHashtable
         $changed[$field]=switch($field){UEExecuted{$false};ExitCode{6};Suite{'Review'};default{'0'*64}}

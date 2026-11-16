@@ -58,16 +58,20 @@ type Instance struct {
 	CurrentMatchID        string    // CurrentMatchID（MainArena绑定比赛ID）。
 	AllocatedMatchPlayers int       // 本次MainArena分配人数，重试必须一致；普通世界为0。
 	LastHeartbeat         time.Time // LastHeartbeat（最近一次心跳时间）。
+	ArenaDrainMatchID     string    // 原Boot直接上报排空的MainArena比赛。
+	ArenaDrainRequestUTC  time.Time // 本次已记录比赛的首次排空上报时间。
 }
 
 // AllocationRequest（服务器分配请求）按角色、体验、区域、世界与容量选择实例。
 type AllocationRequest struct {
-	RoleID           string // RoleID（目标服务器角色ID）。
-	ExperienceID     string // ExperienceID（目标体验ID）。
-	RegionID         string // RegionID（首选部署区域）。
-	WorldID          string // WorldID（目标世界ID；为空表示不限定）。
-	RequiredCapacity int    // RequiredCapacity（所需玩家容量）。
-	MatchID          string // MatchID（MainArena比赛ID，其他角色必须为空）。
+	RoleID                string // RoleID（目标服务器角色ID）。
+	ExperienceID          string // ExperienceID（目标体验ID）。
+	RegionID              string // RegionID（首选部署区域）。
+	WorldID               string // WorldID（目标世界ID；为空表示不限定）。
+	RequiredCapacity      int    // RequiredCapacity（所需玩家容量）。
+	MatchID               string // MatchID（MainArena比赛ID，其他角色必须为空）。
+	PreferredGameServerID string // 可信返程优先选择的原实例，可为空。
+	PreferredServerBootID string // 优先实例的原启动代次，必须同实例一起匹配。
 }
 
 // Registry（游戏服务器注册表）保存可快速访问的GameServer状态。
@@ -102,6 +106,8 @@ func (r *Registry) Register(instance Instance) {
 		if instance.CurrentMatchID == "" {
 			instance.CurrentMatchID = previous.CurrentMatchID
 		}
+		instance.ArenaDrainMatchID = previous.ArenaDrainMatchID
+		instance.ArenaDrainRequestUTC = previous.ArenaDrainRequestUTC
 	}
 	// Boot变化表示旧进程已经失效；绝不能把旧实例的预留、比赛绑定或玩家状态继承到新进程。
 	r.instances[instance.ID] = instance
@@ -168,13 +174,37 @@ func (r *Registry) SetReady(id string) error {
 
 // Drain（进入排空）禁止实例继续接受新分配，但允许已有玩家或比赛结束。
 func (r *Registry) Drain(id string) error {
+	return r.drain(id, "", time.Time{})
+}
+
+// DrainForBoot在实例锁内核对原Boot，避免结束旧比赛时把同名后继进程标为排空。
+func (r *Registry) DrainForBoot(id, bootID string) error {
+	return r.DrainRequestedForBoot(id, bootID, time.Time{})
+}
+
+// DrainRequestedForBoot将实例上报与内部标记排空区分开。回执仅归当前有比赛的MainArena和其Boot。
+func (r *Registry) DrainRequestedForBoot(id, bootID string, requestedAt time.Time) error {
+	if bootID == "" {
+		return errors.New("GAME_SERVER_BOOT_MISMATCH: 服务器Boot不能为空")
+	}
+	return r.drain(id, bootID, requestedAt)
+}
+
+func (r *Registry) drain(id, bootID string, requestedAt time.Time) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	instance, ok := r.instances[id]
 	if !ok {
 		return errors.New("GAME_SERVER_NOT_FOUND: GameServer实例不存在")
 	}
+	if bootID != "" && instance.ServerBootID != bootID {
+		return errors.New("GAME_SERVER_BOOT_MISMATCH: 当前实例为另一Boot")
+	}
 	instance.Status = StatusDraining
+	if instance.RoleID == RoleMainArena && instance.CurrentMatchID != "" && instance.ArenaDrainMatchID != instance.CurrentMatchID && !requestedAt.IsZero() {
+		instance.ArenaDrainMatchID = instance.CurrentMatchID
+		instance.ArenaDrainRequestUTC = requestedAt
+	}
 	r.instances[id] = instance
 	return nil
 }

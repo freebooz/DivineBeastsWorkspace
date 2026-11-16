@@ -13,8 +13,10 @@ param([Parameter(Mandatory)][string]$ClientExe,[ValidateRange(1,4)][int]$Count=2
     # 保留960×540可显式选择用于登录小窗口回归，但不代表大型角色页完整可见。
     [ValidateRange(960,3840)][int]$WindowWidth=1920,
     [ValidateRange(540,2160)][int]$WindowHeight=1080,
-    # 同机双窗口验证默认每端60帧，避免无限制渲染争用显卡；0保留游戏设置，不修改持久化玩家偏好。
-    [ValidateRange(0,240)][int]$FrameRateLimit=60,
+    # 人工验证和调试禁止主动限帧；保留参数兼容既有调用，但仅接受0。
+    [ValidateSet(0)][int]$FrameRateLimit=0,
+    # 开发联调默认显示根布局左上角FPS；可用-ShowFPS:$false关闭，独立于限帧且不写玩家设置。
+    [switch]$ShowFPS=$true,
     # 只记录运动/复制的事件采样，供人工移动后按三端时间戳定位延迟，不包含登录信息。
     [switch]$MovementDiagnostics,
     # 仅显式开发验证加载已批准候选技能；三个参数共同选择文本INI、开发配置及运行开关。
@@ -88,6 +90,7 @@ $gatewayModulePath=Join-Path $PSScriptRoot 'FrontEndClientGateway.psm1'
 Import-Module $gatewayModulePath -Force
 # 在创建任何证据目录或启动客户端前拒绝缺失/非法网关，防止把用户引导到错误的角色档案环境。
 $GatewayUrl=Resolve-FrontEndClientGatewayUrl -GatewayUrl $GatewayUrl
+$gatewayHttpArguments=@(Get-FrontEndClientHttpArguments -GatewayUrl $GatewayUrl)
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $accountConfiguration=Resolve-FrontEndDevelopmentTestAccounts -Enabled:$DevelopmentTestAccounts -AccountsJson ([Environment]::GetEnvironmentVariable('DIVINEBEASTS_DEV_LOGIN_ACCOUNTS_JSON','Process'))
 $developmentToolArguments=@()
@@ -118,11 +121,16 @@ foreach($i in 1..$Count) {
     $info.UseShellExecute=$false; $info.CreateNoWindow=$false; $info.WindowStyle=[Diagnostics.ProcessWindowStyle]::Normal
     Set-FrontEndDevelopmentTestAccountEnvironment -StartInfo $info -Configuration $accountConfiguration
     $info.Environment['DIVINEBEASTS_GATEWAY_BASE_URL']=$GatewayUrl
+    # 只对本机开发网关直连，保留其它HTTP请求的系统代理；参数来自解析后的网关身份。
+    foreach($argument in $gatewayHttpArguments) { $info.ArgumentList.Add($argument) }
     $log=Join-Path $directory "Client$i.log"
     foreach($argument in @('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','-windowed',"-ResX=$WindowWidth","-ResY=$WindowHeight","-WinX=$((($i-1)*40)+20)",'-WinY=40','-nosplash',"-abslog=$log")) {
         $info.ArgumentList.Add($argument)
     }
-    if ($FrameRateLimit -gt 0) { $info.ArgumentList.Add("-ExecCmds=t.MaxFPS $FrameRateLimit") }
+    # FPS由平台根布局消费帧结束通知；原生stat fps固定右侧和彩色，不满足项目视觉合同。
+    $startupCommands=@("t.MaxFPS $FrameRateLimit",'r.VSync 0')
+    if ($ShowFPS) { $info.ArgumentList.Add('-GamePlatformShowFPS') }
+    if ($startupCommands.Count) { $info.ArgumentList.Add('-ExecCmds='+($startupCommands -join ',')) }
     if ($MovementDiagnostics) { $info.ArgumentList.Add('-DBAMovementDiagnostics') }
     if ($DevelopmentSkills) {
         foreach ($argument in @('-CustomConfig=VillageDevelopmentClient','-DBADevelopmentSkills','-textconfig','-dumpiniloads')) {
@@ -135,7 +143,7 @@ foreach($i in 1..$Count) {
     foreach($argument in $developmentToolArguments) { $info.ArgumentList.Add($argument) }
     if ($DevelopmentTestAccounts) { $info.ArgumentList.Add('-DBADevelopmentTestAccounts') }
     $process=[Diagnostics.Process]::Start($info)
-    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills;DevelopmentMonsters=[bool]$DevelopmentMonsters;DevelopmentArena=[bool]$DevelopmentArena;UseWorkspaceInputConfig=[bool]$UseWorkspaceInputConfig;DevelopmentTools=[bool]$DevelopmentTools;DevelopmentTestAccounts=[bool]$DevelopmentTestAccounts;DevelopmentTestAccountNames=$accountConfiguration.AccountNames}
+    $records+=@{PID=$process.Id;Exe=$exe;StartUtcTicks=$process.StartTime.ToUniversalTime().Ticks;Log=$log;GatewayUrl=$GatewayUrl;InitialScreen='Login';AutoLogin=$false;FrameRateLimit=$FrameRateLimit;ShowFPS=[bool]$ShowFPS;WindowWidth=$WindowWidth;WindowHeight=$WindowHeight;MovementDiagnostics=[bool]$MovementDiagnostics;DevelopmentSkills=[bool]$DevelopmentSkills;DevelopmentMonsters=[bool]$DevelopmentMonsters;DevelopmentArena=[bool]$DevelopmentArena;UseWorkspaceInputConfig=[bool]$UseWorkspaceInputConfig;DevelopmentTools=[bool]$DevelopmentTools;DevelopmentTestAccounts=[bool]$DevelopmentTestAccounts;DevelopmentTestAccountNames=$accountConfiguration.AccountNames}
 }
 $records|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $directory 'Clients.json') -Encoding utf8
 $records|Select-Object PID,InitialScreen,AutoLogin|ConvertTo-Json

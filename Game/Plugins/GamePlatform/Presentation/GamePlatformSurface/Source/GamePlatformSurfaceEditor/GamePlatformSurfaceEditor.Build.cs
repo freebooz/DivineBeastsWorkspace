@@ -16,6 +16,9 @@ public class GamePlatformSurfaceEditor : ModuleRules
             "CoreUObject",
             "Engine",
             "UnrealEd",
+            "MaterialEditor",
+            "MeshDescription", // 编辑器只读植物UV权重审计，不进入客户端或专服
+            "StaticMeshDescription",
             "Landscape", // 真实ULandscapeLayerInfoObject/SetLayerName/WeightBlend创建与验证
             "AssetRegistry",
             "Projects",

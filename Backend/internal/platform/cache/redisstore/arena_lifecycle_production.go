@@ -26,8 +26,12 @@ func NewArenaLifecycleStore(client *Client) *ArenaLifecycleStore {
 
 // GetArenaByMatch完整读取已确认事实；损坏记录/存储不可用不得解释为未分配。
 func (s *ArenaLifecycleStore) GetArenaByMatch(ctx context.Context, id string) (gameservercontrol.ArenaAssignmentRecord, bool, error) {
+	return readArenaByMatch(ctx, s.client.inner, id)
+}
+
+func readArenaByMatch(ctx context.Context, reader redis.Cmdable, id string) (gameservercontrol.ArenaAssignmentRecord, bool, error) {
 	var value gameservercontrol.ArenaAssignmentRecord
-	raw, err := s.client.inner.Get(ctx, arenaRecordPrefix+id).Bytes()
+	raw, err := reader.Get(ctx, arenaRecordPrefix+id).Bytes()
 	if errors.Is(err, redis.Nil) {
 		return value, false, nil
 	}
@@ -83,6 +87,9 @@ func (s *ArenaLifecycleStore) SaveArena(ctx context.Context, value gameservercon
 				}
 				if err := gameservercontrol.ValidateArenaRecordTransition(old, value); err != nil {
 					return err
+				}
+				if old.State == "resultCommitted" && value.State == old.State {
+					return nil // 幂等回执不覆盖首次控制提交的心跳基准。
 				}
 			} else if !errors.Is(err, redis.Nil) {
 				return err
@@ -148,7 +155,7 @@ func (s *ArenaLifecycleStore) GetPresence(ctx context.Context, id string) (games
 }
 
 // SavePresence原子拒绝旧准入覆盖新位置；首次写入也必须检查完整会话/Boot/Epoch。
-func (s *ArenaLifecycleStore) SavePresence(ctx context.Context, value gameservercontrol.PlayerPresence) error {
+func (s *ArenaLifecycleStore) SavePresence(ctx context.Context, value gameservercontrol.PlayerPresence, sourceMatchID string) error {
 	if _, cluster := s.client.inner.(*redis.ClusterClient); cluster {
 		return errors.New("ARENA_CLUSTER_UNSUPPORTED: 本人位置要求单逻辑写域")
 	}
@@ -170,6 +177,24 @@ func (s *ArenaLifecycleStore) SavePresence(ctx context.Context, value gameserver
 			}
 			if err := gameservercontrol.ValidatePresenceTransition(old, value); err != nil {
 				return err
+			}
+			if value.MatchID != "" {
+				if err := tx.Watch(ctx, arenaRecordPrefix+value.MatchID).Err(); err != nil {
+					return err
+				}
+				record, found, err := readArenaByMatch(ctx, tx, value.MatchID)
+				if err != nil {
+					return err
+				}
+				if err := gameservercontrol.ValidateArenaAdmission(record, found, value.GameServerID, value.ServerBootID); err != nil {
+					return err
+				}
+			} else {
+				if err := gameservercontrol.ValidateWorldDeparture(old, sourceMatchID, func(matchID string) (gameservercontrol.ArenaAssignmentRecord, bool, error) {
+					return readArenaByMatch(ctx, tx, matchID)
+				}); err != nil {
+					return err
+				}
 			}
 			if err := ctx.Err(); err != nil {
 				return err

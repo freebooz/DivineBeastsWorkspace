@@ -1,5 +1,6 @@
 // 平台客户端显示适配：事件只写一次快照，连续Percent插值交给UMG/MovieScene，不逐帧读取业务状态。
 #include "Components/GamePlatformCastProgressWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -78,10 +79,9 @@ bool UGamePlatformCastProgressWidget::BindCastSource(FGuid InScopeId)
 bool UGamePlatformCastProgressWidget::ApplyCastSnapshot(
     const FGamePlatformUICastProgressState& InState)
 {
-    if (!BoundScopeId.IsValid() ||
-        InState.SourceScopeId != BoundScopeId ||
-        !FGamePlatformUICastProgressPresentation::IsValidSnapshot(InState) ||
-        InState.Revision <= State.Revision)
+    if (!FGamePlatformUISnapshotScope::CanAccept(
+            BoundScopeId, State.Revision, InState.SourceScopeId, InState.Revision) ||
+        !FGamePlatformUICastProgressPresentation::IsValidSnapshot(InState))
     {
         return false;
     }

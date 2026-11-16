@@ -4,6 +4,10 @@
 #include "ViewModels/DivineBeastsUIViewModel.h"
 #include "Components/TextBlock.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Button.h"
+#include "Engine/LocalPlayer.h"
+#include "DivineBeastsPresentationClientSubsystem.h"
 
 void UDivineBeastsUIScreen::ShowPageLoadError(const FText& Message)
 {
@@ -23,6 +27,8 @@ void UDivineBeastsUIScreen::BindUIEvents()
     if (!IsActivated()) return;
     bProjectEventsBound = true;
     ReconcileProjectViewModelBinding();
+    // 页面可能在VM同步回调中失活，只有仍有效的页面才能附加声音观察者。
+    if (IsActivated() && bProjectEventsBound) BindButtonAudio();
 }
 
 void UDivineBeastsUIScreen::UnbindUIEvents()
@@ -31,12 +37,78 @@ void UDivineBeastsUIScreen::UnbindUIEvents()
     const TStrongObjectPtr<UDivineBeastsUIViewModel> Previous(BoundProjectViewModel);
     // 先撤本次资格和精确VM引用，再进入可能取消命令/重新激活页面的外部业务解绑。
     bProjectEventsBound = false;
+    UnbindButtonAudio();
     ++ProjectBindingGeneration;
     BoundProjectViewModel = nullptr;
     BoundProjectPageGeneration = 0;
     if (Previous.IsValid()) Previous->OnScreenDeactivated();
     Super::UnbindUIEvents();
 }
+
+/** 仅页面激活时枚举已有WidgetTree，不扫描Tick；按钮原命令委托完全不受影响。 */
+void UDivineBeastsUIScreen::BindButtonAudio()
+{
+    if (!IsActivated() || !WidgetTree) return;
+    WidgetTree->ForEachWidgetAndDescendants([this](UWidget* Widget)
+    {
+        UButton* Button = Cast<UButton>(Widget);
+        if (!IsValid(Button)) return;
+        const FString Name = Button->GetFName().ToString();
+        const bool bCancel = Name.Contains(TEXT("Cancel"), ESearchCase::IgnoreCase) ||
+            Name.Contains(TEXT("Back"), ESearchCase::IgnoreCase) ||
+            Name.Contains(TEXT("Close"), ESearchCase::IgnoreCase) ||
+            Name.Contains(TEXT("Revert"), ESearchCase::IgnoreCase);
+        const bool bConfirm = !bCancel &&
+            (Name.Contains(TEXT("Confirm"), ESearchCase::IgnoreCase) ||
+             Name.Contains(TEXT("Accept"), ESearchCase::IgnoreCase) ||
+             Name.Contains(TEXT("Apply"), ESearchCase::IgnoreCase) ||
+             Name.Contains(TEXT("Save"), ESearchCase::IgnoreCase));
+        if (bCancel)
+        {
+            Button->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleButtonAudioCancel);
+            CancelAudioButtons.AddUnique(Button);
+        }
+        else if (bConfirm)
+        {
+            Button->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleButtonAudioConfirm);
+            ConfirmAudioButtons.AddUnique(Button);
+        }
+        else
+        {
+            Button->OnClicked.AddUniqueDynamic(this, &ThisClass::HandleButtonAudioClick);
+            ClickAudioButtons.AddUnique(Button);
+        }
+    });
+}
+
+/** 按钮所属页面退出后解绑音频观察者，不取消原按钮的业务委托。 */
+void UDivineBeastsUIScreen::UnbindButtonAudio()
+{
+    for (const auto& Weak : ClickAudioButtons)
+        if (UButton* Button = Weak.Get())
+            Button->OnClicked.RemoveDynamic(this, &ThisClass::HandleButtonAudioClick);
+    for (const auto& Weak : ConfirmAudioButtons)
+        if (UButton* Button = Weak.Get())
+            Button->OnClicked.RemoveDynamic(this, &ThisClass::HandleButtonAudioConfirm);
+    for (const auto& Weak : CancelAudioButtons)
+        if (UButton* Button = Weak.Get())
+            Button->OnClicked.RemoveDynamic(this, &ThisClass::HandleButtonAudioCancel);
+    ClickAudioButtons.Reset();
+    ConfirmAudioButtons.Reset();
+    CancelAudioButtons.Reset();
+}
+
+void UDivineBeastsUIScreen::PlayButtonAudio(FName ActionId)
+{
+    // 鼠标/触摸/手柄对同一UButton均只使用一次OnClicked；程序化提交不产生假点击声。
+    if (!IsActivated() || !bProjectEventsBound) return;
+    if (ULocalPlayer* Player = GetOwningLocalPlayer())
+        if (auto* Audio = Player->GetSubsystem<UDivineBeastsPresentationClientSubsystem>())
+            Audio->PlayStarterUISound(ActionId);
+}
+void UDivineBeastsUIScreen::HandleButtonAudioClick() { PlayButtonAudio(TEXT("Click")); }
+void UDivineBeastsUIScreen::HandleButtonAudioConfirm() { PlayButtonAudio(TEXT("Confirm")); }
+void UDivineBeastsUIScreen::HandleButtonAudioCancel() { PlayButtonAudio(TEXT("Cancel")); }
 
 bool UDivineBeastsUIScreen::ReconcileProjectViewModelBinding()
 {

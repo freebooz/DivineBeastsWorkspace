@@ -16,11 +16,21 @@ import (
 
 // ArenaStatus仅可信Match服务读取，包含真实Boot/位置以恢复步骤；不是公开玩家视图，也不含TransferTicket秘密。
 type ArenaStatus struct {
-	HeartbeatAtUTC time.Time             // 最近真实人数心跳；结束前旧的0人不能证明结束后已迁出。
-	Record         ArenaAssignmentRecord // 已确认分配与可信结果。
-	ServerAlive    bool                  // 最近心跳及Boot均有效；未知恢复期返回错误而非false。
-	CurrentPlayers int                   // Dedicated Server实际心跳人数。
-	Presences      []PlayerPresence      // 本轮名单的最新位置，已迁出者指向新实例。
+	DrainRequestedAtUTC time.Time             // 原Boot直接请求排空，区别于控制面内部标记。
+	HeartbeatAtUTC      time.Time             // 最近真实人数心跳；结束前旧的0人不能证明结束后已迁出。
+	Record              ArenaAssignmentRecord // 已确认分配与可信结果。
+	ServerAlive         bool                  // 最近心跳及Boot均有效；未知恢复期返回错误而非false。
+	CurrentPlayers      int                   // Dedicated Server实际心跳人数。
+	Presences           []PlayerPresence      // 本轮名单的最新位置，已迁出者指向新实例。
+}
+
+// CanFinalizeLiveArena要求专服终态的零心跳和独立排空回执。故障取消未到达专服终态时仍按既有路径回收。
+func (s ArenaStatus) CanFinalizeLiveArena() bool {
+	if s.CurrentPlayers != 0 || !s.HeartbeatAtUTC.After(s.Record.UpdatedAtUTC) {
+		return false
+	}
+	requiresServerDrain := s.Record.State == "resultCommitted" || s.Record.StartAbortReason != ""
+	return !requiresServerDrain || s.DrainRequestedAtUTC.After(s.Record.UpdatedAtUTC)
 }
 
 // ConfigureArenaLifecycle启动前装配一次，启用持久恢复与结果后安全迁出门禁；不能在请求期间替换仓储。
@@ -131,13 +141,16 @@ func (s *Service) GetArenaStatus(ctx context.Context, matchID string) (ArenaStat
 		return status, nil
 	}
 	server, exists := s.registry.Get(record.Assignment.GameServerID)
-	if !exists && s.now().UTC().Before(s.startedAtUTC.Add(60*time.Second)) {
+	if record.State != "released" && !exists && s.now().UTC().Before(s.startedAtUTC.Add(60*time.Second)) {
 		return ArenaStatus{}, errors.New("ARENA_STATUS_UNKNOWN: 等待实例重新注册")
 	}
-	status.ServerAlive = exists && server.ServerBootID == record.ServerBootID && !server.LastHeartbeat.IsZero() && s.now().UTC().Sub(server.LastHeartbeat) <= 45*time.Second
+	status.ServerAlive = record.State != "released" && exists && server.ServerBootID == record.ServerBootID && !server.LastHeartbeat.IsZero() && s.now().UTC().Sub(server.LastHeartbeat) <= 45*time.Second
 	if status.ServerAlive {
 		status.CurrentPlayers = server.CurrentPlayers
 		status.HeartbeatAtUTC = server.LastHeartbeat
+		if server.ArenaDrainMatchID == matchID {
+			status.DrainRequestedAtUTC = server.ArenaDrainRequestUTC
+		}
 	}
 	for _, slot := range record.Assignment.Arena.Roster {
 		presence, found, err := s.arenaLifecycle.GetPresence(ctx, slot.PlayerID)
@@ -172,15 +185,37 @@ func (s *Service) CancelArena(ctx context.Context, matchID string) error {
 	if record.State == "released" || record.State == "cancelled" {
 		return nil
 	}
-	if record.State == "resultCommitted" {
-		return errors.New("ARENA_OPERATION_TERMINAL: 已有可信结果不能改成故障取消")
-	}
-	record.State = "cancelled"
-	record.UpdatedAtUTC = s.now().UTC()
-	if err := s.arenaLifecycle.SaveArena(ctx, record); err != nil {
+	if err := s.cancelAssignedArena(ctx, record, ""); err != nil {
 		return err
 	}
-	return s.registry.Drain(record.Assignment.GameServerID)
+	if instance, ok := s.registry.Get(record.Assignment.GameServerID); ok && instance.ServerBootID == record.ServerBootID {
+		return s.registry.DrainForBoot(record.Assignment.GameServerID, record.ServerBootID)
+	}
+	return nil
+}
+
+var errArenaResultAlreadyCommitted = errors.New("ARENA_OPERATION_TERMINAL: 已有可信结果不能改成故障取消")
+
+// cancelAssignedArena在持有arenaAllocationMu时提交取消；相同锁域内不允许与结果提交互相覆盖。
+func (s *Service) cancelAssignedArena(ctx context.Context, record ArenaAssignmentRecord, startAbortReason string) error {
+	if record.Result != nil || record.State == "resultCommitted" {
+		return errArenaResultAlreadyCommitted
+	}
+	// 结果与发件箱可能已经持久提交，控制投影的写入回执却丢失。先恢复结果，再拒绝取消。
+	stored, committed, err := s.resultService.ReadCommitted(ctx, record.Assignment.Arena.MatchID)
+	if err != nil {
+		return err
+	}
+	if committed {
+		if err := s.persistArenaResult(ctx, record, stored); err != nil {
+			return err
+		}
+		return errArenaResultAlreadyCommitted
+	}
+	record.State = "cancelled"
+	record.StartAbortReason = startAbortReason
+	record.UpdatedAtUTC = s.now().UTC()
+	return s.arenaLifecycle.SaveArena(ctx, record)
 }
 
 // FinalizeArena只有在可信结果/取消且玩家已离开或原进程已失效时才回收；先实际释放，再提交released终态。
@@ -197,8 +232,8 @@ func (s *Service) FinalizeArena(ctx context.Context, matchID string) error {
 	if status.Record.State != "resultCommitted" && status.Record.State != "cancelled" {
 		return errors.New("ARENA_NOT_TERMINAL: 尚无可信结束事实")
 	}
-	if status.ServerAlive && (status.CurrentPlayers > 0 || status.HeartbeatAtUTC.Before(status.Record.UpdatedAtUTC)) {
-		return errors.New("ARENA_PLAYERS_REMAIN: 等待玩家安全迁出")
+	if status.ServerAlive && !status.CanFinalizeLiveArena() {
+		return errors.New("ARENA_PLAYERS_REMAIN: 等待玩家安全迁出和原Boot排空确认")
 	}
 	// 原Boot已消失时只终结旧记录，绝不Drain/Release同名后继进程。
 	if server, found := s.registry.Get(status.Record.Assignment.GameServerID); found && server.ServerBootID == status.Record.ServerBootID {

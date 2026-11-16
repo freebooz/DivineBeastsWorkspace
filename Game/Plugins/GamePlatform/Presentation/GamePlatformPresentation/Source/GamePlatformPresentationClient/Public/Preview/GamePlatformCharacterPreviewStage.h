@@ -54,6 +54,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="GamePlatform|Presentation|CharacterPreview")
     void SetCameraDistance(float DistanceCentimeters);
 
+    /** 返回当前舞台本地相机距离，单位厘米；无舞台时由项目层使用320厘米默认值。 */
+    float GetCameraDistanceCentimeters() const { return CameraDistanceCentimeters; }
+
     UFUNCTION(BlueprintPure, Category="GamePlatform|Presentation|CharacterPreview")
     USkeletalMeshComponent* GetPreviewMeshComponent() const { return PreviewMesh; }
 

@@ -14,9 +14,12 @@ class DIVINEBEASTSINPUTCLIENT_API UDivineBeastsInputProfileDefinition
     GENERATED_BODY()
 
 public:
-    /** Gameplay Profile是否必须包含神兽联盟核心攻击/四技能槽/锁定语义。 */
+    /** 旧Profile兼容：要求基础攻击、Slot1..Slot4与目标锁定。 */
     UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|Input")
     bool bRequireCoreGameplaySemantics = true;
+    /** 新八槽Profile显式开启：额外要求Slot5..Slot7，旧已保存资产不被强行升级。 */
+    UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|Input")
+    bool bRequireEightActiveSlots = false;
 
     virtual FGamePlatformResult ValidateDefinition() const override;
 };

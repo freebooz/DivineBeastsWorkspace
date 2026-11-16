@@ -3,7 +3,6 @@
 #include "DivineBeastsUIClientSubsystem.h"
 #include "Social/DivineBeastsPartyUIClientSubsystem.h"
 #include "Development/DivineBeastsPluginDemoMode.h"
-#include "Characters/DivineBeastsCharacterAppearanceComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Misc/ConfigCacheIni.h"
@@ -14,7 +13,7 @@
 #include "Input/GamePlatformUIInputPolicy.h"
 #include "CommonInputModeTypes.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
-#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Gameplay/DivineBeastsPlayerControlsComponent.h"
 #include "ViewModels/System/DivineBeastsSystemSettingsViewModel.h"
 #include "ViewModels/World/DivineBeastsWorldJournalViewModel.h"
 
@@ -77,7 +76,7 @@ void UDivineBeastsUIClientSubsystem::PlayerControllerChanged(APlayerController* 
     WorldEscapeHandle.Reset();
     WorldInventoryHandle.Reset();
     WorldJournalHandle.Reset();
-    BoundMenuController = Cast<ADivineBeastsWorldPlayerController>(NewPlayerController);
+    BoundMenuController = NewPlayerController ? NewPlayerController->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr;
     if (auto* Current = BoundMenuController.Get())
     {
         WorldEscapeHandle = Current->OnWorldEscapeRequested.AddUObject(
@@ -195,6 +194,9 @@ void UDivineBeastsUIClientSubsystem::Deinitialize()
     if (FSlateApplication::IsInitialized()) FSlateApplication::Get().OnApplicationActivationStateChanged().Remove(SlateActivationHandle);
     ApplicationDeactivateHandle.Reset();
     SystemMenuVisibilityChanged.Clear();
+    WorldMenuActionOwner.Reset();
+    WorldMenuAction = {};
+    OnWorldMenuActionChanged.Clear();
     if (PlatformUI)
     {
         PlatformUI->OnThemeRequestFinished.RemoveDynamic(
@@ -904,16 +906,18 @@ void UDivineBeastsUIClientSubsystem::SyncLoadingService()
     {
         if (!LoadingToken.IsValid())
         {
-            LoadingToken = LoadingService->AcquireToken(
+            LoadingToken = LoadingService->AcquirePresentationToken(
                 ViewState.Loading.Stage,
-                ViewState.Loading.Progress);
+                ViewState.Loading.Progress,
+                ViewState.Loading.Presentation);
         }
         else
         {
-            LoadingService->UpdateToken(
+            LoadingService->UpdatePresentationToken(
                 LoadingToken,
                 ViewState.Loading.Stage,
-                ViewState.Loading.Progress);
+                ViewState.Loading.Progress,
+                ViewState.Loading.Presentation);
         }
     }
     else if (LoadingToken.IsValid())
@@ -941,19 +945,11 @@ void UDivineBeastsUIClientSubsystem::SyncCharacterPreview()
         ViewState.CurrentStep == TEXT("DBA.Flow.ValidateSelection");
     if (!bCharacterFrontEnd)
     {
+        // UI 仅撤销本地角色选择/创建预览，不负责世界 Pawn 组件的创建或外观授权。
+        // 正式世界角色的外观由 DivineBeastsPresentationClient 中现有
+        // UDivineBeastsCharacterAppearanceWorldSubsystem 在角色生成/世界开始事件挂接，
+        // 再由角色组件订阅真实角色身份与就绪事件异步更新；UI快照不能反向修改Pawn。
         Preview->DeactivatePreviewScene();
-        // 已确认选择仅用于本地Avatar表现；服务器准入/技能身份不由UI写入。
-        if(ViewState.CurrentStep==TEXT("DBA.Flow.InWorld") && !ViewState.SelectedHeroDefinitionId.IsNone())
-        {
-            auto* Controller=GetLocalPlayer()->GetPlayerController(GetWorld());
-            APawn* Pawn=Controller?Controller->GetPawn():nullptr;
-            if(Pawn)
-            {
-                auto* Appearance=Pawn->FindComponentByClass<UDivineBeastsCharacterAppearanceComponent>();
-                if(!Appearance){Appearance=NewObject<UDivineBeastsCharacterAppearanceComponent>(Pawn);Pawn->AddInstanceComponent(Appearance);Appearance->RegisterComponent();}
-                Appearance->ApplyApprovedVisualHero(ViewState.SelectedHeroDefinitionId);
-            }
-        }
         return;
     }
 
@@ -1187,7 +1183,18 @@ void UDivineBeastsUIClientSubsystem::HandlePrimaryScreenClosed(
             ActiveInventoryScreen.Reset();
         }
     }
-    if (ScreenId == TEXT("UI.Screen.Settings")) ActiveSystemSettings.Reset();
+    if (ScreenId == TEXT("UI.Screen.Settings"))
+    {
+        // 同名旧页关闭可能晚于新页入栈；仍属于系统栈的新实例不能被旧通知清除。
+        auto* Current = ActiveSystemSettings.Get();
+        auto* Root = PlatformUI ? PlatformUI->GetRootLayout() : nullptr;
+        const bool bStillOwned = IsValid(Current) && Root &&
+            PlatformUI->IsScreenOwnedByStack(Current, Root->GetActivatableStack(EGamePlatformUILayer::System));
+        if (!bStillOwned) ActiveSystemSettings.Reset();
+        // 齿轮直达设置没有父菜单；最后系统页退出时必须释放控制器的系统输入占用。
+        if (!ActiveSystemSettings.IsValid() && !ActiveSystemMenu.IsValid() &&
+            !ActiveWorldJournal.IsValid() && OpeningSystemScreenId.IsNone()) SetSystemMenuVisible(false);
+    }
     if (ScreenId == TEXT("UI.Screen.WorldJournal")) { ActiveWorldJournal.Reset(); if (!ActiveSystemMenu.IsValid()) SetSystemMenuVisible(false); }
     if (ScreenId == TEXT("UI.Screen.SystemMenu") && bSystemMenuVisible)
     { ActiveSystemMenu.Reset(); CloseSystemMenu(); }
@@ -1291,6 +1298,31 @@ void UDivineBeastsUIClientSubsystem::HandleWorldInventoryRequested()
 
 void UDivineBeastsUIClientSubsystem::HandleApplicationActivationChanged(bool bActive) { if (!bActive) CloseSystemMenu(); }
 
+void UDivineBeastsUIClientSubsystem::SetWorldMenuAction(
+    APlayerController& Owner, FDivineBeastsWorldMenuAction Action)
+{
+    if (bUIShuttingDown || !GetLocalPlayer() || Owner.GetWorld() != GetWorld() ||
+        GetLocalPlayer()->GetPlayerController(GetWorld()) != &Owner) return;
+    WorldMenuActionOwner = &Owner;
+    WorldMenuAction = MoveTemp(Action);
+    OnWorldMenuActionChanged.Broadcast();
+}
+
+void UDivineBeastsUIClientSubsystem::ClearWorldMenuAction(const APlayerController* Owner)
+{
+    if (!Owner || WorldMenuActionOwner.Get() != Owner) return;
+    WorldMenuActionOwner.Reset();
+    WorldMenuAction = {};
+    OnWorldMenuActionChanged.Broadcast();
+}
+
+FDivineBeastsWorldMenuAction UDivineBeastsUIClientSubsystem::GetWorldMenuAction() const
+{
+    const APlayerController* Owner = WorldMenuActionOwner.Get();
+    return Owner && !bUIShuttingDown && GetLocalPlayer() && Owner->GetWorld() == GetWorld() &&
+        GetLocalPlayer()->GetPlayerController(GetWorld()) == Owner ? WorldMenuAction : FDivineBeastsWorldMenuAction{};
+}
+
 bool UDivineBeastsUIClientSubsystem::HandleEscapeAction()
 {
     if (ActiveWorldJournal.IsValid()) { CloseSystemMenu(); return true; }
@@ -1311,13 +1343,29 @@ bool UDivineBeastsUIClientSubsystem::OpenSystemSurface(FName ScreenId)
     if (auto* Controller = BoundMenuController.Get()) Controller->SetWorldGameplayInputSuspended(true);
     const auto Request = PlatformUI->OpenScreenAsync(ScreenId, CreateViewModel(ScreenId));
     // 同步失败/同步完成会在调用返回前清掉身份，不能把已终结请求重新写回。
-    if (SystemMenuGeneration == Generation && OpeningSystemScreenId == ScreenId) OpeningSystemRequestId = Request.RequestId;
+    if (SystemMenuGeneration == Generation && OpeningSystemScreenId == ScreenId)
+    {
+        OpeningSystemRequestId = Request.RequestId;
+        if (!Request.IsValid())
+        {
+            // 平台在派发前拒绝请求时可能没有失败广播，也必须撤销本协调器的等待与输入占用。
+            OpeningSystemRequestId.Invalidate();
+            OpeningSystemScreenId = NAME_None;
+            if (!ActiveSystemMenu.IsValid() && !ActiveSystemSettings.IsValid() && !ActiveWorldJournal.IsValid())
+                SetSystemMenuVisible(false);
+        }
+    }
     return Request.IsValid();
 }
 
 bool UDivineBeastsUIClientSubsystem::OpenSystemSettings()
 {
-    return ActiveSystemMenu.IsValid() && !ActiveSystemSettings.IsValid() && OpenSystemSurface(TEXT("UI.Screen.Settings"));
+    if (bUIShuttingDown || !PlatformUI || !FDivineBeastsUIRoutingPolicy::CanOpenSystemMenu(ViewState)) return false;
+    if (ActiveSystemSettings.IsValid() || OpeningSystemScreenId == TEXT("UI.Screen.Settings")) return true;
+    // 技能栏齿轮直接进入设置；关闭本协调器的背包/日志，已有父菜单则保留作为返回目标。
+    if (ActiveWorldJournal.IsValid() || !OpeningSystemScreenId.IsNone()) CloseSystemMenu();
+    CloseInventoryScreen();
+    return OpenSystemSurface(TEXT("UI.Screen.Settings"));
 }
 
 bool UDivineBeastsUIClientSubsystem::CloseSystemSettings()

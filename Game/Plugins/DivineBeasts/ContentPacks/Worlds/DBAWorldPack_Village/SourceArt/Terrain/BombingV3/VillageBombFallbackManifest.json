@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "roleZh": "正式Village共享中性母材质的低体积V3草地基础色默认源图",
+  "sourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/SourceArt/Terrain/V3/T_DBA_Terrain_Grass_BaseColor_V3_Source.png",
+  "sourceSha256": "d4f608fbc80bd12df60563e0709b5632b96d52c07d6f064e133ab7a11c4abd17",
+  "outputSourcePath": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/SourceArt/Terrain/BombingV3/T_DBA_Village_GroundAlbedoV3Default_Source.png",
+  "outputSha256": "0cae6a1933a1034e4a60d873cbe5dc11bd37651e4958bf08f04996f87c495cde",
+  "width": 256,
+  "height": 256,
+  "colorSpaceZh": "仅基础色sRGB；Normal/ORM继续使用已有默认或客户端高精资源",
+  "licenseZh": "原Poly Haven CC0扫描基础色的V3.0派生，来源与原始Manifest追溯",
+  "userReviewStatusZh": "待正式UE客户端与人工场景检查"
+}

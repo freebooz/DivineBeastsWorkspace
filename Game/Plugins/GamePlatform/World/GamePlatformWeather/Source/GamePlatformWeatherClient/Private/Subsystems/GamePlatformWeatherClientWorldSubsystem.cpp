@@ -9,11 +9,18 @@
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/GameStateBase.h"
+#include "Framework/GamePlatformGameStateBase.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Actor.h"
 #include "Components/SceneComponent.h"
 #include "TimerManager.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "GameplayTagsManager.h"
+#include "Atmosphere/GamePlatformWeatherAtmosphere.h"
+#include "API/GamePlatformWeatherWindSource.h"
+#include "Engine/WindDirectionalSource.h"
+#include "Components/WindDirectionalSourceComponent.h"
 
 namespace
 {
@@ -56,6 +63,10 @@ void UGamePlatformWeatherClientWorldSubsystem::Initialize(FSubsystemCollectionBa
 void UGamePlatformWeatherClientWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
+    BindNativeWindSource();
+    WorldGameStateHandle = InWorld.GameStateSetEvent.AddUObject(this,
+        &UGamePlatformWeatherClientWorldSubsystem::OnGameStateSet);
+    OnGameStateSet(InWorld.GetGameState());
     if (auto* Source = InWorld.GetSubsystem<UGamePlatformWeatherWorldSubsystem>())
     {
         SourceSnapshotHandle = Source->AddSnapshotHandler(
@@ -69,8 +80,13 @@ void UGamePlatformWeatherClientWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 void UGamePlatformWeatherClientWorldSubsystem::Deinitialize()
 {
     bClosing = true;
+    if (auto* Source = NativeWindSource.Get()) Source->GetComponent()->SetStrength(0.f);
+    NativeWindSource.Reset();
+    OnGameStateSet(nullptr); // 先解绑时钟，防止World关闭期间校准通知恢复旧风。
+    Atmosphere.Reset(); // 恢复光雾基线并移除仅本地持有的临时雾。
     if (UWorld* World = GetWorld())
     {
+        World->GameStateSetEvent.Remove(WorldGameStateHandle);
         World->GetTimerManager().ClearTimer(TransitionTimer);
         if (auto* Source = World->GetSubsystem<UGamePlatformWeatherWorldSubsystem>())
             Source->RemoveSnapshotHandler(SourceSnapshotHandle);
@@ -85,6 +101,9 @@ float UGamePlatformWeatherClientWorldSubsystem::GetEstimatedServerTimeSeconds() 
 {
     const UWorld* World = GetWorld();
     if (!World) return 0.f;
+    // 优先使用已通过世界身份校验的通知来源，避免GameState切换窗口重新读取另一来源。
+    if (const auto* Clock = ServerClockSource.Get(); IsValid(Clock) && Clock->GetWorld() == World)
+        return Clock->GetServerWorldTimeSeconds();
     if (const AGameStateBase* GameState = World->GetGameState())
         return GameState->GetServerWorldTimeSeconds();
     return World->GetTimeSeconds(); // 启动早期缺GameState时短暂回退；后续插值由真实同步时钟校正。
@@ -105,6 +124,8 @@ void UGamePlatformWeatherClientWorldSubsystem::OnSnapshotReceived(
             !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
         GetWorld()->GetTimerManager().ClearTimer(TransitionTimer);
         ActiveSnapshot = FGamePlatformWeatherSnapshot();
+        ApplyWindSnapshot(ActiveSnapshot);
+        if (bClosing || SnapshotApplyGeneration != ApplyGeneration || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
         ApplyVisualState(FGamePlatformWeatherState());
         return;
     }
@@ -114,6 +135,8 @@ void UGamePlatformWeatherClientWorldSubsystem::OnSnapshotReceived(
     if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
         ActiveSnapshot.Revision != ReceivedRevision || !IsValid(GetWorld()) ||
         GetWorld()->bIsTearingDown) return;
+    ApplyWindSnapshot(Snapshot);
+    if (bClosing || SnapshotApplyGeneration != ApplyGeneration || ActiveSnapshot.Revision != ReceivedRevision) return;
     // 首帧按照服务器实际时间采样；取消/表现同步回调可能递归送来更新的快照。
     SampleAndApplyTransition(false);
     if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
@@ -185,10 +208,14 @@ void UGamePlatformWeatherClientWorldSubsystem::RefreshPresentationAfterContentAc
     // 就撤销、重建已经在播放的Niagara雨雪实例（反之亦然）。
     const int32 Channel = bVisual ? 0 : 1;
     const uint64 ApplyGeneration = SnapshotApplyGeneration;
+    const int32 Revision = ActiveSnapshot.Revision;
+    if (bVisual) ApplyWindSnapshot(ActiveSnapshot);
+    if (bClosing || SnapshotApplyGeneration != ApplyGeneration || ActiveSnapshot.Revision != Revision ||
+        !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
     const FGamePlatformWeatherState Current =
         ActiveSnapshot.Sample(GetEstimatedServerTimeSeconds());
     CancelPreviousPresentation(Channel);
-    if (bClosing || SnapshotApplyGeneration != ApplyGeneration ||
+    if (bClosing || SnapshotApplyGeneration != ApplyGeneration || ActiveSnapshot.Revision != Revision ||
         !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
     SendPresentationEvent(Current, false, Channel);
 }
@@ -196,6 +223,8 @@ void UGamePlatformWeatherClientWorldSubsystem::RefreshPresentationAfterContentAc
 void UGamePlatformWeatherClientWorldSubsystem::ApplyVisualState(const FGamePlatformWeatherState& State)
 {
     LastVisualState = State;
+    ApplyNativeWindSource(State);
+    ApplyAtmosphere(State);
     if (UWorld* World = GetWorld())
     {
         if (IGamePlatformSurfaceService* Surface = IGamePlatformSurfaceService::Get(*World))
@@ -209,12 +238,139 @@ void UGamePlatformWeatherClientWorldSubsystem::ApplyVisualState(const FGamePlatf
             Visual.RainIntensity = State.RainIntensity;
             Visual.SnowIntensity = State.SnowIntensity;
             Visual.TemperatureCelsius = State.TemperatureCelsius;
-            Surface->ApplyEnvironmentState(Visual);
+            bool CanWrite=true;
+            if(DevelopmentProjectionScope.IsValid()){
+                const auto Current=Surface->GetEnvironmentState();const auto& Expected=DevelopmentExpectedSurface;
+                const bool Matches=Current.GlobalWetness==Expected.Wetness&&Current.GlobalSnowAmount==Expected.SnowAmount&&Current.GlobalPuddleAmount==Expected.PuddleAmount&&Current.RainIntensity==Expected.RainIntensity&&Current.SnowIntensity==Expected.SnowIntensity&&Current.TemperatureCelsius==Expected.TemperatureCelsius;
+                bDevelopmentSurfaceTakenOver|=!Matches;CanWrite=!bDevelopmentSurfaceTakenOver;if(CanWrite)DevelopmentExpectedSurface=State;
+            }
+            if(CanWrite)Surface->ApplyEnvironmentState(Visual);
         }
     }
     // 派发稳定值快照，委托内部再次切换天气时不更改正在发出的数据。
     const FGamePlatformWeatherState PublishedState = LastVisualState;
     VisualChanged.Broadcast(PublishedState);
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::BindNativeWindSource()
+{
+    NativeWindSource.Reset();
+    if (!IsValid(GetWorld())) return;
+    FGamePlatformWeatherState Initial; AWindDirectionalSource* Source = nullptr; FString Error;
+    const auto Result = GamePlatformWeatherWindSource::Read(*GetWorld(), Initial, Source, Error);
+    if (Result == EGamePlatformSceneWindResult::Applied)
+    {
+        NativeWindSource = Source;
+        Source->GetComponent()->SetMobility(EComponentMobility::Movable);
+    }
+    else if (Result == EGamePlatformSceneWindResult::Invalid)
+        UE_LOG(LogTemp, Warning, TEXT("NativeWindSourceBindingRejected: %s"), *Error);
+    // 不在首快照前改写地图配置；PIE权威首次ApplyPreset还需要读取原始作者值。
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::ApplyNativeWindSource(const FGamePlatformWeatherState& State)
+{
+    auto* Source = NativeWindSource.Get();
+    if (bClosing || !IsValid(Source) || Source->GetWorld() != GetWorld()) return;
+    auto* Component = Source->GetComponent();
+    if (GetWorld()->GetNetMode() == NM_Client &&
+        (!ServerClockSource.IsValid() || !ServerClockSource->HasSynchronizedServerTime()))
+    { Component->SetStrength(0.f); return; }
+    Source->SetActorRotation(FRotator(0.f, State.WindYawDegrees, 0.f));
+    Component->SetWindType(EWindSourceType::Directional);
+    Component->SetStrength(State.WindIntensity);
+    Component->SetSpeed(State.WindGustFrequencyHz);
+    Component->SetMinimumGustAmount(0.f);
+    Component->SetMaximumGustAmount(State.WindGustStrength);
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::ApplyWindSnapshot(const FGamePlatformWeatherSnapshot& Snapshot)
+{
+    UWorld* World = GetWorld();
+    if (bClosing || !IsValid(World) || World->bIsTearingDown) return;
+    if (auto* Surface = IGamePlatformSurfaceService::Get(*World))
+    {
+        auto Visual = Surface->GetEnvironmentState();
+        Visual.Wind = FGamePlatformSurfaceWindTransition();
+        const bool bClockReady = World->GetNetMode() != NM_Client ||
+            (ServerClockSource.IsValid() && ServerClockSource->HasSynchronizedServerTime());
+        // 晚加入且服务器时钟尚未到达时先保持零风，避免GPU以本地零时钟冻结在远古快照起点。
+        if (Snapshot.Revision > 0 && bClockReady)
+        {
+            const auto From = Snapshot.From.Decode(), To = Snapshot.To.Decode();
+            Visual.Wind.From = FVector4(From.WindYawDegrees, From.WindIntensity, From.WindGustStrength, From.WindGustFrequencyHz);
+            Visual.Wind.To = FVector4(To.WindYawDegrees, To.WindIntensity, To.WindGustStrength, To.WindGustFrequencyHz);
+            Visual.Wind.Timing = FVector4(Snapshot.StartedAtServerSeconds, Snapshot.TransitionSeconds,
+                Snapshot.WindPhaseAtStartCycles, GetEstimatedServerTimeSeconds() - World->GetTimeSeconds());
+            Visual.Wind.Seed = Snapshot.WindSeed;
+        }
+        bool CanWrite=true;
+        if(DevelopmentProjectionScope.IsValid()){
+            const auto Current=Surface->GetEnvironmentState().Wind;
+            const bool Matches=Current.From==DevelopmentExpectedWindFrom&&Current.To==DevelopmentExpectedWindTo&&Current.Timing==DevelopmentExpectedWindTiming&&Current.Seed==DevelopmentExpectedWindSeed;
+            bDevelopmentWindTakenOver|=!Matches;CanWrite=!bDevelopmentWindTakenOver;
+            if(CanWrite){DevelopmentExpectedWindFrom=Visual.Wind.From;DevelopmentExpectedWindTo=Visual.Wind.To;DevelopmentExpectedWindTiming=Visual.Wind.Timing;DevelopmentExpectedWindSeed=Visual.Wind.Seed;}
+        }
+        if(CanWrite)Surface->ApplyEnvironmentState(Visual);
+    }
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::OnGameStateSet(AGameStateBase* GameState)
+{
+    if (auto* Previous = ServerClockSource.Get())
+        Previous->RemoveServerTimeSynchronizedHandler(ServerClockHandle);
+    ServerClockHandle.Reset(); ServerClockSource.Reset();
+    if (bClosing || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
+    auto* Source = Cast<AGamePlatformGameStateBase>(GameState);
+    if (!IsValid(Source) || Source->GetWorld() != GetWorld()) return;
+    ServerClockSource = Source;
+    const TWeakObjectPtr<AGamePlatformGameStateBase> ExpectedSource(Source);
+    ServerClockHandle = Source->AddServerTimeSynchronizedHandler(
+        FGamePlatformServerTimeSynchronized::FDelegate::CreateWeakLambda(this,
+            [this, ExpectedSource](double)
+            {
+                if (!bClosing && ExpectedSource.IsValid() && ServerClockSource == ExpectedSource &&
+                    IsValid(GetWorld()) && !GetWorld()->bIsTearingDown && ExpectedSource->GetWorld() == GetWorld())
+                      ReprojectWindForClock();
+            }));
+    if (ActiveSnapshot.Revision > 0) ReprojectWindForClock();
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::ReprojectWindForClock()
+{
+    const int32 Revision = ActiveSnapshot.Revision;
+    const uint64 Generation = SnapshotApplyGeneration;
+    ApplyWindSnapshot(ActiveSnapshot);
+    if (!bClosing && Revision > 0 && ActiveSnapshot.Revision == Revision && SnapshotApplyGeneration == Generation)
+        ApplyNativeWindSource(ActiveSnapshot.Sample(GetEstimatedServerTimeSeconds()));
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::ConfigureAtmosphereOwned(const FGuid& Scope,const FGamePlatformWeatherAtmosphereProfile& Profile)
+{
+    if(Scope!=DevelopmentAtmosphereScope)return;const auto Configuration=++AtmosphereConfigurationGeneration;ConfiguredAtmosphereProfile=Profile;
+    check(IsInGameThread());
+    Atmosphere.Reset();
+    if (bClosing || Configuration!=AtmosphereConfigurationGeneration || Scope!=DevelopmentAtmosphereScope || !Profile.bEnabled || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown ||
+        GetWorld()->GetNetMode() == NM_DedicatedServer) return;
+    auto Candidate = MakeShared<FGamePlatformWeatherAtmosphere>(*GetWorld(), Profile);
+    if(bClosing||Configuration!=AtmosphereConfigurationGeneration||Scope!=DevelopmentAtmosphereScope)return;
+    Atmosphere=MoveTemp(Candidate);
+    ApplyAtmosphere(LastVisualState);
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::ApplyAtmosphere(const FGamePlatformWeatherState& State)
+{
+    if (!Atmosphere) return;
+    float Cloud = FGamePlatformWeatherAtmosphere::CloudWeight(State);
+    if (ActiveSnapshot.Revision > 0)
+    {
+        const float Alpha = ActiveSnapshot.TransitionSeconds > 0.f ? FMath::Clamp(
+            (GetEstimatedServerTimeSeconds() - ActiveSnapshot.StartedAtServerSeconds) /
+            ActiveSnapshot.TransitionSeconds, 0.f, 1.f) : 1.f;
+        Cloud = FMath::Lerp(FGamePlatformWeatherAtmosphere::CloudWeight(ActiveSnapshot.From.Decode()),
+            FGamePlatformWeatherAtmosphere::CloudWeight(ActiveSnapshot.To.Decode()), Alpha);
+    }
+    Atmosphere->Apply(Cloud, FMath::Max(State.FogIntensity, State.SnowIntensity));
 }
 
 FDelegateHandle UGamePlatformWeatherClientWorldSubsystem::AddVisualChangedHandler(
@@ -363,4 +519,39 @@ void UGamePlatformWeatherClientWorldSubsystem::CancelPreviousPresentation(
         SendPresentationEvent(OldState, true, 0, OldVfxId, OldVfxTag);
     if (bCancelSfx && OldSfxId.IsValid())
         SendPresentationEvent(OldState, true, 1, OldSfxId, OldSfxTag);
+}
+
+void UGamePlatformWeatherClientWorldSubsystem::ConfigureAtmosphere(const FGamePlatformWeatherAtmosphereProfile& P){ConfigureAtmosphereOwned({},P);}
+bool UGamePlatformWeatherClientWorldSubsystem::BeginDevelopmentAtmosphere(FGuid Owner,FGuid& OutScope){OutScope.Invalidate();
+#if UE_BUILD_SHIPPING
+ return false;
+#else
+ auto* W=GetWorld();if(!W||W->GetNetMode()!=NM_Standalone||W->WorldType!=EWorldType::Game||W->bIsTearingDown||!FParse::Param(FCommandLine::Get(),TEXT("DBAPluginDemo"))||!FParse::Param(FCommandLine::Get(),TEXT("GamePlatformManualFixture")))return false;
+#endif
+
+ if(!Owner.IsValid()||bClosing||DevelopmentAtmosphereScope.IsValid()||ConfiguredAtmosphereProfile.bEnabled)return false;
+ DevelopmentAtmosphereBaseline=ConfiguredAtmosphereProfile;DevelopmentAtmosphereScope=FGuid::NewGuid();OutScope=DevelopmentAtmosphereScope;return true;
+}
+bool UGamePlatformWeatherClientWorldSubsystem::ConfigureDevelopmentAtmosphere(const FGuid& Scope,const FGamePlatformWeatherAtmosphereProfile& P){
+ if(!Scope.IsValid()||Scope!=DevelopmentAtmosphereScope||bClosing||bEndingDevelopmentAtmosphere)return false;ConfigureAtmosphereOwned(Scope,P);return Scope==DevelopmentAtmosphereScope&&!bClosing;
+}
+bool UGamePlatformWeatherClientWorldSubsystem::EndDevelopmentAtmosphere(const FGuid& Scope){
+ if(!Scope.IsValid()||Scope!=DevelopmentAtmosphereScope||bEndingDevelopmentAtmosphere)return false;TGuardValue<bool> Ending(bEndingDevelopmentAtmosphere,true);ConfigureAtmosphereOwned(Scope,DevelopmentAtmosphereBaseline);DevelopmentAtmosphereScope.Invalidate();return true;
+}
+bool UGamePlatformWeatherClientWorldSubsystem::BeginDevelopmentProjection(FGuid Owner,FGuid& OutScope){OutScope.Invalidate();
+#if UE_BUILD_SHIPPING
+ return false;
+#else
+ auto* W=GetWorld();if(!W||W->GetNetMode()!=NM_Standalone||W->WorldType!=EWorldType::Game||W->bIsTearingDown||!FParse::Param(FCommandLine::Get(),TEXT("DBAPluginDemo"))||!FParse::Param(FCommandLine::Get(),TEXT("GamePlatformManualFixture")))return false;
+#endif
+
+ if(!Owner.IsValid()||bClosing||DevelopmentProjectionScope.IsValid()||ActiveSnapshot.Revision!=0||NativeWindSource.IsValid())return false;
+ auto* Surface=IGamePlatformSurfaceService::Get(*GetWorld());if(!Surface)return false;const auto V=Surface->GetEnvironmentState();
+ if(V.GlobalWetness!=0||V.GlobalSnowAmount!=0||V.GlobalPuddleAmount!=0||V.RainIntensity!=0||V.SnowIntensity!=0||V.TemperatureCelsius!=20||!V.Wind.IsNearlyEqual(FGamePlatformSurfaceWindTransition(),0))return false;
+ DevelopmentExpectedSurface={};DevelopmentExpectedWindFrom=V.Wind.From;DevelopmentExpectedWindTo=V.Wind.To;DevelopmentExpectedWindTiming=V.Wind.Timing;DevelopmentExpectedWindSeed=V.Wind.Seed;
+ bDevelopmentSurfaceTakenOver=bDevelopmentWindTakenOver=false;DevelopmentProjectionScope=FGuid::NewGuid();OutScope=DevelopmentProjectionScope;return true;
+}
+bool UGamePlatformWeatherClientWorldSubsystem::EndDevelopmentProjection(const FGuid& Scope){
+ if(!Scope.IsValid()||Scope!=DevelopmentProjectionScope||ActiveSnapshot.Revision!=0)return false;
+ DevelopmentProjectionScope.Invalidate();return true;
 }

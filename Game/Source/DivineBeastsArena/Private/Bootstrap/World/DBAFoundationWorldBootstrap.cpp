@@ -30,7 +30,12 @@ namespace
 
 bool UDBAFoundationWorldBootstrap::ShouldCreateSubsystem(UObject* Outer) const
 {
-    return !UE_BUILD_SHIPPING && !IsRunningCommandlet() &&
+    // 专用Manual宿主由DBAClient拥有；完整显式选择时排除旧Sandbox/双Region开发装配。
+    const bool bManualSelected=FParse::Param(FCommandLine::Get(),TEXT("DBAPluginDemo"))&&
+        FParse::Param(FCommandLine::Get(),TEXT("GamePlatformManualFixture"))&&
+        FParse::Param(FCommandLine::Get(),TEXT("FoundationWorld"))&&
+        FParse::Param(FCommandLine::Get(),TEXT("DBAManualWorldHost"));
+    return !bManualSelected && !UE_BUILD_SHIPPING && !IsRunningCommandlet() &&
         FParse::Param(FCommandLine::Get(),TEXT("FoundationWorld")) && Super::ShouldCreateSubsystem(Outer);
 }
 void UDBAFoundationWorldBootstrap::Initialize(FSubsystemCollectionBase& Collection)

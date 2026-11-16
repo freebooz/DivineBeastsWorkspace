@@ -17,8 +17,12 @@ function Resolve-PluginDemoEvidencePath {
     }
     $full=[IO.Path]::GetFullPath($Path)
     if (-not $full.StartsWith($base+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw '证据路径越过固定根。' }
-    for ($cursor=$full; -not [string]::IsNullOrEmpty($cursor); $cursor=Split-Path $cursor -Parent) {
-        if ((Test-Path -LiteralPath $cursor) -and ((Get-Item -LiteralPath $cursor -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw '证据路径包含junction/符号链接。' }
+    for ($cursor=$full; -not [string]::IsNullOrEmpty($cursor); $cursor=[IO.Path]::GetDirectoryName($cursor)) {
+        # 仍逐级校验每个现有祖先；直接使用.NET避免每一级都运行两个PowerShell provider命令。
+        try { $attributes=[IO.File]::GetAttributes($cursor) }
+        catch [IO.FileNotFoundException] { continue }
+        catch [IO.DirectoryNotFoundException] { continue }
+        if ($attributes -band [IO.FileAttributes]::ReparsePoint) { throw '证据路径包含junction/符号链接。' }
     }
     $full
 }
@@ -182,7 +186,7 @@ function Get-PluginDemoContentSnapshot {
 function Read-PluginDemoNativeReport {
     <# 只读本次独占测试目录；校验实际process/index/结果身份和前后证明。无UE进程创建能力。
        返回实际用例与文件引用，供证据提升消费；不接受VerifyOnly、外部目录或只有Passed文字的摘要。 #>
-    param([string]$Workspace,[string]$EngineRoot,[string]$ResultPath,[ValidateSet('Demo','Review')][string]$Suite)
+    param([string]$Workspace,[string]$EngineRoot,[string]$ResultPath,[ValidateSet('Demo','Review','Presentation','PresentationTheme','PresentationLive','WorldLive','WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')][string]$Suite)
     $read=Read-PluginDemoEvidenceJson $Workspace $ResultPath
     $result=$read.Value; $id=[guid]::ParseExact([string]$result.RunId,'D')
     $directory="Saved/Validation/FoundationM0/$($id.ToString('D'))/PluginDemoTests"
@@ -203,19 +207,57 @@ function Read-PluginDemoNativeReport {
         [IO.Path]::GetFullPath((Join-Path $Workspace "$directory/$Suite/Automation"))) { throw '原生进程缺唯一实际报告输出目录，或输出指向其他运行。' }
     if (-not (Test-PDEIntegerNumber $process.Value.ProcessId 1 4294967295) -or $process.Value.ProcessId -ne $entry.Result.ProcessId -or
         ([DateTime]$process.Value.StartTimeUtc).ToUniversalTime().Ticks -ne $entry.Result.StartTimeTicks -or
-        [IO.Path]::GetFullPath($process.Value.FilePath) -ine (Join-Path $EngineRoot 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe') -or
+        [IO.Path]::GetFullPath($process.Value.FilePath) -ine (Join-Path $EngineRoot $(if($Suite -in @('PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHashLive','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')){'Engine/Binaries/Win64/UnrealEditor.exe'}else{'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'})) -or
         $arguments[0] -ine (Join-Path $Workspace 'Game/DivineBeastsArena.uproject') -or
         @($arguments | Where-Object { $_ -clike '-ExecCmds=*' }).Count -ne 1 -or
-        ("-ExecCmds=Automation RunTests "+$policy.Prefix.TrimEnd('.')) -cnotin $arguments) { throw '实际原生测试进程身份/过滤器不匹配。' }
+        ("-ExecCmds=Automation RunTests "+(Get-PluginDemoAutomationFilter $Suite)) -cnotin $arguments) { throw '实际原生测试进程身份/过滤器不匹配。' }
+    $isLive=$Suite -in @('PresentationLive','WorldLive','WorldHostLive','WorldAuthoringLive','EvidenceHashLive','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive')
+    if($isLive -or $Suite -eq 'EditorManual'){
+        $nativeFlag=Get-PluginDemoNativeFlag $Suite
+        foreach($flag in @('-DBAPluginDemo','-DBAPluginDemoMap=/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub','-GamePlatformManualFixture',$nativeFlag,'-RenderOffscreen')){
+            if($flag -cnotin $arguments){throw '原生宿主缺完整显式开发/离线/渲染旗标。'}
+        }
+        if($arguments[1] -cne (Get-PluginDemoMapURL $Suite) -or '-nullrhi' -in $arguments){throw '原生宿主地图或真实渲染合同不匹配。'}
+        if($isLive){
+            if('-game' -cnotin $arguments -or '-GamePlatformManualEditorFixture' -in $arguments -or $result.ExecutionHost -cne 'EditorGameStandaloneClientContext'){throw 'Live组必须是独立Standalone，不能混入Editor夹具。'}
+        }else{
+            foreach($flag in @('-game','-server','-WorldManualNative','-GameplayManualNative')){if($flag -in $arguments){throw 'Editor/PIE组不能使用Game/Server或其它原生宿主。'}}
+            if($result.ExecutionHost -cne 'EditorPIE'){throw 'Editor原生组缺真实Editor/PIE执行身份。'}
+        }
+        $userDirs=@($arguments|Where-Object{$_ -clike '-UserDir=*'})
+        $expectedFixture=Join-Path $Workspace "Saved/Validation/PluginManualUI20261027/Hosts/$($id.ToString('D'))"
+        if($userDirs.Count -ne 1 -or [IO.Path]::GetFullPath($userDirs[0].Substring('-UserDir='.Length)) -ine $expectedFixture -or
+            [IO.Path]::GetFullPath([string]$result.ManualFixtureRoot) -ine $expectedFixture){throw '原生宿主缺本Run工程内独占UserDir。'}
+    }
+    # 精确宿主旗标：既拒绝缺少必要选择，也拒绝普通组混入其他宿主初始化。
+    $expectedHostFlags=@(Get-PluginDemoHostFlags $Suite)
+    foreach($flag in @('-FoundationWorld','-DBAManualWorldHost','-DBAManualGameplayHost','-FoundationGameplayOffline')){
+        $occurrences=@($arguments|Where-Object{$_ -ieq $flag}).Count
+        $expected=if($flag -cin $expectedHostFlags){1}else{0}
+        if($occurrences -ne $expected){throw '实际进程宿主旗标不符合本组精确合同。'}
+    }
     foreach($flag in @('-NoLiveCoding','-LiveCoding=false','-NoHotReload','-NoCompile','-NoCompileEditor',"-FoundationRunId=$($id.ToString('D'))")) {
         if ($flag -cnotin $arguments) { throw '原生测试缺受控启动/禁止编译参数。' }
     }
     $automation=Read-PluginDemoEvidenceJson $Workspace "$directory/$Suite/Automation/index.json"
     if ($automation.File.SHA256 -cne $result.AutomationReportSHA256.ToLowerInvariant()) { throw 'Automation报告自测试结束后变化。' }
+    # 新生产者同时绑定引擎原始日志；历史报告保留原身份，不倒写或补造新字段。
+    $engineLogFile=$null
+    if($Suite -eq 'EditorManual' -and -not $result.Contains('EngineLogSHA256')){throw 'Editor/PIE新组必须绑定真实引擎日志，不能采用历史组兼容入口。'}
+    if($result.Contains('EngineLogSHA256')){
+        $engineLogPath="$directory/$Suite/Unreal.log"
+        $engineLogFile=Get-PluginDemoEvidenceFile $Workspace $engineLogPath
+        if($result.EngineLogSHA256 -isnot [string] -or $engineLogFile.SHA256 -cne $result.EngineLogSHA256.ToLowerInvariant() -or
+            -not (Test-PDEIntegerNumber $result.EngineLogLines 1 9007199254740991)){throw '原始引擎日志与运行摘要不匹配。'}
+        $observedLines=Assert-PluginDemoNoEngineFailure -Lines @(Get-Content -LiteralPath (Resolve-PluginDemoEvidencePath $Workspace $engineLogPath))
+        $engineLogAfter=Get-PluginDemoEvidenceFile $Workspace $engineLogPath
+        if($engineLogFile.SHA256 -cne $engineLogAfter.SHA256 -or $observedLines -ne $result.EngineLogLines){throw '引擎日志读取期间变化或行数不匹配。'}
+    }
     $count=Assert-PluginDemoRunResult -ProcessResult $entry.Result -Cases @($automation.Value.tests) -Before $result.BuildEvidence -After $result.BuildEvidenceAfter -Suite $Suite
     if ($count -ne $result.ValidatedTests) { throw '实际测试数量与结果摘要不匹配。' }
     # Automation可能带有其他组的项目；只把本次过滤器消费的身份写入独立证明，不能污染C++审核合同。
-    $selected=@($automation.Value.tests | Where-Object { ([string]$_.fullTestPath).StartsWith($policy.Prefix,[StringComparison]::Ordinal) })
-    [pscustomobject]@{Result=$result;Cases=$selected;Files=@($read.File,$process.File,$automation.File);Process=$entry.Result;BuildEvidence=$result.BuildEvidence}
+    $selected=if($Suite -in @('WorldHostEditor','WorldHostLive','WorldAuthoringLive','EvidenceHash','EvidenceHashLive','Gameplay','GameplayLive','GameplayHost','GameplayHostStop','PreparingStopLive','EditorManual')){@($automation.Value.tests|Where-Object{$_.fullTestPath -cin $policy.Tests})}else{@($automation.Value.tests | Where-Object { ([string]$_.fullTestPath).StartsWith($policy.Prefix,[StringComparison]::Ordinal) })}
+    # 单项组也保持数组合同；PowerShell会将if管道中的单个Hashtable展开为标量。
+    [pscustomobject]@{Result=$result;Cases=@($selected);Files=(@($read.File,$process.File,$automation.File)+@($engineLogFile|Where-Object{$null -ne $_}));Process=$entry.Result;BuildEvidence=$result.BuildEvidence}
 }
 Export-ModuleMember -Function Resolve-PluginDemoEvidencePath,Get-PluginDemoEvidenceFile,Read-PluginDemoEvidenceJson,Save-PluginDemoEvidenceJson,Assert-PluginDemoPromotionContract,Get-PluginDemoContentSnapshot,Read-PluginDemoNativeReport,Get-PluginDemoRuntimeModuleNames

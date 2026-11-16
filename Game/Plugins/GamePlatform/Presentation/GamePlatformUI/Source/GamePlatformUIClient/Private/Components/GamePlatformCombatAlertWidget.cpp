@@ -1,4 +1,5 @@
 #include "Components/GamePlatformCombatAlertWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 #include "Components/TextBlock.h"
 
@@ -38,10 +39,9 @@ bool UGamePlatformCombatAlertWidget::BindAlertSource(FGuid InSourceScopeId)
 bool UGamePlatformCombatAlertWidget::ApplyAlertSnapshot(
     const FGamePlatformUICombatAlertState& InState)
 {
-    if (!BoundScopeId.IsValid() ||
-        InState.SourceScopeId != BoundScopeId ||
-        !FGamePlatformUICombatAlertPresentation::IsValidSnapshot(InState) ||
-        InState.Revision <= State.Revision)
+    if (!FGamePlatformUISnapshotScope::CanAccept(
+            BoundScopeId, State.Revision, InState.SourceScopeId, InState.Revision) ||
+        !FGamePlatformUICombatAlertPresentation::IsValidSnapshot(InState))
     {
         return false;
     }

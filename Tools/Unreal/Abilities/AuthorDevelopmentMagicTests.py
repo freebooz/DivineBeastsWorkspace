@@ -14,13 +14,14 @@ from datetime import datetime, timezone
 WORKSPACE = Path(__file__).resolve().parents[3]
 ROOT = "/Game/Development/DivineBeasts/Abilities"
 MAGIC = ROOT + "/MagicTests"
+# 恒速、50米射程、伤害/冷却及连发合同不变；2026-10-25火球/冰箭默认0.5秒起手由原生共享常量拥有。
 SPELLS = {
     "Fireball": {"Slot": "Active01", "NameZh": "火焰弹（开发测试）", "Damage": 40, "Cost": 0, "Cooldown": 2,
-                 "Speed": 1200, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
+                 "Speed": 3000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
     "Frostbolt": {"Slot": "Active02", "NameZh": "寒冰箭（开发测试）", "Damage": 30, "Cost": 0, "Cooldown": 1.5,
-                  "Speed": 1600, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
+                  "Speed": 3000, "Radius": 0, "Turns": 0, "Count": 1, "Interval": 0},
     "ArcaneMissiles": {"Slot": "Ultimate", "NameZh": "螺旋奥术飞弹（开发测试）", "Damage": 12, "Cost": 0, "Cooldown": 3,
-                       "Speed": 1400, "Radius": 18, "Turns": 3, "Count": 3, "Interval": 0.2},
+                       "Speed": 3000, "Radius": 18, "Turns": 3, "Count": 3, "Interval": 0.2},
 }
 
 
@@ -201,7 +202,7 @@ def author():
         for name, data in SPELLS.items():
             identifier = "dba.ability." + hero.lower() + "_dev_" + name.lower() + "@1"
             rows.append({"Name": hero + "_" + name + "_L1", "AbilityId": identifier, "Level": 1, "BaseDamage": data["Damage"],
-                         "DamageType": "Magic", "CooldownSeconds": data["Cooldown"], "MomentumCost": data["Cost"], "CastRangeCm": 2000, "AreaRadiusCm": 0})
+                         "DamageType": "Magic", "CooldownSeconds": data["Cooldown"], "MomentumCost": data["Cost"], "CastRangeCm": 5000, "AreaRadiusCm": 0})
     if not unreal.DataTableFunctionLibrary.fill_data_table_from_json_string(table, json.dumps(rows)): raise RuntimeError("魔法数值表导入失败")
     save(table)
     for hero, entries in heroes.items():
@@ -225,7 +226,7 @@ def author():
             definition.set_editor_property("BalanceTable", table); definition.set_editor_property("LevelRowNames", [hero + "_" + name + "_L1"])
             definition.set_editor_property("MagicKind", getattr(unreal.DivineBeastsDevelopmentMagicKind, {"Fireball": "FIREBALL", "Frostbolt": "FROSTBOLT", "ArcaneMissiles": "ARCANE_MISSILES"}[name]))
             motion = unreal.GamePlatformCombatProjectileMotion()
-            for field, number in {"SpeedCmPerSecond": data["Speed"], "RangeCm": 2000, "CollisionRadiusCm": 8,
+            for field, number in {"SpeedCmPerSecond": data["Speed"], "RangeCm": 5000, "CollisionRadiusCm": 8,
                                   "HelixRadiusCm": data["Radius"], "HelixTurnsPerSecond": data["Turns"], "InitialPhaseTurns": 0}.items():
                 motion.set_editor_property(field, number)
             definition.set_editor_property("ProjectileMotion", motion); definition.set_editor_property("ProjectileCount", data["Count"])
@@ -262,12 +263,13 @@ def author():
             grants[index] = grant
             dependencies = [d for d in dependencies if str(d.get_editor_property("PrimaryAssetName")) not in (old_id, identifier)] + [primary(identifier)]
             item = unreal.DivineBeastsAbilityUIEntry(); item.set_editor_property("AbilityId", identifier); item.set_editor_property("DisplayName", unreal.Text(data["NameZh"]))
-            item.set_editor_property("Description", unreal.Text("开发伤害测试：每枚基础法术伤害" + str(data["Damage"]) + "，不消耗气势" + "，冷却" + str(data["Cooldown"]) + "秒。" + ("三枚实际螺旋飞行，间隔0.2秒；取消停止余弹。" if data["Count"] == 3 else "服务器直线投射；未实现燃烧、冰冻或减速。") + "后续替换正式技能。"))
+            cast_description = {"Fireball": "默认施法3秒，服务器起手完成后释放。", "Frostbolt": "默认施法0.5秒，命中存活怪物后冻结3秒。"}.get(name, "")
+            item.set_editor_property("Description", unreal.Text("开发伤害测试：每枚基础法术伤害" + str(data["Damage"]) + "，不消耗气势" + "，冷却" + str(data["Cooldown"]) + "秒。" + cast_description + ("三枚实际螺旋飞行，间隔0.2秒；取消停止余弹。" if data["Count"] == 3 else "服务器权威投射；未实现燃烧或减速。") + "后续替换正式技能。"))
             item.set_editor_property("Icon", unreal.load_asset("/DBAUIPack_Core/UI/Abilities/MagicTests/T_DBA_Dev" + name)); ui[index] = item
         ability_set.set_editor_property("Abilities", grants); ability_set.set_editor_property("RequiredDefinitions", dependencies)
         profile.set_editor_property("Entries", ui); save(ability_set); save(profile)
     report = {"Saved": saved, "Backup": str(backup), "FormalHeroAssetsModified": False, "ShippingEligible": False,
-              "LimitationsZh": "开发单目标投射物伤害；非正式平衡，不实现燃烧/冰冻/减速/追踪。编译保存不代表联网和人工VFX验收。"}
+              "LimitationsZh": "开发单目标投射物伤害；非正式平衡，不实现燃烧/减速；追踪沿用平台权威合同。编译保存不代表联网和人工VFX验收。"}
     (evidence / "Report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"SavedWrites": len(saved), "Report": str(evidence / "Report.json")}, ensure_ascii=False))
     return report

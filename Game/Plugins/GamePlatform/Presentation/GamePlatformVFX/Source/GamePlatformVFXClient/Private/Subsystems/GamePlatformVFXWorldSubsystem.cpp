@@ -40,25 +40,9 @@ bool IsSupportedWorldType(const EWorldType::Type WorldType)
 
 bool BuildDefinitionAssetId(const FName DefinitionId, FPrimaryAssetId& OutAssetId)
 {
-    OutAssetId = FPrimaryAssetId();
-
-    FGamePlatformId LogicalId;
-    if (DefinitionId.IsNone() ||
-        !FGamePlatformId::TryParse(DefinitionId.ToString(), LogicalId))
-    {
-        return false;
-    }
-
-    const FString Canonical = LogicalId.ToString();
-    if (Canonical.IsEmpty())
-    {
-        return false;
-    }
-
-    OutAssetId = FPrimaryAssetId(
-        UGamePlatformPrimaryDataAsset::DefinitionAssetType(),
-        FName(*Canonical));
-    return true;
+    // VFX（视觉特效）保留原bool接口与调用方；规范身份统一交由平台Data公共基类。
+    return UGamePlatformPrimaryDataAsset::BuildDefinitionAssetId(
+        DefinitionId, OutAssetId) == EGamePlatformDefinitionIdBuildStatus::Success;
 }
 }
 
@@ -137,6 +121,8 @@ void UGamePlatformVFXWorldSubsystem::Deinitialize()
 
     FWorldDelegates::OnWorldPostActorTick.Remove(FaunaWorldTickHandle);
     FaunaWorldTickHandle.Reset();
+    FWorldDelegates::OnWorldPostActorTick.Remove(ProjectileMotionWorldTickHandle);
+    ProjectileMotionWorldTickHandle.Reset();
     FaunaInstances.Reset();
     LifetimeTimers.Reset();
     CompositeStepTimers.Reset();
@@ -743,7 +729,7 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
             {
                 const FGamePlatformVFXHandle ExistingHandle = *Existing;
                 Result.Handle = ExistingHandle;
-                Stop(ExistingHandle);
+                StopWithMode(ExistingHandle, Request.bAllowNaturalCompletion ? EGamePlatformVFXStopMode::Drain : EGamePlatformVFXStopMode::Immediate);
                 if (!IsRequestScopeCurrent()) return Reject(EGamePlatformVFXResultCode::InvalidWorld);
                 FGamePlatformVFXDiagnostics::DedupeHit();
             }
@@ -867,6 +853,12 @@ FGamePlatformVFXResult UGamePlatformVFXWorldSubsystem::Play(
 bool UGamePlatformVFXWorldSubsystem::Stop(
     const FGamePlatformVFXHandle& Handle)
 {
+    return StopWithMode(Handle, EGamePlatformVFXStopMode::Immediate);
+}
+
+bool UGamePlatformVFXWorldSubsystem::StopWithMode(
+    const FGamePlatformVFXHandle& Handle, EGamePlatformVFXStopMode Mode)
+{
     check(IsInGameThread());
 
     if (!InstanceRegistry.OwnsHandle(Handle))
@@ -875,6 +867,29 @@ bool UGamePlatformVFXWorldSubsystem::Stop(
     }
 
     if (const auto* Key = DedupeKeysByHandle.Find(Handle.Id)) RecordTerminalOccurrence(*Key, true);
+    if (Mode == EGamePlatformVFXStopMode::Drain && !bClosing)
+    {
+        if (InstanceRegistry.IsStopping(Handle)) return true;
+        const UGamePlatformVFXDefinition* Definition = InstanceRegistry.GetDefinition(Handle);
+        UNiagaraComponent* Component = InstanceRegistry.GetComponent(Handle);
+        if (Definition && Definition->GetBehavior() == EGamePlatformVFXBehavior::Projectile &&
+            IsValid(Component) && Component->IsActive() && GetWorld() && !GetWorld()->bIsTearingDown && InstanceRegistry.BeginStopping(Handle))
+        {
+            Component->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+            Component->Deactivate();
+            // Deactivate可能同步完成并回池；只能在完整旧身份仍Owned时安装兜底。
+            if (InstanceRegistry.OwnsHandle(Handle))
+            {
+                auto& Timer = LifetimeTimers.FindOrAdd(Handle.Id);
+                GetWorld()->GetTimerManager().ClearTimer(Timer);
+                GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateWeakLambda(this, [this, Handle]()
+                {
+                    CleanupInstance(Handle, true, EGamePlatformVFXPlaybackState::Cancelled, EGamePlatformVFXResultCode::Cancelled);
+                }), .5f, false);
+            }
+            return true;
+        }
+    }
     CleanupInstance(Handle, true, EGamePlatformVFXPlaybackState::Cancelled, EGamePlatformVFXResultCode::Cancelled);
     return true;
 }
@@ -900,7 +915,9 @@ void UGamePlatformVFXWorldSubsystem::HandleSystemFinished(
     if (Handle.IsValid())
     {
         // 自然结束后只回收平台记录、共享Definition使用计数和去重状态，不再次Deactivate已结束组件。
-        CleanupInstance(Handle, false);
+        const bool bDraining = InstanceRegistry.IsStopping(Handle);
+        CleanupInstance(Handle, false, bDraining ? EGamePlatformVFXPlaybackState::Cancelled : EGamePlatformVFXPlaybackState::Completed,
+            bDraining ? EGamePlatformVFXResultCode::Cancelled : EGamePlatformVFXResultCode::Played);
     }
 }
 
@@ -1305,6 +1322,18 @@ bool UGamePlatformVFXWorldSubsystem::UnregisterCatalog(
     return true;
 }
 
+void UGamePlatformVFXWorldSubsystem::HandleProjectileMotionWorldTick(UWorld* World,ELevelTick,float)
+{
+    if(World!=GetWorld())return;
+    const uint64 Generation=WorldLifecycleGeneration;
+    const auto Current=[this,Generation](){return !bClosing && GetWorld() && !GetWorld()->bIsTearingDown && Generation==WorldLifecycleGeneration;};
+    if(!Current() || InstanceRegistry.UpdateProjectileMotionParameters(Current)==0)
+    {
+        FWorldDelegates::OnWorldPostActorTick.Remove(ProjectileMotionWorldTickHandle);
+        ProjectileMotionWorldTickHandle.Reset();
+    }
+}
+
 bool UGamePlatformVFXWorldSubsystem::ExecuteLoadedDefinition(
     UGamePlatformVFXDefinition& Definition,
     const FGamePlatformVFXRequest& Request,
@@ -1443,6 +1472,21 @@ bool UGamePlatformVFXWorldSubsystem::ExecuteLoadedDefinition(
         return false;
     }
 
+    if(Definition.GetBehavior()==EGamePlatformVFXBehavior::Projectile)
+    {
+        const uint64 Generation=WorldLifecycleGeneration;
+        const TWeakObjectPtr<UNiagaraComponent> WeakComponent(Component);
+        const auto StillOwned=[this,Generation,ReservedHandle,WeakComponent]()
+        {return !bClosing && GetWorld() && !GetWorld()->bIsTearingDown && Generation==WorldLifecycleGeneration &&
+            InstanceRegistry.OwnsHandle(ReservedHandle) && !InstanceRegistry.IsStopping(ReservedHandle) &&
+            WeakComponent.IsValid() && InstanceRegistry.GetComponent(ReservedHandle)==WeakComponent.Get() &&
+            InstanceRegistry.FindByComponent(WeakComponent.Get())==ReservedHandle;};
+        const bool bMotionBound=FGamePlatformVFXNiagaraExecutor::UpdateProjectileMotion(*Component,StillOwned);
+        if(!StillOwned())return false; // 同步取消后不得给旧组件安装计时器或再次Activate。
+        InstanceRegistry.SetMotionBindingEnabled(ReservedHandle,bMotionBound);
+        if(bMotionBound && !ProjectileMotionWorldTickHandle.IsValid())
+            ProjectileMotionWorldTickHandle=FWorldDelegates::OnWorldPostActorTick.AddUObject(this,&UGamePlatformVFXWorldSubsystem::HandleProjectileMotionWorldTick);
+    }
     // 群落只附加计算状态；组件仍由上方唯一Niagara执行器创建、由同一实例句柄回收。
     if (const auto* WorldDefinition=Cast<UGamePlatformVFXWorldDefinition>(&Definition); WorldDefinition && WorldDefinition->bEnableFauna)
     {

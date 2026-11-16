@@ -13,6 +13,7 @@ UGamePlatformCombatAttributeSet::UGamePlatformCombatAttributeSet()
     InitEnergy(100.0f);
     InitDamageBonus(0.0f);
     InitDamageReduction(0.0f);
+    InitMoveSpeedMultiplier(1.0f);
     InitIncomingDamage(0.0f);
     InitIncomingHealing(0.0f);
 }
@@ -53,6 +54,9 @@ void UGamePlatformCombatAttributeSet::GetLifetimeReplicatedProps(
         DamageReduction,
         COND_OwnerOnly,
         REPNOTIFY_Always);
+    // 移动速度影响远端可见运动与动画，按Actor网络相关性向拥有者和观察者复制。
+    DOREPLIFETIME_CONDITION_NOTIFY(
+        UGamePlatformCombatAttributeSet, MoveSpeedMultiplier, COND_None, REPNOTIFY_Always);
 }
 
 void UGamePlatformCombatAttributeSet::PreAttributeChange(
@@ -89,6 +93,11 @@ void UGamePlatformCombatAttributeSet::PreAttributeChange(
         const float Limit = FMath::Max(
             0.0f, GetDefault<UGamePlatformCombatSettings>()->MaxDamageMagnitude);
         NewValue = FMath::Clamp(NewValue, -Limit, Limit);
+    }
+    else if (Attribute == GetMoveSpeedMultiplierAttribute())
+    {
+        // 所有独立减速GE的加法结果由GAS聚合；最大减速70%，即倍率不小于0.30。
+        NewValue = FMath::Clamp(NewValue, 0.30f, 1.0f);
     }
     else if (Attribute == GetIncomingDamageAttribute() ||
              Attribute == GetIncomingHealingAttribute())
@@ -166,6 +175,12 @@ void UGamePlatformCombatAttributeSet::OnRep_DamageBonus(
     const FGameplayAttributeData& OldValue)
 {
     GAMEPLAYATTRIBUTE_REPNOTIFY(UGamePlatformCombatAttributeSet, DamageBonus, OldValue);
+}
+
+void UGamePlatformCombatAttributeSet::OnRep_MoveSpeedMultiplier(
+    const FGameplayAttributeData& OldValue)
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UGamePlatformCombatAttributeSet, MoveSpeedMultiplier, OldValue);
 }
 
 void UGamePlatformCombatAttributeSet::OnRep_DamageReduction(

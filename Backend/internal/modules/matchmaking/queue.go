@@ -10,23 +10,25 @@ import (
 )
 
 const (
-	PhaseIdle            = "idle"                // 本人没有有效报名，可单人直接开始。
-	PhaseReadyCheck      = "readyCheck"          // 队伍正在对同一名单和模式限时准备。
-	PhaseSearching       = "searching"           // 不可拆分票据已原子进入队列。
-	PhaseConfirmation    = "confirmation"        // 已选出两队，等待每位玩家接受。
-	PhaseAllocating      = "allocating"          // 全员接受，持久分配/签票步骤尚未全部完成。
-	PhaseTransferReady   = "transferReady"       // 全部签票成功并提交；本人可从独立受保护端口取迁移。
-	PhaseInMatch         = "inMatch"             // 目标服务器确认入场，仍保留本局预留。
-	PhaseReturning       = "returning"           // 可信结果已确认，等个人安全返回。
-	PhaseCompleted       = "completed"           // 本轮已结束并释放预留。
-	PhaseCancelled       = "cancelled"           // 迁移提交前明确取消，不授予入场。
-	PhaseFailed          = "failed"              // 明确失败；清理步骤完成后释放。
-	MaxActiveTickets     = 1024                  // 单逻辑写域的有界容量；超限显式拒绝，不以无限扫描维持工作。
-	ConfirmationLifetime = 30 * time.Second      // 后端逐人接受期限；客户端显示不改变权威资格。
-	AllocationLifetime   = 60 * time.Second      // 全员接受后分配/签票的总预算。
-	TerminalRetention    = 15 * time.Minute      // 终态/命令回执恢复窗口，与已有票据幂等期限保持一致。
-	QueueLifetime        = 15 * time.Minute      // 有限报名有效期，属于服务器资格期限，不能被UI当作预计匹配时间。
-	MaxOperationReceipts = 32 * MaxActiveTickets // 限制不同幂等键的恶意写入，命中已有回执的安全重试仍可读取。
+	PhaseIdle                = "idle"                // 本人没有有效报名，可单人直接开始。
+	PhaseChallengeInvitation = "challengeInvitation" // 固定对手尚待接收队长同意，不进入随机队列。
+	ChallengeLifetime        = 60 * time.Second      // 有界约战邀请期限。
+	PhaseReadyCheck          = "readyCheck"          // 队伍正在对同一名单和模式限时准备。
+	PhaseSearching           = "searching"           // 不可拆分票据已原子进入队列。
+	PhaseConfirmation        = "confirmation"        // 已选出两队，等待每位玩家接受。
+	PhaseAllocating          = "allocating"          // 全员接受，持久分配/签票步骤尚未全部完成。
+	PhaseTransferReady       = "transferReady"       // 全部签票成功并提交；本人可从独立受保护端口取迁移。
+	PhaseInMatch             = "inMatch"             // 目标服务器确认入场，仍保留本局预留。
+	PhaseReturning           = "returning"           // 可信结果已确认，等个人安全返回。
+	PhaseCompleted           = "completed"           // 本轮已结束并释放预留。
+	PhaseCancelled           = "cancelled"           // 迁移提交前明确取消，不授予入场。
+	PhaseFailed              = "failed"              // 明确失败；清理步骤完成后释放。
+	MaxActiveTickets         = 1024                  // 单逻辑写域的有界容量；超限显式拒绝，不以无限扫描维持工作。
+	ConfirmationLifetime     = 30 * time.Second      // 后端逐人接受期限；客户端显示不改变权威资格。
+	AllocationLifetime       = 60 * time.Second      // 全员接受后分配/签票的总预算。
+	TerminalRetention        = 15 * time.Minute      // 终态/命令回执恢复窗口，与已有票据幂等期限保持一致。
+	QueueLifetime            = 15 * time.Minute      // 有限报名有效期，属于服务器资格期限，不能被UI当作预计匹配时间。
+	MaxOperationReceipts     = 32 * MaxActiveTickets // 限制不同幂等键的恶意写入，命中已有回执的安全重试仍可读取。
 )
 
 // QueueEntry是持久报名原子单元；名单从后端Party快照取得，ClientRequestID不能替代Owner授权。
@@ -52,6 +54,7 @@ type CandidateSlot struct {
 
 // Candidate是可恢复确认聚合；分配/签票结果归独立持久操作，不广播到公共UI。
 type Candidate struct {
+	ChallengeID  string          // 可选来源邀请，仅内部用于确认期间的队长认证代次校验。
 	ID           string          // 全局候选身份，同时作为分配意图幂等种子。
 	Revision     int64           // 名单与回复修订。
 	GameID       string          // 同一候选只能属于一个游戏。
@@ -79,11 +82,12 @@ type QueueState struct {
 	Candidates   map[string]Candidate    // 持久候选及逐人回复。
 	Receipts     map[string]QueueReceipt // 主体/操作/逻辑键摘要索引。
 	Contexts     map[string]ActorContext // 逐人回复时取得的可信会话/角色，只供编排和本人迁移使用。
+	Challenges   map[string]Challenge    // 与队列共用事务、唯一预留和事件日志的约战邀请。
 }
 
 // NewQueueState创建真实空队列，不构造玩家、模式可用性或Assignment。
 func NewQueueState() *QueueState {
-	return &QueueState{Entries: map[string]QueueEntry{}, Reservations: map[string]string{}, Candidates: map[string]Candidate{}, Receipts: map[string]QueueReceipt{}, Contexts: map[string]ActorContext{}}
+	return &QueueState{Entries: map[string]QueueEntry{}, Reservations: map[string]string{}, Candidates: map[string]Candidate{}, Receipts: map[string]QueueReceipt{}, Contexts: map[string]ActorContext{}, Challenges: map[string]Challenge{}}
 }
 
 // Clone深复制持久值，失败显式返回；仓储只能在全部规则成功后发布此副本。
@@ -106,6 +110,11 @@ func IsTerminal(phase string) bool {
 
 // Prune只删除已释放的过期终态和回执；不按TTL擅自删除进行中玩家预留。
 func (q *QueueState) Prune(now time.Time) {
+	for id, challenge := range q.Challenges {
+		if IsTerminal(challenge.Phase) && !challenge.UpdatedAtUTC.Add(TerminalRetention).After(now) {
+			delete(q.Challenges, id)
+		}
+	}
 	for id, entry := range q.Entries {
 		if IsTerminal(entry.Phase) && !entry.UpdatedAtUTC.Add(TerminalRetention).After(now) {
 			delete(q.Entries, id)
@@ -122,6 +131,13 @@ func (q *QueueState) Prune(now time.Time) {
 		}
 	}
 	needed := map[string]bool{}
+	for _, challenge := range q.Challenges {
+		if challenge.Phase == PhaseChallengeInvitation {
+			for _, player := range challenge.PlayerIDs() {
+				needed[player] = true
+			}
+		}
+	}
 	for _, entry := range q.Entries {
 		for _, player := range entry.Ticket.PartyMemberIDs {
 			needed[player] = true
@@ -239,8 +255,48 @@ func (q *QueueState) FormCandidate(id, modeID, region string, now time.Time) (Ca
 	if picked == nil {
 		return Candidate{}, false, nil
 	}
+	candidate, err := q.FormFixedCandidate(id, modeID, region, picked.a, picked.b, now)
+	return candidate, err == nil, err
+}
+
+// FormFixedCandidate是随机选队与已同意约战共用的唯一候选构造器；先复核精确两队及预留，再一次发布。
+func (q *QueueState) FormFixedCandidate(id, modeID, region string, teamA, teamB []string, now time.Time) (Candidate, error) {
+	mode, ok := ArenaModeByID(modeID)
+	if !ok || id == "" || region == "" {
+		return Candidate{}, errors.New("MATCH_MODE_INVALID: 候选参数无效")
+	}
+	if _, exists := q.Candidates[id]; exists {
+		return Candidate{}, errors.New("MATCH_IDEMPOTENCY_CONFLICT: 候选身份已存在")
+	}
+	seen := map[string]bool{}
+	gameID := ""
+	for _, tickets := range [][]string{teamA, teamB} {
+		count := 0
+		for _, ticketID := range tickets {
+			entry, found := q.Entries[ticketID]
+			if !found || entry.Phase != PhaseSearching || entry.Ticket.ArenaModeID != modeID || entry.Ticket.Region != region || !now.Before(entry.DeadlineUTC) {
+				return Candidate{}, errors.New("MATCH_PHASE_CONFLICT: 候选票据不可用")
+			}
+			if gameID == "" {
+				gameID = entry.Ticket.GameID
+			}
+			if entry.Ticket.GameID != gameID {
+				return Candidate{}, errors.New("MATCH_MODE_INVALID: 候选游戏不一致")
+			}
+			for _, player := range entry.Ticket.PartyMemberIDs {
+				if seen[player] || q.Reservations[player] != ticketID {
+					return Candidate{}, errors.New("MATCH_PLAYER_RESERVED: 候选名单或预留重复")
+				}
+				seen[player] = true
+				count++
+			}
+		}
+		if count != mode.TeamSize {
+			return Candidate{}, errors.New("MATCH_PARTY_NOT_READY: 候选必须组成两支完整队伍")
+		}
+	}
 	candidate := Candidate{ID: id, Revision: 1, GameID: gameID, ArenaModeID: modeID, RegionID: region, Phase: PhaseConfirmation, DeadlineUTC: now.Add(ConfirmationLifetime), UpdatedAtUTC: now}
-	for index, tickets := range [][]string{picked.a, picked.b} {
+	for index, tickets := range [][]string{teamA, teamB} {
 		team := []string{"team-a", "team-b"}[index]
 		for _, ticketID := range tickets {
 			entry := q.Entries[ticketID]
@@ -259,7 +315,7 @@ func (q *QueueState) FormCandidate(id, modeID, region string, now time.Time) (Ca
 	}
 	q.Candidates[id] = candidate
 	q.Revision++
-	return candidate, true, nil
+	return candidate, nil
 }
 
 // Reply仅允许名单本人对未到期版本回复；全员接受才转Allocating，拒绝则原子终止整个候选并释放所有预留。
@@ -348,6 +404,11 @@ func (q *QueueState) Cancel(actor, id string, revision int64, now time.Time) err
 
 // Expire仅推进尚未发生外部副作用的准备/确认；分配期限由持久操作恢复器撤销后终结，防止仍有效签票时提前解锁。
 func (q *QueueState) Expire(now time.Time) {
+	for id, challenge := range q.Challenges {
+		if challenge.Phase == PhaseChallengeInvitation && !now.Before(challenge.DeadlineUTC) {
+			q.FinishChallenge(id, "MATCH_DEADLINE_EXPIRED", now)
+		}
+	}
 	for id, entry := range q.Entries {
 		if entry.Phase == PhaseSearching && !now.Before(entry.DeadlineUTC) {
 			q.finishEntry(id, PhaseCancelled, "MATCH_QUEUE_EXPIRED", now)

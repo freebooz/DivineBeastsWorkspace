@@ -7,6 +7,7 @@
 #include "Elements/PCGTransformPoints.h"
 #include "Elements/PCGProjectionElement.h"
 #include "Elements/PCGSplineSampler.h"
+#include "Elements/PCGDataFromActor.h"
 #include "Nodes/GamePlatformPCGNodes.h"
 #include "Schema/GamePlatformPCGSchema.h"
 
@@ -75,6 +76,7 @@ bool FGamePlatformPCGTemplateContract::IsApprovedSettingsClass(const UClass* Set
         UPCGTransformPointsSettings::StaticClass(),
         UPCGProjectionSettings::StaticClass(),
         UPCGSplineSamplerSettings::StaticClass(),
+        UPCGDataFromActorSettings::StaticClass(),
         UPCGDensityFilterSettings::StaticClass(),
         UPCGStaticMeshSpawnerSettings::StaticClass(),
         UGamePlatformPCGWriteSchemaDefaultsSettings::StaticClass(),

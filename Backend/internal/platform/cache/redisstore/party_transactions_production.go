@@ -181,7 +181,7 @@ func (r *PartyRepository) updateParty(ctx context.Context, id string, revision i
 						if err := json.Unmarshal(queueRaw, queue); err != nil {
 							return err
 						}
-						if queue.Reservations[player] != "" {
+						if queue.HasRosterReservation(player) {
 							return errors.New("MATCH_PLAYER_RESERVED: 目标玩家已有活动匹配")
 						}
 					}

@@ -8,6 +8,7 @@ import (
 	"divinebeasts/backend/internal/modules/gameserver"
 	"divinebeasts/backend/internal/modules/match"
 	"divinebeasts/backend/internal/modules/servertransfer"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -32,7 +33,7 @@ func TestArenaRuntimeHTTP(t *testing.T) {
 	host := httptest.NewServer(NewGameServerControlHandler(service, "test-only-internal"))
 	defer host.Close()
 	client := NewGameServerControlClient(GameServerControlClientConfig{ClientConfig: ClientConfig{BaseURL: host.URL}, BearerToken: "test-only-internal", DefaultRegion: "test"})
-	input := gameservercontrol.AllocateMainArenaInput{WorldID: registration.WorldID, MatchID: "http-match", ArenaModeID: contracts.ArenaMode1v1, MapID: registration.WorldID, RegionID: "test", ProjectRuleRevision: 1, ContentRevision: "test-only-content", HeroCatalogRevision: 1, Roster: []contracts.RosterPlayer{{PlayerID: "http-a", TeamID: "team-a", CharacterID: "char-a", HeroDefinitionID: "Hero.Zodiac.Rat", SlotIndex: 0}, {PlayerID: "http-b", TeamID: "team-b", CharacterID: "char-b", HeroDefinitionID: "Hero.Zodiac.Ox", SlotIndex: 1}}}
+	input := gameservercontrol.AllocateMainArenaInput{WorldID: registration.WorldID, MatchID: "http-match", ArenaModeID: contracts.ArenaMode1v1, MapID: registration.WorldID, RegionID: "test", ProjectRuleRevision: 1, ContentRevision: "test-only-content", HeroCatalogRevision: 1, Roster: []contracts.RosterPlayer{{PlayerID: "http-a", TeamID: "team-a", CharacterID: "char-a", CharacterName: "白君", HeroDefinitionID: "Hero.Zodiac.Rat", SlotIndex: 0}, {PlayerID: "http-b", TeamID: "team-b", CharacterID: "char-b", HeroDefinitionID: "Hero.Zodiac.Ox", SlotIndex: 1}}}
 	assignment, err := client.AllocateMainArenaContext(ctx, input)
 	if err != nil || assignment.ProjectRuleRevision != 1 || assignment.ContentRevision != input.ContentRevision || assignment.Roster[1].SlotIndex != 1 {
 		t.Fatal("分配往返丢失元数据", err)
@@ -57,6 +58,30 @@ func TestArenaRuntimeHTTP(t *testing.T) {
 	response.Body.Close()
 	if response.StatusCode != http.StatusConflict {
 		t.Fatal("旧Boot不能读取分配", response.StatusCode)
+	}
+	request = request.Clone(ctx)
+	request.Header.Set("X-Game-Server-Boot-Id", registration.ServerBootID)
+	response, err = http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatal("当前Boot应能读取比赛分配", response.StatusCode)
+	}
+	var observed struct {
+		Arena struct {
+			Roster []map[string]json.RawMessage
+		}
+	}
+	if err := json.NewDecoder(response.Body).Decode(&observed); err != nil {
+		t.Fatal(err)
+	}
+	if len(observed.Arena.Roster) != 2 || string(observed.Arena.Roster[0]["CharacterName"]) != `"白君"` {
+		t.Fatal("竞技服读取的分配未保留已选角色名")
+	}
+	if _, present := observed.Arena.Roster[1]["CharacterName"]; present {
+		t.Fatal("空角色名应省略以兼容旧分配")
 	}
 	if err := client.RevokeTransfer(ctx, ticket.TicketID); err != nil {
 		t.Fatal(err)

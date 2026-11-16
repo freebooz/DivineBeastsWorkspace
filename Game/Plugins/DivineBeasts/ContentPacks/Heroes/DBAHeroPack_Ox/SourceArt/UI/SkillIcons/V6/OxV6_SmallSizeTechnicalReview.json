@@ -1,0 +1,182 @@
+{
+  "hero": "Hero.Zodiac.Ox",
+  "technicalSizeGate": "PASS",
+  "technicalDuplicateByteGate": "PASS",
+  "review64Count": 8,
+  "runtime48Count": 8,
+  "artisticApproval": "PENDING",
+  "sourceKind": "DERIVED_FROM_EXISTING_PROJECT_OX_ART",
+  "unique64": 8,
+  "unique48": 8,
+  "nearAppearanceRisks": [
+    {
+      "left": "不动玄门",
+      "right": "立阵",
+      "hashDistance": 1,
+      "status": "HUMAN_VISUAL_DISTINCTNESS_REVIEW_REQUIRED"
+    }
+  ],
+  "rows": [
+    {
+      "order": 1,
+      "nameZh": "玄角撞",
+      "abilityId": "dba.ability.ox_eight_horn_strike@1",
+      "slotId": "Primary",
+      "png64": "Review64/T_DBA_Ox_V6_01_XuanJiaoZhuang_Icon_64.png",
+      "png48": "Runtime48/T_DBA_Ox_V6_01_XuanJiaoZhuang_Icon_48.png",
+      "metrics64": {
+        "lumaStdDev": 68.33,
+        "brightPct": 3.1,
+        "darkPct": 3.03,
+        "sha256": "119d476ac6ec6fbb52f465d6a73c3c05bb7c58bfff75445a0c8b93bad0817f62"
+      },
+      "metrics48": {
+        "lumaStdDev": 67.28,
+        "brightPct": 2.6,
+        "darkPct": 2.86,
+        "sha256": "54e62129f1a5ffdde0a31d843e7e24167b824a87b1fdf874def33850041697df"
+      }
+    },
+    {
+      "order": 2,
+      "nameZh": "裂角",
+      "abilityId": "dba.ability.ox_eight_horn_break@1",
+      "slotId": "Slot1",
+      "png64": "Review64/T_DBA_Ox_V6_02_LieJiao_Icon_64.png",
+      "png48": "Runtime48/T_DBA_Ox_V6_02_LieJiao_Icon_48.png",
+      "metrics64": {
+        "lumaStdDev": 65.76,
+        "brightPct": 1.61,
+        "darkPct": 2.95,
+        "sha256": "7871e86c281d722036d280858eac8a3ce2cf29e6c45c8fd2688c8cd576fb41b9"
+      },
+      "metrics48": {
+        "lumaStdDev": 64.71,
+        "brightPct": 1.04,
+        "darkPct": 2.52,
+        "sha256": "89b60c910fc8146ce5453b858c6f024e8c22574e8b6fbeb21d4f12c348f2127b"
+      }
+    },
+    {
+      "order": 3,
+      "nameZh": "裂地踏",
+      "abilityId": "dba.ability.ox_eight_ground_pulse@1",
+      "slotId": "Slot2",
+      "png64": "Review64/T_DBA_Ox_V6_03_LieDiTa_Icon_64.png",
+      "png48": "Runtime48/T_DBA_Ox_V6_03_LieDiTa_Icon_48.png",
+      "metrics64": {
+        "lumaStdDev": 65.7,
+        "brightPct": 0.63,
+        "darkPct": 20.85,
+        "sha256": "4486e0e4168a0dbd3ce14f07afbb095fa530c957e71695adfaee0803c375e4e2"
+      },
+      "metrics48": {
+        "lumaStdDev": 64.65,
+        "brightPct": 0.35,
+        "darkPct": 20.75,
+        "sha256": "20a3030dd3bc1a55d565ecd6b341953747e1a656895028aa5fdb72c5ca1116e8"
+      }
+    },
+    {
+      "order": 4,
+      "nameZh": "不动玄门",
+      "abilityId": "dba.ability.ox_eight_mountain_break@1",
+      "slotId": "Slot4",
+      "png64": "Review64/T_DBA_Ox_V6_04_BuDongXuanMen_Icon_64.png",
+      "png48": "Runtime48/T_DBA_Ox_V6_04_BuDongXuanMen_Icon_48.png",
+      "metrics64": {
+        "lumaStdDev": 66.93,
+        "brightPct": 0.0,
+        "darkPct": 3.15,
+        "sha256": "46d606a0fc97837747efe9fb47779bfa17ff1ca28610cdc9e5b222fa2991872f"
+      },
+      "metrics48": {
+        "lumaStdDev": 65.74,
+        "brightPct": 0.0,
+        "darkPct": 3.04,
+        "sha256": "650617c776aec154fe4e197aaa671fae98192d6454983f8765cdbf6aa5f4a919"
+      }
+    },
+    {
+      "order": 5,
+      "nameZh": "沉步",
+      "abilityId": "dba.ability.ox_eight_horn_charge@1",
+      "slotId": "Slot3",
+      "png64": "Review64/T_DBA_Ox_V6_05_ChenBu_Icon_64.png",
+      "png48": "Runtime48/T_DBA_Ox_V6_05_ChenBu_Icon_48.png",
+      "metrics64": {
+        "lumaStdDev": 66.73,
+        "brightPct": 2.03,
+        "darkPct": 1.78,
+        "sha256": "120d5fdd5bb6de2d9298c13b3a5d056d6c10df6ee6f645dbf4ba37ed91404c36"
+      },
+      "metrics48": {
+        "lumaStdDev": 65.69,
+        "brightPct": 1.65,
+        "darkPct": 1.56,
+        "sha256": "376b0d5b750ddb32e037ab0b3f3b8085b05607e2771ba2f124087021eb1baf94"
+      }
+    },
+    {
+      "order": 6,
+      "nameZh": "镇山护壁",
+      "abilityId": "dba.ability.ox_eight_stone_armor@1",
+      "slotId": "Slot5",
+      "png64": "Review64/T_DBA_Ox_V6_06_ZhenShanHuBi_Icon_64.png",
+      "png48": "Runtime48/T_DBA_Ox_V6_06_ZhenShanHuBi_Icon_48.png",
+      "metrics64": {
+        "lumaStdDev": 47.48,
+        "brightPct": 0.0,
+        "darkPct": 0.0,
+        "sha256": "2b3c68e9d365956e62463c71ad693b1b0bb51a692c29b266cf0f6443de521b6c"
+      },
+      "metrics48": {
+        "lumaStdDev": 46.34,
+        "brightPct": 0.0,
+        "darkPct": 0.0,
+        "sha256": "8e9df1b89229b89b9cb75a26d55b6a6f094a039139952dcd14a2b5f7878713ce"
+      }
+    },
+    {
+      "order": 7,
+      "nameZh": "顶回",
+      "abilityId": "dba.ability.ox_eight_seismic_stun@1",
+      "slotId": "Slot6",
+      "png64": "Review64/T_DBA_Ox_V6_07_DingHui_Icon_64.png",
+      "png48": "Runtime48/T_DBA_Ox_V6_07_DingHui_Icon_48.png",
+      "metrics64": {
+        "lumaStdDev": 67.45,
+        "brightPct": 3.74,
+        "darkPct": 1.34,
+        "sha256": "ed6abdd4abcc65117bbc6d1254880eaa9ce976a6644064b0a1f93c4758d3d883"
+      },
+      "metrics48": {
+        "lumaStdDev": 66.36,
+        "brightPct": 3.6,
+        "darkPct": 1.09,
+        "sha256": "ca9acd3ed7e9d715b814c8df9adf48f514cf4648ba0453ccf4fa4d53b38edd14"
+      }
+    },
+    {
+      "order": 8,
+      "nameZh": "立阵",
+      "abilityId": "dba.ability.ox_eight_steadfast_roar@1",
+      "slotId": "Slot7",
+      "png64": "Review64/T_DBA_Ox_V6_08_LiZhen_Icon_64.png",
+      "png48": "Runtime48/T_DBA_Ox_V6_08_LiZhen_Icon_48.png",
+      "metrics64": {
+        "lumaStdDev": 61.77,
+        "brightPct": 0.0,
+        "darkPct": 0.0,
+        "sha256": "188efdf6cd1f5f2fecaa2469f6cb01bb6716d98bfc25adec36a1663f383e62a5"
+      },
+      "metrics48": {
+        "lumaStdDev": 60.61,
+        "brightPct": 0.0,
+        "darkPct": 0.0,
+        "sha256": "751119f736a9ff70ee986db0e4da2ab2e09db21c2b07315b7807e6cfd797ddf1"
+      }
+    }
+  ],
+  "humanReviewNoticeZh": "基于已有5张Ox原型美术衍生8个图标；技术尺寸/清晰度门禁通过并不证明8技能语义准确，尤其不动玄门、沉步、立阵必须人工重点审核。"
+}

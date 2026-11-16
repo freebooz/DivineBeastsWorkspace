@@ -1,6 +1,7 @@
 // 项目客户端技能栏：只读授权快照，Profile与图标由当前Loadout世界的Data租约持有。
 // UObject/资源访问仅游戏线程；换英雄、解绑及销毁先撤代次再释放本VM的两份租约，不全局卸载。
 #include "ViewModels/Combat/DivineBeastsAbilityBarViewModel.h"
+#include "ViewModels/Combat/DivineBeastsAbilityBarProjectionDiff.h"
 
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
 #include "Components/GamePlatformAbilitySystemComponent.h"
@@ -23,6 +24,7 @@
 #include "Engine/AssetManager.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "DivineBeastsUIClientSubsystem.h"
 #include "Interfaces/IGamePlatformDataService.h"
 
 namespace
@@ -57,6 +59,13 @@ bool UDivineBeastsAbilityBarViewModel::BindToLoadout(
 
 void UDivineBeastsAbilityBarViewModel::UnbindFromLoadout()
 {
+    if (auto* Source = PreviewSource.Get()) Source->OnStateChanged().Remove(PreviewSelectionHandle);
+    PreviewSelectionHandle.Reset();
+    PreviewSource.Reset();
+    PreviewInstance.Reset();
+    PreviewCharacterId.Reset();
+    PreviewStateRunId.Invalidate();
+    bReadOnlyArtPreview = false;
     UnbindFromNativeAbilityEvents();
     if (UDivineBeastsAbilityLoadoutComponent* Current = Loadout.Get())
     {
@@ -74,9 +83,25 @@ void UDivineBeastsAbilityBarViewModel::UnbindFromLoadout()
     }
 }
 
+const FDivineBeastsGrantedAbilitySlot* UDivineBeastsAbilityBarViewModel::FindUniqueGrantedSlot(
+    const FDivineBeastsAbilityLoadoutState& Snapshot, FName SlotId)
+{
+    if (SlotId.IsNone()) return nullptr;
+    const FDivineBeastsGrantedAbilitySlot* Found = nullptr;
+    for (const FDivineBeastsGrantedAbilitySlot& Candidate : Snapshot.Slots)
+    {
+        if (Candidate.SlotId != SlotId) continue;
+        if (Found) return nullptr;
+        Found = &Candidate;
+    }
+    return Found;
+}
+
 FGamePlatformResult UDivineBeastsAbilityBarViewModel::RequestActivateSlot(FName SlotId)
 {
     check(IsInGameThread());
+    if (bReadOnlyArtPreview)
+        return FGamePlatformResult::Failure(TEXT("AbilityArtPreviewReadOnly"), TEXT("仅美术预览、不可施放。"));
     UDivineBeastsAbilityLoadoutComponent* CurrentLoadout = Loadout.Get();
     UGamePlatformAbilitySystemComponent* ASC = AbilitySystem.Get();
     APawn* Pawn = CurrentLoadout ? Cast<APawn>(CurrentLoadout->GetOwner()) : nullptr;
@@ -93,13 +118,8 @@ FGamePlatformResult UDivineBeastsAbilityBarViewModel::RequestActivateSlot(FName 
         [SlotId](const FGamePlatformUISlotState& Slot) { return Slot.SlotId == SlotId; });
     if (!Display || !Display->bEnabled || Display->bPending)
         return FGamePlatformResult::Failure(TEXT("AbilitySlotUnavailable"), TEXT("该技能尚未就绪、资源不足或正在冷却。"));
-    const FDivineBeastsGrantedAbilitySlot* Grant = nullptr;
-    for (const FDivineBeastsGrantedAbilitySlot& Candidate : Snapshot.Slots)
-    {
-        if (Candidate.SlotId != SlotId) continue;
-        if (Grant) return FGamePlatformResult::Failure(TEXT("AbilitySlotAmbiguous"), TEXT("技能槽授权重复，拒绝任选一个技能。"));
-        Grant = &Candidate;
-    }
+    const FDivineBeastsGrantedAbilitySlot* Grant = FindUniqueGrantedSlot(Snapshot, SlotId);
+    if (!Grant) return FGamePlatformResult::Failure(TEXT("AbilitySlotAmbiguous"), TEXT("技能槽没有唯一授权，拒绝任选一个技能。"));
     const FGameplayAbilitySpec* Spec = nullptr;
     if (!Grant || !Grant->InputTag.IsValid() || Display->ContentId != Grant->AbilityId ||
         !TryResolveGrantedSpec(*ASC, Grant->InputTag, Spec) || !Spec || Spec->Level != Grant->AbilityLevel)
@@ -154,6 +174,124 @@ void UDivineBeastsAbilityBarViewModel::ResetProfileLease()
             if (OldProfile.IsValid()) Data->ReleaseResources(OldProfile);
         }
     }
+}
+
+UObject* UDivineBeastsAbilityBarViewModel::GetProfileResourceCaller() const
+{
+    return bReadOnlyArtPreview ? static_cast<UObject*>(PreviewInstance.Get()) : Loadout.Get();
+}
+
+bool UDivineBeastsAbilityBarViewModel::BindToSelectedHeroIcons(UDivineBeastsUIClientSubsystem* InSource)
+{
+    check(IsInGameThread());
+    if (PreviewSource.Get() == InSource && PreviewSelectionHandle.IsValid()) return true;
+    UnbindFromLoadout();
+    UWorld* World = IsValid(InSource) ? InSource->GetWorld() : nullptr;
+    UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
+    if (!IsValid(Instance) || World->IsNetMode(NM_DedicatedServer)) return false;
+    bReadOnlyArtPreview = true;
+    PreviewInstance = Instance;
+    PreviewSource = InSource;
+    PreviewSelectionHandle = InSource->OnStateChanged().AddUObject(this,
+        &ThisClass::HandleSelectedHeroIconsChanged);
+    HandleSelectedHeroIconsChanged(InSource->GetViewState());
+    return true;
+}
+
+void UDivineBeastsAbilityBarViewModel::HandleSelectedHeroIconsChanged(const FDivineBeastsUIViewState&)
+{
+    auto* Source = PreviewSource.Get();
+    if (!Source || !bReadOnlyArtPreview) return;
+    // 读取事件源的最新完整快照，避免同步重入时旧的通知参数恢复已注销角色。
+    const FDivineBeastsUIViewState State = Source->GetViewState();
+    const FName Hero = State.bAuthenticated && !State.SelectedCharacterId.IsEmpty()
+        ? State.SelectedHeroDefinitionId : NAME_None;
+    if (PreviewCharacterId != State.SelectedCharacterId || PreviewStateRunId != State.StateRunId)
+    {
+        ResetProfileLease(); // 同英雄换账号/换档案也撤销旧代次与在途工作。
+        PreviewCharacterId = State.SelectedCharacterId;
+        PreviewStateRunId = State.StateRunId;
+    }
+    PreviewHeroIcons(Hero, PreviewInstance.Get());
+}
+
+bool UDivineBeastsAbilityBarViewModel::PreviewHeroIcons(FName Hero, UGameInstance* Instance)
+{
+    check(IsInGameThread());
+    if (!IsValid(Instance)) { UnbindFromLoadout(); return false; }
+    if (!bReadOnlyArtPreview || PreviewInstance.Get() != Instance)
+    {
+        UnbindFromLoadout();
+        bReadOnlyArtPreview = true;
+        PreviewInstance = Instance;
+    }
+    if (Hero == LoadedHeroId && (!Hero.IsNone() || Slots.IsEmpty())) return true;
+    ResetProfileLease();
+    LoadedHeroId = Hero;
+    ProfileLeaseInstance = Instance;
+    const uint64 Serial = LoadGeneration;
+    // 选中角色事件先清空旧图；异步加载前后均不保留上个英雄的画刷。
+    Slots.Reset(); SlotDetails.Reset();
+    MarkStateChanged();
+    if (Serial != LoadGeneration) return true;
+    SlotsChanged.Broadcast(Slots);
+    if (Serial != LoadGeneration || Hero.IsNone()) return true;
+    if (auto* Assets = UAssetManager::GetIfInitialized())
+        ProfilePath = Assets->GetPrimaryAssetPath(FPrimaryAssetId(
+            FPrimaryAssetType(TEXT("DivineBeastsAbilityUIProfile")), Hero));
+#if WITH_DEV_AUTOMATION_TESTS
+    if (ProfilePathForTests) ProfilePath = ProfilePathForTests(Hero);
+#endif
+    auto* Data = ResolveProfileDataService(Instance);
+    if (!Data || !ProfilePath.IsValid()) return false;
+    const TWeakObjectPtr<UDivineBeastsAbilityBarViewModel> WeakThis(this);
+    const TWeakObjectPtr<UGameInstance> WeakInstance(Instance);
+    FGamePlatformResult Accepted;
+    const FGamePlatformDataLease Lease = Data->AcquireResources({ProfilePath},
+        EGamePlatformDataLifetime::Instance, Instance,
+        [WeakThis, WeakInstance, Serial, Hero](const auto& Completed, const auto& Result)
+        {
+            if (auto* Self = WeakThis.Get(); Self && WeakInstance.IsValid() &&
+                Self->bReadOnlyArtPreview && Self->PreviewInstance == WeakInstance)
+                Self->HandleProfileLoaded(Serial, Hero, Completed, Result);
+        }, Accepted);
+    if (Serial == LoadGeneration && bReadOnlyArtPreview && PreviewInstance.Get() == Instance &&
+        Accepted.IsSuccess() && Lease.IsValid()) ProfileLease = Lease;
+    else if (Lease.IsValid()) Data->ReleaseResources(Lease);
+    return Accepted.IsSuccess() && ProfileLease.IsValid();
+}
+
+void UDivineBeastsAbilityBarViewModel::RefreshPreviewSlots()
+{
+    if (!bReadOnlyArtPreview) return;
+    TArray<FGamePlatformUISlotState> NewSlots;
+    TArray<FDivineBeastsAbilitySlotDetails> NewDetails;
+    // 该顺序与作者Profile的显式八槽合同一致；不从文件名、中文名或条目扫描顺序推算。
+    const TCHAR* Inputs[] = {TEXT("Primary"),TEXT("Slot1"),TEXT("Slot2"),TEXT("Slot4"),
+        TEXT("Slot3"),TEXT("Slot5"),TEXT("Slot6"),TEXT("Slot7")};
+    if (LoadedProfile && bIconsReady && LoadedProfile->ArtPreviewAbilityIds.Num() == 8)
+    {
+        for (int32 Index = 0; Index < 8; ++Index)
+        {
+            const auto* Entry = LoadedProfile->FindEntry(LoadedProfile->ArtPreviewAbilityIds[Index]);
+            if (!Entry) { NewSlots.Reset(); NewDetails.Reset(); break; }
+            FGamePlatformUISlotState Slot;
+            Slot.SlotId = FName(*FString::Printf(TEXT("Platform.Ability.Input.DivineBeasts.%s"), Inputs[Index]));
+            Slot.ContentId = Entry->AbilityId;
+            Slot.Icon = Entry->Icon;
+            Slot.bEnabled = false;
+            Slot.bPending = false;
+            FDivineBeastsAbilitySlotDetails Detail;
+            Detail.SlotId = Slot.SlotId; Detail.AbilityId = Entry->AbilityId;
+            Detail.DisplayName = Entry->DisplayName; Detail.Description = Entry->Description;
+            Detail.DisabledReason = NSLOCTEXT("DBAAbilityBar", "ArtPreviewReadOnly", "仅美术预览、不可施放");
+            NewSlots.Add(Slot); NewDetails.Add(Detail);
+        }
+    }
+    Slots = MoveTemp(NewSlots); SlotDetails = MoveTemp(NewDetails);
+    const uint64 Serial = LoadGeneration;
+    MarkStateChanged();
+    if (Serial == LoadGeneration) SlotsChanged.Broadcast(Slots);
 }
 
 void UDivineBeastsAbilityBarViewModel::BindToNativeAbilityEvents()
@@ -248,6 +386,7 @@ void UDivineBeastsAbilityBarViewModel::UnbindFromNativeAbilityEvents()
 
 void UDivineBeastsAbilityBarViewModel::RefreshCurrentLoadout()
 {
+    if (bReadOnlyArtPreview) { RefreshPreviewSlots(); return; }
     RefreshGameplayEligibilityBindings();
     if (UDivineBeastsAbilityLoadoutComponent* Current = Loadout.Get())
     {
@@ -410,7 +549,7 @@ void UDivineBeastsAbilityBarViewModel::HandleProfileLoaded(
 {
     check(IsInGameThread());
     if (ExpectedLoadGeneration != LoadGeneration || ExpectedHero != LoadedHeroId ||
-        !Loadout.IsValid() || !IsSameUIResourceLease(ProfileLease, Lease))
+        !IsValid(GetProfileResourceCaller()) || !IsSameUIResourceLease(ProfileLease, Lease))
         return; // 旧请求已由换英雄/解绑路径释放；不能触碰后继的租约。
     IGamePlatformDataService* Data = ResolveProfileDataService(ProfileLeaseInstance.Get());
     UDivineBeastsAbilityUIProfile* Profile = Result.IsSuccess() && Data &&
@@ -434,16 +573,16 @@ void UDivineBeastsAbilityBarViewModel::HandleProfileLoaded(
     {
         FGamePlatformResult Accepted;
         const TWeakObjectPtr<UDivineBeastsAbilityBarViewModel> WeakThis(this);
-        const TWeakObjectPtr<UDivineBeastsAbilityLoadoutComponent> WeakSource(Loadout);
+        const TWeakObjectPtr<UObject> WeakSource(GetProfileResourceCaller());
         const FGamePlatformDataLease NewIcons = Data->AcquireResources(
-            IconPaths, EGamePlatformDataLifetime::World, Loadout.Get(),
+            IconPaths, bReadOnlyArtPreview ? EGamePlatformDataLifetime::Instance : EGamePlatformDataLifetime::World, WeakSource,
             [WeakThis, WeakSource, ExpectedLoadGeneration, ExpectedHero](
                 const FGamePlatformDataLease& Completed, const FGamePlatformResult& IconResult)
             {
-                if (auto* Self = WeakThis.Get(); Self && WeakSource.IsValid() && Self->Loadout == WeakSource)
+                if (auto* Self = WeakThis.Get(); Self && WeakSource.IsValid() && Self->GetProfileResourceCaller() == WeakSource.Get())
                     Self->HandleIconsLoaded(ExpectedLoadGeneration, ExpectedHero, Completed, IconResult);
             }, Accepted);
-        if (ExpectedLoadGeneration != LoadGeneration || !Loadout.IsValid())
+        if (ExpectedLoadGeneration != LoadGeneration || !IsValid(GetProfileResourceCaller()))
         {
             if (NewIcons.IsValid()) Data->ReleaseResources(NewIcons);
             return;
@@ -460,7 +599,7 @@ void UDivineBeastsAbilityBarViewModel::HandleIconsLoaded(
 {
     check(IsInGameThread());
     if (ExpectedLoadGeneration != LoadGeneration || ExpectedHero != LoadedHeroId ||
-        !Loadout.IsValid() || !IsSameUIResourceLease(IconLease, Lease))
+        !IsValid(GetProfileResourceCaller()) || !IsSameUIResourceLease(IconLease, Lease))
         return;
     IGamePlatformDataService* Data = ResolveProfileDataService(ProfileLeaseInstance.Get());
     bIconsReady = Result.IsSuccess() && Data &&
@@ -482,7 +621,6 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
     NewSlots.Reserve(Snapshot.Slots.Num());
     TArray<FDivineBeastsAbilitySlotDetails> NewDetails;
     NewDetails.Reserve(Snapshot.Slots.Num());
-    TSet<FName> SeenSlots;
     const UDivineBeastsCharacterComponent* Identity = CharacterIdentity.Get();
     const bool bIdentityCurrent = Identity && Identity->IsCharacterReady() &&
         Identity->GetHeroDefinitionId() == Snapshot.HeroDefinitionId &&
@@ -503,12 +641,11 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
     for (const FDivineBeastsGrantedAbilitySlot& Grant : Snapshot.Slots)
     {
         if (Grant.AbilityId.IsNone() || Grant.SlotId.IsNone() ||
-            Grant.AbilityLevel < 1 || SeenSlots.Contains(Grant.SlotId))
+            Grant.AbilityLevel < 1 || FindUniqueGrantedSlot(Snapshot, Grant.SlotId) != &Grant)
         {
-            // 异常网络投影 fail-closed；不能以重复或未知槽位覆盖真实授权。
+            // 先核对完整快照；重复槽的每个候选均拒绝，不能留下数组中的第一项。
             continue;
         }
-        SeenSlots.Add(Grant.SlotId);
         FGamePlatformUISlotState Slot;
         FDivineBeastsAbilitySlotDetails Detail;
         Detail.SlotId = Grant.SlotId;
@@ -563,8 +700,9 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
                     GamePlatformCombatTags::Control_Stun);
                 const bool bSilenced = ASC->HasMatchingGameplayTag(
                     GamePlatformCombatTags::Control_Silence);
-                const bool bPrimaryAttack =
-                    Grant.InputTag.ToString().EndsWith(TEXT(".Primary"));
+                // 按能力语义判断沉默，数字1也可绑定法术，不能用输入槽冒充普通攻击。
+                const bool bPrimaryAttack = !Spec->Ability->GetAssetTags().HasTag(
+                    FGameplayTag::RequestGameplayTag(TEXT("Ability.Spell")));
                 if (bDead || bStunned || (bSilenced && !bPrimaryAttack))
                 {
                     Slot.bEnabled = false;
@@ -652,43 +790,11 @@ void UDivineBeastsAbilityBarViewModel::RefreshSlots(
         NewSlots.Add(MoveTemp(Slot));
     }
 
-    bool bChanged = Slots.Num() != NewSlots.Num();
-    if (!bChanged)
-    {
-        for (int32 Index = 0; Index < Slots.Num(); ++Index)
-        {
-            const FGamePlatformUISlotState& A = Slots[Index];
-            const FGamePlatformUISlotState& B = NewSlots[Index];
-            if (A.SlotId != B.SlotId || A.ContentId != B.ContentId ||
-                A.Icon != B.Icon || A.bEnabled != B.bEnabled ||
-                A.bPending != B.bPending ||
-                !FMath::IsNearlyEqual(A.OverlayProgress, B.OverlayProgress, 0.0001f))
-            {
-                bChanged = true;
-                break;
-            }
-        }
-    }
-    bool bDetailsChanged = SlotDetails.Num() != NewDetails.Num();
-    if (!bDetailsChanged)
-    {
-        for (int32 Index = 0; Index < NewDetails.Num(); ++Index)
-        {
-            const FDivineBeastsAbilitySlotDetails& A = SlotDetails[Index];
-            const FDivineBeastsAbilitySlotDetails& B = NewDetails[Index];
-            if (A.SlotId != B.SlotId || A.AbilityId != B.AbilityId ||
-                A.AbilityLevel != B.AbilityLevel ||
-                !A.DisplayName.EqualTo(B.DisplayName) ||
-                !A.Description.EqualTo(B.Description) ||
-                !A.DisabledReason.EqualTo(B.DisabledReason) ||
-                !FMath::IsNearlyEqual(A.CooldownRemainingSeconds, B.CooldownRemainingSeconds, 0.01f) ||
-                !FMath::IsNearlyEqual(A.CooldownTotalSeconds, B.CooldownTotalSeconds, 0.01f))
-            {
-                bDetailsChanged = true;
-                break;
-            }
-        }
-    }
+    const bool bChanged = FDivineBeastsAbilityBarProjectionDiff::HasSlotsChanged(
+        Slots, NewSlots);
+    const bool bDetailsChanged = FDivineBeastsAbilityBarProjectionDiff::HasDetailsChanged(
+        SlotDetails, NewDetails);
+
 
     if (bChanged || bDetailsChanged)
     {

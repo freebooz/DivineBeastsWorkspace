@@ -14,6 +14,7 @@
 #include "EngineGlobals.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "Gameplay/DivineBeastsPlayerControlsComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Input/DivineBeastsInputSemantics.h"
 #include "Interfaces/IGamePlatformInputService.h"
@@ -86,6 +87,7 @@ void UDivineBeastsInputClientSubsystem::Initialize(FSubsystemCollectionBase& Col
 
 void UDivineBeastsInputClientSubsystem::Deinitialize()
 {
+    SyncControlsOwnership(false);
     ClearAbilityInput();
     if (UGamePlatformLocalHitstopSubsystem* Hitstop = LocalHitstopSubsystem.Get())
     {
@@ -130,6 +132,7 @@ void UDivineBeastsInputClientSubsystem::Deinitialize()
 
 void UDivineBeastsInputClientSubsystem::PlayerControllerChanged(APlayerController* Controller)
 {
+    SyncControlsOwnership(false);
     Super::PlayerControllerChanged(Controller);
 
     ClearAbilityInput();
@@ -203,6 +206,7 @@ FGamePlatformResult UDivineBeastsInputClientSubsystem::DeactivateGameplayInput()
 
     if (!PlatformInput || !ProfileHandle.IsValid())
     {
+        SyncControlsOwnership(false);
         ProfileHandle = {};
         BindingHandle = {};
         ContextHandles.Reset();
@@ -215,6 +219,8 @@ FGamePlatformResult UDivineBeastsInputClientSubsystem::DeactivateGameplayInput()
     {
         return Result;
     }
+
+    SyncControlsOwnership(false);
 
     ProfileHandle = {};
     BindingHandle = {};
@@ -269,12 +275,14 @@ void UDivineBeastsInputClientSubsystem::TryFinalizeActivation()
     check(IsInGameThread());
     if (!PlatformInput || !ProfileHandle.IsValid())
     {
+        SyncControlsOwnership(false);
         return;
     }
 
     const FGamePlatformInputSnapshot Snapshot = PlatformInput->GetInputSnapshot();
     if (!Snapshot.bProfilePrepared || Snapshot.ProfileGeneration != ProfileHandle.Generation)
     {
+        SyncControlsOwnership(false);
         return;
     }
 
@@ -291,6 +299,7 @@ void UDivineBeastsInputClientSubsystem::TryFinalizeActivation()
                 Result);
             if (!Result.IsSuccess() || !Handle.IsValid())
             {
+                SyncControlsOwnership(false);
                 for (const FGamePlatformInputContextHandle& Acquired : NewHandles)
                 {
                     PlatformInput->ReleaseInputContext(Acquired);
@@ -309,6 +318,7 @@ void UDivineBeastsInputClientSubsystem::TryFinalizeActivation()
     CachedController = Controller;
     if (!Controller)
     {
+        SyncControlsOwnership(false);
         return;
     }
 
@@ -321,6 +331,7 @@ void UDivineBeastsInputClientSubsystem::TryFinalizeActivation()
         }
         if (!EnhancedComponent)
         {
+            SyncControlsOwnership(false);
             return;
         }
 
@@ -328,14 +339,33 @@ void UDivineBeastsInputClientSubsystem::TryFinalizeActivation()
         BindingHandle = PlatformInput->BindInputReceiver(*EnhancedComponent, Result);
         if (!Result.IsSuccess() || !BindingHandle.IsValid())
         {
+            SyncControlsOwnership(false);
             BindingHandle = {};
             return;
         }
     }
 
+    SyncControlsOwnership(IsGameplayInputReady());
     RefreshControlledPawn();
 }
 
+void UDivineBeastsInputClientSubsystem::SyncControlsOwnership(bool bOwned)
+{
+    auto* Controls = bOwned && CachedController.IsValid() ?
+        CachedController->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr;
+    if (OwnedControls.Get() != Controls)
+    {
+        if (OwnedControls.IsValid()) OwnedControls->SetSemanticInputOwned(false);
+        OwnedControls = Controls;
+    }
+    if (Controls && PlatformInput)
+    {
+        const bool bMove = PlatformInput->GetSemanticInputOwnership(GamePlatformInputServices::GetBuiltInSemanticTag(EGamePlatformBuiltInInputSemantic::Move)).IsOwned();
+        const bool bLook = PlatformInput->GetSemanticInputOwnership(GamePlatformInputServices::GetBuiltInSemanticTag(EGamePlatformBuiltInInputSemantic::LookDelta)).IsOwned() ||
+            PlatformInput->GetSemanticInputOwnership(GamePlatformInputServices::GetBuiltInSemanticTag(EGamePlatformBuiltInInputSemantic::LookRate)).IsOwned();
+        Controls->SetSemanticInputOwned(bMove, bLook);
+    }
+}
 void UDivineBeastsInputClientSubsystem::RefreshControlledPawn()
 {
     APlayerController* Controller = CachedController.Get();
@@ -407,8 +437,11 @@ void UDivineBeastsInputClientSubsystem::HandleMoveLookInput(
         return;
     }
 
+    auto* Controls = Controller->FindComponentByClass<UDivineBeastsPlayerControlsComponent>();
     const FGameplayTag SemanticTag = Event.SemanticId.Tag;
     const FVector2D Axis = Event.Value.Get<FVector2D>();
+    const auto Source = PlatformInput ? PlatformInput->GetSemanticInputOwnership(SemanticTag) : FGamePlatformInputSemanticOwnership();
+    if (Controls && PlatformInput && ProfileHandle.IsValid() && !Source.IsOwned()) return;
     if (SemanticTag == GamePlatformInputServices::GetBuiltInSemanticTag(EGamePlatformBuiltInInputSemantic::Move))
     {
         if (!Pawn || Event.Unit != EGamePlatformInputUnit::NormalizedAxis)
@@ -416,6 +449,7 @@ void UDivineBeastsInputClientSubsystem::HandleMoveLookInput(
             return;
         }
 
+        if (Controls) { Controls->ApplySemanticMoveLook(Axis, true, true); return; }
         const FRotator YawRotation(0.0, Controller->GetControlRotation().Yaw, 0.0);
         const FRotationMatrix Rotation(YawRotation);
         Pawn->AddMovementInput(Rotation.GetUnitAxis(EAxis::X), Axis.Y);
@@ -447,6 +481,11 @@ void UDivineBeastsInputClientSubsystem::HandleMoveLookInput(
         return;
     }
 
+    if (Controls)
+    {
+        Controls->ApplySemanticMoveLook(Axis * Scale, false, bLookRate || Source.bTouchReceiver);
+        return;
+    }
     Controller->AddYawInput(static_cast<float>(Axis.X * Scale));
     Controller->AddPitchInput(static_cast<float>(Axis.Y * Scale));
 }

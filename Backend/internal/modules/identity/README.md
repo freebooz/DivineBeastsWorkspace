@@ -4,7 +4,11 @@
 
 ## 接入与稳定 API
 
-旧 `NewService(SessionRepository, Clock, TokenGenerator, accessTTL, refreshTTL)`、`LoginGuest` 保留给旧开发装配和测试，不能用于真实密码认证；旧内存/Redis刷新路径不具备本节的持久原子保证。
+`NewService(SessionRepository, Clock, TokenGenerator, accessTTL, refreshTTL)`、`LoginGuest` 保留给开发装配和测试，不能用于真实密码认证。游客和密码入口签发后均进入同一`Service.Refresh`，由仓储锁/事务内的`TokenRotation.Apply`判断当前凭据、绝对刷新截止和Access封顶；不再有滑动续期或Get/Save刷新分支。
+
+现有公开方法及HTTP字段保持不变；游客凭据也采用256位不透明随机值。`SessionRepository`既有方法签名保留，实现同时须提供`SessionRotationRepository`原子轮换/历史退出合同；仓库内Memory与Redis适配均已接入。缺少原子能力的自定义适配器返回`ErrUnavailable`，不能签发无法安全刷新的会话。持久密码仓储仍只接收摘要，不允许回落游客仓储。
+
+并发刷新只有一个请求能消费当前凭据；旧凭据重放须在返回错误前撤销整个会话（包括成功轮换得到的后继Access）。重复Logout可使用历史刷新凭据幂等退出。内存历史随进程结束销毁，Redis和SQL保留摘要历史，不在本次整改添加未经批准的历史清理。Redis兼容仓储旧明文索引不作为新摘要索引回退；当前生产装配未使用该兼容仓储。没有重启或迁移任何现有运行会话。
 
 生产装配使用 `postgres.NewOnlineIdentityRepository(pool *postgres.Pool)`（`productiondeps` 标签）与：
 
@@ -36,6 +40,7 @@ identity.NewPersistentService(repo identity.PersistentRepository, clock identity
 - Logout接受当前/历史refresh，保留摘要历史，重复同凭据退出幂等；已到期/禁用会话仍允许凭据撤销。未知凭据拒绝。不删除历史，不撤销其他session。
 - Authenticate使用一条SQL同时读取当前access、账户禁用、会话撤销和期限，无会话缓存。**撤销提交后开始的新认证失败；提交前已经取到授权快照的业务请求不能被事后追回。** 不声称Identity撤销与PlayerData写入构成跨服务事务。
 - Authenticate/Refresh将数据库连接池及行锁等待的单调耗时追加到领域时钟，防止以请求开始时间继续放行排队期间已过期的凭据。取消/提交失败不会被报告成成功；提交响应丢失仍可能结果不确定。
+- 游客内存、本地密码内存和Redis轮换同样只将本次存储等待的单调耗时追加到注入的领域时间，然后调用共同`TokenRotation.Apply`；不得用系统日期替换领域时钟。锁/查询等待后须重新检查Context，取消不得消费或撤销原凭据。
 - 登录创建会话时在事务内重新检查账户并取共享锁。禁用更新与创建/轮换互斥；后续认证实时复核禁用状态。
 
 驱动错误在仓储边界变为安全哨兵，保留取消/截止错误但不拼接SQL/参数。本实现没有日志调用，也没有启用pgx查询追踪；部署者仍须检查数据库服务端参数日志、代理与调用方日志配置，不得记录密码、原始令牌、密码哈希或完整认证报文。

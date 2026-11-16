@@ -72,6 +72,15 @@ function Get-DevelopmentStageArgumentProbe([string]$ScriptPath, [string]$Target,
         if (!$optionAssignment -or !$optionIf) { throw '真实CookFoundation缺少服务器策略参数装配。' }
         $additionalCookerOptions = & ([scriptblock]::Create($optionAssignment.Right.Extent.Text))
         . ([scriptblock]::Create($optionIf.Extent.Text))
+    } else {
+        $optionAssignment = $tree.Find({
+            param($node)
+            $node -is [Management.Automation.Language.AssignmentStatementAst] -and
+            $node.Left -is [Management.Automation.Language.VariableExpressionAst] -and
+            $node.Left.VariablePath.UserPath -eq 'cookOptions'
+        }, $true)
+        if (!$optionAssignment) { throw '真实CookFrontEndClient缺少客户端配置参数。' }
+        $cookOptions = & ([scriptblock]::Create($optionAssignment.Right.Extent.Text))
     }
     $arguments = @(& ([scriptblock]::Create($assignment.Right.Extent.Text)))
     . ([scriptblock]::Create($developmentIf.Extent.Text))
@@ -103,6 +112,7 @@ $argumentCases = @(
     @{ Entry='CookFrontEndClient.ps1'; Target='Client'; Config='VillageDevelopmentClient'; Development=$true },
     @{ Entry='CookFoundation.ps1'; Target='Client'; Config='FoundationStandalone'; Development=$false },
     @{ Entry='CookFoundation.ps1'; Target='Server'; Config='FoundationStandalone'; Development=$false },
+    @{ Entry='CookFoundation.ps1'; Target='Server'; Config='DedicatedServer'; Development=$false },
     @{ Entry='CookFoundation.ps1'; Target='Server'; Config='VillageServer'; Development=$false },
     @{ Entry='CookFoundation.ps1'; Target='Server'; Config='VillageDevelopmentServer'; Development=$true }
 )
@@ -112,7 +122,7 @@ if ($ArgumentsOnly) {
             $probe = Get-DevelopmentStageArgumentProbe (Join-Path $context.Workspace ("Build/Game/" + $case.Entry)) $case.Target $case.Config
             Assert-ServerCookPolicyArguments $probe $case.Target $case.Config
         }
-        Write-FoundationResult $context 0 '6组真实脚本参数装配通过；仅ArgumentsOnly，未执行UBT配置解析、Cook或Stage。' @{ ArgumentCases=@($results) }
+        Write-FoundationResult $context 0 '真实脚本参数装配通过；仅ArgumentsOnly，未执行UBT配置解析、Cook或Stage。' @{ ArgumentCases=@($results) }
         exit 0
     } catch { Write-FoundationResult $context 1 $_.Exception.Message; exit 1 }
 }
@@ -161,11 +171,12 @@ try {
         }
         $iniArguments = [string[]]@($probeArguments | Where-Object { $_ -like '-ini:Game:[[]Staging[]]:+AllowedConfigFiles=*' })
         $expectedStageFiles = @()
-        if ($case.Development) {
+        if ($case.Development -or $case.Config -eq 'VillageServer') {
             $expectedStageFiles = @(
                 "DivineBeastsArena/Config/Custom/$($case.Config)/DefaultGame.ini",
-                "DivineBeastsArena/Config/Custom/$($case.Config)/DefaultGameplayTags.ini"
+                "DivineBeastsArena/Config/Custom/$($case.Config)/DefaultEngine.ini"
             )
+            if ($case.Development) { $expectedStageFiles += "DivineBeastsArena/Config/Custom/$($case.Config)/DefaultGameplayTags.ini" }
         }
         if ($iniArguments.Count -ne $expectedStageFiles.Count) { throw "开发白名单数量错误：$($case.Entry)/$($case.Config)" }
         $receiptCustomConfig = if ($case.Target -eq 'Server') { 'DedicatedServer' } else { '' }
@@ -177,7 +188,7 @@ try {
         foreach ($expectedFile in $expectedStageFiles) {
             if ($expectedFile -notin $allowedFiles) { throw "真实UBT解析未保留白名单：$expectedFile" }
         }
-        $stagedDevelopmentFiles = @($allowedFiles | Where-Object { $_ -like 'DivineBeastsArena/Config/Custom/VillageDevelopment*/*' })
+        $stagedDevelopmentFiles = @($allowedFiles | Where-Object { $_ -like 'DivineBeastsArena/Config/Custom/Village*/*' })
         if ($stagedDevelopmentFiles.Count -ne $expectedStageFiles.Count) { throw '默认路径被注入开发配置或额外自定义文件。' }
         $developmentEnabled = $false
         $null = $stageHierarchy.GetBool('DivineBeasts.Abilities','bAllowDevelopmentAbilitySets',[ref]$developmentEnabled)
@@ -212,9 +223,42 @@ try {
         }
         $developmentStageCases += @{ Entry=$case.Entry; Target=$case.Target; CustomConfig=$case.Config; AllowedDevelopmentFiles=$stagedDevelopmentFiles; DefaultDevelopmentEnabled=$developmentEnabled }
     }
-    Write-FoundationResult $context 0 '3项既有数组合并、6组真实脚本参数/Stage白名单及3组服务器排除数组UBT回归通过；未执行Cook、Stage或游戏启动。' @{
+    # 使用锁定UBT真实合并默认层及三个服务器配置；客户端仍保留其扫描与视口类。
+    $profileChecks = @()
+    foreach ($profile in @('DedicatedServer','VillageServer','VillageDevelopmentServer','FrontEndClient')) {
+        $game = [UnrealBuildTool.ConfigCache]::ReadHierarchy([UnrealBuildTool.ConfigHierarchyType]::Game,
+            $project,[UnrealBuildTool.UnrealTargetPlatform]::Win64,$profile,[string[]]@(),$null,$null)
+        $engineIni = [UnrealBuildTool.ConfigCache]::ReadHierarchy([UnrealBuildTool.ConfigHierarchyType]::Engine,
+            $project,[UnrealBuildTool.UnrealTargetPlatform]::Win64,$profile,[string[]]@(),$null,$null)
+        $types = [Collections.Generic.List[string]]::new()
+        $null = $game.GetArray('/Script/Engine.AssetManagerSettings','PrimaryAssetTypesToScan',[ref]$types)
+        $inputData = ''; $viewport = ''
+        $null = $game.GetString('/Script/CommonInput.CommonInputSettings','InputData',[ref]$inputData)
+        $null = $engineIni.GetString('/Script/Engine.Engine','GameViewportClientClassName',[ref]$viewport)
+        $hasInventoryScan = @($types | Where-Object { $_ -match 'AssetBaseClass=/Script/GamePlatformInventoryClient\.' }).Count -gt 0
+        $client = $profile -eq 'FrontEndClient'
+        $expectedViewport = if ($client) { '/Script/CommonUI.CommonGameViewportClient' } else { '/Script/Engine.GameViewportClient' }
+        $expectedInputData = if ($client) { '/GamePlatformUI/Input/BP_GP_UIInputData.BP_GP_UIInputData_C' } else { 'None' }
+        if ($hasInventoryScan -ne $client -or $viewport -cne $expectedViewport -or $inputData -cne $expectedInputData -or
+            -not @($types | Where-Object { $_ -match 'AssetBaseClass=/Script/DivineBeastsCharactersRuntime\.' }).Count) {
+            throw "真实合并后配置错配：$profile。Viewport=$viewport；InputData=$inputData；InventoryScan=$hasInventoryScan"
+        }
+        $profileChecks += @{ Profile=$profile; Viewport=$viewport; InputData=$inputData; InventoryScan=$hasInventoryScan }
+    }
+    Import-Module (Join-Path $context.Workspace 'Build/Game/FoundationTargetAssembly.psm1') -Force
+    $noArenaOptions = [string[]]@(Get-FoundationWithoutArenaCookArguments | Where-Object { $_.StartsWith('-ini:Game:') })
+    $noArenaGame = [UnrealBuildTool.ConfigCache]::ReadHierarchy([UnrealBuildTool.ConfigHierarchyType]::Game,
+        $project,[UnrealBuildTool.UnrealTargetPlatform]::Win64,'FrontEndClient',$noArenaOptions,$null,$null)
+    $excludedScans = [Collections.Generic.List[string]]::new()
+    $excludedCook = [Collections.Generic.List[string]]::new()
+    $null = $noArenaGame.GetArray('/Script/Engine.AssetManagerSettings','DirectoriesToExclude',[ref]$excludedScans)
+    $null = $noArenaGame.GetArray($section,'DirectoriesToNeverCook',[ref]$excludedCook)
+    $arenaRoot = '(Path="/DBAWorldPack_MainArena")'
+    if ($arenaRoot -cnotin $excludedScans -or $arenaRoot -cnotin $excludedCook) { throw 'UBT未应用无竞技Cook和扫描排除。' }
+    Write-FoundationResult $context 0 '真实UBT配置合并、Stage白名单、服务端有效配置及无竞技扫描覆盖通过。' @{
         StandardExcluded=@($normalExcluded); DevelopmentExcluded=@($devExcluded); DevelopmentIncluded=@($devIncluded)
         SentinelExcluded=@($sentinelExcluded); DevelopmentStageCases=$developmentStageCases; ServerCookCases=$serverCookCases
+        EffectivePresentationProfiles=$profileChecks; WithoutArenaCookAndScanExcluded=$true
     }
     exit 0
 } catch { Write-FoundationResult $context 1 $_.Exception.Message; exit 1 }

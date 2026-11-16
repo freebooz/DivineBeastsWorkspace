@@ -27,7 +27,19 @@ const TArray<TPair<FName, float>>& FGamePlatformSurfaceAssetContract::GetRequire
         { GamePlatformSurfaceParameters::GlobalPuddleAmount, 0.0f },
         { GamePlatformSurfaceParameters::RainIntensity, 0.0f },
         { GamePlatformSurfaceParameters::SnowIntensity, 0.0f },
-        { GamePlatformSurfaceParameters::TemperatureCelsius, 20.0f }
+        { GamePlatformSurfaceParameters::TemperatureCelsius, 20.0f },
+        { GamePlatformSurfaceParameters::GlobalWindSeed, 2026.0f }
+    };
+    return Parameters;
+}
+
+const TArray<TPair<FName, FLinearColor>>& FGamePlatformSurfaceAssetContract::GetRequiredVectorParameters()
+{
+    static const TArray<TPair<FName, FLinearColor>> Parameters =
+    {
+        { GamePlatformSurfaceParameters::GlobalWindFrom, FLinearColor(0, 0, 0, 0) },
+        { GamePlatformSurfaceParameters::GlobalWindTo, FLinearColor(0, 0, 0, 0) },
+        { GamePlatformSurfaceParameters::GlobalWindTiming, FLinearColor(0, 0, 0, 0) }
     };
     return Parameters;
 }
@@ -85,7 +97,7 @@ bool FGamePlatformSurfaceAssetContract::ValidateGlobalParameterCollection(
     for (const TPair<FName, float>& Pair : Required)
     {
         // UE5.8 的 GetScalarParameterIndexByName 没有 ENGINE_API 导出，跨模块调用会产生链接错误。
-        // 这里直接遍历公开参数数组；参数数量固定为8，编辑器校验路径的线性扫描成本可以忽略。
+        // 直接遍历公开参数数组，避免调用未导出的引擎符号；不影响运行时材质更新。
         const FCollectionScalarParameter* FoundParameter = Collection.ScalarParameters.FindByPredicate(
             [&Pair](const FCollectionScalarParameter& Candidate)
             {
@@ -108,10 +120,21 @@ bool FGamePlatformSurfaceAssetContract::ValidateGlobalParameterCollection(
         }
     }
 
-    if (!Collection.VectorParameters.IsEmpty())
+    const auto& Vectors = GetRequiredVectorParameters();
+    if (Collection.VectorParameters.Num() != Vectors.Num())
     {
-        OutError = TEXT("一期Surface全局MPC不允许项目私自加入Vector参数；需要扩展时先更新平台契约和迁移说明。");
+        OutError = TEXT("Surface全局MPC必须包含统一风From/To/Timing三个向量。");
         return false;
+    }
+    for (const auto& Pair : Vectors)
+    {
+        const auto* Found = Collection.VectorParameters.FindByPredicate(
+            [&Pair](const FCollectionVectorParameter& Value) { return Value.ParameterName == Pair.Key; });
+        if (!Found || !Found->DefaultValue.Equals(Pair.Value))
+        {
+            OutError = FString::Printf(TEXT("统一风向量参数%s缺失或默认值不符。"), *Pair.Key.ToString());
+            return false;
+        }
     }
 
     return true;

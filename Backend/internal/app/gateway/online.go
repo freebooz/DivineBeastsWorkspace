@@ -50,7 +50,7 @@ func OnlineErrorStatus(err error) (int, string) {
 	}
 	switch code {
 	case "MATCH_WORLD_REQUIRED", "MATCH_COMMAND_REQUIRED", "PLAYER_NOT_IN_WORLD",
-		"ARENA_RECORD_NOT_FOUND", "ARENA_STATUS_UNKNOWN", "ARENA_PLAYERS_REMAIN", "ARENA_NOT_TERMINAL", "ARENA_OPERATION_TERMINAL", "ARENA_SERVER_UNAVAILABLE", "ARENA_IDEMPOTENCY_CONFLICT", "ARENA_SERVER_ALREADY_BOUND", "ARENA_SERVER_BOOT_MISMATCH":
+		"ARENA_RECORD_NOT_FOUND", "ARENA_STATUS_UNKNOWN", "ARENA_PLAYERS_REMAIN", "ARENA_NOT_TERMINAL", "ARENA_OPERATION_TERMINAL", "ARENA_SERVER_UNAVAILABLE", "ARENA_IDEMPOTENCY_CONFLICT", "ARENA_SERVER_ALREADY_BOUND", "ARENA_SERVER_BOOT_MISMATCH", "WORLD_MATCH_MIGRATION_REQUIRED":
 		return 409, string(code)
 	case "MATCH_COMMAND_INVALID", "MATCH_MODE_INVALID", "MATCH_PARTY_TOO_LARGE":
 		return 400, string(code)
@@ -61,7 +61,7 @@ func OnlineErrorStatus(err error) (int, string) {
 	case "MATCH_QUEUE_CAPACITY":
 		return 429, string(code)
 	case "MATCH_REVISION_CONFLICT", "MATCH_IDEMPOTENCY_CONFLICT", "MATCH_PHASE_CONFLICT", "MATCH_DEADLINE_EXPIRED",
-		"MATCH_PLAYER_RESERVED", "MATCH_PARTY_REQUIRED", "MATCH_PARTY_NOT_READY", "MATCH_CHARACTER_REQUIRED", "PARTY_READY_EXPIRED":
+		"MATCH_PLAYER_RESERVED", "MATCH_PARTY_REQUIRED", "MATCH_PARTY_NOT_READY", "MATCH_CHARACTER_REQUIRED", "PARTY_READY_EXPIRED", "MATCH_OPERATION_BUSY", "MATCH_MIGRATION_EXPIRED":
 		return 409, string(code)
 	case "PARTY_NOT_LEADER", "PARTY_NOT_MEMBER", "PARTY_REQUEST_FORBIDDEN":
 		return 403, string(code)
@@ -103,6 +103,10 @@ func OnlineErrorStatus(err error) (int, string) {
 func writeOnlineError(w http.ResponseWriter, err error) {
 	status, code := OnlineErrorStatus(err)
 	w.Header().Set("Cache-Control", "no-store")
+	if code == "MATCH_OPERATION_BUSY" {
+		writeJSON(w, status, map[string]any{"errorCode": code, "message": "请求未完成，请按错误码处理", "retryable": true})
+		return
+	}
 	writeAPIError(w, status, code, "请求未完成，请按错误码处理")
 }
 

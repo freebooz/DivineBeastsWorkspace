@@ -7,6 +7,44 @@
 #include "NiagaraWorldManager.h"
 // 把UWorld转为UObject弱引用需要完整继承定义，不能依赖Unity/PCH间接包含。
 #include "Engine/World.h"
+#include "Execution/GamePlatformVFXNiagaraExecutor.h"
+
+int32 FGamePlatformVFXInstanceRegistry::UpdateProjectileMotionParameters(const TFunction<bool()>& IsWorldCurrent)
+{
+    TArray<FGamePlatformVFXHandle,TInlineAllocator<16>> Handles;
+    for(const auto& Pair:Records)
+        if(Pair.Value.State==EGamePlatformVFXInstanceState::Active && Pair.Value.bMotionParameters)Handles.Add(Pair.Value.Handle);
+    for(const auto& Handle:Handles)
+    {
+        const auto* Definition=GetDefinition(Handle);auto* Component=GetComponent(Handle);
+        if(!Definition || Definition->GetBehavior()!=EGamePlatformVFXBehavior::Projectile ||
+            !IsValid(Component) || FindByComponent(Component)!=Handle)continue;
+        const TWeakObjectPtr<UNiagaraComponent> WeakComponent(Component);
+        const auto StillOwned=[this,Handle,WeakComponent,&IsWorldCurrent]()
+        {return (!IsWorldCurrent || IsWorldCurrent()) && OwnsHandle(Handle) && !IsStopping(Handle) &&
+            WeakComponent.IsValid() && GetComponent(Handle)==WeakComponent.Get() && FindByComponent(WeakComponent.Get())==Handle;};
+        const bool bBound=FGamePlatformVFXNiagaraExecutor::UpdateProjectileMotion(*Component,StillOwned);
+        if(StillOwned())SetMotionBindingEnabled(Handle,bBound);
+    }
+    // 外部查询可同步创建新Owner；按查询后的唯一账本计数，不能因旧快照为空撤掉新实例的世界上传。
+    int32 Count=0;
+    for(auto& Pair:Records)
+    {
+        auto& Record=Pair.Value;
+        if(Record.State!=EGamePlatformVFXInstanceState::Active || !Record.bMotionParameters)continue;
+        auto* Component=Record.Component.Get();
+        if(IsValid(Component) && FindByComponent(Component)==Record.Handle)++Count;
+        else Record.bMotionParameters=false;
+    }
+    return Count;
+}
+
+bool FGamePlatformVFXInstanceRegistry::SetMotionBindingEnabled(const FGamePlatformVFXHandle& Handle,bool bEnabled)
+{
+    auto* Record=Records.Find(Handle.Id);
+    if(!Record || Record->Handle!=Handle || Record->State!=EGamePlatformVFXInstanceState::Active)return false;
+    Record->bMotionParameters=bEnabled;return true;
+}
 
 FGamePlatformVFXHandle FGamePlatformVFXInstanceRegistry::Reserve(UWorld* World)
 {
@@ -141,6 +179,28 @@ bool FGamePlatformVFXInstanceRegistry::Stop(
     }
 
     return true;
+}
+
+bool FGamePlatformVFXInstanceRegistry::BeginStopping(const FGamePlatformVFXHandle& Handle)
+{
+    auto* Record = Records.Find(Handle.Id);
+    if (!Record || Record->Handle != Handle || Record->State != EGamePlatformVFXInstanceState::Active) return false;
+    const auto* Owner = ComponentHandles.Find(Record->Component.Get());
+    if (!Owner || *Owner != Handle) return false;
+    Record->State = EGamePlatformVFXInstanceState::Stopping;
+    return true;
+}
+
+bool FGamePlatformVFXInstanceRegistry::IsStopping(const FGamePlatformVFXHandle& Handle) const
+{
+    const auto* Record = Records.Find(Handle.Id);
+    return Record && Record->Handle == Handle && Record->State == EGamePlatformVFXInstanceState::Stopping;
+}
+
+UGamePlatformVFXDefinition* FGamePlatformVFXInstanceRegistry::GetDefinition(const FGamePlatformVFXHandle& Handle) const
+{
+    const auto* Record = Records.Find(Handle.Id);
+    return Record && Record->Handle == Handle ? Record->Definition.Get() : nullptr;
 }
 
 bool FGamePlatformVFXInstanceRegistry::IsActive(

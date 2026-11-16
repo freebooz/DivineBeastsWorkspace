@@ -18,6 +18,7 @@
 
 class UGamePlatformPresentationClientSubsystem;
 class UGamePlatformCombatComponent;
+class USkeletalMeshComponent;
 class UWorld;struct FGamePlatformWeatherSnapshot;
 class AGamePlatformCombatProjectile;
 struct FGamePlatformCombatProjectileFacts;
@@ -50,6 +51,8 @@ class DIVINEBEASTSPRESENTATIONCLIENT_API UDivineBeastsPresentationClientSubsyste
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
+    /** 旅行后本地控制器绑定可能迟于PostLoadMap；事件驱动补齐村庄音乐首次装载。 */
+    virtual void PlayerControllerChanged(APlayerController* NewPlayerController) override;
 
     bool UpdateProjectContext(
         const FDivineBeastsPresentationProjectContext& Context,
@@ -77,6 +80,30 @@ public:
     /** 与VFX独立预载天气SFX内容包；缺音频不阻断视觉及权威天气。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|Weather")
     FDivineBeastsPresentationContentPackHandle ActivateWeatherAudio(FString& OutError);
+    /** 已经注册且加载完成时播放已审核UI音效；客户端失败只影响表现。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|Audio")
+    bool PlayStarterUISound(FName ActionId);
+    /** 第二批客户端音频按分类预载；返回Loading句柄不代表已经听到声音。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|AudioLibrary")
+    FDivineBeastsPresentationContentPackHandle ActivateAudioLibraryCategory(FName Category, FString& OutError);
+    /** 客户端审核界面查询分类预载终态；Active时允许提交声音。 */
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|AudioLibrary")
+    EDivineBeastsPresentationContentPackState GetAudioLibraryCategoryState(FName Category) const;
+    /** 使用已登记ClipId（例如Spell.Healing）播放一次；不接受任意uasset路径。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|AudioLibrary")
+    bool PlayAudioLibraryClip(FName ClipId, FVector Location);
+    /** 同一服务器确认事实的SFX使用稳定OccurrenceId，复制重放时不得叠加第二段声音。 */
+    bool PlayAudioLibraryFactClip(FName ClipId, FVector Location, const FGuid& OccurrenceId);
+    /** 客户端脚步同一Mesh/足底在85毫秒内只提交一次；状态归本地玩家、随世界/账号释放。 */
+    bool PlayAudioLibraryFootstepClip(FName ClipId, FVector Location, USkeletalMeshComponent* MeshComp, FName FootSocketName);
+
+    /** 真实世界声源锚点循环（仅允许水流A/B），调用方负责在Anchor退出时停止。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|AudioLibrary")
+    bool StartAudioLibraryLoop(FName AnchorId, FName ClipId, FVector Location);
+    /** 停止指定锚点所拥有的循环声音，不会取消其他锚点声音。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|AudioLibrary")
+    bool StopAudioLibraryLoop(FName AnchorId);
+
 
     /** 角色选择/创建共用的一份场景持续落叶；真资产异步激活成功后才播放。返回true表示受理。 */
     bool StartFrontEndFoliage(FName StyleId, const FVector& WorldOrigin,
@@ -171,6 +198,7 @@ public:
 private:
     friend class FDivineBeastsPresentationActivationRegressionTest;
     friend class FDivineBeastsDevelopmentMagicLifecycleTest;
+    friend class FDivineBeastsStarterSpellActivationTest;
     friend class FDivineBeastsHealingPresentationTest;
     // 默认村庄鸟群回归只核验本地意图与世界清理；不绕过真实内容资格或假定GPU播放。
     friend class FDivineBeastsVillageDefaultBirdsTest;
@@ -242,6 +270,18 @@ private:
 
     void RegisterProjectState();
     void BeginDefaultCatalogPreload();
+    /** 在客户端场景启动本世界的音乐/环境以及UI/法术音效定义预载，失败安全静音。 */
+    void EnsureStarterAudioForWorld(UWorld* World);
+    void StopStarterAudioForWorld();
+    void SubmitStarterAudioForWorld();
+    /** 根据复制法术阶段独立提交音效；返回平台是否受理，不依赖VFX结果。 */
+    bool PlayStarterSpellSound(FName SpellName, bool bImpact, const FVector& Location);
+    bool SubmitStarterOneShot(const TCHAR* Semantic, FName ContextId, const FVector& Location);
+    /** 客户端进世界时按场景预热UI/法术/地表等音效；按World作用域清理，零Tick。 */
+    void EnsureAudioLibraryForWorld(UWorld* World);
+    void StopAudioLibraryForWorld();
+    /** 只允许在已激活的分类目录中解析特定声音标签，不暴露声音资产路径。 */
+    bool ResolveAudioLibraryClip(FName ClipId, FGameplayTag& OutSemantic) const;
     void UnregisterProjectState();
     void HandleWorldCleanup(
         UWorld* World,
@@ -340,6 +380,30 @@ private:
     FDivineBeastsPresentationContentPackHandle WeatherAudioHandle;
     bool bWeatherVisualAttempted = false;
     bool bWeatherAudioAttempted = false;
+    /** 首批客户端音频按播放领域分包预载，UI/技能/音乐/环境任何单类失败不相互阻塞。 */
+    FDivineBeastsPresentationContentPackHandle StarterAudioPack; // UI按钮三音效
+    FDivineBeastsPresentationContentPackHandle StarterSpellPack; // 标准施法/命中音效包，条目由项目目录唯一持有
+    FDivineBeastsPresentationContentPackHandle StarterMusicPack; // 当前世界一段背景音乐
+    FDivineBeastsPresentationContentPackHandle StarterAmbiencePack; // 新手村森林氛围
+    TWeakObjectPtr<UWorld> StarterAudioWorld;
+    FGuid StarterMusicRequestId;
+    FGameplayTag StarterMusicTag;
+    FGuid StarterAmbienceRequestId;
+
+    /** 第二批音频库分类内容包：最多八类，全属于当前客户端World，非项目外资源池。 */
+    TWeakObjectPtr<UWorld> AudioLibraryWorld;
+    TMap<FName, FDivineBeastsPresentationContentPackHandle> AudioLibraryCategories;
+    struct FAudioLibraryLoop
+    {
+        FGuid RequestId;
+        FName ClipId = NAME_None;
+        FVector Location = FVector::ZeroVector;
+        FGameplayTag SemanticTag;
+    };
+    /** 仅由明确场景锚点身份管理的可取消声音；Owner退出必须Stop，不扫描世界或逐帧轮询。 */
+    TMap<FName, FAudioLibraryLoop> AudioLibraryLoops;
+    /** 短期脚步通知去重：Weak Mesh避免保持角色存活，限制最大条目数，离开世界完整清空。 */
+    TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<FName, double>> RecentFootsteps;
 
     FDivineBeastsPresentationLogicalPreloadRequested LogicalPreloadRequested;
     FDivineBeastsPresentationLogicalPreloadCancelled LogicalPreloadCancelled;
@@ -352,6 +416,8 @@ private:
         FGuid FlightRequestId;
         FName StyleId = NAME_None;
         bool bImpactSubmitted = false;
+        bool bFlightAudioSubmitted = false;
+        bool bImpactAudioSubmitted = false;
         bool bResidueSubmitted = false; // 仅寒冰箭地面残霜成功播放一次，不参与权威碰撞。
         bool bFlightEnded = false;
     };

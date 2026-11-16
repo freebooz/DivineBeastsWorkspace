@@ -5,6 +5,8 @@
 class FJsonObject;
 namespace DivineBeasts::Demo
 {
+    /** 私有来源文件读取：拒绝链接、缺失、空、超64MiB或读取期间变化；不赋予模块来源资格。 */
+    FString HashRuntimeOriginFile(const FString& Path);
     /** 游戏线程解析固定启动身份/内容摘要及禁热重载标志；失败清空输出，不执行任意参数或文件路径。 */
     FGamePlatformResult ParseRuntimeOriginArguments(const TCHAR* Arguments, FGuid& OutLaunchId, FString& OutContentHash);
     /** 游戏线程观察实际已加载模块文件路径/摘要，读取失败保留具名诊断但不伪造证明。

@@ -366,3 +366,22 @@ void UDivineBeastsCharacterCreateScreen::RotatePreviewFromDrag(float DeltaYawDeg
 {
     if (auto* VM = GetCharacterCreateViewModel(); VM && !VM->GetStateRef().bBusy) { VM->RotateCharacterPreview(DeltaYawDegrees); }
 }
+
+// 滚轮镜头调整只通过现有ViewModel（视图模型）命令链提交，忙碌页面不接受额外交互。
+void UDivineBeastsCharacterCreateScreen::AdjustPreviewCameraDistanceFromWheel(
+    float DeltaCentimeters)
+{
+    if (auto* VM = GetCharacterCreateViewModel(); VM && !VM->GetStateRef().bBusy)
+    {
+        VM->AdjustCharacterPreviewCameraDistance(DeltaCentimeters);
+    }
+}
+
+void UDivineBeastsCharacterCreateScreen::AdjustPreviewCameraFocalLengthFromWheel(
+    float DeltaMillimeters)
+{
+    if (auto* VM = GetCharacterCreateViewModel(); VM && !VM->GetStateRef().bBusy)
+    {
+        VM->AdjustCharacterPreviewCameraFocalLength(DeltaMillimeters);
+    }
+}

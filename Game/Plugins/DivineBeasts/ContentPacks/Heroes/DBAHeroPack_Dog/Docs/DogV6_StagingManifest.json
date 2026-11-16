@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "heroId": "Hero.Zodiac.Dog",
+  "sourceKind": "RECOMPOSED_FROM_EXISTING_V1_1254",
+  "humanArtApproved": false,
+  "nativeUEAssetsCreated": false,
+  "skills": [
+    {
+      "abilityId": "dba.ability.dog_eight_guardian_bite@1",
+      "slotId": "Primary",
+      "v6NameZh": "天犬咬",
+      "files": {
+        "runtime48": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S01_GuardianBite_V6.png",
+          "sha256": "a11191c0d8162b791fad3e676c3c866e6b95b94a1e5f9cdf14f6d742ca369955"
+        },
+        "audit64": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S01_GuardianBite_V6_64x64.png",
+          "sha256": "fe3927f4bb2ad0e1fe0654d2d4f4ddfcf9607d218fd3761ee9bf1b0abe7c3aed"
+        },
+        "master1024": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S01_GuardianBite_V6_Master_1024.png",
+          "sha256": "3b0a6418743abe05565cb6945a5e4b54bfa574ce54d689c86afa01f5b3ab8831"
+        }
+      }
+    },
+    {
+      "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
+      "slotId": "Slot1",
+      "v6NameZh": "反咬",
+      "files": {
+        "runtime48": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S02_CounterBite_V6.png",
+          "sha256": "e9964ac606ce3021a58e8b376cdab09570bf32de3b5a95fed44b61467b35bed9"
+        },
+        "audit64": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S02_CounterBite_V6_64x64.png",
+          "sha256": "80815ecdc6d0dea019c260e257d4250538830760607179a0bdb4df43488b1c7a"
+        },
+        "master1024": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S02_CounterBite_V6_Master_1024.png",
+          "sha256": "7d5a94777812ba93a1579e4d37c5b49d25c2202ff1f82b4d7f4cd68d22bc929e"
+        }
+      }
+    },
+    {
+      "abilityId": "dba.ability.dog_eight_spirit_rake@1",
+      "slotId": "Slot2",
+      "v6NameZh": "双灵爪",
+      "files": {
+        "runtime48": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S03_TwinSpiritClaws_V6.png",
+          "sha256": "200d32b2b934b243f1f4ce16eddae3405a102212d98c2ede337c85fc2725902e"
+        },
+        "audit64": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S03_TwinSpiritClaws_V6_64x64.png",
+          "sha256": "f6f6546e865e020259324a46bc25b39038da6e344da199ce765cdeb534680862"
+        },
+        "master1024": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S03_TwinSpiritClaws_V6_Master_1024.png",
+          "sha256": "58009638683f935ecd2539e992a0c2cf0a8d931b45dfd04b38b6be10fe81e744"
+        }
+      }
+    },
+    {
+      "abilityId": "dba.ability.dog_eight_oath_guardian@1",
+      "slotId": "Slot4",
+      "v6NameZh": "天门守阙",
+      "files": {
+        "runtime48": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S04_CelestialGateWard_V6.png",
+          "sha256": "d549b1e2bae2b03a07b9736f1b23ca6b473aeb780299aa0c5d55ec3977f4eb70"
+        },
+        "audit64": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S04_CelestialGateWard_V6_64x64.png",
+          "sha256": "68fe41fef1542855fca07eae159bf1c2d2193c667bd08bc9de147a8a24c27bb1"
+        },
+        "master1024": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S04_CelestialGateWard_V6_Master_1024.png",
+          "sha256": "dbd1eeb8599280a6b666a7700c7b1458266a67e508e6f436bcb7c11e59a98564"
+        }
+      }
+    },
+    {
+      "abilityId": "dba.ability.dog_eight_hound_leap@1",
+      "slotId": "Slot3",
+      "v6NameZh": "援步",
+      "files": {
+        "runtime48": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S05_RescueStep_V6.png",
+          "sha256": "8bb65146445e5d08e01f1bad9e48c02ddeb677b45a01a24398d484cd99a9023d"
+        },
+        "audit64": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S05_RescueStep_V6_64x64.png",
+          "sha256": "2632eeddcd0a9719c3a3abd55a02d0a3cc75aaf65f1856ad54c91977ad9d3188"
+        },
+        "master1024": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S05_RescueStep_V6_Master_1024.png",
+          "sha256": "23fc352822c9fe68683f07a197670fb3b502bc495af2ad34b3bd2eed5a405aaf"
+        }
+      }
+    },
+    {
+      "abilityId": "dba.ability.dog_eight_guardian_ring@1",
+      "slotId": "Slot5",
+      "v6NameZh": "护主",
+      "files": {
+        "runtime48": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S06_ProtectAlly_V6.png",
+          "sha256": "7f59e7c5250dda8845d4497b21b5bf223f8467daf39ee363042d0f01ec522090"
+        },
+        "audit64": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S06_ProtectAlly_V6_64x64.png",
+          "sha256": "7915a06443975b8ba8e15893d447a7ae199c2a89a89829bd126f9ce340e36ccc"
+        },
+        "master1024": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S06_ProtectAlly_V6_Master_1024.png",
+          "sha256": "29ef67c7112ec54e47ebfc293a565cc89ad752418b4e462ec9fe2cbbb58e0812"
+        }
+      }
+    },
+    {
+      "abilityId": "dba.ability.dog_eight_tracking_slow@1",
+      "slotId": "Slot6",
+      "v6NameZh": "拦门",
+      "files": {
+        "runtime48": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S07_ChargeGateBlock_V6.png",
+          "sha256": "40170a3f1fb73a1c62269ab4897df73aca3625ac030e633d0e1d2ca4564a75c8"
+        },
+        "audit64": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S07_ChargeGateBlock_V6_64x64.png",
+          "sha256": "9ecdfc8c80f4176cd98a543ffa986f324529aa9391c04068eb4e9fa9c1eb0be9"
+        },
+        "master1024": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S07_ChargeGateBlock_V6_Master_1024.png",
+          "sha256": "bad000cd78c6eeaa0b92dfeda4945bd6fc10e2d316b224299d3b9d9e003f939a"
+        }
+      }
+    },
+    {
+      "abilityId": "dba.ability.dog_eight_loyal_heal@1",
+      "slotId": "Slot7",
+      "v6NameZh": "誓约",
+      "files": {
+        "runtime48": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S08_GuardianOath_V6.png",
+          "sha256": "2c839970a477ccc88cf664cd2451d081fc24b65702ba73f717a4bd79954de0e6"
+        },
+        "audit64": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S08_GuardianOath_V6_64x64.png",
+          "sha256": "99087a9901748b2848d4fc23b176c10a7deff580cbfff52df0475a45ddbb6053"
+        },
+        "master1024": {
+          "relativePath": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S08_GuardianOath_V6_Master_1024.png",
+          "sha256": "985fcba981909723288b9ab8c53be4bc2991c6d03a2d06faac05234e04208f87"
+        }
+      }
+    }
+  ]
+}

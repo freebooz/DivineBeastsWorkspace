@@ -152,6 +152,32 @@ void UDivineBeastsUIViewModel::SetCharacterPreviewCameraDistance(
     }
 }
 
+void UDivineBeastsUIViewModel::AdjustCharacterPreviewCameraDistance(
+    float DeltaCentimeters)
+{
+    ULocalPlayer* LocalPlayer = Owner ? Owner->GetLocalPlayer() : nullptr;
+    if (UDivineBeastsCharacterPreviewSubsystem* Preview =
+            LocalPlayer
+                ? LocalPlayer->GetSubsystem<UDivineBeastsCharacterPreviewSubsystem>()
+                : nullptr)
+    {
+        Preview->AdjustPreviewCameraDistance(DeltaCentimeters);
+    }
+}
+
+void UDivineBeastsUIViewModel::AdjustCharacterPreviewCameraFocalLength(
+    float DeltaMillimeters)
+{
+    ULocalPlayer* LocalPlayer = Owner ? Owner->GetLocalPlayer() : nullptr;
+    if (UDivineBeastsCharacterPreviewSubsystem* Preview =
+            LocalPlayer
+                ? LocalPlayer->GetSubsystem<UDivineBeastsCharacterPreviewSubsystem>()
+                : nullptr)
+    {
+        Preview->AdjustPreviewCameraFocalLength(DeltaMillimeters);
+    }
+}
+
 FGuid UDivineBeastsUIViewModel::RequestWorld(
     FName DesiredExperienceId,
     const FString& PreferredRegion)

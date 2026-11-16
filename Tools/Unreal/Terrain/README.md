@@ -8,6 +8,24 @@
 - 新增 Tools/Unreal/Terrain/AuthorVillageLandscapeGrassUE58.py，负责创建 Village 两份原生 LandscapeGrassType，并仅向已有 LandscapeBridge 材质追加 LS_Grass 权重驱动的 LandscapeGrassOutput；保留原地表及天气节点，脚本增量且不覆盖人工 Mesh 选择。
 - GrassType 位于 DBAWorldPack_Village/Terrain/LandscapeGrass/GrassTypes；当前 Grass Mesh 初始空置，需用户在 UE 编辑器中人工选择。正式关卡未由脚本重新绘制图层、修改碰撞或高度。操作与验收：Docs/Implementation/LandscapeGrassUE58_20261028.md。
 - 原生资产创建、表达式保存、客户端/服务器 Cook 与实际植被生成各自独立判定，不得将静态脚本存在冒充实际UE验收。
+2026-10-31当前路径：Village绑定的12项审核母材质/实例归`/DBAWorldPack_Village/Development/Terrain/Production10`，十张公共色彩图归`/DBAPresentationPack_Core/Textures/Terrain/Production10`；作者和验证器已同步。已完成的Dirt单图恢复脚本归`Tools/Archive/Resources/20261031`并拒绝执行，不能重放旧9/10阶段。下文保留历史制作事实；现行状态见`Docs/Implementation/Resources/ResourceOwnershipDelivery_20261031.md`。
+
+## 2026-10-18 全局配色V3.0十层扫描地形非破坏性改造
+
+- 依据[唯一V3.0色彩主规范](../../../Docs/SSLMEngineeringStandard.md#art)和[地形实物审查报告](../../../Docs/Implementation/TerrainColorV3ComplianceReview_20261018.md)，十层初始CC0扫描PBR基础色经分析存在偏黄、偏暗和道路辨识度不足等问题。
+- `TerrainV3ColorMapping.json`（参考色语义及十层校色强度）、`GenerateTerrainV3ColorSource.ps1`（线性空间源图派生）、`AuthorTerrainV3ColorUE58.py`（独立UE原生Texture2D/Material/MI及审核地图制作回读）均不覆盖正式Village与原始40份扫描PBR图。
+- 新图位于`DBAPresentationPack_Core/SourceArt/Terrain/V3`（项目客户端V3校色源），真实10张Texture2D与1母材质及4 MI位于同内容包的`Content/Materials/Terrain/`，独立审图为`/Game/Development/Terrain/Maps/L_DBA_TerrainColorV3Review`。平台8函数调用、Normal/ORM/Height不改动。
+- `Tests/Assets/TestTerrainColorV3Policy.py`（10层源图及15项UE资产身份的静态门禁）通过；真实UE5.8编辑器冷重载、3阶段新地图回读通过。`CaptureTerrainColorV3GPUReview.py`（既有真实GPU采集器的V3参数适配）生成六幅截图，但`Tests/Assets/TestTerrainColorV3GPU.ps1`实际像素检测判定**六张均为黑帧、另有五种天气完全重复**，D3D12画面审核严格失败。截图需修复渲染路径并重跑，不能将存在的图片冒称美术签收。
+- 人工对照图为`Saved/ArtReview/TerrainColorV3/TerrainV3_BeforeAfterReview.png`；历史异常碎石校色版归档于`FirstPass`；真实客户端镜头、RVT/PCG融合、GPU毫秒、Cook剥离、人工签收尚未完成。主工程正式新手村共享地图仍使用原中性材质。
+
+## 2026-10-17 十层地形与平台材质函数接入
+
+- `AuthorTerrainProductionMaterial.py`（扫描PBR母材质作者）保持默认原正式母材质不变，只有显式`TERRAIN_FUNCTION_INTEGRATION=1`时创建`M_DBA_Terrain_Production10_FunctionIntegrated`及`MI_DBA_Terrain_Production10_FunctionIntegrated_Review`（全新的客户端候选）。新增8处真实MaterialFunctionCall（函数调用节点），涉及平台宏观颜色、距离细节、坡度、海拔、生态遮罩与3次四通道PBR覆盖。
+- `RunTerrainFunctionCompositionUE58.py`（两资源作者顺序执行器）：`TERRAIN_FUNCTION_COMPOSITION_MODE=inspect/apply/verify`；平台MF与候选资产在UE5.8实际apply保存通过，日志`Game/Saved/Validation/TerrainFunctionComposition_20261017/AuthorApply.log`，原生候选291表达式和8函数调用已回读。
+- `AuthorTerrainFunctionReviewMapUE58.py`（独立审核地图作者）已按`copy`→`apply`→`verify`三个独立UE5.8进程生成、绑定和冷重载`L_DBA_TerrainFunctionReview.umap`，正式Village不变。同进程复制再加载会触发UE5.8世界对象未回收Fatal，已采用独立进程解决。
+- `AuthorTerrainProductionQualityProfiles.py`（高/中/低三档材质MI作者）与`RunTerrainFunctionReviewUE58.py`（独立回读入口）已完成函数化候选三档UE原生保存及冷重载，日志`Game/Saved/Validation/TerrainFunctionComposition_20261017/QualityApplyScalarSafe.log`与`FunctionColdVerify.log`。由于UE5.8当前静态开关写入API失败，候选三档全部继承HeightBlend=false，仅实现可读回的视觉标量差异，未证明性能提升或高度混合质量切换。
+- `Tests/Architecture/TestTerrainMaterialFunctionIntegration.py`（源合同检查）与`Docs/Implementation/TerrainMaterialFunctionIntegration_20261017.md`（实施及未完成门禁）提供检查依据。所有候选仍不得被正式`L_Village_Start`或专服Cook硬引用。
+
 
 ## 2026-10-16 十层PBR真实原生实施增量
 

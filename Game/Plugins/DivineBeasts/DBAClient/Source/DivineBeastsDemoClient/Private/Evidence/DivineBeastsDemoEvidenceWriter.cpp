@@ -6,7 +6,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 #include "HAL/PlatformFileManager.h"
-#include "HAL/PlatformMisc.h"
+#include "Hash/GamePlatformSHA256.h"
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformProperties.h"
 #include "HAL/FileManager.h"
@@ -57,8 +57,8 @@ bool SaveJson(const TSharedRef<FJsonObject>& Object, const FString& Path)
 FString FileHash(const FString& Path)
 {
     TArray<uint8> Bytes; if (!FFileHelper::LoadFileToArray(Bytes, *Path)) return FString();
-    FSHA256Signature Signature;
-    return FPlatformMisc::GetSHA256Signature(Bytes.GetData(), Bytes.Num(), Signature) ? Signature.ToString().ToLower() : FString();
+    FString Hash;
+    return GamePlatform::Hash::TrySha256Hex(Bytes.GetData(), Bytes.Num(), Hash) ? Hash : FString();
 }
 }
 bool WriteRunEvidence(const FDivineBeastsDemoRunEvidence& Input, FString& OutIndex, FString& OutError)
@@ -99,6 +99,10 @@ bool WriteRunEvidence(const FDivineBeastsDemoRunEvidence& Input, FString& OutInd
     Index->SetObjectField(TEXT("runtime_origin"), CaptureRuntimeOrigin());
     const bool bTerminal = Input.Run.State == EDivineBeastsDemoRunState::Completed || Input.Run.State == EDivineBeastsDemoRunState::Failed || Input.Run.State == EDivineBeastsDemoRunState::Cancelled;
     Index->SetBoolField(TEXT("runtime_completed"), bTerminal && Input.Run.CompletedOperations > 0 && Input.Run.CleanupResult.IsSuccess());
+    State->SetNumberField(TEXT("observation_revision"), Input.Run.ObservationRevision);
+    State->SetStringField(TEXT("observation_text"), Input.Run.ObservationText);
+    State->SetBoolField(TEXT("cleanup_pending"), Input.Run.bCleanupPending);
+    State->SetNumberField(TEXT("cleanup_attempt"), Input.Run.CleanupAttempt);
     Index->SetObjectField(TEXT("raw_state"), State);
     TArray<TSharedPtr<FJsonValue>> Cases;
     for (const auto& Case : Input.ReviewCases)

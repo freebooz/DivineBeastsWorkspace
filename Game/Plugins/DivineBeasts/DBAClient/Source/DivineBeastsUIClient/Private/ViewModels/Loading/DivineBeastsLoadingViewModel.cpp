@@ -93,5 +93,6 @@ bool UDivineBeastsLoadingViewModel::AreSnapshotsEquivalent(
     return A.bIsLoading == B.bIsLoading &&
         A.ActiveTokenCount == B.ActiveTokenCount &&
         A.Stage.EqualTo(B.Stage) &&
+        A.Presentation.IsEquivalent(B.Presentation) &&
         FMath::IsNearlyEqual(A.Progress, B.Progress, 0.0001f);
 }

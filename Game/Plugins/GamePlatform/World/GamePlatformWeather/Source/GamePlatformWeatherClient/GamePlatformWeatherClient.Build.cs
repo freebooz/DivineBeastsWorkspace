@@ -9,7 +9,12 @@ public class GamePlatformWeatherClient : ModuleRules
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "GamePlatformWeatherRuntime" });
         PrivateDependencyModuleNames.AddRange(new[] {
             "GamePlatformSurfaceClient", "GamePlatformPresentationCore",
+            "GamePlatformGameplay", // 消费既有GameState引擎时钟校正通知，不依赖竞技或项目
             "GamePlatformPresentationClient", "GameplayTags"
         });
+        if (Target.Type == TargetType.Editor)
+        {
+            PrivateDependencyModuleNames.AddRange(new[] { "UnrealEd", "GamePlatformSurfaceEditor" });
+        }
     }
 }

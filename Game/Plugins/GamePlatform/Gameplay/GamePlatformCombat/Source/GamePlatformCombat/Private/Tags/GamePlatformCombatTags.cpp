@@ -18,6 +18,8 @@ namespace GamePlatformCombatTags
 
     UE_DEFINE_GAMEPLAY_TAG(Control_Stun, "Combat.Control.Stun");
     UE_DEFINE_GAMEPLAY_TAG(Control_Silence, "Combat.Control.Silence");
+    UE_DEFINE_GAMEPLAY_TAG(Control_Slow, "Combat.Control.Slow");
+    UE_DEFINE_GAMEPLAY_TAG(Data_Control_SlowFraction, "Combat.Data.Control.SlowFraction");
 
     UE_DEFINE_GAMEPLAY_TAG(Event_Damage, "Combat.Event.Damage");
     UE_DEFINE_GAMEPLAY_TAG(Event_Healing, "Combat.Event.Healing");
@@ -26,6 +28,7 @@ namespace GamePlatformCombatTags
 
     // 已废弃的历史表现标识保留注册，不再由服务器结算发布。
     UE_DEFINE_GAMEPLAY_TAG(Result_Critical, "Combat.Result.Critical");
+    UE_DEFINE_GAMEPLAY_TAG(Result_DisplacementQueued, "Combat.Result.DisplacementQueued");
     UE_DEFINE_GAMEPLAY_TAG(Result_ControlResisted, "Combat.Result.ControlResisted");
 
     UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Damage, "GameplayCue.Combat.Damage");

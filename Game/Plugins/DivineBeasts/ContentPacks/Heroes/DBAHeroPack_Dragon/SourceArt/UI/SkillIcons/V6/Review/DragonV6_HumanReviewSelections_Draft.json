@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "heroId": "Hero.Zodiac.Dragon",
+  "candidateSource": "DragonV6CandidateReviewManifest.json",
+  "artPromptSource": "DragonV6_24IndependentAIArtPrompts.json",
+  "explicitUserHumanSelection": false,
+  "productionUIProfileTouched": false,
+  "productionAbilitySetTouched": false,
+  "formalImportedTextures": 0,
+  "selection": [
+    {
+      "skillOrder": 1,
+      "v6ProposedSkillNameZh": "苍龙爪",
+      "abilityId": "dba.ability.dragon_eight_dragon_claw@1",
+      "choiceABC": null,
+      "approval": "PENDING",
+      "artMasterPNG": null,
+      "quality48Verified": false,
+      "quality64Verified": false
+    },
+    {
+      "skillOrder": 2,
+      "v6ProposedSkillNameZh": "雷裁",
+      "abilityId": "dba.ability.dragon_eight_cloud_scale@1",
+      "choiceABC": null,
+      "approval": "PENDING",
+      "artMasterPNG": null,
+      "quality48Verified": false,
+      "quality64Verified": false
+    },
+    {
+      "skillOrder": 3,
+      "v6ProposedSkillNameZh": "雷息",
+      "abilityId": "dba.ability.dragon_eight_azure_breath@1",
+      "choiceABC": null,
+      "approval": "PENDING",
+      "artMasterPNG": null,
+      "quality48Verified": false,
+      "quality64Verified": false
+    },
+    {
+      "skillOrder": 4,
+      "v6ProposedSkillNameZh": "苍龙定天",
+      "abilityId": "dba.ability.dragon_eight_dragon_ascension@1",
+      "choiceABC": null,
+      "approval": "PENDING",
+      "artMasterPNG": null,
+      "quality48Verified": false,
+      "quality64Verified": false
+    },
+    {
+      "skillOrder": 5,
+      "v6ProposedSkillNameZh": "御风",
+      "abilityId": "dba.ability.dragon_eight_cloud_stride@1",
+      "choiceABC": null,
+      "approval": "PENDING",
+      "artMasterPNG": null,
+      "quality48Verified": false,
+      "quality64Verified": false
+    },
+    {
+      "skillOrder": 6,
+      "v6ProposedSkillNameZh": "云护",
+      "abilityId": "dba.ability.dragon_eight_dragon_scale_guard@1",
+      "choiceABC": null,
+      "approval": "PENDING",
+      "artMasterPNG": null,
+      "quality48Verified": false,
+      "quality64Verified": false
+    },
+    {
+      "skillOrder": 7,
+      "v6ProposedSkillNameZh": "龙压",
+      "abilityId": "dba.ability.dragon_eight_thunder_cloud_lock@1",
+      "choiceABC": null,
+      "approval": "PENDING",
+      "artMasterPNG": null,
+      "quality48Verified": false,
+      "quality64Verified": false
+    },
+    {
+      "skillOrder": 8,
+      "v6ProposedSkillNameZh": "龙域",
+      "abilityId": "dba.ability.dragon_eight_cloud_blessing@1",
+      "choiceABC": null,
+      "approval": "PENDING",
+      "artMasterPNG": null,
+      "quality48Verified": false,
+      "quality64Verified": false
+    }
+  ]
+}

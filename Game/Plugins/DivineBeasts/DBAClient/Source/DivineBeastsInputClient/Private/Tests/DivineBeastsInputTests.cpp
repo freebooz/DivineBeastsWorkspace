@@ -1,3 +1,4 @@
+// 项目客户端输入合同回归：校验技能语义、通道及本地玩家作用域，只读默认配置，不创建运行时绑定。
 #include "Definitions/DivineBeastsInputProfileDefinition.h"
 #include "Input/DivineBeastsInputSemantics.h"
 #include "Misc/AutomationTest.h"
@@ -25,9 +26,14 @@ bool FDivineBeastsInputSemanticContractTest::RunTest(const FString&)
         DivineBeastsInputSemantics::AbilitySlot2(),
         DivineBeastsInputSemantics::AbilitySlot3(),
         DivineBeastsInputSemantics::AbilitySlot4(),
+        DivineBeastsInputSemantics::AbilitySlot5(),
+        DivineBeastsInputSemantics::AbilitySlot6(),
+        DivineBeastsInputSemantics::AbilitySlot7(),
         DivineBeastsInputSemantics::TargetLock()
     };
 
+    TestEqual(TEXT("八个可使用技能槽加锁定为九种项目输入语义"),
+        static_cast<int32>(UE_ARRAY_COUNT(Tags)), 9);
     TSet<FGameplayTag> Unique;
     for (const FGameplayTag Tag : Tags)
     {

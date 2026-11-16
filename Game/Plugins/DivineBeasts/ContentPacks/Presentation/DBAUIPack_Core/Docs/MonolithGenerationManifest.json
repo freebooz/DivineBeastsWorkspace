@@ -1369,7 +1369,9 @@
         "ActionBarPortrait",
         "ActionBarStatus"
       ],
-      "SourceRGB": "Unchanged sample; dynamic content and dark background masked in Alpha"
+      "SourceRGB": "Unchanged sample; dynamic content and dark background masked in Alpha",
+      "HistoricalRecord": true,
+      "SupersededBy": "CurrentPlayerFrame"
     },
     "FontPolicy": "Fixed existing font sizes; no ScaleBox or text scaling",
     "EditorBuild": {
@@ -2280,7 +2282,16 @@
     "RootLayout": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
     "SelectionOutline": "/DBAUIPack_Core/UI/World/Materials/M_DBA_TargetSelectionOutline",
     "SelectionRing": "/DBAUIPack_Core/UI/World/Materials/M_DBA_TargetSelectionRing",
-    "Actions": ["import_texture", "duplicate_material", "set_widget_brush", "add_widget", "set_cdo_property", "compile_blueprint", "save_asset", "reload_and_readback"],
+    "Actions": [
+      "import_texture",
+      "duplicate_material",
+      "set_widget_brush",
+      "add_widget",
+      "set_cdo_property",
+      "compile_blueprint",
+      "save_asset",
+      "reload_and_readback"
+    ],
     "CompileErrors": 0,
     "CompileWarnings": 0,
     "RHIAndCook": "待本轮运行证据；Monolith资产编译不代替真实客户端验收",
@@ -2313,5 +2324,452 @@
     "CompileWarnings": 0,
     "Evidence": "Saved/Validation/UIColorRHI/LoadingTravel_1920x1080.png",
     "NotesCN": "已从Monolith回读保存后的控件树：BrandLogo槽位320×160 UMG、2:1；StageText可见，LoadingTitle与ProgressPercentText折叠。原生RHI/Slate截图用于核对实际显示；不是真实跨世界加载或客户端人工验收证据。"
+  },
+  "TargetSelectionRingVisibility20261018": {
+    "Status": "MonolithCompiledSavedReloadVerified_ClientNearTargetVerified",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/World/Materials/M_DBA_TargetSelectionRing",
+    "Actions": [
+      "connect_material_parameter_to_emissive",
+      "compile_material",
+      "save_asset",
+      "reload_packages",
+      "readback_material_graph",
+      "set_ring_width_0_04",
+      "set_opacity_1_0",
+      "recompile_material",
+      "save_material",
+      "readback_expression_properties"
+    ],
+    "CompileErrors": 0,
+    "NotesCN": "目标法环颜色参数同时驱动底色和自发光；此前重新装载后回读连接。本轮通过Monolith将环宽常量设为0.04、透明度乘数设为1.0，编译保存后回读两项参数；双客户端重新登录新手村后，近处友方目标脚下法环已能看清。"
+  },
+  "CombatFloatingText20261018": {
+    "Status": "MonolithCompiledSavedReloadVerified_ClientVisualPending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/Feedback/WBP_DBA_CombatFloatingText",
+    "ParentClass": "GamePlatformFloatingTextWidget",
+    "RootLayout": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+    "RootLayoutProperty": "CombatFloatingTextClass",
+    "NamedWidget": "FeedbackText",
+    "Actions": [
+      "create_widget_blueprint",
+      "add_widget",
+      "set_widget_property",
+      "set_cdo_property",
+      "compile_blueprint",
+      "save_asset",
+      "reload_packages",
+      "readback_widget_tree_and_parent"
+    ],
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "AccessibilityErrors": 0,
+    "NotesCN": "世界与竞技场复用公共浮字控件；只消费确认的战斗事件。已由Monolith回读父类、命名控件、根布局类引用及保存状态。真实客户端战斗视觉仍待实机验证。"
+  },
+  "SkillBarTransparentSplit20261018": {
+    "Status": "HumanApproved_MonolithReloadVerified_NativeAndRHIPassed",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "Engine": "5.8.0-0+UE5",
+    "MonolithVersion": "0.23.0",
+    "HumanApproval": "2026-10-18：审核通过，继续执行",
+    "SourceReview": "Saved/ArtReview/AbilityBar_20261018_v02",
+    "TextureImportManifest": "Docs/SkillBarTextureImportManifest.json",
+    "Textures": 26,
+    "Widgets": [
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_SkillBarMomentum",
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+      "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_CastBar",
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD"
+    ],
+    "Actions": [
+      "import_texture",
+      "set_texture_UI_sRGB_linearAlpha_NoMips_Clamp",
+      "get_owning_player_subsystem",
+      "set_slot_property",
+      "set_brush",
+      "bind_state_event",
+      "set_widget_navigation_bulk",
+      "compile_widget",
+      "save_packages",
+      "reload_packages",
+      "get_widget_tree",
+      "native_texture_export_pixel_compare"
+    ],
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "NativeReloadCount": 31,
+    "ImportedRGBAExactMatchCount": 26,
+    "Accessibility": {
+      "NewFunctionButtonsErrors": 0,
+      "NewFunctionButtonsWarnings": 0,
+      "FocusDanglingTargets": 0,
+      "Note": "左右及前后成对导航的静态循环是可逆导航；两端使用Escape，非焦点陷阱。"
+    },
+    "Evidence": "Saved/Validation/SkillBar20261018",
+    "RHIVerified": true,
+    "ClientCookVerified": false,
+    "ManualRuntimeAcceptance": false,
+    "Interactions20261018": {
+      "WidgetSavedReloaded": true,
+      "Five48PixelSlotsHitTestable": true,
+      "WidgetVerification": "Saved/Validation/SkillBar20261018/InteractionWidgetVerification.json",
+      "BlueprintCompileErrors": 0,
+      "BlueprintCompileWarnings": 0,
+      "Inventory": "CloseInventoryScreen返回false时OpenInventoryScreen，再次点击关闭或取消在途请求",
+      "Party": "OpenPartyPage(UI.Party.Panel)，已有主面板复用",
+      "Settings": "OpenSystemSettings直达设置，原生关闭逻辑支持无父菜单恢复世界输入",
+      "HeroMappingAudit": "12 heroes / 60 grants; HeroAbilityMappingAudit.json",
+      "StaticAssertionsPassed": 52,
+      "NewNativeTests": [
+        "DivineBeasts.UI.Combat.AbilityDetailsProjection",
+        "DivineBeasts.UI.Combat.AbilityGrantIdentity",
+        "DivineBeasts.UI.SystemMenu.SkillBarSettingsClose"
+      ],
+      "NativeChangesCompiled": true,
+      "NativeRegressionExecuted": true,
+      "RequiredNativeTestsPassed": 15
+    },
+    "NotesCN": "727×94底部居中；五个既有技能绑定与三格空背景；三按钮使用拥有者LocalPlayer入口。完整Editor增量构建、18项原生回归及颜色RHI通过；三分辨率实际图已检查。编辑器已重开，五蓝图BS_UP_TO_DATE且无脏包。Cook、联网人工及最终视觉签收另行验收。",
+    "FullEditorBuildRunId": "8ee975af-01e6-4cd4-b2a7-396838d13e73",
+    "NativeRegressionRunId": "a42e0272-34fe-42d2-8f47-457f0f753c45",
+    "ColorRHIRunId": "673084fd-ac9f-4de8-8f69-6c8611db7d98",
+    "FinalEvidence": "Saved/Validation/SkillBar20261018/FinalValidation.json"
+  },
+  "LoadingBarMaskSamplerCookRepair20261018": {
+    "Asset": "/DBAUIPack_Core/UI/Loading/Materials/M_DBA_UI_LoadingBarFill",
+    "Actions": [
+      "set_expression_property",
+      "recompile_material",
+      "save_material",
+      "reload_packages",
+      "get_expression_details"
+    ],
+    "SamplerType": "SAMPLERTYPE_LinearColor",
+    "ValidatedIssueCount": 0,
+    "ColorRHIRunId": "f6a37bc0-ac4f-4eaf-8216-e75aa44380dd",
+    "CookRunId": "efdd7af6-359c-44e0-818f-98ed88a8c479",
+    "Evidence": "Saved/Validation/SkillBar20261018/PackagingRepairs.json"
+  },
+  "CompactHUDAndCastRepair20261018": {
+    "EditorBuildRunId": "0ebe200a-b478-4e0a-953e-23e40873a1ff",
+    "Assets": [
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_CombatHUD",
+      "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+      "/DBAUIPack_Core/UI/Components/WBP_DBA_UI_CastBar"
+    ],
+    "RegressionPassed": 8,
+    "CastFillRGBA": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "CompiledSavedReloaded": true,
+    "RuntimeManualAccepted": false,
+    "RegressionRunId": "821a198f-6201-464c-baac-9e0abd9d6a65",
+    "RemovedWidgets": [
+      "CombatHUD.ActionBarPortrait",
+      "old CombatHUD.ActionBarStatus",
+      "AbilityBar.SkillBarMomentum"
+    ],
+    "CombinedCookStatus": "Passed",
+    "MomentumOwner": "CombatHUD.ActionBarStatus",
+    "ColorRHIRunId": "db56b7ce-3373-48b3-bc04-0ce8a51684ee",
+    "Tool": "Monolith 0.23.0",
+    "CastRHIImagesInspected": [
+      "CastProgress_25.png",
+      "CastProgress_75.png"
+    ],
+    "ClientCookRunId": "fc4ef6e5-714f-4f65-a5a7-2eeccebddc41",
+    "FinalEvidence": "Saved/Validation/SkillBar20261018/LatestReleaseValidation.json"
+  },
+  "FPSOverlay20261018": {
+    "Status": "Saved_ColdReloadVerified_RuntimePending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "MonolithVersion": "0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout",
+    "ParentClass": "DivineBeastsRootLayout",
+    "Widget": "FrameRateText",
+    "FontSize": 16,
+    "Color": "#FFFFFFFF",
+    "Position": [
+      16,
+      16
+    ],
+    "Anchor": "TopLeft",
+    "ZOrder": 100,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "AuthoringEditorPID": 55148,
+    "ColdReloadEditorPID": 52016,
+    "ColdReloadWidgetCount": 17,
+    "Lifecycle": "NativeConstruct/OnEndFrame/NativeDestruct",
+    "RuntimeSwitch": "-GamePlatformShowFPS",
+    "Evidence": "Saved/Validation/FPSAndAudioDiagnostics_20261018/FPSColdReload.json"
+  },
+  "PlayableHotbar20261021": {
+    "CreationTool": "Monolith MCP 0.23.0",
+    "Asset": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+    "bPreviewSelectedHeroIcons": false,
+    "CompiledAndSaved": true,
+    "ColdReloadPassed": true,
+    "HeroCount": 12,
+    "ActiveSlotsPerHero": 8,
+    "AuthoritySource": "Existing OwnerOnly Loadout and native GAS events",
+    "Evidence": "Saved/Validation/SkillBar20261021/GREEN.saved.json",
+    "HumanAccepted": false
+  },
+  "AudioAndOriginalIconRGB_20261021": {
+    "Tool": "Monolith MCP ui and editor.run_python",
+    "Date": "2026-10-21",
+    "SettingsAsset": "/DBAUIPack_Core/UI/Screens/WBP_DBA_UI_Settings",
+    "Parent": "/Script/DivineBeastsUIClient.DivineBeastsDeviceSettingsScreen",
+    "Size": [
+      640,
+      720
+    ],
+    "Controls": [
+      "EffectsVolumeSlider",
+      "AmbientVolumeSlider",
+      "MusicVolumeSlider",
+      "EffectsVolumeText",
+      "AmbientVolumeText",
+      "MusicVolumeText",
+      "AudioHelpText"
+    ],
+    "SliderContract": {
+      "minimum": 0,
+      "maximum": 1,
+      "step": 0.01,
+      "keyboardFocusable": true
+    },
+    "OriginalDevicePreviewPreserved": true,
+    "IconSlot": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot",
+    "RemovedBinding": "AbilityIconPalette.EffectMaterial=M_DBA_NatureAbilityIconPalette",
+    "EffectMaterialAfter": null,
+    "IconRGBAAndWhiteTintUnchanged": true,
+    "RetainerAndLayoutPreserved": true,
+    "CompiledSavedAndReloaded": true,
+    "BlueprintErrors": 0,
+    "BlueprintWarnings": 0,
+    "Evidence": [
+      "Saved/Validation/AudioSettings20261021",
+      "Saved/Validation/HotbarOriginalRGB20261021"
+    ],
+    "RHIAndClientAcceptance": "SeparateEvidenceRequired"
+  },
+  "CurrentPlayerFrame": {
+    "Author": "Tools/Unreal/UI/AuthorCompactPlayerFrameUE58.py",
+    "Contract": "Tools/Unreal/UI/CompactPlayerFrame.json",
+    "Shader": "Tools/Unreal/UI/CompactPlayerFrame.hlsl",
+    "Materials": [
+      "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference",
+      "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference",
+      "/DBAUIPack_Core/UI/Materials/Nature/M_DBA_PlayerFrameEnergyFill"
+    ],
+    "SourceSHA256": "df7f9a9abb546d3193717d4892d10dd2f421ffba37ed58e1a557d5f95eb53ec5",
+    "Canvas": [
+      232,
+      100
+    ],
+    "Frame": [
+      19.5,
+      11.5,
+      193,
+      77
+    ],
+    "Portrait": [
+      24,
+      16,
+      64,
+      64
+    ],
+    "Health": [
+      90,
+      45,
+      119,
+      12
+    ],
+    "Energy": [
+      90,
+      58,
+      119,
+      12
+    ],
+    "HUDPosition": [
+      24,
+      18
+    ],
+    "VisiblePortrait": "Current owning player character identity via existing PortraitImage; native rounded-box circle, no fixed default texture",
+    "LevelDisplayed": false,
+    "NameAndResourceUpdates": "Existing event snapshot projection; no new Tick or polling",
+    "NativeAuthoring": "Monolith materials import plus ui_query tree migration; compile/save five existing WBP; unreferenced obsolete assets deleted through engine tools",
+    "Evidence": "Saved/Validation/PlayerFrame20261103",
+    "FinalVerification": "Saved/Validation/PlayerFrame20261103/Delivery.json",
+    "ReportRule": "Freeze all plugin files before final Editor input gate. Record later reload/RHI/Cook results only in Saved evidence.",
+    "HumanVisualAcceptance": false,
+    "OnlineAdmissionVerified": false
+  },
+  "CloudButtons213x60_20261103": {
+    "Status": "NativeSaved_ReloadVerified_VisualReviewPending",
+    "Project": "Game/DivineBeastsArena.uproject",
+    "EditorPidAtAuthoring": 52084,
+    "MonolithVersion": "0.23.0",
+    "DefaultButtonSize": [
+      213,
+      60
+    ],
+    "Assets": [
+      "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Primary",
+      "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Primary_Alpha",
+      "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Secondary",
+      "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Secondary_Alpha",
+      "/DBAUIPack_Core/UI/Materials/Buttons/M_DBA_UI_CloudButton",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Primary_Normal",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Primary_Hovered",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Primary_Pressed",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Primary_Disabled",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Secondary_Normal",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Secondary_Hovered",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Secondary_Pressed",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Secondary_Disabled",
+      "/DBAUIPack_Core/UI/Materials/Buttons/MI_DBA_UI_Button_Custom_Normal",
+      "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Primary",
+      "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Secondary",
+      "/Game/Development/UI/WBP_DBA_CloudButtonShowcase",
+      "/Game/Development/UI/BP_DBA_CloudButtonCapture"
+    ],
+    "Parents": {
+      "Styles": "CommonButtonStyle",
+      "Showcase": "UserWidget",
+      "CaptureFixture": "Actor"
+    },
+    "Actions": [
+      "run_python native import/material authoring",
+      "recompile_material",
+      "build_ui_from_spec",
+      "blueprint component authoring",
+      "native save",
+      "reload_packages",
+      "RHI ReadRenderTarget sRGB capture"
+    ],
+    "NativeAssetReadbackPassed": true,
+    "SavedReloadedPackages": 18,
+    "SourceToRHIColorPassed": true,
+    "SourceToRHIMaxLinearError": 0.00298235573270422,
+    "PointerInteractionVerified": false,
+    "ClientCookVerified": false,
+    "HumanVisualAccepted": false,
+    "Evidence": "Saved/Validation/GenericCloudButtons20261103",
+    "Screenshot": "Saved/Validation/GenericCloudButtons20261103/NativeStates_213x60_sRGB.png"
+  },
+  "AllProjectButtons20261104": {
+    "Author": "Tools/Unreal/UI/AuthorGenericCloudButtonsUE58.py:project_button_pages",
+    "Contract": "Tools/Unreal/UI/ProjectButtonBindings.json",
+    "Evidence": "Saved/Validation/AllButtons20261104",
+    "FinalVerification": "Saved/Validation/AllButtons20261104/Delivery.json",
+    "Status": "NativeSaved_ColdReloadVerified_HumanReviewPending",
+    "MonolithVersion": "0.23.0",
+    "NativeWidgetPages": 111,
+    "ButtonCount": 777,
+    "ComboBoxCount": 86,
+    "CheckBoxBackgroundCount": 2,
+    "DynamicCameraButtons": 9,
+    "DynamicCameraNoThemeRuntimeVerified": true,
+    "CompileErrors": 0,
+    "CompileWarnings": 0,
+    "ColdReloadErrors": 0,
+    "SharedStyles": [
+      "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Primary",
+      "/DBAUIPack_Core/UI/Styles/BP_DBA_ButtonStyle_Secondary"
+    ],
+    "FixedStateFixtureExcluded": "/Game/Development/UI/WBP_DBA_CloudButtonShowcase",
+    "Preserved": "Existing layout, labels, icons, commands, eligibility, focus, check glyphs and shared event-driven theme ownership",
+    "NativeEvidence": [
+      "NativeCompile.json",
+      "ColdReload.Verification.json",
+      "DynamicCamera.Native.json",
+      "NativeRegression.json",
+      "NativePageCaptures.json"
+    ],
+    "ReportRule": "Later build, Cook and acceptance results recorded only in the Saved evidence directory",
+    "HumanVisualAccepted": false,
+    "HumanPointerInputAccepted": false
+  },
+  "PopupPanel20261103": {
+    "Author": "Tools/Unreal/UI/AuthorPopupPanelUE58.py",
+    "SharedStyle": "/DBAUIPack_Core/UI/Styles/BP_DBA_BorderStyle_Panel",
+    "Evidence": "Saved/Validation/PopupPanel20261104",
+    "Status": "NativeSaved_IndependentValidationInSaved",
+    "Contract": "Tools/Unreal/UI/PopupPanel.json",
+    "EditorPID": 56268,
+    "HumanVisualAccepted": false,
+    "SurfaceCount": 20,
+    "FinalVerification": "Saved/Validation/PopupPanel20261104/Delivery.json",
+    "ShortNotificationIncluded": true,
+    "ReportRule": "Build, Cook, current process and human acceptance results belong to the Saved evidence directory"
+  },
+  "PopupWindowDrag20261104": {
+    "Author": "Tools/Unreal/UI/AuthorPopupPanelUE58.py:window_drag",
+    "Contract": "Tools/Unreal/UI/PopupPanel.json",
+    "Implementation": "GamePlatformUIClient existing widget base classes",
+    "Evidence": "Saved/Validation/PopupDrag20261104",
+    "Status": "NativeSaved_IndependentValidationInSaved",
+    "EnabledFloatingWindows": 14,
+    "UnchangedFullScreenPages": 6,
+    "ControlsAndLayoutPreserved": true,
+    "HumanPointerInputAccepted": false,
+    "ReportRule": "Cold reload, full target build, Cook and human acceptance results recorded only in Saved evidence"
+  },
+  "ClassicSilverCursor": {
+    "Author": "Tools/Unreal/UI/AuthorCursorUE58.py",
+    "Contract": "Tools/Unreal/UI/CursorTheme.json",
+    "MonolithVersion": "0.23.0",
+    "Parent": "/Script/GamePlatformUIClient.GamePlatformWidgetBase",
+    "ControlNames": [
+      "CursorSize",
+      "CursorImage"
+    ],
+    "DisplaySize": [
+      44,
+      44
+    ],
+    "Assets": [
+      "/DBAUIPack_Core/UI/Cursors/Textures/T_DBA_CursorAtlas",
+      "/DBAUIPack_Core/UI/Cursors/Materials/M_DBA_Cursor",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Default",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Default",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Pickup",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Pickup",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Attack",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Attack",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Interact",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Interact",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Talk",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Talk",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Harvest",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Harvest",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Trade",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Trade",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Drag",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Drag",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Select",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Select",
+      "/DBAUIPack_Core/UI/Cursors/Materials/MI_DBA_Cursor_Blocked",
+      "/DBAUIPack_Core/UI/Cursors/Widgets/WBP_DBA_Cursor_Blocked"
+    ],
+    "Actions": [
+      "editor.run_python: import/author",
+      "ui.build_ui_from_spec: dry-run and create",
+      "native compile/save/readback",
+      "AssetRegistry dependency validation"
+    ],
+    "Evidence": "Game/Saved/Validation/CursorReplacement",
+    "NativeReadbackPassed": true,
+    "ReportRule": "Independent RHI, Cook and human pointer results are recorded in Saved evidence"
   }
 }

@@ -602,6 +602,22 @@ bool UGamePlatformSessionClientSubsystem::BeginOperation(
     Snapshot.ErrorMessage.Reset();
     RefreshSnapshot();
 
+    // SessionChanged是同步多播；监听者可以立刻登出、取消或替换Transport。
+    // 广播之后先检查操作身份及适配器，避免为已失效任务重新注册Ticker甚至开始旅行。
+    if (!Runtime || !Runtime->State ||
+        Runtime->ActiveOperationId != Request.TransferOperationId ||
+        !Runtime->State->Snapshot().bOperationActive || !Transport.IsValid())
+    {
+        const bool bCurrentFailure = Snapshot.TransferOperationId == Request.TransferOperationId &&
+            !Snapshot.ErrorCode.IsNone();
+        OutResult = FGamePlatformResult::Failure(
+            bCurrentFailure ? Snapshot.ErrorCode : GamePlatformSessionErrors::TransportFailed,
+            bCurrentFailure && !Snapshot.ErrorMessage.IsEmpty()
+                ? Snapshot.ErrorMessage
+                : FString(TEXT("Session状态事件同步取消或替换了连接操作，拒绝继续创建传输。")));
+        return false;
+    }
+
     UE_LOG(
         LogGamePlatformSession,
         Log,
@@ -738,8 +754,35 @@ bool UGamePlatformSessionClientSubsystem::BeginOperation(
                 });
         };
 
-    // TransferTicket 仅在这一调用边界传给真实传输层；Subsystem自身不复制、不持久化、不记录原文。
-    Transport->BeginTransfer(Request, MoveTemp(Callbacks));
+    // TransferTicket仅跨这一条真实传输边界，不复制到公开状态或持久化日志。
+    // BeginTransfer可能同步报错/取消，甚至由订阅者替换Transport；局部共享指针维持旧对象安全生命周期。
+    const TSharedPtr<IGamePlatformSessionTransport> StartedTransport = Transport;
+    StartedTransport->BeginTransfer(Request, MoveTemp(Callbacks));
+
+    // 不把同步失败伪装成“已接纳”。只有属于本次Operation的四事实即时成功才允许返回true。
+    if (!Runtime || !Runtime->State || Runtime->ActiveOperationId != ExpectedOperation ||
+        StartedTransport != Transport)
+    {
+        const bool bImmediateReady = Runtime && Runtime->State &&
+            Runtime->LastOperationId == ExpectedOperation &&
+            Snapshot.TransferOperationId == ExpectedOperation &&
+            Runtime->State->Snapshot().LastOutcome == GamePlatformSession::EOutcome::Succeeded &&
+            Snapshot.State == EGamePlatformSessionTransferState::Ready;
+        if (bImmediateReady)
+        {
+            OutResult = FGamePlatformResult::Success();
+            return true;
+        }
+
+        const bool bSameFailure = Snapshot.TransferOperationId == ExpectedOperation &&
+            !Snapshot.ErrorCode.IsNone();
+        OutResult = FGamePlatformResult::Failure(
+            bSameFailure ? Snapshot.ErrorCode : GamePlatformSessionErrors::TransportFailed,
+            bSameFailure && !Snapshot.ErrorMessage.IsEmpty()
+                ? Snapshot.ErrorMessage
+                : FString(TEXT("会话传输在连接前同步失败、取消或被替换；不得报告请求成功。")));
+        return false;
+    }
     OutResult = FGamePlatformResult::Success();
     return true;
 }

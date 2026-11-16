@@ -1,0 +1,11 @@
+{
+  "reference": "SSLM_CommonVFX_Attack_V1.png upper-left",
+  "outputMesh": "SM_DBA_AttackSlash_V2",
+  "editableCurves": 11,
+  "vertices": 12878,
+  "triangles": 23040,
+  "materialSlots": 3,
+  "units": "centimeters",
+  "nativeImported": false,
+  "manualAccepted": false
+}

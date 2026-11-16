@@ -5,7 +5,48 @@
 #include "Input/Events.h"
 #include "Components/Image.h"
 #include "Components/Border.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/Button.h"
+#include "Components/ButtonSlot.h"
+#include "Components/TextBlock.h"
 #include "Materials/MaterialInstanceDynamic.h"
+
+bool UGamePlatformSlotWidget::AreSlotStatesEquivalent(
+    const FGamePlatformUISlotState& A, const FGamePlatformUISlotState& B,
+    bool bCompareCount)
+{
+    return A.SlotId == B.SlotId && A.ContentId == B.ContentId &&
+        A.Icon == B.Icon && (!bCompareCount || A.Count == B.Count) &&
+        FMath::IsNearlyEqual(A.OverlayProgress, B.OverlayProgress, 0.0001f) &&
+        A.bEnabled == B.bEnabled && A.bPending == B.bPending;
+}
+
+void UGamePlatformSlotWidget::ApplyNamedSlotCellPresentation(
+    UUserWidget& Root, FName LabelWidgetName, FName ButtonWidgetName,
+    const FGamePlatformUISlotCellPresentation& Presentation)
+{
+    check(IsInGameThread());
+    if (UTextBlock* Label = Cast<UTextBlock>(Root.GetWidgetFromName(LabelWidgetName)))
+    {
+        Label->SetText(FText::FromString(Presentation.LabelText));
+        if (UButtonSlot* ButtonSlot = Cast<UButtonSlot>(Label->Slot))
+        {
+            ButtonSlot->SetHorizontalAlignment(HAlign_Center);
+            ButtonSlot->SetVerticalAlignment(
+                Presentation.bLabelAtBottom ? VAlign_Bottom : VAlign_Center);
+            ButtonSlot->SetPadding(Presentation.LabelPadding);
+        }
+    }
+    if (UButton* Button = Cast<UButton>(Root.GetWidgetFromName(ButtonWidgetName)))
+    {
+        Button->SetIsEnabled(Presentation.bEnabled);
+        Button->SetBackgroundColor(Presentation.BackgroundColor);
+        if (Presentation.bHasToolTip)
+        {
+            Button->SetToolTipText(Presentation.ToolTip);
+        }
+    }
+}
 
 void UGamePlatformSlotWidget::ApplyOverlayTiming(float EndsAtAppSeconds, float DurationSeconds)
 {
@@ -51,24 +92,12 @@ void UGamePlatformSlotWidget::NativeDestruct()
 void UGamePlatformSlotWidget::ApplySlotState(
     const FGamePlatformUISlotState& InState)
 {
-    const float ClampedOverlay =
-        FMath::Clamp(InState.OverlayProgress, 0.0f, 1.0f);
-
-    if (SlotState.SlotId == InState.SlotId &&
-        SlotState.ContentId == InState.ContentId &&
-        SlotState.Icon == InState.Icon &&
-        SlotState.Count == InState.Count &&
-        FMath::IsNearlyEqual(
-            SlotState.OverlayProgress,
-            ClampedOverlay,
-            0.0001f) &&
-        SlotState.bEnabled == InState.bEnabled &&
-        SlotState.bPending == InState.bPending)
+    FGamePlatformUISlotState ClampedState = InState;
+    ClampedState.OverlayProgress = FMath::Clamp(InState.OverlayProgress, 0.0f, 1.0f);
+    if (AreSlotStatesEquivalent(SlotState, ClampedState))
     {
         return;
     }
-
-    SlotState = InState;
-    SlotState.OverlayProgress = ClampedOverlay;
+    SlotState = MoveTemp(ClampedState);
     BP_OnSlotStateChanged(SlotState);
 }

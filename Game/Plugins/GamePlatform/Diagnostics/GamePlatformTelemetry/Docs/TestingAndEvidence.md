@@ -9,3 +9,8 @@ UE 自动化测试覆盖 Privacy/Schema 类型约束与 Freeze、Deterministic S
 本轮最终源码已真实通过 UE5.8 `BuildPlugin`：UnrealEditor Win64 Development、UnrealGame Win64 Development、UnrealGame Win64 Shipping 均 `BUILD SUCCESSFUL`；Telemetry CoreTests、NetworkSink、Subsystem、Transport、Telemetry Unity 模块以及 DBAClient 的 `DivineBeastsClientTelemetryBootstrapSubsystem` 均使用当前 Client 目标生成的正式响应文件定向编译通过。静态架构门禁同时通过。完整 `DivineBeastsArenaClient` 构建仍被本任务外的 UI/Inventory/Online/Session 现有编译错误阻断，Dedicated Server Bootstrap 的定向编译也被 GamePlatformServer 现有 generated.h/UHT 问题提前阻断，因此不能声称完整 Client/Server 目标通过。
 
 上一版独立 AutomationHost 曾真实执行 7 个 `GamePlatform.Telemetry.*` 测试并全部成功；本轮新增 `MetricCoalescing`、`PrivacyBoundaryDiscard` 和账号认证代次隔离后，最终 Automation 重跑被 UE5.8 启动阶段强制 `ValidatePlatforms -AllPlatforms` 的 VisionOS SDK 缺失提前阻断，测试队列没有开始执行。因此当前新增测试只具备“源码已编译”证据，不能描述为已运行通过。这里的 ReconnectRecovery 仍是可控 Fake Transport 故障注入，不等于真实网卡断开/恢复、Gateway/NATS 端到端验证；Multi-PIE、真实网络故障、Backend/NATS Integration、Client/Server Cook 仍需分别形成证据。
+## 2026-10-18 遥测网络重试与关闭生命周期增量整改
+
+- `GamePlatformTelemetryNetworkSink.cpp`：已触发的一次性重试Ticker立即移出受管列表，避免Pending持续非零期间历史句柄累积；AddTicker调度失败明确完成批次；Shutdown增加幂等门闩和预算Ticker创建失败后清理。
+- 新增原生测试源码：`GamePlatform.Telemetry.Network.RetryHandleLifecycle`（重试句柄生命周期）、`GamePlatform.Telemetry.Network.ShutdownIdempotent`（关停幂等）。实现及测试两份C++文件采用UE5.8/MSVC /Zs完成仅语法检查，静态架构检查通过。**新增两项 UE 原生Automation未执行；历史BuildPlugin成功不得冒充最新改动的模块重新链接。**
+- 后端数据入库、长时间断网、内存实际曲线、客户端和专服Cook仍未验证。

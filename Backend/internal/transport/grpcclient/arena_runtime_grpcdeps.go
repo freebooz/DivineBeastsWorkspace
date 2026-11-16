@@ -100,7 +100,7 @@ func (c *ArenaControlClient) LookupMatchmakingPresence(ctx context.Context, play
 	if value.PlayerID != player || value.SessionID != session || value.GameServerID == "" || value.ExperienceID == "" {
 		return gateway.MatchmakingWorldPresence{}, gateway.ServiceError("MATCH_WORLD_REQUIRED")
 	}
-	return gateway.MatchmakingWorldPresence{GameServerID: value.GameServerID, ExperienceID: value.ExperienceID}, nil
+	return gateway.MatchmakingWorldPresence{GameServerID: value.GameServerID, ExperienceID: value.ExperienceID, ServerBootID: value.ServerBootID, SessionEpoch: value.SessionEpoch}, nil
 }
 
 var _ matchservice.RuntimeControl = (*ArenaControlClient)(nil)

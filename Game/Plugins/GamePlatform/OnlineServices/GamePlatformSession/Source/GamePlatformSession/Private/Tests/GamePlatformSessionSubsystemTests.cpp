@@ -21,6 +21,12 @@ public:
         ++BeginCalls;
         LastRequest = Request;
         Callbacks = MoveTemp(InCallbacks);
+        if (bFailSynchronously && Callbacks.OnFailed)
+        {
+            // 模拟外部真实Transport在BeginTransfer调用栈内立即拒绝。
+            Callbacks.OnFailed(TEXT("SessionImmediateTransportFailure"),
+                TEXT("测试：连接尚未开始，传输层同步拒绝。"));
+        }
     }
 
     virtual void CancelTransfer(const FGuid& TransferOperationId) override
@@ -63,6 +69,7 @@ public:
         }
     }
 
+    bool bFailSynchronously = false;
     int32 BeginCalls = 0;
     int32 CancelCalls = 0;
     int32 LeaveCalls = 0;
@@ -307,6 +314,57 @@ private:
         Test->TestFalse(
             TEXT("登出后公开Binding被清理"),
             AfterLogout.Binding.IsValid());
+
+        // 恢复独立认证代次，验证同步失败不会被上层视为请求成功。
+        Session->SetAuthenticationContext(TEXT("account-session-test"), FGuid::NewGuid());
+        // SessionChanged订阅者可以在BeginOperation广播内同步Cancel。
+        // 旧实现在该回调已取消之后依然调用Transport.BeginTransfer并返回Success。
+        const FGuid CancelBeforeTransport = FGuid::NewGuid();
+        int32 SynchronousCancelCount = 0;
+        const FDelegateHandle CancelHandle = Session->OnSessionChanged().AddLambda(
+            [this, CancelBeforeTransport, &SynchronousCancelCount](
+                const FGamePlatformSessionSnapshot& State)
+            {
+                if (State.TransferOperationId == CancelBeforeTransport &&
+                    SynchronousCancelCount == 0)
+                {
+                    ++SynchronousCancelCount;
+                    FGamePlatformResult Ignored;
+                    Session->CancelTransfer(Ignored);
+                }
+            });
+        FGamePlatformResult CancelledBeginResult;
+        const bool bStartedCancelled = Session->BeginOperation(
+            EGamePlatformSessionIntent::Join,
+            MakeSubsystemRequest(CancelBeforeTransport),
+            CancelledBeginResult);
+        Session->OnSessionChanged().Remove(CancelHandle);
+        Test->TestEqual(TEXT("同步取消委托只执行一次"), SynchronousCancelCount, 1);
+        Test->TestFalse(TEXT("状态广播内取消不得返回已接纳"), bStartedCancelled);
+        Test->TestFalse(TEXT("广播内取消不得返回Success"), CancelledBeginResult.IsSuccess());
+        Test->TestEqual(TEXT("已取消操作不能传给Transport"), TransportB->BeginCalls, 1);
+        Session->SetAuthenticationContext(TEXT("account-session-test"), FGuid::NewGuid());
+        TransportB->bFailSynchronously = true;
+        const FGuid ImmediateOperation = FGuid::NewGuid();
+        FGamePlatformResult ImmediateResult;
+        const bool bAccepted = Session->BeginOperation(
+            EGamePlatformSessionIntent::Join,
+            MakeSubsystemRequest(ImmediateOperation),
+            ImmediateResult);
+        Test->TestFalse(TEXT("同步失败必须让BeginOperation返回false"), bAccepted);
+        Test->TestFalse(TEXT("同步失败不得返回Success"), ImmediateResult.IsSuccess());
+        Test->TestEqual(TEXT("同步错误身份保持不变"),
+            ImmediateResult.Code, FName(TEXT("SessionImmediateTransportFailure")));
+        const auto FailedSnapshot = Session->GetSnapshot();
+        Test->TestEqual(TEXT("同步失败状态为Failed"), FailedSnapshot.State,
+            EGamePlatformSessionTransferState::Failed);
+        Test->TestEqual(TEXT("同步失败绑定本次操作GUID"),
+            FailedSnapshot.TransferOperationId, ImmediateOperation);
+        Test->TestEqual(TEXT("仅调用Transport一次"), TransportB->BeginCalls, 2);
+        TransportB->CompleteReady(MakeSubsystemBinding());
+        Test->TestFalse(TEXT("旧同步回调不能恢复Ready"),
+            Session->GetSnapshot().State == EGamePlatformSessionTransferState::Ready);
+        TransportB->bFailSynchronously = false;
 
         ++Phase;
         return false;

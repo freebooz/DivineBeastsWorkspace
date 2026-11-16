@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Arena/GamePlatformArenaTypes.h"
 
+enum class EGamePlatformArenaStartAbortReason : uint8;
+
 /** EGamePlatformArenaSubmitStatus（比赛结果提交状态）。 */
 enum class EGamePlatformArenaSubmitStatus : uint8
 {
@@ -36,6 +38,7 @@ class FGamePlatformArenaServerBackendClient
 {
 public:
     explicit FGamePlatformArenaServerBackendClient(FGamePlatformArenaServerBackendConfig InConfig);
+    virtual ~FGamePlatformArenaServerBackendClient() = default;
 
     const FGamePlatformArenaServerBackendConfig& GetConfig() const { return Config; }
 
@@ -45,8 +48,13 @@ public:
     /** 世界退出解绑并取消本适配器全部请求；不撤销已经提交的后端结果。 */
     void CancelAll();
 
-    void SubmitMatchResult(
+    /** 游戏线程提交冻结结果，完成回调区分终止响应与结果仍未知的响应。 */
+    virtual void SubmitMatchResult(
         const FGamePlatformArenaMatchResult& Result,
+        TFunction<void(EGamePlatformArenaSubmitStatus Status, const FString& Error)> Completion);
+
+    /** 以当前注册实例与Boot提交权威开局终止；成功确认不包含比赛结果。 */
+    void SubmitMatchStartAbort(const FGamePlatformArenaAssignment& Assignment, EGamePlatformArenaStartAbortReason Reason,
         TFunction<void(EGamePlatformArenaSubmitStatus Status, const FString& Error)> Completion);
 
 private:

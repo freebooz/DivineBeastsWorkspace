@@ -6,6 +6,7 @@
 #include "Catalog/DivineBeastsPresentationProjectCatalog.h"
 #include "Context/DivineBeastsProjectContextContributor.h"
 #include "Engine/LocalPlayer.h"
+#include "GameFramework/PlayerController.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Definitions/GamePlatformPrimaryDataAsset.h"
@@ -49,7 +50,20 @@ void UDivineBeastsPresentationClientSubsystem::Initialize(
         BindWeatherWorld(Player->GetWorld());
         BindDevelopmentMagicWorld(Player->GetWorld());
         StartDefaultWorldBirdFlock(Player->GetWorld());
+        EnsureStarterAudioForWorld(Player->GetWorld());
+        EnsureAudioLibraryForWorld(Player->GetWorld());
     }
+}
+
+/** 前端/新手村本地Controller就绪时再确认一次音频；同World重复通知无副作用。 */
+void UDivineBeastsPresentationClientSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
+{
+    Super::PlayerControllerChanged(NewPlayerController);
+    if (bClosing || !IsValid(NewPlayerController) || !GetLocalPlayer() ||
+        NewPlayerController->GetLocalPlayer() != GetLocalPlayer()) return;
+    UWorld* World = NewPlayerController->GetWorld();
+    if (!World || World->bIsTearingDown || World != GetLocalPlayer()->GetWorld()) return;
+    EnsureStarterAudioForWorld(World);
 }
 
 void UDivineBeastsPresentationClientSubsystem::Deinitialize()
@@ -74,6 +88,8 @@ void UDivineBeastsPresentationClientSubsystem::Deinitialize()
     UnbindDevelopmentMagicWorld();
     StopAllAmbientBirdFlocks();
     StopAllAmbientFauna();
+    StopStarterAudioForWorld();
+    StopAudioLibraryForWorld();
     UnregisterProjectState();
     UnbindWeatherWorld();
     WeatherVisualHandle = {};
@@ -312,6 +328,11 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
         bOwnsEnvironmentSuspension = true;
         SuspendEnvironmentFlocksForContextChange();
         if (WasSuperseded()) return false;
+        // 先发送音乐/声景取消请求，必须早于World目录撤销，否则已提交循环声无法按语义停止。
+        StopStarterAudioForWorld();
+        if (WasSuperseded()) return false;
+        StopAudioLibraryForWorld();
+        if (WasSuperseded()) return false;
         DeactivatePacksByScope(EGamePlatformPresentationContextScope::World);
         if (WasSuperseded()) return false;
         StopFrontEndFoliage();
@@ -343,6 +364,12 @@ bool UDivineBeastsPresentationClientSubsystem::UpdateProjectContext(
         bOwnsEnvironmentSuspension = false;
         ResumeEnvironmentFlocksAfterContextChange();
     }
+    if (bWorldScopeChanged && !WasSuperseded())
+    {
+        UWorld* Current = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
+        EnsureStarterAudioForWorld(Current);
+        EnsureAudioLibraryForWorld(Current);
+    }
     return !WasSuperseded();
 }
 
@@ -353,6 +380,8 @@ void UDivineBeastsPresentationClientSubsystem::ResetForAccountSwitch()
     ProjectContextUpdateToken = FGuid::NewGuid();
     UnbindEnvironmentFlockCompletion();
     StopFrontEndFoliage();
+    StopStarterAudioForWorld();
+    StopAudioLibraryForWorld();
     StopAllAmbientBirdFlocks();
     StopAllAmbientFauna();
     TArray<FDivineBeastsPresentationContentPackHandle> ActiveHandles;
@@ -381,6 +410,10 @@ void UDivineBeastsPresentationClientSubsystem::ResetForAccountSwitch()
         if (auto* Weather = WeatherWorld->GetSubsystem<UGamePlatformWeatherWorldSubsystem>())
             HandleWeatherSnapshot(Weather->GetCurrentSnapshot());
     }
+    // 切换账号撤销旧租约后重建当前世界的可选客户端音频。
+    UWorld* CurrentAudioWorld = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
+    EnsureStarterAudioForWorld(CurrentAudioWorld);
+    EnsureAudioLibraryForWorld(CurrentAudioWorld);
 }
 
 FGamePlatformPresentationContextPatch
@@ -489,12 +522,15 @@ FGuid UDivineBeastsPresentationClientSubsystem::BeginLogicalPreload(FName OwnerS
     TSet<FName> Unique;
     for (const FName DefinitionId : DefinitionIds)
     {
-        FGamePlatformId Id;
-        if (!FGamePlatformId::TryParse(DefinitionId.ToString(), Id)) return {};
-        const FName Canonical(*Id.ToString());
+        FPrimaryAssetId ResolvedId;
+        // 预载同时消费VFX/SFX的逻辑定义，统一通过平台Data公共身份转换。
+        // 唯一性仍在本次申请范围内判断，禁止改变主资产ID与资源租约生命周期。
+        if (UGamePlatformPrimaryDataAsset::BuildDefinitionAssetId(
+                DefinitionId, ResolvedId) != EGamePlatformDefinitionIdBuildStatus::Success) return {};
+        const FName Canonical = ResolvedId.PrimaryAssetName;
         if (Unique.Contains(Canonical)) return {};
         Unique.Add(Canonical); Request.DefinitionIds.Add(Canonical);
-        AssetIds.Emplace(UGamePlatformPrimaryDataAsset::DefinitionAssetType(), Canonical);
+        AssetIds.Add(ResolvedId);
     }
     Request.RemainingLoads = AssetIds.Num();
     const FGuid RequestId = Request.RequestId; const int64 Generation = Request.Generation;
@@ -609,6 +645,12 @@ void UDivineBeastsPresentationClientSubsystem::HandleLogicalPreloadCompleted(con
         AmbientFauna.Pack.IsValid() && AmbientFauna.Pack.Id == PackHandle.Id &&
         AmbientFauna.Pack.Generation == PackHandle.Generation)
         SubmitPendingEnvironmentFlocks(AmbientFauna);
+    // 背景音乐或环境目录异步激活后立即触发对应循环。
+    // 只核对当前拥有的有效包句柄和代次，不能再使用旧整包DBA.Audio.Starter身份。
+    if (!bClosing && (
+        (StarterMusicPack.Id == PackHandle.Id && StarterMusicPack.Generation == PackHandle.Generation) ||
+        (StarterAmbiencePack.Id == PackHandle.Id && StarterAmbiencePack.Generation == PackHandle.Generation)))
+        SubmitStarterAudioForWorld();
     // 初次天气快照可能在真实VFX/SFX内容包异步加载完成之前到达。
     // Catalog已成功提交后按当前服务器时间重新发布本世界天气一次，
     // 避免“只有下一次切换天气后才能看到雨雪”。不添加Ticker/重复实例管理器。
@@ -823,6 +865,8 @@ void UDivineBeastsPresentationClientSubsystem::HandleWorldCleanup(
         GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;
     if (!World) return;
     if (DevelopmentMagicWorld.Get() == World) UnbindDevelopmentMagicWorld();
+    if (StarterAudioWorld.Get() == World) StopStarterAudioForWorld();
+    if (AudioLibraryWorld.Get() == World) StopAudioLibraryForWorld();
     if (World != LocalWorld)
     {
         // LocalPlayer可能已进入新世界；只撤销真正绑定旧世界的环境意图。
@@ -867,6 +911,8 @@ void UDivineBeastsPresentationClientSubsystem::HandlePostLoadMap(UWorld* World)
         BindWeatherWorld(World);
         BindDevelopmentMagicWorld(World);
         StartDefaultWorldBirdFlock(World);
+        EnsureStarterAudioForWorld(World);
+        EnsureAudioLibraryForWorld(World);
     }
 }
 /**

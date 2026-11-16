@@ -64,4 +64,29 @@ if (-not $gatewayParameter -or $gatewayParameter.DefaultValue) {
     throw 'GatewayUrl必须由调用方显式指定，禁止启动器默认切换玩家档案库。'
 }
 
+# 本地联调必须直连回环网关；远程/局域网服务仍沿用用户代理，不能扩大绕过范围。
+$proxyCases = @(
+    @{ Value='http://127.0.0.1:28181'; HostName='127.0.0.1'; Bypass=$true },
+    @{ Value='http://[::1]:28181'; HostName='::1'; Bypass=$true },
+    @{ Value='http://localhost:28181'; HostName='localhost'; Bypass=$true },
+    @{ Value='http://127.0.0.2:28181'; HostName='127.0.0.2'; Bypass=$true },
+    @{ Value='https://gateway.example.test'; Bypass=$false },
+    @{ Value='http://192.168.1.2:28181'; Bypass=$false },
+    @{ Value='http://127.0.0.1.example.test:28181'; Bypass=$false }
+)
+foreach($case in $proxyCases) {
+    $arguments=@(Get-FrontEndClientHttpArguments -GatewayUrl $case.Value)
+    if($case.Bypass) {
+        if($arguments.Count -ne 1 -or !$arguments[0].StartsWith('-HttpNoProxy=')) {
+            throw "回环网关缺少UE原生代理绕过参数：$($case.Value)"
+        }
+        # UE FParse::Value默认在未加引号的逗号处截断；准确单主机同时避免扩大绕过范围。
+        if($arguments[0] -cne ('-HttpNoProxy=' + $case.HostName)) {
+            throw "代理绕过必须仅包含准确回环主机，不能被UE分隔符解析截断：$($case.Value)"
+        }
+    } elseif($arguments.Count -ne 0) {
+        throw "非回环网关不得改变HTTP代理策略：$($case.Value)"
+    }
+}
+
 Write-Host 'FRONTEND_CLIENT_GATEWAY_CONTRACT_PASS'

@@ -35,9 +35,9 @@
 
 本轮新增 `UGamePlatformCinematicCameraProfile`（电影镜头数据资产）和 `UGamePlatformCinematicCameraSubsystem`（本地玩家电影机位），以及数据校验Automation源码。这是对现有ClientOnly模块的增量，不是另建摄像机插件，也不意味着原规格中的模式账本、异步Data租约、输入迁移、完整CameraModifier已经实现。
 
-进入临时展示机位：在当前LocalPlayer上获取 `UGamePlatformCinematicCameraSubsystem`，调用 `BeginCinematicView(CameraActor, Profile)`；只允许当前本地世界已存在的Actor，返回false不修改视角。结束时调用 `EndCinematicView()`；只有当前ViewTarget仍归本次机位，且旧目标有效时才恢复。过渡使用引擎`SetViewTargetWithBlend`。电影Actor的传感器宽度、焦距及非竞技光圈/手动对焦由Profile设置；配置仅供客户端表现，不改变权威行为。
+进入临时展示机位：在当前LocalPlayer上获取 `UGamePlatformCinematicCameraSubsystem`，调用 `BeginCinematicView(CameraActor, Profile)`；只允许当前本地世界已存在的Actor，返回false不修改视角。业务调用使用 `EndCinematicViewFor(CameraActor)` 按目标释放；目标与当前租约Owner不符时返回false且不修改视角或租约。仅管理唯一电影机位的开发演示可继续调用原无参数 `EndCinematicView()`。过渡使用引擎`SetViewTargetWithBlend`。电影Actor的传感器宽度、焦距及非竞技光圈/手动对焦由Profile设置；配置仅供客户端表现，不改变权威行为。
 
-**未完成**：在角色展示工作室及正式场景内创建/接入原生CineCamera、数据实例、序列和Demo；与已有输入/预览相机及MOBA视角进行完整整合；模式优先级和可抢占恢复；真实资产创建、Editor/Client/Server编译、Automation运行、Cook剥离及性能测量。该增量代码尚未在UE5.8中编译，应在工作环境恢复后优先验证CinematicCamera头文件/API与模块依赖，然后继续集成。
+**截至2026-10-15仍未完成**：在角色展示工作室及正式场景内创建/接入原生CineCamera、数据实例、序列和Demo；与已有输入/预览相机及MOBA视角进行完整整合；模式优先级和可抢占恢复；真实资产创建、Editor/Client/Server编译、Automation运行、Cook剥离及性能测量。该增量当时尚未在UE5.8中编译。后续正式角色预览源码增量与实际验证见下文。
 
 ## 2026-10-16 真实资产与验收补充
 
@@ -46,3 +46,9 @@
 ## 2026-10-16 可选镜头重定向
 
 同一本地玩家拥有有效电影机位时，BeginCinematicView再次申请同一Actor保持幂等；更换为另一已预置Actor时，由UE原生SetViewTargetWithBlend连续混合，并保留最初退出恢复目标。其它系统、世界或Controller抢占后应拒绝修改。此能力完全属于ClientOnly，不能代替完整相机模式栈或正式比赛策略；开发对比镜头已复用，生产场景仍待验收。
+
+## 2026-10-18 正式角色预览增量
+
+正式角色预览退出使用 `EndCinematicViewFor(PreviewStage)` 精确释放对应舞台的租约。若目标不匹配，平台子系统保持当前机位租约及恢复目标不变，避免角色预览结束时释放登录页或其他界面申请的电影机位。开发演示保留原有无参数 `EndCinematicView()` 接口。
+
+UE5.8.0完整Editor目标构建通过，Editor构建证据为Eligible；8项定向原生自动化测试全部通过，其中 `GamePlatform.Camera.Cinematic.LeaseOwnership` 覆盖错配目标保护。具体命令与报告路径见 `Docs/Implementation/Cameras/SSLM_FormalCharacterPreviewCameraIntegration_20261018.md`。自动化未完成正式场景人工画面、鼠标操作、焦点/输入交接、Cook、服务器隔离及目标设备性能验收。

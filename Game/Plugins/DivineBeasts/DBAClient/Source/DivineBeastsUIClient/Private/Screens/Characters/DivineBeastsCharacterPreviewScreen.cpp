@@ -1,11 +1,40 @@
 // 项目客户端预览鼠标输入适配；透明区域由Monolith布局，不拦截两侧选择与底部表单。
 #include "Screens/Characters/DivineBeastsCharacterPreviewScreen.h"
 #include "Screens/Characters/DivineBeastsPreviewDragState.h"
+#include "Input/Events.h"
 #include "Components/Border.h"
 #include "Input/Reply.h"
 #include "InputCoreTypes.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Application/SlateUser.h"
+
+FReply UDivineBeastsCharacterPreviewScreen::NativeOnMouseWheel(
+    const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if (PreviewDragSurface &&
+        PreviewDragSurface->GetCachedGeometry().IsUnderLocation(Event.GetScreenSpacePosition()))
+    {
+        const float WheelDelta = Event.GetWheelDelta();
+        if (!FMath::IsFinite(WheelDelta) || FMath::IsNearlyZero(WheelDelta))
+        {
+            return FReply::Handled();
+        }
+
+        // 预览区域内滚轮调视距；按住Shift后调焦段。表单与列表等其它控件沿用原输入。
+        if (Event.IsShiftDown())
+        {
+            AdjustPreviewCameraFocalLengthFromWheel(
+                FDivineBeastsPreviewCameraWheelState::FocalLengthDelta(WheelDelta));
+        }
+        else
+        {
+            AdjustPreviewCameraDistanceFromWheel(
+                FDivineBeastsPreviewCameraWheelState::DistanceDelta(WheelDelta));
+        }
+        return FReply::Handled();
+    }
+    return Super::NativeOnMouseWheel(Geometry, Event);
+}
 
 FReply UDivineBeastsCharacterPreviewScreen::NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)
 {

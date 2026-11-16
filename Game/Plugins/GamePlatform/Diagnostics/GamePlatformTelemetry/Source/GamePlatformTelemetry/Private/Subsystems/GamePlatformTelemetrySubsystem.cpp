@@ -3,6 +3,10 @@
 #include "Subsystems/GamePlatformTelemetrySubsystem.h"
 
 #include "Buffer/TelemetryBoundedBuffer.h"
+#include "Engine/World.h"
+#include "Engine/GameInstance.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Containers/Ticker.h"
 #include "Async/Async.h"
 #include "Templates/Atomic.h"
@@ -106,6 +110,8 @@ void UGamePlatformTelemetrySubsystem::Deinitialize()
         LocalSink->Shutdown(Limits.ShutdownFlushBudgetSeconds);
         if (!bStillClosingAfterFlush || !IsSinkScopeCurrent(ClosingLifecycleGeneration, RetiredSinkGeneration, LocalSink, true)) { return; }
     }
+    if(DevelopmentSavedSink.IsValid()){auto Saved=MoveTemp(DevelopmentSavedSink);Saved->Shutdown(Limits.ShutdownFlushBudgetSeconds);}
+    DevelopmentCaptureScope.Invalidate();DevelopmentSavedBuffer.Reset();DevelopmentSavedRateLimiter.Reset();DevelopmentSavedSchema.Reset();
     Buffer.Reset(); RateLimiter.Reset(); SchemaRegistry.Reset();
     Super::Deinitialize();
 }
@@ -113,6 +119,7 @@ void UGamePlatformTelemetrySubsystem::Deinitialize()
 
 bool UGamePlatformTelemetrySubsystem::ConfigureSink(TSharedPtr<IGamePlatformTelemetrySink, ESPMode::ThreadSafe> InSink)
 {
+    if(DevelopmentCaptureScope.IsValid()||bBeginningDevelopmentCapture)return false;
     check(IsInGameThread());
     if (bClosing || !bInitialized || bConfiguringSink || !InSink.IsValid()) { return false; }
     TStrongObjectPtr<UGamePlatformTelemetrySubsystem> KeepSelf(this);
@@ -157,6 +164,7 @@ bool UGamePlatformTelemetrySubsystem::ConfigureSink(TSharedPtr<IGamePlatformTele
 
 void UGamePlatformTelemetrySubsystem::SetEnabled(bool bInEnabled)
 {
+    if(DevelopmentCaptureScope.IsValid()||bBeginningDevelopmentCapture)return;
     check(IsInGameThread());
     if (bClosing || !bInitialized || bEnabled == bInEnabled) { return; }
     bEnabled = bInEnabled;
@@ -172,6 +180,7 @@ void UGamePlatformTelemetrySubsystem::SetEnabled(bool bInEnabled)
 void UGamePlatformTelemetrySubsystem::SetSamplingSeed(
     FString InSamplingSeed)
 {
+    if(DevelopmentCaptureScope.IsValid()||bBeginningDevelopmentCapture)return;
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     SamplingSeed = MoveTemp(InSamplingSeed);
@@ -180,6 +189,7 @@ void UGamePlatformTelemetrySubsystem::SetSamplingSeed(
 void UGamePlatformTelemetrySubsystem::SetTraceBridgeEnabled(
     bool bInEnabled)
 {
+    if(DevelopmentCaptureScope.IsValid()||bBeginningDevelopmentCapture)return;
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     bTraceBridgeEnabled = bInEnabled;
@@ -188,6 +198,7 @@ void UGamePlatformTelemetrySubsystem::SetTraceBridgeEnabled(
 void UGamePlatformTelemetrySubsystem::SetContentRevision(
     FString InContentRevision)
 {
+    if(DevelopmentCaptureScope.IsValid()||bBeginningDevelopmentCapture)return;
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     FScopeLock Lock(&ContextMutex);
@@ -197,6 +208,7 @@ void UGamePlatformTelemetrySubsystem::SetContentRevision(
 void UGamePlatformTelemetrySubsystem::SetEnvironment(
     FString InEnvironment)
 {
+    if(DevelopmentCaptureScope.IsValid()||bBeginningDevelopmentCapture)return;
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     FScopeLock Lock(&ContextMutex);
@@ -208,6 +220,7 @@ void UGamePlatformTelemetrySubsystem::SetServerContext(
     FString InRegion,
     FString InServerInstanceId)
 {
+    if(DevelopmentCaptureScope.IsValid()||bBeginningDevelopmentCapture)return;
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     FScopeLock Lock(&ContextMutex);
@@ -216,10 +229,9 @@ void UGamePlatformTelemetrySubsystem::SetServerContext(
     Context.ServerInstanceId = SanitizeContextValue(MoveTemp(InServerInstanceId));
 }
 
-void UGamePlatformTelemetrySubsystem::BeginSession(
-    FString InSessionId,
-    FString InPseudonymousPlayerId)
+void UGamePlatformTelemetrySubsystem::BeginSessionOwned(const FGuid& Scope,FString InSessionId,FString InPseudonymousPlayerId)
 {
+    if(Scope!=DevelopmentCaptureScope||bEndingDevelopmentCapture||bBeginningDevelopmentCapture){return;}
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     TStrongObjectPtr<UGamePlatformTelemetrySubsystem> KeepSelf(this);
@@ -234,8 +246,9 @@ void UGamePlatformTelemetrySubsystem::BeginSession(
     Context.PseudonymousPlayerId = SanitizeContextValue(MoveTemp(InPseudonymousPlayerId));
 }
 
-void UGamePlatformTelemetrySubsystem::EndSession()
+void UGamePlatformTelemetrySubsystem::EndSessionOwned(const FGuid& Scope)
 {
+    if(Scope!=DevelopmentCaptureScope||bEndingDevelopmentCapture||bBeginningDevelopmentCapture){return;}
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     TStrongObjectPtr<UGamePlatformTelemetrySubsystem> KeepSelf(this);
@@ -286,13 +299,9 @@ bool UGamePlatformTelemetrySubsystem::EndSessionInternal(
     return true;
 }
 
-void UGamePlatformTelemetrySubsystem::UpdateWorldContext(
-    FString InMapId,
-    FString InWorldId,
-    FString InExperienceId,
-    FString InMatchId,
-    FString InArenaModeId)
+void UGamePlatformTelemetrySubsystem::UpdateWorldContextOwned(const FGuid& Scope,FString InMapId,FString InWorldId,FString InExperienceId,FString InMatchId,FString InArenaModeId)
 {
+    if(Scope!=DevelopmentCaptureScope||bEndingDevelopmentCapture||bBeginningDevelopmentCapture){return;}
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     ++ContextOperationGeneration;
@@ -305,10 +314,9 @@ void UGamePlatformTelemetrySubsystem::UpdateWorldContext(
     Context.ArenaModeId = SanitizeContextValue(MoveTemp(InArenaModeId));
 }
 
-void UGamePlatformTelemetrySubsystem::UpdateCorrelationContext(
-    FString InCorrelationId,
-    FString InTransactionId)
+void UGamePlatformTelemetrySubsystem::UpdateCorrelationContextOwned(const FGuid& Scope,FString InCorrelationId,FString InTransactionId)
 {
+    if(Scope!=DevelopmentCaptureScope||bEndingDevelopmentCapture||bBeginningDevelopmentCapture){return;}
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     FScopeLock Lock(&ContextMutex);
@@ -316,8 +324,9 @@ void UGamePlatformTelemetrySubsystem::UpdateCorrelationContext(
     Context.TransactionId = SanitizeContextValue(MoveTemp(InTransactionId));
 }
 
-void UGamePlatformTelemetrySubsystem::BeforeWorldTravel()
+void UGamePlatformTelemetrySubsystem::BeforeWorldTravelOwned(const FGuid& Scope)
 {
+    if(Scope!=DevelopmentCaptureScope||bEndingDevelopmentCapture||bBeginningDevelopmentCapture){return;}
     check(IsInGameThread());
     if (bClosing || !bInitialized) { return; }
     TStrongObjectPtr<UGamePlatformTelemetrySubsystem> KeepSelf(this);
@@ -346,9 +355,9 @@ void UGamePlatformTelemetrySubsystem::BeforeWorldTravel()
 }
 
 EGamePlatformTelemetryRecordResult
-UGamePlatformTelemetrySubsystem::RecordEvent(
-    FGamePlatformTelemetryEvent Event)
+UGamePlatformTelemetrySubsystem::RecordEventOwned(const FGuid& Scope,FGamePlatformTelemetryEvent Event)
 {
+    if(Scope!=DevelopmentCaptureScope||bEndingDevelopmentCapture||bBeginningDevelopmentCapture){return EGamePlatformTelemetryRecordResult::Disabled;}
     check(IsInGameThread());
     if (bClosing || !bInitialized || !bEnabled || !SchemaRegistry.IsValid() || !Buffer)
     {
@@ -448,9 +457,9 @@ UGamePlatformTelemetrySubsystem::RecordEvent(
 }
 
 EGamePlatformTelemetryRecordResult
-UGamePlatformTelemetrySubsystem::RecordMetric(
-    FGamePlatformTelemetryMetric Metric)
+UGamePlatformTelemetrySubsystem::RecordMetricOwned(const FGuid& Scope,FGamePlatformTelemetryMetric Metric)
 {
+    if(Scope!=DevelopmentCaptureScope||bEndingDevelopmentCapture||bBeginningDevelopmentCapture){return EGamePlatformTelemetryRecordResult::Disabled;}
     check(IsInGameThread());
     if (bClosing || !bInitialized || !bEnabled || !SchemaRegistry.IsValid() || !Buffer)
     {
@@ -816,4 +825,83 @@ FString UGamePlatformTelemetrySubsystem::StableSamplingKey(
            ContextSnapshot.WorldId +
            TEXT("|") +
            LexToString(Generation);
+}
+
+EGamePlatformTelemetryRecordResult UGamePlatformTelemetrySubsystem::RecordEvent(FGamePlatformTelemetryEvent Event){return RecordEventOwned({},MoveTemp(Event));}
+EGamePlatformTelemetryRecordResult UGamePlatformTelemetrySubsystem::RecordMetric(FGamePlatformTelemetryMetric Metric){return RecordMetricOwned({},MoveTemp(Metric));}
+void UGamePlatformTelemetrySubsystem::BeginSession(FString InSessionId,
+    FString InPseudonymousPlayerId){BeginSessionOwned({},MoveTemp(InSessionId),MoveTemp(InPseudonymousPlayerId));}
+void UGamePlatformTelemetrySubsystem::EndSession(){EndSessionOwned({});}
+void UGamePlatformTelemetrySubsystem::UpdateWorldContext(FString InMapId,
+    FString InWorldId,
+    FString InExperienceId,
+    FString InMatchId,
+    FString InArenaModeId){UpdateWorldContextOwned({},MoveTemp(InMapId),MoveTemp(InWorldId),MoveTemp(InExperienceId),MoveTemp(InMatchId),MoveTemp(InArenaModeId));}
+void UGamePlatformTelemetrySubsystem::UpdateCorrelationContext(FString InCorrelationId,
+    FString InTransactionId){UpdateCorrelationContextOwned({},MoveTemp(InCorrelationId),MoveTemp(InTransactionId));}
+void UGamePlatformTelemetrySubsystem::BeforeWorldTravel(){BeforeWorldTravelOwned({});}
+
+namespace {
+/** 同步有界计数sink只接纳平台执行器传来的合成批次；不存事件、身份、属性或网络队列。 */
+class FGamePlatformDevelopmentCountSink final:public IGamePlatformTelemetrySink {
+ FGamePlatformTelemetrySinkStatus Status;
+public:
+ bool Start()override{Status.Health=EGamePlatformTelemetrySinkHealth::Healthy;return true;}
+ void SubmitBatch(FGamePlatformTelemetryBatch,FGamePlatformTelemetrySubmitCompletion Done)override{++Status.SubmittedBatches;Status.LastSuccessUtc=FDateTime::UtcNow();if(Done)Done(true,false);}
+ void Flush()override{}
+ void Shutdown(float)override{Status.Health=EGamePlatformTelemetrySinkHealth::Stopped;}
+ FGamePlatformTelemetrySinkStatus GetHealth()const override{return Status;}
+};
+}
+bool UGamePlatformTelemetrySubsystem::BeginDevelopmentCapture(UWorld& World,FGuid Owner,FGuid& OutScope){
+ check(IsInGameThread());OutScope.Invalidate();
+#if UE_BUILD_SHIPPING
+ return false;
+#else
+ if(!Owner.IsValid()||World.GetGameInstance()!=GetGameInstance()||World.GetNetMode()!=NM_Standalone||World.bIsTearingDown||World.WorldType!=EWorldType::Game||
+    !FParse::Param(FCommandLine::Get(),TEXT("DBAPluginDemo"))||!FParse::Param(FCommandLine::Get(),TEXT("GamePlatformManualFixture"))||
+    bClosing||!bInitialized||bConfiguringSink||bFlushInProgress||FlushTickerHandle.IsValid()||DevelopmentCaptureScope.IsValid()||!Buffer||Buffer->GetDiagnostics().BufferDepth!=0)return false;
+ const auto C=GetContextSnapshot();if(!C.SessionId.IsEmpty()||!C.PseudonymousPlayerId.IsEmpty()||!C.MapId.IsEmpty()||!C.WorldId.IsEmpty()||!C.ExperienceId.IsEmpty()||!C.MatchId.IsEmpty()||!C.ArenaModeId.IsEmpty()||!C.CorrelationId.IsEmpty()||!C.TransactionId.IsEmpty()||!C.ServerInstanceId.IsEmpty())return false;
+ TGuardValue<bool> Beginning(bBeginningDevelopmentCapture,true);TGuardValue<bool> Configuring(bConfiguringSink,true);const auto L=LifecycleGeneration;const auto G=SinkGeneration;const auto ContextGeneration=ContextOperationGeneration;auto Previous=Sink;
+ const auto Health=Previous.IsValid()?Previous->GetHealth():FGamePlatformTelemetrySinkStatus{};
+ if(bClosing||LifecycleGeneration!=L||SinkGeneration!=G||ContextOperationGeneration!=ContextGeneration||Sink!=Previous||Health.PendingBatches!=0||Buffer->GetDiagnostics().BufferDepth!=0||bFlushInProgress)return false;
+ auto Candidate=MakeShared<FGamePlatformDevelopmentCountSink,ESPMode::ThreadSafe>();if(!Candidate->Start())return false;
+ CancelScheduledFlush();DevelopmentSavedSink=MoveTemp(Sink);DevelopmentSavedBuffer=MoveTemp(Buffer);DevelopmentSavedRateLimiter=MoveTemp(RateLimiter);DevelopmentSavedSchema=MoveTemp(SchemaRegistry);
+ DevelopmentSavedContext=C;DevelopmentSavedSamplingSeed=SamplingSeed;bDevelopmentSavedEnabled=bEnabled;bDevelopmentSavedTrace=bTraceBridgeEnabled;DevelopmentSavedLastFlushUtc=LastFlushUtc;DevelopmentSavedLastFlushRecords=LastFlushRecords;
+ Sink=Candidate;++SinkGeneration;Buffer=MakeUnique<FGamePlatformTelemetryBoundedBuffer>(Limits);RateLimiter=MakeUnique<FGamePlatformTelemetryRateLimiter>();SchemaRegistry=FGamePlatformTelemetrySchemaRegistry::CreateFoundationDefaults();
+ SamplingSeed=TEXT("manual.synthetic");bEnabled=true;bTraceBridgeEnabled=false;DevelopmentCaptureScope=FGuid::NewGuid();OutScope=DevelopmentCaptureScope;return true;
+#endif
+}
+bool UGamePlatformTelemetrySubsystem::ExecuteDevelopmentCapture(const FGuid& Scope,FName Op,double Value,FString Identifier,EGamePlatformTelemetryRecordResult& Out){
+ Out=EGamePlatformTelemetryRecordResult::Disabled;if(!Scope.IsValid()||Scope!=DevelopmentCaptureScope||bClosing||bEndingDevelopmentCapture||!FMath::IsFinite(Value)||Identifier.Len()>128)return false;
+ for(TCHAR C:Identifier)if(!((C>='A'&&C<='Z')||(C>='a'&&C<='z')||(C>='0'&&C<='9')||C=='.'||C=='_'||C=='-'))return false;
+ const FString Id=TEXT("manual.")+Identifier;
+ if(Op==TEXT("BeginSession"))BeginSessionOwned(Scope,Id,TEXT("manual.anonymous"));
+ else if(Op==TEXT("EndSession"))EndSessionOwned(Scope);
+ else if(Op==TEXT("PublishWorld")){UpdateWorldContextOwned(Scope,TEXT("manual.map"),Id,TEXT(""),TEXT(""),TEXT(""));UpdateCorrelationContextOwned(Scope,TEXT("manual.trace"),TEXT(""));}
+ else if(Op==TEXT("PublishCorrelation"))UpdateCorrelationContextOwned(Scope,Id,TEXT(""));
+ else if(Op==TEXT("BeforeTravel"))BeforeWorldTravelOwned(Scope);
+ else if(Op==TEXT("Discard"))DiscardBufferedRecordsForPrivacyBoundary();
+ else if(Op==TEXT("Flush"))FlushBestEffort();
+ else if(Op==TEXT("RecordEvent")||Op==TEXT("RejectSchema")){
+  FGamePlatformTelemetryEvent V;V.EventName=Op==TEXT("RecordEvent")?FName(TEXT("Telemetry.Foundation.WorldLoaded")):FName(TEXT("Manual.UnknownSchema"));V.SchemaVersion=1;
+  FGamePlatformTelemetryAttribute A;A.Key=TEXT("result");A.StringValue=Id;V.Attributes.Add(A);Out=RecordEventOwned(Scope,MoveTemp(V));
+ }else{
+  FGamePlatformTelemetryMetric V;V.Value=Value;
+  if(Op==TEXT("Counter")){V.Name=TEXT("client.telemetry.dropped_total");V.Type=EGamePlatformTelemetryMetricType::Counter;}
+  else if(Op==TEXT("Gauge")){V.Name=TEXT("client.telemetry.buffer_depth");V.Type=EGamePlatformTelemetryMetricType::Gauge;}
+  else if(Op==TEXT("Histogram")){V.Name=TEXT("client.frame_ms");V.Type=EGamePlatformTelemetryMetricType::Histogram;}
+  else if(Op==TEXT("Duration")){V.Name=TEXT("client.loading.duration_ms");V.Type=EGamePlatformTelemetryMetricType::Duration;}
+  else return false;Out=RecordMetricOwned(Scope,MoveTemp(V));
+ }
+ return !bClosing&&DevelopmentCaptureScope==Scope;
+}
+bool UGamePlatformTelemetrySubsystem::EndDevelopmentCapture(const FGuid& Scope){
+ check(IsInGameThread());if(!Scope.IsValid()||Scope!=DevelopmentCaptureScope||bClosing||bConfiguringSink||bFlushInProgress||bEndingDevelopmentCapture)return false;
+ TGuardValue<bool> Ending(bEndingDevelopmentCapture,true);CancelScheduledFlush();
+ auto Retired=MoveTemp(Sink);++SinkGeneration;if(Retired.IsValid())Retired->Shutdown(Limits.ShutdownFlushBudgetSeconds);
+ // The dedicated sink has no callbacks or pending IO. Restore exact suspended objects, including an actually empty pointer.
+ Sink=MoveTemp(DevelopmentSavedSink);Buffer=MoveTemp(DevelopmentSavedBuffer);RateLimiter=MoveTemp(DevelopmentSavedRateLimiter);SchemaRegistry=MoveTemp(DevelopmentSavedSchema);
+ {FScopeLock Lock(&ContextMutex);Context=DevelopmentSavedContext;}SamplingSeed=MoveTemp(DevelopmentSavedSamplingSeed);bEnabled=bDevelopmentSavedEnabled;bTraceBridgeEnabled=bDevelopmentSavedTrace;LastFlushUtc=DevelopmentSavedLastFlushUtc;LastFlushRecords=DevelopmentSavedLastFlushRecords;++ContextOperationGeneration;++SessionGeneration;
+ DevelopmentCaptureScope.Invalidate();return true;
 }

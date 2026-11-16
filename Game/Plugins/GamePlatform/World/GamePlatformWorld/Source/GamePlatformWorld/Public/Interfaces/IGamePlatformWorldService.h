@@ -21,6 +21,16 @@ public:
     virtual FGamePlatformResult InitializeBoundWorld(const FPrimaryAssetId& DefinitionId, const FGamePlatformWorldContext& VerifiedContext) = 0;
     /** 立即采样现状的值副本，不能借用内部定义指针。 */
     virtual FGamePlatformWorldReadinessSnapshot GetReadiness() = 0;
+    /** 游戏线程弱Owner状态订阅；成功后先GetReadiness读取完整快照，此后只在真实事实变化时通知。
+     * 复用World已有采样/加载完成源，不为调用者创建轮询。Owner必须属于本World。
+     * 回调内业务变更可能被拒绝；可精确解绑，后续工作须校验世界/代次后有界投递。
+     * 老实现默认Unsupported，避免新增纯虚函数破坏既有替身源码兼容。
+     */
+    virtual FGamePlatformWorldRegistration SubscribeReadiness(TWeakObjectPtr<UObject> Owner,
+        TFunction<void(const FGamePlatformWorldReadinessSnapshot&)> Callback, FGamePlatformResult& OutResult)
+    { OutResult=FGamePlatformResult::Unsupported(TEXT("WorldNotificationsUnsupported"),TEXT("当前世界实现不提供状态通知"));return {}; }
+    /** 完整世界/注册身份解绑，允许回调内调用；同世界有效句柄重复撤销幂等。 */
+    virtual bool UnsubscribeReadiness(const FGamePlatformWorldRegistration& Registration) { return false; }
     /** 只登记当前已声明且已加载区域；重复ID失败。 */
     virtual FGamePlatformWorldRegistration RegisterRegionProvider(const FGamePlatformRegionProvider& Provider, FGamePlatformResult& OutResult) = 0;
     /** 精确身份幂等撤销；随后采样发布观察者离开，不影响其他世界。 */

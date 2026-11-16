@@ -10,23 +10,35 @@
 退出2表示未执行，1表示检查失败；引擎非零码原样保留。通过不等于新手村网络准入通过。
 #>
 param([string]$EngineRoot, [switch]$Cook,
+    # 可显式绑定完整Editor构建；缺省核验最新成功完整Editor证据，拒绝陈旧反射DLL。
+    [string]$EditorBuildResult,
     # 默认不向每个独占Stage重复复制数GB的PDB；原始调试符号仍归Game/Binaries。
     # 需要随包调试时显式传-SkipDebugSymbols:$false，不降低配置、不跳过Cook与资产容器检查。
     [switch]$SkipDebugSymbols=$true,
+    # Zen服务实际不可用时显式回退原生文件Cook输出；不关闭IoStore、DDC或现有发布门禁。
+    [switch]$SkipZenStore,
+    # VillageDevelopmentClient 发布门禁要求同次编译证据，此选项也可为其他前端配置开启。
+    [switch]$ForceNiagaraCompileOnLoad,
+    # 文件Cook遇到深层资产名超过260字符时，显式使用独占短输出目录；不改变资产身份或跳过检查。
+    [string]$ShortCookRoot,
     # 必须匹配当前公共UI与原图的真实RHI颜色报告；资源变化后旧报告拒绝发布。
     [string]$UIColorRHIReport,
     # 默认发行前端保持开发资源隔离；候选技能必须显式选择用户批准的开发客户端配置。
     [ValidateSet('FrontEndClient','VillageDevelopmentClient')][string]$CustomConfig='FrontEndClient',
+    [switch]$WithoutArena,
     [ValidateRange(1,86400)][int]$TimeoutSeconds=1800, [guid]$RunId=[guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
-$context=$null; $lock=$null; $code=2; $message=''; $details=@{Target='Client';CustomConfig=$CustomConfig}
+Import-Module (Join-Path $PSScriptRoot 'FoundationTargetAssembly.psm1') -Force
+$context=$null; $lock=$null; $code=2; $message=''; $details=@{Target='Client';CustomConfig=$CustomConfig;SkipZenStore=[bool]$SkipZenStore}
 try {
     $context=New-FoundationContext 'Cook-FrontEndClient' $RunId
     if (!$Cook) { throw [IO.FileNotFoundException]::new('需显式指定-Cook。') }
+    if ($WithoutArena -and $CustomConfig -ne 'FrontEndClient') { throw '无竞技前端Cook要求FrontEndClient配置。' }
     $engine=Get-FoundationEngine $EngineRoot
     $details.EngineVersion=$engine.Version
     $details.EngineRoot=$engine.Root
+    Import-Module (Join-Path $PSScriptRoot 'FoundationCookEvidence.psm1') -Force
     $tool=Get-FoundationManagedTool $engine AutomationTool
     Assert-FoundationFile $context.Project
     Assert-FoundationFile (Join-Path $context.Workspace "Game/Config/Custom/$CustomConfig/DefaultGame.ini")
@@ -35,25 +47,72 @@ try {
     if($LASTEXITCODE -ne 0){throw '真实RHI颜色门禁未通过；拒绝发布缺失、失败或过期的UI颜色证据。'}
     $details.UIColorRHIReport=[IO.Path]::GetFullPath($UIColorRHIReport)
     $lock=Enter-FoundationEngineLock $engine.Root
+    $details.TargetAssembly=Read-FoundationTargetAssembly -Workspace $context.Workspace -Target Client -WithoutArena:$WithoutArena
+    # 锁内核验，防止预检后被另一构建替换Editor DLL，再启动UAT。
+    $details.CookEditorGate=Assert-FoundationCookEditorBuildResult -Workspace $context.Workspace -EngineRoot $engine.Root -BuildResultPath $EditorBuildResult
+    if ($CustomConfig -eq 'VillageDevelopmentClient') {
+        Import-Module (Join-Path $PSScriptRoot 'FoundationBuildEvidence.psm1')
+        Import-Module (Join-Path $PSScriptRoot 'LocalValidationPackageEvidence.psm1')
+        $battleInput = Get-FoundationBattleInputSHA256 -Workspace $context.Workspace -CookRelevantCompileSHA256 $details.CookEditorGate.CookRelevantCompileSHA256
+    }
+    if($ShortCookRoot -and -not $SkipZenStore){throw 'ShortCookRoot只用于显式文件Cook（SkipZenStore）。'}
     $cookDirectory=Join-Path $context.Directory 'Cooked/WindowsClient'
+    if ($SkipZenStore) {
+        # 文件Cook会拼接完整插件目录，深层验证目录会触发Windows的260字符限制。
+        # 仅此恢复模式使用工作区内独占短路径；不改源资产身份、不复用或清理旧Cook。
+        # UAT要求最终目录仍以平台名结尾，否则Stage会再追加一层WindowsClient。
+        $cookDirectory=Join-Path $context.Workspace ('Saved/C/'+$RunId.ToString('N').Substring(0,8)+'/WindowsClient')
+        if($ShortCookRoot){
+            if(-not [IO.Path]::IsPathRooted($ShortCookRoot)){throw '短Cook目录必须是当前工程内的绝对路径。'}
+            $shortRoot=[IO.Path]::GetFullPath($ShortCookRoot)
+            $workspaceBoundary=[IO.Path]::GetFullPath($context.Workspace).TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar
+            if(-not $shortRoot.StartsWith($workspaceBoundary,[StringComparison]::OrdinalIgnoreCase)){throw '短Cook目录必须位于当前工程内，禁止工程外烘焙副本。'}
+            $shortParent=Split-Path -Parent $shortRoot
+            $shortAncestor=$shortParent
+            while($shortAncestor -and ($shortAncestor.StartsWith($workspaceBoundary,[StringComparison]::OrdinalIgnoreCase) -or $shortAncestor -ieq $context.Workspace)){
+                if((Test-Path -LiteralPath $shortAncestor) -and ((Get-Item -LiteralPath $shortAncestor).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw '短Cook祖先目录不得为重解析点。'}
+                $shortAncestor=Split-Path -Parent $shortAncestor
+            }
+            if(Test-Path -LiteralPath $shortRoot){throw '短Cook目录已经存在，拒绝覆盖。'}
+            $null=New-Item -ItemType Directory -Path $shortRoot -Force
+            @{Workspace=$context.Workspace;RunId=$RunId.ToString();Purpose='Exclusive frontend file Cook'}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $shortRoot 'Owner.json') -Encoding utf8
+            $cookDirectory=Join-Path $shortRoot 'WindowsClient'
+            $details.ShortCookRoot=$shortRoot
+        }
+        if (Test-Path -LiteralPath $cookDirectory) { throw '文件Cook独占短路径已存在，拒绝覆盖。' }
+    }
     $stageDirectory=Join-Path $context.Directory 'Stage'
     $details.CookDirectory=$cookDirectory; $details.StageDirectory=$stageDirectory
     # 三张真实地图与小范围软引用目录共同组成前端回归包；不使用CookAll扩大到全部开发内容。
     $maps=@('/DBAFrontEndPack/Maps/L_DBA_FrontEnd','/DBAFrontEndPack/Maps/L_DBA_CharacterStudio','/DBAWorldPack_Village/Maps/L_Village_Start')
     if($CustomConfig -eq 'VillageDevelopmentClient'){$maps+='/DBAWorldPack_MainArena/Maps/L_DBA_MainArena'}
     $details.Maps=$maps
+    $cookOptions="-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback"
+    if ($WithoutArena) {
+        $arenaOptions=(Get-FoundationWithoutArenaCookArguments) -join ' '
+        $cookOptions += (' ' + (Get-FoundationWithoutArenaCookerOptions))
+        $details.RequiredRuntimeArguments = $arenaOptions
+    }
+    if ($SkipZenStore) { $cookOptions += ' -SkipZenStore' }
+    $compileNiagaraForCook = $ForceNiagaraCompileOnLoad -or $CustomConfig -ceq 'VillageDevelopmentClient'
+    if ($compileNiagaraForCook) { $cookOptions += ' -ForceDPCVars=fx.ForceCompileOnLoad=1' }
+    $details.ForceNiagaraCompileOnLoad=$compileNiagaraForCook
+    # 复用工程已有DDC；UE5.8编辑器设置可覆盖环境/命令行，三处限定同一工程内目录。
+    $cookLocalCacheDirectory=Join-Path $context.Workspace 'Game/DerivedDataCache'
+    $cookOptions+=(' -LocalDataCachePath="'+$cookLocalCacheDirectory+'" -ini:EditorSettings:/Script/UnrealEd.EditorSettings:LocalDerivedDataCache=(Path="'+$cookLocalCacheDirectory+'")')
+    $details.LocalDataCacheDirectory=$cookLocalCacheDirectory
     $arguments=@($tool.Dll,'BuildCookRun',"-project=$($context.Project)",'-target=DivineBeastsArenaClient',
         '-nop4','-unattended','-utf8output','-cook','-stage','-pak','-skipbuild','-skipbuildeditor','-platform=Win64',
         '-clientconfig=Development','-client','-ddc=NoZenLocalFallback',
-        "-AdditionalCookerOptions=-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback",
+        "-AdditionalCookerOptions=$cookOptions",
         ('-map='+($maps -join '+')), "-CookOutputDir=$cookDirectory", "-stagingdirectory=$stageDirectory")
     if ($SkipDebugSymbols) { $arguments += '-nodebuginfo' }
     $details.SkipDebugSymbols = [bool]$SkipDebugSymbols
     if ($CustomConfig -eq 'VillageDevelopmentClient') {
         # Cook的CustomConfig不决定Stage：Stage仍按目标收据过滤Config/Custom目录。
-        # UAT顶层CustomConfig又会被UBT配置缓存读取，影响其他Stage层，因此只精确白名单这两份开发INI。
-        # DefaultGame含开关、十二集合映射和客户端UIProfile扫描；GameplayTags含36个独立冷却标签。
-        $developmentConfigFiles = @('DefaultGame.ini','DefaultGameplayTags.ini')
+        # UAT顶层CustomConfig又会被UBT配置缓存读取，影响其他Stage层，因此只精确白名单开发INI。
+        # DefaultEngine提供客户端Landscape Grass运行时草图开关；其余文件为技能与标签合同。
+        $developmentConfigFiles = @('DefaultGame.ini','DefaultGameplayTags.ini','DefaultEngine.ini')
         $details.StagedDevelopmentConfigFiles = @()
         foreach ($configFile in $developmentConfigFiles) {
             Assert-FoundationFile (Join-Path $context.Workspace "Game/Config/Custom/$CustomConfig/$configFile")
@@ -67,6 +126,14 @@ try {
     }
     $tool.Environment.uebp_LogFolder=Join-Path $context.Directory 'UATLogs'
     $tool.Environment.uebp_EngineSavedFolder=Join-Path $context.Directory 'EngineSaved'
+    # UAT及其Cook子进程的临时文件同样留在当前工程；短目录避免Shader工作路径再次超长。
+    $cookTemporaryDirectory=Join-Path $context.Workspace ('Saved/T/'+$RunId.ToString('N').Substring(0,8))
+    if(Test-Path -LiteralPath $cookTemporaryDirectory){throw '本次Cook临时目录已存在，拒绝复用。'}
+    $null=New-Item -ItemType Directory -Path $cookTemporaryDirectory -Force
+    $tool.Environment.TEMP=$cookTemporaryDirectory
+    $tool.Environment.TMP=$cookTemporaryDirectory
+    $tool.Environment['UE-LocalDataCachePath']=$cookLocalCacheDirectory
+    $details.TemporaryDirectory=$cookTemporaryDirectory
     $result=Invoke-FoundationProcess -FilePath $tool.Executable -Arguments $arguments -WorkingDirectory (Split-Path $tool.Dll) -OutputDirectory $context.Directory -TimeoutSeconds $TimeoutSeconds -Environment $tool.Environment
     $details.Result=$result; $code=$result.ExitCode
     if ($code -eq 0) {
@@ -140,6 +207,24 @@ try {
         $grassResult=Invoke-FoundationProcess -FilePath $grassPython -Arguments @($grassGate,'--csv',$csv,'--report',$grassReport) -WorkingDirectory $context.Workspace -OutputDirectory $grassDirectory -TimeoutSeconds 60
         $details.GrassContainerReport=$grassReport; $details.GrassContainerResult=$grassResult
         $code=$grassResult.ExitCode
+    }
+    if ($code -eq 0) {
+        # 同一有限合同拒绝退休身份/样例/历史；枚举本次全部IoStore容器，不能漏查新增Chunk。
+        $resourcePython=Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        $resourceGate=Join-Path $context.Workspace 'Tools/Unreal/Resources/ValidateResourceOwnershipContainer.py'
+        Assert-FoundationFile $resourcePython; Assert-FoundationFile $resourceGate
+        $resourceDirectory=Join-Path $context.Directory 'ResourceOwnershipGate'
+        $null=New-Item -ItemType Directory -Path $resourceDirectory
+        $resourceReport=Join-Path $resourceDirectory 'ResourceOwnership.json'
+        $resourceArguments=@($resourceGate,'--stage',$stageDirectory,'--unreal-pak',$pakTool,'--profile',$CustomConfig,'--report',$resourceReport)
+        if ($WithoutArena) { $resourceArguments += '--without-arena' }
+        $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments $resourceArguments -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
+        $details.ResourceOwnershipGateResult=$resourceResult; $details.ResourceOwnershipReport=$resourceReport
+        $code=$resourceResult.ExitCode
+    }
+    if ($code -eq 0 -and $CustomConfig -eq 'VillageDevelopmentClient') {
+        $details.LocalValidationPackage = Complete-LocalValidationCookProof -Workspace $context.Workspace -StageDirectory $stageDirectory `
+            -Target Client -ContainerCsv $csv -BattleInputSHA256 $battleInput
     }
     $message='实际客户端Cook/Stage和IoStore资源门禁结束；仍须验证认证、UI交互与网络准入。'
 } catch [IO.FileNotFoundException] { $code=2; $message=$_.Exception.Message }

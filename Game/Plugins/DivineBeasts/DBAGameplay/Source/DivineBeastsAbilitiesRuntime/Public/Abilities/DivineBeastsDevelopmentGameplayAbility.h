@@ -1,16 +1,18 @@
 #pragma once
 
-#include "Abilities/DivineBeastsConfiguredGameplayAbility.h"
+#include "Abilities/DivineBeastsCombatGameplayAbility.h"
 #include "DivineBeastsDevelopmentGameplayAbility.generated.h"
 
 /**
  * 项目双端开发验证能力：只在双重显式启用的非Shipping/Test进程执行服务器前向单目标伤害。
  * 继承既有配置技能的身份、预加载、可信命中和平台战斗结算；不实现图标所示位移、范围、治疗或被动。
  * 数据、GE与蓝图由开发目录拥有；本类不加载资产、不拥有另一个ASC，单次激活立即结束。
+ * 经公共Combat基类保持既有DevelopmentMagic反射祖先兼容；本射线入口显式使用Configured初始化，
+ * 魔法子类只委托公共执行，不会先触发本类的即时射线或提前结束。
  */
 UCLASS(Blueprintable)
 class DIVINEBEASTSABILITIESRUNTIME_API UDivineBeastsDevelopmentGameplayAbility
-    : public UDivineBeastsConfiguredGameplayAbility
+    : public UDivineBeastsCombatGameplayAbility
 {
     GENERATED_BODY()
 

@@ -129,7 +129,14 @@ func TestOnlineIdentityPGConcurrentRefreshReplayRevokes(t *testing.T) {
 func TestOnlineIdentityPGLogoutHistoricalTokenAndIsolation(t *testing.T) {
 	p, s, game, password := onlineIdentityIntegration(t)
 	old := loginOnlineIdentity(t, s, game, password)
-	other := loginOnlineIdentity(t, s, game, password)
+	// 隔离会话必须属于不同账号；同账号第二次登录会按新规则撤销前一个会话。
+	if _, err := s.EnsureAccount(context.Background(), game, "account-b", password); err != nil {
+		t.Fatal(err)
+	}
+	other, err := s.LoginPassword(context.Background(), game, "account-b", password, "test-device-b")
+	if err != nil {
+		t.Fatal(err)
+	}
 	fresh, err := s.Refresh(context.Background(), old.RefreshToken)
 	if err != nil {
 		t.Fatal(err)
@@ -156,6 +163,26 @@ func TestOnlineIdentityPGLogoutHistoricalTokenAndIsolation(t *testing.T) {
 	}
 	if _, err = reopened.Authenticate(context.Background(), other.AccessToken); err != nil {
 		t.Fatal("退出不得撤销另一个会话")
+	}
+}
+
+// 真实PG事务回归：后一次同账号登录生效，旧令牌和旧设备退出不能影响新会话。
+func TestOnlineIdentityPGLaterLoginWins(t *testing.T) {
+	_, service, game, password := onlineIdentityIntegration(t)
+	ctx := context.Background()
+	first := loginOnlineIdentity(t, service, game, password)
+	second := loginOnlineIdentity(t, service, game, password)
+	if _, err := service.Authenticate(ctx, first.AccessToken); !errors.Is(err, identity.ErrInvalidToken) {
+		t.Fatal("旧Access未撤销")
+	}
+	if _, err := service.Refresh(ctx, first.RefreshToken); !errors.Is(err, identity.ErrInvalidToken) {
+		t.Fatal("旧Refresh未撤销")
+	}
+	if err := service.Logout(ctx, first.RefreshToken); err != nil {
+		t.Fatal("旧会话退出应幂等")
+	}
+	if _, err := service.Authenticate(ctx, second.AccessToken); err != nil {
+		t.Fatal("旧会话退出误伤新登录")
 	}
 }
 

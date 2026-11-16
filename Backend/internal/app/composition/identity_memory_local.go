@@ -199,6 +199,13 @@ func (r *localIdentityPersistentRepository) CreateSession(
 		return identity.ErrInvalidCredentials
 	}
 
+	// 同账号只允许最后一次成功登录；保留刷新摘要归属供旧设备幂等退出，但旧令牌立即失效。
+	for sessionID, previous := range r.sessions {
+		if previous.GameID == record.GameID && previous.PlayerID == record.PlayerID {
+			r.revokedSession[sessionID] = true
+			delete(r.accessOwners, previous.AccessDigest)
+		}
+	}
 	r.sessions[record.SessionID] = record
 	r.accessOwners[record.AccessDigest] = record.SessionID
 	r.refreshOwners[record.RefreshDigest] = record.SessionID
@@ -242,12 +249,16 @@ func (r *localIdentityPersistentRepository) Rotate(
 	refreshDigest string,
 	rotation identity.TokenRotation,
 ) (identity.StoredSession, error) {
+	started := time.Now()
 	if err := ctx.Err(); err != nil {
 		return identity.StoredSession{}, err
 	}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if err := ctx.Err(); err != nil {
+		return identity.StoredSession{}, err
+	}
 
 	sessionID, ok := r.refreshOwners[refreshDigest]
 	if !ok || r.revokedSession[sessionID] {
@@ -257,27 +268,19 @@ func (r *localIdentityPersistentRepository) Rotate(
 	if !ok {
 		return identity.StoredSession{}, identity.ErrInvalidToken
 	}
-	if record.RefreshDigest != refreshDigest {
-		// 旧Refresh摘要重放必须先撤销整个会话，再返回安全错误。
+	// 同SQL/Redis：等待消耗有效期，但不以系统日期替换注入的领域时钟。
+	rotation.Now = rotation.Now.Add(time.Since(started))
+	fresh, err := rotation.Apply(record, refreshDigest)
+	if err != nil {
+		// 领域规则拒绝重放或绝对过期后，原子提交整会话撤销。
 		r.revokedSession[sessionID] = true
 		delete(r.accessOwners, record.AccessDigest)
-		return identity.StoredSession{}, identity.ErrInvalidToken
-	}
-	if !rotation.Now.Before(record.RefreshExpiresAt) {
-		r.revokedSession[sessionID] = true
-		delete(r.accessOwners, record.AccessDigest)
-		return identity.StoredSession{}, identity.ErrTokenExpired
+		return identity.StoredSession{}, err
 	}
 
 	delete(r.accessOwners, record.AccessDigest)
 	// 旧Refresh摘要保留在refreshOwners中，使重复Logout仍能定位同一Session。
-	record.AccessDigest = rotation.AccessDigest
-	record.RefreshDigest = rotation.RefreshDigest
-	candidateAccessExpiry := rotation.Now.Add(rotation.AccessTTL)
-	if candidateAccessExpiry.After(record.RefreshExpiresAt) {
-		candidateAccessExpiry = record.RefreshExpiresAt
-	}
-	record.AccessExpiresAt = candidateAccessExpiry
+	record = fresh
 
 	r.sessions[sessionID] = record
 	r.accessOwners[record.AccessDigest] = sessionID

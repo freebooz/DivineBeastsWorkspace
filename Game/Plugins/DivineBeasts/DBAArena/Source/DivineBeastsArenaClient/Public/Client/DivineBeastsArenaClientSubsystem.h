@@ -9,6 +9,17 @@ class IDivineBeastsApplicationFlowExtension;
 class IGamePlatformArenaMatchmakingAdapter;
 class FDivineBeastsArenaOnlineMatchmakingAdapter;
 class UDivineBeastsApplicationFlowSubsystem;
+struct FDivineBeastsWorldEntryPresentation;
+
+/** 本人认证代次下的约战只读快照；无准入秘密，不授予客户端名单或比赛权威。 */
+struct DIVINEBEASTSARENACLIENT_API FDivineBeastsArenaChallengeView
+{
+    bool bPresent=false,bCanReply=false,bCanCancel=false;
+    FString ChallengeId,OwnerPlayerId,TargetPlayerId,ModeId,RegionId;
+    int64 Revision=0;
+    FDateTime DeadlineUtc;
+    TArray<FString> TeamAPlayerIds,TeamBPlayerIds;
+};
 
 /**
  * UDivineBeastsArenaClientSubsystem（神兽联盟竞技客户端适配子系统）。
@@ -47,16 +58,29 @@ public:
     TSharedPtr<IGamePlatformArenaMatchmakingAdapter> GetMatchmakingAdapter()const;
     bool CanCancelObservedQueue()const;
     bool CanReturnObservedMatch()const;
+    /** 赛后只允许补同步未知观察或重试已确认返回，不触发旧的竞技场迁入。 */
+    bool CanRetryPostMatchReturn() const;
     /** 明确人工重试只重取本人状态/准入，不重复报名、选人或改变服务器资格。 */
     bool RetryObservedMigration();
     bool CanRetryObservedMigration()const;
     FText GetObservedMatchmakingStatus()const;
+    /** 当前报名/邀请模式；失联时保留最后活动模式只作保守锁定，不授予写入资格。无活动记录返回None。 */
+    FName GetObservedMatchmakingMode() const;
+    FDivineBeastsArenaChallengeView GetObservedChallenge() const;
+    bool CanChallengeMode(FName ModeId,FString& OutReason) const;
+    /** 项目约战意图仍经唯一Online适配器；完成仅代表服务器确认，失败不产生本地旅行。 */
+    void RequestChallenge(FName ModeId,const FString& TargetPlayerId,const FString& ClientRequestId,TFunction<void(bool,const FString&)> Completion);
+    void ReplyChallenge(bool bAccept,const FString& ClientRequestId,TFunction<void(bool,const FString&)> Completion);
+    void CancelChallenge(const FString& ClientRequestId,TFunction<void(bool,const FString&)> Completion);
     FSimpleMulticastDelegate OnMatchmakingStateChanged;
     /** 真实世界/Controller/Pawn复制事件触发；页面不拥有这些订阅，也不查询业务Tick。 */
     void RefreshArenaReadiness();
-    bool TryObserveArenaReadiness(UWorld& World,bool& bBound,bool& bPrepared,bool& bActive)const;
+    bool TryObserveArenaReadiness(UWorld& World, bool& bBound, bool& bPrepared, bool& bActive,
+        FDivineBeastsWorldEntryPresentation& Presentation) const;
 
 private:
+    friend class FDivineBeastsArenaApplicationFlowExtension;
+
     UPROPERTY(Transient)
     TObjectPtr<UDivineBeastsApplicationFlowSubsystem> ApplicationFlow = nullptr;
 
@@ -68,16 +92,22 @@ private:
     /** 只保存逻辑意图身份；票据只在回调栈移动给Flow。 */
     FString MigrationCandidateId,MigrationDirection,MigrationRequestId;
     FGuid MigrationAuthGeneration;
+    /** 当前认证代次中已通知源Village的报名ID；不存任何位置或准入凭据。 */
+    FString CapturedVillageQueueTicketId;
     uint64 MigrationGeneration=0;
     bool bMigrationPending=false;
     bool bDeinitializing=false;
     FText MigrationError;
+    TFunction<void()> CancelMigrationRequest;
     void HandleMatchmakingChanged();
     bool RequestObservedMigration(const FString& Direction);
+    void CancelObservedMigration();
 
     /** 以下弱引用及委托只属于当前World；旅行/销毁先解绑，再接受新世界事实。 */
     TWeakObjectPtr<UWorld> ReadinessWorld;
     TWeakObjectPtr<APlayerController> ReadinessController;
+    TWeakObjectPtr<class UDivineBeastsPlayerControlsComponent> ReadinessControls;
+    TWeakObjectPtr<class AGamePlatformArenaPlayerState> ReadinessPlayer;
     TWeakObjectPtr<class AGamePlatformArenaGameState> ReadinessGameState;
     TWeakObjectPtr<class UDivineBeastsCharacterComponent> ReadinessCharacter;
     TWeakObjectPtr<class UGamePlatformGameplayEligibilityComponent> ReadinessEligibility;

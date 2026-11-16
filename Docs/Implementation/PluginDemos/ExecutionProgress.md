@@ -1,5 +1,20 @@
 # 插件演示中心实际实施进度
 
+## 2026-10-18 全插件可视化诊断入口增量（当前批次）
+
+- 保留原67插件／89模块体系和4个功能9个正式案例，不重新创建插件演示框架或空资产。扩展UE5.8真实开发地图快捷入口：19个插件对应13张不重复原生地图（含游戏内容包寒冰箭VFX审核图），所有链接有包文件头校验，仍属于人工观察，不增加正式功能覆盖数。
+- 编辑器运行态仅扫描明确的`/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review`资源路径，并只对白名单L_DBA_IceArrow_A_Review登记；通用开发目录的地图仍按已有AssetRegistry发现。普通客户端不扫描项目内容包的VFX审核目录。
+- DemoHub统一使用原生Catalog预检及OpenScenario/ReturnToHub路由；插件禁用时不给域快捷入口。演示列表FName对象缓存改为TMap哈希索引以复用行值并减少重复刷新。没有生成虚假适配器或人工通过结论。
+- `TestPluginVisualDiagnosticRouting.py`（9项）、`TestCurrentPluginQualityAudit.py`（8项）、现有地图路由6项、UI就绪5项均通过；三份修改的演示中心C++源码通过锁定MSVC/UE5.8编译器的`/Zs`仅语法检查。三层插件ModuleGraph 2项、目标装配17项、571头/1238类型/210继承关系源检查通过。
+- 当前人工签收仍为0；需正式人工操作场景的53个插件中51个没有登记正式可操作功能案例，实时窗口、蓝图重载、性能和双Cook验收仍未完成。详细台账见`Docs/Implementation/PluginQualityAudit/CurrentPluginQualityMatrix.md`与`ReviewAndImplementationPlan_20261017.md`。
+
+## 2026-10-17 插件UI编目覆盖率可复现专项（仅新增检查器，不伪造新案例）
+
+- 增加`Tools/Unreal/PluginDemos/AuditPluginUIReadiness.py`（可打印全67插件逐项审查工作单和`--summary`统计）与`TestPluginUIReadiness.py`（5项负例验证，新增伪造批准状态拒绝）；不改既有`PluginDemoManifest.json`和已保存的Monolith控件。
+- 实际计算：67插件中`unreviewed`63、`partial`4；登记功能4、已接线4、演示案例9、人工批准0。功能能力分母未知（null），全部演示中心ProductionReady=false，`--require-ready`显式拒绝。
+- 公共/竞技UI目录资产清单改由正式C++ Catalog/WBP文件持续核验，不再依赖被Git忽略的旧32份Saved规格。详细源码整改、风险和静态检查证据见`Docs/Implementation/UIPluginArchitectureRemediation_20261017.md`。原生Editor和实际案例交互未执行；已有旧兼容AddToViewport仅限开发演示，未来需先验证再迁入统一层栈。
+
+
 ## 2026-10-16 实时编目缺项与派生覆盖表修复
 
 - 当前真实工作区存在67个插件描述（48个代码／机制插件、19个内容包），原演示编目已列66个，`ValidatePluginDemoManifest.py`通过真实身份校验指出唯一漏登的`DBAWorldPack_MainArena`（主竞技场世界内容包）。现已将其作为`Project/content_pack/unreviewed`（项目层纯内容包，未完成审查）补入正式Schema2编目，不虚构案例或人工签收。

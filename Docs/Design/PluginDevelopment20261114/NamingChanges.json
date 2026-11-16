@@ -1,0 +1,941 @@
+{
+  "Scope": "Current review design files only; native assets unchanged",
+  "Changes": [
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/BlueprintAutoLayoutUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/BlueprintAutoLayoutLayout.svg",
+      "SHA256": "c1761960c70738ec5bd8f94812f87ff787094e7b4b11d823bf307d9eda9235ae",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/BuildingGalleryUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/BuildingGalleryLayout.svg",
+      "SHA256": "255daca2f704daf3844045d44f158792569ad1cc688de12469c66a0fbdf20ec4",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/ComponentGalleryUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/ComponentGalleryLayout.svg",
+      "SHA256": "7e4e67c2639768418162bf51297611871782dba36ff944771ac2a868039d5163",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAArenaUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAArenaLayout.svg",
+      "SHA256": "ff335751bfe9c77c243930eb02a63e8003c5ecd1f5a04542f8a224319813eee2",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAClientUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAClientLayout.svg",
+      "SHA256": "a169fbbc3ee38fb55817c5f885153aa2a750920e4c18c22d3231750a242120c6",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAContentPackCommonUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAContentPackCommonLayout.svg",
+      "SHA256": "a317abd3604713d8b2db6486e91535e2be27bb4b453685bb11963c09d551e1b6",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAFoliagePackCoreUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAFoliagePackCoreLayout.svg",
+      "SHA256": "c37e06ef2f2962692ca971177f8bd8176980deddb103e9ca42f878c8c9fd0e2a",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAFrontEndPackUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAFrontEndPackLayout.svg",
+      "SHA256": "62b6a0dcb82af7b402da94695b56d92cd131b60d1a6da1a633cbe5ecb540c724",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAGameplayUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAGameplayLayout.svg",
+      "SHA256": "a569cc39e41a2745d2ff577b1e9fcdb459a847ffdd92bb98300bc7181d550710",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackBoarUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackBoarLayout.svg",
+      "SHA256": "bf48e29024f306005c372444a0208bb3fba257798457d1402d36501843f3c4ee",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackDogUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackDogLayout.svg",
+      "SHA256": "1d66ae4388170056ffe78b97dd4c60494137f331055958b38aa691d3fe08a0fd",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackDragonUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackDragonLayout.svg",
+      "SHA256": "e1086c31b681412bb1c015740ad11c7f1d8cd14eb8d095f1f08413e2950c6b49",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackGoatUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackGoatLayout.svg",
+      "SHA256": "f447d17bff63943d5799fb59f64350d7196b653b744735e475c6caa430ae65d9",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackHorseUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackHorseLayout.svg",
+      "SHA256": "08490e5cd3dd262ac951e195667779df933396780d8d16b1889517dbcdfa91a6",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackMonkeyUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackMonkeyLayout.svg",
+      "SHA256": "a876b8dbdeb1d7376553b1df8aae45dd7511d7b37a45ba2b2169c0ca73fb574a",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackOxUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackOxLayout.svg",
+      "SHA256": "2f30912689e4e4d24f743bab4c42c4b650f502b1d51503eba4b34dba7bfc0aff",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackRabbitUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackRabbitLayout.svg",
+      "SHA256": "850529fdad6065b12eca28a2d9e1cf8d2048a82ed25b15021366b7f27a7fa6e1",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackRatUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackRatLayout.svg",
+      "SHA256": "42023d9b6e23709e50d8bd6208ee5213d0ea60bca411ccc972a0cc66f9e7d3c7",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackRoosterUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackRoosterLayout.svg",
+      "SHA256": "1844c285b7922108fff16a633be6fc3d04b48b884176cafba7b1658513b10099",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackSnakeUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackSnakeLayout.svg",
+      "SHA256": "c0a82f2580b4a8a523b3d9f6974a1d36add152a1ea3cb825799f3c0b7a0ba890",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackTigerUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAHeroPackTigerLayout.svg",
+      "SHA256": "681807e98883db0c5eb9340f855abfe1e3b6b1233f320664d657e6df95f5a8f8",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAPresentationPackCoreUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAPresentationPackCoreLayout.svg",
+      "SHA256": "54e96e32e0af5e3691c3cea2cdc8284892f74b9ac4dfca1bf1c883992e9debf6",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAServerUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAServerLayout.svg",
+      "SHA256": "86509f4a5f3aa68b7d68a742d103f3bbf4668ea41d66e5cbfd905b5918064f97",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBASFXPackCoreUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBASFXPackCoreLayout.svg",
+      "SHA256": "d9d7c7c0ccc03f4fee078fa2ab77111fce7df62c43f476779776e22ac215d9d7",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAUIPackCoreUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAUIPackCoreLayout.svg",
+      "SHA256": "0454a9c7c14c2e4666b26ac37e5808080848918a265cf2156a4443fbffefbdbe",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAWorldPackMainArenaUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAWorldPackMainArenaLayout.svg",
+      "SHA256": "920a7d4915d37c7d7bf21a5743ceaa400725859610fce0b1749162de67eea0a2",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAWorldPackVillageUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAWorldPackVillageLayout.svg",
+      "SHA256": "ea8104ea93cb28894d8bba7d6bd6cbbd20f4cf3d5e35ed198ea0269129843abb",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/DBAWorldsUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/DBAWorldsLayout.svg",
+      "SHA256": "2dbd74d735e2b9e951ec5350438a27fb1eb462539021d5619918c8b50f58a332",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/FlowerGalleryUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/FlowerGalleryLayout.svg",
+      "SHA256": "0791cf4d4fe0cdc03b4308ddd1abe2906bfc43a0361b0f8f717d6645305b558c",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformAbilitySystemUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformAbilitySystemLayout.svg",
+      "SHA256": "93da3d8bae1d2cb0a4804a8237c6aa90e1f1cf15286acdb2fa7d6143857d7d3e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformAIUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformAILayout.svg",
+      "SHA256": "a6625c997e173790265e23662a1b48771223a5f8c5369bb5e3b16269226c58dc",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformAnimationUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformAnimationLayout.svg",
+      "SHA256": "d2f4096d7f9a65d2bac13087581bf52fa2e8c52d7f96f9cb4eb0440b754f0a29",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformApplicationFlowUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformApplicationFlowLayout.svg",
+      "SHA256": "4e9e3d720bbdc6b70b68a6fa6ea379eea31ca5b55ab2f9c1123c330c12396986",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformArenaUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformArenaLayout.svg",
+      "SHA256": "3069a163b50d03ad6d6ddd98b1ce50e07850495894cd359d0f42dc6cec1e8c9b",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCameraUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCameraLayout.svg",
+      "SHA256": "1e484038e6cc94934b99ee973d3a725aa50860c26a3b09d2a3b189cccba59783",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCharacterUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCharacterLayout.svg",
+      "SHA256": "de7e128594e69f8d2fec197efecfb817a2fc1712a942c48d2d0a719ef442dd12",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCombatUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCombatLayout.svg",
+      "SHA256": "c1ece66138ffbb51cba144017f5787afce3ca3cb2cebb799ed671743739e8ff4",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCommerceUIUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCommerceUILayout.svg",
+      "SHA256": "9c59edf212e0077485713bc08ac9ec8507fb69d91f398ccfd3d0e4624cf763e6",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCoreUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformCoreLayout.svg",
+      "SHA256": "28b4f7785b6ea19fa727d913acbe3f75c66875da95ede702e60576f82eb81b9f",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformDataUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformDataLayout.svg",
+      "SHA256": "d87367d9295563e2db91bc255aaea6b8feab122a6f1c631cd6683da042e97428",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformDebugUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformDebugLayout.svg",
+      "SHA256": "6bc90b74d08892357cf85b0273e08473ab96057a73557ff60f358d2517b0b1da",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformDeveloperToolsUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformDeveloperToolsLayout.svg",
+      "SHA256": "666041b61eb71ff4362b76084eba905ffa3ba1d985ed992a231c8cc9f9368a2d",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformEntitlementUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformEntitlementLayout.svg",
+      "SHA256": "c7da48992f3b4e62147ebb96c4e13409ee0ff9c5590acc56c3453d84249584b9",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformEquipmentUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformEquipmentLayout.svg",
+      "SHA256": "b0eb36ab257fb8c71e5de29f703d650a914a4ffd3c01db4e0586abc060ab2860",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformGameplayUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformGameplayLayout.svg",
+      "SHA256": "b38e3af6fa25f450b0e31dece5730e1ac47f580fde944e89aa3d88fc1e2d90e7",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformInputUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformInputLayout.svg",
+      "SHA256": "6e944763bb695797968da6e9cea30fd04196c0eb8c0c7527b4c2fb6fa90369e1",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformInteractionUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformInteractionLayout.svg",
+      "SHA256": "64c308d33aa2162cf2286c09d2b14c3b3878b39b5f4d87a455c9cf04e06460c5",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformInventoryUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformInventoryLayout.svg",
+      "SHA256": "2a350fcfdc26e24638b9a82be28a9cf7c036544f79ad2f528b0e378bcc09d18f",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformLiveOpsUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformLiveOpsLayout.svg",
+      "SHA256": "63969f8b9a936ab3abbaaac186ce1e2dc2eae75bc569650c730eea792d8a3b7d",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformLoadingUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformLoadingLayout.svg",
+      "SHA256": "a0d10e25af4f5401141c9203b9b560e9e71ed10c2673897f5ea09f590216db45",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformLobbyUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformLobbyLayout.svg",
+      "SHA256": "24f8612c222cf36af7f3cfd377ead59908995528c547fe5effe62f44d1745aac",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformLocalizationUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformLocalizationLayout.svg",
+      "SHA256": "94b7c0733ea247f5d2e9bc394e40adbe546103ba95212ae3fa6b3cf7fe49ccfb",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformNavigationUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformNavigationLayout.svg",
+      "SHA256": "8af3725a936d38813f9797282b69374285f64b39dad432b55f3a242999953269",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformOnlineUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformOnlineLayout.svg",
+      "SHA256": "b9d1384467515253409a01d17c87a3eb5f1efb04dfc0abf63ce285a9df62cd14",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformPCGUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformPCGLayout.svg",
+      "SHA256": "e5d3e2909693481a25c6bd2d18fd61204c74e71a54a66091337aa1f649c7920f",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformPresentationUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformPresentationLayout.svg",
+      "SHA256": "cf9d0b85221bf15f68e09e16d1fb202aabdbdf4cc0792d6e8641b4408f24e0f7",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformProgressionUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformProgressionLayout.svg",
+      "SHA256": "0ad3da6186b4b011dd17ad13ad298d60e88bdfb7bc7e3d5788d7bf03891d648c",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformQuestUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformQuestLayout.svg",
+      "SHA256": "d30f378b6bd86f946a045a912d4fb8df812da7c1f887b7939b320c2efd3b74b1",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSaveUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSaveLayout.svg",
+      "SHA256": "6fb3f78c4a50e2ca0507dd4cc301ee5a4363cfe549431a7d45d38047d70e1cdc",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformServerUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformServerLayout.svg",
+      "SHA256": "241f7ae157ae94ef8db278b2d0c66ff383ed1c8393b3a95a8164dc18e25425f3",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSessionUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSessionLayout.svg",
+      "SHA256": "0f7694117aa66a9b1754563bedfa109455bc91e28c01e303d7279dd6ed7499c8",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSettingsUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSettingsLayout.svg",
+      "SHA256": "35bc69bb866fa620c1be7a23b0f984052f894cc326ddbf4e223c1b0d3a589e73",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSFXUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSFXLayout.svg",
+      "SHA256": "be436200337cd8285b71401c07feee56937ecce94b48c0501424d4d512c32c55",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSurfaceUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformSurfaceLayout.svg",
+      "SHA256": "8d3766f1b079c42c85724615f0d3a220e379105cd9bc0ce989ba83256ef0d334",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformTelemetryUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformTelemetryLayout.svg",
+      "SHA256": "4ca8a08744d80bc77eca55f8a39464af012884e09c00dd348b4c618dcef7fc50",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformUIUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformUILayout.svg",
+      "SHA256": "bc05d02c3258928aff398c38327ab1688d11490a08ad8e84fbae5415558a5adc",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformVFXUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformVFXLayout.svg",
+      "SHA256": "7e4eee8e31fe75449c627396cfe99ac4e38894c2e405847989347a13b4de8951",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformVillageUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformVillageLayout.svg",
+      "SHA256": "1a2850826de2c715ef512bc916056550677aac16df71ea4a0f0979b3c3cdb488",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformWaterUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformWaterLayout.svg",
+      "SHA256": "d6406fdda7788799ccdf80340c6f974f4eeefa4f24f57a1bc9b1638c30f43fbf",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformWeatherUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformWeatherLayout.svg",
+      "SHA256": "92eadd3692447c29195faaf5b9ae3a097c2f869fb7fb16eb7c9554dfa26a0e2c",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformWorldUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GamePlatformWorldLayout.svg",
+      "SHA256": "8497c9ec64481dabf119a055b821045bab8a8c7386830cb8e80c615e233a0253",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/GlooPrintUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/GlooPrintLayout.svg",
+      "SHA256": "d50ccf14b282ce7f3a23e4929fb757f94bf5f156eb661a7a8fc2383155369a9e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/MaterialCalibrationUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/MaterialCalibrationLayout.svg",
+      "SHA256": "8693be5e461138b0ab61bb81cc11d1f26bb5bf946d9c565426a2048ad88f985e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/MobaPresentationUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/MobaPresentationLayout.svg",
+      "SHA256": "5054a1af1f6ef6b89006272e41d76ed400242827d74314d9b319f47eb1a6fa3d",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/PropGalleryUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/PropGalleryLayout.svg",
+      "SHA256": "27e5c22935847b16d9aefd80d56e82996e5d5cff4a2d7e486700f0202ca116c3",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/RockGalleryUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/RockGalleryLayout.svg",
+      "SHA256": "b8cfabb3b4962a10d6566f99fe22f135390aa0f345cfa43efb20989ae709305f",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/ShrubGrassGalleryUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/ShrubGrassGalleryLayout.svg",
+      "SHA256": "29d0ae7bb3c781b2e67e1918e125029430a701e788f7b8633a73c21a3f9b4be5",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Pages/TreeGalleryUi.svg",
+      "To": "Docs/Design/PluginDevelopment20261114/Pages/TreeGalleryLayout.svg",
+      "SHA256": "73399b17ea33f19e34f849552f359a6c758b68185e62de436978a73cbd901da7",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/BlueprintAutoLayoutUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/BlueprintAutoLayoutLayout.png",
+      "SHA256": "748118e99097c46d1e5ddf46fe30129132e704222d4cf3efc1f0e77adf28a5c5",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/BuildingGalleryUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/BuildingGalleryLayout.png",
+      "SHA256": "5d1ec13e8783f6b686dd36b3fce1aaed8d21998d3dcd23474c60d97194a1462f",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/ComponentGalleryUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/ComponentGalleryLayout.png",
+      "SHA256": "53408e2be6f257c8e6431bbcf4553d8f25105c4eb730f21629811af487c3418a",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAArenaUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAArenaLayout.png",
+      "SHA256": "843c599fa1051d1d4b408e47bf2e2306781c338061d219db037f9b06aa4992ac",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAClientUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAClientLayout.png",
+      "SHA256": "d789669c048b89479e50545dc9ef454c348d106be5fe7b2eaa179bddb096b7ec",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAContentPackCommonUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAContentPackCommonLayout.png",
+      "SHA256": "f42e9b2ceb7fb97619e1b9cc7ac93e455942355fda33d1a7f80e61d4d366a6b8",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAFoliagePackCoreUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAFoliagePackCoreLayout.png",
+      "SHA256": "d9bf042f2d9febdf6872e2f0279be73c33b61fffad6b661275c7b0164a8f0e92",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAFrontEndPackUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAFrontEndPackLayout.png",
+      "SHA256": "ed624ceaf1b06474e6e2a4c4553cf4fc085d8a5308fcdbc4889bf4907996e6b0",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAGameplayUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAGameplayLayout.png",
+      "SHA256": "a298d93c5de0dfcf88c9244a5a3ed354a33109b9551bca2ffac01bb7402f3dfe",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackBoarUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackBoarLayout.png",
+      "SHA256": "2e3a24ac3ded366e76f8b5210deeb70a560244f54c70c23bf8fc178c01accdf5",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackDogUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackDogLayout.png",
+      "SHA256": "f262922d7defc0f666708c29e55b40e915277a4bfd5b93c4cb041d53fd5845c9",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackDragonUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackDragonLayout.png",
+      "SHA256": "8940794c10fbd78a85791de5a55e4bf54fe39ebbd1f2630426ed58786f463dc8",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackGoatUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackGoatLayout.png",
+      "SHA256": "9770251f71e2290e949512f010f206f5634bcdfcbc3cdc7c8618e6a13e96619b",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackHorseUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackHorseLayout.png",
+      "SHA256": "c86e3ff220a1729130179bad903cfbb3b014f361252f0b7eb2cd4b48aa0e2772",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackMonkeyUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackMonkeyLayout.png",
+      "SHA256": "1b219d691e94d83a198927683ade9370a95892c979fa8cf5452ebea74085a2c4",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackOxUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackOxLayout.png",
+      "SHA256": "74a28206c7a48b06a3c5fd459369d5705ec8b8cf894418aca20fad0ffe6e1af4",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackRabbitUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackRabbitLayout.png",
+      "SHA256": "d459be2d163ad61015ea96569da3ba382077cadbabe15e224833c7889bd47a04",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackRatUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackRatLayout.png",
+      "SHA256": "97bafd767f261a109f9f85c2838fdd0a39734eff15dcb1782677fc5a6bb17f27",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackRoosterUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackRoosterLayout.png",
+      "SHA256": "8ab61736f409def57e29faa59a0170205f9c5b159ae6632f096dd594382a5598",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackSnakeUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackSnakeLayout.png",
+      "SHA256": "ce83c07611b99d3503643855ec8ec472a5de1c0396e00a1529902dde23cef80e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAHeroPackTigerUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAHeroPackTigerLayout.png",
+      "SHA256": "e3450aa84c2c5dd4a9f8a23e4c7d77875e1d5182de3b3f4457deac575022c89e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAPresentationPackCoreUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAPresentationPackCoreLayout.png",
+      "SHA256": "6d847c2fe1b43782bdb3bec3d6a2eecf9bbbe3b1e47c19dfe6e64d33d2dba37e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAServerUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAServerLayout.png",
+      "SHA256": "777699cc45249027443423b79c8d06b56b75d6e2e8cbba42ceea566b5da0afa7",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBASFXPackCoreUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBASFXPackCoreLayout.png",
+      "SHA256": "6c86291d9362073b416a5ab13c351bcef1a60396595a569cf9ae62087b08e199",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAUIPackCoreUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAUIPackCoreLayout.png",
+      "SHA256": "a26395343680f25865609725c2711f8016d7ffb3178af6e286116deb208a28c8",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAWorldPackMainArenaUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAWorldPackMainArenaLayout.png",
+      "SHA256": "6d940ff619ea33b6817c26519a582c10a6952fd59f9052ca2fd1e2d254a5f355",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAWorldPackVillageUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAWorldPackVillageLayout.png",
+      "SHA256": "54760407b2acf26f47fc4f93a3241f85aea7cbf6047ee26af2b730ab46b404b0",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/DBAWorldsUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/DBAWorldsLayout.png",
+      "SHA256": "e0bdb1221b8604b355b62db883c84505ef074f8e1015e186d5f2a83b4efbd9a5",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/FlowerGalleryUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/FlowerGalleryLayout.png",
+      "SHA256": "a2f2a99559dd5bab3b22e107723a4752af24c32d52e485fb62f41285b8b62560",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformAbilitySystemUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformAbilitySystemLayout.png",
+      "SHA256": "ee12a32a180ea092040d11d8b9055cd9274eb4cfe12b03bd745b5fdacbce4d0c",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformAIUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformAILayout.png",
+      "SHA256": "f63e47b6c5417108120c404adfa461b957c5131bb8b7d45bddc1532525c26609",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformAnimationUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformAnimationLayout.png",
+      "SHA256": "389c7fb56a82a1379be80e4854e4fc044b6332578e72e7bf92c290319c3e234a",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformApplicationFlowUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformApplicationFlowLayout.png",
+      "SHA256": "21de8f5e7f310c79b7bc702ac1e553dae8e58dd533e7c5974a38e1cf58c554ac",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformArenaUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformArenaLayout.png",
+      "SHA256": "96e4b19fdc96db5363ff1e7810934d56c91e9378f09931a690e0b586ad827efa",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformCameraUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformCameraLayout.png",
+      "SHA256": "83a2a9f4f2e72ed5ff3899afb64d6bde5c4c3cb00f4046cd2040fc3851494b56",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformCharacterUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformCharacterLayout.png",
+      "SHA256": "b05b04d67bf1c8c84ff6a3429fbaf42c294a9212e61e9e138b1c7a05ab445c73",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformCombatUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformCombatLayout.png",
+      "SHA256": "b84d1e8d8243ff1b84b5604faa82885c846214720d670699379636e61355deb5",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformCommerceUIUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformCommerceUILayout.png",
+      "SHA256": "4201bc3f95404d448fd1c4e4bb5aeece37337a8ef2a0af0c4b3b6bbad5d54da2",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformCoreUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformCoreLayout.png",
+      "SHA256": "f454aaab83959ae00187ccd7c904a2fcf526d4a194a3a269d806f0f6c21de3d3",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformDataUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformDataLayout.png",
+      "SHA256": "8d6c970fb19ff626b81de922ef8a5c73dddcc3ef32d3935096e07269b7a28c63",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformDebugUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformDebugLayout.png",
+      "SHA256": "0c5b8092d11fb7d184216b54ff297e9cc54439b478aa134756a3a8695a5c776a",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformDeveloperToolsUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformDeveloperToolsLayout.png",
+      "SHA256": "2af6f2fbc5b2da70342d1dde34f185866ff8539e9482a8f7e55594c4101ebded",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformEntitlementUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformEntitlementLayout.png",
+      "SHA256": "3825d52d62d272199df342d299de32aba72f7afde90f949794e40432b0e24166",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformEquipmentUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformEquipmentLayout.png",
+      "SHA256": "8448946e0d1e5a0ec298524ee29c1a7f1c936ee5b6802766e9f785a40f02822c",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformGameplayUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformGameplayLayout.png",
+      "SHA256": "b0f3746a66efdac95adbd81da58450e4fe517e9de3cd679ab49a30a8d356269e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformInputUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformInputLayout.png",
+      "SHA256": "c30957765116ea07652819f16370f7f41a6a0e121ec9007dbb17ba90cdb50fa0",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformInteractionUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformInteractionLayout.png",
+      "SHA256": "90f818e764d818c03f7c734ea807d8f9600bf69493932322799eb510b8994c09",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformInventoryUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformInventoryLayout.png",
+      "SHA256": "43168e0ab04bf90944f9fc42d07276d52075130995c5f84fb814759b5f6c5b71",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformLiveOpsUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformLiveOpsLayout.png",
+      "SHA256": "f253a47ce2c72e39f086a71f92badb8680cb66eaead515eb18b710bb2f905f42",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformLoadingUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformLoadingLayout.png",
+      "SHA256": "b43e11d0e5ac53473bcd180f15dcf7e6aa05f81fa638b4c3a2873f27280bccea",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformLobbyUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformLobbyLayout.png",
+      "SHA256": "abc181f42f4c5d406bb34eadfede251ff55fe97331b81eb7b55b91091537b0c1",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformLocalizationUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformLocalizationLayout.png",
+      "SHA256": "2fc55069b769d639244bcbef9153251b325bea1fa36b4636678985e2958cf920",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformNavigationUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformNavigationLayout.png",
+      "SHA256": "79baae39051a80bb38f80dd37399a449a89433d507f76a30a95f06ece1c79de8",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformOnlineUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformOnlineLayout.png",
+      "SHA256": "c34b27f8e88c06473b22c4a257317741119394a57e4365fa08fab545e858b615",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformPCGUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformPCGLayout.png",
+      "SHA256": "80e653d850b606d755ff6074870e0333e3c700b4db7b1fb3f798dd9d97a87ef7",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformPresentationUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformPresentationLayout.png",
+      "SHA256": "bc1918e84449e3449ffea5e9d1507606629f629295a5d727ecb2ee6fa7b0a1be",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformProgressionUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformProgressionLayout.png",
+      "SHA256": "26cdaf66cf0f0d90539fac4aa560ab23fd335466895e2e5f4fce75567dca1633",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformQuestUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformQuestLayout.png",
+      "SHA256": "3b7738b73e0111476b9a23e385806a83ec42c4099a5acf7ddc730d84591fd218",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformSaveUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformSaveLayout.png",
+      "SHA256": "691bd09cf4afc51b35acce72e939241410df5691169e75711c7e6f3efcac3aee",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformServerUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformServerLayout.png",
+      "SHA256": "5f52f62beb44d6a734194023c852311f1565a2183e8c44cb49088527f2a98f8e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformSessionUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformSessionLayout.png",
+      "SHA256": "620503f867751a7959fffac3d3238723256516c869b55782769c4fa3f5e5a305",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformSettingsUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformSettingsLayout.png",
+      "SHA256": "fc362a251ffab4980289fc429db576a335b98f773eb68e182bf9f696cdf9c41e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformSFXUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformSFXLayout.png",
+      "SHA256": "a59bf1afc02c54e888a76dd4957489e28887c615bcb469174e22a4345c3a58ab",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformSurfaceUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformSurfaceLayout.png",
+      "SHA256": "20bac7b2347798c4085bf6084eaa967ae9c2e17e6e84f2a17c1783d2bbe049f2",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformTelemetryUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformTelemetryLayout.png",
+      "SHA256": "492e81350eddbfb87cd854f2aac690e52b6ff2bf62595ee837f446ea33e78be7",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformUIUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformUILayout.png",
+      "SHA256": "cf18542359c31f6dae2a312c628ad238c9b2215a1f80f1d87add00335dc2e7be",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformVFXUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformVFXLayout.png",
+      "SHA256": "aced7d189d3e1cb9857aa9d2ee1d40221dbf1869e8db3bacf0fc124cf87eff37",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformVillageUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformVillageLayout.png",
+      "SHA256": "652ee84d72ae28b3d838c3b897fd2bd92371b2670e5c96f03391e3bac566ff9e",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformWaterUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformWaterLayout.png",
+      "SHA256": "48b6675404ec5566abc2a4a49da13a40739f4d1dabbc6bad41b1049471604fba",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformWeatherUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformWeatherLayout.png",
+      "SHA256": "131d888bafbf089fce4c71bef874bdefcf8e67aa8cc114d164c7744d77ddfdab",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GamePlatformWorldUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GamePlatformWorldLayout.png",
+      "SHA256": "7d3640573a9c7a0c4b95eac4d8152a6d8991c71d0c9128efa662c5ff8a935ae4",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/GlooPrintUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/GlooPrintLayout.png",
+      "SHA256": "8b7be8fbd0e9fd78a0e02111b5d4bfe86ca5527e471459440000d551c6960059",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/MaterialCalibrationUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/MaterialCalibrationLayout.png",
+      "SHA256": "225820cd469abd45d5cae610450c9400e154446041704ee95bee3ff62250b97f",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/MobaPresentationUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/MobaPresentationLayout.png",
+      "SHA256": "844832d1a116556fd4fceb602ca7e1464c5ec60950015f6e88f54c5176579883",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/PropGalleryUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/PropGalleryLayout.png",
+      "SHA256": "9e5d519d4baa3dc7204dc96ebf89b69f357515b0962769f9797205187fcec05b",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/RockGalleryUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/RockGalleryLayout.png",
+      "SHA256": "7d73ff104bb08cc7da62d3347747b49900c309ea1dfaec71df475fe92d1edb39",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/ShrubGrassGalleryUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/ShrubGrassGalleryLayout.png",
+      "SHA256": "b5ffb3149a860a9d6b3f6edaa5d5a7b3de0d515d06b88df504308cbcb9b17320",
+      "Kind": "DesignArtifactOnly"
+    },
+    {
+      "From": "Docs/Design/PluginDevelopment20261114/Screenshots/TreeGalleryUi.png",
+      "To": "Docs/Design/PluginDevelopment20261114/Previews/TreeGalleryLayout.png",
+      "SHA256": "983860d623712feaa4df38fc90f5041f9a8ae3906e9f6664f151b69efb19efeb",
+      "Kind": "DesignArtifactOnly"
+    }
+  ]
+}

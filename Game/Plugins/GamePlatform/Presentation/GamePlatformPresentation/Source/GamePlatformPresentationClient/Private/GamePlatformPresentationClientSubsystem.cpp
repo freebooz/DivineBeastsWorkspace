@@ -465,6 +465,14 @@ UGamePlatformPresentationClientSubsystem::ResolveCatalog(
 }
 
 
+int32 UGamePlatformPresentationClientSubsystem::GetWorldGeneration()
+{
+    // 请求创建者必须先观察到当前世界的代次；仅在Submit中刷新会拒绝新世界的第一条请求。
+    check(IsInGameThread());
+    RefreshWorldGeneration();
+    return WorldGeneration;
+}
+
 void UGamePlatformPresentationClientSubsystem::RefreshWorldGeneration()
 {
     UWorld* CurrentWorld = GetLocalPlayer() ? GetLocalPlayer()->GetWorld() : nullptr;

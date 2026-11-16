@@ -1234,6 +1234,38 @@ bool UGamePlatformInputLocalPlayerSubsystem::UnsubscribeInputState(
     return Scope->StateSubscriptions.Remove(Handle.Id) == 1;
 }
 
+FGamePlatformInputSemanticOwnership UGamePlatformInputLocalPlayerSubsystem::GetSemanticInputOwnership(FGameplayTag SemanticTag) const
+{
+    check(IsInGameThread());
+    FGamePlatformInputSemanticOwnership Result;
+    if (!Scope || !Scope->bProfilePrepared || !Scope->Profile.IsValid()) return Result;
+    const int32* Slot = Scope->SlotByTag.Find(SemanticTag);
+    if (!Slot || !Scope->CompiledActions.IsValidIndex(*Slot)) return Result;
+    const UInputAction* Action = Scope->CompiledActions[*Slot].Action.Get();
+    auto* Controller = GetLocalPlayer() && GetWorld() ? GetLocalPlayer()->GetPlayerController(GetWorld()) : nullptr;
+    if (!Action || !Controller || GetWorld()->bIsTearingDown) return Result;
+    bool bReceiver = false;
+    for (const auto& Pair : Scope->Bindings)
+    {
+        const auto* Component = Pair.Value.Component.Get();
+        if (Component && !Pair.Value.NativeBindingHandles.IsEmpty() &&
+            (Component->GetTypedOuter<APlayerController>() == Controller ||
+             (Controller->GetPawn() && Component->GetTypedOuter<APawn>() == Controller->GetPawn())))
+        { bReceiver = true; break; }
+    }
+    if (!bReceiver) return Result;
+    for (const auto& Pair : Scope->ContextLeases)
+    {
+        const auto* Context = Scope->Contexts.FindRef(Pair.Value.ContextName).Get();
+        if (!Context || !IsCurrentOwner(Pair.Value.Owner)) continue;
+        if (Context->GetMappings().ContainsByPredicate([Action](const FEnhancedActionKeyMapping& Mapping) { return Mapping.Action == Action; }))
+        { Result.bMappedReceiver = true; break; }
+    }
+    for (const auto& Pair : Scope->Touches)
+        if (Pair.Value.Slot == *Slot && IsCurrentOwner(Pair.Value.Owner)) { Result.bTouchReceiver = true; break; }
+    return Result;
+}
+
 FGamePlatformInputSnapshot UGamePlatformInputLocalPlayerSubsystem::GetInputSnapshot() const
 {
     check(IsInGameThread());
@@ -1931,3 +1963,5 @@ void UGamePlatformInputLocalPlayerSubsystem::OnContextRemoved(const UInputMappin
     }
     Scope->bMappingsApplied = false;
 }
+
+#include "Tests/InputSemanticOwnershipTests.inl"

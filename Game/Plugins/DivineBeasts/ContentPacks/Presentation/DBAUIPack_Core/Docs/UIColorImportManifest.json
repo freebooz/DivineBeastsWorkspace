@@ -24,7 +24,8 @@
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePlayerFrameReference.png",
       "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReference",
       "Role": "Color",
-      "SHA256": "e8b2a2fe1bf3c9a082d9a7ba08098d38838706f8bd66adaad538a8b517899284"
+      "SHA256": "df7f9a9abb546d3193717d4892d10dd2f421ffba37ed58e1a557d5f95eb53ec5",
+      "DescriptionZh": "用户2026-11-03指定原图；Color保留RGB，AlphaMask只采线性A；两个文件均与原附件逐字节相同。"
     },
     {
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NatureLoginPanelReference.png",
@@ -66,7 +67,8 @@
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePlayerFrameReferenceMatte.png",
       "Destination": "/DBAUIPack_Core/UI/Textures/Nature/T_DBA_NaturePlayerFrameReferenceMatte",
       "Role": "AlphaMask",
-      "SHA256": "d3de7bfce3d8716658cdd2659b60472bbf61ce1e5d0add6ba8d8f4a5b75d7809"
+      "SHA256": "df7f9a9abb546d3193717d4892d10dd2f421ffba37ed58e1a557d5f95eb53ec5",
+      "DescriptionZh": "用户2026-11-03指定原图；Color保留RGB，AlphaMask只采线性A；两个文件均与原附件逐字节相同。"
     },
     {
       "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Nature/NaturePanelReferenceMatte.png",
@@ -109,6 +111,55 @@
       "Destination": "/DBAUIPack_Core/UI/Loading/Textures/T_DBA_UI_LoadingBar_Frame_1200x20",
       "Role": "Color",
       "SHA256": "931f568ed334bdfccb56e80b3e84bf2de8d4f95b847419f863f4008b6fea58e1"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Buttons/T_DBA_UI_CloudButton_Primary.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Primary",
+      "Role": "Color",
+      "SHA256": "e5a7af2c9347cff54f003adab45fa14f00aed78f8292bce4546a597006076a61",
+      "DescriptionZh": "213×60通用云纹按钮；Color采sRGB RGB，AlphaMask只采线性A；默认颜色直通，换色由显式材质参数控制。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Buttons/T_DBA_UI_CloudButton_Primary.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Primary_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "e5a7af2c9347cff54f003adab45fa14f00aed78f8292bce4546a597006076a61",
+      "DescriptionZh": "213×60通用云纹按钮；Color采sRGB RGB，AlphaMask只采线性A；默认颜色直通，换色由显式材质参数控制。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Buttons/T_DBA_UI_CloudButton_Secondary.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Secondary",
+      "Role": "Color",
+      "SHA256": "9c4eb3b57bfb7e93b5ac2e609580f1c5a8df0cd3d64dd55358b7026f968906b9",
+      "DescriptionZh": "213×60通用云纹按钮；Color采sRGB RGB，AlphaMask只采线性A；默认颜色直通，换色由显式材质参数控制。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Buttons/T_DBA_UI_CloudButton_Secondary.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Buttons/T_DBA_UI_CloudButton_Secondary_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "9c4eb3b57bfb7e93b5ac2e609580f1c5a8df0cd3d64dd55358b7026f968906b9",
+      "DescriptionZh": "213×60通用云纹按钮；Color采sRGB RGB，AlphaMask只采线性A；默认颜色直通，换色由显式材质参数控制。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Panels/T_DBA_UI_PopupPanel.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Panels/T_DBA_UI_PopupPanel",
+      "Role": "Color",
+      "SHA256": "58d7d2d4eef63d0bf31c7c379c5bb25b423573ff5842a0f576601c493bcb89ec",
+      "DescriptionZh": "共享木框弹窗；RGB原色与线性A分开导入，内衬按实心窗口合同处理。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Panels/T_DBA_UI_PopupPanel.png",
+      "Destination": "/DBAUIPack_Core/UI/Textures/Panels/T_DBA_UI_PopupPanel_Alpha",
+      "Role": "AlphaMask",
+      "SHA256": "58d7d2d4eef63d0bf31c7c379c5bb25b423573ff5842a0f576601c493bcb89ec",
+      "DescriptionZh": "共享木框弹窗；RGB原色与线性A分开导入，内衬按实心窗口合同处理。"
+    },
+    {
+      "Source": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/Cursors/T_DBA_CursorAtlas.png",
+      "Destination": "/DBAUIPack_Core/UI/Cursors/Textures/T_DBA_CursorAtlas",
+      "Role": "Color",
+      "SHA256": "29b5c6a52a5f6c7e9be5f2272ad4744e071e274728ebef5be97908985393c4b1",
+      "DescriptionZh": "01经典银钢鼠标指针RGBA图集。RGB按sRGB解码，线性Alpha单独用于透明度，不乘色。"
     }
   ]
 }

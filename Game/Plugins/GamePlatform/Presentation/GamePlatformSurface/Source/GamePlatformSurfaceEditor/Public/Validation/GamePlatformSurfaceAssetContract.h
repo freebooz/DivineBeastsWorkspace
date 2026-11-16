@@ -18,8 +18,10 @@ struct GAMEPLATFORMSURFACEEDITOR_API FGamePlatformSurfaceAssetContract
     /** 标准MPC对象软路径。 */
     static FSoftObjectPath GetGlobalParameterCollectionObjectPath();
 
-    /** 标准MPC中必须存在的8个标量参数及默认值。 */
+    /** 标准MPC中必须存在的9个标量参数及默认值，含统一风种子。 */
     static const TArray<TPair<FName, float>>& GetRequiredScalarParameters();
+    /** 统一风From/To/Timing三个向量的稳定名称及默认值。 */
+    static const TArray<TPair<FName, FLinearColor>>& GetRequiredVectorParameters();
 
     /** 一期必须由材质编辑器真实制作的通用母材质/材质函数包名。 */
     static const TArray<FString>& GetRequiredMaterialAuthoringPackages();

@@ -7,6 +7,7 @@
 #include "Misc/App.h"
 #include "Policy/GamePlatformSavePolicy.h"
 #include "Storage/GamePlatformSaveStorage.h"
+#include "Storage/GamePlatformSaveProcessSlotLease.h"
 
 namespace
 {
@@ -252,6 +253,19 @@ FGamePlatformSaveRequestHandle UGamePlatformSaveSubsystem::BeginRequest(
         return {};
     }
 
+    // 不同GameInstance在同一Client进程内可能写向ProjectSavedDir的相同摘要路径。
+    // 进程互斥租约在本函数返回之前原子取得；请求失败不消耗槽位，取消后后台任务仍持有。
+    TSharedPtr<FGamePlatformSaveProcessSlotLease, ESPMode::ThreadSafe> ProcessSlotLease =
+        FGamePlatformSaveProcessSlotLease::TryAcquire(StableStorageId);
+    if (!ProcessSlotLease.IsValid())
+    {
+        ++Diagnostics.RejectedRequestCount;
+        OutStartResult = FGamePlatformResult::Failure(
+            TEXT("SaveSlotBusy"),
+            TEXT("本进程其他GameInstance或尚未完成的后台IO正使用同一存档槽位。"));
+        return {};
+    }
+
     FGamePlatformSaveRequestHandle Handle;
     Handle.ScopeId = ScopeId;
     Handle.Id = FGuid::NewGuid();
@@ -261,6 +275,7 @@ FGamePlatformSaveRequestHandle UGamePlatformSaveSubsystem::BeginRequest(
     Pending.Handle = Handle;
     Pending.Key = Key;
     Pending.StableStorageId = StableStorageId;
+    Pending.ProcessSlotLease = MoveTemp(ProcessSlotLease);
     Pending.Operation = Operation;
     Pending.Callback = MoveTemp(Callback);
     Pending.ProviderSnapshot = MoveTemp(ProviderSnapshot);
@@ -312,12 +327,17 @@ FGamePlatformSaveRequestHandle UGamePlatformSaveSubsystem::SaveRecordAsync(
     }
 
     const TWeakObjectPtr<UGamePlatformSaveSubsystem> WeakThis(this);
+    const TSharedPtr<FGamePlatformSaveProcessSlotLease, ESPMode::ThreadSafe> ProcessSlotLease =
+        PendingRequests.FindChecked(Handle.Id).ProcessSlotLease;
 
     // 输入const引用仍归调用方；初始化捕获复制为任务独占的非const值，mutable允许完成时转移载荷。
     // 捕获const局部再MoveTemp会保留顶层const，既无法真实移动也违反引擎所有权断言。
     Async(EAsyncExecution::ThreadPool,
-        [WeakThis, Handle, RecordCopy = Record]() mutable
+        [WeakThis, Handle, ProcessSlotLease, RecordCopy = Record]() mutable
         {
+            // 线程池任务持有物理槽位直到最后一次文件访问完成；
+            // 旧GameInstance注销时只会撤销其回调，不会释放仍运行的旧IO。
+            (void)ProcessSlotLease;
             TArray<uint8> Encoded;
             FGamePlatformResult Result =
                 FGamePlatformSavePolicy::EncodeRecord(RecordCopy, Encoded);
@@ -379,10 +399,13 @@ FGamePlatformSaveRequestHandle UGamePlatformSaveSubsystem::LoadRecordAsync(
     const TWeakObjectPtr<UGamePlatformSaveSubsystem> WeakThis(this);
     const FString StableStorageId =
         FGamePlatformSavePolicy::BuildStableStorageId(Key);
+    const TSharedPtr<FGamePlatformSaveProcessSlotLease, ESPMode::ThreadSafe> ProcessSlotLease =
+        PendingRequests.FindChecked(Handle.Id).ProcessSlotLease;
 
     Async(EAsyncExecution::ThreadPool,
-        [WeakThis, Handle, Key, StableStorageId]() mutable
+        [WeakThis, Handle, Key, StableStorageId, ProcessSlotLease]() mutable
         {
+            (void)ProcessSlotLease; // 后台读主档/备份结束前，即使本GI撤销也持续占有槽位。
             FGamePlatformSaveOperationResult OperationResult =
                 LoadFromStorage(Key, StableStorageId);
 
@@ -423,10 +446,13 @@ FGamePlatformSaveRequestHandle UGamePlatformSaveSubsystem::DeleteRecordAsync(
     const TWeakObjectPtr<UGamePlatformSaveSubsystem> WeakThis(this);
     const FString StableStorageId =
         FGamePlatformSavePolicy::BuildStableStorageId(Key);
+    const TSharedPtr<FGamePlatformSaveProcessSlotLease, ESPMode::ThreadSafe> ProcessSlotLease =
+        PendingRequests.FindChecked(Handle.Id).ProcessSlotLease;
 
     Async(EAsyncExecution::ThreadPool,
-        [WeakThis, Handle, StableStorageId]() mutable
+        [WeakThis, Handle, StableStorageId, ProcessSlotLease]() mutable
         {
+            (void)ProcessSlotLease; // 删除主档/备份全过程占有，取消后不可并发重建同一文件。
             const FString PrimaryPath =
                 FGamePlatformSaveStorage::BuildPrimaryPath(StableStorageId);
             FGamePlatformSaveOperationResult OperationResult;

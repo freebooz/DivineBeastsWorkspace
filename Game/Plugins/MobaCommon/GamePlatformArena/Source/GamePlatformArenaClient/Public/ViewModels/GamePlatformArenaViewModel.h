@@ -20,6 +20,8 @@ struct GAMEPLATFORMARENACLIENT_API FGamePlatformArenaScoreboardRow
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadOnly) FString PlayerId;
+    /** 结算与记分板使用的公开显示名，缺少角色名时使用通用名称。 */
+    UPROPERTY(BlueprintReadOnly) FString PlayerName;
     UPROPERTY(BlueprintReadOnly) FName TeamId;
     UPROPERTY(BlueprintReadOnly) FString HeroDefinitionId;
     UPROPERTY(BlueprintReadOnly) int32 Kills = 0;

@@ -33,13 +33,13 @@ class PluginDemoRoutingPolicyTests(unittest.TestCase):
         self.assertNotIn("ResolveScenarioPluginIds(", self.catalog)
 
     def test_unreviewed_hero_packs_are_not_automatically_counted_complete(self):
-        # 12生肖内容包可以显示为未审查，不能因为有共享地图便推定12个英雄功能均完成。
+        # 完成盘点后可标记partial；共享地图或独立页仍不能使审计分母变为已完整审查。
         actual = {item["plugin_id"]: item for item in self.manifest["plugins"]}
         for name in ("Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake",
                      "Horse", "Goat", "Monkey", "Rooster", "Dog", "Boar"):
             with self.subTest(hero=name):
                 record = actual["DBAHeroPack_" + name]
-                self.assertEqual(record["feature_audit_status"], "unreviewed")
+                self.assertIn(record["feature_audit_status"], ("unreviewed", "partial"))
                 self.assertTrue((ROOT / record["descriptor_path"]).is_file())
 
     def test_formal_scenario_uses_stable_definition_id_and_asset(self):

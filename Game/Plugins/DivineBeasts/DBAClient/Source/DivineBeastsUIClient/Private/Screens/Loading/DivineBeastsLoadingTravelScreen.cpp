@@ -5,6 +5,9 @@
 #include "ViewModels/Loading/DivineBeastsLoadingViewModel.h"
 #include "Components/TextBlock.h"
 #include "Components/ProgressBar.h"
+#include "Engine/World.h"
+#include "GameFramework/GameStateBase.h"
+#include "TimerManager.h"
 
 UDivineBeastsLoadingViewModel*
 UDivineBeastsLoadingTravelScreen::GetLoadingViewModel() const
@@ -35,8 +38,23 @@ void UDivineBeastsLoadingTravelScreen::RefreshLoadingPresentation(int32, int32 P
     if (!IsActivated() || !StageText || !LocalViewModel || !LocalViewModel->IsPageActive() ||
         LocalViewModel->GetPageGeneration() != PageGeneration) return;
     const auto Snapshot = LocalViewModel->GetLoadingSnapshot();
+    StopCountdown();
+    UWorld* World = GetWorld();
+    const bool bShowWorld = Snapshot.Presentation.bShowWorld && World && !World->bIsTearingDown;
+    SetWorldBackdrop(bShowWorld);
     StageText->SetText(Snapshot.Stage.IsEmpty()
         ? NSLOCTEXT("DivineBeastsUI", "PreparingWorld", "正在准备世界，请稍候") : Snapshot.Stage);
+    if (bShowWorld && Snapshot.Presentation.CountdownDeadlineServerTime > 0.0)
+    {
+        if (AGameStateBase* GameState = World->GetGameState())
+        {
+            CountdownStage = Snapshot.Stage;
+            CountdownWorld = World;
+            CountdownClock = GameState;
+            CountdownDeadlineServerTime = Snapshot.Presentation.CountdownDeadlineServerTime;
+            UpdateCountdownText();
+        }
+    }
     const bool bKnown=FMath::IsFinite(Snapshot.Progress)&&Snapshot.Progress>=0.0f;
     if(LoadProgress){LoadProgress->SetIsMarquee(!bKnown);LoadProgress->SetPercent(bKnown?FMath::Clamp(Snapshot.Progress,0.0f,1.0f):0.0f);}
     if(ProgressPercentText)
@@ -45,4 +63,76 @@ void UDivineBeastsLoadingTravelScreen::RefreshLoadingPresentation(int32, int32 P
         ProgressPercentText->SetText(bKnown?FText::AsPercent(FMath::Clamp(Snapshot.Progress,0.0f,1.0f),&Format):
             NSLOCTEXT("DivineBeastsUI","WorldProgressUnknown","正在连接，请稍候"));
     }
+}
+
+void UDivineBeastsLoadingTravelScreen::NativeOnDeactivated()
+{
+    StopCountdown();
+    SetWorldBackdrop(false);
+    Super::NativeOnDeactivated();
+}
+
+void UDivineBeastsLoadingTravelScreen::NativeDestruct()
+{
+    StopCountdown();
+    SetWorldBackdrop(false);
+    Super::NativeDestruct();
+}
+
+void UDivineBeastsLoadingTravelScreen::SetWorldBackdrop(bool bShowWorld)
+{
+    // 复用现有蓝图的背景与遮罩，保留阶段、进度与 UIOnly 输入层。
+    if (UWidget* Scene = GetWidgetFromName(TEXT("SceneBackdrop")))
+    {
+        if (!InitialSceneOpacity.IsSet()) InitialSceneOpacity = Scene->GetRenderOpacity();
+        Scene->SetRenderOpacity(bShowWorld ? 0.0f : InitialSceneOpacity.GetValue());
+    }
+    if (UWidget* Shade = GetWidgetFromName(TEXT("BackdropShade")))
+    {
+        if (!InitialShadeOpacity.IsSet()) InitialShadeOpacity = Shade->GetRenderOpacity();
+        const float Opacity = InitialShadeOpacity.GetValue();
+        Shade->SetRenderOpacity(bShowWorld ? Opacity * 0.45f : Opacity);
+    }
+}
+
+void UDivineBeastsLoadingTravelScreen::UpdateCountdownText()
+{
+    UWorld* World = CountdownWorld.Get();
+    const AGameStateBase* Clock = CountdownClock.Get();
+    if (!IsActivated() || !StageText || !World || World != GetWorld() || World->bIsTearingDown ||
+        !Clock || World->GetGameState() != Clock)
+    {
+        StopCountdown();
+        return;
+    }
+    // 每次数字重绘只读时钟，以吸收引擎接收的服务器时间修正。
+    const double Remaining = CountdownDeadlineServerTime - Clock->GetServerWorldTimeSeconds();
+    if (!FMath::IsFinite(Remaining) || Remaining >= static_cast<double>(MAX_int32))
+    {
+        StopCountdown();
+        return;
+    }
+    if (Remaining <= 0.0)
+    {
+        StageText->SetText(NSLOCTEXT("DivineBeastsUI", "WaitingForBattleStart", "等待服务器开战确认"));
+        StopCountdown();
+        return;
+    }
+    const int32 Seconds = FMath::CeilToInt32(Remaining);
+    StageText->SetText(FText::Format(
+        NSLOCTEXT("DivineBeastsUI", "LoadingCountdownSeconds", "{0} · {1} 秒"),
+        CountdownStage, FText::AsNumber(Seconds)));
+    const float UntilNextSecond = static_cast<float>(FMath::Max(0.01, Remaining - (Seconds - 1)));
+    // 仅为当前可见数字安排下一次重绘；不向网络或业务层请求新状态。
+    World->GetTimerManager().SetTimer(CountdownTimer, this, &ThisClass::UpdateCountdownText, UntilNextSecond, false);
+}
+
+void UDivineBeastsLoadingTravelScreen::StopCountdown()
+{
+    if (UWorld* World = CountdownWorld.Get()) World->GetTimerManager().ClearTimer(CountdownTimer);
+    CountdownTimer.Invalidate();
+    CountdownWorld.Reset();
+    CountdownClock.Reset();
+    CountdownDeadlineServerTime = 0.0;
+    CountdownStage = FText::GetEmpty();
 }

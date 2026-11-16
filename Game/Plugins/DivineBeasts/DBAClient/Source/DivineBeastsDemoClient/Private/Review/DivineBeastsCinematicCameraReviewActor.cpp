@@ -260,7 +260,7 @@ void ADivineBeastsCinematicCameraReviewActor::PrintCameraStatus(const FString& M
     {
         ControlsWidget->SetCameraStatus(Message);
     }
-    // 已存在真实UMG面板时避免重复绘制屏幕调试文字，保证电影镜头构图清晰。
+    // 真实UMG面板存在时不绘制重复的屏幕调试文字，保持电影镜头构图清晰。
     if (GEngine && !ControlsWidget)
     {
         GEngine->AddOnScreenDebugMessage(-1, 8.f, FColor::Cyan,

@@ -1,0 +1,275 @@
+{
+  "heroId": "Hero.Zodiac.Dog",
+  "artCount": 8,
+  "sourceArtNativeSize": [
+    1254,
+    1254
+  ],
+  "actualMasterSize": [
+    1024,
+    1024
+  ],
+  "masterProvenance": "V1_NATIVE_1254_RECOMPOSED_NOT_INDEPENDENT_AI_GENERATION",
+  "review64Count": 8,
+  "runtime48Count": 8,
+  "uiProfileUpdated": false,
+  "unrealTexture2DImported": false,
+  "humanArtApproved": false,
+  "v1SourceSHA256": {
+    "T_DBA_Dog_BasicAttack_BiteStrike_V1.png": "82bda3a51ca9bff640673a70fc80ea2b2e78202b0055cc0ed226fea6a6679a12",
+    "T_DBA_Dog_Active01_TrackingMark_V1.png": "4e7bcf0113956ace38eadbb915c17a1048cfaa44a34fef0ef441f82d7daf5de5",
+    "T_DBA_Dog_Active02_GuardianLeap_V1.png": "24390405a60d0c7cbf053bd5871947284dab6043cfd6d576bb578b2ce72f4b80",
+    "T_DBA_Dog_Ultimate_CelestialHunt_V1.png": "00bbc5a57ba892e51b756dad7cefdd3418eb8706f940dbddb530a24e7d16e2ae",
+    "T_DBA_Dog_Passive_GuardianInstinct_V1.png": "a4362830b7af3f6976b7f104989749569435fef3d4dc700b24d10d75ffc47819"
+  },
+  "assets": [
+    {
+      "index": 1,
+      "slot": "Primary",
+      "abilityId": "dba.ability.dog_eight_guardian_bite@1",
+      "v6NameZh": "天犬咬",
+      "v5NameZh": "天犬咬",
+      "textureAssetName": "T_DBA_Dog_S01_GuardianBite_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S01_GuardianBite_V6",
+      "files": {
+        "1024": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S01_GuardianBite_V6_Master_1024.png",
+          "sha256": "3b0a6418743abe05565cb6945a5e4b54bfa574ce54d689c86afa01f5b3ab8831",
+          "width": 1024,
+          "height": 1024
+        },
+        "64": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S01_GuardianBite_V6_64x64.png",
+          "sha256": "fe3927f4bb2ad0e1fe0654d2d4f4ddfcf9607d218fd3761ee9bf1b0abe7c3aed",
+          "width": 64,
+          "height": 64
+        },
+        "48": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S01_GuardianBite_V6.png",
+          "sha256": "a11191c0d8162b791fad3e676c3c866e6b95b94a1e5f9cdf14f6d742ca369955",
+          "width": 48,
+          "height": 48
+        }
+      },
+      "artSource": "RECOMPOSED_FROM_EXISTING_V1_1254",
+      "humanArtworkApproved": false
+    },
+    {
+      "index": 2,
+      "slot": "Slot1",
+      "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
+      "v6NameZh": "反咬",
+      "v5NameZh": "护主咬",
+      "textureAssetName": "T_DBA_Dog_S02_CounterBite_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S02_CounterBite_V6",
+      "files": {
+        "1024": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S02_CounterBite_V6_Master_1024.png",
+          "sha256": "7d5a94777812ba93a1579e4d37c5b49d25c2202ff1f82b4d7f4cd68d22bc929e",
+          "width": 1024,
+          "height": 1024
+        },
+        "64": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S02_CounterBite_V6_64x64.png",
+          "sha256": "80815ecdc6d0dea019c260e257d4250538830760607179a0bdb4df43488b1c7a",
+          "width": 64,
+          "height": 64
+        },
+        "48": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S02_CounterBite_V6.png",
+          "sha256": "e9964ac606ce3021a58e8b376cdab09570bf32de3b5a95fed44b61467b35bed9",
+          "width": 48,
+          "height": 48
+        }
+      },
+      "artSource": "RECOMPOSED_FROM_EXISTING_V1_1254",
+      "humanArtworkApproved": false
+    },
+    {
+      "index": 3,
+      "slot": "Slot2",
+      "abilityId": "dba.ability.dog_eight_spirit_rake@1",
+      "v6NameZh": "双灵爪",
+      "v5NameZh": "双灵爪",
+      "textureAssetName": "T_DBA_Dog_S03_TwinSpiritClaws_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S03_TwinSpiritClaws_V6",
+      "files": {
+        "1024": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S03_TwinSpiritClaws_V6_Master_1024.png",
+          "sha256": "58009638683f935ecd2539e992a0c2cf0a8d931b45dfd04b38b6be10fe81e744",
+          "width": 1024,
+          "height": 1024
+        },
+        "64": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S03_TwinSpiritClaws_V6_64x64.png",
+          "sha256": "f6f6546e865e020259324a46bc25b39038da6e344da199ce765cdeb534680862",
+          "width": 64,
+          "height": 64
+        },
+        "48": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S03_TwinSpiritClaws_V6.png",
+          "sha256": "200d32b2b934b243f1f4ce16eddae3405a102212d98c2ede337c85fc2725902e",
+          "width": 48,
+          "height": 48
+        }
+      },
+      "artSource": "RECOMPOSED_FROM_EXISTING_V1_1254",
+      "humanArtworkApproved": false
+    },
+    {
+      "index": 4,
+      "slot": "Slot4",
+      "abilityId": "dba.ability.dog_eight_oath_guardian@1",
+      "v6NameZh": "天门守阙",
+      "v5NameZh": "天门护",
+      "textureAssetName": "T_DBA_Dog_S04_CelestialGateWard_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S04_CelestialGateWard_V6",
+      "files": {
+        "1024": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S04_CelestialGateWard_V6_Master_1024.png",
+          "sha256": "dbd1eeb8599280a6b666a7700c7b1458266a67e508e6f436bcb7c11e59a98564",
+          "width": 1024,
+          "height": 1024
+        },
+        "64": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S04_CelestialGateWard_V6_64x64.png",
+          "sha256": "68fe41fef1542855fca07eae159bf1c2d2193c667bd08bc9de147a8a24c27bb1",
+          "width": 64,
+          "height": 64
+        },
+        "48": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S04_CelestialGateWard_V6.png",
+          "sha256": "d549b1e2bae2b03a07b9736f1b23ca6b473aeb780299aa0c5d55ec3977f4eb70",
+          "width": 48,
+          "height": 48
+        }
+      },
+      "artSource": "RECOMPOSED_FROM_EXISTING_V1_1254",
+      "humanArtworkApproved": false
+    },
+    {
+      "index": 5,
+      "slot": "Slot3",
+      "abilityId": "dba.ability.dog_eight_hound_leap@1",
+      "v6NameZh": "援步",
+      "v5NameZh": "援步",
+      "textureAssetName": "T_DBA_Dog_S05_RescueStep_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S05_RescueStep_V6",
+      "files": {
+        "1024": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S05_RescueStep_V6_Master_1024.png",
+          "sha256": "23fc352822c9fe68683f07a197670fb3b502bc495af2ad34b3bd2eed5a405aaf",
+          "width": 1024,
+          "height": 1024
+        },
+        "64": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S05_RescueStep_V6_64x64.png",
+          "sha256": "2632eeddcd0a9719c3a3abd55a02d0a3cc75aaf65f1856ad54c91977ad9d3188",
+          "width": 64,
+          "height": 64
+        },
+        "48": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S05_RescueStep_V6.png",
+          "sha256": "8bb65146445e5d08e01f1bad9e48c02ddeb677b45a01a24398d484cd99a9023d",
+          "width": 48,
+          "height": 48
+        }
+      },
+      "artSource": "RECOMPOSED_FROM_EXISTING_V1_1254",
+      "humanArtworkApproved": false
+    },
+    {
+      "index": 6,
+      "slot": "Slot5",
+      "abilityId": "dba.ability.dog_eight_guardian_ring@1",
+      "v6NameZh": "护主",
+      "v5NameZh": "护主",
+      "textureAssetName": "T_DBA_Dog_S06_ProtectAlly_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S06_ProtectAlly_V6",
+      "files": {
+        "1024": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S06_ProtectAlly_V6_Master_1024.png",
+          "sha256": "29ef67c7112ec54e47ebfc293a565cc89ad752418b4e462ec9fe2cbbb58e0812",
+          "width": 1024,
+          "height": 1024
+        },
+        "64": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S06_ProtectAlly_V6_64x64.png",
+          "sha256": "7915a06443975b8ba8e15893d447a7ae199c2a89a89829bd126f9ce340e36ccc",
+          "width": 64,
+          "height": 64
+        },
+        "48": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S06_ProtectAlly_V6.png",
+          "sha256": "7f59e7c5250dda8845d4497b21b5bf223f8467daf39ee363042d0f01ec522090",
+          "width": 48,
+          "height": 48
+        }
+      },
+      "artSource": "RECOMPOSED_FROM_EXISTING_V1_1254",
+      "humanArtworkApproved": false
+    },
+    {
+      "index": 7,
+      "slot": "Slot6",
+      "abilityId": "dba.ability.dog_eight_tracking_slow@1",
+      "v6NameZh": "拦门",
+      "v5NameZh": "截冲盾",
+      "textureAssetName": "T_DBA_Dog_S07_ChargeGateBlock_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S07_ChargeGateBlock_V6",
+      "files": {
+        "1024": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S07_ChargeGateBlock_V6_Master_1024.png",
+          "sha256": "bad000cd78c6eeaa0b92dfeda4945bd6fc10e2d316b224299d3b9d9e003f939a",
+          "width": 1024,
+          "height": 1024
+        },
+        "64": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S07_ChargeGateBlock_V6_64x64.png",
+          "sha256": "9ecdfc8c80f4176cd98a543ffa986f324529aa9391c04068eb4e9fa9c1eb0be9",
+          "width": 64,
+          "height": 64
+        },
+        "48": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S07_ChargeGateBlock_V6.png",
+          "sha256": "40170a3f1fb73a1c62269ab4897df73aca3625ac030e633d0e1d2ca4564a75c8",
+          "width": 48,
+          "height": 48
+        }
+      },
+      "artSource": "RECOMPOSED_FROM_EXISTING_V1_1254",
+      "humanArtworkApproved": false
+    },
+    {
+      "index": 8,
+      "slot": "Slot7",
+      "abilityId": "dba.ability.dog_eight_loyal_heal@1",
+      "v6NameZh": "誓约",
+      "v5NameZh": "誓愈",
+      "textureAssetName": "T_DBA_Dog_S08_GuardianOath_V6",
+      "texturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S08_GuardianOath_V6",
+      "files": {
+        "1024": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S08_GuardianOath_V6_Master_1024.png",
+          "sha256": "985fcba981909723288b9ab8c53be4bc2991c6d03a2d06faac05234e04208f87",
+          "width": 1024,
+          "height": 1024
+        },
+        "64": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S08_GuardianOath_V6_64x64.png",
+          "sha256": "99087a9901748b2848d4fc23b176c10a7deff580cbfff52df0475a45ddbb6053",
+          "width": 64,
+          "height": 64
+        },
+        "48": {
+          "path": "Game/Plugins/DivineBeasts/ContentPacks/Heroes/DBAHeroPack_Dog/SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S08_GuardianOath_V6.png",
+          "sha256": "2c839970a477ccc88cf664cd2451d081fc24b65702ba73f717a4bd79954de0e6",
+          "width": 48,
+          "height": 48
+        }
+      },
+      "artSource": "RECOMPOSED_FROM_EXISTING_V1_1254",
+      "humanArtworkApproved": false
+    }
+  ]
+}

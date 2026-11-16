@@ -26,6 +26,7 @@ public:
     const TSoftObjectPtr<USoundAttenuation>& GetAttenuation() const { return Attenuation; }
     const TSoftObjectPtr<USoundConcurrency>& GetConcurrency() const { return Concurrency; }
     EGamePlatformSFXPlaybackSpace GetPlaybackSpace() const { return PlaybackSpace; }
+    EGamePlatformSFXSoundGroup GetSoundGroup() const { return SoundGroup; }
     bool ShouldStopWhenOwnerDestroyed() const { return bStopWhenOwnerDestroyed; }
     float GetVolumeMultiplier() const { return VolumeMultiplier; }
     float GetPitchMultiplier() const { return PitchMultiplier; }
@@ -40,6 +41,10 @@ public:
     }
 
 protected:
+    /** 用户混音分类与播放空间无关；音乐/环境Definition必须明确赋值，其余兼容既有效果音。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SFX|Mixing")
+    EGamePlatformSFXSoundGroup SoundGroup = EGamePlatformSFXSoundGroup::Effects;
+
     /** Runtime Bundle确保Definition租约同时持有真实声音资源。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="SFX|Assets", meta=(AssetBundles="SFXRuntime"))
     TSoftObjectPtr<USoundBase> Sound;

@@ -87,4 +87,6 @@ P0 UI 底座已开始落地：GamePlatformUI 已新增普通/可激活分类基�
 
 ## 2026-10-09 公共流程Retry合同
 
+2026-10-18认证生命周期修复：Online的Refreshing仍保留账号与认证代次，应用流程不得向Session传入空账号。受保护请求继续由Online等待凭据刷新；UI仅保留已确认身份，不绕过任何请求授权。真正失效沿用LogoutAndRestart，先取消旧流程，再通过唯一Session Transport退出世界、清除旧InWorld投影，最终由Online注销通知重启人工登录。`DivineBeasts.ApplicationFlow.Logout.SessionLifetime`覆盖刷新中/成功的绑定保持、真正失效与注销/迟到事实；原生测试与打包客户端验收独立记录。
+
 UI允许Retry时，命令实际调用RetryFailedFlow：取消本流程/后端等待、取消转移、清空连接材料并经Online注销事件重启人工登录。只在无活动运行、不忙、装配完整且错误可恢复时发布Retry；CharacterCreateOutcomeUnknown不发布重试，避免重复创建。true仅表示恢复受理，后续失败/页面投影仍通过既有ViewState事件交付。此改动不涉及Widget/主题/动画资产，实际界面视觉仍须既有Monolith流程验收。

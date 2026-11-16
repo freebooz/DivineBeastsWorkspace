@@ -2,6 +2,7 @@
 
 #include "Components/GamePlatformComponentWidget.h"
 #include "Engine/Texture2D.h"
+#include "Layout/Margin.h"
 #include "GamePlatformSlotWidget.generated.h"
 
 /** FGamePlatformUISlotState（游戏平台通用槽位显示状态）。 */
@@ -39,6 +40,22 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformUISlotState
     bool bPending = false;
 };
 
+/**
+ * FGamePlatformUISlotCellPresentation（跨游戏通用槽位展示值）。
+ * 不包含项目物品名称、固定配色、英雄身份或网络权威状态。
+ * 数据、样式及输入命令由消费者提供；平台只负责投影现存命名控件。
+ */
+struct GAMEPLATFORMUICLIENT_API FGamePlatformUISlotCellPresentation
+{
+    FString LabelText;
+    FText ToolTip;
+    FLinearColor BackgroundColor = FLinearColor::Transparent;
+    FMargin LabelPadding;
+    bool bEnabled = false;
+    bool bHasToolTip = false;
+    bool bLabelAtBottom = false;
+};
+
 /** 中立槽位调用事件；只传当前显示身份，具体授权、输入和业务结果由消费者拥有。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformUISlotInvokedNative, FName);
 
@@ -55,6 +72,19 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformSlotWidget
     GENERATED_BODY()
 
 public:
+    /** 跨游戏通用槽位视觉等价比较。技能栏无数量文本时允许排除Count字段。 */
+    static bool AreSlotStatesEquivalent(const FGamePlatformUISlotState& A,
+        const FGamePlatformUISlotState& B, bool bCompareCount = true);
+
+    /**
+     * 通用槽位基类提供的命名控件绘制适配。
+     * 不创建Widget树、不绑定点击委托、不加载资源、不修改业务状态。
+     * 支持继承本组件的蓝图以及尚未迁移为子组件的既有项目界面。
+     */
+    static void ApplyNamedSlotCellPresentation(UUserWidget& Root,
+        FName LabelWidgetName, FName ButtonWidgetName,
+        const FGamePlatformUISlotCellPresentation& Presentation);
+
     /** 游戏线程拷贝领域显示快照并将覆盖比例裁剪为0～1；仅变化时通知蓝图，不加载图标或修改领域状态。 */
     UFUNCTION(BlueprintCallable, Category="UI|Slot")
     void ApplySlotState(const FGamePlatformUISlotState& InState);

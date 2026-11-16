@@ -1,0 +1,38 @@
+{
+  "Author": "Rob Tuytel",
+  "Files": [
+    {
+      "SHA256": "9ABE413E1740FA91564CE8111EB9CF11AE52B8DE2914B884DDA39C162E598289",
+      "URL": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/snow_02/snow_02_diff_2k.png",
+      "File": "snow_02_diff_2k.png",
+      "Map": "Diffuse",
+      "MD5": "b2b84ea0435f960b3f5d69274e1a675c"
+    },
+    {
+      "SHA256": "A9B0EC89592A3FF112E57C7A9D5C4C3C562D6B7DDB3F85567432ADD9ECA793CE",
+      "URL": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/snow_02/snow_02_nor_dx_2k.png",
+      "File": "snow_02_nor_dx_2k.png",
+      "Map": "nor_dx",
+      "MD5": "d128db3a26c40191a49dc5fb87cbc1c1"
+    },
+    {
+      "SHA256": "E95C18CDA242FCE36E263413BCDA8848E533B37537F445155FFE504AB8D401BB",
+      "URL": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/snow_02/snow_02_arm_2k.png",
+      "File": "snow_02_arm_2k.png",
+      "Map": "arm",
+      "MD5": "af774e79a8714c40f63140514b706f0d"
+    },
+    {
+      "SHA256": "F2B979BC78989333EBFFFB2063BA9CA72EDC3FFC929F6A6D94BA39D80EB0358A",
+      "URL": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/snow_02/snow_02_disp_2k.png",
+      "File": "snow_02_disp_2k.png",
+      "Map": "Displacement",
+      "MD5": "e7ef934f3ce4e5061a7f937477f07a0e"
+    }
+  ],
+  "LicenseURL": "https://polyhaven.com/license",
+  "Asset": "Snow 02",
+  "AssetURL": "https://polyhaven.com/a/snow_02",
+  "WidthCm": 200,
+  "License": "CC0"
+}

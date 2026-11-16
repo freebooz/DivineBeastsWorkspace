@@ -1,4 +1,5 @@
 #include "Components/GamePlatformStatusEffectTrayWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 namespace
 {
@@ -157,22 +158,23 @@ bool UGamePlatformStatusEffectTrayWidget::ApplyEffects(
     // 没有显式绑定时保留仅含旧字段、SourceScopeId为空的兼容行为。
     if (BoundSourceScopeId.IsValid())
     {
-        if (InState.SourceScopeId != BoundSourceScopeId ||
-            InState.OwnerDisplayId != BoundOwnerDisplayId)
+        // 共享来源校验，但仍要求该效果托盘对应当前拥有者身份。
+        if (InState.OwnerDisplayId != BoundOwnerDisplayId ||
+            !FGamePlatformUISnapshotScope::CanAccept(
+                BoundSourceScopeId, State.Revision, InState.SourceScopeId, InState.Revision))
         {
             return false;
         }
     }
-    else if (InState.SourceScopeId.IsValid())
+    else
     {
-        // 新来源必须先BindDisplayContext，防止随意交替接收不同会话的事件。
-        return false;
-    }
-
-    if (State.OwnerDisplayId == InState.OwnerDisplayId &&
-        InState.Revision <= State.Revision)
-    {
-        return false;
+        // 兼容旧资产的无FGuid快照：只允许空作用域，并沿用同目标递增修订要求。
+        if (InState.SourceScopeId.IsValid() ||
+            (State.OwnerDisplayId == InState.OwnerDisplayId &&
+             InState.Revision <= State.Revision))
+        {
+            return false;
+        }
     }
 
     FGamePlatformUIStatusEffectDisplayGroups Candidate;

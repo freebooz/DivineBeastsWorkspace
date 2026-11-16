@@ -12,7 +12,7 @@ import (
 func DecodeMatchmakingActorJSON(payload string) (matchmaking.ActorContext, error) {
 	var actor matchmaking.ActorContext
 	request := &http.Request{Header: make(http.Header), Body: io.NopCloser(strings.NewReader(payload))}
-	err := DecodeOnlineJSON(request, &actor, []string{"playerId", "sessionId", "characterId", "heroDefinitionId", "characterRevision", "sourceGameServerId", "sourceExperienceId"}, []string{"playerId", "sessionId", "characterId", "heroDefinitionId", "characterRevision", "sourceGameServerId", "sourceExperienceId"})
+	err := DecodeOnlineJSON(request, &actor, []string{"playerId", "sessionId", "characterId", "characterName", "heroDefinitionId", "characterRevision", "sourceGameServerId", "sourceExperienceId", "sourceServerBootId", "sourceSessionEpoch"}, []string{"playerId", "sessionId", "characterId", "heroDefinitionId", "characterRevision", "sourceGameServerId", "sourceExperienceId"})
 	return actor, err
 }
 
@@ -20,7 +20,7 @@ func DecodeMatchmakingActorJSON(payload string) (matchmaking.ActorContext, error
 func DecodeMatchmakingCommandJSON(payload string) (matchmaking.Command, error) {
 	var command matchmaking.Command
 	request := &http.Request{Header: make(http.Header), Body: io.NopCloser(strings.NewReader(payload))}
-	err := DecodeOnlineJSON(request, &command, []string{"action", "clientRequestId", "expectedRevision", "ticketId", "candidateId", "arenaModeId", "partyId", "regionId", "accept"}, []string{"action", "clientRequestId", "expectedRevision"})
+	err := DecodeOnlineJSON(request, &command, []string{"action", "clientRequestId", "expectedRevision", "ticketId", "candidateId", "arenaModeId", "partyId", "regionId", "accept", "targetPlayerId", "challengeId"}, []string{"action", "clientRequestId", "expectedRevision"})
 	return command, err
 }
 
@@ -28,6 +28,10 @@ func DecodeMatchmakingCommandJSON(payload string) (matchmaking.Command, error) {
 func DecodeMatchmakingMigrationJSON(payload string) (matchmaking.MigrationRequest, error) {
 	var command matchmaking.MigrationRequest
 	request := &http.Request{Header: make(http.Header), Body: io.NopCloser(strings.NewReader(payload))}
-	err := DecodeOnlineJSON(request, &command, []string{"candidateId", "direction", "clientRequestId"}, []string{"candidateId", "direction", "clientRequestId"})
+	err := decodeMatchmakingMigration(request, &command)
 	return command, err
+}
+
+func decodeMatchmakingMigration(r *http.Request, command *matchmaking.MigrationRequest) error {
+	return DecodeOnlineJSON(r, command, []string{"candidateId", "direction", "clientRequestId", "sourceAssignmentId"}, []string{"candidateId", "direction", "clientRequestId"})
 }

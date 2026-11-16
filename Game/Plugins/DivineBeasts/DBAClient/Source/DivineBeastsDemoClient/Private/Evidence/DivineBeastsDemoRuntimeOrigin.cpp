@@ -3,7 +3,7 @@
 #include "Evidence/DivineBeastsDemoRuntimeOrigin.h"
 #include "Dom/JsonObject.h"
 #include "HAL/PlatformFileManager.h"
-#include "HAL/PlatformMisc.h"
+#include "Hash/GamePlatformSHA256.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Misc/Paths.h"
@@ -15,6 +15,22 @@
 
 namespace DivineBeasts::Demo
 {
+FString HashRuntimeOriginFile(const FString& Path)
+{
+    auto& Files = FPlatformFileManager::Get().GetPlatformFile();
+    bool bPlain = true;
+    for (FString Cursor = Path; !Cursor.IsEmpty();)
+    {
+        if ((Files.FileExists(*Cursor) || Files.DirectoryExists(*Cursor)) && Files.IsSymlink(*Cursor) != ESymlinkResult::NonSymlink) { bPlain = false; break; }
+        const FString Parent = FPaths::GetPath(Cursor); if (Parent == Cursor) break; Cursor = Parent;
+    }
+    // 64MiB是单次诊断缓冲保护，不是项目DLL/性能预算；超限拒绝补证，不截断后散列。
+    const int64 Size = Files.FileSize(*Path); const auto Timestamp = Files.GetTimeStamp(*Path); TArray<uint8> Bytes;
+    if (!bPlain || Size <= 0 || Size > 64 * 1024 * 1024 || !FFileHelper::LoadFileToArray(Bytes, *Path) ||
+        Bytes.Num() != Size || Files.FileSize(*Path) != Size || Files.GetTimeStamp(*Path) != Timestamp) return FString();
+    FString Hash;
+    return GamePlatform::Hash::TrySha256Hex(Bytes.GetData(), Bytes.Num(), Hash) ? Hash : FString();
+}
 FGamePlatformResult ParseRuntimeOriginArguments(const TCHAR* Arguments, FGuid& OutLaunchId, FString& OutContentHash)
 {
     OutLaunchId.Invalidate(); OutContentHash.Reset(); FString Launch, Hash; bool bLiveCodingEnabled = true;
@@ -60,26 +76,16 @@ TSharedRef<FJsonObject> CaptureRuntimeOrigin()
         // 仅观察来源证明需要的机制模块；不因同名模块存在就推断所有源码或DLL已更新。
         FString Workspace = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("..")));
         FPaths::NormalizeDirectoryName(Workspace); Workspace += TEXT("/");
-        auto& Files = FPlatformFileManager::Get().GetPlatformFile(); auto& Modules = FModuleManager::Get();
+        auto& Modules = FModuleManager::Get();
         // -game不会加载Type=Editor审核模块；它由独立Editor Review组证明，不能反向强载到游戏运行。
         for (const TCHAR* Name : {TEXT("DivineBeastsDemoClient"), TEXT("DivineBeastsApplicationFlowClient"), TEXT("GamePlatformData"), TEXT("GamePlatformUIClient")})
         {
             if (!Modules.IsModuleLoaded(FName(Name))) continue;
             FString Path = FPaths::ConvertRelativePathToFull(Modules.GetModuleFilename(FName(Name))); FPaths::MakeStandardFilename(Path);
             if (!Path.StartsWith(Workspace, ESearchCase::IgnoreCase)) continue;
-            bool bPlain = true;
-            for (FString Cursor = Path; !Cursor.IsEmpty();)
-            {
-                if ((Files.FileExists(*Cursor) || Files.DirectoryExists(*Cursor)) && Files.IsSymlink(*Cursor) != ESymlinkResult::NonSymlink) { bPlain = false; break; }
-                const FString Parent = FPaths::GetPath(Cursor); if (Parent == Cursor) break; Cursor = Parent;
-            }
-            // 64MiB是单次诊断缓冲保护，不是项目DLL/性能预算；超限拒绝补证，不截断后散列。
-            const int64 Size = Files.FileSize(*Path); const auto Timestamp = Files.GetTimeStamp(*Path); TArray<uint8> Bytes;
-            if (!bPlain || Size <= 0 || Size > 64 * 1024 * 1024 || !FFileHelper::LoadFileToArray(Bytes, *Path) ||
-                Bytes.Num() != Size || Files.FileSize(*Path) != Size || Files.GetTimeStamp(*Path) != Timestamp) continue;
-            FSHA256Signature Signature; if (!FPlatformMisc::GetSHA256Signature(Bytes.GetData(), Bytes.Num(), Signature)) continue;
+            const FString Hash = HashRuntimeOriginFile(Path); if (Hash.IsEmpty()) continue;
             auto Entry = MakeShared<FJsonObject>(); Entry->SetStringField(TEXT("name"), Name);
-            Entry->SetStringField(TEXT("path"), Path.RightChop(Workspace.Len())); Entry->SetStringField(TEXT("sha256"), Signature.ToString().ToLower());
+            Entry->SetStringField(TEXT("path"), Path.RightChop(Workspace.Len())); Entry->SetStringField(TEXT("sha256"), Hash);
             Observations.Add(MakeShared<FJsonValueObject>(Entry));
         }
 #else

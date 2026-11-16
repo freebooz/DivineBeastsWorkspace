@@ -26,4 +26,10 @@ public:
 
     UFUNCTION(Client, Reliable)
     void ClientArenaRequestRejected(const FString& Reason);
+
+    UFUNCTION(Client, Reliable)
+    void ClientArenaForfeitRejected(const FString& Reason);
+
+    /** 只通知本人弃权失败。英雄选择和准备的回复不会清除退场意图。 */
+    FSimpleMulticastDelegate OnArenaForfeitRejected;
 };

@@ -9,15 +9,17 @@ import (
 
 // Command只表示用户意图；认证主体、会话和角色由Gateway另行注入，禁止在正文冒名。
 type Command struct {
-	Action           string `json:"action"`                  // start/cancel/reply/ready；不同阶段权限分别验证。
-	ClientRequestID  string `json:"clientRequestId"`         // 主体/操作域幂等键，重试沿用。
-	ExpectedRevision int64  `json:"expectedRevision,string"` // start为队伍版本；solo start为0，其余为对应聚合版本。
-	TicketID         string `json:"ticketId,omitempty"`      // 取消或准备的当前票据身份。
-	CandidateID      string `json:"candidateId,omitempty"`   // 逐人确认身份，不是入场资格。
-	ArenaModeID      string `json:"arenaModeId,omitempty"`   // start的模式定义身份。
-	PartyID          string `json:"partyId,omitempty"`       // 已组队必须提供本人实际队伍，单人可为空。
-	RegionID         string `json:"regionId,omitempty"`      // start区域分区。
-	Accept           bool   `json:"accept"`                  // ready/reply时的本人接受意图。
+	Action           string `json:"action"`                   // start/cancel/reply/ready及challenge三命令；各阶段独立验证。
+	ClientRequestID  string `json:"clientRequestId"`          // 主体/操作域幂等键，重试沿用。
+	ExpectedRevision int64  `json:"expectedRevision,string"`  // start为队伍版本；solo start为0，其余为对应聚合版本。
+	TicketID         string `json:"ticketId,omitempty"`       // 取消或准备的当前票据身份。
+	CandidateID      string `json:"candidateId,omitempty"`    // 逐人确认身份，不是入场资格。
+	TargetPlayerID   string `json:"targetPlayerId,omitempty"` // 公开对手身份，服务器解析其真实队伍及队长。
+	ChallengeID      string `json:"challengeId,omitempty"`    // 固定名单邀请身份，不能替代本人授权。
+	ArenaModeID      string `json:"arenaModeId,omitempty"`    // start的模式定义身份。
+	PartyID          string `json:"partyId,omitempty"`        // 已组队必须提供本人实际队伍，单人可为空。
+	RegionID         string `json:"regionId,omitempty"`       // start区域分区。
+	Accept           bool   `json:"accept"`                   // ready/reply时的本人接受意图。
 }
 
 // UnmarshalJSON防止缺失accept被Go零值解释为主动拒绝；重复键/未知字段仍由外层严格对象解码器拒绝。
@@ -27,7 +29,7 @@ func (c *Command) UnmarshalJSON(payload []byte) error {
 	if err := json.Unmarshal(payload, &next); err != nil {
 		return err
 	}
-	if next.Action == "ready" || next.Action == "reply" {
+	if next.Action == "ready" || next.Action == "reply" || next.Action == "challengeReply" {
 		var fields map[string]json.RawMessage
 		if err := json.Unmarshal(payload, &fields); err != nil {
 			return err
@@ -43,13 +45,29 @@ func (c *Command) UnmarshalJSON(payload []byte) error {
 
 // ActorContext只在可信服务间持久，权限由Gateway从会话和已选角色验证；不包含令牌或用户密码。
 type ActorContext struct {
-	PlayerID           string `json:"playerId"`                 // 已认证玩家。
-	SessionID          string `json:"sessionId"`                // 当前认证会话，取迁移时必须相同。
-	CharacterID        string `json:"characterId"`              // 后端已选择并验证归属的持久角色。
-	HeroDefinitionID   string `json:"heroDefinitionId"`         // 后端角色对应英雄身份，不能由客户端覆盖。
-	CharacterRevision  int64  `json:"characterRevision,string"` // 读取角色的可信修订。
-	SourceGameServerID string `json:"sourceGameServerId"`       // 控制面确认的来源实例，不能接受客户端地址。
-	SourceExperienceID string `json:"sourceExperienceId"`       // 控制面确认来源体验，赛后重新分配，不复用旧地址。
+	PlayerID           string `json:"playerId"`                            // 已认证玩家。
+	SessionID          string `json:"sessionId"`                           // 当前认证会话，取迁移时必须相同。
+	CharacterID        string `json:"characterId"`                         // 后端已选择并验证归属的持久角色。
+	CharacterName      string `json:"characterName,omitempty"`             // 已选角色的公开显示名，旧匹配上下文可为空。
+	HeroDefinitionID   string `json:"heroDefinitionId"`                    // 后端角色对应英雄身份，不能由客户端覆盖。
+	CharacterRevision  int64  `json:"characterRevision,string"`            // 读取角色的可信修订。
+	SourceGameServerID string `json:"sourceGameServerId"`                  // 控制面确认的来源实例，不能接受客户端地址。
+	SourceExperienceID string `json:"sourceExperienceId"`                  // 控制面确认来源体验，赛后重新分配，不复用旧地址。
+	SourceServerBootID string `json:"sourceServerBootId,omitempty"`        // 源准入的服务器启动身份，历史报名可缺省。
+	SourceSessionEpoch uint64 `json:"sourceSessionEpoch,omitempty,string"` // 源准入代次，十进制文本保留完整精度。
+	QueueTicketID      string `json:"queueTicketId,omitempty"`             // 只由候选事务读取本人固定报名身份，供恢复可信落点。
+}
+
+// VillageQueueOriginEnrollment仅在可信控制面和Match间核对真实报名及采样来源，不包含位置坐标。
+type VillageQueueOriginEnrollment struct {
+	QueueTicketID      string `json:"queueTicketId"`
+	PlayerID           string `json:"playerId"`
+	CharacterID        string `json:"characterId"`
+	SessionID          string `json:"sessionId"`
+	SourceGameServerID string `json:"sourceGameServerId"`
+	SourceExperienceID string `json:"sourceExperienceId"`
+	SourceServerBootID string `json:"sourceServerBootId"`
+	SourceSessionEpoch uint64 `json:"sourceSessionEpoch,string"`
 }
 
 // ParticipantSnapshot只公开候选名单、分队和明确回复；不公开SessionID、隐藏分或其他玩家的准入票据。
@@ -79,6 +97,22 @@ type PlayerSnapshot struct {
 	CanReady          bool                  `json:"canReady"`                 // 当前是否能提交本人限时准备。
 	ReasonCode        string                `json:"reasonCode"`               // 安全稳定原因，不含任意内部正文。
 	Participants      []ParticipantSnapshot `json:"participants"`             // 最多10个授权可见成员。
+	Challenge         *ChallengeSnapshot    `json:"challenge,omitempty"`      // 仅邀请双方名单可见，不含会话或迁移秘密。
+}
+
+// ChallengeSnapshot是Shared约战邀请的授权只读投影；接受邀请不能代替逐人候选确认。
+type ChallengeSnapshot struct {
+	ChallengeID    string    `json:"challengeId"`     // 本轮固定对手邀请。
+	Revision       int64     `json:"revision,string"` // 回复和取消的条件版本。
+	OwnerPlayerID  string    `json:"ownerPlayerId"`   // 发起队长或单人。
+	TargetPlayerID string    `json:"targetPlayerId"`  // 服务器解析的接收队长或单人。
+	ArenaModeID    string    `json:"arenaModeId"`     // 已登记人数模式。
+	RegionID       string    `json:"regionId"`        // 同一部署区域。
+	DeadlineUTC    time.Time `json:"deadlineUtc"`     // 60秒邀请权威期限。
+	CanReply       bool      `json:"canReply"`        // 仅接收队长可回复。
+	CanCancel      bool      `json:"canCancel"`       // 仅发起主体可取消。
+	TeamAPlayerIDs []string  `json:"teamAPlayerIds"`  // 邀请时不可变甲队名单。
+	TeamBPlayerIDs []string  `json:"teamBPlayerIds"`  // 邀请时不可变乙队名单。
 }
 
 // Observation在独立匹配作用域续接同一仓储事件日志；初始和失效游标均提供完整快照。
@@ -92,9 +126,10 @@ type Observation struct {
 
 // MigrationRequest只选择本人比赛和方向，永远不接受客户端目标地址/ServerID/票据内容。
 type MigrationRequest struct {
-	CandidateID     string `json:"candidateId"`     // 本人已确认候选。
-	Direction       string `json:"direction"`       // arena或return。
-	ClientRequestID string `json:"clientRequestId"` // 同一逻辑迁移重试沿用。
+	SourceAssignmentID string `json:"sourceAssignmentId,omitempty"` // 返程恢复可提交原竞技分配身份用于一致性检查。
+	CandidateID        string `json:"candidateId"`                  // 本人已确认候选。
+	Direction          string `json:"direction"`                    // arena或return。
+	ClientRequestID    string `json:"clientRequestId"`              // 同一逻辑迁移重试沿用。
 }
 
 // Migration仅交给Flow/Loading/Session，不写UI状态或日志；字段沿用已有世界进入合同。

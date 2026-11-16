@@ -17,4 +17,9 @@ namespace GamePlatformSurfaceParameters
     GAMEPLATFORMSURFACECLIENT_API extern const FName RainIntensity;
     GAMEPLATFORMSURFACECLIENT_API extern const FName SnowIntensity;
     GAMEPLATFORMSURFACECLIENT_API extern const FName TemperatureCelsius;
+    /** 世界植物风端点/时基为Vector，种子为Scalar；名称与原生MPC合同一致。 */
+    GAMEPLATFORMSURFACECLIENT_API extern const FName GlobalWindFrom;
+    GAMEPLATFORMSURFACECLIENT_API extern const FName GlobalWindTo;
+    GAMEPLATFORMSURFACECLIENT_API extern const FName GlobalWindTiming;
+    GAMEPLATFORMSURFACECLIENT_API extern const FName GlobalWindSeed;
 }

@@ -12,6 +12,9 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/ScaleBox.h"
 #include "Components/TextBlock.h"
+#include "Components/Slider.h"
+#include "Definitions/GamePlatformSFXDefinition.h"
+#include "Sound/SoundBase.h"
 #include "Screens/DivineBeastsUIScreenCatalog.h"
 #include "Screens/System/DivineBeastsDeviceSettingsScreen.h"
 #include "Screens/System/DivineBeastsSystemMenuScreen.h"
@@ -134,8 +137,49 @@ bool FDivineBeastsDeviceSettingsAssetContractTest::RunTest(const FString&)
     for (const TCHAR* Name : {TEXT("ApplyButton"), TEXT("ConfirmButton"), TEXT("RevertButton"), TEXT("BackButton")})
         VerifySavedFocusableButton(*this, *Screen.Get(), FName(Name));
     for (const TCHAR* Name : {TEXT("StatusText"), TEXT("ErrorText")}) VerifySavedTextBlock(*this, *Screen.Get(), FName(Name));
+    for (const TCHAR* Name : {TEXT("EffectsVolumeSlider"), TEXT("AmbientVolumeSlider"), TEXT("MusicVolumeSlider")})
+    {
+        auto* Slider = Cast<USlider>(Screen->GetWidgetFromName(FName(Name)));
+        if (!TestNotNull(TEXT("真实音量滑杆"), Slider)) continue;
+        TestEqual(TEXT("滑杆下限0%"), Slider->GetMinValue(), 0.0f);
+        TestEqual(TEXT("滑杆上限100%"), Slider->GetMaxValue(), 1.0f);
+        TestEqual(TEXT("键盘手柄步进1%"), Slider->GetStepSize(), 0.01f);
+        TestTrue(TEXT("音量滑杆支持键盘手柄焦点"), Slider->IsFocusable);
+    }
+    for (const TCHAR* Name : {TEXT("EffectsVolumeText"), TEXT("AmbientVolumeText"), TEXT("MusicVolumeText"), TEXT("AudioHelpText")})
+        VerifySavedTextBlock(*this, *Screen.Get(), FName(Name));
     TestFalse(TEXT("检查结束仍未激活系统设置页"), Screen->IsActivated());
     TestNull(TEXT("只读资产检查没有业务VM或显示设置命令"), Screen->GetViewModel());
+    return true;
+}
+
+/** 读取真实保存Definition及声音，验证音乐/环境分类和循环静音恢复合同；不以路径推断替代资产值。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAudioGroupsAssetContractTest,
+    "DivineBeasts.UI.Settings.AudioGroupsAssetContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsAudioGroupsAssetContractTest::RunTest(const FString&)
+{
+    struct FCase { const TCHAR* Path; EGamePlatformSFXSoundGroup Group; };
+    const FCase Cases[] = {
+        {TEXT("/DBASFXPack_Core/Audio/Music/Definitions/DA_DBA_SFX_Music_Login"), EGamePlatformSFXSoundGroup::Music},
+        {TEXT("/DBASFXPack_Core/Audio/Music/Definitions/DA_DBA_SFX_Music_Village"), EGamePlatformSFXSoundGroup::Music},
+        {TEXT("/DBASFXPack_Core/Audio/Ambience/Definitions/DA_DBA_SFX_Ambience_Forest"), EGamePlatformSFXSoundGroup::Ambient},
+        {TEXT("/DBASFXPack_Core/Audio/Library/Ambience/Definitions/DA_DBA_SFX_Ambience_WaterStreamA"), EGamePlatformSFXSoundGroup::Ambient},
+        {TEXT("/DBASFXPack_Core/Audio/Library/Ambience/Definitions/DA_DBA_SFX_Ambience_WaterStreamB"), EGamePlatformSFXSoundGroup::Ambient},
+        {TEXT("/DBASFXPack_Core/Audio/Library/Ambience/Definitions/DA_DBA_SFX_Ambience_Birds"), EGamePlatformSFXSoundGroup::Ambient},
+        {TEXT("/DBASFXPack_Core/Weather/Definitions/DA_DBA_SFX_Weather_Rain"), EGamePlatformSFXSoundGroup::Ambient},
+        {TEXT("/DBASFXPack_Core/Weather/Definitions/DA_DBA_SFX_Weather_Snow"), EGamePlatformSFXSoundGroup::Ambient}
+    };
+    for (const auto& Case : Cases)
+    {
+        auto* Definition = LoadObject<UGamePlatformSFXDefinition>(nullptr, Case.Path);
+        if (!TestNotNull(*FString::Printf(TEXT("保存的音频Definition：%s"), Case.Path), Definition)) continue;
+        TestEqual(TEXT("原生Definition明确用户混音分组"), Definition->GetSoundGroup(), Case.Group);
+        auto* Sound = LoadObject<USoundBase>(nullptr, *Definition->GetSound().ToSoftObjectPath().ToString());
+        if (!TestNotNull(TEXT("Definition实际声音"), Sound)) continue;
+        if (Sound->IsLooping())
+            TestEqual(TEXT("持续声音静音时仍由原生音频保持播放可恢复"), Sound->VirtualizationMode, EVirtualizationMode::PlayWhenSilent);
+    }
     return true;
 }
 #endif

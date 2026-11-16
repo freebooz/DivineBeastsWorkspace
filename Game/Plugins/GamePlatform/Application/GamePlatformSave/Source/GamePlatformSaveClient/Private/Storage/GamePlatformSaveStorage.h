@@ -21,7 +21,9 @@ public:
 
     /**
      * 同目录临时文件写入并Full Flush，然后使用IFileManager::Move替换主档。
-     * 若旧主档存在，替换前先保存一份.bak；备份步骤失败则不覆盖当前主档。
+     * 存储层独立检查编码后的字节限额；超限先拒绝，不创建目录、临时文件或备份。
+     * 若旧主档存在，替换前先保存一份.bak；备份失败清理本次临时文件，
+     * 不覆盖原主档及旧备份（禁止把已有文件当成可清理的失败夹具）。
      */
     static FGamePlatformResult WriteAtomically(
         const FString& PrimaryPath,

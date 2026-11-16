@@ -20,7 +20,7 @@ def make_manifest() -> dict:
     """独立构造合法的开发夹具；描述来源真实，但案例本身只用于验证器回归。"""
     plugins = []
     for directory, layer in (("GamePlatform", "Platform"), ("MobaCommon", "Moba"),
-                             ("DivineBeasts", "Project")):
+                             ("DivineBeasts", "Project"), ("ThirdParty", "Project")):
         for path in sorted((WORKSPACE / "Game/Plugins" / directory).rglob("*.uplugin")):
             description = json.loads(path.read_text(encoding="utf-8-sig"))
             plugins.append({"plugin_id": path.stem, "descriptor_path": path.relative_to(WORKSPACE).as_posix(),

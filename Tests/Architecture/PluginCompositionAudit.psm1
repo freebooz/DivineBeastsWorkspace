@@ -1,5 +1,7 @@
 ﻿Set-StrictMode -Version Latest
 
+. (Join-Path $PSScriptRoot 'ActiveUnrealFiles.ps1')
+
 function Get-CompositionTargetRuleSource {
     <# 对字面量依赖的只读目标预处理：只求值完整的Target.Type ==/!= TargetType枚举if块。
        不执行C#或UBT；未知表达式/else仍保守保留全部依赖。插值/原始字符串或预处理指令整源保留，
@@ -77,7 +79,7 @@ function Test-PluginComposition {
         }
         return $true
     }
-    foreach ($file in Get-ChildItem -LiteralPath $pluginRoot -Filter '*.uplugin' -File -Recurse) {
+    foreach ($file in Get-ActiveUnrealFiles $pluginRoot '*.uplugin') {
         try { $descriptor = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop }
         catch { $errors.Add("插件描述无法解析：$($file.FullName)"); continue }
         $name = $file.BaseName
@@ -141,7 +143,7 @@ function Test-PluginComposition {
         if (-not (Test-Path -LiteralPath $rulePath -PathType Leaf)) { $errors.Add("缺少模块构建规则：$moduleName"); continue }
         $source = Get-Content -LiteralPath $rulePath -Raw -Encoding UTF8
         $source = Get-CompositionTargetRuleSource -Source $source -Target $Target
-        $pattern = '(?:Public|Private|DynamicallyLoaded)DependencyModuleNames\.Add(?:Range)?\s*\((?<body>.*?)\)\s*;'
+        $pattern = '(?:(?:Public|Private)DependencyModuleNames|DynamicallyLoadedModuleNames)\.Add(?:Range)?\s*\((?<body>.*?)\)\s*;'
         $declaredPlugins = @()
         $descriptor = $plugins[$owner].Descriptor
         if ($descriptor.PSObject.Properties['Plugins']) {

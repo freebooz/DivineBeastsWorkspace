@@ -73,7 +73,12 @@ public:
     EGamePlatformPresentationSubmitResult Submit(
         const FGamePlatformPresentationRequest& Request);
 
-    int32 GetWorldGeneration() const { return WorldGeneration; }
+    /**
+     * 游戏线程取得当前LocalPlayer世界的代次快照；读取前同步世界归属，因此不是const查询。
+     * 创建新请求前调用，避免首请求携带旧缓存而在Submit刷新后被误判为过期；
+     * 快照取得后发生真实切图的请求仍由Submit按原有规则拒绝，不绕过旧世界保护。
+     */
+    int32 GetWorldGeneration();
     int32 GetProviderCount() const { return Providers.Num(); }
     int32 GetContextContributorCount() const { return ContextContributors.Num(); }
     int32 GetCatalogFragmentCount() const { return CatalogFragments.Num(); }

@@ -14,11 +14,11 @@
     { "serverRole": "GameServer.Role.MainArena", "experiences": ["Experience.MainArena.Main"] }
   ],
   "x-arena-mode-context-map": [
-    { "arenaMode": "Arena.Mode.Duel1v1", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" },
-    { "arenaMode": "Arena.Mode.Team2v2", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" },
-    { "arenaMode": "Arena.Mode.Team3v3", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" },
-    { "arenaMode": "Arena.Mode.Team4v4", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" },
-    { "arenaMode": "Arena.Mode.Team5v5", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main" }
+    { "arenaMode": "Arena.Mode.Duel1v1", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main", "teamSize": 1 },
+    { "arenaMode": "Arena.Mode.Team2v2", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main", "teamSize": 2 },
+    { "arenaMode": "Arena.Mode.Team3v3", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main", "teamSize": 3 },
+    { "arenaMode": "Arena.Mode.Team4v4", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main", "teamSize": 4 },
+    { "arenaMode": "Arena.Mode.Team5v5", "serverRole": "GameServer.Role.MainArena", "experience": "Experience.MainArena.Main", "teamSize": 5 }
   ],
   "type": "object",
   "additionalProperties": false,

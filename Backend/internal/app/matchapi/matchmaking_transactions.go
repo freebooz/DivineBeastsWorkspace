@@ -8,6 +8,7 @@ import (
 	"divinebeasts/backend/internal/modules/party"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"sort"
 	"time"
 )
@@ -70,7 +71,6 @@ func (r *MemoryPartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs,
 	if err := ValidateMatchmakingTransaction(tx); err != nil {
 		return err
 	}
-	changed := map[string]bool{}
 	changedParties := map[string]*party.Party{}
 	for id, next := range tx.Parties {
 		previous := r.items[id]
@@ -84,11 +84,6 @@ func (r *MemoryPartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs,
 		newBytes, _ := json.Marshal(next)
 		if string(oldBytes) != string(newBytes) {
 			changedParties[id] = next.Clone()
-			if previous.Revision != next.Revision {
-				for player := range next.Members {
-					changed[player] = true
-				}
-			}
 		}
 	}
 	// 全部队伍及队列通过验证后才提交，禁止遍历中途发现错误留下部分已发布更新。
@@ -98,16 +93,17 @@ func (r *MemoryPartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs,
 		r.publishPartyChangesLocked(previous, next)
 	}
 	after, _ := json.Marshal(queue)
-	if string(before) != string(after) {
-		// 预留被释放的玩家也要通知，不能只扫描新状态中的活跃成员。
-		for _, state := range []*matchmaking.QueueState{original, queue} {
-			for _, entry := range state.Entries {
-				for _, player := range entry.Ticket.PartyMemberIDs {
-					changed[player] = true
-				}
-			}
-		}
+	queueChanged := string(before) != string(after)
+	if queueChanged {
 		r.queue = queue
+	}
+	changed := map[string]bool{}
+	if queueChanged || len(changedParties) > 0 {
+		AddMatchmakingObserverChanges(original, queue, changed, func(id string) bool {
+			return changedParties[id] != nil
+		})
+	}
+	if queueChanged || len(changed) > 0 {
 		notification := &party.Party{Members: map[string]party.Member{}}
 		for player := range changed {
 			notification.Members[player] = party.Member{PlayerID: player}
@@ -115,6 +111,62 @@ func (r *MemoryPartyRepository) UpdateMatchmaking(ctx context.Context, partyIDs,
 		r.publishPartyChangesLocked(nil, notification)
 	}
 	return nil
+}
+
+// AddMatchmakingObserverChanges收集快照可能变化的旧、新玩家，包括候选局部确认和历史移除。
+// 回执和可信角色上下文不进入玩家快照。工作器的提交唤醒由仓储独立保留。
+func AddMatchmakingObserverChanges(before, after *matchmaking.QueueState, actors map[string]bool, partyChanged func(string) bool) {
+	addEntryActors := func(entry matchmaking.QueueEntry) {
+		for _, player := range entry.Ticket.PartyMemberIDs {
+			actors[player] = true
+		}
+	}
+	visitChangedMatchmakingValues(before.Entries, after.Entries, addEntryActors)
+	// 无候选时从当前Party投影准备标记。历史票据可能还包含已离队的观察者。
+	for _, entry := range after.Entries {
+		if id := entry.Ticket.PartyID; id != "" && partyChanged(id) {
+			if _, hasCandidate := after.Candidates[entry.CandidateID]; !hasCandidate {
+				addEntryActors(entry)
+			}
+		}
+	}
+	visitChangedMatchmakingValues(before.Challenges, after.Challenges, func(challenge matchmaking.Challenge) {
+		for _, player := range challenge.PlayerIDs() {
+			actors[player] = true
+		}
+	})
+	visitChangedMatchmakingValues(before.Candidates, after.Candidates, func(candidate matchmaking.Candidate) {
+		for _, slot := range candidate.Roster {
+			actors[slot.PlayerID] = true
+		}
+	})
+	for player, id := range before.Reservations {
+		if after.Reservations[player] != id {
+			actors[player] = true
+		}
+	}
+	for player, id := range after.Reservations {
+		if before.Reservations[player] != id {
+			actors[player] = true
+		}
+	}
+}
+
+func visitChangedMatchmakingValues[T any](before, after map[string]T, visit func(T)) {
+	for id, previous := range before {
+		current, found := after[id]
+		if !found || !reflect.DeepEqual(previous, current) {
+			visit(previous)
+			if found {
+				visit(current)
+			}
+		}
+	}
+	for id, current := range after {
+		if _, found := before[id]; !found {
+			visit(current)
+		}
+	}
 }
 
 // SamePartyMembers阻止队列事务绕开成员唯一索引与邀请授权；准备/模式/锁定变化不改变成员身份。
@@ -133,7 +185,7 @@ func SamePartyMembers(before, after *party.Party) bool {
 // ValidateMatchmakingTransaction复核活动票据与预留一一对应，防止恢复或新命令写出幽灵锁；失败不会部分提交。
 func ValidateMatchmakingTransaction(tx *MatchmakingTransaction) error {
 	expected := map[string]string{}
-	if tx.Queue == nil || tx.Queue.Entries == nil || tx.Queue.Reservations == nil || tx.Queue.Candidates == nil || tx.Queue.Receipts == nil || tx.Queue.Contexts == nil || tx.Queue.Revision < 0 || len(tx.Queue.Entries) > 4*matchmaking.MaxActiveTickets {
+	if tx.Queue == nil || tx.Queue.Entries == nil || tx.Queue.Reservations == nil || tx.Queue.Candidates == nil || tx.Queue.Receipts == nil || tx.Queue.Contexts == nil || tx.Queue.Challenges == nil || tx.Queue.Revision < 0 || len(tx.Queue.Entries) > 4*matchmaking.MaxActiveTickets || len(tx.Queue.Challenges) > 4*matchmaking.MaxActiveTickets {
 		return errors.New("MATCH_TRANSACTION_INVALID: 队列缺失或超限")
 	}
 	for id, entry := range tx.Queue.Entries {
@@ -148,6 +200,35 @@ func ValidateMatchmakingTransaction(tx *MatchmakingTransaction) error {
 				return errors.New("MATCH_PLAYER_RESERVED: 多条活动票据包含同一玩家")
 			}
 			expected[player] = id
+		}
+	}
+	for id, c := range tx.Queue.Challenges {
+		if id != c.ID || c.Revision < 1 {
+			return errors.New("MATCH_TRANSACTION_INVALID: 邀请键或修订不一致")
+		}
+		if c.Phase != matchmaking.PhaseChallengeInvitation {
+			continue
+		}
+		if _, exists := tx.Queue.Entries[id]; exists {
+			return errors.New("MATCH_TRANSACTION_INVALID: 邀请与票据身份冲突")
+		}
+		mode, ok := matchmaking.ArenaModeByID(c.ArenaModeID)
+		if !ok || len(c.TeamAPlayerIDs) != mode.TeamSize || len(c.TeamBPlayerIDs) != mode.TeamSize || c.RegionID == "" || c.DeadlineUTC.IsZero() {
+			return errors.New("MATCH_TRANSACTION_INVALID: 邀请模式名单无效")
+		}
+		owner, target := false, false
+		for i, members := range [][]string{c.TeamAPlayerIDs, c.TeamBPlayerIDs} {
+			for _, player := range members {
+				if player == "" || expected[player] != "" {
+					return errors.New("MATCH_PLAYER_RESERVED: 邀请与活动资格重复")
+				}
+				expected[player] = id
+				owner = owner || (i == 0 && player == c.OwnerPlayerID)
+				target = target || (i == 1 && player == c.TargetPlayerID)
+			}
+		}
+		if !owner || !target {
+			return errors.New("MATCH_TRANSACTION_INVALID: 邀请队长不在各自名单")
 		}
 	}
 	if len(expected) != len(tx.Queue.Reservations) {

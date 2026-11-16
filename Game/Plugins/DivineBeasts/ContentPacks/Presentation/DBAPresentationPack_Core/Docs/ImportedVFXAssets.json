@@ -7022,5 +7022,197 @@
       "className": "Texture2D",
       "sha256": "022b6303fa9d46e993a581db4d57cf010094ffe35b0800bcbfbdd377230761c2"
     }
-  ]
+  ],
+  "healingReimport20261018": {
+    "assets": [
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/EffectTypes/ET_VFX_Combat",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/EffectTypes/ET_VFX_Combat",
+        "className": "NiagaraEffectType",
+        "sha256": "0ec4d7388ab428e88195a9a66dc5815321d7ff599918b4c70bb991eebb559972"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/MI_PetalBloom_Glint",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/MI_PetalBloom_Glint",
+        "className": "MaterialInstanceConstant",
+        "sha256": "03749ec6795ee9530c25790f93097ab203e8dfd0958e16a612b6c5bb18e320f9"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/MI_PetalBloom_Halo",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/MI_PetalBloom_Halo",
+        "className": "MaterialInstanceConstant",
+        "sha256": "1d037417b50a6841b690eb6afdbf554be219c9f6f0476515086a3b6afef243d8"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/MI_PetalBloom_InnerSpiral",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/MI_PetalBloom_InnerSpiral",
+        "className": "MaterialInstanceConstant",
+        "sha256": "fd2817b7badc2e8742d897105b3b9a320aceabf0dffdcdbd93e77eb98b9b8130"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/MI_PetalBloom_Mist",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/MI_PetalBloom_Mist",
+        "className": "MaterialInstanceConstant",
+        "sha256": "8f6a4f8a198c032eeaeea4af876f018a2beec88cf92481eea6c86666f731c2b4"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/MI_PetalBloom_PetalLuminous",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/MI_PetalBloom_PetalLuminous",
+        "className": "MaterialInstanceConstant",
+        "sha256": "9d6ba97b9145bcee857eb2e2951c00dba3a6a3ee31ef59f9ac99b84face99e25"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/MI_PetalBloom_PetalRose",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/MI_PetalBloom_PetalRose",
+        "className": "MaterialInstanceConstant",
+        "sha256": "c84ce11c4f7bcba1b842fcbf6ce53031440b400835419bae2c33eb71ab2d5167"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/MI_PetalBloom_SilkRing",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/MI_PetalBloom_SilkRing",
+        "className": "MaterialInstanceConstant",
+        "sha256": "c881b36ac4a5d0845189b46807f25ff7306d1d1c7c08a2b91bf8c23413bf296a"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/M_PetalBloom_AuroraSkirt",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/M_PetalBloom_AuroraSkirt",
+        "className": "Material",
+        "sha256": "9e0b9eb513e8bccc793e8a636dcd80ed9c8aad38389d0c8b08c08dfa51d95727"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/M_PetalBloom_Haze",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/M_PetalBloom_Haze",
+        "className": "Material",
+        "sha256": "0f2585e12b1f0e708895fa0e5b5fd5f560ba8c9210dc20d89e8e6e3831430db0"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/M_PetalBloom_Luminous",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/M_PetalBloom_Luminous",
+        "className": "Material",
+        "sha256": "16861a99df3634cb3210d84cc62cc5be2e95a0bbcfc6772031fdb4a71a319c3d"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Materials/Nature/M_PetalBloom_SilkenPetal",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Materials/Nature/M_PetalBloom_SilkenPetal",
+        "className": "Material",
+        "sha256": "89198718f62f3d160122fb54f3a3c012b594c14c99c4ed353e19cc52c39ed5f7"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Meshes/Nature/SM_PetalBloom_LightSkirt",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Meshes/Nature/SM_PetalBloom_LightSkirt",
+        "className": "StaticMesh",
+        "sha256": "63ec297597f3a0c579cb372bf97819e57a5f8cd3805e5fcba8d680dd5de6b88a"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Meshes/Nature/SM_PetalBloom_PetalCup",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Meshes/Nature/SM_PetalBloom_PetalCup",
+        "className": "StaticMesh",
+        "sha256": "bd912520246e2a31186706c9f0c547df032b15795c4e62e9f8b8c4c38371d1ce"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Meshes/Nature/SM_PetalBloom_PetalCurl",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Meshes/Nature/SM_PetalBloom_PetalCurl",
+        "className": "StaticMesh",
+        "sha256": "f289decab13f51ea33d53dd86897733c059f380e5ccbd1da7eb7ae9d8941ec73"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/NiagaraModules/Nature/NM_PetalBloom_PaletteParameters",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/NiagaraModules/Nature/NM_PetalBloom_PaletteParameters",
+        "className": "NiagaraScript",
+        "sha256": "6d0b783de61cfd991cf3d485d5a72d22a3d4ce2bc95be29ac280a2e92b2c790b"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/NiagaraModules/Nature/NM_PetalBloom_PetalMotion",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/NiagaraModules/Nature/NM_PetalBloom_PetalMotion",
+        "className": "NiagaraScript",
+        "sha256": "4ef9b4f65b8caa5b014a1125a46957116f333f7fd4cd1061b5256adf3afc4c02"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/NiagaraModules/Nature/NM_PetalBloom_PollenPolish",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/NiagaraModules/Nature/NM_PetalBloom_PollenPolish",
+        "className": "NiagaraScript",
+        "sha256": "a5a3d9031d69721b4f24d84fe74df3ddc17c12ceda91aaa534f2c08ae4f5916a"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Textures/Nature/T_PetalBloom_AuroraRays",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Textures/Nature/T_PetalBloom_AuroraRays",
+        "className": "Texture2D",
+        "sha256": "2e6a02582ee210c0e9f8f60f2fbba385328baf5107a70f5bc1908659fd44c71f"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Textures/Nature/T_PetalBloom_Glint",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Textures/Nature/T_PetalBloom_Glint",
+        "className": "Texture2D",
+        "sha256": "6333ce536f0c232cd2c508e3073251423dd5de3065406d32c437bd78a946be73"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Textures/Nature/T_PetalBloom_Halo",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Textures/Nature/T_PetalBloom_Halo",
+        "className": "Texture2D",
+        "sha256": "42a0c2013a549a7dcdcd97abd947b0f114a3d5d36f083331943a9b5ef9ff1393"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Textures/Nature/T_PetalBloom_InnerSpiral",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Textures/Nature/T_PetalBloom_InnerSpiral",
+        "className": "Texture2D",
+        "sha256": "239a018c89435183f54da1cbe76a3808c1fccb106fb23bbdaea52d385cc7d955"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Textures/Nature/T_PetalBloom_Mist",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Textures/Nature/T_PetalBloom_Mist",
+        "className": "Texture2D",
+        "sha256": "326b94f4faa8bc56529301ad124dac36f6d05b3aedb298f01e813ae9b930c30d"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Textures/Nature/T_PetalBloom_Petal",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Textures/Nature/T_PetalBloom_Petal",
+        "className": "Texture2D",
+        "sha256": "39eeae95eab6bc3e1af77be53ccf8699111c90e1c3777775146cf6b13d8d3226"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Textures/Nature/T_PetalBloom_SilkRing",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/Textures/Nature/T_PetalBloom_SilkRing",
+        "className": "Texture2D",
+        "sha256": "0538a5bb2b57d0d330ca21c9f889b679cf719432c72fda58b82029049fb7a305"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/07_Status/NS_Nature_PetalBloom_Aura",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_Nature_PetalBloom_Aura",
+        "className": "NiagaraSystem",
+        "sha256": "52bea374f1dca925233462ab75c1ede64854e7fa65f24ae2f24c65aa6c63946e"
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/NiagaraModules/Nature/NM_PetalBloom_PetalMotion",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/NiagaraModules/Nature/NM_DBA_HealingMotion",
+        "className": "NiagaraScript",
+        "derived": true
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/NiagaraModules/Nature/NM_PetalBloom_PollenPolish",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/NiagaraModules/Nature/NM_DBA_HealingPollen",
+        "className": "NiagaraScript",
+        "derived": true
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/NiagaraModules/Nature/NM_PetalBloom_PaletteParameters",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/00_Core/NiagaraModules/Nature/NM_DBA_HealingPalette",
+        "className": "NiagaraScript",
+        "derived": true
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/07_Status/NS_Nature_PetalBloom_Aura",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Medium",
+        "className": "NiagaraSystem",
+        "derived": true
+      },
+      {
+        "source": "/ModularGameVFX/ModularGameVFXLibrary/07_Status/NS_Nature_PetalBloom_Aura",
+        "target": "/DBAPresentationPack_Core/VFX/HealingBloom/07_Status/NS_DBA_HealingBloom_Low",
+        "className": "NiagaraSystem",
+        "derived": true
+      }
+    ],
+    "evidence": "Saved/Validation/HealingReimport20261018/Verification.json",
+    "ruleZh": "26份原包完整重导，3份原公式兼容包装、2份装饰生成分档；历史1170项清单保留。"
+  }
 }

@@ -7,7 +7,11 @@
 调用隔离PostgreSQL测试入口，实际重启本次数据库。不是已认证HTTP或UE联调。
 #>
 [CmdletBinding()]
-param([switch]$NativeTests, [switch]$BackendTests)
+param(
+    [switch]$NativeTests,
+    [switch]$BackendTests,
+    [string]$EngineRoot = $env:UE_ROOT
+)
 $ErrorActionPreference = 'Stop'
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $runId = [guid]::NewGuid().ToString('N')
@@ -21,13 +25,36 @@ try {
     if ($descriptor.Modules[0].TargetAllowList -contains 'Server' -or $descriptor.Modules.Count -ne 1) { throw 'Session target boundary invalid' }
     $checks.Add(@{Name='DescriptorBoundary';Status='Passed';Evidence='One module; Client and Editor only; static check'})
     if ($NativeTests) {
+        # 原生内核测试不依赖已运行的UE Editor；优先使用PATH，缺失时只读定位锁定UE5.8自带CMake。
+        # 显式使用绝对可执行文件路径，不修改全局PATH/系统环境/引擎目录，也不调用下载器。
+        $cmakeCommand = Get-Command 'cmake.exe' -ErrorAction SilentlyContinue
+        $ctestCommand = Get-Command 'ctest.exe' -ErrorAction SilentlyContinue
+        $cmakeExe = if ($cmakeCommand) { $cmakeCommand.Source } else { '' }
+        $ctestExe = if ($ctestCommand) { $ctestCommand.Source } else { '' }
+        if (!$cmakeExe -or !$ctestExe) {
+            $roots = @($EngineRoot, 'D:/UnrealEngine-5.8.0-release') | Where-Object { $_ }
+            foreach ($root in $roots) {
+                $bin = Join-Path $root 'Engine/Extras/ThirdPartyNotUE/CMake/bin'
+                $candidateCMake = Join-Path $bin 'cmake.exe'
+                $candidateCTest = Join-Path $bin 'ctest.exe'
+                if ((Test-Path -LiteralPath $candidateCMake -PathType Leaf) -and
+                    (Test-Path -LiteralPath $candidateCTest -PathType Leaf)) {
+                    if (!$cmakeExe) { $cmakeExe = $candidateCMake }
+                    if (!$ctestExe) { $ctestExe = $candidateCTest }
+                    break
+                }
+            }
+        }
+        if (!$cmakeExe -or !$ctestExe) {
+            throw 'Native CMake/CTest不存在；请指定锁定的UE5.8 EngineRoot，不得把未运行的测试记为通过。'
+        }
         $output = Join-Path $evidence 'Native'
-        & cmake -S (Join-Path $plugin 'Tests') -B $output -G 'Visual Studio 17 2022' -A x64 *> (Join-Path $evidence 'configure.log')
+        & $cmakeExe -S (Join-Path $plugin 'Tests') -B $output -G 'Visual Studio 17 2022' -A x64 *> (Join-Path $evidence 'configure.log')
         if ($LASTEXITCODE -ne 0) { throw 'Native configure failed' }
         foreach ($configuration in @('Debug','Release')) {
-            & cmake --build $output --config $configuration *> (Join-Path $evidence "build-$configuration.log")
+            & $cmakeExe --build $output --config $configuration *> (Join-Path $evidence "build-$configuration.log")
             if ($LASTEXITCODE -ne 0) { throw "Native $configuration build failed" }
-            & ctest --test-dir $output -C $configuration --output-on-failure *> (Join-Path $evidence "test-$configuration.log")
+            & $ctestExe --test-dir $output -C $configuration --output-on-failure *> (Join-Path $evidence "test-$configuration.log")
             if ($LASTEXITCODE -ne 0) { throw "Native $configuration test failed" }
             $checks.Add(@{Name="Native-$configuration";Status='Passed';Evidence="test-$configuration.log"})
         }

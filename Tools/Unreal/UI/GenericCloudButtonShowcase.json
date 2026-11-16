@@ -1,0 +1,914 @@
+{
+  "version": 1,
+  "name": "WBP_DBA_CloudButtonShowcase",
+  "parentClass": "UserWidget",
+  "metadata": {
+    "authoringTool": "Monolith",
+    "sourceFile": "Tools/Unreal/UI/GenericCloudButtonShowcase.json",
+    "description": "213x60通用按钮独立原生审核，不接正式HUD"
+  },
+  "rootWidget": {
+    "type": "CanvasPanel",
+    "id": "Root",
+    "style": {
+      "visibility": "SelfHitTestInvisible"
+    },
+    "children": [
+      {
+        "type": "Border",
+        "id": "PreviewBackground",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "x": 1060,
+            "y": 640
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "background": "#203D35FF",
+          "visibility": "HitTestInvisible"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "Title",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 24,
+            "y": 18
+          },
+          "size": {
+            "x": 950,
+            "y": 32
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "SSLM · 通用按钮 | 213 × 60",
+          "fontSize": 24,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "State0",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 136,
+            "y": 72
+          },
+          "size": {
+            "x": 213,
+            "y": 26
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "正常",
+          "fontSize": 16,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "State1",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 364,
+            "y": 72
+          },
+          "size": {
+            "x": 213,
+            "y": 26
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "悬停",
+          "fontSize": 16,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "State2",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 592,
+            "y": 72
+          },
+          "size": {
+            "x": 213,
+            "y": 26
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "按下",
+          "fontSize": 16,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "State3",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 820,
+            "y": 72
+          },
+          "size": {
+            "x": 213,
+            "y": 26
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "禁用",
+          "fontSize": 16,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "TextBlock",
+        "id": "PrimaryLabel",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 24,
+            "y": 123
+          },
+          "size": {
+            "x": 100,
+            "y": 28
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "主要操作",
+          "fontSize": 16,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "State_Primary_Normal",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 136,
+            "y": 110
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "State_Primary_Normal_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "确认",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "State_Primary_Hovered",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 364,
+            "y": 110
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "State_Primary_Hovered_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "确认",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "State_Primary_Pressed",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 592,
+            "y": 110
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "State_Primary_Pressed_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "确认",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "State_Primary_Disabled",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 820,
+            "y": 110
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "State_Primary_Disabled_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "确认",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "SecondaryLabel",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 24,
+            "y": 219
+          },
+          "size": {
+            "x": 100,
+            "y": 28
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "次要操作",
+          "fontSize": 16,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "State_Secondary_Normal",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 136,
+            "y": 206
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "State_Secondary_Normal_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "取消",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "State_Secondary_Hovered",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 364,
+            "y": 206
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "State_Secondary_Hovered_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "取消",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "State_Secondary_Pressed",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 592,
+            "y": 206
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "State_Secondary_Pressed_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "取消",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "State_Secondary_Disabled",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 820,
+            "y": 206
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "State_Secondary_Disabled_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "取消",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "InteractionLabel",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 24,
+            "y": 300
+          },
+          "size": {
+            "x": 500,
+            "y": 26
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "交互按钮（可悬停、按下）",
+          "fontSize": 16,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "Interactive_Primary",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 24,
+            "y": 338
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "Interactive_Primary_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "确认",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "Interactive_Secondary",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 252,
+            "y": 338
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "Interactive_Secondary_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "取消",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "ColorLabel",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 540,
+            "y": 300
+          },
+          "size": {
+            "x": 480,
+            "y": 26
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "同一材质换色（金边保留）",
+          "fontSize": 16,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "CustomColor",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 540,
+            "y": 338
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "CustomColor_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "自定义",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "TextBlock",
+        "id": "SizesLabel",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 24,
+            "y": 438
+          },
+          "size": {
+            "x": 980,
+            "y": 28
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "style": {
+          "visibility": "HitTestInvisible"
+        },
+        "content": {
+          "text": "九宫格：142×40 / 213×60 / 300×60",
+          "fontSize": 16,
+          "fontColor": "#EEE6CCFF"
+        }
+      },
+      {
+        "type": "Button",
+        "id": "Size_Minimum",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 24,
+            "y": 504
+          },
+          "size": {
+            "x": 142,
+            "y": 40
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "Size_Minimum_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "确认",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "Size_Default",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 200,
+            "y": 494
+          },
+          "size": {
+            "x": 213,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "Size_Default_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "确认",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "Size_Wide",
+        "slot": {
+          "anchorPreset": "top_left",
+          "position": {
+            "x": 448,
+            "y": 494
+          },
+          "size": {
+            "x": 300,
+            "y": 60
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "children": [
+          {
+            "type": "TextBlock",
+            "id": "Size_Wide_Text",
+            "style": {
+              "visibility": "HitTestInvisible"
+            },
+            "slot": {
+              "hAlign": "center",
+              "vAlign": "center",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "text": "确认",
+              "fontSize": 18,
+              "fontColor": "#FFF4D6FF"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

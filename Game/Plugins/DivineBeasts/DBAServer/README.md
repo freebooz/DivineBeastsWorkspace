@@ -2,6 +2,12 @@
 
 正式位置：`Game/Plugins/DivineBeasts/DBAServer/`。本插件承载项目服务器组合模块`DBAServer`；`DivineBeastsArenaServer`（MainArena项目扩展）已归可选DBAArena，本插件不强制依赖竞技。
 
+2026-10-21死亡重生：现有世界角色准入桥订阅当前Pawn的权威死亡，仅对Shared目录确认的Village/OpenWorld且实际体验允许ServerAuthorized重生时创建五秒单次截止。截止再次核对真实准入、Active、当前Pawn和Avatar后，调用平台唯一RequestServerRestart；平台继续拥有安全出生、重新接管和角色初始化。MainArena仍由模式决定淘汰。换Pawn、断线、撤销和关闭均取消本连接死亡订阅/计时器；旧票据不得清理后继Pawn资源。死亡不会被当作CharacterReady失败；不新增轮询、客户端复活或直接补血入口。
+
+死亡生命周期回归直接使用GAS的FGameplayEffectSpec与属性值，模块和插件已显式声明GameplayAbilities依赖。该测试证明死亡事实、拒绝与资源归属边界，不伪造Active记录；五秒后的实际成功出生/接管必须由真实服务器另验。Village资产策略、完整构建、原生用例及部署证据分别保存于Saved/Validation/WorldRespawn20261021和HotbarRespawn20261021，不以源码和资产文件存在宣告联机通过。
+
+独立审查补齐常驻世界装配：Bootstrap按Shared体验角色映射为Village/OpenWorld复用完整World初始化、可信准入桥、Experience启动与Ready门禁，并写入真实World上下文角色。缺少Active体验时两种角色均拒绝Ready，未恢复独立Lobby角色。当前登记内容仍只有Village/MainArena，OpenWorld Profile的地图及体验尚未有真实资产闭环；此次仅完成常驻世界源码装配及失败关闭，不宣称常驻世界已可准入或已完成重生验收。
+
 2026-10-10角色准入修复：Village桥接必须显式部署`PLAYERDATA_BASE_URL`，指向受保护内网中的既有PlayerData HTTP服务。当前保留的本地环境为`http://127.0.0.1:18182`；历史18082仅属于旧环境，不可作为默认值。专用服务器先用当前真实准入的PlayerId读取`/internal/v1/playerdata/profile`及`characters`，校验已选角色属于该玩家、状态Active和核心Hero Catalog，再提交平台出生门禁。每个当前连接冻结一次资料选择快照，不接受客户端Hero自报；Pawn生成事实事件绑定可信CharacterId/Hero及出生、Avatar代次，公开Hero复制给全部观察者，持久CharacterId继续仅Owner复制。
 
 2026-10-15实际进入世界故障：客户端已完成网络连接和村庄载图，但专服启动未注入资料地址，产生`WorldCharacterPlayerDataUnconfigured`，客户端进入失败页。开发启动统一使用`Deploy/Local/StartVillageDevelopment.ps1`和`RunMainArenaPool.ps1`，二者都必须显式传`-PlayerDataBaseUrl`；共用`LocalPlayerDataEnvironment.psm1`在创建进程前校验并检查资料服务就绪，然后只向子进程写入环境。控制面202注册、端口监听及地图加载均不能替代玩家角色Ready证据。真实角色准入仍使用原有事件通知与失败关闭逻辑，不绕过后端资料校验。

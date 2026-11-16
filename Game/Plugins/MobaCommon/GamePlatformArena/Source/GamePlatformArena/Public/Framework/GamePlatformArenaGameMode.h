@@ -15,6 +15,16 @@ DECLARE_MULTICAST_DELEGATE_OneParam(
     FGamePlatformArenaResultPendingDelegate,
     const FGamePlatformArenaMatchResult&);
 
+/** 权威开局终止原因，尚未产生比赛结果。 */
+enum class EGamePlatformArenaStartAbortReason : uint8
+{
+    PreMatchTimeout,
+    PlayerDisconnected,
+    SpawnFailed,
+    StartupFailed
+};
+DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformArenaStartAbortedDelegate, EGamePlatformArenaStartAbortReason);
+
 /** AGamePlatformArenaGameMode（MainArena服务器权威竞技规则入口）。 */
 UCLASS()
 class GAMEPLATFORMARENA_API AGamePlatformArenaGameMode : public AGameModeBase
@@ -34,6 +44,8 @@ public:
 
     virtual void BeginPlay() override;
     virtual void Logout(AController* Exiting) override;
+    /** 拒绝引擎旅行选项和改名请求；公开角色名由可信名册准入写入。 */
+    virtual void ChangeName(AController* Controller, const FString& NewName, bool bNameChange) override;
     /** 世界退出撤销所有玩法资格与本模式Timer，再清空借用接口；不能影响其他World。 */
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
@@ -78,10 +90,12 @@ public:
     const FGamePlatformArenaMatchResult& GetPendingResult() const { return PendingResult; }
     const FGamePlatformArenaModeSpec& GetModeSpec() const { return ActiveModeSpec; }
     FGamePlatformArenaResultPendingDelegate& OnResultPending() { return ResultPendingDelegate; }
+    FGamePlatformArenaStartAbortedDelegate& OnMatchStartAborted() { return MatchStartAbortedDelegate; }
 
 private:
 #if WITH_DEV_AUTOMATION_TESTS
     friend class FGamePlatformArenaEliminationTest;
+    friend class FGamePlatformArenaStartAbortTest;
 #endif
     struct FPlayerRecoveryState
     {
@@ -105,6 +119,7 @@ private:
     void BeginReadyCheckIfReady();
     void BeginCountdownIfReady();
     void StartMatchFromCountdown();
+    void AbortMatchStart(EGamePlatformArenaStartAbortReason Reason, const FString& Detail = {});
     void HandlePreMatchTimeout();
     void HandleMatchTimeLimit();
     /** 汇合本帧全部死亡后一次判定，避免双方同帧全灭被首个事件抢先判胜。 */
@@ -135,6 +150,8 @@ private:
     FTimerHandle PreMatchTimeoutTimer;
     FTimerHandle MatchDeadlineTimer;
     FGamePlatformArenaResultPendingDelegate ResultPendingDelegate;
+    FGamePlatformArenaStartAbortedDelegate MatchStartAbortedDelegate;
     bool bAssignmentApplied = false;
+    bool bStartingMatch = false;
     bool bEndStarted = false;
 };

@@ -6,6 +6,7 @@
 #include "Types/GamePlatformVFXRegistrationHandle.h"
 #include "Types/GamePlatformVFXRequest.h"
 #include "Types/GamePlatformVFXResult.h"
+#include "Types/GamePlatformVFXStopMode.h"
 #include "Environment/GamePlatformFaunaConfig.h"
 
 class UGamePlatformVFXCatalog;
@@ -24,6 +25,8 @@ public:
 
     virtual FGamePlatformVFXResult Play(const FGamePlatformVFXRequest& Request) = 0;
     virtual bool Stop(const FGamePlatformVFXHandle& Handle) = 0;
+    /** 完整句柄校验后停止；Drain最长0.5秒，仍由本世界账本、原生池及完成通知收敛。 */
+    virtual bool StopWithMode(const FGamePlatformVFXHandle& Handle, EGamePlatformVFXStopMode Mode) { return Stop(Handle); }
     virtual bool IsActive(const FGamePlatformVFXHandle& Handle) const = 0;
     /** 仅本世界完整实例句柄可查；历史有界，淘汰后返回Invalid。 */
     virtual FGamePlatformVFXPlaybackSnapshot GetPlaybackSnapshot(const FGamePlatformVFXHandle& Handle) const = 0;

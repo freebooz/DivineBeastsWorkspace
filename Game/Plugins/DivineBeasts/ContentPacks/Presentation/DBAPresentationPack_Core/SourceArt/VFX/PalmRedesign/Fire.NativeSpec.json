@@ -1,0 +1,907 @@
+{
+  "spec": {
+    "user_parameters": [
+      {
+        "name": "AirRippleScale",
+        "type": "NiagaraFloat",
+        "default": "1.0"
+      },
+      {
+        "name": "BodyCount",
+        "type": "NiagaraInt32",
+        "default": "3"
+      },
+      {
+        "name": "CastDurationSec",
+        "type": "NiagaraFloat",
+        "default": "0.5"
+      },
+      {
+        "name": "CoreCount",
+        "type": "NiagaraInt32",
+        "default": "1"
+      },
+      {
+        "name": "DetailCount",
+        "type": "NiagaraInt32",
+        "default": "8"
+      },
+      {
+        "name": "EffectIntensity",
+        "type": "NiagaraFloat",
+        "default": "1.0"
+      },
+      {
+        "name": "EffectScale",
+        "type": "NiagaraFloat",
+        "default": "1.0"
+      },
+      {
+        "name": "ElapsedAtStartSec",
+        "type": "NiagaraFloat",
+        "default": "0.0"
+      },
+      {
+        "name": "HandSideSign",
+        "type": "NiagaraFloat",
+        "default": "1.0"
+      },
+      {
+        "name": "RippleCount",
+        "type": "NiagaraInt32",
+        "default": "1"
+      }
+    ],
+    "system_properties": {
+      "warmup_time": 0,
+      "determinism": false,
+      "fixed_bounds": true,
+      "bounds": {
+        "min": "(-60.000000,-60.000000,-60.000000)",
+        "max": "(60.000000,60.000000,60.000000)"
+      },
+      "random_seed": 0,
+      "max_pool_size": 32,
+      "effect_type": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V2/AttackSlash/Scalability/NET_DBA_Review_CombatCast.NET_DBA_Review_CombatCast"
+    },
+    "emitters": [
+      {
+        "name": "E_FireCore",
+        "sim_target": "CPU",
+        "asset": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NS_DBA_FirePalmCast_V3_ConceptReview.NS_DBA_FirePalmCast_V3_ConceptReview:E_FireCore_0",
+        "local_space": true,
+        "determinism": true,
+        "calculate_bounds_mode": "Fixed",
+        "allocation_mode": "AutomaticEstimate",
+        "pre_allocation_count": 0,
+        "modules": [
+          {
+            "stage": "emitter_update",
+            "guid": "7CAA05E946B89A2BFD5D59BE6BA98A3F",
+            "script": "/Niagara/Modules/Emitter/EmitterState.EmitterState",
+            "static_switches": [
+              {
+                "name": "Loop Duration Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Loop Behavior",
+                "value": "NewEnumerator1"
+              },
+              {
+                "name": "UseLoopDelay",
+                "value": "false"
+              },
+              {
+                "name": "Life Cycle Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Enable Distance Culling",
+                "value": "false"
+              },
+              {
+                "name": "Scalability Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Enable Visibility Culling",
+                "value": "false"
+              },
+              {
+                "name": "Scale Spawn Count",
+                "value": "false"
+              },
+              {
+                "name": "Inactive Response",
+                "value": "NewEnumerator0"
+              }
+            ]
+          },
+          {
+            "stage": "emitter_update",
+            "guid": "5E97F4494E21CC22E033D1AA9B5B6F03",
+            "script": "/Niagara/Modules/Emitter/SpawnBurst_Instantaneous.SpawnBurst_Instantaneous",
+            "static_switches": [
+              {
+                "name": "Use Spawn Probability",
+                "value": "false"
+              },
+              {
+                "name": "UseLoopCountLimit",
+                "value": "false"
+              }
+            ]
+          },
+          {
+            "stage": "particle_spawn",
+            "guid": "00409C6348FD718230423BB89B6E75E3",
+            "script": "/Niagara/Modules/Spawn/Initialization/V2/InitializeParticle.InitializeParticle",
+            "static_switches": [
+              {
+                "name": "Write Material Random",
+                "value": "true"
+              },
+              {
+                "name": "Lifetime Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Lifetime Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Color Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Color Channel Mode",
+                "value": "NewEnumerator1"
+              },
+              {
+                "name": "AdjustHue",
+                "value": "true"
+              },
+              {
+                "name": "AdjustSaturation",
+                "value": "false"
+              },
+              {
+                "name": "AdjustValue",
+                "value": "false"
+              },
+              {
+                "name": "AdjustAlpha",
+                "value": "false"
+              },
+              {
+                "name": "Color Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mass Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mass Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Size Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Size Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite UV Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite UV Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Rotation Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Rotation Mode",
+                "value": "NewEnumerator3"
+              },
+              {
+                "name": "Mesh Scale Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mesh Scale Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "UsePositionOffset",
+                "value": "false"
+              },
+              {
+                "name": "Position Mode",
+                "value": "NewEnumerator2"
+              },
+              {
+                "name": "Wrap Index By Mesh Count",
+                "value": "true"
+              },
+              {
+                "name": "Mesh Renderer Array Visibility Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Width Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Twist Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Facing Mode",
+                "value": "NewEnumerator0"
+              }
+            ]
+          },
+          {
+            "stage": "particle_update",
+            "guid": "8EEA75AB4D5C452EBCCC438EFA15F85B",
+            "script": "/Niagara/Modules/Update/Lifetime/ParticleState.ParticleState",
+            "static_switches": [
+              {
+                "name": "Kill Particles When Lifetime Has Elapsed",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "stage": "particle_update",
+            "guid": "D843346844181D29A52849A635EE5B78",
+            "script": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NM_DBA_PalmConceptMotion_Review.NM_DBA_PalmConceptMotion_Review",
+            "inputs": {
+              "Layer": "0"
+            }
+          }
+        ],
+        "renderers": [
+          {
+            "class": "NiagaraMeshRendererProperties"
+          }
+        ]
+      },
+      {
+        "name": "E_FireCurlBody",
+        "sim_target": "CPU",
+        "asset": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NS_DBA_FirePalmCast_V3_ConceptReview.NS_DBA_FirePalmCast_V3_ConceptReview:E_FireCurlBody_0",
+        "local_space": true,
+        "determinism": true,
+        "calculate_bounds_mode": "Fixed",
+        "allocation_mode": "AutomaticEstimate",
+        "pre_allocation_count": 0,
+        "modules": [
+          {
+            "stage": "emitter_update",
+            "guid": "083F91B245E6DA5187D7B79DAA945DE4",
+            "script": "/Niagara/Modules/Emitter/EmitterState.EmitterState",
+            "static_switches": [
+              {
+                "name": "Loop Duration Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Loop Behavior",
+                "value": "NewEnumerator1"
+              },
+              {
+                "name": "UseLoopDelay",
+                "value": "false"
+              },
+              {
+                "name": "Life Cycle Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Enable Distance Culling",
+                "value": "false"
+              },
+              {
+                "name": "Scalability Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Enable Visibility Culling",
+                "value": "false"
+              },
+              {
+                "name": "Scale Spawn Count",
+                "value": "false"
+              },
+              {
+                "name": "Inactive Response",
+                "value": "NewEnumerator0"
+              }
+            ]
+          },
+          {
+            "stage": "emitter_update",
+            "guid": "AF7A49E94223CB222D5B57BA79D69994",
+            "script": "/Niagara/Modules/Emitter/SpawnBurst_Instantaneous.SpawnBurst_Instantaneous",
+            "static_switches": [
+              {
+                "name": "Use Spawn Probability",
+                "value": "false"
+              },
+              {
+                "name": "UseLoopCountLimit",
+                "value": "false"
+              }
+            ]
+          },
+          {
+            "stage": "particle_spawn",
+            "guid": "AFDB85CE48BF1EC2C0DD47BB12CE112F",
+            "script": "/Niagara/Modules/Spawn/Initialization/V2/InitializeParticle.InitializeParticle",
+            "static_switches": [
+              {
+                "name": "Write Material Random",
+                "value": "true"
+              },
+              {
+                "name": "Lifetime Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Lifetime Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Color Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Color Channel Mode",
+                "value": "NewEnumerator1"
+              },
+              {
+                "name": "AdjustHue",
+                "value": "true"
+              },
+              {
+                "name": "AdjustSaturation",
+                "value": "false"
+              },
+              {
+                "name": "AdjustValue",
+                "value": "false"
+              },
+              {
+                "name": "AdjustAlpha",
+                "value": "false"
+              },
+              {
+                "name": "Color Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mass Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mass Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Size Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Size Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite UV Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite UV Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Rotation Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Rotation Mode",
+                "value": "NewEnumerator3"
+              },
+              {
+                "name": "Mesh Scale Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mesh Scale Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "UsePositionOffset",
+                "value": "false"
+              },
+              {
+                "name": "Position Mode",
+                "value": "NewEnumerator2"
+              },
+              {
+                "name": "Wrap Index By Mesh Count",
+                "value": "true"
+              },
+              {
+                "name": "Mesh Renderer Array Visibility Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Width Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Twist Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Facing Mode",
+                "value": "NewEnumerator0"
+              }
+            ]
+          },
+          {
+            "stage": "particle_update",
+            "guid": "920F45E842B8AE83F45793B868E4B1B5",
+            "script": "/Niagara/Modules/Update/Lifetime/ParticleState.ParticleState",
+            "static_switches": [
+              {
+                "name": "Kill Particles When Lifetime Has Elapsed",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "stage": "particle_update",
+            "guid": "1D5060664F25BF9DCEF450B94FB0C34D",
+            "script": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NM_DBA_PalmConceptMotion_Review.NM_DBA_PalmConceptMotion_Review",
+            "inputs": {
+              "Layer": "1"
+            }
+          }
+        ],
+        "renderers": [
+          {
+            "class": "NiagaraMeshRendererProperties"
+          }
+        ]
+      },
+      {
+        "name": "E_FireDetails",
+        "sim_target": "CPU",
+        "asset": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NS_DBA_FirePalmCast_V3_ConceptReview.NS_DBA_FirePalmCast_V3_ConceptReview:E_FireDetails_0",
+        "local_space": true,
+        "determinism": true,
+        "calculate_bounds_mode": "Fixed",
+        "allocation_mode": "AutomaticEstimate",
+        "pre_allocation_count": 0,
+        "modules": [
+          {
+            "stage": "emitter_update",
+            "guid": "70B966D0484D121D3393AAA07F99DF00",
+            "script": "/Niagara/Modules/Emitter/EmitterState.EmitterState",
+            "static_switches": [
+              {
+                "name": "Loop Duration Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Loop Behavior",
+                "value": "NewEnumerator1"
+              },
+              {
+                "name": "UseLoopDelay",
+                "value": "false"
+              },
+              {
+                "name": "Life Cycle Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Enable Distance Culling",
+                "value": "false"
+              },
+              {
+                "name": "Scalability Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Enable Visibility Culling",
+                "value": "false"
+              },
+              {
+                "name": "Scale Spawn Count",
+                "value": "false"
+              },
+              {
+                "name": "Inactive Response",
+                "value": "NewEnumerator0"
+              }
+            ]
+          },
+          {
+            "stage": "emitter_update",
+            "guid": "9CBC82AC4FBC6F0D5C84EE999E1968C9",
+            "script": "/Niagara/Modules/Emitter/SpawnBurst_Instantaneous.SpawnBurst_Instantaneous",
+            "static_switches": [
+              {
+                "name": "Use Spawn Probability",
+                "value": "false"
+              },
+              {
+                "name": "UseLoopCountLimit",
+                "value": "false"
+              }
+            ]
+          },
+          {
+            "stage": "particle_spawn",
+            "guid": "4D2EDC1E4F3E0DE68447DDA455F30E1C",
+            "script": "/Niagara/Modules/Spawn/Initialization/V2/InitializeParticle.InitializeParticle",
+            "static_switches": [
+              {
+                "name": "Write Material Random",
+                "value": "true"
+              },
+              {
+                "name": "Lifetime Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Lifetime Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Color Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Color Channel Mode",
+                "value": "NewEnumerator1"
+              },
+              {
+                "name": "AdjustHue",
+                "value": "true"
+              },
+              {
+                "name": "AdjustSaturation",
+                "value": "false"
+              },
+              {
+                "name": "AdjustValue",
+                "value": "false"
+              },
+              {
+                "name": "AdjustAlpha",
+                "value": "false"
+              },
+              {
+                "name": "Color Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mass Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mass Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Size Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Size Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite UV Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite UV Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Rotation Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Rotation Mode",
+                "value": "NewEnumerator3"
+              },
+              {
+                "name": "Mesh Scale Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mesh Scale Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "UsePositionOffset",
+                "value": "false"
+              },
+              {
+                "name": "Position Mode",
+                "value": "NewEnumerator2"
+              },
+              {
+                "name": "Wrap Index By Mesh Count",
+                "value": "true"
+              },
+              {
+                "name": "Mesh Renderer Array Visibility Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Width Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Twist Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Facing Mode",
+                "value": "NewEnumerator0"
+              }
+            ]
+          },
+          {
+            "stage": "particle_update",
+            "guid": "EA3B7C804724D8331D9EB5B2D7C40A38",
+            "script": "/Niagara/Modules/Update/Lifetime/ParticleState.ParticleState",
+            "static_switches": [
+              {
+                "name": "Kill Particles When Lifetime Has Elapsed",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "stage": "particle_update",
+            "guid": "80AB6AB4463B1BE02AE2BD857D890450",
+            "script": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NM_DBA_PalmConceptMotion_Review.NM_DBA_PalmConceptMotion_Review",
+            "inputs": {
+              "Layer": "2"
+            }
+          }
+        ],
+        "renderers": [
+          {
+            "class": "NiagaraSpriteRendererProperties",
+            "material": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Materials/MI_DBA_PalmFire_Detail_Review.MI_DBA_PalmFire_Detail_Review"
+          }
+        ]
+      },
+      {
+        "name": "E_FireAirRipple",
+        "sim_target": "CPU",
+        "asset": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NS_DBA_FirePalmCast_V3_ConceptReview.NS_DBA_FirePalmCast_V3_ConceptReview:E_FireAirRipple_0",
+        "local_space": true,
+        "determinism": true,
+        "calculate_bounds_mode": "Fixed",
+        "allocation_mode": "AutomaticEstimate",
+        "pre_allocation_count": 0,
+        "modules": [
+          {
+            "stage": "emitter_update",
+            "guid": "A2CEF6C148BB53B6BF02D5ABBA16F03E",
+            "script": "/Niagara/Modules/Emitter/EmitterState.EmitterState",
+            "static_switches": [
+              {
+                "name": "Loop Duration Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Loop Behavior",
+                "value": "NewEnumerator1"
+              },
+              {
+                "name": "UseLoopDelay",
+                "value": "false"
+              },
+              {
+                "name": "Life Cycle Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Enable Distance Culling",
+                "value": "false"
+              },
+              {
+                "name": "Scalability Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Enable Visibility Culling",
+                "value": "false"
+              },
+              {
+                "name": "Scale Spawn Count",
+                "value": "false"
+              },
+              {
+                "name": "Inactive Response",
+                "value": "NewEnumerator0"
+              }
+            ]
+          },
+          {
+            "stage": "emitter_update",
+            "guid": "462E737E4F70A258425879984AC5087B",
+            "script": "/Niagara/Modules/Emitter/SpawnBurst_Instantaneous.SpawnBurst_Instantaneous",
+            "static_switches": [
+              {
+                "name": "Use Spawn Probability",
+                "value": "false"
+              },
+              {
+                "name": "UseLoopCountLimit",
+                "value": "false"
+              }
+            ]
+          },
+          {
+            "stage": "particle_spawn",
+            "guid": "29926C1E41B1B23417BDD2A5340D4DEA",
+            "script": "/Niagara/Modules/Spawn/Initialization/V2/InitializeParticle.InitializeParticle",
+            "static_switches": [
+              {
+                "name": "Write Material Random",
+                "value": "true"
+              },
+              {
+                "name": "Lifetime Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Lifetime Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Color Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Color Channel Mode",
+                "value": "NewEnumerator1"
+              },
+              {
+                "name": "AdjustHue",
+                "value": "true"
+              },
+              {
+                "name": "AdjustSaturation",
+                "value": "false"
+              },
+              {
+                "name": "AdjustValue",
+                "value": "false"
+              },
+              {
+                "name": "AdjustAlpha",
+                "value": "false"
+              },
+              {
+                "name": "Color Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mass Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mass Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Size Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Size Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite UV Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite UV Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Rotation Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Sprite Rotation Mode",
+                "value": "NewEnumerator3"
+              },
+              {
+                "name": "Mesh Scale Randomness Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Mesh Scale Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "UsePositionOffset",
+                "value": "false"
+              },
+              {
+                "name": "Position Mode",
+                "value": "NewEnumerator2"
+              },
+              {
+                "name": "Wrap Index By Mesh Count",
+                "value": "true"
+              },
+              {
+                "name": "Mesh Renderer Array Visibility Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Width Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Twist Mode",
+                "value": "NewEnumerator0"
+              },
+              {
+                "name": "Ribbon Facing Mode",
+                "value": "NewEnumerator0"
+              }
+            ]
+          },
+          {
+            "stage": "particle_update",
+            "guid": "F1E5CEE349AA83D72AC37FB88CEAD283",
+            "script": "/Niagara/Modules/Update/Lifetime/ParticleState.ParticleState",
+            "static_switches": [
+              {
+                "name": "Kill Particles When Lifetime Has Elapsed",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "stage": "particle_update",
+            "guid": "77C9313C44E1DEF67FEECF9917594735",
+            "script": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Niagara/NM_DBA_PalmConceptMotion_Review.NM_DBA_PalmConceptMotion_Review",
+            "inputs": {
+              "Layer": "3"
+            }
+          }
+        ],
+        "renderers": [
+          {
+            "class": "NiagaraMeshRendererProperties"
+          }
+        ]
+      }
+    ]
+  }
+}

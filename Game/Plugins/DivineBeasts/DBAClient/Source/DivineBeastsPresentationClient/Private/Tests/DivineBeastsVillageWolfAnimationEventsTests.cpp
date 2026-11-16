@@ -77,6 +77,8 @@ bool FDivineBeastsVillageWolfAnimationEventsTest::RunTest(const FString&)
     FGameplayEffectSpec Effect;
     Combat->ResolveIncomingDamage(*Attributes, Effect, 100.0f);
     TestTrue(TEXT("真实Combat伤害已结算死亡"), Combat->IsCombatDead() && Wolf->IsWolfDead());
+    TestEqual(TEXT("死亡后禁用移动防止失去胶囊碰撞时跌入地面"),
+        Wolf->GetCharacterMovement()->MovementMode, MOVE_None);
     TestTrue(TEXT("死亡通知在没有动画Tick时立即收敛"), Animation->bWolfDead);
     TestEqual(TEXT("死亡立即归零移动动画输入"), Animation->WolfSpeed, 0.0f);
     TestFalse(TEXT("死亡不再播放咬击"), Animation->Montage_IsPlaying(Montage));

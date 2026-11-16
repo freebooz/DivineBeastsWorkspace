@@ -270,7 +270,7 @@ CRC32 仅用于检测随机损坏，不是数字签名，不提供防篡改认�
 - Save 与 Delete 互相竞争；
 - 两个 Save 最终顺序不可预测。
 
-不同 Key 可以并发，但全局存在固定并发上限。
+不同 Key 可以并发；每个 GameInstance 的 PendingRequests（待完成请求）上限为16。当前增加了独立于 GameInstance 的进程级物理槽位租约：BeginRequest 在游戏线程以稳定 StorageId 原子获取；Save/Load/Delete 的线程池任务各持有引用，CancelPendingRequests 或 Deinitialize 只撤销本GI回调，直到真正IO结束后租约才可释放。不同GI访问相同StableStorageId返回 `SaveSlotBusy`（槽位占用），不等待、不抢占。该互斥不包括跨进程操作；多个客户端进程直接共享同一个 ProjectSavedDir 时，仍需要外部文件锁或独立目录隔离。
 
 ## 9. 与其他插件的边界
 

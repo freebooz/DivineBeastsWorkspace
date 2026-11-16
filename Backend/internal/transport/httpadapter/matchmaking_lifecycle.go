@@ -13,6 +13,20 @@ import (
 
 // registerMatchmakingLifecycle只注册可信内部路由，公开客户端仅连接认证Gateway。
 func registerMatchmakingLifecycle(mux *http.ServeMux, service *matchapi.Service) {
+	mux.HandleFunc("POST /internal/v1/match/matchmaking/village-origin-enrollment", func(w http.ResponseWriter, r *http.Request) {
+		var input matchmaking.VillageQueueOriginEnrollment
+		fields := []string{"queueTicketId", "playerId", "characterId", "sessionId", "sourceGameServerId", "sourceExperienceId", "sourceServerBootId", "sourceSessionEpoch"}
+		if err := gateway.DecodeOnlineJSON(r, &input, fields, fields); err != nil {
+			writeMatchLifecycleError(w, err)
+			return
+		}
+		allowed, err := service.ValidateVillageQueueOrigin(r.Context(), input)
+		if err != nil {
+			writeMatchLifecycleError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]bool{"allowed": allowed})
+	})
 	mux.HandleFunc("POST /internal/v1/match/matchmaking/state", func(w http.ResponseWriter, r *http.Request) {
 		var input struct {
 			PlayerID string `json:"playerId"`
@@ -92,6 +106,13 @@ func registerMatchmakingLifecycle(mux *http.ServeMux, service *matchapi.Service)
 			}
 		})
 	}
+}
+
+// ValidateVillageQueueOrigin在本地独立服务间只读核对Match保存的源报名。
+func (c *MatchClient) ValidateVillageQueueOrigin(ctx context.Context, input matchmaking.VillageQueueOriginEnrollment) (bool, error) {
+	var result struct{ Allowed bool }
+	err := c.post(ctx, "/internal/v1/match/matchmaking/village-origin-enrollment", input, &result)
+	return result.Allowed, err
 }
 
 // writeMatchLifecycleError只传稳定安全码，不输出数据库/控制面原始异常。

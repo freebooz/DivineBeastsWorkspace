@@ -22,6 +22,8 @@
 #include "Components/Overlay.h"
 #include "Components/TextBlock.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Framework/GamePlatformPlayerStateBase.h"
+#include "Widgets/SWidget.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldHealthResourceTest,
     "DivineBeasts.UI.World.HealthBar.ResourceEventProjection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -39,21 +41,24 @@ bool FDivineBeastsWorldHealthResourceTest::RunTest(const FString&)
     auto* Fill = Cast<UProgressBar>(Widget->GetWidgetFromName(TEXT("ResourceFill")));
     if (!TestNotNull(TEXT("真实命名生命填充"), Fill)) return false;
     FGamePlatformWorldUIRequest Request; Request.RequestId = FGuid::NewGuid(); Request.SurfaceKey = TEXT("HealthTest");
+    Request.PrimaryText = FText::FromString(TEXT("青玉玩家"));
     Request.Resource.MaximumValue = 300.; Request.Resource.CurrentValue = 300.;
     Widget->ApplyWorldUIRequest(Request); TestEqual(TEXT("初始化事件显示真实满血"), Fill->GetPercent(), 1.f);
+    auto* PlayerName = Cast<UTextBlock>(Widget->GetWidgetFromName(TEXT("NameText")));
+    if (!TestNotNull(TEXT("真实名称文本控件"), PlayerName)) return false;
+    TestEqual(TEXT("真实名称板显示请求中的玩家名称"), PlayerName->GetText().ToString(), Request.PrimaryText.ToString());
     auto* SelectionOutline = Cast<UImage>(Widget->GetWidgetFromName(TEXT("SelectionOutline")));
     auto* SelectionMarker = Cast<UTextBlock>(Widget->GetWidgetFromName(TEXT("SelectionMarker")));
-    if (!TestNotNull(TEXT("选中状态有实际边框"), SelectionOutline) || !TestNotNull(TEXT("选中状态有非纯色标记"), SelectionMarker)) return false;
+    TestNull(TEXT("项目名称板已移除选中矩形框"), SelectionOutline);
+    TestNull(TEXT("项目名称板已移除已选中文字"), SelectionMarker);
     const FLinearColor OriginalFill = Fill->GetFillColorAndOpacity();
     Request.bSelected = true; Request.SelectionTint = FLinearColor(1.f, .12f, .08f);
     Widget->ApplyWorldUIRequest(Request);
     TestEqual(TEXT("选中事件着色真实生命条"), Fill->GetFillColorAndOpacity(), Request.SelectionTint);
-    TestEqual(TEXT("选中事件显示实际边框"), SelectionOutline->GetVisibility(), ESlateVisibility::HitTestInvisible);
-    TestFalse(TEXT("选中事件保留非颜色识别文字"), SelectionMarker->GetText().IsEmpty());
+    TestNull(TEXT("选中事件不能重新创建框线"), Widget->GetWidgetFromName(TEXT("SelectionOutline")));
+    TestNull(TEXT("选中事件不能重新创建选择文案"), Widget->GetWidgetFromName(TEXT("SelectionMarker")));
     Request.bSelected = false; Widget->ApplyWorldUIRequest(Request);
     TestEqual(TEXT("切换目标后恢复原生命条颜色"), Fill->GetFillColorAndOpacity(), OriginalFill);
-    TestEqual(TEXT("旧目标立即清除边框"), SelectionOutline->GetVisibility(), ESlateVisibility::Collapsed);
-    TestEqual(TEXT("旧目标立即清除标记"), SelectionMarker->GetVisibility(), ESlateVisibility::Collapsed);
     Request.Resource.CurrentValue = 90.; Widget->ApplyWorldUIRequest(Request);
     TestEqual(TEXT("伤害事件立即更新30%血条，不等待Tick"), Fill->GetPercent(), .3f);
     Request.Resource.MaximumValue = 0.; Widget->ApplyWorldUIRequest(Request);
@@ -67,6 +72,12 @@ bool FDivineBeastsWorldHealthResourceTest::RunTest(const FString&)
     const float Scale = UWidgetLayoutLibrary::GetViewportScale(Widget.Get());
     TestTrue(TEXT("首投影按DPI居中并置于目标上方"), Widget->GetRenderTransform().Translation.Equals(
         FVector2D(500, 300) / FMath::Max(Scale, .001f) - FVector2D(80, 44), .01));
+    // 标记Slate的下一次预排版；只改变屏幕位置时不应抢先递归排版整棵名称板。
+    NameplateSlate->MarkPrepassAsDirty();
+    Widget->SetProjectedState(FVector2D(600, 350), true, 100.f);
+    TestTrue(TEXT("可见名称板的纯位移保留Slate排版待处理状态"), NameplateSlate->NeedsPrepass());
+    TestTrue(TEXT("纯位移立即更新居中位置"), Widget->GetRenderTransform().Translation.Equals(
+        FVector2D(600, 350) / FMath::Max(Scale, .001f) - FVector2D(80, 44), .01));
     Widget->SetProjectedState(FVector2D::ZeroVector, false, 100.f);
     Widget->SetProjectedState(FVector2D(700, 400), true, 100.f);
     TestTrue(TEXT("隐藏后重显立即重新排版定位"), Widget->GetRenderTransform().Translation.Equals(
@@ -156,14 +167,14 @@ bool FDivineBeastsWorldTargetSelectionTest::RunTest(const FString&)
     Presenter->ObservedWorld = World; Presenter->LocalPlayer = Player.Get();
     Presenter->ObserveActor(First); Presenter->ObserveActor(Second);
     Presenter->ApplyHealth(First, 100.f, 100.f); Presenter->ApplyHealth(Second, 100.f, 100.f);
-    Controller->SetSelectedWorldTarget(First); // 先选择，再绑定必须读取首次快照。
-    Presenter->BindSelectionController(Controller);
+    Controller->GetPlayerControls()->SetSelectedWorldTarget(First); // 先选择，再绑定必须读取首次快照。
+    Presenter->BindSelectionController(Controller->GetPlayerControls());
     TestTrue(TEXT("静止镜头首次绑定立即突出已有目标"), Presenter->Bindings.FindChecked(First).Request.bSelected);
     TestEqual(TEXT("没有可信关系的目标使用中立金色"), Presenter->Bindings.FindChecked(First).Request.SelectionTint, FLinearColor(1.f, .73f, .18f));
     auto* Wolf = World->SpawnActor<ADivineBeastsVillageWolf>();
     TestEqual(TEXT("正式狼怪目标使用敌对红色"), Presenter->ResolveSelectionTint(Wolf), FLinearColor(1.f, .12f, .08f));
-    Presenter->BindSelectionController(Controller); // 重绑不应重复观察或重置选择。
-    Controller->SetSelectedWorldTarget(Second);
+    Presenter->BindSelectionController(Controller->GetPlayerControls()); // 重绑不应重复观察或重置选择。
+    Controller->GetPlayerControls()->SetSelectedWorldTarget(Second);
     TestFalse(TEXT("切换事件立即取消旧目标"), Presenter->Bindings.FindChecked(First).Request.bSelected);
     TestTrue(TEXT("切换事件立即突出新目标"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
     Presenter->ApplyHealth(Second, 0.f, 100.f);
@@ -171,13 +182,13 @@ bool FDivineBeastsWorldTargetSelectionTest::RunTest(const FString&)
     TestTrue(TEXT("UI不清除Gameplay失效选择意图"), Controller->GetSelectedWorldTarget() == Second);
     Presenter->ApplyHealth(Second, 100.f, 100.f);
     TestFalse(TEXT("复活属性通知不会复活旧选择"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
-    Controller->SetSelectedWorldTarget(Second);
+    Controller->GetPlayerControls()->SetSelectedWorldTarget(Second);
     TestTrue(TEXT("同Actor显式重选恢复新展示"), Presenter->Bindings.FindChecked(Second).Request.bSelected);
     Second->OnEndPlay.Broadcast(Second, EEndPlayReason::RemovedFromWorld);
     TestFalse(TEXT("目标流送退出撤销选中引用"), Presenter->SelectedTarget.IsValid());
     Presenter->Clear();
-    TestFalse(TEXT("退出解除目标真源订阅"), Controller->OnWorldTargetChanged.IsBoundToObject(Presenter.Get()));
-    Controller->SetSelectedWorldTarget(First);
+    TestFalse(TEXT("退出解除目标真源订阅"), Controller->GetPlayerControls()->OnWorldTargetChanged.IsBoundToObject(Presenter.Get()));
+    Controller->GetPlayerControls()->SetSelectedWorldTarget(First);
     TestEqual(TEXT("退出后迟到选择不能恢复实体或旧显示"), Presenter->GetObservedCount(), 0);
     return true;
 }
@@ -214,6 +225,136 @@ bool FDivineBeastsWorldHealthBarRootReadyTest::RunTest(const FString&)
     TestEqual(TEXT("原请求仅存在于新投影层，无重复实例"), SecondLayer->GetChildrenCount(), 1);
     TestEqual(TEXT("两次真实Root变化各通知一次"), Notifications, 2);
     TestTrue(TEXT("原请求身份仍可明确注销"), UI->UnregisterWorldUI(Request.RequestId));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsWorldProjectionReentrancyTest,
+    "DivineBeasts.UI.World.HealthBar.ProjectionReentrancy", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsWorldProjectionReentrancyTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString()));
+    UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    World->InitializeActorsForPlay(FURL());
+    auto* Controller = World->SpawnActor<APlayerController>();
+    TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine));
+    Controller->SetPlayer(Player.Get());
+    auto* RootClass = LoadClass<UGamePlatformUILayerStack>(nullptr, TEXT("/DBAUIPack_Core/UI/Root/WBP_DBA_UI_RootLayout.WBP_DBA_UI_RootLayout_C"));
+    auto* BarClass = LoadClass<UGamePlatformWorldWidgetBase>(nullptr, TEXT("/DBAUIPack_Core/UI/World/WBP_DBA_WorldHealthBar.WBP_DBA_WorldHealthBar_C"));
+    if (!TestNotNull(TEXT("真实Root类"), RootClass) || !TestNotNull(TEXT("真实血条类"), BarClass)) return false;
+    TStrongObjectPtr<UGamePlatformUILayerStack> Root(CreateWidget<UGamePlatformUILayerStack>(Controller, RootClass));
+    if (!TestNotNull(TEXT("真实Root实例"), Root.Get())) return false;
+    const TSharedRef<SWidget> RootSlate = Root->TakeWidget();
+    auto* Layer = Cast<UOverlay>(Root->GetWidgetFromName(TEXT("WorldProjectionLayer")));
+    if (!TestNotNull(TEXT("真实投影层"), Layer)) return false;
+    TStrongObjectPtr<UGamePlatformWorldUIService> UI(NewObject<UGamePlatformWorldUIService>());
+    UI->Initialize(Player.Get());
+    ON_SCOPE_EXIT { UI->Deinitialize(); };
+    UI->SetRootLayout(Root.Get());
+
+    FGamePlatformWorldUIRequest First, Second;
+    First.RequestId = FGuid::NewGuid();
+    First.SurfaceKey = TEXT("ProjectionReentrancyTest");
+    First.bDisplayRequested = false;
+    Second = First;
+    Second.RequestId = FGuid::NewGuid();
+    if (!TestEqual(TEXT("注册第一个名称板"), UI->RegisterWorldUI(First, BarClass), First.RequestId) ||
+        !TestEqual(TEXT("注册第二个名称板"), UI->RegisterWorldUI(Second, BarClass), Second.RequestId)) return false;
+    auto* FirstWidget = Cast<UGamePlatformWorldWidgetBase>(Layer->GetChildAt(0));
+    auto* SecondWidget = Cast<UGamePlatformWorldWidgetBase>(Layer->GetChildAt(1));
+    if (!TestNotNull(TEXT("第一个名称板"), FirstWidget) || !TestNotNull(TEXT("第二个名称板"), SecondWidget)) return false;
+    FirstWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+    SecondWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+    UI->RefreshProjection(First.RequestId);
+    TestTrue(TEXT("单实体投影只隐藏本次请求的名称板"), FirstWidget->GetVisibility() == ESlateVisibility::Collapsed);
+    TestTrue(TEXT("单实体投影不触碰其他实体"), SecondWidget->GetVisibility() == ESlateVisibility::HitTestInvisible);
+    FirstWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+    // 两个回调以先触发者为准，验证全量投影不会处理同GUID、同池对象的后继注册。
+    UGamePlatformWorldWidgetBase* Replacement = nullptr;
+    FGuid ReplacementId;
+    auto Replace = [&](ESlateVisibility Visibility, const FGamePlatformWorldUIRequest& Request, UGamePlatformWorldWidgetBase* Previous)
+    {
+        if (Visibility != ESlateVisibility::Collapsed || ReplacementId.IsValid()) return;
+        ReplacementId = Request.RequestId;
+        TestTrue(TEXT("投影过程中可同步注销"), UI->UnregisterWorldUI(Request.RequestId));
+        TestEqual(TEXT("投影过程中可用相同GUID重新注册"), UI->RegisterWorldUI(Request, BarClass), Request.RequestId);
+        Replacement = Cast<UGamePlatformWorldWidgetBase>(Layer->GetChildAt(Layer->GetChildrenCount() - 1));
+        if (TestEqual(TEXT("后继注册复用池中的相同控件"), Replacement, Previous) && Replacement)
+            Replacement->SetVisibility(ESlateVisibility::HitTestInvisible);
+    };
+    const auto FirstHandle = FirstWidget->OnNativeVisibilityChanged.AddLambda([&](ESlateVisibility Visibility)
+    { Replace(Visibility, Second, SecondWidget); });
+    const auto SecondHandle = SecondWidget->OnNativeVisibilityChanged.AddLambda([&](ESlateVisibility Visibility)
+    { Replace(Visibility, First, FirstWidget); });
+    ON_SCOPE_EXIT
+    {
+        FirstWidget->OnNativeVisibilityChanged.Remove(FirstHandle);
+        SecondWidget->OnNativeVisibilityChanged.Remove(SecondHandle);
+    };
+    UI->RefreshProjection();
+    if (!TestNotNull(TEXT("全量刷新触发同步替换"), Replacement)) return false;
+    TestTrue(TEXT("旧全量快照不向后继注册写入可见性"), Replacement->GetVisibility() == ESlateVisibility::HitTestInvisible);
+    TestEqual(TEXT("同步替换保持两项独立注册"), Layer->GetChildrenCount(), 2);
+    return true;
+}
+
+// 角色先到、PlayerState后到、名称复制/修改及控制权切换均走真实事件；不读取后端或模拟网络准入。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlayerNameplateEventsTest,
+    "DivineBeasts.UI.World.HealthBar.PlayerNamesAndSelfExclusion", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlayerNameplateEventsTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString())); UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    World->InitializeActorsForPlay(FURL());
+    auto* Controller = World->SpawnActor<APlayerController>();
+    TStrongObjectPtr<ULocalPlayer> Player(NewObject<ULocalPlayer>(GEngine)); Controller->SetPlayer(Player.Get());
+    auto* Own = World->SpawnActor<ADivineBeastsCharacter>(); Controller->Possess(Own);
+    auto* Other = World->SpawnActor<ADivineBeastsCharacter>();
+    TStrongObjectPtr<UDivineBeastsWorldHealthBarPresenter> Presenter(NewObject<UDivineBeastsWorldHealthBarPresenter>());
+    ON_SCOPE_EXIT { Presenter->Clear(); };
+    Presenter->ObservedWorld = World; Presenter->LocalPlayer = Player.Get();
+    Presenter->ObserveActor(Own); Presenter->ObserveActor(Other); Presenter->ApplyHealth(Other, 125.f, 200.f);
+    TestFalse(TEXT("自己的名称和血条均不注册"), Presenter->Bindings.Contains(Own));
+    TestTrue(TEXT("其他玩家无需选中即请求显示真实血条"), Presenter->Bindings.FindChecked(Other).Request.bDisplayRequested);
+    auto* State = World->SpawnActor<AGamePlatformPlayerStateBase>(); State->SetPlayerName(TEXT("青玉玩家"));
+    Other->SetPlayerState(State);
+    TestEqual(TEXT("迟到PlayerState通知立即显示角色名称"), Presenter->Bindings.FindChecked(Other).Request.PrimaryText.ToString(), FString(TEXT("青玉玩家")));
+    State->SetPlayerName(TEXT("流光玩家"));
+    TestEqual(TEXT("名称变化通知立即更新且不等待移动"), Presenter->Bindings.FindChecked(Other).Request.PrimaryText.ToString(), FString(TEXT("流光玩家")));
+    auto* SuccessorState = World->SpawnActor<AGamePlatformPlayerStateBase>(); SuccessorState->SetPlayerName(TEXT("后继玩家"));
+    Other->SetPlayerState(SuccessorState); State->SetPlayerName(TEXT("过期名称"));
+    TestEqual(TEXT("旧PlayerState通知不能覆盖后继名称"), Presenter->Bindings.FindChecked(Other).Request.PrimaryText.ToString(), FString(TEXT("后继玩家")));
+    Controller->Possess(Other); Presenter->Publish(Other);
+    TestFalse(TEXT("成为自己后即使收到血量通知也不会显示头顶名称板"), Presenter->Bindings.Contains(Other));
+    Presenter->Clear(); SuccessorState->SetPlayerName(TEXT("销毁后名称"));
+    TestEqual(TEXT("失活后名称事件不能恢复注册"), Presenter->GetObservedCount(), 0);
+    return true;
+}
+
+// 真实128个怪物先到时仍为后来玩家让出既有预算；不提高平台实例上限或新增轮询。
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsPlayerNameplateBudgetTest,
+    "DivineBeasts.UI.World.HealthBar.PlayerPriorityWithinBudget", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsPlayerNameplateBudgetTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> Instance(NewObject<UGameInstance>(GEngine));
+    Instance->InitializeStandalone(FName(*FGuid::NewGuid().ToString())); UWorld* World = Instance->GetWorld();
+    ON_SCOPE_EXIT { Instance->Shutdown(); GEngine->DestroyWorldContext(World); World->DestroyWorld(false); };
+    TStrongObjectPtr<UDivineBeastsWorldHealthBarPresenter> Presenter(NewObject<UDivineBeastsWorldHealthBarPresenter>());
+    ON_SCOPE_EXIT { Presenter->Clear(); }; Presenter->ObservedWorld = World;
+    for (int32 Index = 0; Index < 128; ++Index)
+    {
+        FActorSpawnParameters Spawn; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        auto* Monster = World->SpawnActor<ADivineBeastsVillageWolf>(Spawn);
+        if (!TestNotNull(TEXT("预算夹具真实狼怪"), Monster)) return false;
+        Presenter->ObserveActor(Monster);
+    }
+    TestEqual(TEXT("怪物已占满既有预算"), Presenter->GetObservedCount(), 128);
+    auto* Other = World->SpawnActor<ADivineBeastsCharacter>(); Presenter->ObserveActor(Other);
+    TestTrue(TEXT("后来玩家不能被满额怪物挤掉"), Presenter->Bindings.Contains(Other));
+    TestEqual(TEXT("玩家替换低优先级名称板，实例预算仍为128"), Presenter->GetObservedCount(), 128);
     return true;
 }
 #endif

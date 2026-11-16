@@ -3,10 +3,15 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Types/GamePlatformWeatherTypes.h"
+#include "Types/GamePlatformWeatherAtmosphereProfile.h"
 #include "GamePlatformWeatherClientWorldSubsystem.generated.h"
 
 /** 当前客户端本世界天气插值结果通知；表现提供者不可用不影响服务器天气事实。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(FGamePlatformWeatherVisualChanged, const FGamePlatformWeatherState&);
+class FGamePlatformWeatherAtmosphere;
+class AGameStateBase;
+class AGamePlatformGameStateBase;
+class AWindDirectionalSource;
 
 /** 在天气过渡期间才短期定时更新材质，完成后释放Timer；不复制服务器调度器。 */
 UCLASS()
@@ -33,12 +38,47 @@ public:
      */
     void RefreshPresentationAfterContentActivation(bool bVisual);
 
+    /** 项目组合根在本世界启用光雾联动；禁用/重配先恢复原场景，生命周期仍归本Subsystem。 */
+    void ConfigureAtmosphere(const FGamePlatformWeatherAtmosphereProfile& Profile);
+
+    bool BeginDevelopmentAtmosphere(FGuid Owner,FGuid& OutScope);
+    bool ConfigureDevelopmentAtmosphere(const FGuid& Scope,const FGamePlatformWeatherAtmosphereProfile& Profile);
+    bool EndDevelopmentAtmosphere(const FGuid& Scope);
+    /** 仅默认天气表面/零风且无原生风源的开发World；不覆盖原有非默认投影。 */
+    bool BeginDevelopmentProjection(FGuid Owner,FGuid& OutScope);
+    /** 空天气已投影后精确归还；外部后继天气字段/风被保留，不回写旧默认。 */
+    bool EndDevelopmentProjection(const FGuid& Scope);
 private:
+    FGuid DevelopmentProjectionScope;
+    FGamePlatformWeatherState DevelopmentExpectedSurface;
+    FVector4 DevelopmentExpectedWindFrom=FVector4(0,0,0,0),DevelopmentExpectedWindTo=FVector4(0,0,0,0),DevelopmentExpectedWindTiming=FVector4(0,0,0,0);
+    int32 DevelopmentExpectedWindSeed=2026;
+    bool bDevelopmentSurfaceTakenOver=false,bDevelopmentWindTakenOver=false;
+    FGuid DevelopmentAtmosphereScope;
+    uint64 AtmosphereConfigurationGeneration=0;
+    bool bEndingDevelopmentAtmosphere=false;
+    FGamePlatformWeatherAtmosphereProfile ConfiguredAtmosphereProfile,DevelopmentAtmosphereBaseline;
+    void ConfigureAtmosphereOwned(const FGuid&,const FGamePlatformWeatherAtmosphereProfile&);
+
+    friend class FGamePlatformWeatherWindRefreshReentryTest;
+    friend class FGamePlatformWeatherWindClockTest;
+    friend class FGamePlatformWeatherNativeWindTest;
+    /** 地图源只查找一次；运行参数随后消费天气事件，不扫描植物或新增Tick。 */
+    void BindNativeWindSource();
+    void ApplyNativeWindSource(const FGamePlatformWeatherState& State);
+    /** 真实服务器时钟首次到达/校正时同步两种风投影；拒绝同步重入后的旧代次。 */
+    void ReprojectWindForClock();
+    TWeakObjectPtr<AWindDirectionalSource> NativeWindSource;
+    /** GameState首次出现/替换时更换时钟订阅；旧来源回调不得恢复旧世界风。 */
+    void OnGameStateSet(AGameStateBase* GameState);
     void OnSnapshotReceived(const FGamePlatformWeatherSnapshot& Snapshot);
     void UpdateTransition();
     /** 分离快照首帧与Timer推进；避免首帧用未来目标天气瞬间播放满量雨雪。 */
     void SampleAndApplyTransition(bool bRefreshPresentation);
     void ApplyVisualState(const FGamePlatformWeatherState& State);
+    /** 快照/内容就绪事件写风端点；持续运动由GPU推进，不新增Timer。 */
+    void ApplyWindSnapshot(const FGamePlatformWeatherSnapshot& Snapshot);
+    void ApplyAtmosphere(const FGamePlatformWeatherState& State);
     float GetEstimatedServerTimeSeconds() const;
     /** ChannelFilter: -1全部，0仅VFX，1仅SFX；保持独立请求身份，禁止跨通道误取消。 */
     void SendPresentationEvent(const FGamePlatformWeatherState& State,
@@ -50,7 +90,11 @@ private:
     FGamePlatformWeatherState LastVisualState;
     FGamePlatformWeatherVisualChanged VisualChanged;
     FDelegateHandle SourceSnapshotHandle;
+    FDelegateHandle WorldGameStateHandle;
+    FDelegateHandle ServerClockHandle;
+    TWeakObjectPtr<AGamePlatformGameStateBase> ServerClockSource;
     FTimerHandle TransitionTimer;
+    TSharedPtr<FGamePlatformWeatherAtmosphere> Atmosphere;
     /** VFX和SFX使用不同请求身份，避免统一表现总线/播放器将两条请求去重成一条。 */
     FGuid ActiveVfxRequestId;
     FGuid ActiveSfxRequestId;

@@ -69,6 +69,8 @@ public:
     bool RegisterAgentProfile(
         UGamePlatformNavigationAgentProfile* Profile);
 
+    /** 精确撤销调用者注册的同一Profile对象；有同Profile异步请求/Invoker时拒绝；其他所有者/其他Profile不阻塞。 */
+    bool UnregisterAgentProfile(const UGamePlatformNavigationAgentProfile* Profile);
     bool RegisterFilter(
         FName FilterId,
         TSubclassOf<UNavigationQueryFilter> FilterClass);
@@ -105,6 +107,7 @@ private:
     TMap<FName, TSubclassOf<UNavigationQueryFilter>> Filters;
     TMap<FGuid, FAsyncRequestRecord> AsyncRequests;
     TSet<TWeakObjectPtr<AActor>> RegisteredInvokers;
+    TMap<TWeakObjectPtr<AActor>,FName> RegisteredInvokerProfiles;
 
     bool ResolveQueryContext(
         FName AgentProfileId,

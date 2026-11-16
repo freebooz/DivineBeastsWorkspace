@@ -9,6 +9,7 @@ class UGamePlatformUILayerStack;
 class UGamePlatformWorldWidgetBase;
 class ULocalPlayer;
 class FViewport;
+class APlayerController;
 
 /**
  * UGamePlatformWorldUIService（游戏平台世界投影UI服务）。
@@ -38,6 +39,9 @@ public:
         FGuid RequestId,
         FGamePlatformWorldUIRequest Request);
 
+    /** 位移事件只写入锚点并重投影已有实例，保留已应用的内容。 */
+    bool UpdateWorldUILocation(FGuid RequestId, const FVector& WorldLocation);
+
     UFUNCTION(BlueprintCallable, Category="UI|WorldUI")
     bool UnregisterWorldUI(FGuid RequestId);
 
@@ -47,9 +51,18 @@ public:
     void RefreshProjection(FGuid OnlyRequestId = FGuid());
 
 private:
+    struct FActiveWorldWidget
+    {
+        TWeakObjectPtr<UGamePlatformWorldWidgetBase> Widget;
+        uint64 Registration = 0;
+    };
+
     UGamePlatformWorldWidgetBase* AcquireWidget(
         TSubclassOf<UGamePlatformWorldWidgetBase> WidgetClass);
-    void RecycleWidget(UGamePlatformWorldWidgetBase* Widget);
+    void RecycleWidget(UGamePlatformWorldWidgetBase* Widget, bool bAllowPooling = true);
+    void ProjectWidget(FGuid RequestId, FActiveWorldWidget Active, const APlayerController& PlayerController,
+        const FVector& CameraLocation, FIntPoint ViewportSize, uint64 LayoutGeneration);
+    const FActiveWorldWidget* FindRegistration(FGuid RequestId, uint64 Registration) const;
     /** 仅活动期间订阅视口尺寸事件；相机与实体位置事件由调用方注入。 */
     void BindProjectionEvents();
 
@@ -64,7 +77,9 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformUILayerStack> RootLayout = nullptr;
 
-    TMap<FGuid, TWeakObjectPtr<UGamePlatformWorldWidgetBase>> ActiveWidgets;
+    TMap<FGuid, FActiveWorldWidget> ActiveWidgets;
+    /** 同一请求ID及同一池对象可以立即复用，旧投影快照必须能识别这次替换。 */
+    uint64 NextRegistration = 0;
 
     /** 池内Widget由服务强引用保活；活动Widget仍由WorldProjectionLayer持有。 */
     UPROPERTY(Transient)
@@ -73,4 +88,5 @@ private:
     FSimpleMulticastDelegate RootLayoutChanged;
     /** 同步回调换Root或清理时阻断旧迁移栈，身份只在本服务内部使用。 */
     uint64 RootLayoutGeneration = 0;
+    bool bClearing = false;
 };

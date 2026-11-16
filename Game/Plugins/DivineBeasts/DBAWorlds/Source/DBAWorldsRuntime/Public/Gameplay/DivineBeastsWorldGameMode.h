@@ -7,7 +7,7 @@
 
 /** 第三层共享世界装配：复用平台准入/出生门禁，仅选择项目控制器。
  * 服务器可信Bootstrap完成World/Data装配后启动体验；客户端不依赖服务器私有实现。 */
-UCLASS()
+UCLASS(Config=Game)
 class DBAWORLDSRUNTIME_API ADivineBeastsWorldGameMode : public AGamePlatformGameModeBase
 {
     GENERATED_BODY()
@@ -25,6 +25,11 @@ protected:
      */
     UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|Weather")
     FName InitialWeatherPresetId = NAME_None;
+    /** 按正式World包名选择既有天气Definition逻辑ID；仅服务器可信Game配置读取。
+     * 显式InitialWeatherPresetId、自动天气表及开发审查序列优先；空表保持旧行为。
+     * 值仍经平台Data租约解析，不硬引用客户端材质，不新增项目天气执行器。 */
+    UPROPERTY(Config, EditDefaultsOnly, Category="DivineBeasts|Weather")
+    TMap<FName, FName> InitialWeatherPresetIdsByWorld;
 
     /** 世界初始天气仅由服务器读取；默认晴天，不在登录前端启动随机雨雪。 */
     UPROPERTY(EditDefaultsOnly, Category="DivineBeasts|Weather")
@@ -49,10 +54,14 @@ private:
     /** 两个客户端通过正常PostLogin完成准入才开始固定审查，避免冷启动导致错过小雪。 */
     bool bVillageSnowReviewArmed = false;
     bool bVillageSnowReviewStarted = false;
+    /** 显式地面积雪人工审核序列；与历史断线重入序列分别选择，绝不默认启用。 */
+    bool bVillageGroundSnowReview = false;
     int32 VillageSnowReviewJoinedPlayers = 0;
     virtual void PostLogin(APlayerController* NewPlayer) override;
     int32 VillageSnowReviewStep = 0;
     void AdvanceVillageSnowReviewWeather();
+    /** 小雪、大雪、停雪保留与升温融化；只向唯一平台Weather提交目标快照。 */
+    void AdvanceVillageGroundSnowReviewWeather();
 #endif
     void BeginLoadInitialWeatherPreset();
     void HandleInitialWeatherPresetCompleted(

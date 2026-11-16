@@ -1,0 +1,358 @@
+{
+  "schema_version": 1,
+  "lab_id": "SSLM_LightingLab",
+  "engine_version": "5.8",
+  "scope": "Editor authoring and PIE review only; formal maps, runtime weather contracts, materials and project INI are read-only.",
+  "formal_map": "/DBAWorldPack_Village/Maps/L_Village_Start",
+  "review_root": "/Game/Development/LightingLab",
+  "output_relative": "Saved/Validation/SSLM_LightingLab20261111",
+  "exposure_policy": {
+    "mode": "inherit_formal_baseline",
+    "reason": "正式地图当前曝光由正式地图自身提供；实验室作者不写入PostProcess曝光/白平衡/色彩分级。",
+    "assert_post_process_unchanged": true
+  },
+  "camera": {
+    "fov_degrees": 75,
+    "resolution": [
+      1280,
+      720
+    ],
+    "views": [
+      "Entry",
+      "PeachWoodland",
+      "LakeShore",
+      "LakesideHut",
+      "LowWoodland"
+    ]
+  },
+  "profiles": {
+    "SoftDaylight": {
+      "description": "柔和日光：中性暖白主光、适度天空补光、轻量空气透视。",
+      "sun_altitude_deg": 38,
+      "sun_intensity_multiplier": 0.9,
+      "sun_source_angle_deg": 2,
+      "temperature_kelvin": 5600,
+      "sky_intensity_multiplier": 1,
+      "sun_volumetric_scattering": 0.5,
+      "fog_density": 0.0035,
+      "height_falloff": 0.2,
+      "start_cm": 1800,
+      "max_opacity": 0.28,
+      "fog_srgb": [
+        160,
+        178,
+        184
+      ],
+      "second_density": 0.001,
+      "second_height_falloff": 0.5,
+      "local_enabled": false,
+      "local_radial": 0,
+      "local_height": 0,
+      "local_start_cm": 1200,
+      "volumetric_enabled": false,
+      "volumetric_albedo_srgb": [
+        235,
+        241,
+        242
+      ],
+      "volumetric_scattering": 0.2,
+      "volumetric_distance_cm": 12000,
+      "volumetric_extinction_scale": 0.45
+    },
+    "MorningWarm": {
+      "description": "清晨暖光：低角度暖色主光、湖岸轻雾、局部雾体。",
+      "sun_altitude_deg": 12,
+      "sun_intensity_multiplier": 0.82,
+      "sun_source_angle_deg": 3,
+      "temperature_kelvin": 4800,
+      "sky_intensity_multiplier": 0.95,
+      "sun_volumetric_scattering": 0.55,
+      "fog_density": 0.006,
+      "height_falloff": 0.22,
+      "start_cm": 1200,
+      "max_opacity": 0.38,
+      "fog_srgb": [
+        164,
+        181,
+        184
+      ],
+      "second_density": 0.002,
+      "second_height_falloff": 0.5,
+      "local_enabled": true,
+      "local_radial": 0.006,
+      "local_height": 0.04,
+      "local_start_cm": 900,
+      "volumetric_enabled": true,
+      "volumetric_albedo_srgb": [
+        235,
+        241,
+        242
+      ],
+      "volumetric_scattering": 0.2,
+      "volumetric_distance_cm": 12000,
+      "volumetric_extinction_scale": 0.45
+    },
+    "OvercastDiffuse": {
+      "description": "阴天漫射光：降低直射主光、提高天空补光，保留接触阴影。",
+      "sun_altitude_deg": 42,
+      "sun_intensity_multiplier": 0.42,
+      "sun_source_angle_deg": 4,
+      "temperature_kelvin": 6500,
+      "sky_intensity_multiplier": 1.22,
+      "sun_volumetric_scattering": 0.25,
+      "fog_density": 0.004,
+      "height_falloff": 0.18,
+      "start_cm": 1500,
+      "max_opacity": 0.25,
+      "fog_srgb": [
+        171,
+        183,
+        187
+      ],
+      "second_density": 0.001,
+      "second_height_falloff": 0.5,
+      "local_enabled": false,
+      "local_radial": 0,
+      "local_height": 0,
+      "local_start_cm": 1200,
+      "volumetric_enabled": false,
+      "volumetric_albedo_srgb": [
+        235,
+        241,
+        242
+      ],
+      "volumetric_scattering": 0.2,
+      "volumetric_distance_cm": 12000,
+      "volumetric_extinction_scale": 0.45
+    },
+    "GoldenHour": {
+      "description": "黄金时刻：低角度暖光与柔和半影，暖色只作为局部视觉焦点。",
+      "sun_altitude_deg": 6,
+      "sun_intensity_multiplier": 0.68,
+      "sun_source_angle_deg": 4,
+      "temperature_kelvin": 4200,
+      "sky_intensity_multiplier": 0.82,
+      "sun_volumetric_scattering": 0.65,
+      "fog_density": 0.005,
+      "height_falloff": 0.22,
+      "start_cm": 1100,
+      "max_opacity": 0.32,
+      "fog_srgb": [
+        177,
+        184,
+        181
+      ],
+      "second_density": 0.002,
+      "second_height_falloff": 0.5,
+      "local_enabled": true,
+      "local_radial": 0.004,
+      "local_height": 0.03,
+      "local_start_cm": 900,
+      "volumetric_enabled": true,
+      "volumetric_albedo_srgb": [
+        239,
+        239,
+        235
+      ],
+      "volumetric_scattering": 0.18,
+      "volumetric_distance_cm": 10000,
+      "volumetric_extinction_scale": 0.42
+    },
+    "Twilight": {
+      "description": "暮光：降低直射贡献，使用偏冷环境补光与轻薄空气透视。",
+      "sun_altitude_deg": -3,
+      "sun_intensity_multiplier": 0.08,
+      "sun_source_angle_deg": 4,
+      "temperature_kelvin": 7600,
+      "sky_intensity_multiplier": 0.42,
+      "sun_volumetric_scattering": 0.15,
+      "fog_density": 0.0045,
+      "height_falloff": 0.24,
+      "start_cm": 1000,
+      "max_opacity": 0.3,
+      "fog_srgb": [
+        151,
+        168,
+        181
+      ],
+      "second_density": 0.0015,
+      "second_height_falloff": 0.5,
+      "local_enabled": true,
+      "local_radial": 0.004,
+      "local_height": 0.04,
+      "local_start_cm": 900,
+      "volumetric_enabled": false,
+      "volumetric_albedo_srgb": [
+        226,
+        234,
+        241
+      ],
+      "volumetric_scattering": 0.16,
+      "volumetric_distance_cm": 10000,
+      "volumetric_extinction_scale": 0.4
+    },
+    "Moonlit": {
+      "description": "柔和月夜：极低方向光倍率、冷色月光候选、保留可读暗部。",
+      "sun_altitude_deg": 25,
+      "sun_intensity_multiplier": 0.025,
+      "sun_source_angle_deg": 2,
+      "temperature_kelvin": 8200,
+      "sky_intensity_multiplier": 0.28,
+      "sun_volumetric_scattering": 0.12,
+      "fog_density": 0.0025,
+      "height_falloff": 0.18,
+      "start_cm": 1600,
+      "max_opacity": 0.2,
+      "fog_srgb": [
+        135,
+        153,
+        170
+      ],
+      "second_density": 0.0008,
+      "second_height_falloff": 0.5,
+      "local_enabled": false,
+      "local_radial": 0,
+      "local_height": 0,
+      "local_start_cm": 1400,
+      "volumetric_enabled": false,
+      "volumetric_albedo_srgb": [
+        221,
+        231,
+        241
+      ],
+      "volumetric_scattering": 0.12,
+      "volumetric_distance_cm": 12000,
+      "volumetric_extinction_scale": 0.4
+    }
+  },
+  "shadow_sweep": {
+    "base_profile": "SoftDaylight",
+    "source_angles_deg": [
+      0.5357,
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "presets": {
+    "SSLM_LightingLab_SoftDaylight": {
+      "profile": "SoftDaylight"
+    },
+    "SSLM_LightingLab_MorningWarm": {
+      "profile": "MorningWarm"
+    },
+    "SSLM_LightingLab_OvercastDiffuse": {
+      "profile": "OvercastDiffuse"
+    },
+    "SSLM_LightingLab_GoldenHour": {
+      "profile": "GoldenHour"
+    },
+    "SSLM_LightingLab_Twilight": {
+      "profile": "Twilight"
+    },
+    "SSLM_LightingLab_Moonlit": {
+      "profile": "Moonlit"
+    },
+    "SSLM_LightingLab_ShadowAngle_0_5357": {
+      "profile": "SoftDaylight",
+      "source_angle_override_deg": 0.5357
+    },
+    "SSLM_LightingLab_ShadowAngle_1": {
+      "profile": "SoftDaylight",
+      "source_angle_override_deg": 1
+    },
+    "SSLM_LightingLab_ShadowAngle_2": {
+      "profile": "SoftDaylight",
+      "source_angle_override_deg": 2
+    },
+    "SSLM_LightingLab_ShadowAngle_3": {
+      "profile": "SoftDaylight",
+      "source_angle_override_deg": 3
+    },
+    "SSLM_LightingLab_ShadowAngle_4": {
+      "profile": "SoftDaylight",
+      "source_angle_override_deg": 4
+    }
+  },
+  "quality": {
+    "High": {
+      "scalability": 2,
+      "r.VolumetricFog": 1,
+      "r.VolumetricFog.GridPixelSize": 16,
+      "r.VolumetricFog.GridSizeZ": 64
+    },
+    "Medium": {
+      "scalability": 1,
+      "r.VolumetricFog": 1,
+      "r.VolumetricFog.GridPixelSize": 24,
+      "r.VolumetricFog.GridSizeZ": 48
+    },
+    "Low": {
+      "scalability": 0,
+      "r.VolumetricFog": 0,
+      "r.VolumetricFog.GridPixelSize": 32,
+      "r.VolumetricFog.GridSizeZ": 32
+    }
+  },
+  "gi_modes": {
+    "Baseline": {
+      "commands": [],
+      "requires": {},
+      "expected": {},
+      "description": "只记录当前项目GI/Reflection设置，不修改CVar。"
+    },
+    "LumenSoftware": {
+      "commands": [
+        [
+          "r.DynamicGlobalIlluminationMethod",
+          1
+        ],
+        [
+          "r.ReflectionMethod",
+          1
+        ]
+      ],
+      "requires": {},
+      "expected": {
+        "r.DynamicGlobalIlluminationMethod": 1,
+        "r.ReflectionMethod": 1
+      },
+      "description": "PIE运行时尝试切换软件Lumen；必须回读CVar，不能据命令提交成功推断启用。"
+    },
+    "LumenHardware": {
+      "commands": [
+        [
+          "r.DynamicGlobalIlluminationMethod",
+          1
+        ],
+        [
+          "r.ReflectionMethod",
+          1
+        ],
+        [
+          "r.Lumen.HardwareRayTracing",
+          1
+        ]
+      ],
+      "requires": {
+        "r.RayTracing": 1
+      },
+      "expected": {
+        "r.DynamicGlobalIlluminationMethod": 1,
+        "r.ReflectionMethod": 1,
+        "r.Lumen.HardwareRayTracing": 1
+      },
+      "description": "仅在项目/设备已经启用硬件光追时测试；不修改项目INI或构建设置。"
+    }
+  },
+  "evidence": {
+    "author_baseline": "P0_Baseline.json",
+    "authoring_directory": "Saved/Validation/SSLM_LightingLab20261111",
+    "cold_reload_report": "ColdReload.json",
+    "record_cvar_before_after": true,
+    "record_map_hash_and_geometry": true,
+    "record_engine_version_and_pid": true,
+    "record_human_review_separately": true
+  }
+}

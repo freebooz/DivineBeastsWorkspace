@@ -134,6 +134,7 @@ void UGamePlatformWorldSubsystem::LoadRegions(const TArray<FPrimaryAssetId>& Ids
                 const auto* Definition=Service?Cast<UGamePlatformRegionDefinition>(Service->GetLoadedDefinition(RegionLease)):nullptr;
                 if(!Definition){Self->Fail(TEXT("RegionDefinitionMissing"),TEXT("区域租约没有可读定义"));return;}
                 Self->RegionIdentities.Add(Id,Definition->LogicalId);
+                Self->Refresh(); // Data真实终态更新区域定义事实；既有采样轮发布变化。
             },Accepted);
         RegionLeases.Add(Id,Lease);
         if(!Accepted.IsSuccess()){Fail(Accepted.Code,Accepted.Message);return;}
@@ -155,12 +156,14 @@ void UGamePlatformWorldSubsystem::Refresh()
     Snapshot.bDefinitionLoaded=Definition!=nullptr;
     Snapshot.bMapIdentityMatched=Definition&&Definition->MapIdentity.ToSoftObjectPath().GetLongPackageName()==Snapshot.Context.MapPackageName;
     if(Definition&&!Snapshot.bMapIdentityMatched)Fail(TEXT("MapIdentityMismatch"),TEXT("实际地图与世界定义MapIdentity不同"));
-    Snapshot.bRequiredRegionsRegistered=Definition&&RegionIdentities.Num()==Definition->Regions.Num();
+    Snapshot.bRegionDefinitionsLoaded=Definition&&RegionIdentities.Num()==Definition->Regions.Num();
+    Snapshot.RegisteredRegionProviders=0;for(const auto& R:Regions)if(Owns(R.Value.Provider))++Snapshot.RegisteredRegionProviders;
+    Snapshot.bRequiredRegionsRegistered=Snapshot.bRegionDefinitionsLoaded;
     for(const auto& Pair:RegionIdentities)
     {
         const bool Found=Regions.ContainsByPredicate([&](const auto& R){return R.Value.RegionId==Pair.Value&&Owns(R.Value.Provider);});
         Snapshot.bRequiredRegionsRegistered&=Found;
-        if(!Data||!Data->GetLoadedDefinition(RegionLeases.FindChecked(Pair.Key)))Snapshot.bDefinitionLoaded=false;
+        if(!Data||!Data->GetLoadedDefinition(RegionLeases.FindChecked(Pair.Key))){Snapshot.bDefinitionLoaded=false;Snapshot.bRegionDefinitionsLoaded=false;}
     }
     // GetReadiness也是公开持续屏障，不能仅依赖上一轮0.1秒采样留下的流送成功。
     if(Streaming)Streaming->Tick();
@@ -195,7 +198,7 @@ bool UGamePlatformWorldSubsystem::Tick(float)
     if(bClosing)return false;
     if(!GetWorld()||GetWorld()->bIsTearingDown){Stop();return false;}
     // Refresh负责唯一一次流送状态采样；旧实现此处重复Tick，造成每周期两次状态遍历。
-    UpdateRegions();Refresh();
+    UpdateRegions();Refresh();PublishReadiness();
     // 更新过程中可能因世界失效而同步Stop；不可继续分发旧世界事件。
     if(bClosing)return false;
     // 大多数周期没有区域事件，不必每0.1秒复制所有订阅者。
@@ -224,6 +227,9 @@ void UGamePlatformWorldSubsystem::Stop()
     Snapshot.bWorldNotTearingDown=false;Snapshot.bWorldObjectValid=false;
     if(TickerHandle.IsValid()){FTSTicker::GetCoreTicker().RemoveTicker(TickerHandle);TickerHandle.Reset();}
     ReleaseOwnedResources();
+    PublishReadiness();
+    // 普通通知栈内退出时，外层PublishReadiness负责有界补发终态后清表。
+    if(!bPublishingReadiness)ReadinessSubscriptions.Reset();
 }
 void UGamePlatformWorldSubsystem::ReleaseOwnedResources()
 {
@@ -233,7 +239,7 @@ void UGamePlatformWorldSubsystem::ReleaseOwnedResources()
     auto* World=GetWorld();auto* GI=World?World->GetGameInstance():nullptr;auto* Data=GI?IGamePlatformDataService::Get(*GI):nullptr;
     if(Data){for(const auto& Pair:RegionLeases)Data->ReleaseDefinition(Pair.Value);if(DefinitionLease.IsValid())Data->ReleaseDefinition(DefinitionLease);}
     RegionLeases.Reset();RegionIdentities.Reset();DefinitionLease={};
-    Snapshot.bDefinitionLoaded=false;Snapshot.bRequiredRegionsRegistered=false;Snapshot.bRequiredStreamingReady=false;
+    Snapshot.bDefinitionLoaded=false;Snapshot.bRegionDefinitionsLoaded=false;Snapshot.RegisteredRegionProviders=0;Snapshot.bRequiredRegionsRegistered=false;Snapshot.bRequiredStreamingReady=false;
 }
 void UGamePlatformWorldSubsystem::OnWorldEndPlay(UWorld& World){Stop();Super::OnWorldEndPlay(World);}
 void UGamePlatformWorldSubsystem::Deinitialize(){Stop();Super::Deinitialize();}

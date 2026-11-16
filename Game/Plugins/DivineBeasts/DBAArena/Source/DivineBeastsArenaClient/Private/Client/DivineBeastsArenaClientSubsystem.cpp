@@ -16,46 +16,63 @@
 #include "Framework/GamePlatformArenaPlayerState.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
+#include "Gameplay/DivineBeastsPlayerControlsComponent.h"
+#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Identity/DivineBeastsProjectCatalog.h"
 
 namespace
 {
     const FName ArenaFlowExtensionId(TEXT("DivineBeasts.Arena.ApplicationFlow"));
-
-    class FDivineBeastsArenaApplicationFlowExtension final
-        : public IDivineBeastsApplicationFlowExtension
-    {
-    public:
-        explicit FDivineBeastsArenaApplicationFlowExtension(
-            TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> InOwner)
-            : Owner(InOwner)
-        {
-        }
-
-        virtual void OnEnteredInWorld(
-            UDivineBeastsApplicationFlowSubsystem&) override
-        {
-            if (Owner.IsValid())
-            {
-                Owner->SetApplicationFlowInWorld(true);
-            }
-        }
-
-        virtual void OnLeavingInWorld(
-            UDivineBeastsApplicationFlowSubsystem&) override
-        {
-            if (Owner.IsValid())
-            {
-                Owner->SetApplicationFlowInWorld(false);
-            }
-        }
-
-    private:
-        TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> Owner;
-    public:
-        virtual bool TryObserveWorldReadiness(UWorld& World,bool& bBound,bool& bPrepared,bool& bActive)const override
-        {return Owner.IsValid()&&Owner->TryObserveArenaReadiness(World,bBound,bPrepared,bActive);}
-    };
 }
+
+class FDivineBeastsArenaApplicationFlowExtension final : public IDivineBeastsApplicationFlowExtension
+{
+public:
+    explicit FDivineBeastsArenaApplicationFlowExtension(TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> InOwner)
+        : Owner(InOwner)
+    {
+    }
+
+    virtual void OnEnteredInWorld(UDivineBeastsApplicationFlowSubsystem&) override
+    {
+        if (auto* Arena = Owner.Get())
+        {
+            Arena->SetApplicationFlowInWorld(true);
+        }
+    }
+
+    virtual void OnLeavingInWorld(UDivineBeastsApplicationFlowSubsystem&) override
+    {
+        if (auto* Arena = Owner.Get())
+        {
+            Arena->SetApplicationFlowInWorld(false);
+        }
+    }
+
+    virtual bool TryObserveWorldReadiness(UWorld& World, bool& bBound, bool& bPrepared, bool& bActive,
+        FDivineBeastsWorldEntryPresentation& Presentation) const override
+    {
+        return Owner.IsValid() && Owner->TryObserveArenaReadiness(World, bBound, bPrepared, bActive, Presentation);
+    }
+
+    virtual FDivineBeastsCancelWorldRecovery TryRequestWorldRecovery(
+        const FDivineBeastsWorldAssignmentSummary& Previous, FDivineBeastsWorldRecoveryCompletion Completion) override
+    {
+        if (auto* Arena = Owner.Get(); Arena && !Arena->bDeinitializing && Arena->OnlineMatchmaking)
+        {
+            return Arena->OnlineMatchmaking->RequestWorldRecovery(Previous, MoveTemp(Completion));
+        }
+        return {};
+    }
+
+    virtual bool RequestPostMatchReturn() override
+    {
+        return Owner.IsValid() && Owner->RequestPostMatchReturnToWorld();
+    }
+
+private:
+    TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> Owner;
+};
 
 void UDivineBeastsArenaClientSubsystem::Initialize(
     FSubsystemCollectionBase& Collection)
@@ -63,7 +80,14 @@ void UDivineBeastsArenaClientSubsystem::Initialize(
     Super::Initialize(Collection);
     bDeinitializing=false;
     ReadinessMapHandle=FCoreUObjectDelegates::PostLoadMapWithWorld.AddWeakLambda(this,[this](UWorld* World){if(World&&World->GetGameInstance()==GetGameInstance())RefreshArenaReadiness();});
-    ReadinessCleanupHandle=FWorldDelegates::OnWorldCleanup.AddWeakLambda(this,[this](UWorld* World,bool,bool){if(ReadinessWorld.Get()==World)ClearArenaReadiness();});
+    ReadinessCleanupHandle = FWorldDelegates::OnWorldCleanup.AddWeakLambda(this, [this](UWorld* World, bool, bool)
+    {
+        if (World && ReadinessWorld.Get() == World)
+        {
+            ClearArenaReadiness();
+            if (ApplicationFlow) ApplicationFlow->NotifyWorldEntryWorldRemoved(*World);
+        }
+    });
     Collection.InitializeDependency<UGamePlatformOnlineClientSubsystem>();
     Collection.InitializeDependency<UGamePlatformPartyClientSubsystem>();
     Collection.InitializeDependency<UDivineBeastsApplicationFlowSubsystem>();
@@ -100,7 +124,7 @@ void UDivineBeastsArenaClientSubsystem::Deinitialize()
 {
     FCoreUObjectDelegates::PostLoadMapWithWorld.Remove(ReadinessMapHandle);FWorldDelegates::OnWorldCleanup.Remove(ReadinessCleanupHandle);ClearArenaReadiness();
     if(PartySource.IsValid())PartySource->OnChanged().Remove(PartyChangedHandle);PartySource.Reset();PartyChangedHandle.Reset();
-    bDeinitializing=true;++MigrationGeneration;bMigrationPending=false;MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();
+    bDeinitializing=true;CancelObservedMigration();MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();
     if(OnlineMatchmaking){OnlineMatchmaking->Changed.Remove(MatchmakingChangedHandle);OnlineMatchmaking->Stop();OnlineMatchmaking.Reset();}
     MatchmakingChangedHandle.Reset();OnMatchmakingStateChanged.Clear();
     if (ApplicationFlow && FlowExtension)
@@ -173,7 +197,18 @@ bool UDivineBeastsArenaClientSubsystem::RequestPostMatchReturnToWorld()
 
 TSharedPtr<IGamePlatformArenaMatchmakingAdapter> UDivineBeastsArenaClientSubsystem::GetMatchmakingAdapter()const{return OnlineMatchmaking;}
 bool UDivineBeastsArenaClientSubsystem::CanCancelObservedQueue()const{return OnlineMatchmaking&&OnlineMatchmaking->GetSnapshot().bKnown&&OnlineMatchmaking->GetSnapshot().bCanCancel;}
-bool UDivineBeastsArenaClientSubsystem::CanReturnObservedMatch()const{return !bDeinitializing&&!bMigrationPending&&bApplicationFlowInWorld&&OnlineMatchmaking&&OnlineMatchmaking->GetSnapshot().bKnown&&OnlineMatchmaking->GetSnapshot().Phase==TEXT("returning");}
+bool UDivineBeastsArenaClientSubsystem::CanReturnObservedMatch() const
+{
+    return !bDeinitializing && !bMigrationPending && bApplicationFlowInWorld && OnlineMatchmaking && ApplicationFlow &&
+        ApplicationFlow->GetViewState().Assignment.ServerRoleId == FDivineBeastsProjectCatalog::GetMainArenaServerRole() &&
+        FDivineBeastsArenaOnlineMatchmakingAdapter::CanRequestReturn(OnlineMatchmaking->GetSnapshot(), true);
+}
+bool UDivineBeastsArenaClientSubsystem::CanRetryPostMatchReturn() const
+{
+    if (!CanRetryObservedMigration()) return false;
+    const auto& View = OnlineMatchmaking->GetSnapshot();
+    return !View.bKnown || FDivineBeastsArenaOnlineMatchmakingAdapter::CanRequestReturn(View, true);
+}
 bool UDivineBeastsArenaClientSubsystem::CanRetryObservedMigration()const
 {return !bDeinitializing&&!bMigrationPending&&bApplicationFlowInWorld&&OnlineMatchmaking&&(!OnlineMatchmaking->GetSnapshot().bKnown||!MigrationError.IsEmpty());}
 bool UDivineBeastsArenaClientSubsystem::RetryObservedMigration()
@@ -181,17 +216,32 @@ bool UDivineBeastsArenaClientSubsystem::RetryObservedMigration()
     if(!CanRetryObservedMigration())return false;
     if(!OnlineMatchmaking->GetSnapshot().bKnown){OnlineMatchmaking->Resynchronize();return true;}
     const auto Phase=OnlineMatchmaking->GetSnapshot().Phase;
-    if(Phase==TEXT("returning"))return RequestObservedMigration(TEXT("return"));
+    if(CanReturnObservedMatch())return RequestObservedMigration(TEXT("return"));
     if(Phase==TEXT("transferReady")||Phase==TEXT("inMatch"))return RequestObservedMigration(TEXT("arena"));
     MigrationError=FText::GetEmpty();OnlineMatchmaking->Resynchronize();return true;
 }
 void UDivineBeastsArenaClientSubsystem::SetApplicationFlowInWorld(bool bInWorld)
-{bApplicationFlowInWorld=bInWorld;if(bInWorld)HandleMatchmakingChanged();}
+{
+    bApplicationFlowInWorld = bInWorld;
+    if (bInWorld)
+    {
+        HandleMatchmakingChanged();
+    }
+    else if (bMigrationPending)
+    {
+        // 另一转场或断线已被受理，旧命令回调不能接管下一世界。
+        CancelObservedMigration();
+        MigrationRequestId.Reset();
+        MigrationCandidateId.Reset();
+        MigrationDirection.Reset();
+    }
+}
 FText UDivineBeastsArenaClientSubsystem::GetObservedMatchmakingStatus()const
 {
     if(!MigrationError.IsEmpty())return MigrationError;
     if(!OnlineMatchmaking||!OnlineMatchmaking->GetSnapshot().bKnown)return FText::FromString(TEXT("正在同步匹配状态"));
     const auto& View=OnlineMatchmaking->GetSnapshot();
+    if(View.Phase==TEXT("challengeInvitation"))return FText::FromString(TEXT("约战邀请待回复；接受后全员分别确认"));
     if(View.Phase==TEXT("readyCheck"))return FText::FromString(TEXT("等待全部队员准备；名单保持完整"));
     if(View.Phase==TEXT("searching"))return FText::FromString(TEXT("正在匹配；小队不会被拆分"));
     if(View.Phase==TEXT("confirmation"))return FText::FromString(FString::Printf(TEXT("已找到对局 · 已确认 %d / %d"),View.Accepted,View.Participants));
@@ -202,12 +252,72 @@ FText UDivineBeastsArenaClientSubsystem::GetObservedMatchmakingStatus()const
     if(View.Phase==TEXT("cancelled")||View.Phase==TEXT("failed"))return FText::FromString(TEXT("本次匹配已结束，可以重新报名"));
     return FText::FromString(View.bServiceReady?TEXT("请选择模式；单人可直接匹配"):TEXT("当前竞技场不可用，请稍后重试"));
 }
+FName UDivineBeastsArenaClientSubsystem::GetObservedMatchmakingMode() const
+{
+    if(!OnlineMatchmaking)return NAME_None;
+    const auto& View=OnlineMatchmaking->GetSnapshot();
+    if(View.Phase==TEXT("idle")||View.Phase==TEXT("completed")||View.Phase==TEXT("cancelled")||View.Phase==TEXT("failed"))return NAME_None;
+    return FName(*View.ModeId);
+}
+FDivineBeastsArenaChallengeView UDivineBeastsArenaClientSubsystem::GetObservedChallenge() const
+{
+    return OnlineMatchmaking&&OnlineMatchmaking->GetSnapshot().bKnown?OnlineMatchmaking->GetSnapshot().Challenge:FDivineBeastsArenaChallengeView{};
+}
+bool UDivineBeastsArenaClientSubsystem::CanChallengeMode(FName ModeId,FString& Reason) const
+{
+    if(!CanQueueMode(ModeId,Reason))return false;
+    const auto* Mode=FDivineBeastsArenaModeCatalog::Find(ModeId);
+    const auto& Party=PartySource->GetSnapshot().Snapshot;
+    const int32 Count=Party.bHasParty?Party.Members.Num():1;
+    if(!Mode||Count!=Mode->TeamSize){Reason=TEXT("约战需要双方各有完整人数；请先组满本方小队");return false;}
+    const auto State=OnlineMatchmaking->GetObservedState();
+    if(State!=EGamePlatformArenaClientFlowState::Idle){Reason=TEXT("当前已有邀请或报名，请先等待终态或取消");return false;}
+    Reason.Empty();return true;
+}
+void UDivineBeastsArenaClientSubsystem::RequestChallenge(FName ModeId,const FString& TargetPlayerId,const FString& Id,TFunction<void(bool,const FString&)> Done)
+{
+    FString Error;FGamePlatformArenaMatchmakingRequest Request;
+    if(bDeinitializing||!CanChallengeMode(ModeId,Error)||!BuildMatchmakingRequest(ModeId,FString(),FString(),Id,Request,Error))
+    {Done(false,TEXT("Matchmaking.ChallengeUnavailable"));return;}
+    OnlineMatchmaking->RequestChallenge(Request,TargetPlayerId,MoveTemp(Done));
+}
+void UDivineBeastsArenaClientSubsystem::ReplyChallenge(bool bAccept,const FString& Id,TFunction<void(bool,const FString&)> Done)
+{
+    if(bDeinitializing||!bApplicationFlowInWorld||!OnlineMatchmaking){Done(false,TEXT("Matchmaking.ChallengeUnavailable"));return;}
+    OnlineMatchmaking->ReplyChallenge(bAccept,Id,MoveTemp(Done));
+}
+void UDivineBeastsArenaClientSubsystem::CancelChallenge(const FString& Id,TFunction<void(bool,const FString&)> Done)
+{
+    if(bDeinitializing||!bApplicationFlowInWorld||!OnlineMatchmaking){Done(false,TEXT("Matchmaking.ChallengeUnavailable"));return;}
+    OnlineMatchmaking->CancelChallenge(Id,MoveTemp(Done));
+}
 void UDivineBeastsArenaClientSubsystem::HandleMatchmakingChanged()
 {
     if(bDeinitializing||!OnlineMatchmaking)return;
     const auto Auth=OnlineMatchmaking->GetAuthenticationGeneration();
-    if(MigrationAuthGeneration!=Auth){++MigrationGeneration;bMigrationPending=false;MigrationAuthGeneration=Auth;MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();MigrationError=FText::GetEmpty();}
+    if(MigrationAuthGeneration!=Auth){CancelObservedMigration();MigrationAuthGeneration=Auth;MigrationRequestId.Empty();MigrationCandidateId.Empty();MigrationDirection.Empty();MigrationError=FText::GetEmpty();CapturedVillageQueueTicketId.Reset();}
+    if (bApplicationFlowInWorld && ApplicationFlow && ApplicationFlow->GetViewState().Assignment.ServerRoleId == FName(TEXT("GameServer.Role.Village")))
+    {
+        const auto& Queue = OnlineMatchmaking->GetSnapshot();
+        const bool bCanCapture = Queue.Phase == TEXT("searching") ||
+            (Queue.bSelfAccepted && (Queue.Phase == TEXT("confirmation") ||
+                Queue.Phase == TEXT("allocating") || Queue.Phase == TEXT("transferReady")));
+        if (Queue.bKnown && bCanCapture && !Queue.TicketId.IsEmpty() && Queue.TicketId != CapturedVillageQueueTicketId)
+        {
+            UWorld* SourceWorld = GetGameInstance()->GetWorld();
+            auto* Controller = SourceWorld ? Cast<ADivineBeastsWorldPlayerController>(SourceWorld->GetFirstPlayerController()) : nullptr;
+            if (Controller && Controller->IsLocalController())
+            {
+                CapturedVillageQueueTicketId = Queue.TicketId;
+                Controller->ServerCaptureVillageQueueOrigin(CapturedVillageQueueTicketId);
+            }
+        }
+    }
     OnMatchmakingStateChanged.Broadcast();
+    if (!bDeinitializing && !bApplicationFlowInWorld && ApplicationFlow)
+    {
+        ApplicationFlow->NotifyGameplayWorldFactsChanged();
+    }
     if(bDeinitializing||!OnlineMatchmaking||!bApplicationFlowInWorld||!ApplicationFlow)return;
     const auto& View=OnlineMatchmaking->GetSnapshot();const auto World=ApplicationFlow->GetViewState();
     if(View.bKnown&&(View.Phase==TEXT("transferReady")||View.Phase==TEXT("inMatch"))&&World.Assignment.ServerRoleId!=FName(TEXT("GameServer.Role.MainArena"))&&!bMigrationPending&&MigrationError.IsEmpty())RequestObservedMigration(TEXT("arena"));
@@ -222,17 +332,49 @@ bool UDivineBeastsArenaClientSubsystem::RequestObservedMigration(const FString& 
     MigrationError=FText::GetEmpty();bMigrationPending=true;const uint64 Expected=++MigrationGeneration;const FGuid Auth=OnlineMatchmaking->GetAuthenticationGeneration();
     const TWeakObjectPtr<UDivineBeastsArenaClientSubsystem> Weak(this);OnMatchmakingStateChanged.Broadcast();
     if(bDeinitializing||!OnlineMatchmaking||Expected!=MigrationGeneration||OnlineMatchmaking->GetAuthenticationGeneration()!=Auth)return false;
-    OnlineMatchmaking->RequestMigration(Direction,MigrationRequestId,[Weak,Expected,Auth](bool bSuccess,FDivineBeastsWorldAssignmentPayload Payload)mutable
+    const auto Adapter = OnlineMatchmaking;
+    const FString SourceAssignmentId = Direction == TEXT("return") ? ApplicationFlow->GetViewState().Assignment.AssignmentId : FString();
+    auto Cancel = Adapter->RequestMigration(Direction,MigrationRequestId,SourceAssignmentId,[Weak,Expected,Auth](bool bSuccess,FDivineBeastsWorldAssignmentPayload Payload)mutable
     {
         auto* Self=Weak.Get();if(!Self||Self->bDeinitializing||Self->MigrationGeneration!=Expected||!Self->OnlineMatchmaking||Self->OnlineMatchmaking->GetAuthenticationGeneration()!=Auth)return;
         Self->bMigrationPending=false;
+        Self->CancelMigrationRequest = {};
         if(!bSuccess||!Self->ApplicationFlow||!Self->ApplicationFlow->RequestTrustedWorldMigration(MoveTemp(Payload),Auth))Self->MigrationError=FText::FromString(TEXT("连接尚未确认，请重试；不会复用旧地址进入"));
         Self->OnMatchmakingStateChanged.Broadcast();
-    });return true;
+    });
+    if (Cancel && bMigrationPending && Expected == MigrationGeneration)
+    {
+        CancelMigrationRequest = MoveTemp(Cancel);
+    }
+    else if (Cancel)
+    {
+        Cancel();
+    }
+    return true;
+}
+
+void UDivineBeastsArenaClientSubsystem::CancelObservedMigration()
+{
+    ++MigrationGeneration;
+    bMigrationPending = false;
+    auto Cancel = MoveTemp(CancelMigrationRequest);
+    CancelMigrationRequest = {};
+    if (Cancel)
+    {
+        Cancel();
+    }
 }
 
 void UDivineBeastsArenaClientSubsystem::ClearArenaReadiness()
 {
+    if (ReadinessControls.IsValid())
+    {
+        ReadinessControls->OnInputReceiverChanged.RemoveAll(this);
+        ReadinessControls->SetGameplayActive(false);
+    }
+    ReadinessControls.Reset();
+    if (ReadinessPlayer.IsValid()) ReadinessPlayer->OnArenaStatsChanged.RemoveAll(this);
+    ReadinessPlayer.Reset();
     if(ReadinessWorld.IsValid())ReadinessWorld->GameStateSetEvent.Remove(ReadinessGameStateHandle);
     if(ReadinessController.IsValid())ReadinessController->OnPossessedPawnChanged.RemoveDynamic(this,&ThisClass::HandleReadinessPawnChanged);
     if(ReadinessGameState.IsValid())ReadinessGameState->OnArenaPhaseChanged.RemoveAll(this);
@@ -259,6 +401,26 @@ void UDivineBeastsArenaClientSubsystem::RefreshArenaReadiness()
         if(Controller)Controller->OnPossessedPawnChanged.AddUniqueDynamic(this,&ThisClass::HandleReadinessPawnChanged);
     }
     auto* State=World?World->GetGameState<AGamePlatformArenaGameState>():nullptr;
+    auto* CurrentPlayer = Controller ? Controller->GetPlayerState<AGamePlatformArenaPlayerState>() : nullptr;
+    if (ReadinessPlayer.Get() != CurrentPlayer)
+    {
+        if (ReadinessPlayer.IsValid()) ReadinessPlayer->OnArenaStatsChanged.RemoveAll(this);
+        ReadinessPlayer = State ? CurrentPlayer : nullptr;
+        if (ReadinessPlayer.IsValid()) ReadinessPlayer->OnArenaStatsChanged.AddWeakLambda(this,
+            [this](AGamePlatformArenaPlayerState*) { RefreshArenaReadiness(); });
+    }
+    auto* Controls = Controller ? Controller->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr;
+    if (ReadinessControls.Get() != Controls)
+    {
+        if (ReadinessControls.IsValid())
+        {
+            ReadinessControls->OnInputReceiverChanged.RemoveAll(this);
+            ReadinessControls->SetGameplayActive(false);
+        }
+        ReadinessControls = State ? Controls : nullptr;
+        if (ReadinessControls.IsValid())
+            ReadinessControls->OnInputReceiverChanged.AddUObject(this, &ThisClass::RefreshArenaReadiness);
+    }
     if(ReadinessGameState.Get()!=State)
     {
         if(ReadinessGameState.IsValid())ReadinessGameState->OnArenaPhaseChanged.RemoveAll(this);
@@ -280,14 +442,55 @@ void UDivineBeastsArenaClientSubsystem::RefreshArenaReadiness()
         ReadinessEligibility=Eligibility;
         if(Eligibility)Eligibility->OnEligibilityChanged().AddWeakLambda(this,[this](const FGamePlatformGameplayEligibilitySnapshot&){RefreshArenaReadiness();});
     }
+    if (Controller && State)
+        if (Controls)
+        {
+            const auto* Player = Controller->GetPlayerState<AGamePlatformArenaPlayerState>();
+            // 观战Ready仅用于加载完成，不能借此打开角色运动；仍要求当前Pawn权威资格。
+            Controls->SetGameplayActive(Player && !Player->bEliminated &&
+                Player->ConnectionState == EGamePlatformArenaConnectionState::Connected &&
+                Pawn && Pawn->GetController() == Controller && Pawn->InputComponent &&
+                Character && Character->IsCharacterReady() && Eligibility && Eligibility->IsServerPlayerActiveForGameplay());
+        }
     if(ApplicationFlow)ApplicationFlow->NotifyGameplayWorldFactsChanged();
 }
-bool UDivineBeastsArenaClientSubsystem::TryObserveArenaReadiness(UWorld& World,bool& bBound,bool& bPrepared,bool& bActive)const
+bool UDivineBeastsArenaClientSubsystem::TryObserveArenaReadiness(UWorld& World, bool& bBound, bool& bPrepared,
+    bool& bActive, FDivineBeastsWorldEntryPresentation& Presentation) const
 {
     if(bDeinitializing||ReadinessWorld.Get()!=&World||!ReadinessGameState.IsValid()||!ReadinessController.IsValid()||!ReadinessController->IsLocalController())return false;
+    const AGamePlatformArenaGameState& State = *ReadinessGameState.Get();
+    switch (State.MatchPhase)
+    {
+    case EGamePlatformArenaMatchPhase::HeroSelection:
+    case EGamePlatformArenaMatchPhase::ReadyCheck:
+        Presentation.Stage = NSLOCTEXT("DivineBeastsArena", "WaitingForParticipants", "已进入竞技场，等待参赛者准备");
+        break;
+    case EGamePlatformArenaMatchPhase::Countdown:
+        Presentation.Stage = NSLOCTEXT("DivineBeastsArena", "StartCountdown", "竞技场开战倒计时");
+        if (FMath::IsFinite(State.PhaseDeadlineServerTime) && State.PhaseDeadlineServerTime > 0.0)
+        {
+            Presentation.CountdownDeadlineServerTime = State.PhaseDeadlineServerTime;
+        }
+        break;
+    case EGamePlatformArenaMatchPhase::InProgress:
+        Presentation.Stage = NSLOCTEXT("DivineBeastsArena", "SynchronizingParticipant", "正在同步参赛角色");
+        break;
+    default:
+        break;
+    }
     const auto* Controller=ReadinessController.Get();const APawn* Pawn=Controller->GetPawn();
     const auto* Player=Controller->GetPlayerState<AGamePlatformArenaPlayerState>();
     if(!Player||Player->ConnectionState!=EGamePlatformArenaConnectionState::Connected)return true;
+    const bool bTerminalPhase = State.MatchPhase == EGamePlatformArenaMatchPhase::Failed ||
+        State.MatchPhase == EGamePlatformArenaMatchPhase::Aborted ||
+        State.MatchPhase == EGamePlatformArenaMatchPhase::ResultPending || State.MatchPhase == EGamePlatformArenaMatchPhase::Completed;
+    if (bTerminalPhase && OnlineMatchmaking && ApplicationFlow && !State.MatchIdPublic.IsEmpty())
+    {
+        const auto& Assignment = ApplicationFlow->GetViewState().Assignment;
+        Presentation.bTrustedReturnAvailable = Assignment.AssignmentId == TEXT("match:") + State.MatchIdPublic &&
+            !Assignment.CharacterId.IsEmpty() && Assignment.CharacterId == Player->CharacterId &&
+            FDivineBeastsArenaOnlineMatchmakingAdapter::CanRequestReturn(OnlineMatchmaking->GetSnapshot(), true);
+    }
     // 淘汰者恢复的是观战连接，不能为了满足加载屏障重新生成角色或补满资源。
     const bool bSpectating=Player->bEliminated&&!Player->CharacterId.IsEmpty();
     bBound=bSpectating||(Pawn&&Pawn->GetWorld()==&World&&Pawn->GetController()==Controller&&Pawn->InputComponent);

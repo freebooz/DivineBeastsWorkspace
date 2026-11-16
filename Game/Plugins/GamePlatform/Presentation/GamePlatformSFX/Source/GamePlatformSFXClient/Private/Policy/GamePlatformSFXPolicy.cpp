@@ -47,27 +47,21 @@ FGamePlatformResult FGamePlatformSFXPolicy::BuildDefinitionAssetId(
     const FName DefinitionId,
     FPrimaryAssetId& OutAssetId)
 {
-    OutAssetId = FPrimaryAssetId();
-
-    FGamePlatformId Parsed;
-    if (DefinitionId.IsNone() ||
-        !FGamePlatformId::TryParse(DefinitionId.ToString(), Parsed))
+    // 复用GamePlatformData（平台数据模块）的唯一定义身份转换。
+    // 保留SFX原有两类错误消息；资源实际加载仍由平台数据租约拥有。
+    const EGamePlatformDefinitionIdBuildStatus Status =
+        UGamePlatformPrimaryDataAsset::BuildDefinitionAssetId(DefinitionId, OutAssetId);
+    if (Status == EGamePlatformDefinitionIdBuildStatus::InvalidLogicalId)
     {
         return FGamePlatformResult::Failure(
             TEXT("SFX.DefinitionIdInvalid"),
             TEXT("SFX DefinitionId必须是namespace.name@version格式的GamePlatform逻辑身份，不能使用资产路径。"));
     }
-
-    const FString Canonical = Parsed.ToString();
-    if (Canonical.IsEmpty())
+    if (Status == EGamePlatformDefinitionIdBuildStatus::EmptyCanonicalId)
     {
         return FGamePlatformResult::Failure(
             TEXT("SFX.DefinitionIdInvalid"),
             TEXT("SFX DefinitionId规范化失败。"));
     }
-
-    OutAssetId = FPrimaryAssetId(
-        UGamePlatformPrimaryDataAsset::DefinitionAssetType(),
-        FName(*Canonical));
     return FGamePlatformResult::Success();
 }

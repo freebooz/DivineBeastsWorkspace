@@ -1,5 +1,21 @@
 # DBAWorldPack_Village（神兽联盟新手村世界内容包）
 
+2026-10-31资源归属更新：三份硬绑定Village贴图的Production10审核母材质和九份实例归本包`Development/Terrain/Production10`。它们只供开发审核地图，默认不进入正式Client或专服；PluginDemoClient按地图白名单精确放开此开发目录。十张公共V3色彩图归`/DBAPresentationPack_Core/Textures/Terrain/Production10`，项目雪地表现软路径已同步。正式Village共享Landscape母材质、地形、Actor及实例布局未改。历史制作与来源记录保留原路径事实；当前路径合同与阶段证据见`Docs/Implementation/Resources/ResourceOwnershipDelivery_20261031.md`。
+## 2026-10-18 新手村地形V3资源最终原生收口（最新进度）
+
+当前正式十层地形BaseColor（基础色）原位覆盖与独立UE冷重载 **10/10已通过**；原Dirt（普通泥土）被锁情况已解决，并无待修改的第十层。中立共享Landscape母材质M_DBA_Village_LandscapeBridge由55节点增量升级为81节点Texture Bombing（纹理轰炸），已有三通道一致UV及高/低画质分支；新建256×256 V3绿色草地共享默认Texture2D并已实际绑定两处VillageGroundAlbedoTexture，独立UE5.8冷重载通过。正式L_Village_Start地图哈希未变，雪/湿润、法线、ORM、PCG、碰撞导航不重新生成，纯客户端高精贴图继续通过资源租约加载。正式服务器共享地图依赖审计通过。
+
+完整UE来源、实物与恢复文档：Docs/Implementation/TerrainColorV3ComplianceReview_20261018.md（十层原位重导入记录）与Docs/Implementation/VillageTerrainTextureBombingV3_20261018.md（绿色默认色与纹理轰炸）。低端与移动端保留普通采样；真实GPU、Client/Server Cook、性能与人工美术验收仍不能宣称通过：新的真实D3D12及GUI跨帧图片依旧黑帧，Server Cook因另一任务持有引擎互斥锁返回NotExecuted。以下9/10段落保留历史，不代表最新状态。
+
+## 2026-10-18 历史阶段（当时9/10，现已由上节10/10完成记录取代）
+
+用户批准直接覆盖后，十层地形稳定BaseColor Texture2D原路径已有9层真实重导入V3色板的派生PNG并在独立UE5.8进程验证；剩余Dirt（泥土）被其他进程文件锁阻断，保留原资产。正式Village地图及中立Landscape母材质SHA未变、原Normal/ORM/Height未变。项目客户端原有VillageSnowWorldSubsystem的草地基础色软路径已更新至V3候选，并配套同一扫描资源的Normal/ORM，保持天气事件和世界异步租约。VillageDevelopmentClient新增Cook与配置，专服三配置已用服务器排除策略生成，不能据此宣称Server Cook已验证。
+
+十二份执行前回退资产及其哈希见Saved/ArtReview/TerrainColorV3FormalCover/Before_20261018/BackupManifest.json；9/10独立冷重载证据与Dirt锁阻断见Docs/Implementation/TerrainColorV3ComplianceReview_20261018.md。实际GPU六态图仍黑帧，真正Client/Server Cook、完整十层和人工最终美术签收未完成，不应标记发布通过。
+Dirt安全恢复脚本为Tools/Unreal/Terrain/ResumeTerrainV3FormalCover.ps1，默认只读。其-Apply仅能在本机同工程编辑器安全关闭、纹理文件独占后执行UE原位覆盖与独立十层冷重载，未满足门禁不得提前尝试。
+
+
+
 本内容包是神兽联盟第三层正式 Village（新手村）世界资产所有者，只承载真实世界内容，不实现平台机制或项目运行时代码。
 
 当前首批交付：
@@ -57,3 +73,9 @@
 ## 2026-10-16 狼怪物与导航修复
 
 本包持有Quaternius CC0狼的SourceArt、客户端Creatures/Wolf和服务器AI定义。通过Monolith真实导入Idle/Walking、建立平台动画基类派生AnimBP并烘焙出生点外围导航；两个PlayerStart保持原坐标。服务器排除Creatures/Wolf叶子，保留AI与地图。开发配置启用四只狼；发行默认关闭。资源来源与重载证据见Docs/MonolithGenerationManifest.json，实际构建、Cook、人工验收边界见工作空间Docs/Implementation/VillageWolvesAndPartyOperations20261016.md。
+
+## 2026-10-18 月光与薄雾
+
+用户明确要求增加雾、调暗并采用月光照明。已通过Monolith原位保存正式村庄地图：复用既有冷色主光/低强度天光、高度雾，加入三处外围近地LocalFogVolume及固定曝光。未新增Niagara System、材质或运行机制；两个出生点保持原变换。此地图月夜为配色V3的用户指定例外，不修改其他世界。
+
+独立冷重载和实际Client/Server Cook/Stage通过，原生截图归工作空间Saved/Validation/VillageMist_20261018；参数及边界见Docs/Implementation/GamePlatformWorld/VillageMistAndMoonlight_20261018.md。未重启现有联机客户端/服务器，人工可读性与不同画质/GPU仍待验证。

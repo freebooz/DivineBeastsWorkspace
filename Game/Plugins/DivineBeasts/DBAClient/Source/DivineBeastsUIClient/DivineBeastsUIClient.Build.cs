@@ -29,6 +29,8 @@ public class DivineBeastsUIClient : ModuleRules
             "GamePlatformOnline",
             // 设置页公开快照合同来自现有平台设备设置服务；不另存一份设备配置。
             "GamePlatformSettingsClient",
+            // 系统设置公开三路音频快照，音量持久化与混音仍由平台SFX领域唯一拥有。
+            "GamePlatformSFXClient",
             // 当前公开战斗反馈映射直接暴露 FGamePlatformCombatEvent，
             // 背包和任务页面的公开头同样直接暴露平台客户端快照类型，
             // 因此这些模块都是调用方编译公开接口所需的真实 Public 依赖。
@@ -57,6 +59,7 @@ public class DivineBeastsUIClient : ModuleRules
             "InputCore",
             // 玩家状态 ViewModel 只在 Private 实现中订阅平台 ASC/项目 Momentum AttributeSet；公开 UI 契约不泄漏 Gameplay 类型。
             "GameplayAbilities",
+            "GameplayTags", // 按真实Ability.Spell语义判断沉默，显式链接标签查询。
             "GamePlatformAbilitySystem",
             // 技能栏仅订阅公开玩家生命周期与中立玩法资格事件，不拥有Active权威状态。
             "GamePlatformGameplay",

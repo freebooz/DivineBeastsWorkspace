@@ -38,6 +38,16 @@ bool FGamePlatformServerAdmissionContractTest::RunTest(const FString&)
     TestTrue(TEXT("完整权威准入投影有效"), Admission.IsStructurallyValid());
     TestTrue(TEXT("准入必须匹配当前实例Boot/World/Experience/Protocol"), Admission.MatchesTarget(Target));
 
+    Admission.WorldId = TEXT("Wrong.World");
+    TestFalse(TEXT("已验证绑定查询仍拒绝其他World"), Admission.MatchesTarget(Target));
+    Admission.WorldId = Target.WorldId;
+    Admission.ExperienceId = TEXT("Wrong.Experience");
+    TestFalse(TEXT("已验证绑定查询仍拒绝其他体验"), Admission.MatchesTarget(Target));
+    Admission.ExperienceId = Target.ExperienceId;
+    Admission.ProtocolVersion = TEXT("Wrong.Protocol");
+    TestFalse(TEXT("已验证绑定查询仍拒绝其他协议"), Admission.MatchesTarget(Target));
+    Admission.ProtocolVersion = Target.ProtocolVersion;
+
     Admission.ServerBootId = TEXT("old-boot");
     TestFalse(TEXT("旧Boot准入必须拒绝"), Admission.MatchesTarget(Target));
     Admission.ServerBootId = Target.ServerBootId;

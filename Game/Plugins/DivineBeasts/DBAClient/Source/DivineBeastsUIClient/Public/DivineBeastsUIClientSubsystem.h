@@ -17,7 +17,7 @@ class UGamePlatformUILayerStack;
 class UGamePlatformUIManagerSubsystem;
 class UGamePlatformUIScreen;
 class UGamePlatformUIScreenDefinition;
-class ADivineBeastsWorldPlayerController;
+class UDivineBeastsPlayerControlsComponent;
 class UCommonUIActionRouterBase;
 class UGameInstance;
 class IGamePlatformDataService;
@@ -25,6 +25,15 @@ struct FUIInputConfig;
 
 /** 本地系统菜单整体可见性；设置子页切换不重复广播，世界控制器据此撤销鼠标拖动。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(FDivineBeastsSystemMenuVisibilityChangedNative, bool);
+
+/** 当前世界可在系统菜单的会话操作位提供一项上下文命令。仅本地表现，权限由命令接收者复核。 */
+struct FDivineBeastsWorldMenuAction
+{
+    FText Label;
+    FText Status;
+    bool bEnabled = false;
+    FSimpleDelegate Execute;
+};
 
 /** FDivineBeastsUIContractHandle（项目UI应用契约注册句柄）。 */
 USTRUCT(BlueprintType)
@@ -91,16 +100,21 @@ public:
     /** 仅处理已进入真实世界的ESC；前端返回false，保留原页面取消语义。游戏线程。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
     bool HandleEscapeAction();
-    /** 从游戏菜单打开真实设备设置；重复或资源加载中返回false。 */
+    /** 世界内从齿轮或游戏菜单打开真实设备设置；已有设置/在途同页幂等成功，不重复创建。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
     bool OpenSystemSettings();
     /** 返回游戏；取消本协调器在途请求并关闭所有系统子页，不暂停联网世界。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
     void CloseSystemMenu();
-    /** 关闭设置子页回到原游戏菜单；没有子页时返回false。 */
+    /** 关闭设置回到父菜单；齿轮直接进入时恢复世界输入，没有子页时返回false。 */
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|System")
     bool CloseSystemSettings();
     FDivineBeastsSystemMenuVisibilityChangedNative& OnSystemMenuVisibilityChanged() { return SystemMenuVisibilityChanged; }
+    /** 仅接受本地玩家当前世界的控制器。世界提供者退出时用原控制器撤销。 */
+    void SetWorldMenuAction(APlayerController& Owner, FDivineBeastsWorldMenuAction Action);
+    void ClearWorldMenuAction(const APlayerController* Owner);
+    FDivineBeastsWorldMenuAction GetWorldMenuAction() const;
+    FSimpleMulticastDelegate OnWorldMenuActionChanged;
 
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI")
     FGamePlatformUIAsyncRequest OpenScreen(
@@ -154,6 +168,7 @@ private:
 #if WITH_DEV_AUTOMATION_TESTS
     /** 原生回归只注入同LocalPlayer的真实Router，验证交接/阻断/解绑，不伪造网络或平台输入。 */
     friend class FDivineBeastsWorldInputHandoffTest;
+    friend class FDivineBeastsSkillBarSettingsCloseTest;
 #endif
     /** 按本地玩家真实Router实例绑定，替换/退出精确撤销旧委托，不关闭其他UI来源。 */
     void ObserveWorldInputRouter(UCommonUIActionRouterBase* Router);
@@ -174,7 +189,7 @@ private:
     void HandleWorldInventoryRequested();
     void HandleWorldJournalRequested(FName Section);
     void SetSystemMenuVisible(bool bVisible);
-    TWeakObjectPtr<ADivineBeastsWorldPlayerController> BoundMenuController;
+    TWeakObjectPtr<UDivineBeastsPlayerControlsComponent> BoundMenuController;
     FDelegateHandle WorldEscapeHandle;
     /** 仅本地当前控制器的I键委托句柄，换控制器及退出时精确解除。 */
     FDelegateHandle WorldInventoryHandle;
@@ -199,6 +214,8 @@ private:
     bool bInventoryOpening = false;
 
     FDivineBeastsSystemMenuVisibilityChangedNative SystemMenuVisibilityChanged;
+    TWeakObjectPtr<APlayerController> WorldMenuActionOwner;
+    FDivineBeastsWorldMenuAction WorldMenuAction;
     /** 读取项目默认主题编号并交给平台UI服务；空配置兼容旧页面，失败不阻断登录。 */
     void EnsureConfiguredTheme();
     UFUNCTION()

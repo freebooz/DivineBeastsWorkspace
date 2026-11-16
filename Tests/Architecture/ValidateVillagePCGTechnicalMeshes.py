@@ -23,7 +23,10 @@ def main() -> None:
     found = {p.name for p in ART.iterdir() if p.is_file()}
     assert found == set(source_data), "技术OBJ来源文件清单不完整或含陌生文件"
     for name, data in source_data.items():
-        assert (ART / name).read_bytes() == data, "固定生成器与真实源字节不一致：" + name
+        actual = GEN["canonical_repository_text"]((ART / name).read_bytes())
+        assert actual == data, "规范化Git文本换行后，固定生成器与源内容仍不一致：" + name
+        assert GEN["canonical_repository_text"](data.replace(b"\n", b"\r\n")) == data
+        assert IMPORT["sha"](ART / name) == GEN["hashlib"].sha256(data).hexdigest()
     saved = json.loads((ART / "VillagePCGTechnicalSourceManifest_v1.json").read_text(encoding="utf-8"))
     assert saved == expected_manifest
     assert saved["sourceKind"] == "procedural_technical_prototype_not_approved"

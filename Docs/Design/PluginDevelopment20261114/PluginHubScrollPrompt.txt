@@ -1,0 +1,40 @@
+Edit the supplied SSLM plugin hub mockup. Preserve its premium smooth dark teal jade, warm champagne gold edging, ivory Chinese typography, quiet mountain background and tasteful small emblem. Apply BOTH layout changes exactly: MUCH LARGER CARDS WITH IMAGE ABOVE AND WRITTEN DESCRIPTION BELOW, and ONE CONTINUOUS VERTICAL SCROLL VIEW WITHOUT PAGINATION.
+
+One full-frame flat widescreen 16:9 professional game UI concept, ideally 1920x1080 or larger. Compact fixed top header: "SSLM · 插件工作台", smaller "选择插件，进入工作台", small "设计稿 · 待确认" badge and "返回登录" button. No search field, no search icon, no sidebar, no directory tree, no category menu, no filters, no detail inspector, no list toggle.
+
+Main body: EXACTLY THREE EQUAL COLUMNS, not four. Cards are substantially larger than the reference. Show TWO COMPLETE ROWS (six complete cards) plus a clearly clipped upper portion of the NEXT ROW at the bottom of the content viewport, making it obvious that more cards continue downward. The clipping is intentional at the viewport edge. A slender vertical scrollbar is visible at the far RIGHT of the card area, thumb near the top. No horizontal scroll. All 70 plugins belong to this same continuous grid. Do not compress 70 cards into the screenshot.
+
+Each large card has:
+- Upper 65%: one beautiful wide high-quality plugin preview image, image only, no text over it.
+- Lower 35%: a distinct calm dark-jade caption panel with comfortable padding, a small fine icon, a large readable Chinese plugin title, and a smaller TWO-LINE Chinese purpose description below.
+- A subtle small right arrow and an unobtrusive neutral "待检查" badge on the caption panel; neither overlaps the description.
+- The WHOLE CARD is clickable, no extra large enter button.
+- First card is softly highlighted with a thin gold hover rim.
+Do NOT show long English plugin identifiers on these cards; the Chinese title and explanatory text are the focus.
+Clear visual separation between upper image and lower description, consistent image ratios and card dimensions. More breathing room and larger imagery than the input image.
+
+First two visible rows, reading left to right:
+1 "程序化场景"
+Description exact: "生成森林与植被，控制密度、坡度和区域避让。"
+Image: lush mountain hillside, willow and flowering trees, winding earthen footpath.
+2 "材质与表面"
+Description exact: "预览材质层次，调节颜色、粗糙度与表面细节。"
+Image: four beautifully rendered jade, stone, wood and snow material spheres.
+3 "视觉特效"
+Description exact: "查看法术与环境特效，调整形态、色彩和表现。"
+Image: contained gold-orange fireball beside crisp ice crystals.
+4 "界面与主题"
+Description exact: "预览通用控件与主题，检查布局和交互状态。"
+Image: exquisite polished emerald green and sea-blue Chinese fantasy buttons.
+5 "水体系统"
+Description exact: "调节湖泊与河流，预览水面、岸线和水下表现。"
+Image: calm turquoise mountain lake with natural lush shoreline.
+6 "天气系统"
+Description exact: "预览晴雨雪雾，调整光照、强度和天气过渡。"
+Image: Chinese pavilion landscape with gentle rain, cloud, mist and snow.
+The partial third row shows only the upper portions of an audio waveform thumbnail, village/world thumbnail and AI movement thumbnail.
+
+Bottom fixed slim footer outside the scroll viewport: left "共 70 个插件", center a subtle downward chevron with "向下滚动浏览", right "设计示意 · 非 UE 实机截图".
+ABSOLUTELY NO PAGE NUMBERS, no previous/next page arrows, no pages, no pagination bar, no load-more button. Only natural vertical scrolling. No directory or search, no list/table.
+
+Finish: clean refined polished jade panels, thin tactile gold bevels, broad continuous gentle highlights, subtle natural material variation, pure elegant surfaces. No grain, no noise, no scratched or rough surfaces, no oversharpening, no excessive ornaments. Large readable Chinese headings and descriptions with no overlap or clipping inside complete cards. Keep the scene thumbnails rich but the text panels quiet and functional.

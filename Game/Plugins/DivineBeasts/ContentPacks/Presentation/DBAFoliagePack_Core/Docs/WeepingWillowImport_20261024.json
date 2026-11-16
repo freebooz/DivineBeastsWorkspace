@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-24",
+  "source": "User supplied local Downloads files",
+  "engine": "UE5.8.0",
+  "importer": "SpeedTreeImportFactory via direct Monolith MCP",
+  "tree_scale": 1.0,
+  "sources": [
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/Branches_02_Color.png",
+      "bytes": 424554,
+      "sha256": "44f4fcbd404085f5f97d60196a4c00f0574e2ce851f0a4d990a287c8ca5b9991"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/Branches_02_Normal.png",
+      "bytes": 306995,
+      "sha256": "18a54a3f74ee1c1344e77576dc2fc932b09bd10fe567535a64b60561caff5dc2"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/Cap_01_Color.png",
+      "bytes": 928059,
+      "sha256": "cfbe68c0881cff7119aa4469bf76166f32a329e2854e58280d603d4a10211347"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/Cap_01_Normal.png",
+      "bytes": 699609,
+      "sha256": "06fb46b654b7db1118488c95417f143fb33a60a0f620cde11c7931339599e99e"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/FrondStem_Color.png",
+      "bytes": 224852,
+      "sha256": "110dfccf2ac7d5bd6fc9851dae215019ba04673b2f6adc419c83faf99368aeba"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/FrondStem_Normal.png",
+      "bytes": 105020,
+      "sha256": "e990f6b912d3dc6247d0f77ec706f6703c5432d4cedd40ac70314ff85636fe9a"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/WeepingWillow_Med.st9",
+      "bytes": 74423852,
+      "sha256": "7f0e9abfc78953fd55fdee5177de7a02594d778b2df77d5083ff807d7c0d1283"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/WeepingWillow_Med_Color.png",
+      "bytes": 6731775,
+      "sha256": "1d07777a462142420569d40675f5b46bc5ecd2fae3c1d16cfa079d4f07a46007"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/WeepingWillow_Med_Normal.png",
+      "bytes": 4134066,
+      "sha256": "e846ea9dfd706e876cec2df9acdb6eb4b9f7b7d5dedac07c27dfbecac7a9f958"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/WeepingWillow_Med_Subsurface.png",
+      "bytes": 235576,
+      "sha256": "d5877a3c32bdc18c1508d31ae5751613baa012b497cba1fd3433b5baaed98fba"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/WeepingWillowBark_Color.png",
+      "bytes": 3663944,
+      "sha256": "49643aa0a51c2aab30f471a292c8414d0560cfca9e1bc11da8a56a40293c8d85"
+    },
+    {
+      "path": "SourceArt/Trees/WeepingWillow_Med/WeepingWillowBark_Normal.png",
+      "bytes": 2588554,
+      "sha256": "196302fb859dcf5906374a2ff5c33c3ff288e25ba2f0f1061f5589eb21d241fb"
+    }
+  ],
+  "assets": [
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/MI_DBA_Willow_Atlas.MI_DBA_Willow_Atlas",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/MI_DBA_Willow_Bark.MI_DBA_Willow_Bark",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/MI_DBA_Willow_Branches.MI_DBA_Willow_Branches",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/MI_DBA_Willow_Cap.MI_DBA_Willow_Cap",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/MI_DBA_Willow_FrondStem.MI_DBA_Willow_FrondStem",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/SM_DBA_Foliage_WeepingWillow_Med.SM_DBA_Foliage_WeepingWillow_Med",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_Atlas_Color.T_DBA_Willow_Atlas_Color",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_Atlas_Normal.T_DBA_Willow_Atlas_Normal",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_Atlas_Subsurface.T_DBA_Willow_Atlas_Subsurface",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_Bark_Color.T_DBA_Willow_Bark_Color",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_Bark_Normal.T_DBA_Willow_Bark_Normal",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_Branches_Color.T_DBA_Willow_Branches_Color",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_Branches_Normal.T_DBA_Willow_Branches_Normal",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_Cap_Color.T_DBA_Willow_Cap_Color",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_Cap_Normal.T_DBA_Willow_Cap_Normal",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_FrondStem_Color.T_DBA_Willow_FrondStem_Color",
+    "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/T_DBA_Willow_FrondStem_Normal.T_DBA_Willow_FrondStem_Normal"
+  ],
+  "placement": {
+    "label": "Village_WeepingWillow_Lakeside",
+    "path": "/DBAWorldPack_Village/Maps/L_Village_Start.L_Village_Start:PersistentLevel.StaticMeshActor_2",
+    "transform": "<Struct 'Transform' (0x000001BE784A3540) {rotation: {x: -0.000000, y: 0.000000, z: -0.984808, w: 0.173648}, translation: {x: -7800.000000, y: 6700.000000, z: -6.586461}, scale3d: {x: 1.000000, y: 1.000000, z: 1.000000}}>",
+    "mesh": "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/SM_DBA_Foliage_WeepingWillow_Med.SM_DBA_Foliage_WeepingWillow_Med"
+  },
+  "validation": {
+    "native_errors": 0,
+    "native_warnings": 0,
+    "native_assets_total_both_models": 39,
+    "saved_packages_reloaded": true,
+    "map_saved_reloaded": true,
+    "old_actors_unchanged": 32,
+    "old_tree_instances_unchanged": 107,
+    "cook_stage_performed": false,
+    "client_deployment_performed": false
+  },
+  "initial_placement": {
+    "label": "Village_WeepingWillow_Lakeside",
+    "path": "/DBAWorldPack_Village/Maps/L_Village_Start.L_Village_Start:PersistentLevel.StaticMeshActor_2",
+    "transform": "<Struct 'Transform' (address) {rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}, translation: {x: -7800.000000, y: 7600.000000, z: -6.586461}, scale3d: {x: 1.000000, y: 1.000000, z: 1.000000}}>",
+    "mesh": "/DBAFoliagePack_Core/Foliage/Trees/WeepingWillow/SM_DBA_Foliage_WeepingWillow_Med.SM_DBA_Foliage_WeepingWillow_Med",
+    "collision_profile": "NoCollision"
+  },
+  "placement_source": "Live editor state preserved before manual-client publication on 2026-10-24",
+  "server_component_always_load": false
+}

@@ -24,4 +24,6 @@ struct FGamePlatformVFXInstanceRecord
     TArray<FGamePlatformVFXHandle> Children;
     EGamePlatformVFXInstanceState State = EGamePlatformVFXInstanceState::Pending;
     bool bPooled = false;
+    /** 仅表示本实例需要上传中立运动参数，不拥有运动或独立生命周期。 */
+    bool bMotionParameters = false;
 };

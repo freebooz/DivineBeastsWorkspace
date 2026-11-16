@@ -6,6 +6,8 @@
 #include "Panels/Combat/DivineBeastsAbilityBarPanel.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Components/Image.h"
+#include "Components/TextBlock.h"
+#include "Components/DivineBeastsAbilityLoadoutComponent.h"
 #include "Engine/Texture2D.h"
 
 #include <limits>
@@ -158,6 +160,93 @@ bool FDivineBeastsAbilityBarReconstructTest::RunTest(const FString&)
     const int32 InactiveRevision = Widget->GetPresentationRevision();
     Original->OnSlotsChanged().Broadcast({});
     TestEqual(TEXT("失活后不再消费异步视图事件"), Widget->GetPresentationRevision(), InactiveRevision);
+    return true;
+}
+/** 已保存槽位必须消费完整详情事件：只变等级也刷新，同技能不同槽不能串用详情，清空不能遗留提示。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAbilityDetailsProjectionTest,
+    "DivineBeasts.UI.Combat.AbilityDetailsProjection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsAbilityDetailsProjectionTest::RunTest(const FString&)
+{
+    UClass* Class = LoadClass<UDivineBeastsAbilityBarPanel>(nullptr,
+        TEXT("/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar.WBP_DBA_UI_AbilityBar_C"));
+    if (!TestNotNull(TEXT("真实技能栏类"), Class)) return false;
+    TStrongObjectPtr<UDivineBeastsAbilityBarPanel> Bar(NewObject<UDivineBeastsAbilityBarPanel>(GetTransientPackage(), Class));
+    Bar->Initialize();
+    Bar->NativeConstruct();
+    auto* Slot = Cast<UGamePlatformSlotWidget>(Bar->GetWidgetFromName(TEXT("ActiveAbilitySlot1")));
+    if (!TestNotNull(TEXT("真实槽位"), Slot)) return false;
+    // 图标/文字不接收点击时，由已保存的48×48槽控件接收指针并承载悬浮提示。
+    for (const TCHAR* Name : {TEXT("PrimaryAbilitySlot"), TEXT("ActiveAbilitySlot1"), TEXT("ActiveAbilitySlot2"),
+        TEXT("UltimateAbilitySlot"), TEXT("PassiveAbilitySlot")})
+    {
+        auto* NamedSlot = Bar->GetWidgetFromName(Name);
+        if (TestNotNull(TEXT("五个真实槽位均存在"), NamedSlot))
+            TestEqual(TEXT("技能格自身必须接收命中"), NamedSlot->GetVisibility(), ESlateVisibility::Visible);
+    }
+    Slot->Initialize();
+    auto* Level = Cast<UTextBlock>(Slot->GetWidgetFromName(TEXT("LevelText")));
+    auto* Cooldown = Cast<UTextBlock>(Slot->GetWidgetFromName(TEXT("CooldownText")));
+    if (!TestNotNull(TEXT("等级文本"), Level) || !TestNotNull(TEXT("冷却文本"), Cooldown)) return false;
+    auto* Model = Bar->AbilityBarViewModel.Get();
+    if (!TestNotNull(TEXT("实际事件来源"), Model)) return false;
+    FGamePlatformUISlotState State;
+    State.SlotId = TEXT("Platform.Ability.Input.DivineBeasts.Slot1");
+    State.ContentId = TEXT("Ability.Test.Details");
+    State.bEnabled = false;
+    State.OverlayProgress = 0.5f;
+    FDivineBeastsAbilitySlotDetails Detail;
+    Detail.SlotId = State.SlotId;
+    Detail.AbilityId = State.ContentId;
+    Detail.AbilityLevel = 3;
+    Detail.DisplayName = FText::FromString(TEXT("测试技能"));
+    Detail.Description = FText::FromString(TEXT("测试说明"));
+    Detail.DisabledReason = FText::FromString(TEXT("技能冷却中"));
+    Detail.CooldownRemainingSeconds = 2.f;
+    Detail.CooldownTotalSeconds = 4.f;
+    Model->SlotDetails = {Detail};
+    Model->OnSlotsChanged().Broadcast({State});
+    TestEqual(TEXT("授权等级投影到已有文本"), Level->GetText().ToString(), FText::AsNumber(3).ToString());
+    TestTrue(TEXT("提示包含名称"), Slot->GetToolTipText().ToString().Contains(TEXT("测试技能")));
+    TestTrue(TEXT("提示包含说明"), Slot->GetToolTipText().ToString().Contains(TEXT("测试说明")));
+    TestTrue(TEXT("提示包含禁用原因"), Slot->GetToolTipText().ToString().Contains(TEXT("技能冷却中")));
+    TestEqual(TEXT("冷却文字为事件状态，不伪造逐秒倒计时"), Cooldown->GetText().ToString(), FString(TEXT("冷却")));
+    Model->SlotDetails[0].AbilityLevel = 4;
+    Model->OnSlotsChanged().Broadcast({State});
+    TestEqual(TEXT("通用槽快照未变也刷新详情"), Level->GetText().ToString(), FText::AsNumber(4).ToString());
+    Model->SlotDetails[0].SlotId = TEXT("Platform.Ability.Input.DivineBeasts.Slot2");
+    Model->OnSlotsChanged().Broadcast({State});
+    TestTrue(TEXT("相同技能的其他槽详情不能串格"), Level->GetText().IsEmpty());
+    Model->OnSlotsChanged().Broadcast({});
+    TestTrue(TEXT("解绑清空悬浮说明"), Slot->GetToolTipText().IsEmpty());
+    TestTrue(TEXT("解绑清空冷却文本"), Cooldown->GetText().IsEmpty());
+    Bar->NativeDestruct();
+    return true;
+}
+
+/** 显示与点击共同采用唯一授权查询；畸形重复项无论排列顺序都不能留下任意一个可操作技能。 */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsAbilityGrantIdentityTest,
+    "DivineBeasts.UI.Combat.AbilityGrantIdentity",
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+bool FDivineBeastsAbilityGrantIdentityTest::RunTest(const FString&)
+{
+    FDivineBeastsAbilityLoadoutState Snapshot;
+    FDivineBeastsGrantedAbilitySlot A;
+    A.SlotId = TEXT("Platform.Ability.Input.DivineBeasts.Slot1");
+    A.AbilityId = TEXT("Ability.Test.A"); A.AbilityLevel = 1;
+    auto B = A; B.AbilityId = TEXT("Ability.Test.B");
+    Snapshot.Slots = {A};
+    TestNotNull(TEXT("唯一授权可投影"), UDivineBeastsAbilityBarViewModel::FindUniqueGrantedSlot(Snapshot, A.SlotId));
+    Snapshot.Slots = {A, B};
+    TestNull(TEXT("冲突授权全部拒绝"), UDivineBeastsAbilityBarViewModel::FindUniqueGrantedSlot(Snapshot, A.SlotId));
+    Snapshot.Slots = {B, A};
+    TestNull(TEXT("不以数组顺序选技能"), UDivineBeastsAbilityBarViewModel::FindUniqueGrantedSlot(Snapshot, A.SlotId));
+    Snapshot.Slots = {A, A};
+    TestNull(TEXT("同技能重复授权同样拒绝"), UDivineBeastsAbilityBarViewModel::FindUniqueGrantedSlot(Snapshot, A.SlotId));
+    B.SlotId = TEXT("Platform.Ability.Input.DivineBeasts.Slot2"); Snapshot.Slots = {A, B};
+    TestNotNull(TEXT("独立槽位互不误伤"), UDivineBeastsAbilityBarViewModel::FindUniqueGrantedSlot(Snapshot, B.SlotId));
+    TestNull(TEXT("未授权槽位无结果"), UDivineBeastsAbilityBarViewModel::FindUniqueGrantedSlot(Snapshot, TEXT("Unknown")));
+    TestNull(TEXT("空槽身份无结果"), UDivineBeastsAbilityBarViewModel::FindUniqueGrantedSlot(Snapshot, NAME_None));
     return true;
 }
 #endif

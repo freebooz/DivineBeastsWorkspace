@@ -134,6 +134,8 @@ class FDivineBeastsProjectLoadingContext final
             return true;
         }
 
+        bool IsObservedWorld(const UWorld& World) const { return ObservedWorld.Get() == &World; }
+
         bool IsWorldOperable() const
         {
             UGameInstance* Owner = Instance.Get();
@@ -516,6 +518,7 @@ void UDivineBeastsApplicationFlowSubsystem::Deinitialize()
     bRestartAfterLogout = false;
 
     ReleaseCharacterCreationValidationLease();
+    CancelPendingWorldRecovery();
 
     if (Backend.IsValid())
     {
@@ -943,10 +946,15 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
 
     if (ExecutorId == FDivineBeastsFlowExecutors::RequestWorld())
     {
+        const FDivineBeastsWorldAssignmentSummary Previous = ProjectContext->GetAssignment();
+        const bool bRecoveringArena =
+            !PendingTrustedMigration.IsSet() &&
+            Previous.ServerRoleId == FDivineBeastsProjectCatalog::GetMainArenaServerRole() &&
+            Previous.ExperienceId == ProjectContext->GetTargetExperience();
         if (!Backend.IsValid() ||
             !ProjectContext->HasSelectedCharacter() ||
             ProjectContext->GetTargetExperience().IsNone() ||
-            (!PendingTrustedMigration.IsSet()&&!IsExperienceAllowedForCurrentProfile(
+            (!PendingTrustedMigration.IsSet() && !bRecoveringArena && !IsExperienceAllowedForCurrentProfile(
                 ProjectContext->GetTargetExperience())))
         {
             SetError(EDivineBeastsFlowError::ExperienceNotAllowed);
@@ -965,17 +973,19 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
         const TSharedRef<FGamePlatformFlowCompletion> SharedComplete =
             MakeShared<FGamePlatformFlowCompletion>(MoveTemp(Complete));
         TWeakObjectPtr<UDivineBeastsApplicationFlowSubsystem> WeakThis(this);
-        FDivineBeastsWorldAssignmentCompletion AssignmentCompletion=
-            [WeakThis, Token, SharedComplete, ExpectedExperience,
+        const FGuid Auth = Online ? Online->GetSnapshot().AuthGeneration : FGuid{};
+        auto CompleteAssignment =
+            [WeakThis, Token, SharedComplete, Auth,
              ExpectedCharacterId = Character.CharacterId](
+                 FName RequiredExperience,
                 bool bSuccess,
                 FDivineBeastsWorldAssignmentPayload Assignment,
-                EDivineBeastsFlowError Error) mutable
+                 EDivineBeastsFlowError Error)
             {
                 AsyncTask(
                     ENamedThreads::GameThread,
-                    [WeakThis, Token, SharedComplete, ExpectedExperience,
-                     ExpectedCharacterId = MoveTemp(ExpectedCharacterId),
+                    [WeakThis, Token, SharedComplete, RequiredExperience, Auth,
+                     ExpectedCharacterId,
                      bSuccess, Assignment = MoveTemp(Assignment), Error]() mutable
                     {
                         UDivineBeastsApplicationFlowSubsystem* Self = WeakThis.Get();
@@ -994,8 +1004,10 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
                         }
 
                         FName ExpectedRole = NAME_None;
+                        const bool bFromRecovery = RequiredExperience.IsNone();
                         const bool bMappingValid =
-                            Assignment.Summary.ExperienceId == ExpectedExperience &&
+                            (bFromRecovery ? Self->IsCurrentTrustedAssignment(Assignment, Auth)
+                                : Assignment.Summary.ExperienceId == RequiredExperience) &&
                             FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(
                                 Assignment.Summary.ExperienceId,
                                 ExpectedRole) &&
@@ -1013,6 +1025,11 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
                             return;
                         }
 
+                        if (bFromRecovery)
+                        {
+                            Self->FlowContext->SetTargetExperience(
+                                Assignment.Summary.ExperienceId, Assignment.Summary.RegionId.ToString());
+                        }
                         Self->FlowContext->SetAssignment(
                             Assignment.Summary,
                             MoveTemp(Assignment.Endpoint),
@@ -1021,15 +1038,79 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
                         (*SharedComplete)(FGamePlatformFlowNodeResult::Success());
                     });
             };
-        if(PendingTrustedMigration.IsSet())
+
+        auto RequestRecovery = [WeakThis, Token, Previous, CompleteAssignment, Auth]()
+        {
+            auto* Self = WeakThis.Get();
+            if (!Self || !Self->IsCurrentToken(Token) || Self->PendingWorldRecovery)
+            {
+                return;
+            }
+            if (!Auth.IsValid() || !Self->Online || Self->Online->GetSnapshot().AuthGeneration != Auth)
+            {
+                CompleteAssignment(NAME_None, false, {}, EDivineBeastsFlowError::AuthenticationRequired);
+                return;
+            }
+            const TArray<FName> Providers = Self->ExtensionOrder;
+            for (const FName Id : Providers)
+            {
+                if (!Self->IsCurrentToken(Token))
+                {
+                    return;
+                }
+                const auto Provider = Self->Extensions.FindRef(Id);
+                if (!Provider)
+                {
+                    continue;
+                }
+                auto Cancel = Provider->TryRequestWorldRecovery(Previous,
+                    [CompleteAssignment](bool bSuccess, FDivineBeastsWorldAssignmentPayload Assignment)
+                    {
+                        CompleteAssignment(NAME_None, bSuccess, MoveTemp(Assignment),
+                            EDivineBeastsFlowError::ReconnectExhausted);
+                    });
+                if (Cancel)
+                {
+                    if (Self->IsCurrentToken(Token))
+                    {
+                        Self->PendingWorldRecovery = MoveTemp(Cancel);
+                    }
+                    else
+                    {
+                        Cancel();
+                    }
+                    return;
+                }
+            }
+            CompleteAssignment(NAME_None, false, {}, EDivineBeastsFlowError::ReconnectExhausted);
+        };
+
+        if (PendingTrustedMigration.IsSet())
         {
             const bool bCurrent=Online&&Online->GetSnapshot().AuthGeneration==PendingMigrationAuthGeneration;
             auto Payload=MoveTemp(PendingTrustedMigration.GetValue());PendingTrustedMigration.Reset();PendingMigrationAuthGeneration.Invalidate();
-            AssignmentCompletion(bCurrent,MoveTemp(Payload),bCurrent?EDivineBeastsFlowError::None:EDivineBeastsFlowError::AuthenticationRequired);
+            CompleteAssignment(ExpectedExperience, bCurrent, MoveTemp(Payload),
+                bCurrent ? EDivineBeastsFlowError::None : EDivineBeastsFlowError::AuthenticationRequired);
+        }
+        else if (bRecoveringArena)
+        {
+            RequestRecovery();
         }
         else
         {
-            Backend->RequestWorldAssignment(Character.CharacterId,Character.CharacterRevision,ExpectedExperience,PreferredRegion,RequestId,MoveTemp(AssignmentCompletion));
+            Backend->RequestWorldAssignment(Character.CharacterId, Character.CharacterRevision,
+                ExpectedExperience, PreferredRegion, RequestId,
+                [CompleteAssignment, RequestRecovery, ExpectedExperience](
+                    bool bSuccess, FDivineBeastsWorldAssignmentPayload Assignment, EDivineBeastsFlowError Error)
+                {
+                    if (!bSuccess && Error == EDivineBeastsFlowError::MatchMigrationRequired)
+                    {
+                        // 重新登录也从比赛权威获取票据。延迟到节点栈外，避免同步重入。
+                        AsyncTask(ENamedThreads::GameThread, RequestRecovery);
+                        return;
+                    }
+                    CompleteAssignment(ExpectedExperience, bSuccess, MoveTemp(Assignment), Error);
+                });
         }
         return;
     }
@@ -1074,7 +1155,15 @@ void UDivineBeastsApplicationFlowSubsystem::ExecuteProjectNode(
             return;
         }
 
-        FName ExperienceId = ProjectContext->GetAssignment().ExperienceId;
+        const auto& Previous = ProjectContext->GetAssignment();
+        if (Previous.ServerRoleId == FDivineBeastsProjectCatalog::GetMainArenaServerRole())
+        {
+            ProjectContext->SetTargetExperience(Previous.ExperienceId, FString());
+            Complete(FGamePlatformFlowNodeResult::Success());
+            return;
+        }
+
+        FName ExperienceId = Previous.ExperienceId;
         if (ExperienceId.IsNone() ||
             !IsExperienceAllowedForCurrentProfile(ExperienceId))
         {
@@ -1103,6 +1192,11 @@ void UDivineBeastsApplicationFlowSubsystem::FinishProjectNode(
     EGamePlatformFlowFinishReason Reason)
 {
     check(IsInGameThread());
+
+    if (ExecutorId == FDivineBeastsFlowExecutors::RequestWorld())
+    {
+        CancelPendingWorldRecovery();
+    }
 
     // 同一时间平台只运行一个主节点；HTTP节点退出时取消尚未结束的本节点请求，
     // 已完成请求已从ActiveRequests移除，因此成功路径不会产生额外网络取消开销。
@@ -1439,29 +1533,35 @@ bool UDivineBeastsApplicationFlowSubsystem::RequestWorldAssignment(
     FName DesiredExperienceId,
     const FString& PreferredRegion)
 {
-    if (!FlowContext ||
+    if (!IsInGameThread() || ViewState.bBusy || !FlowContext ||
         !FlowContext->HasSelectedCharacter() ||
-        !IsCurrentNode(FDivineBeastsFlowNodes::InWorld()) ||
+        !IsCurrentNode(FDivineBeastsFlowNodes::InWorld()))
+    {
+        return false;
+    }
+    if (FlowContext->GetAssignment().ServerRoleId == FDivineBeastsProjectCatalog::GetMainArenaServerRole() ||
         !IsExperienceAllowedForCurrentProfile(DesiredExperienceId))
     {
         SetError(EDivineBeastsFlowError::ExperienceNotAllowed);
         return false;
     }
 
-    NotifyExtensionsLeavingWorld();
-    FlowContext->SetTargetExperience(
-        DesiredExperienceId,
-        PreferredRegion);
-
-    const bool bAccepted = SubmitCurrentNodeEvent(
+    const auto Token = GetCurrentNodeToken();
+    if (!SubmitCurrentNodeEvent(
         FDivineBeastsFlowNodes::InWorld(),
         FGamePlatformFlowNodeResult::Success(
-            FDivineBeastsFlowOutcomes::RequestWorld()));
-    if (bAccepted)
+            FDivineBeastsFlowOutcomes::RequestWorld())))
     {
-        SetBusy(true);
+        return false;
     }
-    return bAccepted;
+    // SubmitEvent只将事件入邮箱。先受理，再提交目标；拒绝或通知重入均不能覆盖此次意图。
+    FlowContext->SetTargetExperience(DesiredExperienceId, PreferredRegion);
+    SetBusy(true);
+    if (IsCurrentToken(Token))
+    {
+        NotifyExtensionsLeavingWorld();
+    }
+    return true;
 }
 
 FName UDivineBeastsApplicationFlowSubsystem::DefaultExperienceForOnboarding() const
@@ -1643,6 +1743,7 @@ UDivineBeastsApplicationFlowSubsystem::BeginLoadingForAssignment()
     ActiveTransferOperationId = FGuid::NewGuid();
     FlowContext->SetLoadingObservationId(ActiveTransferOperationId);
     ViewState.LoadingObservationId = ActiveTransferOperationId;
+    ViewState.WorldEntryPresentation = {};
 
     LoadingContext = MakeShared<FDivineBeastsProjectLoadingContext>(
         *GetGameInstance(),
@@ -1833,6 +1934,13 @@ bool UDivineBeastsApplicationFlowSubsystem::NotifyWorldObserved(
         return false;
     }
 
+    // 定义可能晚于World通知到达；尚未校验包身份时继续等待，不提前发布目标已加载。
+    if (!LoadingContext->HasWorldDefinition())
+    {
+        return false;
+    }
+
+    const bool bFirstObservation = !LoadingContext->HasObservedWorld();
     if (!LoadingContext->ObserveWorld(
             ObservationId,
             ExperienceId,
@@ -1843,13 +1951,19 @@ bool UDivineBeastsApplicationFlowSubsystem::NotifyWorldObserved(
         return false;
     }
 
-    if (!ObservedWorld ||
-        !Loading->ReportWorldOperable(
-            ActiveLoadingOperation,
-            *ObservedWorld).IsSuccess())
+    // 本操作使用项目自定义任务，未配置内置WorldPresence/TargetWorldPackage。
+    // 操作性由同一已校验WorldDefinition的项目Context和任务IsReadyToUse共同验证；
+    // 不能再用空的内置目标包拒绝已确认的真实World。
+    if (!LoadingContext->IsWorldOperable())
     {
         SetError(EDivineBeastsFlowError::WorldMismatch);
         return false;
+    }
+
+    if (bFirstObservation)
+    {
+        UE_LOG(LogTemp, Display, TEXT("WorldReadiness: ExpectedWorldObserved Operation=%s Package=%s"),
+            *ObservationId.ToString(), *ObservedWorld->GetOutermost()->GetName());
     }
 
     TryReportLocalFactsToSession();
@@ -1893,12 +2007,21 @@ bool UDivineBeastsApplicationFlowSubsystem::MarkLoadingFactReady(
         !TryGetReadinessFact(TaskId, Fact) ||
         Fact == DivineBeastsLoading::Fact::SessionAdmission ||
         Fact == DivineBeastsLoading::Fact::ExpectedWorld ||
-        Fact == DivineBeastsLoading::Fact::ExpectedExperience ||
-        !LoadingContext->Observe(ObservationId, Fact))
+        Fact == DivineBeastsLoading::Fact::ExpectedExperience)
     {
         return false;
     }
 
+    const bool bFirstObservation = !LoadingContext->Has(Fact);
+    if (!LoadingContext->Observe(ObservationId, Fact))
+    {
+        return false;
+    }
+    if (bFirstObservation)
+    {
+        UE_LOG(LogTemp, Display, TEXT("WorldReadiness: FactObserved Operation=%s Task=%s"),
+            *ObservationId.ToString(), *TaskId.ToString());
+    }
     TryCompleteWorldReady();
     return true;
 }
@@ -1913,9 +2036,19 @@ void UDivineBeastsApplicationFlowSubsystem::TryReportLocalFactsToSession()
         return;
     }
 
-    const FGamePlatformSessionSnapshot SessionSnapshot =
-        Session->GetSnapshot();
-    if (SessionSnapshot.TransferOperationId != ActiveTransferOperationId ||
+    const FGuid ReportingOperation = ActiveTransferOperationId;
+    const TSharedPtr<FDivineBeastsProjectLoadingContext> ReportingContext = LoadingContext;
+    const TWeakObjectPtr<UGamePlatformSessionClientSubsystem> ReportingSession = Session;
+    const auto IsCurrentReport = [this, ReportingOperation, ReportingContext, ReportingSession]()
+    {
+        return ReportingSession.IsValid() && Session == ReportingSession.Get() &&
+            ActiveTransferOperationId == ReportingOperation && LoadingContext == ReportingContext &&
+            ReportingContext->IsActiveFor(ReportingOperation);
+    };
+    if (!IsCurrentReport()) { return; }
+
+    const FGamePlatformSessionSnapshot SessionSnapshot = ReportingSession->GetSnapshot();
+    if (SessionSnapshot.TransferOperationId != ReportingOperation ||
         !SessionSnapshot.Binding.IsValid())
     {
         return;
@@ -1924,19 +2057,21 @@ void UDivineBeastsApplicationFlowSubsystem::TryReportLocalFactsToSession()
     TGuardValue<bool> Guard(bSynchronizingSessionFacts, true);
     FGamePlatformResult Ignored;
 
-    if (LoadingContext->Has(DivineBeastsLoading::Fact::ExpectedWorld))
+    if (ReportingContext->Has(DivineBeastsLoading::Fact::ExpectedWorld))
     {
-        Session->ReportLocalFact(
-            ActiveTransferOperationId,
+        ReportingSession->ReportLocalFact(
+            ReportingOperation,
             EGamePlatformSessionTransferFact::TargetWorldLoaded,
             SessionSnapshot.Binding,
             Ignored);
     }
 
-    if (LoadingContext->Has(DivineBeastsLoading::Fact::CharacterBinding))
+    // ReportLocalFact同步派发Session通知，Ready/注销可在回调中释放或替换Loading上下文。
+    if (!IsCurrentReport()) { return; }
+    if (ReportingContext->Has(DivineBeastsLoading::Fact::CharacterBinding))
     {
-        Session->ReportLocalFact(
-            ActiveTransferOperationId,
+        ReportingSession->ReportLocalFact(
+            ReportingOperation,
             EGamePlatformSessionTransferFact::ControllerReady,
             SessionSnapshot.Binding,
             Ignored);
@@ -1966,9 +2101,40 @@ void UDivineBeastsApplicationFlowSubsystem::TryCompleteWorldReady()
         return;
     }
 
-    SubmitCurrentNodeEvent(
+    const FGuid CompletedOperationId = ActiveTransferOperationId;
+    if (SubmitCurrentNodeEvent(
         FDivineBeastsFlowNodes::WorldReady(),
-        FGamePlatformFlowNodeResult::Success());
+        FGamePlatformFlowNodeResult::Success()))
+    {
+        UE_LOG(LogTemp, Display, TEXT("WorldReadiness: Completed Operation=%s"), *CompletedOperationId.ToString());
+    }
+}
+
+bool UDivineBeastsApplicationFlowSubsystem::TryRecoverArenaEntry()
+{
+    if (!FlowContext || !Online || !ActiveTransferOperationId.IsValid()) { return false; }
+    const auto& Assignment = FlowContext->GetAssignment();
+    const auto Auth = Online->GetSnapshot();
+    const auto Token = GetCurrentNodeToken();
+    if (!Token.IsValid() || (Token.NodeId != FDivineBeastsFlowNodes::TransferWorld() &&
+        Token.NodeId != FDivineBeastsFlowNodes::WorldReady()) ||
+        Assignment.ServerRoleId != FDivineBeastsProjectCatalog::GetMainArenaServerRole() ||
+        Assignment.AssignmentId.IsEmpty() || !Auth.AuthGeneration.IsValid() ||
+        Auth.SessionId.IsEmpty() || Auth.SessionId != Assignment.SessionId)
+    {
+        return false;
+    }
+    if (ArenaEntryRecoveryToken.Handle.ScopeId == Token.Handle.ScopeId &&
+        ArenaEntryRecoveryToken.Handle.RunId == Token.Handle.RunId && ArenaEntryRecoveryToken.NodeGeneration == Token.NodeGeneration)
+    {
+        return true;
+    }
+    if (!SubmitCurrentNodeEvent(Token.NodeId, FGamePlatformFlowNodeResult::Success(FDivineBeastsFlowOutcomes::Recover())))
+    {
+        return false;
+    }
+    ArenaEntryRecoveryToken = Token;
+    return true;
 }
 
 void UDivineBeastsApplicationFlowSubsystem::FailWorldReady(
@@ -1997,6 +2163,7 @@ bool UDivineBeastsApplicationFlowSubsystem::ReleaseLoadingOperation()
 
     ViewState.LoadingObservationId.Invalidate();
     ViewState.LoadingProgress01 = -1.0f;
+    ViewState.WorldEntryPresentation = {};
     ActiveTransferOperationId.Invalidate();
 
     bool bSuccess = true;
@@ -2173,14 +2340,28 @@ void UDivineBeastsApplicationFlowSubsystem::HandleAuthSnapshot(
                     static_cast<int64>(Snapshot.State))
             : FString();
 
-    // 只投影无秘密认证事实，Password/AccessToken/RefreshToken 永不进入流程 ViewState。
+    // 刷新只轮换凭据，不撤销同账号/同认证代次的准入。错误地传空账号会让Session主动断线，
+    // 并清掉TransferOperationId，使旧InWorld流程收不到断线终态而在前端显示黑屏。
+    // 这里仅保留身份投影，受保护请求仍由Online等待刷新，不能绕过凭据有效性校验。
+    const bool bHadAuthentication = ViewState.bAuthenticated;
     ViewState.bAuthenticated =
-        Snapshot.State == EGamePlatformAuthState::Authenticated;
+        (Snapshot.State == EGamePlatformAuthState::Authenticated ||
+         Snapshot.State == EGamePlatformAuthState::Refreshing) &&
+        !Snapshot.AccountId.IsEmpty() && Snapshot.AuthGeneration.IsValid();
+
+    if (bHadAuthentication && !ViewState.bAuthenticated && !bRestartAfterLogout)
+    {
+        // 真正失效先取消旧流程，再由唯一Session Transport离开世界；同步注销回调启动
+        // 干净的人工登录流程，不能留下InWorld页面或自动重放过期票据。
+        UE_LOG(LogTemp, Log, TEXT("[DBA Flow] Authentication ended; restarting login flow."));
+        LogoutAndRestart();
+        return;
+    }
 
     if (Session)
     {
         Session->SetAuthenticationContext(
-            Snapshot.State == EGamePlatformAuthState::Authenticated
+            ViewState.bAuthenticated
                 ? Snapshot.AccountId
                 : FString(),
             Snapshot.AuthGeneration);
@@ -2251,6 +2432,7 @@ void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
 
     if (IsSessionFailureState(Snapshot.State))
     {
+        if (TryRecoverArenaEntry()) { return; }
         if (IsCurrentNode(FDivineBeastsFlowNodes::TransferWorld()))
         {
             SetError(EDivineBeastsFlowError::AdmissionFailed);
@@ -2266,12 +2448,22 @@ void UDivineBeastsApplicationFlowSubsystem::HandleSessionSnapshot(
 
         if (IsCurrentNode(FDivineBeastsFlowNodes::InWorld()))
         {
-            NotifyExtensionsLeavingWorld();
-            SetError(EDivineBeastsFlowError::SessionDisconnected);
-            SubmitCurrentNodeEvent(
+            const auto Token = GetCurrentNodeToken();
+            if (SubmitCurrentNodeEvent(
                 FDivineBeastsFlowNodes::InWorld(),
                 FGamePlatformFlowNodeResult::Success(
-                    FDivineBeastsFlowOutcomes::Recover()));
+                    FDivineBeastsFlowOutcomes::Recover())))
+            {
+                SetBusy(true);
+                if (IsCurrentToken(Token))
+                {
+                    NotifyExtensionsLeavingWorld();
+                }
+                if (IsCurrentToken(Token))
+                {
+                    SetError(EDivineBeastsFlowError::SessionDisconnected);
+                }
+            }
             return;
         }
     }
@@ -2286,11 +2478,12 @@ void UDivineBeastsApplicationFlowSubsystem::ObserveCurrentGameplayWorld()
     if(bObservingGameplayFacts)return;
     TGuardValue<bool> Guard(bObservingGameplayFacts,true);
     if(!Session || !ActiveTransferOperationId.IsValid() || !LoadingContext.IsValid())return;
+    const FGuid ObservationId = ActiveTransferOperationId;
     const auto S=Session->GetSnapshot();
     UWorld* World=GetGameInstance()->GetWorld();
     auto* LocalController=World?World->GetFirstPlayerController():nullptr;
     auto* Controller=Cast<ADivineBeastsWorldPlayerController>(LocalController);
-    if(!LocalController || !LocalController->IsLocalController() || S.TransferOperationId!=ActiveTransferOperationId || !S.bAdmissionConfirmed)return;
+    if(!LocalController || !LocalController->IsLocalController() || S.TransferOperationId!=ObservationId || !S.bAdmissionConfirmed)return;
     if(ObservedWorldController.Get()!=Controller)
     {
         if(ObservedWorldController.IsValid())ObservedWorldController->OnLocalWorldFactsChanged.RemoveAll(this);
@@ -2298,6 +2491,7 @@ void UDivineBeastsApplicationFlowSubsystem::ObserveCurrentGameplayWorld()
         if(Controller)Controller->OnLocalWorldFactsChanged.AddUObject(this,&ThisClass::ObserveCurrentGameplayWorld);
     }
     bool bPawnBound=false,bResourcesPrepared=false,bGameplayActive=false;
+    FDivineBeastsWorldEntryPresentation Presentation;
     if(Controller)
     {
         bPawnBound=Controller->IsLocalPawnBound();bResourcesPrepared=Controller->AreLocalResourcesPrepared();bGameplayActive=Controller->IsWorldGameplayActive();
@@ -2309,27 +2503,57 @@ void UDivineBeastsApplicationFlowSubsystem::ObserveCurrentGameplayWorld()
         for(const FName Id:ExtensionOrder)
         {
             const auto* Extension=Extensions.Find(Id);
-            if(Extension&&Extension->IsValid()&&(*Extension)->TryObserveWorldReadiness(*World,bPawnBound,bResourcesPrepared,bGameplayActive))
+            if(Extension&&Extension->IsValid()&&(*Extension)->TryObserveWorldReadiness(*World,
+                bPawnBound,bResourcesPrepared,bGameplayActive,Presentation))
             {if(bOwned)return;bOwned=true;}
         }
         if(!bOwned)return;
     }
-    const auto& A=ViewState.Assignment;
+    if (Presentation.bTrustedReturnAvailable && TryRecoverArenaEntry()) { return; }
+    const FName WorldId = ViewState.Assignment.WorldId;
+    const FName ExperienceId = ViewState.Assignment.ExperienceId;
     if(!LoadingContext->HasWorldDefinition() || !World->HasBegunPlay())return;
     auto* Service=IGamePlatformWorldService::Get(*World);
     if(Service && Service->GetReadiness().Context.AuthorityKind==EGamePlatformWorldAuthority::Unbound)
     {
         // 本值来自当前经服务器握手确认的Session，不从界面或URL接受任意世界身份。
         FGamePlatformWorldContext C;
-        if(!FGamePlatformId::TryParse(A.WorldId.ToString(),C.WorldId) || !FGamePlatformId::TryParse(A.ExperienceId.ToString()+TEXT("@1"),C.ExperienceId))return;
-        C.ServerInstanceId=A.GameServerId; C.ServerStartGeneration=1; C.AuthorityKind=EGamePlatformWorldAuthority::SessionProjection;
-        const FPrimaryAssetId Id(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),A.WorldId);
+        if(!FGamePlatformId::TryParse(WorldId.ToString(),C.WorldId) || !FGamePlatformId::TryParse(ExperienceId.ToString()+TEXT("@1"),C.ExperienceId))return;
+        C.ServerInstanceId=ViewState.Assignment.GameServerId; C.ServerStartGeneration=1; C.AuthorityKind=EGamePlatformWorldAuthority::SessionProjection;
+        const FPrimaryAssetId Id(UGamePlatformPrimaryDataAsset::DefinitionAssetType(),WorldId);
         Service->InitializeBoundWorld(Id,C);
     }
-    NotifyWorldObserved(ActiveTransferOperationId,A.ExperienceId,A.WorldId,World);
-    if(bPawnBound)NotifyCharacterBindingReady(ActiveTransferOperationId);
-    if(bResourcesPrepared)NotifyGameplayDataReady(ActiveTransferOperationId);
-    if(bGameplayActive)NotifyProjectReadiness(ActiveTransferOperationId);
+    // 只有本次已准入、已验证的世界能露出准备场景。通知可同步完成或取消转场。
+    if (ActiveTransferOperationId != ObservationId ||
+        !NotifyWorldObserved(ObservationId, ExperienceId, WorldId, World) ||
+        ActiveTransferOperationId != ObservationId)
+    {
+        return;
+    }
+    const bool bPresentationChanged = !ViewState.WorldEntryPresentation.IsEquivalent(Presentation);
+    if (bPresentationChanged)
+    {
+        UE_LOG(LogTemp, Display, TEXT("WorldReadiness: EntryPresentationChanged Operation=%s DeadlineServerTime=%.3f"),
+            *ObservationId.ToString(), Presentation.CountdownDeadlineServerTime);
+        ViewState.WorldEntryPresentation = MoveTemp(Presentation);
+    }
+    if(bPawnBound)NotifyCharacterBindingReady(ObservationId);
+    if(bResourcesPrepared)NotifyGameplayDataReady(ObservationId);
+    if(bGameplayActive)NotifyProjectReadiness(ObservationId);
+    if (bPresentationChanged && ActiveTransferOperationId == ObservationId)
+    {
+        BroadcastView();
+    }
+}
+
+void UDivineBeastsApplicationFlowSubsystem::NotifyWorldEntryWorldRemoved(UWorld& World)
+{
+    if (LoadingContext && LoadingContext->IsActiveFor(ActiveTransferOperationId) &&
+        LoadingContext->IsObservedWorld(World) && !ViewState.WorldEntryPresentation.Stage.IsEmpty())
+    {
+        ViewState.WorldEntryPresentation = {};
+        BroadcastView();
+    }
 }
 
 void UDivineBeastsApplicationFlowSubsystem::HandleLoadingSnapshot(
@@ -2428,6 +2652,11 @@ void UDivineBeastsApplicationFlowSubsystem::SetError(
         return;
     }
     ViewState.Error = Error;
+    if (Error != EDivineBeastsFlowError::None)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("WorldFlowError: Code=%s Step=%s Operation=%s"),
+            *ProjectErrorCode(Error).ToString(), *ViewState.CurrentStep.ToString(), *ActiveTransferOperationId.ToString());
+    }
     RefreshAllowedActions();
     BroadcastView();
 }
@@ -2532,21 +2761,32 @@ void UDivineBeastsApplicationFlowSubsystem::NotifyExtensionsEnteredWorld()
 
 void UDivineBeastsApplicationFlowSubsystem::NotifyExtensionsLeavingWorld()
 {
-    for (const FName Id : ExtensionOrder)
+    const TArray<FName> Providers = ExtensionOrder;
+    for (const FName Id : Providers)
     {
-        const TSharedPtr<IDivineBeastsApplicationFlowExtension>* Extension =
-            Extensions.Find(Id);
-        if (Extension && Extension->IsValid())
+        if (const auto Extension = Extensions.FindRef(Id))
         {
-            (*Extension)->OnLeavingInWorld(*this);
+            Extension->OnLeavingInWorld(*this);
         }
     }
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::RequestPostMatchReturnToWorld()
 {
-    return RequestWorldAssignment(
-        FDivineBeastsProjectCatalog::GetOpenWorldHubExperience());
+    if (!IsInGameThread() || ViewState.bBusy || !IsCurrentNode(FDivineBeastsFlowNodes::InWorld()))
+    {
+        return false;
+    }
+    const TArray<FName> Providers = ExtensionOrder;
+    for (const FName Id : Providers)
+    {
+        const auto Extension = Extensions.FindRef(Id);
+        if (Extension && Extension->RequestPostMatchReturn())
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool UDivineBeastsApplicationFlowSubsystem::RetryFailedFlow()
@@ -2563,6 +2803,7 @@ void UDivineBeastsApplicationFlowSubsystem::LogoutAndRestart()
 {
     bRestartAfterLogout = true;
     ++StartRequestGeneration;
+    CancelPendingWorldRecovery();
 
     if (Backend.IsValid())
     {
@@ -2614,17 +2855,66 @@ void UDivineBeastsApplicationFlowSubsystem::ReleaseCharacterCreationValidationLe
     if (Data && Lease.IsValid()) Data->ReleaseResources(Lease);
 }
 
-bool UDivineBeastsApplicationFlowSubsystem::RequestTrustedWorldMigration(FDivineBeastsWorldAssignmentPayload Payload,FGuid AuthenticationGeneration)
+bool UDivineBeastsApplicationFlowSubsystem::IsCurrentTrustedAssignment(
+    const FDivineBeastsWorldAssignmentPayload& Payload, const FGuid& Auth) const
 {
-    if(!IsInGameThread()||!FlowContext||!Online||!IsCurrentNode(FDivineBeastsFlowNodes::InWorld())||!FlowContext->HasSelectedCharacter()||PendingTrustedMigration.IsSet()||!AuthenticationGeneration.IsValid()||Online->GetSnapshot().AuthGeneration!=AuthenticationGeneration)return false;
-    const auto& Assignment=Payload.Summary;FName Role;FGamePlatformId WorldId;
-    if(Assignment.CharacterId!=FlowContext->GetSelectedCharacter().CharacterId||Assignment.SessionId!=Online->GetSnapshot().SessionId||
-       !FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(Assignment.ExperienceId,Role)||Role!=Assignment.ServerRoleId||
-       !FGamePlatformId::TryParse(Assignment.WorldId.ToString(),WorldId)||Assignment.AssignmentId.IsEmpty()||Assignment.GameServerId.IsEmpty()||Assignment.GameSessionId.IsEmpty()||Assignment.ServerBootId.IsEmpty()||Assignment.SessionEpoch<=0||Payload.Endpoint.IsEmpty()||Payload.TransferTicket.IsEmpty())return false;
-    PendingMigrationAuthGeneration=AuthenticationGeneration;
-    FlowContext->SetTargetExperience(Assignment.ExperienceId,Assignment.RegionId.ToString());
-    PendingTrustedMigration=MoveTemp(Payload);NotifyExtensionsLeavingWorld();
-    const bool bAccepted=SubmitCurrentNodeEvent(FDivineBeastsFlowNodes::InWorld(),FGamePlatformFlowNodeResult::Success(FDivineBeastsFlowOutcomes::RequestWorld()));
-    if(!bAccepted){PendingTrustedMigration.Reset();PendingMigrationAuthGeneration.Invalidate();return false;}
-    SetBusy(true);return true;
+    if (!FlowContext || !FlowContext->HasSelectedCharacter() || !Online || !Auth.IsValid())
+    {
+        return false;
+    }
+    const auto Snapshot = Online->GetSnapshot();
+    const auto& Assignment = Payload.Summary;
+    FName Role;
+    FGamePlatformId WorldId;
+    return Snapshot.AuthGeneration == Auth &&
+        Assignment.CharacterId == FlowContext->GetSelectedCharacter().CharacterId &&
+        Assignment.SessionId == Snapshot.SessionId &&
+        FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(Assignment.ExperienceId, Role) &&
+        Role == Assignment.ServerRoleId &&
+        FGamePlatformId::TryParse(Assignment.WorldId.ToString(), WorldId) &&
+        !Assignment.AssignmentId.IsEmpty() && !Assignment.GameServerId.IsEmpty() &&
+        !Assignment.GameSessionId.IsEmpty() && !Assignment.ServerBootId.IsEmpty() &&
+        Assignment.SessionEpoch > 0 && !Payload.Endpoint.IsEmpty() && !Payload.TransferTicket.IsEmpty();
 }
+
+void UDivineBeastsApplicationFlowSubsystem::CancelPendingWorldRecovery()
+{
+    auto Cancel = MoveTemp(PendingWorldRecovery);
+    PendingWorldRecovery = {};
+    if (Cancel)
+    {
+        Cancel();
+    }
+}
+
+bool UDivineBeastsApplicationFlowSubsystem::RequestTrustedWorldMigration(
+    FDivineBeastsWorldAssignmentPayload Payload, FGuid AuthenticationGeneration)
+{
+    if (!IsInGameThread() || ViewState.bBusy || PendingTrustedMigration.IsSet() ||
+        !IsCurrentNode(FDivineBeastsFlowNodes::InWorld()) ||
+        !IsCurrentTrustedAssignment(Payload, AuthenticationGeneration))
+    {
+        return false;
+    }
+    const auto Token = GetCurrentNodeToken();
+    if (!SubmitCurrentNodeEvent(FDivineBeastsFlowNodes::InWorld(),
+        FGamePlatformFlowNodeResult::Success(FDivineBeastsFlowOutcomes::RequestWorld())))
+    {
+        return false;
+    }
+
+    FlowContext->SetTargetExperience(Payload.Summary.ExperienceId, Payload.Summary.RegionId.ToString());
+    PendingMigrationAuthGeneration = AuthenticationGeneration;
+    PendingTrustedMigration = MoveTemp(Payload);
+    SetBusy(true);
+    if (IsCurrentToken(Token))
+    {
+        NotifyExtensionsLeavingWorld();
+    }
+    return true;
+}
+
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
+// 私有LoadingContext定义在本翻译单元；回归仍归Private/Tests，只编入Editor原生测试。
+#include "Tests/DivineBeastsWorldObservationTests.inl"
+#endif

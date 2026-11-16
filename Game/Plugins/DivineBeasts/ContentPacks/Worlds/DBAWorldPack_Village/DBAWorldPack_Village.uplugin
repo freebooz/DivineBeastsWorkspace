@@ -10,6 +10,11 @@
   "EnabledByDefault": false,
   "Plugins": [
     {
+      "Name": "DBAFoliagePack_Core",
+      "Enabled": true,
+      "TargetAllowList": ["Game", "Client", "Editor"]
+    },
+    {
       "Name": "DBAWorlds",
       "Enabled": true,
       "TargetAllowList": ["Client", "Server", "Editor"]

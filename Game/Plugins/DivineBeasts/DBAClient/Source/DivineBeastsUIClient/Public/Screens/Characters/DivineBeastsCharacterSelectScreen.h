@@ -29,6 +29,8 @@ protected:
     /** 只在页面激活期间订阅输入、状态和命令完成事件，无业务Tick。 */
     virtual void NativeOnActivated() override;
     virtual void RotatePreviewFromDrag(float DeltaYawDegrees) override;
+    virtual void AdjustPreviewCameraDistanceFromWheel(float DeltaCentimeters) override;
+    virtual void AdjustPreviewCameraFocalLengthFromWheel(float DeltaMillimeters) override;
     virtual void NativeOnDeactivated() override;
     /** 空档案优先聚焦可见、启用且允许键盘焦点的创建入口；非空档案沿用当前卡片及原有回退。 */
     virtual UWidget* NativeGetDesiredFocusTarget() const override;

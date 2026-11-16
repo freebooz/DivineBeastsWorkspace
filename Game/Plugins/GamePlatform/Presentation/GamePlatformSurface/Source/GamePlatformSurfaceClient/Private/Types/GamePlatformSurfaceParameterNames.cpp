@@ -11,4 +11,8 @@ namespace GamePlatformSurfaceParameters
     const FName RainIntensity(TEXT("GP_Surface_RainIntensity"));
     const FName SnowIntensity(TEXT("GP_Surface_SnowIntensity"));
     const FName TemperatureCelsius(TEXT("GP_Surface_TemperatureCelsius"));
+    const FName GlobalWindFrom(TEXT("GlobalWindFrom"));
+    const FName GlobalWindTo(TEXT("GlobalWindTo"));
+    const FName GlobalWindTiming(TEXT("GlobalWindTiming"));
+    const FName GlobalWindSeed(TEXT("GlobalWindSeed"));
 }

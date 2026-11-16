@@ -8,6 +8,7 @@ class FGamePlatformWorldStreaming;
 struct FWorldRegionRecord { FGamePlatformWorldRegistration Handle; FGamePlatformRegionProvider Value; };
 struct FWorldObserverRecord { TWeakObjectPtr<UObject> Owner; FVector Position; FGamePlatformId Region; };
 struct FWorldRegionSubscription { TWeakObjectPtr<UObject> Owner; TFunction<void(const FGamePlatformRegionEvent&)> Callback; };
+struct FWorldReadinessSubscription { TWeakObjectPtr<UObject> Owner; TFunction<void(const FGamePlatformWorldReadinessSnapshot&)> Callback; };
 struct FWorldContributorRecord { TWeakObjectPtr<UObject> Owner; TSharedPtr<IGamePlatformWorldReadinessContributor> Contributor; };
 
 /** 私有世界服务：仅Game/PIE非Commandlet创建，实例间无共享可变登记表。 */
@@ -27,6 +28,8 @@ public:
     virtual FGamePlatformResult InitializeSessionWorld() override;
     virtual FGamePlatformResult InitializeBoundWorld(const FPrimaryAssetId&, const FGamePlatformWorldContext&) override;
     virtual FGamePlatformWorldReadinessSnapshot GetReadiness() override;
+    virtual FGamePlatformWorldRegistration SubscribeReadiness(TWeakObjectPtr<UObject>,TFunction<void(const FGamePlatformWorldReadinessSnapshot&)>,FGamePlatformResult&) override;
+    virtual bool UnsubscribeReadiness(const FGamePlatformWorldRegistration&) override;
     virtual FGamePlatformWorldRegistration RegisterRegionProvider(const FGamePlatformRegionProvider&,FGamePlatformResult&) override;
     virtual bool UnregisterRegionProvider(const FGamePlatformWorldRegistration&) override;
     virtual FGamePlatformResult QueryRegion(const FVector&,FGamePlatformId&) override;
@@ -45,6 +48,11 @@ private:
     void ReleaseOwnedResources();
     void Fail(FName Code, const FString& Message);
     void Refresh();
+    void PublishReadiness();
+    TMap<FGuid,TSharedPtr<FWorldReadinessSubscription>> ReadinessSubscriptions;
+    FGamePlatformWorldReadinessSnapshot PublishedReadiness;
+    bool bHasPublishedReadiness=false;
+    bool bPublishingReadiness=false;
     void LoadRegions(const TArray<FPrimaryAssetId>& Ids);
     void UpdateRegions();
     FGamePlatformWorldRegistration NewRegistration() const;

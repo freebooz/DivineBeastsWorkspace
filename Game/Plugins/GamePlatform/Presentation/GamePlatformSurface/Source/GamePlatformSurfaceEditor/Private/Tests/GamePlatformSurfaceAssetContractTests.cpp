@@ -31,6 +31,13 @@ bool FGamePlatformSurfaceMPCContractTest::RunTest(const FString& Parameters)
         Collection->ScalarParameters.Add(Parameter);
     }
 
+    for (const auto& Pair : FGamePlatformSurfaceAssetContract::GetRequiredVectorParameters())
+    {
+        FCollectionVectorParameter Parameter;
+        Parameter.ParameterName = Pair.Key;
+        Parameter.DefaultValue = Pair.Value;
+        Collection->VectorParameters.Add(Parameter);
+    }
     FString Error;
     TestTrue(
         TEXT("完整MPC参数合同应通过"),

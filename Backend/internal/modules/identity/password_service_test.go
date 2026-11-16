@@ -56,12 +56,11 @@ func (r *passwordRepositoryDouble) Rotate(_ context.Context, d string, n TokenRo
 	if r.err != nil {
 		return StoredSession{}, r.err
 	}
-	if d != r.record.RefreshDigest {
-		return StoredSession{}, ErrInvalidToken
+	fresh, err := n.Apply(r.record, d)
+	if err != nil {
+		return StoredSession{}, err
 	}
-	r.record.AccessDigest = n.AccessDigest
-	r.record.RefreshDigest = n.RefreshDigest
-	r.record.AccessExpiresAt = n.Now.Add(n.AccessTTL)
+	r.record = fresh
 	return r.record, nil
 }
 func (r *passwordRepositoryDouble) Logout(context.Context, string) error { return r.err }

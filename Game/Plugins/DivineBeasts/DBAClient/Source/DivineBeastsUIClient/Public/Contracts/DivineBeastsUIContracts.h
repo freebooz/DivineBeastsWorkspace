@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Loading/GamePlatformLoadingScreenService.h"
 #include "UObject/Interface.h"
 #include "DivineBeastsUIContracts.generated.h"
 
@@ -85,6 +86,7 @@ struct DIVINEBEASTSUICLIENT_API FDivineBeastsUILoadingProjection
     UPROPERTY(BlueprintReadOnly) FText Stage;
     /** 小于0表示真实进度未知，UI不得伪造0~100。 */
     UPROPERTY(BlueprintReadOnly) float Progress = -1.0f;
+    UPROPERTY(BlueprintReadOnly) FGamePlatformUILoadingPresentation Presentation;
 };
 
 /** FDivineBeastsUIWorldProjection（开放世界/新手村HUD只读投影）。 */

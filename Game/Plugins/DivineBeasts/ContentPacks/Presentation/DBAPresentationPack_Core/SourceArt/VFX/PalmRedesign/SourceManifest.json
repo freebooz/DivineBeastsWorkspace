@@ -1,0 +1,146 @@
+{
+  "units": "cm",
+  "proceduralAuthoring": true,
+  "runtimeFluids": false,
+  "meshes": [
+    {
+      "file": "SM_DBA_PalmFireCurl_A.obj",
+      "triangles": 496,
+      "min": [
+        -6.39516845116856,
+        -6.093125739325078,
+        1.0
+      ],
+      "max": [
+        5.5344879097613795,
+        7.362674228818687,
+        28.0
+      ],
+      "finite": true
+    },
+    {
+      "file": "SM_DBA_PalmIcePetal_A.obj",
+      "triangles": 92,
+      "min": [
+        1.0884197411715748,
+        -1.7702196182797234,
+        1.0
+      ],
+      "max": [
+        9.913699768615967,
+        2.1584704170981635,
+        21.0
+      ],
+      "finite": true
+    },
+    {
+      "file": "SM_DBA_PalmFireCurl_B.obj",
+      "triangles": 496,
+      "min": [
+        -6.66645187596442,
+        -7.0909290727661904,
+        1.0
+      ],
+      "max": [
+        5.174122213972595,
+        6.243972384772775,
+        26.0
+      ],
+      "finite": true
+    },
+    {
+      "file": "SM_DBA_PalmIcePetal_B.obj",
+      "triangles": 92,
+      "min": [
+        1.0897870040840614,
+        -2.3268540453030706,
+        1.0
+      ],
+      "max": [
+        10.024184470832248,
+        2.1525130587873225,
+        22.8
+      ],
+      "finite": true
+    },
+    {
+      "file": "SM_DBA_PalmFireCurl_C.obj",
+      "triangles": 496,
+      "min": [
+        -6.801698048979271,
+        -7.33369045265569,
+        1.0
+      ],
+      "max": [
+        6.8630736250673365,
+        4.840509801278486,
+        24.0
+      ],
+      "finite": true
+    },
+    {
+      "file": "SM_DBA_PalmIcePetal_C.obj",
+      "triangles": 92,
+      "min": [
+        1.0911662153817283,
+        -2.6389146045448504,
+        1.0
+      ],
+      "max": [
+        9.927465746534628,
+        1.9618513169200857,
+        24.6
+      ],
+      "finite": true
+    },
+    {
+      "file": "SM_DBA_PalmIceCore.obj",
+      "triangles": 80,
+      "min": [
+        -3.0,
+        -2.79,
+        -3.54
+      ],
+      "max": [
+        3.0,
+        2.79,
+        3.54
+      ],
+      "finite": true
+    }
+  ],
+  "textures": [
+    {
+      "file": "T_DBA_PalmFire_Flow.png",
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "65b61c2385de615c43987e9661f0daaaaa65086e20e4b5d2bb30c13d0ac09183"
+    },
+    {
+      "file": "T_DBA_PalmIce_Surface.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "8b8510fa3d28debaf03412473d63800a08e97723f68d0520c70ad17b0d3668a1"
+    },
+    {
+      "file": "T_DBA_PalmIce_Normal.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "63add83cb3f41936b8024aa1297e282cd9d9192e2c6145c7b425fc44ffd8c859"
+    },
+    {
+      "file": "T_DBA_PalmMist_Flipbook.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "77f002bedba1f3d89efd4b83845d9332d639bf9585e6fddb41627de231697084"
+    }
+  ]
+}

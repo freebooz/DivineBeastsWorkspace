@@ -109,6 +109,13 @@
       },
       "minItems": 0,
       "uniqueItems": true
+    },
+    "manual_page_contract_version": {
+      "type": "integer",
+      "enum": [
+        1
+      ],
+      "description": "独立插件页合同版本；启用后每个插件必须声明精确绑定的开发页和来源。"
     }
   },
   "additionalProperties": false,
@@ -157,6 +164,19 @@
             "partial",
             "complete"
           ]
+        },
+        "test_page_asset": {
+          "type": "string",
+          "minLength": 1,
+          "description": "本插件真实独立UMG页面的包路径；存在/编译/运行另行原生核验。"
+        },
+        "source_kind": {
+          "type": "string",
+          "enum": [
+            "first_party",
+            "third_party"
+          ],
+          "description": "来源分类，不是第四架构层。"
         }
       },
       "additionalProperties": false
@@ -299,7 +319,8 @@
             "boolean",
             "integer",
             "number",
-            "identifier"
+            "identifier",
+            "asset_path"
           ]
         },
         "unit": {
@@ -468,20 +489,21 @@
         },
         "operations": {
           "type": "array",
-          "description": "实际支持的操作；未知操作禁止执行",
+          "description": "声明的稳定操作ID；执行还须通过对应适配器的编译白名单和参数合同",
           "items": {
-            "type": "string",
-            "description": "操作能力",
-            "enum": [
-              "Execute",
-              "Pause",
-              "Resume",
-              "Stop",
-              "Reset"
-            ]
+            "$ref": "#/$defs/identity"
           },
           "minItems": 1,
           "uniqueItems": true
+        },
+        "operation_labels": {
+          "type": "object",
+          "description": "具名操作的中文显示标签；不能扩充未声明操作或作为执行指令",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
         },
         "prepare_timeout_seconds": {
           "type": "number",

@@ -1,0 +1,330 @@
+{
+  "schemaVersion": 1,
+  "heroId": "Hero.Zodiac.Dog",
+  "heroNameZh": "戌狗·守阙天犬",
+  "projectCode": "SSLM",
+  "designStatus": "PENDING_HUMAN_APPROVAL",
+  "version": "2026-10-19_G0",
+  "referenceFiles": [
+    "Docs/Design/ZodiacHistoryFirstEightSkillsV6_Review.json",
+    "Docs/Design/ZodiacEightSlotSkills_V2.json",
+    "Docs/Design/ApprovedSkillDisplayNames_V5.json"
+  ],
+  "scope": "ART_CANDIDATE_PLANNING_ONLY_NOT_UE_ASSET",
+  "visualStatus": "NO_IMAGES_GENERATED",
+  "realCandidatePngCount": 0,
+  "plannedCandidateCount": 24,
+  "notesZh": [
+    "第四显示格对应Slot4，第五显示格对应Slot3。",
+    "V6变更名称待批准，现有V5正式显示名必须保留。",
+    "第八技能loyal_heal为兼容历史编号，不代表V6有治疗行为。",
+    "人工选型前不能生成正式贴图、启用V6 GAS或替换占位Profile。",
+    "Higgsfield返回Requires basic plan or higher；Adobe初始化失败；没有图像生成成功。"
+  ],
+  "passive": {
+    "nameZh": "守阙",
+    "occupiesSlot": false,
+    "status": "NOT_GENERATED"
+  },
+  "gates": {
+    "G0": "DESIGN_IDENTITIES_VERIFIED_V6_APPROVAL_PENDING",
+    "G1": "NOT_GENERATED",
+    "G2": "PENDING_HUMAN_SELECTION",
+    "G3": "WAIT_G2",
+    "G4": "WAIT_G3_AND_MONOLITH",
+    "G5": "WAIT_G4_AND_APPROVAL",
+    "G6": "WAIT_G5",
+    "G7": "WAIT_G3",
+    "G8": "WAIT_G4_G6_RUNTIME_VERIFICATION"
+  },
+  "skills": [
+    {
+      "displayOrder": 1,
+      "slotId": "Primary",
+      "v6NameZh": "天犬咬",
+      "approvedV5NameZh": "天犬咬",
+      "abilityId": "dba.ability.dog_eight_guardian_bite@1",
+      "mechanicsZh": "白金犬牙向前短咬",
+      "assetName": "T_DBA_Dog_S01_GuardianBite_V6",
+      "master1024": "SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S01_GuardianBite_V6_Master_1024.png",
+      "audit64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S01_GuardianBite_V6_64x64.png",
+      "runtime48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S01_GuardianBite_V6.png",
+      "unrealTexturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S01_GuardianBite_V6.T_DBA_Dog_S01_GuardianBite_V6",
+      "candidates": [
+        {
+          "variant": "A",
+          "compositionZh": "主体和核心物体特写",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能天犬咬，效果：白金犬牙向前短咬。本方案：近景两枚立体白金犬牙朝右前方瞬间合咬，只有一次清晰弧形牙刃。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S01_GuardianBite_V6_Candidate_A_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "B",
+          "compositionZh": "完整技能动作与方向",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能天犬咬，效果：白金犬牙向前短咬。本方案：玄青护甲天犬侧身张嘴短咬，牙吻特写，动作方向朝右。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S01_GuardianBite_V6_Candidate_B_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "C",
+          "compositionZh": "电影级光照和魔法能量",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能天犬咬，效果：白金犬牙向前短咬。本方案：月银逆光下金白牙齿从暗处冲出，玉青弧刃集中命中一点。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S01_GuardianBite_V6_Candidate_C_1024.png",
+          "status": "NOT_GENERATED"
+        }
+      ]
+    },
+    {
+      "displayOrder": 2,
+      "slotId": "Slot1",
+      "v6NameZh": "反咬",
+      "approvedV5NameZh": "护主咬",
+      "abilityId": "dba.ability.dog_eight_hunter_pounce@1",
+      "mechanicsZh": "回身反击攻击受护友军的敌人",
+      "assetName": "T_DBA_Dog_S02_CounterBite_V6",
+      "master1024": "SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S02_CounterBite_V6_Master_1024.png",
+      "audit64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S02_CounterBite_V6_64x64.png",
+      "runtime48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S02_CounterBite_V6.png",
+      "unrealTexturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S02_CounterBite_V6.T_DBA_Dog_S02_CounterBite_V6",
+      "candidates": [
+        {
+          "variant": "A",
+          "compositionZh": "主体和核心物体特写",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能反咬，效果：回身反击攻击受护友军的敌人。本方案：反向金白牙刃向左回勾，撞开来自左侧敌方攻击轨迹。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S02_CounterBite_V6_Candidate_A_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "B",
+          "compositionZh": "完整技能动作与方向",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能反咬，效果：回身反击攻击受护友军的敌人。本方案：天犬守护友军时猛然回头向左反咬，友军留在受护位。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S02_CounterBite_V6_Candidate_B_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "C",
+          "compositionZh": "电影级光照和魔法能量",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能反咬，效果：回身反击攻击受护友军的敌人。本方案：电影级侧逆光强化回首的犬牙、回弹轨迹和断裂攻击光。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S02_CounterBite_V6_Candidate_C_1024.png",
+          "status": "NOT_GENERATED"
+        }
+      ]
+    },
+    {
+      "displayOrder": 3,
+      "slotId": "Slot2",
+      "v6NameZh": "双灵爪",
+      "approvedV5NameZh": "双灵爪",
+      "abilityId": "dba.ability.dog_eight_spirit_rake@1",
+      "mechanicsZh": "同一敌人两次连续利爪追击",
+      "assetName": "T_DBA_Dog_S03_TwinSpiritClaws_V6",
+      "master1024": "SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S03_TwinSpiritClaws_V6_Master_1024.png",
+      "audit64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S03_TwinSpiritClaws_V6_64x64.png",
+      "runtime48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S03_TwinSpiritClaws_V6.png",
+      "unrealTexturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S03_TwinSpiritClaws_V6.T_DBA_Dog_S03_TwinSpiritClaws_V6",
+      "candidates": [
+        {
+          "variant": "A",
+          "compositionZh": "主体和核心物体特写",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能双灵爪，效果：同一敌人两次连续利爪追击。本方案：双组灵犬金白爪痕前后错开，完整显示两个连续爪击而非犬牙。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S03_TwinSpiritClaws_V6_Candidate_A_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "B",
+          "compositionZh": "完整技能动作与方向",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能双灵爪，效果：同一敌人两次连续利爪追击。本方案：披甲天犬交错挥动左右双爪，同一落点两次命中。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S03_TwinSpiritClaws_V6_Candidate_B_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "C",
+          "compositionZh": "电影级光照和魔法能量",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能双灵爪，效果：同一敌人两次连续利爪追击。本方案：深蓝黑暗处出现前后错层两组金白爪芒，短暂青玉能量残影。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S03_TwinSpiritClaws_V6_Candidate_C_1024.png",
+          "status": "NOT_GENERATED"
+        }
+      ]
+    },
+    {
+      "displayOrder": 4,
+      "slotId": "Slot4",
+      "v6NameZh": "天门守阙",
+      "approvedV5NameZh": "天门护",
+      "abilityId": "dba.ability.dog_eight_oath_guardian@1",
+      "mechanicsZh": "可破坏的大型定向天门拦截冲锋和投射物",
+      "assetName": "T_DBA_Dog_S04_CelestialGateWard_V6",
+      "master1024": "SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S04_CelestialGateWard_V6_Master_1024.png",
+      "audit64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S04_CelestialGateWard_V6_64x64.png",
+      "runtime48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S04_CelestialGateWard_V6.png",
+      "unrealTexturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S04_CelestialGateWard_V6.T_DBA_Dog_S04_CelestialGateWard_V6",
+      "candidates": [
+        {
+          "variant": "A",
+          "compositionZh": "主体和核心物体特写",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能天门守阙，效果：可破坏的大型定向天门拦截冲锋和投射物。本方案：正面宏伟实体玄金天门，厚重门框和中央天犬守护纹章。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S04_CelestialGateWard_V6_Candidate_A_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "B",
+          "compositionZh": "完整技能动作与方向",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能天门守阙，效果：可破坏的大型定向天门拦截冲锋和投射物。本方案：受护友军前大型竖立天门阻挡一枚从右前方射来的投射物。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S04_CelestialGateWard_V6_Candidate_B_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "C",
+          "compositionZh": "电影级光照和魔法能量",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能天门守阙，效果：可破坏的大型定向天门拦截冲锋和投射物。本方案：终极巨门被月白神光和金玉结界照亮，厚门体与空间纵深强烈。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S04_CelestialGateWard_V6_Candidate_C_1024.png",
+          "status": "NOT_GENERATED"
+        }
+      ]
+    },
+    {
+      "displayOrder": 5,
+      "slotId": "Slot3",
+      "v6NameZh": "援步",
+      "approvedV5NameZh": "援步",
+      "abilityId": "dba.ability.dog_eight_hound_leap@1",
+      "mechanicsZh": "疾跃至受护友军的合法位置",
+      "assetName": "T_DBA_Dog_S05_RescueStep_V6",
+      "master1024": "SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S05_RescueStep_V6_Master_1024.png",
+      "audit64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S05_RescueStep_V6_64x64.png",
+      "runtime48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S05_RescueStep_V6.png",
+      "unrealTexturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S05_RescueStep_V6.T_DBA_Dog_S05_RescueStep_V6",
+      "candidates": [
+        {
+          "variant": "A",
+          "compositionZh": "主体和核心物体特写",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能援步，效果：疾跃至受护友军的合法位置。本方案：向上跃起的神犬前足及连接终点的弧形金青援护轨迹。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S05_RescueStep_V6_Candidate_A_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "B",
+          "compositionZh": "完整技能动作与方向",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能援步，效果：疾跃至受护友军的合法位置。本方案：玄青天犬从左侧空中疾跃至右侧受护者，明显救援路径。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S05_RescueStep_V6_Candidate_B_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "C",
+          "compositionZh": "电影级光照和魔法能量",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能援步，效果：疾跃至受护友军的合法位置。本方案：背光飞跃剪影、两端清晰落点和金玉救援光带，非进攻扑杀。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S05_RescueStep_V6_Candidate_C_1024.png",
+          "status": "NOT_GENERATED"
+        }
+      ]
+    },
+    {
+      "displayOrder": 6,
+      "slotId": "Slot5",
+      "v6NameZh": "护主",
+      "approvedV5NameZh": "护主",
+      "abilityId": "dba.ability.dog_eight_guardian_ring@1",
+      "mechanicsZh": "挡在友军前承担伤害并形成可破坏门盾",
+      "assetName": "T_DBA_Dog_S06_ProtectAlly_V6",
+      "master1024": "SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S06_ProtectAlly_V6_Master_1024.png",
+      "audit64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S06_ProtectAlly_V6_64x64.png",
+      "runtime48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S06_ProtectAlly_V6.png",
+      "unrealTexturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S06_ProtectAlly_V6.T_DBA_Dog_S06_ProtectAlly_V6",
+      "candidates": [
+        {
+          "variant": "A",
+          "compositionZh": "主体和核心物体特写",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能护主，效果：挡在友军前承担伤害并形成可破坏门盾。本方案：深青金玉实体护盾迎面挡住来袭能量，护盾撞击近景。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S06_ProtectAlly_V6_Candidate_A_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "B",
+          "compositionZh": "完整技能动作与方向",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能护主，效果：挡在友军前承担伤害并形成可破坏门盾。本方案：天犬站在友军前方，身体挡住敌方攻击且抬起半透明护盾。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S06_ProtectAlly_V6_Candidate_B_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "C",
+          "compositionZh": "电影级光照和魔法能量",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能护主，效果：挡在友军前承担伤害并形成可破坏门盾。本方案：电影级撞击特写，厚实盾面青金反光与从盾面扩散的护卫冲击环。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S06_ProtectAlly_V6_Candidate_C_1024.png",
+          "status": "NOT_GENERATED"
+        }
+      ]
+    },
+    {
+      "displayOrder": 7,
+      "slotId": "Slot6",
+      "v6NameZh": "拦门",
+      "approvedV5NameZh": "截冲盾",
+      "abilityId": "dba.ability.dog_eight_tracking_slow@1",
+      "mechanicsZh": "小型门盾打断前方敌人的冲锋",
+      "assetName": "T_DBA_Dog_S07_ChargeGateBlock_V6",
+      "master1024": "SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S07_ChargeGateBlock_V6_Master_1024.png",
+      "audit64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S07_ChargeGateBlock_V6_64x64.png",
+      "runtime48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S07_ChargeGateBlock_V6.png",
+      "unrealTexturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S07_ChargeGateBlock_V6.T_DBA_Dog_S07_ChargeGateBlock_V6",
+      "candidates": [
+        {
+          "variant": "A",
+          "compositionZh": "主体和核心物体特写",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能拦门，效果：小型门盾打断前方敌人的冲锋。本方案：竖直小型金玉门盾近景正面截停冲撞箭形光轨。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S07_ChargeGateBlock_V6_Candidate_A_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "B",
+          "compositionZh": "完整技能动作与方向",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能拦门，效果：小型门盾打断前方敌人的冲锋。本方案：天犬向前立起一面小门盾撞开冲锋敌人，明显反推姿态。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S07_ChargeGateBlock_V6_Candidate_B_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "C",
+          "compositionZh": "电影级光照和魔法能量",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能拦门，效果：小型门盾打断前方敌人的冲锋。本方案：冷白与青金碰撞爆发短促反推波，实体门盾小于终极天门。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S07_ChargeGateBlock_V6_Candidate_C_1024.png",
+          "status": "NOT_GENERATED"
+        }
+      ]
+    },
+    {
+      "displayOrder": 8,
+      "slotId": "Slot7",
+      "v6NameZh": "誓约",
+      "approvedV5NameZh": "誓愈",
+      "abilityId": "dba.ability.dog_eight_loyal_heal@1",
+      "mechanicsZh": "唯一友军护卫契约和联动反击身份",
+      "assetName": "T_DBA_Dog_S08_GuardianOath_V6",
+      "master1024": "SourceArt/UI/SkillIcons/V6/Masters/T_DBA_Dog_S08_GuardianOath_V6_Master_1024.png",
+      "audit64": "SourceArt/UI/SkillIcons/V6/64/T_DBA_Dog_S08_GuardianOath_V6_64x64.png",
+      "runtime48": "SourceArt/UI/SkillIcons/V6/48/T_DBA_Dog_S08_GuardianOath_V6.png",
+      "unrealTexturePath": "/DBAHeroPack_Dog/UI/Abilities/T_DBA_Dog_S08_GuardianOath_V6.T_DBA_Dog_S08_GuardianOath_V6",
+      "candidates": [
+        {
+          "variant": "A",
+          "compositionZh": "主体和核心物体特写",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能誓约，效果：唯一友军护卫契约和联动反击身份。本方案：左右两个暖金誓约印记由单条金玉纹链相连，中间守护犬徽。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S08_GuardianOath_V6_Candidate_A_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "B",
+          "compositionZh": "完整技能动作与方向",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能誓约，效果：唯一友军护卫契约和联动反击身份。本方案：一位守卫天犬与唯一受护友军面对面，两枚印记通过光链绑定。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S08_GuardianOath_V6_Candidate_B_1024.png",
+          "status": "NOT_GENERATED"
+        },
+        {
+          "variant": "C",
+          "compositionZh": "电影级光照和魔法能量",
+          "promptZh": "SSLM《神兽联盟》戌狗·守阙天犬东方神话3A游戏独立技能图标，1024x1024方形高清母版。画面主体占70%以上，玄墨青/深蓝黑基底、月光银与金白主色、碧玉青及暖金配光；清晰立体结构、温润金属与玉石、电影级明暗与体积光，48x48缩小时主体仍可识别。严禁文字、数字、UI底座、过密粒子、胶片噪点、过度锐化、夸张泛光、旧王印、五行阵营符号。神犬不得像狼妖、虎或狐狸。技能誓约，效果：唯一友军护卫契约和联动反击身份。本方案：双目标契约符印与中心犬守护符文同步发光，不出现治疗十字或回血。",
+          "plannedPng": "SourceArt/UI/SkillIcons/V6/Candidates/T_DBA_Dog_S08_GuardianOath_V6_Candidate_C_1024.png",
+          "status": "NOT_GENERATED"
+        }
+      ]
+    }
+  ]
+}

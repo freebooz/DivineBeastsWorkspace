@@ -2,6 +2,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "DivineBeastsApplicationFlowSubsystem.h"
 #include "GamePlatformSessionClientSubsystem.h"
+#include "GamePlatformOnlineClientSubsystem.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -51,7 +52,10 @@ public:
             Flow->Session = Session;
             Transport = MakeShared<FLogoutTestTransport>();
             Session->SetTransport(Transport);
-            Session->SetAuthenticationContext(TEXT("test-only-logout-account"), FGuid::NewGuid());
+            Authentication.State = EGamePlatformAuthState::Authenticated;
+            Authentication.AccountId = TEXT("test-only-logout-account");
+            Authentication.AuthGeneration = FGuid::NewGuid();
+            Flow->HandleAuthSnapshot(Authentication);
             Binding.AssignmentId = TEXT("logout-assignment"); Binding.GameSessionId = TEXT("logout-game-session");
             Binding.ServerInstanceId = TEXT("logout-server"); Binding.ServerBootId = TEXT("logout-boot");
             Binding.WorldId = TEXT("World.OpenWorld.Main"); Binding.ProtocolVersion = TEXT("1"); Binding.SessionEpoch = 1;
@@ -85,17 +89,50 @@ public:
         if (Phase == 1)
         {
             Test->TestEqual(TEXT("可信四事实建立Ready前提"), Session->GetSnapshot().State, EGamePlatformSessionTransferState::Ready);
+            // 真实Online在轮换凭据时保留账号与认证代次；刷新不是退出，不能断开已准入世界。
+            Authentication.State = EGamePlatformAuthState::Refreshing;
+            Flow->HandleAuthSnapshot(Authentication);
+            Test->TestEqual(TEXT("凭据刷新不能调用LeaveSession"), Transport->LeaveCalls, 0);
+            Test->TestTrue(TEXT("凭据刷新保留世界绑定"), Session->GetSnapshot().Binding.IsValid());
+            Test->TestTrue(TEXT("刷新中的UI继续投影已认证身份"), Flow->GetViewState().bAuthenticated);
+            Authentication.State = EGamePlatformAuthState::Authenticated;
+            Flow->HandleAuthSnapshot(Authentication);
+            Test->TestEqual(TEXT("刷新成功不重新离开世界"), Transport->LeaveCalls, 0);
+            Test->TestEqual(TEXT("刷新成功仍是Ready"), Session->GetSnapshot().State, EGamePlatformSessionTransferState::Ready);
             Flow->LogoutAndRestart();
             Test->TestEqual(TEXT("Ready注销真实调用Leave而不是只Cancel"), Transport->LeaveCalls, 1);
             Test->TestFalse(TEXT("已确认世界Binding立即撤销"), Session->GetSnapshot().Binding.IsValid());
             Transport->EmitReady(Binding); // 模拟网络队列里的旧事实，不能复活注销连接。
             ++Phase; return false;
         }
+        if (Phase == 3)
+        {
+            Test->TestTrue(TEXT("失效测试具有真实准入绑定"), Session->GetSnapshot().Binding.IsValid());
+            // 夹具没有Online/Backend，精确验证失效会进入已有注销清理，而非伪造登录完成。
+            Flow->ViewState.CurrentStep = TEXT("DBA.Flow.InWorld");
+            Authentication.State = EGamePlatformAuthState::Failed;
+            Authentication.Error = EGamePlatformAuthError::AuthExpired;
+            Authentication.AccountId.Reset();
+            Flow->HandleAuthSnapshot(Authentication);
+            Test->TestEqual(TEXT("真正失效离开本次真实连接一次"), Transport->LeaveCalls, 2);
+            Test->TestFalse(TEXT("真正失效清除世界绑定"), Session->GetSnapshot().Binding.IsValid());
+            Test->TestFalse(TEXT("真正失效清除认证投影"), Flow->GetViewState().bAuthenticated);
+            Test->TestTrue(TEXT("真正失效不能残留InWorld导致前端无页面"), Flow->GetViewState().CurrentStep.IsNone());
+            Cleanup(); return true;
+        }
         Test->TestFalse(TEXT("注销后迟到事实不能重新Ready"), Session->GetSnapshot().State == EGamePlatformSessionTransferState::Ready);
         Test->TestFalse(TEXT("迟到事实不能恢复旧Binding"), Session->GetSnapshot().Binding.IsValid());
         Flow->LogoutAndRestart();
         Test->TestEqual(TEXT("重复注销不会再离开同一连接"), Transport->LeaveCalls, 1);
-        Cleanup(); return true;
+        Flow->bRestartAfterLogout = false; // 模拟下一次人工登录；夹具未装配Online，故自行结束注销等待。
+        Authentication.AuthGeneration = FGuid::NewGuid(); // 真实Online每次重新登录都推进认证代次。
+        Authentication.State = EGamePlatformAuthState::Authenticated;
+        Flow->HandleAuthSnapshot(Authentication);
+        Request.TransferOperationId = FGuid::NewGuid();
+        FGamePlatformResult Result;
+        if (!Session->BeginTransfer(Request, Result)) { Test->AddError(TEXT("失效测试传输前提失败：") + Result.Message); Cleanup(); return true; }
+        Transport->EmitReady(Binding);
+        ++Phase; return false;
     }
 private:
     void Cleanup()
@@ -116,6 +153,7 @@ private:
     TSharedPtr<FLogoutTestTransport> Transport;
     FGamePlatformSessionTransferRequest Request;
     FGamePlatformSessionConnectionBinding Binding;
+    FGamePlatformAuthSnapshot Authentication;
 };
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsLogoutSessionLifetimeTest, "DivineBeasts.ApplicationFlow.Logout.SessionLifetime", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

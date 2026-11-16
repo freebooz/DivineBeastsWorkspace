@@ -7,7 +7,7 @@
 
 class AGamePlatformArenaPlayerState;
 
-/** 参赛者复制统计变化事件；用于客户端只读表现/记分板适配。 */
+/** 参赛者复制统计或公开姓名变化事件；用于客户端只读表现/记分板适配。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(
     FGamePlatformArenaPlayerStatsChangedNative,
     AGamePlatformArenaPlayerState*);
@@ -38,7 +38,9 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Arena") EGamePlatformArenaForfeitState ForfeitState = EGamePlatformArenaForfeitState::None;
     UPROPERTY(ReplicatedUsing=OnRep_StatsRevision, BlueprintReadOnly, Category="Arena") int32 StatsRevision = 0;
 
-    void AuthorityApplyRosterIdentity(const FString& InPlayerId, const FString& InCharacterId, FName InTeamId);
+    /** 服务器以同一可信名册设置参赛身份；缺少可选姓名时公开姓名为空。 */
+    void AuthorityApplyRosterIdentity(const FString& InPlayerId, const FString& InCharacterId, FName InTeamId,
+        const FString& InCharacterName = FString());
     bool AuthoritySelectHero(const FString& InHeroDefinitionId);
     bool AuthoritySetReady(bool bInReady);
     void AuthorityRecordKill();
@@ -60,6 +62,8 @@ public:
     FGamePlatformArenaPlayerStatsChangedNative OnArenaStatsChanged;
 
     UFUNCTION() void OnRep_StatsRevision();
+    /** 继承姓名字段独立复制，迟到时也通知竞技只读投影。 */
+    virtual void OnRep_PlayerName() override;
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

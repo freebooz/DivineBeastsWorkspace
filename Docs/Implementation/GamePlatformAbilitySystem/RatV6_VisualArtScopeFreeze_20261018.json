@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "hero": "Hero.Zodiac.Rat",
+  "project": "SSLM",
+  "state": "ART_SCOPE_FROZEN_GAMEPLAY_NOT_APPROVED",
+  "currentLiveDisplayVersion": "V5",
+  "proposalSkillDesign": "V6",
+  "artCandidateCountPerSkill": 3,
+  "artChoicesAllowed": [
+    "A",
+    "B",
+    "C"
+  ],
+  "fullCandidateImages": 24,
+  "humanSelected": false,
+  "defaultAbilitySetModified": false,
+  "uiProfileModified": false,
+  "oldV1AssetPreserved": true,
+  "formalGameplayApproved": false,
+  "summaryZh": "只冻结8个技能的图标设计与稳定编号，不冻结未经批准的V6机制数值或五项新名称。先完成8x3人工作业，再导入子鼠英雄内容包。",
+  "abilities": [
+    {
+      "slotOrder": 1,
+      "inputSlot": "Primary",
+      "stableAbilityId": "dba.ability.rat_eight_fang_cut@1",
+      "approvedV5NameZh": "影牙斩",
+      "proposedV6NameZh": "影牙斩",
+      "pendingRenameApproval": false,
+      "imageStem": "T_DBA_Rat_S01_FangCut_V6",
+      "selectedCandidate": null,
+      "textureImported": false,
+      "productionUIEntryUpdated": false
+    },
+    {
+      "slotOrder": 2,
+      "inputSlot": "Slot1",
+      "stableAbilityId": "dba.ability.rat_eight_crescent_blade@1",
+      "approvedV5NameZh": "伏牙刺",
+      "proposedV6NameZh": "咬影",
+      "pendingRenameApproval": true,
+      "imageStem": "T_DBA_Rat_S02_ShadowBite_V6",
+      "selectedCandidate": null,
+      "textureImported": false,
+      "productionUIEntryUpdated": false
+    },
+    {
+      "slotOrder": 3,
+      "inputSlot": "Slot2",
+      "stableAbilityId": "dba.ability.rat_eight_cross_fangs@1",
+      "approvedV5NameZh": "交牙斩",
+      "proposedV6NameZh": "交牙斩",
+      "pendingRenameApproval": false,
+      "imageStem": "T_DBA_Rat_S03_CrossFangs_V6",
+      "selectedCandidate": null,
+      "textureImported": false,
+      "productionUIEntryUpdated": false
+    },
+    {
+      "slotOrder": 4,
+      "inputSlot": "Slot4",
+      "stableAbilityId": "dba.ability.rat_eight_shadow_hunt@1",
+      "approvedV5NameZh": "三影袭",
+      "proposedV6NameZh": "万鼠影袭",
+      "pendingRenameApproval": true,
+      "imageStem": "T_DBA_Rat_S04_ShadowAssault_V6",
+      "selectedCandidate": null,
+      "textureImported": false,
+      "productionUIEntryUpdated": false
+    },
+    {
+      "slotOrder": 5,
+      "inputSlot": "Slot3",
+      "stableAbilityId": "dba.ability.rat_eight_shadow_step@1",
+      "approvedV5NameZh": "穿隙",
+      "proposedV6NameZh": "钻缝",
+      "pendingRenameApproval": true,
+      "imageStem": "T_DBA_Rat_S05_CrackSlip_V6",
+      "selectedCandidate": null,
+      "textureImported": false,
+      "productionUIEntryUpdated": false
+    },
+    {
+      "slotOrder": 6,
+      "inputSlot": "Slot5",
+      "stableAbilityId": "dba.ability.rat_eight_mist_guard@1",
+      "approvedV5NameZh": "敛影",
+      "proposedV6NameZh": "藏尾",
+      "pendingRenameApproval": true,
+      "imageStem": "T_DBA_Rat_S06_TailVeil_V6",
+      "selectedCandidate": null,
+      "textureImported": false,
+      "productionUIEntryUpdated": false
+    },
+    {
+      "slotOrder": 7,
+      "inputSlot": "Slot6",
+      "stableAbilityId": "dba.ability.rat_eight_shadow_snare@1",
+      "approvedV5NameZh": "绊步牙",
+      "proposedV6NameZh": "咬筋",
+      "pendingRenameApproval": true,
+      "imageStem": "T_DBA_Rat_S07_TendonBite_V6",
+      "selectedCandidate": null,
+      "textureImported": false,
+      "productionUIEntryUpdated": false
+    },
+    {
+      "slotOrder": 8,
+      "inputSlot": "Slot7",
+      "stableAbilityId": "dba.ability.rat_eight_fang_mark@1",
+      "approvedV5NameZh": "嗅踪",
+      "proposedV6NameZh": "嗅踪",
+      "pendingRenameApproval": false,
+      "imageStem": "T_DBA_Rat_S08_ScentTrace_V6",
+      "selectedCandidate": null,
+      "textureImported": false,
+      "productionUIEntryUpdated": false
+    }
+  ]
+}

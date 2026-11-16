@@ -66,6 +66,11 @@ void UGamePlatformArenaViewModel::RefreshFromReplicatedState(
 
         FGamePlatformArenaScoreboardRow Row;
         Row.PlayerId = PlayerState->PlayerIdPublic;
+        Row.PlayerName = PlayerState->GetPlayerName();
+        if (Row.PlayerName.IsEmpty())
+        {
+            Row.PlayerName = NSLOCTEXT("GamePlatformArena", "UnnamedPlayer", "玩家").ToString();
+        }
         Row.TeamId = PlayerState->TeamId;
         Row.HeroDefinitionId = PlayerState->HeroDefinitionId;
         Row.Kills = PlayerState->Kills;

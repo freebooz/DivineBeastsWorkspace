@@ -58,6 +58,10 @@ USTRUCT(BlueprintType)
 struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoMenuSnapshot
 {
     GENERATED_BODY()
+    /** None表示中心；固定插件页面不因搜索、筛选或迟到通知改变此身份。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FName FixedPluginId;
+    /** 当前选中插件的独立页面已被完整目录登记；不代表资源已加载或能力可执行。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") bool bCanOpenPluginPage = false;
     /** 筛选后可见插件/功能/案例；总数仍单独保存。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") TArray<FDivineBeastsDemoPlugin> Plugins;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") TArray<FDivineBeastsDemoFeatureMenuEntry> Features;
@@ -83,6 +87,8 @@ struct DIVINEBEASTSDEMOCLIENT_API FDivineBeastsDemoMenuSnapshot
     /** 当前/最近运行和目录真实结果，默认未执行。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FDivineBeastsDemoRunSnapshot Run;
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FGamePlatformResult CatalogResult;
+    /** 切页加载/身份/UIManager失败独立显示，保留原页面的重试/返回能力。 */
+    UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FGamePlatformResult PageNavigationResult;
     /** 中文详情包含目的/依据/步骤/期望/缺口，失败保留可读原因。 */
     UPROPERTY(BlueprintReadOnly, Category="DivineBeasts|Demo") FText Details;
     /** 作者内容指纹，不能冒充Editor已加载DLL版本。 */

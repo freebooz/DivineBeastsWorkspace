@@ -1,4 +1,5 @@
 #include "ViewModels/Domains/DivineBeastsScopedDomainViewModelBase.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 bool UDivineBeastsScopedDomainViewModelBase::BeginSourceScope(const FGuid& NewScopeId)
 {
@@ -33,8 +34,8 @@ bool UDivineBeastsScopedDomainViewModelBase::CanAcceptSnapshot(
     const FGuid& ScopeId, int64 InSnapshotRevision) const
 {
     // 拒绝旧账号、未知来源以及迟到或重复的数据，不按客户端时钟推断权威新旧。
-    return ScopeId.IsValid() && ScopeId == SourceScopeId &&
-        InSnapshotRevision >= 0 && InSnapshotRevision > SourceRevision;
+    return FGamePlatformUISnapshotScope::CanAccept(
+        SourceScopeId, SourceRevision, ScopeId, InSnapshotRevision);
 }
 
 void UDivineBeastsScopedDomainViewModelBase::PublishAcceptedSnapshot(

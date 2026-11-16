@@ -1,4 +1,5 @@
 #include "Components/GamePlatformCountdownWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 #include "Components/TextBlock.h"
 
@@ -7,18 +8,14 @@ bool UGamePlatformCountdownWidget::ApplyCountdownState(
 {
     // 拒绝恶意或错误同步的NaN/Inf，以免格式化溢出、进度动画异常。
     constexpr double MaxDisplaySeconds = 2592000.0; // UI最多展示30天，不限制业务计时器本身。
-    if (InState.CountdownId.IsNone() || InState.Revision < 0 ||
+    if (!FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            State.CountdownId, State.Revision, InState.CountdownId, InState.Revision) ||
         !FMath::IsFinite(InState.RemainingSeconds) ||
         !FMath::IsFinite(InState.TotalSeconds) ||
         InState.RemainingSeconds < 0.0 ||
         InState.TotalSeconds < 0.0 ||
         InState.RemainingSeconds > MaxDisplaySeconds ||
         InState.TotalSeconds > MaxDisplaySeconds)
-    {
-        return false;
-    }
-    if (State.CountdownId == InState.CountdownId &&
-        InState.Revision <= State.Revision)
     {
         return false;
     }

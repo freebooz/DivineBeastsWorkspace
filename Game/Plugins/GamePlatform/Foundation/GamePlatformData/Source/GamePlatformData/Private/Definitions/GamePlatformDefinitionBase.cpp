@@ -6,6 +6,26 @@ FName UGamePlatformPrimaryDataAsset::LogicalIdTag() { return TEXT("GamePlatformL
 FName UGamePlatformDefinitionBase::SchemaVersionTag() { return TEXT("GamePlatformSchemaVersion"); }
 FName UGamePlatformDefinitionBase::ContentRevisionTag() { return TEXT("GamePlatformContentRevision"); }
 FName UGamePlatformDefinitionBase::RequiredDefinitionCountTag() { return TEXT("GamePlatformRequiredDefinitionCount"); }
+EGamePlatformDefinitionIdBuildStatus UGamePlatformPrimaryDataAsset::BuildDefinitionAssetId(
+    const FName DefinitionId, FPrimaryAssetId& OutAssetId)
+{
+    OutAssetId = FPrimaryAssetId();
+    FGamePlatformId LogicalId;
+    if (DefinitionId.IsNone() ||
+        !FGamePlatformId::TryParse(DefinitionId.ToString(), LogicalId))
+    {
+        return EGamePlatformDefinitionIdBuildStatus::InvalidLogicalId;
+    }
+
+    const FString CanonicalName = LogicalId.ToString();
+    if (CanonicalName.IsEmpty())
+    {
+        return EGamePlatformDefinitionIdBuildStatus::EmptyCanonicalId;
+    }
+    OutAssetId = FPrimaryAssetId(DefinitionAssetType(), FName(*CanonicalName));
+    return EGamePlatformDefinitionIdBuildStatus::Success;
+}
+
 FPrimaryAssetId UGamePlatformPrimaryDataAsset::GetPrimaryAssetId() const
 {
     return LogicalId.IsValid() ? FPrimaryAssetId(DefinitionAssetType(), FName(*LogicalId.ToString())) : FPrimaryAssetId();

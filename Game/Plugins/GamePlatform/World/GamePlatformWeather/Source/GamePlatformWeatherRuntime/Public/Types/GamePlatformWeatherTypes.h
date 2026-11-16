@@ -42,6 +42,15 @@ struct GAMEPLATFORMWEATHERRUNTIME_API FGamePlatformWeatherState
     float FogIntensity = 0.f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weather", meta=(ClampMin="0",ClampMax="1"))
     float WindIntensity = 0.f;
+    /** 风吹向的世界Yaw角度，0为+X、90为+Y，有限且位于[0,360)。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weather|Wind", meta=(ClampMin="0",ClampMax="359.999"))
+    float WindYawDegrees = 0.f;
+    /** 统一阵风调制比例0..1；不改变树种自身柔度。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weather|Wind", meta=(ClampMin="0",ClampMax="1"))
+    float WindGustStrength = 0.f;
+    /** 阵风频率，单位Hz；0冻结相位，最大2Hz。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weather|Wind", meta=(ClampMin="0",ClampMax="2"))
+    float WindGustFrequencyHz = 0.f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weather", meta=(ClampMin="-100",ClampMax="100",Units="Celsius"))
     float TemperatureCelsius = 20.f;
 
@@ -73,6 +82,14 @@ struct GAMEPLATFORMWEATHERRUNTIME_API FGamePlatformWeatherQuantizedState
     uint8 Fog = 0;
     UPROPERTY()
     uint8 Wind = 0;
+    /** 整圈65536步编码；反量化结果始终小于360度。 */
+    UPROPERTY()
+    uint16 WindYaw = 0;
+    UPROPERTY()
+    uint8 WindGust = 0;
+    /** 阵风毫赫兹，合法线路范围0..2000。 */
+    UPROPERTY()
+    uint16 WindGustMilliHz = 0;
     UPROPERTY()
     int16 TemperatureTenths = 200;
 
@@ -97,9 +114,17 @@ struct GAMEPLATFORMWEATHERRUNTIME_API FGamePlatformWeatherSnapshot
     /** 世界内单调状态版本，0表示尚未激活；网络乱序不回退。 */
     UPROPERTY()
     int32 Revision = 0;
+    /** 世界激活后固定的阵风空间种子；不由客户端随机创建。 */
+    UPROPERTY()
+    uint16 WindSeed = 2026;
+    /** 过渡起点的连续阵风相位，单位周期，范围[0,1)。 */
+    UPROPERTY()
+    float WindPhaseAtStartCycles = 0.f;
 
     /** 时间单位秒；零时长直接返回To，所有输入由服务器创建时验证。 */
     FGamePlatformWeatherState Sample(float ServerTimeSeconds) const;
+    /** 对过渡频率积分并取模；新过渡用旧快照当前相位作锚点，避免阵风跳变。 */
+    float SampleWindPhaseCycles(float ServerTimeSeconds) const;
 };
 
 /** 一条已解析的天气调度条目；真实Definition由Data租约加载后投影到本值。 */

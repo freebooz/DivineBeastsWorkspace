@@ -1,0 +1,1256 @@
+{
+  "schema_version": 1,
+  "migration_id": "ResourceOwnership20261031",
+  "description_zh": "用户批准的175包原生归属迁移；source用于追溯/拒绝退休路径，target是唯一当前位置，不是运行时别名表。",
+  "group_counts": {
+    "plants_samples": 40,
+    "plants_runtime": 51,
+    "stylehex_samples": 55,
+    "terrain_review": 12,
+    "terrain_color": 10,
+    "bird_history": 7
+  },
+  "moves": [
+    {
+      "source": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Eagle",
+      "target": "/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/SM_DBA_Bird_Eagle",
+      "group": "bird_history",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Eagle.uasset",
+      "source_bytes": 97761
+    },
+    {
+      "source": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Eagle_Cm",
+      "target": "/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/SM_DBA_Bird_Eagle_Cm",
+      "group": "bird_history",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Eagle_Cm.uasset",
+      "source_bytes": 100473
+    },
+    {
+      "source": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Seagull",
+      "target": "/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/SM_DBA_Bird_Seagull",
+      "group": "bird_history",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Seagull.uasset",
+      "source_bytes": 98188
+    },
+    {
+      "source": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Seagull_Cm",
+      "target": "/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/SM_DBA_Bird_Seagull_Cm",
+      "group": "bird_history",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Seagull_Cm.uasset",
+      "source_bytes": 100699
+    },
+    {
+      "source": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Seagull_Flight",
+      "target": "/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/SM_DBA_Bird_Seagull_Flight",
+      "group": "bird_history",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Seagull_Flight.uasset",
+      "source_bytes": 37464
+    },
+    {
+      "source": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Swallow",
+      "target": "/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/SM_DBA_Bird_Swallow",
+      "group": "bird_history",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Swallow.uasset",
+      "source_bytes": 98188
+    },
+    {
+      "source": "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Swallow_Cm",
+      "target": "/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/SM_DBA_Bird_Swallow_Cm",
+      "group": "bird_history",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock/Meshes/SM_DBA_Bird_Swallow_Cm.uasset",
+      "source_bytes": 100504
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Materials/Bending",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Materials/Bending",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Materials/Bending.uasset",
+      "source_bytes": 137902
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Materials/Interaction",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Materials/Interaction",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Materials/Interaction.uasset",
+      "source_bytes": 123765
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Materials/MA_OpenWorldFoliage",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Materials/MA_OpenWorldFoliage",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Materials/MA_OpenWorldFoliage.uasset",
+      "source_bytes": 176991
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Materials/MA_OpenWorldGround",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Materials/MA_OpenWorldGround",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Materials/MA_OpenWorldGround.uasset",
+      "source_bytes": 183111
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Materials/MI_OpenWorldFoliage",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Materials/MI_OpenWorldFoliage",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Materials/MI_OpenWorldFoliage.uasset",
+      "source_bytes": 137584
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Materials/MI_OpenWorldGround",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Materials/MI_OpenWorldGround",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Materials/MI_OpenWorldGround.uasset",
+      "source_bytes": 166517
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Materials/MaterialCollection",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Materials/MaterialCollection",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Materials/MaterialCollection.uasset",
+      "source_bytes": 6021
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_01_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_01_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_01_01.uasset",
+      "source_bytes": 112416
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_01_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_01_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_01_02.uasset",
+      "source_bytes": 126658
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_02_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_02_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_02_01.uasset",
+      "source_bytes": 103264
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_02_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_02_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_02_02.uasset",
+      "source_bytes": 108664
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_03_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_03_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_03_01.uasset",
+      "source_bytes": 105982
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_03_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_03_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_03_02.uasset",
+      "source_bytes": 114088
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_04_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_04_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_04_01.uasset",
+      "source_bytes": 114217
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_04_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_04_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_04_02.uasset",
+      "source_bytes": 111146
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_05_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_05_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_05_01.uasset",
+      "source_bytes": 107487
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_05_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_05_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_05_02.uasset",
+      "source_bytes": 122389
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_06_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_06_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_06_01.uasset",
+      "source_bytes": 106168
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_flower_06_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_flower_06_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_flower_06_02.uasset",
+      "source_bytes": 113400
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_01.uasset",
+      "source_bytes": 134778
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_02.uasset",
+      "source_bytes": 132139
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_03",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_03",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_03.uasset",
+      "source_bytes": 128799
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_04",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_04",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_04.uasset",
+      "source_bytes": 126987
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_01.uasset",
+      "source_bytes": 129379
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_02.uasset",
+      "source_bytes": 130820
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_03",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_03",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_03.uasset",
+      "source_bytes": 132386
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_04",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_04",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_02_04.uasset",
+      "source_bytes": 138468
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_01.uasset",
+      "source_bytes": 125689
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_02.uasset",
+      "source_bytes": 131165
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_03",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_03",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_03.uasset",
+      "source_bytes": 130933
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_04",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_04",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_03_04.uasset",
+      "source_bytes": 138954
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_01.uasset",
+      "source_bytes": 140738
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_02.uasset",
+      "source_bytes": 151008
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_03",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_03",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_03.uasset",
+      "source_bytes": 138472
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_04",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_04",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_01_04.uasset",
+      "source_bytes": 152101
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_01.uasset",
+      "source_bytes": 140204
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_02.uasset",
+      "source_bytes": 148414
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_03",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_03",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_03.uasset",
+      "source_bytes": 143905
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_04",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_04",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_02_04.uasset",
+      "source_bytes": 155625
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_01",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_01",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_01.uasset",
+      "source_bytes": 132285
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_02",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_02",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_02.uasset",
+      "source_bytes": 148407
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_03",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_03",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_03.uasset",
+      "source_bytes": 137405
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_04",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_04",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Meshes/openWorld_grass_02_03_04.uasset",
+      "source_bytes": 151851
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Textures/grass_albedo",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Textures/grass_albedo",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Textures/grass_albedo.uasset",
+      "source_bytes": 15653404
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Textures/grass_normal",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Textures/grass_normal",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Textures/grass_normal.uasset",
+      "source_bytes": 16963789
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Textures/grass_opacity",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Textures/grass_opacity",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Textures/grass_opacity.uasset",
+      "source_bytes": 400298
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Textures/grass_spec",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Textures/grass_spec",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Textures/grass_spec.uasset",
+      "source_bytes": 10506601
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Textures/ground_AO",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Textures/ground_AO",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Textures/ground_AO.uasset",
+      "source_bytes": 20356444
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Textures/ground_Albedo",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Textures/ground_Albedo",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Textures/ground_Albedo.uasset",
+      "source_bytes": 50993823
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Textures/ground_Height",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Textures/ground_Height",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Textures/ground_Height.uasset",
+      "source_bytes": 17357818
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Textures/ground_Normal",
+      "target": "/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Textures/ground_Normal",
+      "group": "plants_runtime",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Textures/ground_Normal.uasset",
+      "source_bytes": 49809169
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/Landscape_I",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/Landscape_I",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/Landscape_I.uasset",
+      "source_bytes": 153009
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/Landscape_II",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/Landscape_II",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/Landscape_II.uasset",
+      "source_bytes": 168336
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/Landscape_III",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/Landscape_III",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/Landscape_III.uasset",
+      "source_bytes": 166428
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/MI_autumn",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/MI_autumn",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/MI_autumn.uasset",
+      "source_bytes": 138669
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/MI_darkGreen",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/MI_darkGreen",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/MI_darkGreen.uasset",
+      "source_bytes": 139162
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/MI_freshGreen",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/MI_freshGreen",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/MI_freshGreen.uasset",
+      "source_bytes": 146443
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/MI_weathered",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/MI_weathered",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/MI_weathered.uasset",
+      "source_bytes": 128780
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/autumn",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/autumn",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/autumn.uasset",
+      "source_bytes": 155945
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/darkGreen",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/darkGreen",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/darkGreen.uasset",
+      "source_bytes": 156921
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/freshGreen",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/freshGreen",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/freshGreen.uasset",
+      "source_bytes": 158416
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/ColorExamples/weathered",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/ColorExamples/weathered",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/ColorExamples/weathered.uasset",
+      "source_bytes": 157680
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/Maps/Showroom",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/Maps/Showroom",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/Maps/Showroom.umap",
+      "source_bytes": 1385225
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Blueprints/ThirdPersonCharacter",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Blueprints/ThirdPersonCharacter",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Blueprints/ThirdPersonCharacter.uasset",
+      "source_bytes": 205600
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Blueprints/ThirdPersonGameMode",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Blueprints/ThirdPersonGameMode",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Blueprints/ThirdPersonGameMode.uasset",
+      "source_bytes": 12961
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonIdle",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonIdle",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonIdle.uasset",
+      "source_bytes": 142750
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonJump_End",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonJump_End",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonJump_End.uasset",
+      "source_bytes": 109432
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonJump_Loop",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonJump_Loop",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonJump_Loop.uasset",
+      "source_bytes": 115582
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonJump_Start",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonJump_Start",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonJump_Start.uasset",
+      "source_bytes": 111914
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonRun",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonRun",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonRun.uasset",
+      "source_bytes": 113157
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonWalk",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonWalk",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPersonWalk.uasset",
+      "source_bytes": 123424
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPerson_AnimBP",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPerson_AnimBP",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPerson_AnimBP.uasset",
+      "source_bytes": 231504
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPerson_IdleRun_2D",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPerson_IdleRun_2D",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPerson_IdleRun_2D.uasset",
+      "source_bytes": 92960
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPerson_Jump",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPerson_Jump",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Animations/ThirdPerson_Jump.uasset",
+      "source_bytes": 109296
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/M_UE4Man_Body",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/M_UE4Man_Body",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/M_UE4Man_Body.uasset",
+      "source_bytes": 134515
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/M_UE4Man_ChestLogo",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/M_UE4Man_ChestLogo",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/M_UE4Man_ChestLogo.uasset",
+      "source_bytes": 101295
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_GlossyBlack_Latex_UE4",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_GlossyBlack_Latex_UE4",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_GlossyBlack_Latex_UE4.uasset",
+      "source_bytes": 80068
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_Plastic_Shiny_Beige",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_Plastic_Shiny_Beige",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_Plastic_Shiny_Beige.uasset",
+      "source_bytes": 76557
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_Plastic_Shiny_Beige_LOGO",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_Plastic_Shiny_Beige_LOGO",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_Plastic_Shiny_Beige_LOGO.uasset",
+      "source_bytes": 77531
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_SoftMetal_UE4",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_SoftMetal_UE4",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/ML_SoftMetal_UE4.uasset",
+      "source_bytes": 80932
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Aluminum01",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Aluminum01",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Aluminum01.uasset",
+      "source_bytes": 434861
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Aluminum01_N",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Aluminum01_N",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Aluminum01_N.uasset",
+      "source_bytes": 405870
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_D",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_D",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_D.uasset",
+      "source_bytes": 470334
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_N",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_N",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_N.uasset",
+      "source_bytes": 362731
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Mesh/SK_Mannequin",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Mesh/SK_Mannequin",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Mesh/SK_Mannequin.uasset",
+      "source_bytes": 2567516
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Mesh/SK_Mannequin_PhysicsAsset",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Mesh/SK_Mannequin_PhysicsAsset",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Mesh/SK_Mannequin_PhysicsAsset.uasset",
+      "source_bytes": 128151
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Mesh/UE4_Mannequin_Skeleton",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Mesh/UE4_Mannequin_Skeleton",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Mesh/UE4_Mannequin_Skeleton.uasset",
+      "source_bytes": 12181
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4Man_Logo_N",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4Man_Logo_N",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4Man_Logo_N.uasset",
+      "source_bytes": 162426
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4_LOGO_CARD",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4_LOGO_CARD",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4_LOGO_CARD.uasset",
+      "source_bytes": 95863
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4_Mannequin_MAT_MASKA",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4_Mannequin_MAT_MASKA",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4_Mannequin_MAT_MASKA.uasset",
+      "source_bytes": 270506
+    },
+    {
+      "source": "/Game/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4_Mannequin__normals",
+      "target": "/Game/Development/Vendor/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4_Mannequin__normals",
+      "group": "plants_samples",
+      "source_file": "Game/Content/PN_OpenWorldFoliage/UE4_ThirdPerson/Mannequin/Character/Textures/UE4_Mannequin__normals.uasset",
+      "source_bytes": 5481741
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Levels/Preview_Scene",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Levels/Preview_Scene",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Levels/Preview_Scene.umap",
+      "source_bytes": 972270
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Levels/Preview_Scene_BuiltData",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Levels/Preview_Scene_BuiltData",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Levels/Preview_Scene_BuiltData.uasset",
+      "source_bytes": 1234046
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Materials/Mat_Foliage/MI_Fol_Foliage_Atlas",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Materials/Mat_Foliage/MI_Fol_Foliage_Atlas",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Materials/Mat_Foliage/MI_Fol_Foliage_Atlas.uasset",
+      "source_bytes": 127964
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Materials/Mat_Foliage/MI_Fol_Grass_AlphaCut",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Materials/Mat_Foliage/MI_Fol_Grass_AlphaCut",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Materials/Mat_Foliage/MI_Fol_Grass_AlphaCut.uasset",
+      "source_bytes": 115863
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Bush_1",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Bush_1",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Bush_1.uasset",
+      "source_bytes": 147223
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Bush_2",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Bush_2",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Bush_2.uasset",
+      "source_bytes": 151780
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Bush_3",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Bush_3",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Bush_3.uasset",
+      "source_bytes": 214312
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_1",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_1",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_1.uasset",
+      "source_bytes": 114053
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_2",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_2",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_2.uasset",
+      "source_bytes": 113165
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_3",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_3",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_3.uasset",
+      "source_bytes": 114120
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_4",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_4",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Flower_Clump_4.uasset",
+      "source_bytes": 119952
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Grass_Clump_1",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Grass_Clump_1",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Grass_Clump_1.uasset",
+      "source_bytes": 115157
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Grass_Clump_2",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Grass_Clump_2",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Grass_Clump_2.uasset",
+      "source_bytes": 115649
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Grass_Clump_3",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Grass_Clump_3",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Grass_Clump_3.uasset",
+      "source_bytes": 116745
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_1",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_1",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_1.uasset",
+      "source_bytes": 114704
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_10",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_10",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_10.uasset",
+      "source_bytes": 106939
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_11",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_11",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_11.uasset",
+      "source_bytes": 108197
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_12",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_12",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_12.uasset",
+      "source_bytes": 111277
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_13",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_13",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_13.uasset",
+      "source_bytes": 111758
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_14",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_14",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_14.uasset",
+      "source_bytes": 119550
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_15",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_15",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_15.uasset",
+      "source_bytes": 110778
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_16",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_16",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_16.uasset",
+      "source_bytes": 111920
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_17",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_17",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_17.uasset",
+      "source_bytes": 123813
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_18",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_18",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_18.uasset",
+      "source_bytes": 117842
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_19",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_19",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_19.uasset",
+      "source_bytes": 110389
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_2",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_2",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_2.uasset",
+      "source_bytes": 146557
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_3",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_3",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_3.uasset",
+      "source_bytes": 112097
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_4",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_4",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_4.uasset",
+      "source_bytes": 119896
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_5",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_5",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_5.uasset",
+      "source_bytes": 112809
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_6",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_6",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_6.uasset",
+      "source_bytes": 147374
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_7",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_7",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_7.uasset",
+      "source_bytes": 131907
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_8",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_8",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_8.uasset",
+      "source_bytes": 140663
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_9",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_9",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Meshes/SM_Fol_Plant_9.uasset",
+      "source_bytes": 125145
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Atlas_BC",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Atlas_BC",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Atlas_BC.uasset",
+      "source_bytes": 1733913
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Atlas_Color_Mask",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Atlas_Color_Mask",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Atlas_Color_Mask.uasset",
+      "source_bytes": 32484
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Atlas_Opacity",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Atlas_Opacity",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Atlas_Opacity.uasset",
+      "source_bytes": 509231
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Grass_Atlas_Opacity",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Grass_Atlas_Opacity",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Textures/Foliage/T_Foliage_Grass_Atlas_Opacity.uasset",
+      "source_bytes": 305275
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Global_Settings/MPC_Wind_Global_STARTER",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Global_Settings/MPC_Wind_Global_STARTER",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Global_Settings/MPC_Wind_Global_STARTER.uasset",
+      "source_bytes": 2460
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_STARTER/M_Foliage_Flowers_Master_STARTER",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_STARTER/M_Foliage_Flowers_Master_STARTER",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_STARTER/M_Foliage_Flowers_Master_STARTER.uasset",
+      "source_bytes": 159899
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_STARTER/M_Foliage_Grass_Master_STARTER",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_STARTER/M_Foliage_Grass_Master_STARTER",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_STARTER/M_Foliage_Grass_Master_STARTER.uasset",
+      "source_bytes": 159369
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Instances/MI_Grid_Preview_A",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Instances/MI_Grid_Preview_A",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Instances/MI_Grid_Preview_A.uasset",
+      "source_bytes": 93299
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Instances/MI_Preview_Fog_Near",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Instances/MI_Preview_Fog_Near",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Instances/MI_Preview_Fog_Near.uasset",
+      "source_bytes": 85378
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Masters/M_Gid_Preview",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Masters/M_Gid_Preview",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Masters/M_Gid_Preview.uasset",
+      "source_bytes": 161725
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Masters/M_Preview_Fog",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Masters/M_Preview_Fog",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Master_Materials_Utility/Material_Masters/M_Preview_Fog.uasset",
+      "source_bytes": 90859
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_AdvancedDithering",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_AdvancedDithering",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_AdvancedDithering.uasset",
+      "source_bytes": 94446
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Custom_PDO",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Custom_PDO",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Custom_PDO.uasset",
+      "source_bytes": 53502
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Foliage_Normals",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Foliage_Normals",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Foliage_Normals.uasset",
+      "source_bytes": 73000
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Foliage_RVT",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Foliage_RVT",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Foliage_RVT.uasset",
+      "source_bytes": 100710
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Object_Local_Gradient",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Object_Local_Gradient",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Material_Functions/MF_Common/MF_Object_Local_Gradient.uasset",
+      "source_bytes": 90246
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Nosies/T_Bluenoise",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Nosies/T_Bluenoise",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Nosies/T_Bluenoise.uasset",
+      "source_bytes": 113626
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_Default_Normal",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_Default_Normal",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_Default_Normal.uasset",
+      "source_bytes": 4270
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_Gradient_Linear",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_Gradient_Linear",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_Gradient_Linear.uasset",
+      "source_bytes": 26721
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_Grid_Mask",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_Grid_Mask",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_Grid_Mask.uasset",
+      "source_bytes": 14275
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_White_Linear",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_White_Linear",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_Textures/Utility/T_White_Linear.uasset",
+      "source_bytes": 4139
+    },
+    {
+      "source": "/Game/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_VT/VT_Terrain_Grass_Color_Demo",
+      "target": "/Game/Development/Vendor/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_VT/VT_Terrain_Grass_Color_Demo",
+      "group": "stylehex_samples",
+      "source_file": "Game/Content/StyleHex_Studio/Shared_Resources/Free_Packs/Shared_VT/VT_Terrain_Grass_Color_Demo.uasset",
+      "source_bytes": 1692
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Dirt_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Dirt_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_Dirt_BaseColor_V3.uasset",
+      "source_bytes": 10915021
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_FarmSoil_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_FarmSoil_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_FarmSoil_BaseColor_V3.uasset",
+      "source_bytes": 7897091
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_ForestSoil_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_ForestSoil_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_ForestSoil_BaseColor_V3.uasset",
+      "source_bytes": 7585308
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Grass_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Grass_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_Grass_BaseColor_V3.uasset",
+      "source_bytes": 10612479
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Gravel_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Gravel_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_Gravel_BaseColor_V3.uasset",
+      "source_bytes": 10104181
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_RoadDirt_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_RoadDirt_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_RoadDirt_BaseColor_V3.uasset",
+      "source_bytes": 10018508
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Rock_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Rock_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_Rock_BaseColor_V3.uasset",
+      "source_bytes": 8692895
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Sand_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Sand_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_Sand_BaseColor_V3.uasset",
+      "source_bytes": 8426290
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_Scree_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Scree_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_Scree_BaseColor_V3.uasset",
+      "source_bytes": 8449773
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/TexturesV3/T_DBA_Terrain_ShoreMud_BaseColor_V3",
+      "target": "/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_ShoreMud_BaseColor_V3",
+      "group": "terrain_color",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/TexturesV3/T_DBA_Terrain_ShoreMud_BaseColor_V3.uasset",
+      "source_bytes": 7419061
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_FunctionIntegrated_High",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_FunctionIntegrated_High",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/MI_DBA_Terrain_Production10_FunctionIntegrated_High.uasset",
+      "source_bytes": 11382
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_FunctionIntegrated_Low",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_FunctionIntegrated_Low",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/MI_DBA_Terrain_Production10_FunctionIntegrated_Low.uasset",
+      "source_bytes": 7580
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_FunctionIntegrated_Medium",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_FunctionIntegrated_Medium",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/MI_DBA_Terrain_Production10_FunctionIntegrated_Medium.uasset",
+      "source_bytes": 7598
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_FunctionIntegrated_Review",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_FunctionIntegrated_Review",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/MI_DBA_Terrain_Production10_FunctionIntegrated_Review.uasset",
+      "source_bytes": 9853
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_Review",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_Review",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/MI_DBA_Terrain_Production10_Review.uasset",
+      "source_bytes": 9366
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_V3_High",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_V3_High",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/MI_DBA_Terrain_Production10_V3_High.uasset",
+      "source_bytes": 7442
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_V3_Low",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_V3_Low",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/MI_DBA_Terrain_Production10_V3_Low.uasset",
+      "source_bytes": 7436
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_V3_Medium",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_V3_Medium",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/MI_DBA_Terrain_Production10_V3_Medium.uasset",
+      "source_bytes": 7454
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_V3_Review",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_V3_Review",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/MI_DBA_Terrain_Production10_V3_Review.uasset",
+      "source_bytes": 9399
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/M_DBA_Terrain_Production10",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/M_DBA_Terrain_Production10",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/M_DBA_Terrain_Production10.uasset",
+      "source_bytes": 158466
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/M_DBA_Terrain_Production10_FunctionIntegrated",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/M_DBA_Terrain_Production10_FunctionIntegrated",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/M_DBA_Terrain_Production10_FunctionIntegrated.uasset",
+      "source_bytes": 189184
+    },
+    {
+      "source": "/DBAPresentationPack_Core/Materials/Terrain/M_DBA_Terrain_Production10_V3",
+      "target": "/DBAWorldPack_Village/Development/Terrain/Production10/M_DBA_Terrain_Production10_V3",
+      "group": "terrain_review",
+      "source_file": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Materials/Terrain/M_DBA_Terrain_Production10_V3.uasset",
+      "source_bytes": 189008
+    }
+  ],
+  "retired_roots": [
+    "/Game/PN_OpenWorldFoliage",
+    "/Game/StyleHex_Studio",
+    "/DBAPresentationPack_Core/Materials/Terrain"
+  ],
+  "never_cook_roots": [
+    "/Game/Development/Vendor",
+    "/DBAPresentationPack_Core/Development/History",
+    "/DBAWorldPack_Village/Development/Terrain"
+  ],
+  "preserve_roots": [
+    "/GamePlatformVFX/Environment/BirdFlock",
+    "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Meshes/Flight",
+    "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Niagara",
+    "/DBAPresentationPack_Core/VFX/Environment/BirdFlock/Definitions"
+  ]
+}

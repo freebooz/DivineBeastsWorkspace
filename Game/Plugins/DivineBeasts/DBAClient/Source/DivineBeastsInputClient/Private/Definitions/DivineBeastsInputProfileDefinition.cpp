@@ -6,7 +6,10 @@
 FGamePlatformResult UDivineBeastsInputProfileDefinition::ValidateDefinition() const
 {
     const FGamePlatformResult Base = Super::ValidateDefinition();
-    if (!Base.IsSuccess() || !bRequireCoreGameplaySemantics)
+    // 只要要求八槽，即使旧核心检查开关为false也必须进行全部八槽完整性验证。
+    // 防止作者误配置两个布尔值后绕过Slot5..Slot7必需语义。
+    if (!Base.IsSuccess() ||
+        (!bRequireCoreGameplaySemantics && !bRequireEightActiveSlots))
     {
         return Base;
     }
@@ -75,6 +78,24 @@ FGamePlatformResult UDivineBeastsInputProfileDefinition::ValidateDefinition() co
             return FGamePlatformResult::Failure(
                 TEXT("DivineBeastsRequiredInputMissing"),
                 TEXT("神兽联盟Gameplay输入Profile缺少核心攻击、技能槽或目标锁定语义。"));
+        }
+    }
+
+    if (bRequireEightActiveSlots)
+    {
+        // 新八槽Profile必须提供真实Semantic定义；不能靠ini或画面显示的数字键伪装可使用。
+        const FGameplayTag Extended[] =
+        {
+            DivineBeastsInputSemantics::AbilitySlot5(),
+            DivineBeastsInputSemantics::AbilitySlot6(),
+            DivineBeastsInputSemantics::AbilitySlot7()
+        };
+        for (const FGameplayTag Tag : Extended)
+        {
+            if (!Tag.IsValid() || !ProjectSemantics.Contains(Tag))
+                return FGamePlatformResult::Failure(
+                    TEXT("DivineBeastsEightSlotInputMissing"),
+                    TEXT("正式八槽输入Profile缺少Slot5、Slot6或Slot7真实输入语义。"));
         }
     }
 

@@ -1,0 +1,632 @@
+{
+  "version": 1,
+  "name": "WBP_DBA_PluginPortal",
+  "parentClass": "/Script/DivineBeastsDemoClient.DivineBeastsDemoHubScreen",
+  "metadata": {
+    "authoringTool": "MonolithUI.SpecSerializer",
+    "sourceFile": "/DBAUIPack_Core/Development/PluginDemos/UI/WBP_DBA_PluginPortal",
+    "author": "",
+    "description": ""
+  },
+  "rootWidget": {
+    "type": "SafeZone",
+    "id": "PortalSafe",
+    "slot": {
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "x": 0,
+        "y": 0
+      },
+      "alignment": {
+        "x": 0,
+        "y": 0
+      },
+      "padding": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    "style": {
+      "opacity": 1,
+      "visibility": "SelfHitTestInvisible",
+      "background": "#00000000",
+      "borderColor": "#00000000",
+      "padding": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      }
+    },
+    "content": {
+      "fontColor": "#FFFFFFFF"
+    },
+    "children": [
+      {
+        "type": "Border",
+        "id": "PortalBackground",
+        "slot": {
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "size": {
+            "x": 0,
+            "y": 0
+          },
+          "alignment": {
+            "x": 0,
+            "y": 0
+          },
+          "padding": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+          }
+        },
+        "style": {
+          "opacity": 1,
+          "visibility": "Visible",
+          "background": "#000606FF",
+          "borderColor": "#00000000",
+          "padding": {
+            "left": 28,
+            "top": 16,
+            "right": 28,
+            "bottom": 16
+          }
+        },
+        "content": {
+          "fontColor": "#FFFFFFFF"
+        },
+        "children": [
+          {
+            "type": "VerticalBox",
+            "id": "PortalPage",
+            "slot": {
+              "hAlign": "Fill",
+              "vAlign": "Fill",
+              "position": {
+                "x": 0,
+                "y": 0
+              },
+              "size": {
+                "x": 0,
+                "y": 0
+              },
+              "alignment": {
+                "x": 0,
+                "y": 0
+              },
+              "padding": {
+                "left": 28,
+                "top": 20,
+                "right": 28,
+                "bottom": 20
+              }
+            },
+            "style": {
+              "opacity": 1,
+              "visibility": "SelfHitTestInvisible",
+              "background": "#00000000",
+              "borderColor": "#00000000",
+              "padding": {
+                "left": 0,
+                "top": 0,
+                "right": 0,
+                "bottom": 0
+              }
+            },
+            "content": {
+              "fontColor": "#FFFFFFFF"
+            },
+            "children": [
+              {
+                "type": "HorizontalBox",
+                "id": "PortalHeader",
+                "slot": {
+                  "hAlign": "Fill",
+                  "vAlign": "Fill",
+                  "sizeRule": "Automatic",
+                  "fillWeight": 1,
+                  "position": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "size": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "alignment": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "padding": {
+                    "left": 4,
+                    "top": 0,
+                    "right": 4,
+                    "bottom": 14
+                  }
+                },
+                "style": {
+                  "opacity": 1,
+                  "visibility": "SelfHitTestInvisible",
+                  "background": "#00000000",
+                  "borderColor": "#00000000",
+                  "padding": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0
+                  }
+                },
+                "content": {
+                  "fontColor": "#FFFFFFFF"
+                },
+                "children": [
+                  {
+                    "type": "TextBlock",
+                    "id": "PortalTitle",
+                    "slot": {
+                      "hAlign": "Fill",
+                      "vAlign": "Fill",
+                      "sizeRule": "Fill",
+                      "fillWeight": 1,
+                      "position": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "size": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "alignment": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "style": {
+                      "opacity": 1,
+                      "visibility": "Visible",
+                      "background": "#00000000",
+                      "borderColor": "#00000000",
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "content": {
+                      "text": "SSLM · 插件工作台",
+                      "fontSize": 28,
+                      "wrapMode": "Wrap",
+                      "fontColor": "#E5BC6BFF"
+                    }
+                  },
+                  {
+                    "type": "TextBlock",
+                    "id": "PortalSubtitle",
+                    "slot": {
+                      "hAlign": "Fill",
+                      "vAlign": "Center",
+                      "sizeRule": "Automatic",
+                      "fillWeight": 1,
+                      "position": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "size": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "alignment": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "padding": {
+                        "left": 30,
+                        "top": 0,
+                        "right": 30,
+                        "bottom": 0
+                      }
+                    },
+                    "style": {
+                      "opacity": 1,
+                      "visibility": "Visible",
+                      "background": "#00000000",
+                      "borderColor": "#00000000",
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "content": {
+                      "text": "选择插件，进入工作台",
+                      "fontSize": 16,
+                      "wrapMode": "Wrap",
+                      "fontColor": "#8EB3AAFF"
+                    }
+                  },
+                  {
+                    "type": "TextBlock",
+                    "id": "ReviewState",
+                    "slot": {
+                      "hAlign": "Fill",
+                      "vAlign": "Center",
+                      "sizeRule": "Automatic",
+                      "fillWeight": 1,
+                      "position": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "size": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "alignment": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "style": {
+                      "opacity": 1,
+                      "visibility": "Visible",
+                      "background": "#00000000",
+                      "borderColor": "#00000000",
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "content": {
+                      "text": "人工审核中",
+                      "fontSize": 14,
+                      "wrapMode": "Wrap",
+                      "fontColor": "#AB8539FF"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "Border",
+                "id": "HeaderRule",
+                "slot": {
+                  "hAlign": "Fill",
+                  "vAlign": "Fill",
+                  "sizeRule": "Automatic",
+                  "fillWeight": 1,
+                  "position": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "size": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "alignment": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "padding": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0
+                  }
+                },
+                "style": {
+                  "opacity": 1,
+                  "visibility": "Visible",
+                  "background": "#5F6442FF",
+                  "borderColor": "#00000000",
+                  "padding": {
+                    "left": 4,
+                    "top": 2,
+                    "right": 4,
+                    "bottom": 2
+                  }
+                },
+                "content": {
+                  "fontColor": "#FFFFFFFF"
+                },
+                "children": [
+                  {
+                    "type": "SizeBox",
+                    "id": "HeaderRuleBounds",
+                    "slot": {
+                      "hAlign": "Fill",
+                      "vAlign": "Fill",
+                      "position": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "size": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "alignment": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "padding": {
+                        "left": 4,
+                        "top": 2,
+                        "right": 4,
+                        "bottom": 2
+                      }
+                    },
+                    "style": {
+                      "height": 1,
+                      "opacity": 1,
+                      "useCustomSize": true,
+                      "visibility": "SelfHitTestInvisible",
+                      "background": "#00000000",
+                      "borderColor": "#00000000",
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "content": {
+                      "fontColor": "#FFFFFFFF"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "TileView",
+                "id": "PluginList",
+                "slot": {
+                  "hAlign": "Fill",
+                  "vAlign": "Fill",
+                  "sizeRule": "Fill",
+                  "fillWeight": 1,
+                  "position": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "size": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "alignment": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "padding": {
+                    "left": 0,
+                    "top": 18,
+                    "right": 0,
+                    "bottom": 12
+                  }
+                },
+                "style": {
+                  "opacity": 1,
+                  "visibility": "Visible",
+                  "background": "#00000000",
+                  "borderColor": "#00000000",
+                  "padding": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0
+                  }
+                },
+                "content": {
+                  "fontColor": "#FFFFFFFF"
+                }
+              },
+              {
+                "type": "HorizontalBox",
+                "id": "PortalFooterRow",
+                "slot": {
+                  "hAlign": "Fill",
+                  "vAlign": "Fill",
+                  "sizeRule": "Automatic",
+                  "fillWeight": 1,
+                  "position": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "size": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "alignment": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "padding": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0
+                  }
+                },
+                "style": {
+                  "opacity": 1,
+                  "visibility": "SelfHitTestInvisible",
+                  "background": "#00000000",
+                  "borderColor": "#00000000",
+                  "padding": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0
+                  }
+                },
+                "content": {
+                  "fontColor": "#FFFFFFFF"
+                },
+                "children": [
+                  {
+                    "type": "TextBlock",
+                    "id": "CoverageText",
+                    "slot": {
+                      "hAlign": "Fill",
+                      "vAlign": "Fill",
+                      "sizeRule": "Fill",
+                      "fillWeight": 1,
+                      "position": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "size": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "alignment": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "style": {
+                      "opacity": 1,
+                      "visibility": "Collapsed",
+                      "background": "#00000000",
+                      "borderColor": "#00000000",
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "content": {
+                      "text": "正在加载插件…",
+                      "fontSize": 14,
+                      "wrapMode": "Wrap",
+                      "fontColor": "#93B3A8FF"
+                    }
+                  },
+                  {
+                    "type": "TextBlock",
+                    "id": "PortalFooter",
+                    "slot": {
+                      "hAlign": "Right",
+                      "vAlign": "Fill",
+                      "sizeRule": "Automatic",
+                      "fillWeight": 1,
+                      "position": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "size": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "alignment": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "style": {
+                      "opacity": 1,
+                      "visibility": "Visible",
+                      "background": "#00000000",
+                      "borderColor": "#00000000",
+                      "padding": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
+                      }
+                    },
+                    "content": {
+                      "text": "向下滚动浏览  ·  图片为用途示意",
+                      "fontSize": 14,
+                      "wrapMode": "Wrap",
+                      "fontColor": "#7C9D98FF"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "TextBlock",
+                "id": "OperationStatusText",
+                "slot": {
+                  "hAlign": "Fill",
+                  "vAlign": "Fill",
+                  "sizeRule": "Automatic",
+                  "fillWeight": 1,
+                  "position": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "size": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "alignment": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "padding": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0
+                  }
+                },
+                "style": {
+                  "opacity": 1,
+                  "visibility": "Visible",
+                  "background": "#00000000",
+                  "borderColor": "#00000000",
+                  "padding": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0
+                  }
+                },
+                "content": {
+                  "fontSize": 12,
+                  "wrapMode": "Wrap",
+                  "fontColor": "#B38260FF"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

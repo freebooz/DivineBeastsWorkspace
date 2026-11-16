@@ -15,21 +15,35 @@ import (
 
 // WorldAllocationRecord不含秘密，持久目标Boot及期限；签票回执另由统一Transfer仓储持有。
 type WorldAllocationRecord struct {
-	Fingerprint  string             // 固定输入摘要；同TicketID异内容冲突。
-	Assignment   gc.WorldAssignment // 首次选定的世界任务及端点，只供受保护签票。
-	ServerBootID string             // 目标真实启动代次；重启后拒绝继承。
-	ExpiresAtUTC time.Time          // 原意图UTC截止；过期需新的逻辑请求。
+	Fingerprint     string               // 固定输入摘要；同TicketID异内容冲突。
+	Assignment      gc.WorldAssignment   // 首次选定的世界任务及端点，只供受保护签票。
+	ServerBootID    string               // 目标真实启动代次；重启后拒绝继承。
+	ExpiresAtUTC    time.Time            // 原意图UTC截止；过期需新的逻辑请求。
+	ReturnSpawn     *gc.WorldReturnSpawn // 仅同一Village实例和启动代次可继承的经验证候选落点。
+	ReturnPlayerID  string               // 可消费本落点的返程玩家。
+	ReturnSessionID string               // 可消费本落点的返程认证会话。
 }
 
 // WorldAllocationStore的create必须只有快照选择，禁止副作用；并发提交只允许唯一首次目标。
 type WorldAllocationStore interface {
 	GetOrCreateWorldAllocation(context.Context, string, string, time.Time, func() (WorldAllocationRecord, error)) (WorldAllocationRecord, error)
+	GetWorldAllocation(context.Context, string) (WorldAllocationRecord, bool, error)
 }
 
 // memoryWorldAllocationStore仅供明确单进程开发/测试，不能作为生产跨副本恢复仓储。
 type memoryWorldAllocationStore struct {
 	mu    sync.Mutex
 	items map[string]WorldAllocationRecord
+}
+
+func (s *memoryWorldAllocationStore) GetWorldAllocation(ctx context.Context, id string) (WorldAllocationRecord, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return WorldAllocationRecord{}, false, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	record, found := s.items[id]
+	return record, found, nil
 }
 
 func (s *memoryWorldAllocationStore) GetOrCreateWorldAllocation(ctx context.Context, id, fp string, now time.Time, create func() (WorldAllocationRecord, error)) (WorldAllocationRecord, error) {
@@ -80,14 +94,26 @@ func (s *Service) prepareWorldTransfer(ctx context.Context, input AllocateWorldT
 		if !ok {
 			return WorldAllocationRecord{}, errors.New("WORLD_ASSIGNMENT_INVALID: 未登记体验")
 		}
-		target, err := s.registry.PreviewWorldAllocation(gameserver.AllocationRequest{RoleID: role, ExperienceID: input.World.ExperienceID, WorldID: input.World.WorldID, RegionID: input.World.RegionID, RequiredCapacity: input.World.PlayerSlots}, now)
+		request := gameserver.AllocationRequest{RoleID: role, ExperienceID: input.World.ExperienceID, WorldID: input.World.WorldID, RegionID: input.World.RegionID, RequiredCapacity: input.World.PlayerSlots}
+		origin := s.villageQueueOrigin(ctx, input, now)
+		if origin != nil {
+			request.PreferredGameServerID = origin.Presence.GameServerID
+			request.PreferredServerBootID = origin.Presence.ServerBootID
+		}
+		target, err := s.registry.PreviewWorldAllocation(request, now)
 		if err != nil {
 			return WorldAllocationRecord{}, err
 		}
-		assignment := gc.WorldAssignment{AssignmentID: "world:" + target.ID + ":" + input.World.ExperienceID, GameServerID: target.ID, ServerRoleID: role, ExperienceID: input.World.ExperienceID, WorldID: input.World.WorldID, RegionID: input.World.RegionID, Endpoint: target.PublicEndpoint}
+		assignment := gc.WorldAssignment{AssignmentID: "world:" + target.ID + ":" + input.World.ExperienceID, GameServerID: target.ID, ServerRoleID: role, ExperienceID: input.World.ExperienceID, WorldID: input.World.WorldID, RegionID: target.RegionID, Endpoint: target.PublicEndpoint}
 		if err := assignment.Validate(); err != nil {
 			return WorldAllocationRecord{}, err
 		}
-		return WorldAllocationRecord{Fingerprint: fp, Assignment: assignment, ServerBootID: target.ServerBootID, ExpiresAtUTC: now.Add(input.Transfer.TTL)}, nil
+		allocation := WorldAllocationRecord{Fingerprint: fp, Assignment: assignment, ServerBootID: target.ServerBootID, ExpiresAtUTC: now.Add(input.Transfer.TTL)}
+		if origin != nil && target.ID == origin.Presence.GameServerID && target.ServerBootID == origin.Presence.ServerBootID {
+			allocation.ReturnSpawn = &origin.Spawn
+			allocation.ReturnPlayerID = input.Transfer.PlayerID
+			allocation.ReturnSessionID = input.Transfer.SessionID
+		}
+		return allocation, nil
 	})
 }

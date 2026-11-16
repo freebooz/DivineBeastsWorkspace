@@ -41,6 +41,7 @@ bool FGamePlatformVFXPresentationProvider::Handle(
     VFXRequest.ExperienceId = Request.Context.ExperienceId;
     VFXRequest.ContextTags = Request.ContextTags;
     VFXRequest.DefinitionId = Request.DefinitionId;
+    VFXRequest.bAllowNaturalCompletion = Request.bAllowNaturalCompletion;
     VFXRequest.PlatformId = FName(FPlatformProperties::IniPlatformName());
     // 读取客户端当前sg.EffectsQuality（特效画质0—3/更高档），不再将所有表现请求固定为High。
     // 获取不到CVar时沿用原始High默认值；质量变体仅改变美术，不改变服务器时序和范围。
@@ -50,6 +51,7 @@ bool FGamePlatformVFXPresentationProvider::Handle(
             FMath::Clamp(EffectsQuality->GetInt(), 0, 3));
     }
     VFXRequest.SpawnContext.Location = Request.SourceLocation;
+    VFXRequest.SpawnContext.Rotation = Request.SourceRotation;
     VFXRequest.SpawnContext.AttachComponent = Request.AttachComponent;
     VFXRequest.SpawnContext.TargetLocation = Request.TargetLocation;
     VFXRequest.SpawnContext.ImpactLocation = Request.ImpactLocation;

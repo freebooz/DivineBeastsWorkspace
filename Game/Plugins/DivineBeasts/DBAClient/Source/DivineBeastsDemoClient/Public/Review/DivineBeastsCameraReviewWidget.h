@@ -2,21 +2,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "Core/GamePlatformWidgetBase.h"
 #include "DivineBeastsCameraReviewWidget.generated.h"
 
 class ADivineBeastsCinematicCameraReviewActor;
 class UButton;
+class UCommonButtonStyle;
 class UHorizontalBox;
 class UTextBlock;
 class UVerticalBox;
 
 /** 开发地图中由C++生成真实可点击按钮的轻量UMG界面；按键与按钮共用同一Actor操作。 */
 UCLASS()
-class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsCameraReviewWidget final : public UUserWidget
+class DIVINEBEASTSDEMOCLIENT_API UDivineBeastsCameraReviewWidget final : public UGamePlatformWidgetBase
 {
     GENERATED_BODY()
 public:
+    /** 复用平台LocalPlayer事件主题，动态镜头按钮与正式页面共用同一视觉样式。 */
+    UDivineBeastsCameraReviewWidget();
+
     /** Widget借用当前开发Actor，不持有服务器/账号/比赛对象。 */
     void BindReviewActor(ADivineBeastsCinematicCameraReviewActor* Actor);
 
@@ -26,6 +30,10 @@ public:
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
 private:
+    /** 本控件持有共享初始样式，保证独立镜头地图没有活动主题时仍显示正式云纹按钮。 */
+    UPROPERTY(Transient)
+    TSubclassOf<UCommonButtonStyle> InitialButtonStyleClass;
+
     UPROPERTY(Transient)
     TObjectPtr<UTextBlock> StatusText;
     TWeakObjectPtr<ADivineBeastsCinematicCameraReviewActor> ReviewActor;

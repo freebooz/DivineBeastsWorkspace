@@ -21,6 +21,7 @@ namespace
 FName MagicName(FName Style)
 {
     if (Style == TEXT("DBA.Development.Fireball")) return TEXT("Fireball");
+    if (Style == TEXT("DBA.Development.DirectedMissile")) return TEXT("DirectedMissile");
     if (Style == TEXT("DBA.Development.Frostbolt")) return TEXT("Frostbolt");
     if (Style == TEXT("DBA.Development.ArcaneMissiles")) return TEXT("ArcaneMissiles");
     return NAME_None;
@@ -51,12 +52,12 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
     DevelopmentMagicSpawnHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &ThisClass::HandleDevelopmentMagicSpawn));
     DevelopmentMagicPackHandle = ContentPackChanged.AddUObject(this, &ThisClass::HandleDevelopmentMagicPack);
     FDivineBeastsPresentationContentPackFragment Pack;
-    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 3; // 新增服务器确认治疗的原资源花瓣表现。
+    Pack.ContentPackId = TEXT("DBA.Development.Magic"); Pack.Revision = 5; // 1号定向飞弹前摇/飞行独立，命中仍复用火球。
     Pack.LifecycleScope = EGamePlatformPresentationContextScope::World; Pack.bRequiredPreload = true;
     auto& Catalog = Pack.CatalogFragment;
     Catalog.FragmentId = Pack.ContentPackId; Catalog.OwnerScopeId = Pack.ContentPackId;
-    Catalog.Revision = 3; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
-    for (const TCHAR* Name : {TEXT("Fireball"), TEXT("Frostbolt"), TEXT("ArcaneMissiles"),TEXT("Healing")})
+    Catalog.Revision = 5; Catalog.Scope = EGamePlatformPresentationCatalogScope::ContentPack; Catalog.LifecycleScope = Pack.LifecycleScope;
+    for (const TCHAR* Name : {TEXT("Fireball"), TEXT("Frostbolt"), TEXT("ArcaneMissiles"),TEXT("Healing"),TEXT("DirectedMissile")})
         for (const TCHAR* Stage : {TEXT("Flight"),TEXT("Impact"),TEXT("Cast"),TEXT("Residue")})
         {
             // 治疗只由已确认受疗事件播放一次，不为它创建弹体或借源施法事实播放目标效果。
@@ -68,7 +69,8 @@ void UDivineBeastsPresentationClientSubsystem::BindDevelopmentMagicWorld(UWorld*
             Entry.ProviderChannel = TEXT("VFX");
             // 目录身份使用DBA短名；已注册语义保留DivineBeasts稳定身份，不能由EntryId拼出不存在的标签。
             Entry.SemanticTag = FGameplayTag::RequestGameplayTag(FName(*(FString(TEXT("Presentation.DivineBeasts.Development.Magic."))+Name+TEXT(".")+Stage)),false);
-            Entry.DefinitionId = FName(*(FString(TEXT("presentation.dba.development.magic.")) + FString(Name).ToLower() +
+            const TCHAR* ResourceName = FCString::Strcmp(Name,TEXT("DirectedMissile"))==0 && FCString::Strcmp(Stage,TEXT("Impact"))==0 ? TEXT("Fireball") : Name;
+            Entry.DefinitionId = FName(*(FString(TEXT("presentation.dba.development.magic.")) + FString(ResourceName).ToLower() +
                 TEXT(".") + FString(Stage).ToLower() + TEXT("@1")));
             Entry.ContextQuery.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
             Entry.Scope = Catalog.Scope; Entry.Specificity = 1; Entry.ContentRevision = TEXT("1");
@@ -170,11 +172,31 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
         {
             FGamePlatformPresentationRequest Cancel; Cancel.RequestId=OldRequest;
             Cancel.SemanticTag=MagicSemantic(Name,false); Cancel.PredictionState=EGamePlatformPresentationPredictionState::Cancelled;
+            Cancel.bAllowNaturalCompletion=Snapshot.bImpacted;
             SubmitProjectRequest(Cancel);
         }
     }
     if (DevelopmentMagicBindingToken != Token || !IsValid(Actor)) return;
     Flight = DevelopmentMagicFlights.Find(Actor); if (!Flight) return;
+    // 音效独立消费同一服务器阶段事实，不被Niagara预载/受理失败连带静音。
+    // 外调前锁住本阶段，拒绝同步重入重复发声；失败可在后续真实事实/资源通知时重试。
+    const bool bImpactAudio = Snapshot.bFinished && Snapshot.bImpacted;
+    if (bImpactAudio &&
+        !(bImpactAudio ? Snapshot.ImpactLocation : Actor->GetActorLocation()).ContainsNaN() &&
+        !(bImpactAudio ? Flight->bImpactAudioSubmitted : Flight->bFlightAudioSubmitted))
+    {
+        if (bImpactAudio) Flight->bImpactAudioSubmitted = true;
+        else Flight->bFlightAudioSubmitted = true;
+        const bool bAudioAccepted = PlayStarterSpellSound(Name, bImpactAudio,
+            bImpactAudio ? Snapshot.ImpactLocation : Actor->GetActorLocation());
+        if (Token != DevelopmentMagicBindingToken || !IsValid(Actor)) return;
+        Flight = DevelopmentMagicFlights.Find(Actor); if (!Flight) return;
+        if (!bAudioAccepted)
+        {
+            if (bImpactAudio) Flight->bImpactAudioSubmitted = false;
+            else Flight->bFlightAudioSubmitted = false;
+        }
+    }
     FString Error;
     if (GetContentPackState(DevelopmentMagicPack, Error) != EDivineBeastsPresentationContentPackState::Active) return;
     const auto Submit = [this, Actor, &Snapshot, Name, Token](bool bImpact)
@@ -185,6 +207,7 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentMagicFacts(
         Request.RequestId = FGuid::NewGuid(); Request.SemanticTag = MagicSemantic(Name, bImpact);
         Request.ContextId = Snapshot.PresentationStyleId; Request.SourceId = Snapshot.AbilityId;
         Request.SourceLocation = bImpact ? Snapshot.ImpactLocation : Actor->GetActorLocation();
+        Request.SourceRotation = bImpact ? FRotator::ZeroRotator : Actor->GetActorRotation();
         Request.ImpactLocation = Snapshot.ImpactLocation; Request.ImpactNormal = Snapshot.ImpactNormal;
         Request.Context.ProjectId = FDivineBeastsProjectCatalog::GetProjectId();
         Request.Context.AvatarGeneration = Snapshot.SourceAvatarGeneration;
@@ -317,13 +340,8 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentHealingFeedback(
         !IsValid(Target) || Target->GetWorld()!=World || Target->IsActorBeingDestroyed() ||
         !Combat || Combat->IsCombatDead() || Event.TargetAvatarGeneration<=0 ||
         Combat->GetCombatAvatarGeneration()!=Event.TargetAvatarGeneration) return;
-    // 严格按已批准的十二个Primary身份映射，拒绝任意网络字符串拼资源或其它治疗误播。
-    bool bApproved=false;
-    for(const TCHAR* Hero:{TEXT("rat"),TEXT("ox"),TEXT("tiger"),TEXT("rabbit"),TEXT("dragon"),TEXT("snake"),
-        TEXT("horse"),TEXT("goat"),TEXT("monkey"),TEXT("rooster"),TEXT("dog"),TEXT("boar")})
-        if(Event.SourceAbilityId==FName(*(FString(TEXT("dba.ability."))+Hero+TEXT("_placeholder_primary@1"))))
-        { bApproved=true; break; }
-    if(!bApproved) return;
+    // 既有治疗与明确批准的角色恢复映射共用唯一表现链；拒绝未登记的技能/样式。
+    if(!DivineBeastsPlaceholderMagicVisualPolicy::IsApprovedPlaceholderSpell(Event.SourceAbilityId,TEXT("Healing"))) return;
     FVector Feet=Target->GetActorLocation();
     if(const auto* Capsule=Target->GetCapsuleComponent()) Feet.Z-=Capsule->GetScaledCapsuleHalfHeight();
     FGamePlatformPresentationRequest Request;
@@ -337,4 +355,6 @@ void UDivineBeastsPresentationClientSubsystem::HandleDevelopmentHealingFeedback(
     Request.Lifetime=EGamePlatformPresentationLifetime::Timed;
     // 平台确认反馈已按EventId/类型去重；重入或重复请求仍由唯一请求ID/作用域服务收敛。
     SubmitProjectRequest(Request);
+    // 治疗音效由同一确认事件身份驱动，与治疗Niagara独立；音效失败不影响GAS实际治疗。
+    PlayAudioLibraryFactClip(TEXT("Spell.Healing"), Feet, Event.EventId);
 }

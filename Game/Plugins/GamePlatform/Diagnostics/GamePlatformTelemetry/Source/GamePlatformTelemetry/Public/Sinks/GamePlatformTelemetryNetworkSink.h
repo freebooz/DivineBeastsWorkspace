@@ -51,8 +51,13 @@ private:
     bool bStarted = false;
     bool bShuttingDown = false;
 
-    /** 已安排的一次性重试任务；数量受 MaxPendingBatches * MaxRetries 的硬上限约束。 */
+    /** 仅保存尚未执行的一次性重试句柄；触发即移除，每个待完成批次至多一个。 */
     TArray<FTSTicker::FDelegateHandle> RetryTickerHandles;
+#if WITH_DEV_AUTOMATION_TESTS
+    /** 仅测试阶段读取本地调度句柄数量；Shipping不暴露诊断入口。 */
+    friend class FGamePlatformTelemetryRetryHandleLifecycleTest;
+    friend class FGamePlatformTelemetryShutdownIdempotentTest;
+#endif
     /** 非阻塞关停预算到期任务；在预算内允许已发HTTP自然完成。 */
     FTSTicker::FDelegateHandle ShutdownTickerHandle;
 

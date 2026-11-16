@@ -39,6 +39,8 @@ func lifecycleControlFixture(t *testing.T) (*Service, *MemoryArenaLifecycleStore
 func TestArenaResultWaitsForSafeReturn(t *testing.T) {
 	service, store, registration, input := lifecycleControlFixture(t)
 	ctx := context.Background()
+	now := time.Now().UTC()
+	service.now = func() time.Time { return now }
 	if err := service.Heartbeat(registration.GameServerID, 2, gameserver.StatusActive); err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +71,21 @@ func TestArenaResultWaitsForSafeReturn(t *testing.T) {
 		t.Fatal("结果终态不能继续签入场")
 	}
 	// 服务器真实报告无玩家后才允许回收；不把客户端关闭结果窗口当作已迁出。
+	now = now.Add(time.Second)
 	if err := service.Heartbeat(registration.GameServerID, 0, gameserver.StatusActive); err != nil {
+		t.Fatal(err)
+	}
+	if err := service.Drain(registration.GameServerID); err != nil {
+		t.Fatal(err)
+	}
+	if err := service.FinalizeArena(ctx, input.MatchID); err == nil {
+		t.Fatal("control-plane draining status is not a server drain receipt")
+	}
+	if err := service.ReportServerDrain(registration.GameServerID, registration.ServerBootID); err != nil {
+		t.Fatal(err)
+	}
+	// 模拟实例释放已完成、released持久化尚未成功的重试，原Boot回执仍然有效。
+	if err := service.registry.Release(registration.GameServerID); err != nil {
 		t.Fatal(err)
 	}
 	if err := service.FinalizeArena(ctx, input.MatchID); err != nil {

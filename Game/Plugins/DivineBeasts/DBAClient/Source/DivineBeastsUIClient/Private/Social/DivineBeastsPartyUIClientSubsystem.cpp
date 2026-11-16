@@ -91,6 +91,13 @@ bool UDivineBeastsPartyUIClientSubsystem::OpenPartyPage(FName PageId)
     if(bClosing||!UI||!GetLocalPlayer()||!GetLocalPlayer()->GetPlayerController(GetWorld()))return false;
     if(PageId.IsNone())PageId=TEXT("UI.Party.Panel");
     if(!Definitions.ContainsByPredicate([&](const auto& Definition){return Definition&&Definition->ScreenId==PageId;}))return false;
+    // 技能栏重复点击组队入口复用本地玩家已有主面板，不创建第二个VM或重复订阅业务通知。
+    // 人物上下文页仍允许更新目标，不将其与固定的组队主面板混为一谈。
+    if(PageId==TEXT("UI.Party.Panel"))
+        for(const auto& Binding:Bindings)
+            if(Binding&&Binding->IsBound())
+                if(auto* Screen=Binding->GetBoundScreen(); Screen&&Screen->GetScreenId()==PageId&&
+                    UI->IsScreenOwnedByStack(Screen,Binding->GetOriginalStack()))return true;
     // 只保留一个在途公共页面请求；关闭窗口不是业务取消，也不改变队伍状态。
     if(!PendingModels.IsEmpty()||DispatchingModel)return false;
     const TStrongObjectPtr<UDivineBeastsPartyViewModel> KeepModel(NewObject<UDivineBeastsPartyViewModel>(this));

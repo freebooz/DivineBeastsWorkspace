@@ -23,8 +23,11 @@ struct FGameplayEffectSpec;
 struct FGameplayAbilitySpec;
 struct FGamePlatformAbilityAvatarBindingSnapshot;
 struct FDivineBeastsAbilityLoadoutState;
+struct FDivineBeastsGrantedAbilitySlot;
 class UGameInstance;
 class IGamePlatformDataService;
+class UDivineBeastsUIClientSubsystem;
+struct FDivineBeastsUIViewState;
 
 /** FDivineBeastsAbilitySlotDetails（神兽联盟技能栏单格提示信息）。
  * 纯客户端只读投影，不提供技能授予、伤害或资源成本写入权限。 */
@@ -81,6 +84,19 @@ public:
     UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Ability")
     void UnbindFromLoadout();
 
+    /** 只读美术模式：首次读取本地玩家已选择角色快照，随后只订阅选择/注销事件。
+     * 空选择清空技能栏；不持有Loadout、不授予技能，所有槽位始终禁止激活。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Ability|ArtPreview")
+    bool BindToSelectedHeroIcons(UDivineBeastsUIClientSubsystem* InSource);
+
+    /** 编辑器/美术审查可显式切换只读英雄；使用同一Data租约和投影链，不写业务选择。
+     * Instance必须是当前本地游戏实例；换英雄先释放旧租约，缺完整八图配置时保持空栏。 */
+    UFUNCTION(BlueprintCallable, Category="DivineBeasts|UI|Ability|ArtPreview")
+    bool PreviewHeroIcons(FName HeroDefinitionId, UGameInstance* Instance);
+
+    UFUNCTION(BlueprintPure, Category="DivineBeasts|UI|Ability|ArtPreview")
+    bool IsReadOnlyArtPreview() const { return bReadOnlyArtPreview; }
+
     /** 向当前本地受控Pawn提交一次已授权槽位的按下/释放输入，复用平台ASC与原生GAS远程激活。
      * SlotId必须属于当前Ready快照及已确认Spec；被动、旧Avatar、禁用和待确认返回中文失败结果。
      * 成功仅表示输入请求受理；成本、冷却、投射物与伤害仍等待服务器GAS确认，无客户端授予或扣费。 */
@@ -102,6 +118,11 @@ public:
 private:
     // 仅自动化夹具可植入旧的只读显示快照，以验证真实资格事件刷新；不开放运行授权写接口。
     friend class FDivineBeastsAbilityActivationEventsTest;
+    friend class FDivineBeastsAbilityDetailsProjectionTest;
+    friend class FDivineBeastsAbilityGrantIdentityTest;
+    /** 显示与命令共享精确槽位的唯一性约束；重复授权一律拒绝，不按快照顺序挑选。 */
+    static const FDivineBeastsGrantedAbilitySlot* FindUniqueGrantedSlot(
+        const FDivineBeastsAbilityLoadoutState& Snapshot, FName SlotId);
     void HandleLoadoutChanged(const FDivineBeastsAbilityLoadoutState& Snapshot);
     /** Data只在游戏线程延后完成；代次、英雄、原Loadout与完整租约必须仍属当前请求。 */
     void HandleProfileLoaded(uint64 ExpectedLoadGeneration, FName ExpectedHero,
@@ -118,6 +139,16 @@ private:
 #endif
     void RefreshSlots(const FDivineBeastsAbilityLoadoutState& Snapshot);
     void ResetProfileLease();
+    /** 与正式授权路径共用Profile/图标租约；只读模式以GI为Data调用者并主动管理结束。 */
+    UObject* GetProfileResourceCaller() const;
+    void HandleSelectedHeroIconsChanged(const FDivineBeastsUIViewState& State);
+    void RefreshPreviewSlots();
+    TWeakObjectPtr<UDivineBeastsUIClientSubsystem> PreviewSource;
+    TWeakObjectPtr<UGameInstance> PreviewInstance;
+    FDelegateHandle PreviewSelectionHandle;
+    FString PreviewCharacterId;
+    FGuid PreviewStateRunId;
+    bool bReadOnlyArtPreview = false;
 
     /** 当 GAS 能力授予复制、技能效果、气势或阻断标签变化时更新单一快照；不使用 Widget Tick。 */
     void BindToNativeAbilityEvents();

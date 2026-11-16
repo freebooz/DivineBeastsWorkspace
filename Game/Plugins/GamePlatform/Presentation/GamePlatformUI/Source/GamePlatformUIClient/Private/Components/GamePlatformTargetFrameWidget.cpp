@@ -1,4 +1,5 @@
 #include "Components/GamePlatformTargetFrameWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 namespace
 {
@@ -69,10 +70,9 @@ bool UGamePlatformTargetFrameWidget::BindTargetSource(FGuid InSourceScopeId)
 bool UGamePlatformTargetFrameWidget::ApplyTargetSnapshot(
     const FGamePlatformUITargetFrameState& InState)
 {
-    if (!BoundScopeId.IsValid() ||
-        InState.SourceScopeId != BoundScopeId ||
-        !FGamePlatformUITargetFramePresentation::IsValidSnapshot(InState) ||
-        InState.Revision <= State.Revision)
+    if (!FGamePlatformUISnapshotScope::CanAccept(
+            BoundScopeId, State.Revision, InState.SourceScopeId, InState.Revision) ||
+        !FGamePlatformUITargetFramePresentation::IsValidSnapshot(InState))
     {
         return false;
     }

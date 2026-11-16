@@ -13,7 +13,32 @@
     "VillageDevelopmentServer": "VillageDevelopmentServer",
     "FoundationStandalone": "DedicatedServer"
   },
+  "StageOnlyEnginePlugins": [
+    "Fab",
+    "Bridge"
+  ],
   "CookDirectories": [
+    {
+      "PackagePath": "/GamePlatformUI/Input",
+      "SourceDirectory": "Game/Plugins/GamePlatform/Presentation/GamePlatformUI/Content/Input",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "CommonUI的输入类与返回确认动作表只服务客户端视口和控件。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/VFX/Activities/Arena",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/VFX/Activities/Arena",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "竞技门旋涡Niagara、GPU模块、材质和EffectType仅供客户端；入口交互与模式定义仍由服务器加载。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Definitions/Presentation/Activities",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Definitions/Presentation/Activities",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "活动入口纯表现VFX定义不进专服；Definitions/Activities/Arena中的五项权威入口定义不在排除范围。"
+    },
     {
       "PackagePath": "/DBAWorldPack_Village/Water/Blueprints",
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Water/Blueprints",
@@ -34,6 +59,13 @@
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "湖泊、河流、瀑布与泡沫的项目材质实例仅引用客户端Surface材质；只排除材质叶子，不排除Village地图、权威水域蓝图或GamePlatformWaterRuntime。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Water/Textures",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Water/Textures",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "水下焦散的湖岸遮罩纹理仅由客户端水下材质采样；权威物理水域保存于地图Brush，不读取纹理。"
     },
     {
       "PackagePath": "/Game/Development/PluginDemos",
@@ -288,6 +320,20 @@
       "Reason": "神兽联盟环境雪苔项目材质实例为客户端纯表现，不属于服务器必要资源。"
     },
     {
+      "PackagePath": "/DBAPresentationPack_Core/Textures/Terrain/Production10",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Textures/Terrain/Production10",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "十张公共地形色彩图仅供客户端雪地与材质表现；迁移保留源RGB，专服地图权威地形不依赖此目录。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/Textures/Terrain/Grass",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Textures/Terrain/Grass",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "2026-10-13历史客户端Grass扫描纹理目录；目前正式Village改为V3软租约，旧Grass依然只应由客户端Cook而非服务器Cook。"
+    },
+    {
       "PackagePath": "/Game/Development/Snow",
       "SourceDirectory": "Game/Content/Development/Snow",
       "Profiles": "AllServers",
@@ -321,6 +367,13 @@
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "已独立的纯表现开发审核目录；不排除其他开发资源。"
+    },
+    {
+      "PackagePath": "/Game/Development/LightingLab",
+      "SourceDirectory": "Game/Content/Development/LightingLab",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "SSLM独立艺术光照实验室的审核地图与灯光对照资源仅供UE5.8 Editor/PIE；不含服务器权威逻辑，必须从三种专用服务器Cook排除。"
     },
     {
       "PackagePath": "/DBAHeroPack_Rat/UI/Portraits",
@@ -419,6 +472,62 @@
       "Profiles": "AllServers",
       "Availability": "Present",
       "Reason": "CC0狼模型、材质、骨骼和动画蓝图只供客户端表现；权威AI独立位于Village/AI，地图与导航保持服务器可用。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Creatures/VampireALusth",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Creatures/VampireALusth",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "吸血鬼的骨骼、材质和动画仅由客户端租约装配；服务器只Cook项目怪物类与权威AI定义。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/VFX/CommonSkillVFX",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/CommonSkillVFX",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "通用技能的审核及运行Niagara、材质和网格均为纯客户端表现；服务器只使用DBAGameplay授权与Combat权威弹体，不Cook这些资源。"
+    },
+    {
+      "PackagePath": "/DBAFoliagePack_Core",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFoliagePack_Core/Content",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯客户端/编辑器植物原型库，当前不承担服务器碰撞、导航或玩法权威；只由批准场景显式消费。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/PCG/Ferns",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/PCG/Ferns",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "纯装饰蕨类PCG图和专用放置器；Cooker按独立类剥离生成HISM，权威地形、掩码、道路与导航继续保留。真实Cook须独立验证。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Development/Wind",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/Wind",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "统一植物风原生审核地图/夹具不提供权威碰撞或玩法，禁止进入服务器发布包。"
+    },
+    {
+      "PackagePath": "/DBAWorldPack_Village/Development/Terrain",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/Terrain",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "世界绑定的12项Production10审核材质仅用于开发演示，不含正式地图或权威地形。"
+    },
+    {
+      "PackagePath": "/Game/Development/Vendor",
+      "SourceDirectory": "Game/Content/Development/Vendor",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "PN与StyleHex供应商原始样例保留历史内部引用，不进入正式客户端或专服。"
+    },
+    {
+      "PackagePath": "/DBAPresentationPack_Core/Development/History",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/Development/History",
+      "Profiles": "AllServers",
+      "Availability": "Present",
+      "Reason": "七项旧鸟网格历史留存，当前Flight网格及Niagara链保持稳定；专服不加载鸟视觉。"
     }
   ],
   "StageOnlyDirectories": [
@@ -541,6 +650,12 @@
       "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core",
       "Availability": "Present",
       "Reason": "实际公共声音包已经存在；继续仅客户端Stage剥离，包含音频、定义和插件发布文件。"
+    },
+    {
+      "PackagePath": "/DBAFoliagePack_Core",
+      "SourceDirectory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFoliagePack_Core",
+      "Availability": "Present",
+      "Reason": "植物纯表现内容及插件侧文件不进入专服Stage。"
     }
   ]
 }

@@ -16,6 +16,14 @@ public:
     UPROPERTY(Config, EditAnywhere, Category="DivineBeasts|UI|CharacterCreation")
     TMap<FName, FSoftObjectPath> CharacterCreationProfiles;
 
+    /** 正式新手村小地图底图中心（世界厘米）；与编辑器俯视捕获共用。 */
+    UPROPERTY(Config, EditAnywhere, Category="DivineBeasts|UI|Minimap")
+    FVector2D VillageMinimapCenterCm = FVector2D::ZeroVector;
+
+    /** 底图覆盖的正方形边长（世界厘米）。 */
+    UPROPERTY(Config, EditAnywhere, Category="DivineBeasts|UI|Minimap", meta=(ClampMin="1.0"))
+    double VillageMinimapWidthCm = 50400.0;
+
     /** 只读解析；成功填写OutPath并清空OutError，失败清空OutPath并说明原因，不发起加载。 */
     bool TryGetCharacterCreationProfilePath(FName HeroDefinitionId, FSoftObjectPath& OutPath, FString& OutError) const;
 };

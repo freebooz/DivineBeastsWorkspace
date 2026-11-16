@@ -9,6 +9,48 @@
 #include "GameFramework/Actor.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
+#include "Attributes/GamePlatformCombatAttributeSet.h"
+#include "Settings/GamePlatformCombatSettings.h"
+#include "GameplayEffect.h"
+
+bool UDivineBeastsConfiguredGameplayAbility::UsesDefaultSpellEnergy() const
+{
+    const auto* Definition = Cast<UDivineBeastsAbilityDefinition>(
+        UAssetManager::Get().GetPrimaryAssetObject(AbilityDefinitionId));
+    return !Definition || (Definition->Kind != EDivineBeastsAbilityKind::Primary &&
+        Definition->Kind != EDivineBeastsAbilityKind::Passive);
+}
+
+UGameplayEffect* UDivineBeastsConfiguredGameplayAbility::BuildDefaultEnergyCost(UGameplayEffect* OriginalCost) const
+{
+    const float Amount = GetDefault<UGamePlatformCombatSettings>()->DefaultAbilityEnergyCost;
+    if (Amount <= 0.f) return OriginalCost;
+    if (OriginalCost)
+        for (const auto& Modifier : OriginalCost->Modifiers)
+            if (Modifier.Attribute == UGamePlatformCombatAttributeSet::GetEnergyAttribute()) return OriginalCost;
+    if (CachedEnergyCost && CachedOriginalCost == OriginalCost && CachedEnergyCostAmount == Amount)
+        return CachedEnergyCost;
+    auto* Self = const_cast<UDivineBeastsConfiguredGameplayAbility*>(this);
+    UGameplayEffect* Effect = OriginalCost ? DuplicateObject<UGameplayEffect>(OriginalCost, Self)
+        : NewObject<UGameplayEffect>(Self);
+    Effect->SetFlags(RF_Transient);
+    if (!OriginalCost) Effect->DurationPolicy = EGameplayEffectDurationType::Instant;
+    FGameplayModifierInfo Modifier;
+    Modifier.Attribute = UGamePlatformCombatAttributeSet::GetEnergyAttribute();
+    Modifier.ModifierOp = EGameplayModOp::Additive;
+    Modifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(-Amount));
+    Effect->Modifiers.Add(Modifier);
+    Self->CachedOriginalCost = OriginalCost;
+    Self->CachedEnergyCostAmount = Amount;
+    Self->CachedEnergyCost = Effect;
+    return Effect;
+}
+
+UGameplayEffect* UDivineBeastsConfiguredGameplayAbility::GetCostGameplayEffect() const
+{
+    UGameplayEffect* Original = Super::GetCostGameplayEffect();
+    return UsesDefaultSpellEnergy() ? BuildDefaultEnergyCost(Original) : Original;
+}
 
 void UDivineBeastsConfiguredGameplayAbility::ActivateAbility(
     const FGameplayAbilitySpecHandle Handle,
@@ -18,6 +60,8 @@ void UDivineBeastsConfiguredGameplayAbility::ActivateAbility(
 {
     // 任意新激活均重新开始提交资格；不得沿用上次施法的成本与冷却承诺。
     bCommittedForCurrentActivation = false;
+    bCommitInProgress = false;
+    ++CommitActivationGeneration;
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 }
 
@@ -29,9 +73,15 @@ bool UDivineBeastsConfiguredGameplayAbility::CommitAbility(
 {
     // 引擎 GAS 负责 CheckCost、CheckCooldown、ApplyCost、ApplyCooldown 和网络预测，
     // 项目只记住“当前激活已成功提交”的事件，不复制成本/冷却计算。
+    if (bCommittedForCurrentActivation) return true;
+    if (bCommitInProgress) return false;
+    const uint64 Expected = CommitActivationGeneration;
+    bCommitInProgress = true;
     const bool bSucceeded = Super::CommitAbility(
         Handle, ActorInfo, ActivationInfo, OptionalRelevantTags);
-    bCommittedForCurrentActivation = bSucceeded;
+    if (Expected != CommitActivationGeneration) return false;
+    bCommitInProgress = false;
+    bCommittedForCurrentActivation = bSucceeded && IsActive();
     return bSucceeded;
 }
 
@@ -42,6 +92,8 @@ void UDivineBeastsConfiguredGameplayAbility::EndAbility(
     bool bReplicateEndAbility, bool bWasCancelled)
 {
     bCommittedForCurrentActivation = false;
+    bCommitInProgress = false;
+    ++CommitActivationGeneration;
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -123,16 +175,22 @@ bool UDivineBeastsConfiguredGameplayAbility::AuthorityTraceForwardAndApplyDamage
         FName(TEXT("DivineBeastsAbilityForwardTrace")), false, Source);
     QueryParams.bReturnPhysicalMaterial = false;
 
-    FHitResult Hit;
-    if (!World->LineTraceSingleByChannel(
-            Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams) ||
-        !Hit.bBlockingHit || !IsValid(Hit.GetActor()) || Hit.GetActor() == Source)
+    FHitResult VisibilityHit;
+    FHitResult PawnHit;
+    const bool bVisibilityHit = World->LineTraceSingleByChannel(
+        VisibilityHit, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
+    // Pawn胶囊可能忽略Visibility；仅选择首个遮挡物之前的Pawn，不能穿墙补命中。
+    const bool bPawnHit = World->LineTraceSingleByObjectType(
+        PawnHit, TraceStart, TraceEnd, FCollisionObjectQueryParams(ECC_Pawn), QueryParams);
+    const FHitResult* Hit = bPawnHit && (!bVisibilityHit || PawnHit.Distance < VisibilityHit.Distance)
+        ? &PawnHit : (bVisibilityHit ? &VisibilityHit : nullptr);
+    if (!Hit || !Hit->bBlockingHit || !IsValid(Hit->GetActor()) || Hit->GetActor() == Source)
     {
         OutError = TEXT("服务器前向技能射线未命中可执行伤害的有效目标。");
         return false;
     }
 
-    const float Distance = FVector::Distance(TraceStart, Hit.ImpactPoint);
+    const float Distance = FVector::Distance(TraceStart, Hit->ImpactPoint);
     if (!FMath::IsFinite(Distance) || Distance > Balance.CastRangeCm + 1.0f)
     {
         OutError = TEXT("服务器命中距离不合法，拒绝处理伤害。");
@@ -143,12 +201,12 @@ bool UDivineBeastsConfiguredGameplayAbility::AuthorityTraceForwardAndApplyDamage
     HitContext.bHasValidatedHit = true;
     HitContext.TraceStart = TraceStart;
     HitContext.TraceEnd = TraceEnd;
-    HitContext.ImpactPoint = Hit.ImpactPoint;
-    HitContext.ImpactNormal = Hit.ImpactNormal.GetSafeNormal();
+    HitContext.ImpactPoint = Hit->ImpactPoint;
+    HitContext.ImpactNormal = Hit->ImpactNormal.GetSafeNormal();
     HitContext.ValidatedDistance = Distance;
 
     // 只交给唯一GamePlatformCombat（平台战斗）组件做防御、护盾、血量与重复事件处理。
-    return AuthorityApplyConfiguredDamage(Hit.GetActor(), HitContext, OutResult, OutError);
+    return AuthorityApplyConfiguredDamage(Hit->GetActor(), HitContext, OutResult, OutError);
 }
 
 bool UDivineBeastsConfiguredGameplayAbility::AuthorityApplyConfiguredDamage(

@@ -14,6 +14,8 @@ public class DivineBeastsPresentationClient : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            // 公开脚步通知头依赖PhysicsCore的EPhysicalSurface枚举及反射类型。
+            "PhysicsCore",
             // 公共配置头直接继承UDeveloperSettings，须公开声明模块依赖。
             "DeveloperSettings",
             // 公开回执使用平台结果值；显式链接其实现，不能仅依赖Data头文件的传递可见性。
@@ -53,6 +55,9 @@ public class DivineBeastsPresentationClient : ModuleRules
             // 仅查询FluidFlux插件是否存在，绝不硬依赖其源码或客户端资源。
             "Projects"
         });
+
+        // 正式角色预览复用平台相机插件的本地ViewTarget租约和镜头配置；只由ClientOnly模块链接。
+        PrivateDependencyModuleNames.Add("GamePlatformCameraClient");
 
         // UE Landscape原生渲染材质MID桥接仅编入ClientOnly模块，Server目标完全不依赖。
         PrivateDependencyModuleNames.Add("Landscape");

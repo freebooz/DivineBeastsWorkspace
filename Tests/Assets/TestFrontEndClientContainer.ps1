@@ -1,10 +1,10 @@
-﻿#requires -Version 7.0
+#requires -Version 7.0
 <#
 .SYNOPSIS
 只读检查锁定引擎导出的客户端IoStore清单中是否包含前端运行必需的软引用资产。
 .DESCRIPTION
 输入为UnrealPak -ListContainer -Csv生成的真实CSV；逐项要求WindowsClient的非空ExportBundleData。
-覆盖RootLayout、登录/角色页面、动态卡片、应用流程和十二生肖外观入口；不以源码文件存在代替包内存在。
+覆盖RootLayout、登录/角色页面、动态卡片、应用流程、十二生肖外观及42条音频定义/配套声源；不以源码存在代替包内存在。
 退出0表示包内容门禁通过，1表示缺失或清单无效；不代表登录、材质效果或新手村联机通过。
 #>
 [CmdletBinding()]
@@ -70,11 +70,11 @@ try {
         'GamePlatformUI/Content/Input/BP_GP_UIInputData.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameReference.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameHealthFillReference.uasset',
-        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference.uasset',
+        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_PlayerFrameEnergyFill.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFramePortrait.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameStatus.uasset',
         'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameHealthBar.uasset',
-        'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameMomentumBar.uasset',
+        'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameEnergyBar.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NatureMenuReference.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NatureAbilityReference.uasset',
         'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NatureMinimapReference.uasset',
@@ -102,7 +102,10 @@ try {
         # 真实蒙皮必须连同完整UE5骨架交付；旧68骨架同名兼容身份不能代替依赖。
         'DBAContentPack_Common/Content/Mannequins/UE5/Meshes/SK_Mannequin.uasset',
         'DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Manny_Simple.uasset',
-        'DBAContentPack_Common/Content/Mannequins/DBA/Meshes/SKM_Quinn_Simple.uasset',
+        # 十二生肖已替换Manny/Quinn占位模型；要求真实共用模型和动画蓝图进入容器。
+        'DBAContentPack_Common/Content/Characters/KachujinGRosales/Kachujin_G_Rosales.uasset',
+        'DBAContentPack_Common/Content/Characters/KachujinGRosales/Animations/ABP_DBA_Kachujin.uasset',
+        'DBAContentPack_Common/Content/Characters/KachujinGRosales/Animations/BS_DBA_Kachujin_Locomotion.uasset',
         # 网络世界定义必须进入实际IoStore，不以编辑器磁盘文件代替交付。
         'DBAWorldPack_Village/Content/Definitions/DA_DBA_Pawn_WorldCharacter.uasset',
         'DBAWorldPack_Village/Content/Definitions/DA_DBA_Experience_Village_Tutorial.uasset'
@@ -150,6 +153,12 @@ try {
         }
     }
     if ($DevelopmentSkills) {
+        # 村庄开发包同时含三名NPC与混合怪群；表现不进入专服，但必须在客户端容器。
+        $required += 'DBAContentPack_Common/Content/Characters/NPC/Arissa/Arissa.uasset'
+        $required += 'DBAContentPack_Common/Content/Characters/NPC/Arissa/Animations/ABP_DBA_Arissa.uasset'
+        $required += 'DBAWorldPack_Village/Content/Creatures/VampireALusth/Vampire_A_Lusth.uasset'
+        $required += 'DBAWorldPack_Village/Content/Creatures/VampireALusth/Animations/ABP_DBA_Vampire.uasset'
+        $required += 'DBAWorldPack_Village/Content/Creatures/VampireALusth/Animations/AM_DBA_Vampire_Attack.uasset'
         # 魔法定义/GA/成本/冷却与三图标、六VFX都必须在实际容器，不能以本机Editor存在放行。
         $required += 'DivineBeastsArena/Content/Development/DivineBeasts/Abilities/DT_DBA_Zodiac_DevBalance.uasset'
         $magic='DivineBeastsArena/Content/Development/DivineBeasts/Abilities/MagicTests'
@@ -162,10 +171,6 @@ try {
         }
         foreach($spell in @('Fireball','Frostbolt','ArcaneMissiles')) {
             $required += "DBAUIPack_Core/Content/UI/Abilities/MagicTests/T_DBA_Dev$spell.uasset"
-            foreach($stage in @('Flight','Impact')) {
-                $required += "DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Niagara/NS_DBA_Dev${spell}$stage.uasset"
-                $required += "DBAPresentationPack_Core/Content/VFX/DevelopmentMagic/Definitions/DA_DBA_VFX_Dev${spell}$stage.uasset"
-            }
         }
     }
     if($DevelopmentArena){
@@ -175,18 +180,92 @@ try {
         foreach($name in @('PartyPanel','PartyInviteModal','PartyReadyCheckModal','PartyApplications','PartyListEntry')){$required+="DBAUIPack_Core/Content/UI/Social/WBP_DBA_$name.uasset"}
         foreach($name in @('Matchmaking','MatchFoundReady','HeroSelection','Scoreboard','PostMatch')){$required+="DBAArena/Content/UI/Screens/WBP_DBA_UI_Arena_$name.uasset"}
         $required+='DBAArena/Content/UI/HUD/WBP_DBA_UI_ArenaHUD.uasset'
+        $required+='DBAArena/Content/UI/HUD/WBP_DBA_UI_ArenaQueueStatus.uasset'
+        foreach($mode in @('duel1v1','team2v2','team3v3','team4v4','team5v5')){$required+="DBAWorldPack_Village/Content/Definitions/Activities/Arena/DA_Village_ArenaEntrance_$mode.uasset"}
+        foreach($asset in @('NS_VillageArenaGate_Vortex','NET_VillageArenaGate','M_VillageArenaGate_Particle')){$required+="DBAWorldPack_Village/Content/VFX/Activities/Arena/$asset.uasset"}
+        $required+='DBAWorldPack_Village/Content/Definitions/Presentation/Activities/DA_VillageArenaGate_Vortex.uasset'
         $required+='DBAUIPack_Core/Content/UI/Materials/Social/M_DBA_PartyJade_V1.uasset'
     }
+    # 音频逻辑ID通过目录软加载，AssetManager扫描不能保证Cook。
+    # 逐项检查42条定义和声源；默认/登录/新手村三份音乐定义共用同一曲目，不要求退休旧曲目继续入包。
+    $audioRequired = @()
+    $audioRoot = 'DBASFXPack_Core/Content/Audio'
+    $starterAudio = @(
+        @('UI','UI_Click','UI_Click_01'),
+        @('UI','UI_Confirm','UI_Confirm_01'),
+        @('UI','UI_Cancel','UI_Cancel_01'),
+        @('Spells','Spell_FrostCast','Spell_Frost_Cast_01'),
+        @('Spells','Spell_FrostImpact','Spell_Frost_Impact_01'),
+        @('Spells','Spell_FireImpact','Spell_Fire_Impact_01'),
+        @('Music','Music_Default','Music_GoldenAutumnPond'),
+        @('Music','Music_Login','Music_GoldenAutumnPond'),
+        @('Music','Music_Village','Music_GoldenAutumnPond'),
+        @('Ambience','Ambience_Forest','Ambience_Forest_01')
+    )
+    foreach ($entry in $starterAudio) {
+        $audioRequired += "$audioRoot/$($entry[0])/Definitions/DA_DBA_SFX_$($entry[1]).uasset"
+        $audioRequired += "$audioRoot/$($entry[0])/Waves/S_DBA_$($entry[2]).uasset"
+    }
+    $workspaceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+    $audioManifestPath = Join-Path $workspaceRoot 'Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBASFXPack_Core/Docs/SSLM_AudioLibraryExpansion_20261018.json'
+    $audioManifest = Get-Content -LiteralPath $audioManifestPath -Raw | ConvertFrom-Json
+    if (@($audioManifest.entries).Count -ne 32) { throw '音频库发布清单必须包含已登记的32条音效。' }
+    foreach ($entry in $audioManifest.entries) {
+        $waveName = [IO.Path]::GetFileNameWithoutExtension($entry.filename)
+        $audioRequired += "$audioRoot/Library/$($entry.category)/Definitions/DA_DBA_SFX_$($entry.category)_$($entry.id).uasset"
+        $audioRequired += "$audioRoot/Library/$($entry.category)/Waves/$waveName.uasset"
+    }
+    # 标准火球长前摇的唯一循环Cue及定义必须真实入包，不能只凭本机存在放行。
+    $audioRequired += "$audioRoot/Spells/Cues/SC_DBA_Spell_FireCast.uasset"
+    $audioRequired += "$audioRoot/Spells/Definitions/DA_DBA_SFX_Spell_FireCast.uasset"
+    $audioRequired = @($audioRequired | Sort-Object -Unique)
+    $required += $audioRequired
+
+    # 光标资源由同一主题合同制作；逐个核对当前客户端包中的原生控件、材质和图集。
+    $cursorTheme = Get-Content -LiteralPath (Join-Path $workspaceRoot 'Tools/Unreal/UI/CursorTheme.json') -Raw -Encoding utf8 | ConvertFrom-Json
+    $cursorPackages = @($cursorTheme.texture, $cursorTheme.material) + @($cursorTheme.states | ForEach-Object { $_.material; $_.widget })
+    if (@($cursorTheme.states).Count -eq 0 -or @($cursorPackages | Sort-Object -Unique).Count -ne $cursorPackages.Count) {
+        throw '光标主题资产合同为空或包含重复包。'
+    }
+    foreach ($package in $cursorPackages) {
+        if ($package -cnotmatch '^/DBAUIPack_Core/UI/Cursors/[A-Za-z0-9_/]+$') { throw "光标资产不在公共 UI 内容包：$package" }
+        $required += 'DBAUIPack_Core/Content' + $package.Substring('/DBAUIPack_Core'.Length) + '.uasset'
+    }
+
+    # 当前VFX与退休包均从唯一合同派生；正式/开发客户端不能各自维护版本列表。
+    $spellManifest = Get-Content -LiteralPath (Join-Path $workspaceRoot 'Tools/Unreal/VFX/SpellProjectiles/PresentationManifest.json') -Raw -Encoding utf8 | ConvertFrom-Json
+    function Convert-SpellPackageToContainerSuffix([string]$Package) {
+        $parts = $Package.TrimStart('/').Split('/',2)
+        return "$($parts[0])/Content/$($parts[1]).uasset"
+    }
+    $spellPackages = @($spellManifest.bindings | ForEach-Object { $_.definition; $_.system }) +
+        @($spellManifest.resources | ForEach-Object { $_.path }) +
+        @($spellManifest.auxiliary_systems) + @($spellManifest.auxiliary_definitions)
+    $required += @($spellPackages | Sort-Object -Unique | ForEach-Object { Convert-SpellPackageToContainerSuffix $_ })
+    $forbiddenSuffixes = @(@($spellManifest.bindings | ForEach-Object { $_.source_system }) + @($spellManifest.retired_systems) |
+        Sort-Object -Unique | ForEach-Object { Convert-SpellPackageToContainerSuffix $_ })
+    # 动态头像已接回既有事件链；禁止退休的静态肖像/旧头像气势控件重新进入发布。
+    $forbiddenSuffixes += @(
+        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_PlayerFramePortrait.uasset',
+        'DBAUIPack_Core/Content/UI/Materials/Nature/M_DBA_NaturePlayerFrameMomentumFillReference.uasset',
+        'DBAUIPack_Core/Content/UI/Components/WBP_DBA_UI_PlayerFrameMomentumBar.uasset'
+    )
+    $forbidden = @($forbiddenSuffixes | Where-Object {
+        $suffix = '/' + $_
+        @($rows | Where-Object { $_.Filename.Replace('\','/').EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase) -and
+            $_.ChunkType -eq 'ExportBundleData' -and $_.Platform -eq 'WindowsClient' -and [long]$_.Size -gt 0 }).Count -gt 0
+    })
+
     # 软路径在C++目录中构造，地图引用扫描不能发现；要求实际导出数据而非配置或仅包名。
     $missing = @($required | Where-Object {
         $suffix = '/' + $_
         @($rows | Where-Object { $_.Filename.Replace('\','/').EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase) -and
             $_.ChunkType -eq 'ExportBundleData' -and $_.Platform -eq 'WindowsClient' -and [long]$_.Size -gt 0 }).Count -eq 0
     })
-    $report = [ordered]@{ Passed=($missing.Count -eq 0); RequiredCount=$required.Count; Missing=$missing; ContainerCsv=[IO.Path]::GetFullPath($ContainerCsv) }
+    $report = [ordered]@{ Passed=($missing.Count -eq 0 -and $forbidden.Count -eq 0); RequiredCount=$required.Count; AudioRequiredCount=$audioRequired.Count; CursorRequiredCount=$cursorPackages.Count; Missing=$missing; Forbidden=$forbidden; ContainerCsv=[IO.Path]::GetFullPath($ContainerCsv) }
     $json = $report | ConvertTo-Json -Depth 5
     if ($ReportPath) { $json | Set-Content -LiteralPath $ReportPath -Encoding utf8 }
     $json
-    if ($missing.Count -gt 0) { exit 1 }
+    if ($missing.Count -gt 0 -or $forbidden.Count -gt 0) { exit 1 }
     exit 0
 } catch { Write-Error $_; exit 1 }

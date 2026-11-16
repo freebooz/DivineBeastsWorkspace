@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "designLock": "TigerV6_EightSkillArtLock_20261018",
+  "candidateManifest": "Docs/Implementation/GamePlatformAbilitySystem/TigerV6IconCandidates_24_20261018.json",
+  "reviewPurposeZh": "用户已按八技能逐项确认A/B/C构图方向，但实际独立1024图像由后续生成，须另行完成真实美术人工审核和正式UE导入。",
+  "status": "DIRECTIONS_SELECTED_SOURCE_IMAGES_STAGED_ART_REVIEW_PENDING",
+  "entries": [
+    {
+      "skillOrder": 1,
+      "v6NameZh": "白虎爪",
+      "options": [
+        "S01-A",
+        "S01-B",
+        "S01-C"
+      ],
+      "selectedCandidateId": "S01-A",
+      "selectionStatus": "DIRECTION_SELECTED_ART_REVIEW_PENDING",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": "用户已明确选择S01-A构图方向；新生成独立原画仍需实际视觉验收，不能记作正式艺术品已批准。",
+      "directionSelectionSourceZh": "2026-10-18本会话用户明确选择",
+      "artworkApproved": false
+    },
+    {
+      "skillOrder": 2,
+      "v6NameZh": "裂爪",
+      "options": [
+        "S02-A",
+        "S02-B",
+        "S02-C"
+      ],
+      "selectedCandidateId": "S02-B",
+      "selectionStatus": "DIRECTION_SELECTED_ART_REVIEW_PENDING",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": "用户已明确选择S02-B构图方向；新生成独立原画仍需实际视觉验收，不能记作正式艺术品已批准。",
+      "directionSelectionSourceZh": "2026-10-18本会话用户明确选择",
+      "artworkApproved": false
+    },
+    {
+      "skillOrder": 3,
+      "v6NameZh": "双爪袭",
+      "options": [
+        "S03-A",
+        "S03-B",
+        "S03-C"
+      ],
+      "selectedCandidateId": "S03-C",
+      "selectionStatus": "DIRECTION_SELECTED_ART_REVIEW_PENDING",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": "用户已明确选择S03-C构图方向；新生成独立原画仍需实际视觉验收，不能记作正式艺术品已批准。",
+      "directionSelectionSourceZh": "2026-10-18本会话用户明确选择",
+      "artworkApproved": false
+    },
+    {
+      "skillOrder": 4,
+      "v6NameZh": "啸岭扑杀",
+      "options": [
+        "S04-A",
+        "S04-B",
+        "S04-C"
+      ],
+      "selectedCandidateId": "S04-A",
+      "selectionStatus": "DIRECTION_SELECTED_ART_REVIEW_PENDING",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": "用户已明确选择S04-A构图方向；新生成独立原画仍需实际视觉验收，不能记作正式艺术品已批准。",
+      "directionSelectionSourceZh": "2026-10-18本会话用户明确选择",
+      "artworkApproved": false
+    },
+    {
+      "skillOrder": 5,
+      "v6NameZh": "扑杀",
+      "options": [
+        "S05-A",
+        "S05-B",
+        "S05-C"
+      ],
+      "selectedCandidateId": "S05-A",
+      "selectionStatus": "DIRECTION_SELECTED_ART_REVIEW_PENDING",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": "用户已明确选择S05-A构图方向；新生成独立原画仍需实际视觉验收，不能记作正式艺术品已批准。",
+      "directionSelectionSourceZh": "2026-10-18本会话用户明确选择",
+      "artworkApproved": false
+    },
+    {
+      "skillOrder": 6,
+      "v6NameZh": "虎踞",
+      "options": [
+        "S06-A",
+        "S06-B",
+        "S06-C"
+      ],
+      "selectedCandidateId": "S06-B",
+      "selectionStatus": "DIRECTION_SELECTED_ART_REVIEW_PENDING",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": "用户已明确选择S06-B构图方向；新生成独立原画仍需实际视觉验收，不能记作正式艺术品已批准。",
+      "directionSelectionSourceZh": "2026-10-18本会话用户明确选择",
+      "artworkApproved": false
+    },
+    {
+      "skillOrder": 7,
+      "v6NameZh": "虎啸",
+      "options": [
+        "S07-A",
+        "S07-B",
+        "S07-C"
+      ],
+      "selectedCandidateId": "S07-B",
+      "selectionStatus": "DIRECTION_SELECTED_ART_REVIEW_PENDING",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": "用户已明确选择S07-B构图方向；新生成独立原画仍需实际视觉验收，不能记作正式艺术品已批准。",
+      "directionSelectionSourceZh": "2026-10-18本会话用户明确选择",
+      "artworkApproved": false
+    },
+    {
+      "skillOrder": 8,
+      "v6NameZh": "开猎",
+      "options": [
+        "S08-A",
+        "S08-B",
+        "S08-C"
+      ],
+      "selectedCandidateId": "S08-B",
+      "selectionStatus": "DIRECTION_SELECTED_ART_REVIEW_PENDING",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "decisionCommentZh": "用户已明确选择S08-B构图方向；新生成独立原画仍需实际视觉验收，不能记作正式艺术品已批准。",
+      "directionSelectionSourceZh": "2026-10-18本会话用户明确选择",
+      "artworkApproved": false
+    }
+  ]
+}

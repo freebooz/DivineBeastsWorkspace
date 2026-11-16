@@ -36,11 +36,22 @@ FDivineBeastsArenaUISurfaceDescriptor MakeHUD()
     Descriptor.SurfaceId = TEXT("UI.HUD.Arena");
     Descriptor.Kind = EDivineBeastsArenaUISurfaceKind::HUD;
     Descriptor.Layer = EGamePlatformUILayer::HUD;
-    Descriptor.InputMode = EGamePlatformUIInputMode::GameOnly;
+    Descriptor.InputMode = EGamePlatformUIInputMode::GameAndUI;
     Descriptor.WidgetClassPath =
         TEXT("/DBAArena/UI/HUD/WBP_DBA_UI_ArenaHUD.WBP_DBA_UI_ArenaHUD_C");
     // HUD移动专用资源尚未交付，先使用公共布局而非制造必然失败的软引用。
     Descriptor.MobileWidgetClassPath.Reset();
+    return Descriptor;
+}
+
+FDivineBeastsArenaUISurfaceDescriptor MakeQueueStatusHUD()
+{
+    FDivineBeastsArenaUISurfaceDescriptor Descriptor;
+    Descriptor.SurfaceId=TEXT("UI.HUD.ArenaQueueStatus");
+    Descriptor.Kind=EDivineBeastsArenaUISurfaceKind::HUD;
+    Descriptor.Layer=EGamePlatformUILayer::HUD;
+    Descriptor.InputMode=EGamePlatformUIInputMode::GameAndUI;
+    Descriptor.WidgetClassPath=TEXT("/DBAArena/UI/HUD/WBP_DBA_UI_ArenaQueueStatus.WBP_DBA_UI_ArenaQueueStatus_C");
     return Descriptor;
 }
 
@@ -80,7 +91,8 @@ const TArray<FDivineBeastsArenaUISurfaceDescriptor>& BuildCatalog()
             EGamePlatformUILayer::Screen,
             EGamePlatformUIInputMode::UIOnly,
             TEXT("CloseButton")),
-        MakeHUD()
+        MakeHUD(),
+        MakeQueueStatusHUD()
     };
     return Catalog;
 }

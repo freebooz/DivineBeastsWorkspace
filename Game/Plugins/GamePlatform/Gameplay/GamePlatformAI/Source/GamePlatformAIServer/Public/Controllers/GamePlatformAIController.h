@@ -1,3 +1,4 @@
+// 平台服务器AI控制器合同：由当前Pawn/World拥有感知、资源租约和原生路径；客户端只消费复制的AI公开状态。
 #pragma once
 
 #include "CoreMinimal.h"
@@ -35,6 +36,10 @@ struct FGamePlatformAITargetCandidate
     bool bVisible = false;
     bool bHeard = false;
     bool bDamageSource = false;
+    /** 本次目标代次对本AI造成的权威实际伤害；不接受客户端声明，不跨生命继承。 */
+    double DamageThreat = 0.0;
+    /** 权威Combat正常已去重；重复到达的同一事件不能重复计仇恨。 */
+    FGuid LastDamageEventId;
 };
 
 UCLASS()
@@ -47,6 +52,8 @@ public:
     AGamePlatformAIController();
 
     virtual void OnPossess(APawn* InPawn) override;
+    /** 当前原生导航请求成功完成时，立即重评攻击条件；仍须遵守可见性、冷却和服务器伤害资格。 */
+    virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
     virtual void OnUnPossess() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -64,6 +71,9 @@ public:
         int32 ExpectedResourceGeneration, int32 ExpectedAIInstanceGeneration) const;
 
 protected:
+    /** 项目服务器策略选择持续交战。默认关闭，保持其他宿主原有感知/归家规则。
+     * 启用后有效当前目标不因距离/记忆超时脱战，累计伤害更高者可转移仇恨。 */
+    bool bRetainCombatTarget = false;
     UPROPERTY(EditDefaultsOnly, Category="AI")
     TSoftObjectPtr<UGamePlatformAIDefinition> DefaultDefinition;
 
@@ -71,7 +81,25 @@ protected:
      * 子类必须独立完成攻击碰撞、距离、安全区、伤害上下文与身份代次的二次校验。 */
     virtual bool TryExecuteNativeAttack(AActor& ValidatedTarget) { return false; }
 
+    /** 选定目标后由具体玩法返回基础追击速度，空值表示使用现有怪物配置；不采集当前短时Buff值。 */
+    virtual TOptional<float> ResolveCombatTargetBaseWalkSpeed(const AActor& ValidatedTarget) const
+    {
+        (void)ValidatedTarget;
+        return {};
+    }
+
 private:
+    // 私有纯规则只投影当前Pawn/World事实；友元仅供模块内部UE回归，不开放玩法调用入口。
+    friend class FAIIdleMovementPolicyTest;
+    friend class FAIImmediateChaseCompletionTest;
+    enum class EIdleMovementAction { ContinueMove, Wait, ReturnHome, SelectPatrolGoal };
+
+    /** 游戏线程无目标决策：距离为水平平方厘米，半径为厘米；输入来自已校验定义和当前原生路径。
+     * 返回继续已有路径、等待退避、归家或选择巡逻点；不申请导航、不持有世界状态、不执行伤害。 */
+    static EIdleMovementAction DecideIdleMovement(double DistanceHomeSquared, float PatrolRadius,
+        float ReturnHomeAcceptanceRadius, bool bPatrolling, bool bReturningHome,
+        bool bMovementInProgress, bool bMayRequest);
+
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<UAIPerceptionComponent> PlatformPerceptionComponent;
 
@@ -129,6 +157,8 @@ private:
     EGamePlatformAIError LastError = EGamePlatformAIError::None;
     bool bBrainReady = false;
     bool bStoppedForDeath = false;
+    /** MoveToActor可能同步报告已到达；该阶段禁止完成回调递归提交追击。 */
+    bool bSubmittingNativeChaseMove = false;
 
     UFUNCTION()
     void HandleTargetPerceptionUpdated(
@@ -164,7 +194,9 @@ private:
         const FVector& Location,
         bool bVisible,
         bool bHeard,
-        bool bDamageSource);
+        bool bDamageSource,
+        double ConfirmedDamage = 0.0,
+        const FGuid& DamageEventId = FGuid());
 
     AActor* SelectBestTarget();
     bool IsCandidateEligible(
@@ -172,12 +204,19 @@ private:
 
     void SetCurrentTarget(AActor* NewTarget);
     void UpdateBlackboardForTarget(AActor* Target);
+    /** 无目标阶段只延续当前巡逻/归家路径，取消旧追击；到达后按当前意图和退避选择下一步。 */
     void UpdateNoTargetBehavior();
     void UpdateTargetBehavior(AActor& Target);
 
+    /** 查询出生锚点周围可达点；原生脑检查MoveTo受理结果，失败保留诊断并有限退避，抵达不会伪报移动。 */
     bool RequestPatrolGoal();
+    /** 归家复用原生PathFollowing；移动失败时发布Idle并允许决策时钟再次尝试。 */
     void RequestReturnHome();
     void RequestChase(AActor& Target);
+
+    /** 仅记录已发生的原生空闲移动请求；Goal为空表示导航尚未提供目标点，NavigationError保留查询错误，Verbose默认关闭。 */
+    void LogIdleMovementRequest(const TCHAR* Movement, const TCHAR* Result, const FVector* Goal = nullptr,
+        const TCHAR* NavigationError = TEXT("None")) const;
 
     void SetPublicState(
         EGamePlatformAIPublicState NewState,

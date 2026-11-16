@@ -5,6 +5,7 @@
 #include "DivineBeastsGameplayCharacter.generated.h"
 
 class UDivineBeastsAbilityLoadoutComponent;
+class UDivineBeastsV6PassiveComponent;
 class UGamePlatformWaterInteractorComponent;
 class USpringArmComponent;
 class UCameraComponent;
@@ -42,8 +43,8 @@ private:
     /** 本地输入轴值沿控制器水平朝向请求运动；无控制器或移动输入被忽略时不请求，服务器运动复制仍权威。 */
     void MoveForward(float Value);
     void MoveRight(float Value);
-    /** 游泳专用垂直输入：Space上浮、左Ctrl下潜；陆地时不产生移动，不引入自定义运动复制。 */
-    void MoveSwimmingVertical(float Value);
+    /** 原生Swimming模式的本地升降轴；出水、失控和死亡时拒绝，不发送坐标RPC。 */
+    void SwimVertical(float Value);
     /** 本地镜头轴输入交给引擎Controller处理；不修改权威位置、出生身份或技能资格。 */
     void TurnCamera(float Value);
     void LookCamera(float Value);
@@ -53,6 +54,11 @@ private:
     /** Pawn拥有唯一技能装配组件；只在可信身份Ready后授予，换身份/退出由组件撤销自有租约与授权。 */
     UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Gameplay")
     TObjectPtr<UDivineBeastsAbilityLoadoutComponent> AbilityLoadout;
+    /** V6历史固有被动：默认审核不通过，只有正式技能集合签审后可显式启用；
+     * 当前只接入服务器真实伤害事件，旧占位技能完全不调用被动。 */
+    UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Gameplay")
+    TObjectPtr<UDivineBeastsV6PassiveComponent> V6Passive;
+
     /** 统一平台水域交互组件：服务器低频查询并复制离散涉水状态，
      * 不在角色类保存材质、Niagara、WaterBody或客户端纹理引用。 */
     UPROPERTY(VisibleAnywhere, Category="DivineBeasts|Water")

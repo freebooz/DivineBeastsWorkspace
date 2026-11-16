@@ -15,6 +15,9 @@
 #include "PCGInputOutputSettings.h"
 #include "Elements/PCGProjectionElement.h"
 #include "Elements/PCGSplineSampler.h"
+#include "Elements/PCGDataFromActor.h"
+#include "Components/SplineComponent.h"
+#include "Components/BoxComponent.h"
 #include "Elements/PCGCreatePointsGrid.h"
 #include "Nodes/GamePlatformPCGNodes.h"
 
@@ -142,20 +145,54 @@ bool FPCGFoundationTemplateGraphTest::RunTest(const FString& Parameters)
                 {
                     return Node && Node->GetSettings() && Node->GetSettings()->IsA<UPCGSplineSamplerSettings>();
                 }));
-            const TArray<FPCGPinProperties> Inputs = Graph->DefaultInputPinProperties();
-            bool bHasTrueSplineConnection = false;
+            // UE5.8的Graph Input可能是Box+Spline复合数据，SplineSampler只接受PolylineData。
+            // 验证GetActorData限制当前Actor的SplineComponent且连到Sampler.Spline。
+            const UPCGNode* SourceNode = nullptr;
+            const UPCGNode* SampleNode = nullptr;
             for (const UPCGNode* Node : Graph->GetNodes())
             {
-                if (Node && Node->GetSettings() &&
-                    Node->GetSettings()->IsA<UPCGSplineSamplerSettings>() && !Inputs.IsEmpty())
+                if (Node && Node->GetSettings())
                 {
-                    bHasTrueSplineConnection = HasVerifiedGraphEdge(
-                        Graph->GetInputNode(), Inputs[0].Label, Node,
-                        PCGSplineSamplerConstants::SplineLabel);
+                    if (Node->GetSettings()->IsA<UPCGDataFromActorSettings>())
+                    {
+                        if (SourceNode) { AddError(TEXT("样条来源重复")); }
+                        SourceNode = Node;
+                    }
+                    if (Node->GetSettings()->IsA<UPCGSplineSamplerSettings>())
+                    {
+                        if (SampleNode) { AddError(TEXT("样条采样器重复")); }
+                        SampleNode = Node;
+                    }
                 }
             }
-            TestTrue(TEXT("样条Graph Input到Sampler.Spline存在真正UPCGEdge"),
-                bHasTrueSplineConnection);
+            const UPCGDataFromActorSettings* Source = SourceNode
+                ? Cast<UPCGDataFromActorSettings>(SourceNode->GetSettings()) : nullptr;
+            TestTrue(TEXT("只查询当前Actor的SplineComponent"),
+                Source && Source->ActorSelector.ActorFilter == EPCGActorFilter::Self &&
+                !Source->ActorSelector.bIncludeChildren &&
+                Source->ComponentSelector.ComponentSelection == EPCGComponentSelection::ByClass &&
+                Source->ComponentSelector.ComponentSelectionClass == USplineComponent::StaticClass() &&
+                Source->Mode == EPCGGetDataFromActorMode::ParseActorComponents);
+            TestTrue(TEXT("官方GetActorData的Out真正连接至Sampler.Spline"),
+                HasVerifiedGraphEdge(SourceNode, PCGPinConstants::DefaultOutputLabel,
+                    SampleNode, PCGSplineSamplerConstants::SplineLabel));
+            if (TemplateId == FGamePlatformPCGTemplateIds::CropField && Source)
+            {
+                // 负向用例：当前Actor的查询限制不可被改为全世界，不能选择生成范围盒替代农田样条。
+                // 本次测试图为内存UObject，不写入Foundation或项目正式资产。
+                UPCGDataFromActorSettings* MutableSource =
+                    const_cast<UPCGDataFromActorSettings*>(Source);
+                MutableSource->ActorSelector.ActorFilter = EPCGActorFilter::AllWorldActors;
+                TestFalse(TEXT("禁止跨世界查询Actor生成农田"),
+                    GamePlatformPCGInspection::ValidateApprovedGraph(*Profile).IsSuccess());
+                MutableSource->ActorSelector.ActorFilter = EPCGActorFilter::Self;
+                MutableSource->ComponentSelector.ComponentSelectionClass = UBoxComponent::StaticClass();
+                TestFalse(TEXT("范围盒不得伪装为Spline数据来源"),
+                    GamePlatformPCGInspection::ValidateApprovedGraph(*Profile).IsSuccess());
+                MutableSource->ComponentSelector.ComponentSelectionClass = USplineComponent::StaticClass();
+                TestTrue(TEXT("恢复受限Spline来源后图合同再次通过"),
+                    GamePlatformPCGInspection::ValidateApprovedGraph(*Profile).IsSuccess());
+            }
         }
     }
 

@@ -1,0 +1,107 @@
+{
+  "project": "SSLM",
+  "heroId": "Hero.Zodiac.Ox",
+  "review64Count": 8,
+  "runtime48Count": 8,
+  "sourceKind": "DERIVED_FROM_EXISTING_PROJECT_OX_ART",
+  "approval": "PENDING_HUMAN_ART_REVIEW",
+  "notesZh": "与当前会话生成原图不是同一来源。本次16张PNG由丑牛内容包已有5张高清美术衍生；部分技能意象需重绘。48×48图与现有8张UE Texture2D的导入源逐字节匹配；未修改技能授权和HUD。",
+  "entries": [
+    {
+      "order": 1,
+      "nameZh": "玄角撞",
+      "slot": "Primary",
+      "abilityId": "dba.ability.ox_eight_horn_strike@1",
+      "review64": "Review64/T_DBA_Ox_V6_01_XuanJiaoZhuang_Icon_64.png",
+      "sha256Review64": "119d476ac6ec6fbb52f465d6a73c3c05bb7c58bfff75445a0c8b93bad0817f62",
+      "runtime48": "Runtime48/T_DBA_Ox_V6_01_XuanJiaoZhuang_Icon_48.png",
+      "sha256Runtime48": "54e62129f1a5ffdde0a31d843e7e24167b824a87b1fdf874def33850041697df",
+      "texture2D": "/DBAHeroPack_Ox/UI/Abilities/V6/Textures/T_DBA_Ox_V6_01_XuanJiaoZhuang_Icon",
+      "approval": "PENDING_HUMAN_ART_REVIEW"
+    },
+    {
+      "order": 2,
+      "nameZh": "裂角",
+      "slot": "Slot1",
+      "abilityId": "dba.ability.ox_eight_horn_break@1",
+      "review64": "Review64/T_DBA_Ox_V6_02_LieJiao_Icon_64.png",
+      "sha256Review64": "7871e86c281d722036d280858eac8a3ce2cf29e6c45c8fd2688c8cd576fb41b9",
+      "runtime48": "Runtime48/T_DBA_Ox_V6_02_LieJiao_Icon_48.png",
+      "sha256Runtime48": "89b60c910fc8146ce5453b858c6f024e8c22574e8b6fbeb21d4f12c348f2127b",
+      "texture2D": "/DBAHeroPack_Ox/UI/Abilities/V6/Textures/T_DBA_Ox_V6_02_LieJiao_Icon",
+      "approval": "PENDING_HUMAN_ART_REVIEW"
+    },
+    {
+      "order": 3,
+      "nameZh": "裂地踏",
+      "slot": "Slot2",
+      "abilityId": "dba.ability.ox_eight_ground_pulse@1",
+      "review64": "Review64/T_DBA_Ox_V6_03_LieDiTa_Icon_64.png",
+      "sha256Review64": "4486e0e4168a0dbd3ce14f07afbb095fa530c957e71695adfaee0803c375e4e2",
+      "runtime48": "Runtime48/T_DBA_Ox_V6_03_LieDiTa_Icon_48.png",
+      "sha256Runtime48": "20a3030dd3bc1a55d565ecd6b341953747e1a656895028aa5fdb72c5ca1116e8",
+      "texture2D": "/DBAHeroPack_Ox/UI/Abilities/V6/Textures/T_DBA_Ox_V6_03_LieDiTa_Icon",
+      "approval": "PENDING_HUMAN_ART_REVIEW"
+    },
+    {
+      "order": 4,
+      "nameZh": "不动玄门",
+      "slot": "Slot4",
+      "abilityId": "dba.ability.ox_eight_mountain_break@1",
+      "review64": "Review64/T_DBA_Ox_V6_04_BuDongXuanMen_Icon_64.png",
+      "sha256Review64": "46d606a0fc97837747efe9fb47779bfa17ff1ca28610cdc9e5b222fa2991872f",
+      "runtime48": "Runtime48/T_DBA_Ox_V6_04_BuDongXuanMen_Icon_48.png",
+      "sha256Runtime48": "650617c776aec154fe4e197aaa671fae98192d6454983f8765cdbf6aa5f4a919",
+      "texture2D": "/DBAHeroPack_Ox/UI/Abilities/V6/Textures/T_DBA_Ox_V6_04_BuDongXuanMen_Icon",
+      "approval": "PENDING_HUMAN_ART_REVIEW"
+    },
+    {
+      "order": 5,
+      "nameZh": "沉步",
+      "slot": "Slot3",
+      "abilityId": "dba.ability.ox_eight_horn_charge@1",
+      "review64": "Review64/T_DBA_Ox_V6_05_ChenBu_Icon_64.png",
+      "sha256Review64": "120d5fdd5bb6de2d9298c13b3a5d056d6c10df6ee6f645dbf4ba37ed91404c36",
+      "runtime48": "Runtime48/T_DBA_Ox_V6_05_ChenBu_Icon_48.png",
+      "sha256Runtime48": "376b0d5b750ddb32e037ab0b3f3b8085b05607e2771ba2f124087021eb1baf94",
+      "texture2D": "/DBAHeroPack_Ox/UI/Abilities/V6/Textures/T_DBA_Ox_V6_05_ChenBu_Icon",
+      "approval": "PENDING_HUMAN_ART_REVIEW"
+    },
+    {
+      "order": 6,
+      "nameZh": "镇山护壁",
+      "slot": "Slot5",
+      "abilityId": "dba.ability.ox_eight_stone_armor@1",
+      "review64": "Review64/T_DBA_Ox_V6_06_ZhenShanHuBi_Icon_64.png",
+      "sha256Review64": "2b3c68e9d365956e62463c71ad693b1b0bb51a692c29b266cf0f6443de521b6c",
+      "runtime48": "Runtime48/T_DBA_Ox_V6_06_ZhenShanHuBi_Icon_48.png",
+      "sha256Runtime48": "8e9df1b89229b89b9cb75a26d55b6a6f094a039139952dcd14a2b5f7878713ce",
+      "texture2D": "/DBAHeroPack_Ox/UI/Abilities/V6/Textures/T_DBA_Ox_V6_06_ZhenShanHuBi_Icon",
+      "approval": "PENDING_HUMAN_ART_REVIEW"
+    },
+    {
+      "order": 7,
+      "nameZh": "顶回",
+      "slot": "Slot6",
+      "abilityId": "dba.ability.ox_eight_seismic_stun@1",
+      "review64": "Review64/T_DBA_Ox_V6_07_DingHui_Icon_64.png",
+      "sha256Review64": "ed6abdd4abcc65117bbc6d1254880eaa9ce976a6644064b0a1f93c4758d3d883",
+      "runtime48": "Runtime48/T_DBA_Ox_V6_07_DingHui_Icon_48.png",
+      "sha256Runtime48": "ca9acd3ed7e9d715b814c8df9adf48f514cf4648ba0453ccf4fa4d53b38edd14",
+      "texture2D": "/DBAHeroPack_Ox/UI/Abilities/V6/Textures/T_DBA_Ox_V6_07_DingHui_Icon",
+      "approval": "PENDING_HUMAN_ART_REVIEW"
+    },
+    {
+      "order": 8,
+      "nameZh": "立阵",
+      "slot": "Slot7",
+      "abilityId": "dba.ability.ox_eight_steadfast_roar@1",
+      "review64": "Review64/T_DBA_Ox_V6_08_LiZhen_Icon_64.png",
+      "sha256Review64": "188efdf6cd1f5f2fecaa2469f6cb01bb6716d98bfc25adec36a1663f383e62a5",
+      "runtime48": "Runtime48/T_DBA_Ox_V6_08_LiZhen_Icon_48.png",
+      "sha256Runtime48": "751119f736a9ff70ee986db0e4da2ab2e09db21c2b07315b7807e6cfd797ddf1",
+      "texture2D": "/DBAHeroPack_Ox/UI/Abilities/V6/Textures/T_DBA_Ox_V6_08_LiZhen_Icon",
+      "approval": "PENDING_HUMAN_ART_REVIEW"
+    }
+  ]
+}

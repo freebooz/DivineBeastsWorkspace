@@ -30,6 +30,10 @@
 - 来自当前对话的梨花、樱花、银杏、梧桐、枫叶高清参考图集导出为可人工导入的源包；远程连接器未能接受ImageGen原图文件引用，当前工程内33套新源图是独立程序绘制版本。待原图可信传入`SourceArt/AmbientNature/ExternalReferences`后，使用`ImportApprovedAmbientReferenceArtUE58.py（原图SHA校验与UE导入工具）`做可回滚的手工批准替换；任何未知来源图片不得冒充已交付原图。
 - 实施细节、未完成门禁和证据见`Docs/Implementation/AmbientNatureAssetLibrary_20261011.md（自然环境资源库实施文档）`。正式验收仍需地图区域动态接入、Editor目标反射注册、区域DataAsset落盘、Cook/Stage、D3D12及移动端实际性能与人工视觉测试。
 
+## 2026-10-31资源归属更新
+
+十张公共地形色彩图当前归`Textures/Terrain/Production10`；三份Village绑定审核母材质及九份实例归`DBAWorldPack_Village/Development/Terrain/Production10`，公共包不再反向依赖世界包。当前鸟群三项`VFX/Environment/BirdFlock/Meshes/Flight`保持稳定；七项旧网格归`Development/History/BirdFlock/Meshes`且禁止正式Cook。当前作者同步`Tools/Unreal/Resources/ResourceOwnershipManifest.json`对应路径；来源图和下文历史审核记录不重写。迁移与各阶段验证见`Docs/Implementation/Resources/ResourceOwnershipDelivery_20261031.md`。
+
 ## Niagara PBR 落叶外观母版（2026-10-11）
 
 平台 `GamePlatformVFX（游戏平台视觉特效插件）` 已通过 UE5.8 实际保存 `M_GP_AmbientNature_PBR_Foliage（通用双面植被PBR母材质）`，包含基础颜色、法线、粗糙度、独立OpacityMask（透明裁剪）、镜面反射与Subsurface（次表面透光），不硬引用本项目纹理。项目 `AmbientNature（自然环境内容）` 已登记33套 `MI_DBA_Ambient_*（项目材质实例）`和原 Niagara 变体，不另建播放框架。
@@ -55,3 +59,24 @@
 
 原生导入入口为 `Tools/Unreal/VFX/DevelopmentMagic/ImportIceArrowA3Validated.py` 的 `import_candidate`（A3导入函数），要求项目、版本、独占编辑器标记及源文件摘要全部通过；不存在时才能新建Review下原生网格。该入口尚未在UE编辑器运行。
 
+## SSLM 攻击弧刃V2审核候选（2026-10-18）
+
+`VFX/CommonSkillVFX/Review/V2/AttackSlash`新增一个弧刃斩击样本：一个CPU Emitter/粒子、三材质三维宽刃/流带/云纹网格、Instant Definition和CombatCast审核Effect Type。`SourceArt/VFX/CommonSkillVFX/V2/AttackSlash`保留11条Bezier曲线与可编辑`.blend`。原生地图为`Review/L_DBA_Review_AttackSlashV2`。
+
+已通过Monolith制作保存、独立UE冷加载编译、十实例有限生命周期与31帧原生序列检查。**人工视觉仍待审核**；没有更新正式生肖技能或生产扫描，未完成打包GPU/四档质量/Cook验收。详细说明见工作空间`Docs/Implementation/VFX/SSLM攻击弧刃V2审核样本_20261018.md`，证据归`Saved/Validation/CommonSkillVFX/AttackSlashV2`。通过前不制作其他效果。
+
+## SSLM 凝锋攻击V3审核候选（2026-10-18）
+
+V2已因刃面平、粗亮边及内部/云纹细节不足被用户退回；按最新「第三版·攻击01·凝锋」图修订同一攻击。当前`broad_flame_air_02`在`VFX/CommonSkillVFX/Review/V3/AttackSlash`保存13份原生包；一个CPU Emitter/粒子、16256三角形、四材质段，顶部为三片真实宽幅翻卷火焰，减少长丝并保留连续UV能量流，同一网格附带局部空气包络。`SourceArt/VFX/CommonSkillVFX/V3/AttackSlash`保留可编辑Bezier、FBX、原始参考与RGBA能量源图。
+
+同镜头原生PNG、33帧原速/三倍慢放MP4及无损WebP归`Saved/Validation/CommonSkillVFX/AttackSlashV3`，最终原始帧为`RenderRuns/20261018T110552203427Z`。冷加载编译、十实例有限结束、空气开关原生对照及媒体核对通过；**V3人工视觉待审核**。Effect Type继续共享V2的`Scalability/NET_DBA_Review_CombatCast`，不能随旧修订删除。正式Catalog/生肖绑定及服务器未改；空气折射增加SceneColor和第4材质段成本，未完成打包GPU/四档质量/Cook。全部魔法空气波动规则已写入全局/项目AGENTS及VFX规范，不代表其他魔法已补齐；[逐项对照与边界](../../../../../../Docs/Implementation/VFX/SSLM凝锋攻击V3逐项对照与原生审核_20261018.md)是本轮说明。
+
+
+## SSLM 定向飞弹V1审核候选（2026-10-18）
+
+用户明确授权制作第二项定向飞弹，并要求修正弹头比例、三条加粗尾迹及相邻60°相位。本轮仅实现该审核候选，不把此授权解释为凝锋已通过人工审核。资源归`VFX/CommonSkillVFX/Review/V1/DirectedMissile`，源归`SourceArt/VFX/CommonSkillVFX/V1/DirectedMissile`；仍复用平台Projectile Definition与唯一VFX执行链，没有生产技能绑定或新播放器。
+
+17份原生包、一个System/四个CPU Emitter、11168三角形/三材质段；translucent_energy_layers_03修订保持外轮廓比例，补实加厚瓣面、弯曲金边、尖端聚能；三条世界历史Ribbon相位0°/60°/120°、宽度26厘米，共用一材质。有界空气包络随弹头生命周期启停。保存源与FBX倒面修正后复核通过；Monolith编译/保存、独立UE冷加载、十实例有限结束、空气开关对照及60帧原生媒体核对通过。证据归`Saved/Validation/CommonSkillVFX/DirectedMissileV1`，最终序列`RenderRuns/20261018T131417986824Z`。人工视觉、正式接入、四档质量、打包GPU与Cook仍待验证；完整纹理/材质拆解及Niagara提示词见工作空间`Docs/Implementation/VFX/SSLM定向飞弹V1拆解与完整Niagara制作提示词_20261018.md`。
+
+### 定向飞弹运行接线（2026-10-18）
+用户已授权将定向飞弹绑定十二生肖按钮/数字1，原Primary身份治疗移到数字5，保留2火焰弹、3冰箭、4奥术。运行内容位于 VFX/CommonSkillVFX/Runtime/DirectedMissile，独立于审核资源；Definition位于已有DevelopmentMagic/Definitions扫描范围。一个System、四CPU Emitter、三尾相差60度、局部空气波动；沿用唯一平台表现链和服务器投射物。完整Editor/Client/Server构建、独立重载、真实输入与20%最大生命治疗/10秒冷却/沉默回归，以及Client/Server Cook和实际容器核对通过；证据见工作空间 Saved/Validation/CommonSkillVFX/DirectedMissileSlotBinding。人工视觉、四档多人GPU与真实网络准入仍待验证。

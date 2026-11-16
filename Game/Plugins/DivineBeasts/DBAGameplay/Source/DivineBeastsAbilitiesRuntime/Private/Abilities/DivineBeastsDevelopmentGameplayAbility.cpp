@@ -14,7 +14,8 @@ void UDivineBeastsDevelopmentGameplayAbility::ActivateAbility(
     const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
     const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-    Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+    // 此兼容入口是既有即时射线样板；魔法子类显式委托公共执行，不能在此提前伤害/结束。
+    UDivineBeastsConfiguredGameplayAbility::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
     FDivineBeastsAbilityBalanceRow Balance;
     FString Error;
     const AActor* Avatar = GetAvatarActorFromActorInfo();

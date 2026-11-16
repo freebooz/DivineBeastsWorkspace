@@ -8,6 +8,7 @@
 #include "DivineBeastsVillageWolfWorldSubsystem.generated.h"
 
 class ADivineBeastsVillageWolf;
+class ADivineBeastsVillageNPC;
 class UGamePlatformExperienceComponent;
 class UGamePlatformServerLifecycleSubsystem;
 class UNavigationSystemV1;
@@ -53,10 +54,16 @@ private:
     UFUNCTION() void HandleNavigationFinished(ANavigationData* NavigationData);
     /** 服务端Ready/Experience Active推动首次有限散布。 */
     void TryFillWolves();
-    /** 多圈候选+NavMesh+真实地形+碰撞+22米保护+原生锚点严格>30米，缺空间不强制生成。 */
-    bool FindSpawnTransform(int32 SpawnOrdinal, FTransform& OutTransform) const;
+    /** 本世界有界地表候选缓存；只读现有PCG排除和导航，不修改地图。 */
+    bool BuildSpawnCandidates() const;
+    /** 缓存候选+NavMesh+地形+碰撞+22米保护+锚点严格>24米，缺空间不强刷。 */
+    bool FindSpawnTransform(int32 SpawnOrdinal, bool bVampire, FTransform& OutTransform) const;
+    /** 在出生区外围导航可达且互不重叠的位置选取三名友好NPC的固定落点。 */
+    bool FindNPCSpawnTransform(int32 SpawnOrdinal, FTransform& OutTransform) const;
+    /** 每个真实Village实例仅维护三名服务器复制NPC；美术由客户端独立装配。 */
+    void TryFillNPCs(const FApprovedScope& Scope);
     /** 世界拥有Actor/Controller及订阅；初始化失败销毁两者，不保留半活体。 */
-    bool SpawnOneWolf(const FTransform& SpawnAt);
+    bool SpawnOneWolf(const FTransform& SpawnAt, bool bVampire);
     /** 只处理自己持有的已结算死亡，尸体延迟销毁并触发有界补充。 */
     void HandleWolfDeath(const FGamePlatformCombatEvent& Event);
     UFUNCTION() void HandleWolfDestroyed(AActor* DestroyedActor);
@@ -69,8 +76,12 @@ private:
 
     UPROPERTY(Transient)
     TArray<TObjectPtr<ADivineBeastsVillageWolf>> OwnedWolves;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<ADivineBeastsVillageNPC>> OwnedNPCs;
     /** 当前世界的实际出生位置，不跟随狼追击/巡逻移动；避免死亡补刷在原锚点附近扎堆。 */
     TMap<TWeakObjectPtr<ADivineBeastsVillageWolf>, FVector> WolfSpawnAnchors;
+    mutable TArray<FVector> CachedSpawnGrounds;
+    mutable bool bSpawnCandidatesBuilt = false;
     TWeakObjectPtr<UGamePlatformExperienceComponent> ObservedExperience;
     TWeakObjectPtr<UGamePlatformServerLifecycleSubsystem> ObservedLifecycle;
     TWeakObjectPtr<UNavigationSystemV1> ObservedNavigation;

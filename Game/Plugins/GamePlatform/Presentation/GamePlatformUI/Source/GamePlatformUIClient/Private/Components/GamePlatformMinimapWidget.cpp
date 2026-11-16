@@ -1,4 +1,5 @@
 #include "Components/GamePlatformMinimapWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
@@ -8,18 +9,14 @@ bool UGamePlatformMinimapWidget::ApplyMinimapState(
 {
     // 入库前一次验证，源数据非法时保持最后一个完整可用快照，不泄漏半成品。
     constexpr int32 MaxMarkers = 128;
-    if (InState.MapId.IsNone() || InState.Revision < 0 ||
+    if (!FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            State.MapId, State.Revision, InState.MapId, InState.Revision) ||
         InState.Markers.Num() > MaxMarkers ||
         !FMath::IsFinite(InState.PlayerNormalizedPosition.X) ||
         !FMath::IsFinite(InState.PlayerNormalizedPosition.Y) ||
         !FMath::IsFinite(InState.HeadingDegrees) ||
         !FMath::IsFinite(InState.Zoom) ||
         InState.Zoom < 0.25f || InState.Zoom > 8.0f)
-    {
-        return false;
-    }
-
-    if (State.MapId == InState.MapId && InState.Revision <= State.Revision)
     {
         return false;
     }

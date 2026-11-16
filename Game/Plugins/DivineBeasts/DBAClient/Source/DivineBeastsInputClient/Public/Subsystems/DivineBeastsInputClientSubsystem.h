@@ -12,6 +12,7 @@ class APlayerController;
 class APawn;
 class UGamePlatformAbilitySystemComponent;class UGamePlatformLocalHitstopSubsystem;
 class USkeletalMeshComponent;
+class UDivineBeastsPlayerControlsComponent;
 
 /** 神兽联盟项目输入事件；仍然是客户端请求，不代表服务器技能/移动已经成功。 */
 DECLARE_MULTICAST_DELEGATE_OneParam(
@@ -77,11 +78,13 @@ public:
         const FGamePlatformInputTouchHandle& Handle);
 
 private:
+    friend class FDivineBeastsSharedSemanticControlsTest;
     void HandlePlatformInput(const FGamePlatformInputEvent& Event);
     /** 平台低频状态变化；回调栈只排队刷新，避免在平台广播期间重入输入服务修改。 */
     void HandlePlatformState(const FGamePlatformInputSnapshot& Snapshot);
     void QueueActivationRefresh();
     void TryFinalizeActivation();
+    void SyncControlsOwnership(bool bOwned);
     void RefreshControlledPawn();
     void HandleMoveLookInput(const FGamePlatformInputEvent& Event);
     void HandleProjectGameplayInput(const FGamePlatformInputEvent& Event);
@@ -109,6 +112,7 @@ private:
     bool bReplayingBufferedAbilityInput = false;
 
     TWeakObjectPtr<APlayerController> CachedController;
+    TWeakObjectPtr<UDivineBeastsPlayerControlsComponent> OwnedControls;
     TWeakObjectPtr<APawn> CachedPawn;
     TWeakObjectPtr<UGamePlatformAbilitySystemComponent> CachedAbilitySystem;
 

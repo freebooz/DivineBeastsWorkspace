@@ -5,6 +5,7 @@
 #include "Types/GamePlatformDataLease.h"
 #include "ContentPacks/DivineBeastsPresentationContentPack.h"
 #include "TimerManager.h"
+#include "GameplayTagContainer.h"
 #include "DivineBeastsDevelopmentCastingWorldSubsystem.generated.h"
 class ACharacter;
 class UAnimInstance;
@@ -30,6 +31,15 @@ public:
 private:
     // Editor原生回归仅构造受控初始状态并观察自有资源；不增加生产入口或改变施法行为。
     friend struct FDivineBeastsDevelopmentCastingTestFixture;
+    /** 单掌纯表现所有权；提交中重入的取消由该Submit栈收尾，不跨回调保留容器引用。 */
+    struct FPalmVFXBinding
+    {
+        FGuid RequestId;
+        TWeakObjectPtr<USceneComponent> Anchor;
+        TWeakObjectPtr<UGamePlatformPresentationClientSubsystem> Adapter;
+        int32 WorldGeneration=0;
+        bool bSubmitting=false;
+    };
     /** 每角色独立动作账本；停止只针对自己实际播放的Montage和Request，不能清别人的动画。 */
     struct FBinding
     {
@@ -43,6 +53,8 @@ private:
         TWeakObjectPtr<UAnimMontage> Montage;
         TWeakObjectPtr<USkeletalMesh> SkeletalMesh;
         TWeakObjectPtr<USceneComponent> CastAnchor;
+        /** 只用于数字1定向飞弹的左右掌；其余技能保留原单锚点/地面表现。 */
+        FPalmVFXBinding Palms[2];
         /** 保存实际请求的作用域和世界代次；Travel后的清理不能借用新世界代次。 */
         TWeakObjectPtr<UGamePlatformPresentationClientSubsystem> VFXAdapter;
         int32 VFXWorldGeneration=0;
@@ -51,6 +63,13 @@ private:
         /** 同步启动/提交期间防止重复受理；启动中取消先撤非动画资源，动画清理延后到本Play返回栈。 */
         bool bStartingMontage=false, bSubmittingVFX=false;
         FTimerHandle StopTimer;
+        /** 声音独立于动画/VFX资源就绪；同一施法只起播一次，取消和剩余窗口结束均收敛。 */
+        FGuid AudioActivationId, AudioRequestId;
+        FGameplayTag AudioSemantic;
+        TWeakObjectPtr<UGamePlatformPresentationClientSubsystem> AudioAdapter;
+        int32 AudioWorldGeneration=0;
+        bool bSubmittingAudio=false, bAudioAccepted=false;
+        FTimerHandle AudioStopTimer;
     };
     TMap<TWeakObjectPtr<UGamePlatformAbilityCastComponent>,FBinding> Bindings;
     FGamePlatformDataLease VisualLease;
@@ -63,6 +82,9 @@ private:
     void ObserveActor(AActor* Actor);
     /** 只接收组件当前值快照；旧广播与已过期窗口不清理或复活后继动作。 */
     void HandleFacts(UGamePlatformAbilityCastComponent* Component,const FGamePlatformAbilityCastFacts& Facts);
+    /** 复用现有请求服务，分别附着真实左右掌，传递只读施法窗口；不生成权威动作。 */
+    void UpdateSpellPalms(UGamePlatformAbilityCastComponent* Component,
+        const FGamePlatformAbilityCastFacts& Facts,const FGuid& OperationId,const FGuid& Token);
     /** GT只读身份/Combat和服务器时钟，返回有效窗口的已过/剩余秒数；不写权威状态。 */
     bool GetCastWindow(UGamePlatformAbilityCastComponent* Component,const FGamePlatformAbilityCastFacts& Facts,
         double& ElapsedSeconds,double& RemainingSeconds) const;
@@ -73,6 +95,11 @@ private:
     void StopCast(UGamePlatformAbilityCastComponent* Component,FGuid ExpectedOperationId=FGuid());
     /** 只释放已摘除的值快照；不在外部回调返回后访问原容器元素。 */
     void ReleaseCastResources(const FBinding& Binding);
+    /** 消费同一服务器施法事实，不从弹体发射推断起手时机，不依赖可选动画或VFX。 */
+    void UpdateCastAudio(UGamePlatformAbilityCastComponent* Component,
+        const FGamePlatformAbilityCastFacts& Facts, double RemainingSeconds);
+    void StopCastAudio(UGamePlatformAbilityCastComponent* Component, FGuid ExpectedActivation=FGuid());
+    void ReleaseCastAudio(const FBinding& Binding);
     /** EndPlay/Deinitialize在任何停止/取消外调前，先解绑自己拥有的所有订阅。 */
     void DetachObservers(UGamePlatformAbilityCastComponent* Component,const FBinding& Binding);
     void RefreshFacts();

@@ -16,7 +16,7 @@ function Reject([object[]]$Cases,$Process=$result,$After=$before) {
     if (-not $caught) { throw '不合格合成门禁被接受。' }
 }
 $count=Assert-PluginDemoRunResult -ProcessResult $result -Cases $valid -Before $before -After $before
-if ($count -ne 8) { throw '必需测试数量不匹配。' }; $passed++
+if ($count -ne $policy.Tests.Count) { throw '必需测试数量不匹配。' }; $passed++
 Reject @(); $passed++
 Reject @($valid | Select-Object -Skip 1); $passed++
 $bad=@($valid | ForEach-Object { [pscustomobject]@{fullTestPath=$_.fullTestPath;state=$_.state} }); $bad[0].state='Fail'; Reject $bad; $passed++

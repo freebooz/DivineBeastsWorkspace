@@ -57,7 +57,7 @@
 
 - `Tests/Architecture/DBAPluginConsolidation.Tests.ps1`：模块唯一归属与声明。
 - `Tests/Architecture/PluginCompositionAudit.Tests.ps1`：禁用竞技后的公共闭包、竞技Server不引入客户端、循环与隐藏依赖负例。
-- `Tests/Architecture/ValidateDesignBaseline.ps1`：46个代码／机制插件＋登记内容插件。
+- `Tests/Architecture/ValidateDesignBaseline.ps1` 核对48个代码／机制插件、登记内容包及获批编辑器工具。
 - UE测试源码仍位于各模块的`Private/Tests`。结构检查不是UE编译、Cook、网络或五模式运行验收；本轮证据见总体实施规划。
 
 2026-10-09 联机验证前修复：竞技反馈组合根的两个include曾拼接在同一行，引发C4067；现已分行并补充本地玩家/世界租约边界说明。受影响Editor模块重新编译退出0；Client、Server、Cook和双客户端准入结果分别记录，不能由该结果推断。

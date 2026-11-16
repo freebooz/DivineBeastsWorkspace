@@ -1,9 +1,10 @@
 #include "Screens/Inventory/DivineBeastsInventoryScreen.h"
 #include "Screens/Inventory/DivineBeastsInventoryPresentationCatalog.h"
+#include "Screens/Inventory/DivineBeastsInventoryCellPresenter.h"
+#include "Screens/Inventory/DivineBeastsInventoryTextCatalog.h"
 
 #include "Engine/LocalPlayer.h"
 #include "Components/Button.h"
-#include "Components/ButtonSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Engine/StreamableManager.h"
@@ -93,80 +94,14 @@ int64 UDivineBeastsInventoryScreen::GetInventoryRevision() const
 
 FText UDivineBeastsInventoryScreen::GetInventoryStateText() const
 {
-    // 正式本地化键采用LOCTEXT，状态变化由平台OnChanged推送而不是蓝图逐帧翻译。
-    switch (GetInventoryState())
-    {
-    case EGamePlatformInventoryClientState::Uninitialized:
-        return LOCTEXT("InventoryUninitialized", "尚未登录或背包未初始化");
-    case EGamePlatformInventoryClientState::Loading:
-        return LOCTEXT("InventoryLoading", "正在读取背包…");
-    case EGamePlatformInventoryClientState::Ready:
-        return LOCTEXT("InventoryReady", "背包已同步");
-    case EGamePlatformInventoryClientState::Mutating:
-        return LOCTEXT("InventoryMutating", "正在提交操作…");
-    case EGamePlatformInventoryClientState::Reconciling:
-        return LOCTEXT("InventoryReconciling", "正在核对服务器结果…");
-    case EGamePlatformInventoryClientState::Error:
-        return LOCTEXT("InventoryError", "背包暂时不可用");
-    default:
-        return LOCTEXT("InventoryUnknown", "背包状态未知");
-    }
+    return FDivineBeastsInventoryTextCatalog::ForState(GetInventoryState());
 }
 
 FText UDivineBeastsInventoryScreen::GetInventoryErrorText() const
 {
-    // 只映射平台约定的机器错误，不显示可能包含敏感信息的后端原始消息。
-    switch (GetInventoryLastError())
-    {
-    case EGamePlatformInventoryError::None: return FText::GetEmpty();
-    case EGamePlatformInventoryError::InventoryNotLoaded:
-        return LOCTEXT("InventoryNotLoaded", "背包尚未加载");
-    case EGamePlatformInventoryError::ItemNotFound:
-        return LOCTEXT("InventoryItemNotFound", "物品不存在或已变化，请刷新背包");
-    case EGamePlatformInventoryError::DefinitionNotFound:
-        return LOCTEXT("InventoryDefinitionNotFound", "物品显示资料不可用");
-    case EGamePlatformInventoryError::InvalidQuantity:
-        return LOCTEXT("InventoryInvalidQuantity", "物品数量不合法");
-    case EGamePlatformInventoryError::StackNotSupported:
-        return LOCTEXT("InventoryStackNotSupported", "该物品不支持拆分或堆叠");
-    case EGamePlatformInventoryError::StackLimitExceeded:
-        return LOCTEXT("InventoryStackLimitExceeded", "超出物品堆叠上限");
-    case EGamePlatformInventoryError::SlotOutOfRange:
-        return LOCTEXT("InventorySlotOutOfRange", "背包槽位超出当前容量");
-    case EGamePlatformInventoryError::SlotOccupied:
-        return LOCTEXT("InventorySlotOccupied", "目标位置已有物品");
-    case EGamePlatformInventoryError::ContainerNotFound:
-        return LOCTEXT("InventoryContainerNotFound", "背包容器不存在");
-    case EGamePlatformInventoryError::RevisionConflict:
-        return LOCTEXT("InventoryRevisionConflict", "背包已更新，正在重新同步");
-    case EGamePlatformInventoryError::DuplicateOperation:
-        return LOCTEXT("InventoryDuplicateOperation", "该背包操作已提交");
-    case EGamePlatformInventoryError::OperationInProgress:
-        return LOCTEXT("InventoryOperationInProgress", "上一项背包操作尚未完成");
-    case EGamePlatformInventoryError::OperationNotFound:
-        return LOCTEXT("InventoryOperationNotFound", "服务器未找到原操作，正在恢复");
-    case EGamePlatformInventoryError::InventoryFull:
-        return LOCTEXT("InventoryFull", "背包空间不足");
-    case EGamePlatformInventoryError::ConsumeNotAllowed:
-        return LOCTEXT("InventoryConsumeNotAllowed", "当前物品不可使用");
-    case EGamePlatformInventoryError::InsufficientQuantity:
-        return LOCTEXT("InventoryInsufficientQuantity", "物品数量不足");
-    case EGamePlatformInventoryError::OutcomeUnknown:
-        return LOCTEXT("InventoryOutcomeUnknown", "结果尚未确认，请查询原操作，勿重复提交");
-    case EGamePlatformInventoryError::BackendUnavailable:
-        return LOCTEXT("InventoryBackendUnavailable", "背包服务器暂不可用");
-    case EGamePlatformInventoryError::Unauthorized:
-        return LOCTEXT("InventoryUnauthorized", "登录失效或操作无权限");
-    case EGamePlatformInventoryError::Cancelled:
-        return LOCTEXT("InventoryCancelled", "已取消等待，服务器结果仍需核对");
-    case EGamePlatformInventoryError::TimedOut:
-        return LOCTEXT("InventoryTimedOut", "请求超时，请核对原操作");
-    case EGamePlatformInventoryError::InvalidResponse:
-        return LOCTEXT("InventoryInvalidResponse", "背包数据校验失败");
-    default:
-        return LOCTEXT("InventoryUnknownError", "背包操作失败");
-    }
+    return FDivineBeastsInventoryTextCatalog::ForError(GetInventoryLastError());
 }
+
 
 bool UDivineBeastsInventoryScreen::CanModifyInventory() const
 {
@@ -583,24 +518,6 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
             Label->SetText(Value);
         }
     };
-    // 已有真实图标时只在格底显示数量；缺少或未加载图标时恢复完整中文名称。
-    // 仅修改真实ButtonSlot（按钮槽）布局，不创建额外Widget或抢占按钮鼠标输入。
-    const auto SetCellText = [this](const FString& WidgetName, const FString& TextValue,
-                                   bool bIconReady, bool bQuickbar)
-    {
-        if (UTextBlock* Label = Cast<UTextBlock>(GetWidgetFromName(FName(*WidgetName))))
-        {
-            Label->SetText(FText::FromString(TextValue));
-            if (UButtonSlot* ButtonSlot = Cast<UButtonSlot>(Label->Slot))
-            {
-                ButtonSlot->SetHorizontalAlignment(HAlign_Center);
-                ButtonSlot->SetVerticalAlignment(bIconReady ? VAlign_Bottom : VAlign_Center);
-                ButtonSlot->SetPadding(bIconReady
-                    ? FMargin(0.0f, bQuickbar ? 35.0f : 48.0f, 0.0f, 0.0f)
-                    : FMargin(0.0f));
-            }
-        }
-    };
     const auto SetButtonEnabled = [this](const TCHAR* Name, bool bEnabled)
     {
         if (UButton* Button = Cast<UButton>(GetWidgetFromName(Name)))
@@ -640,37 +557,10 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
         const bool bIconReady = RenderInventoryIcon(
             FString::Printf(TEXT("SlotIcon_%d"), Index),
             bOccupied ? ProjectedSlot->Item.ItemDefinitionId : NAME_None);
-        FString LabelText;
-        if (!ProjectedSlot) { LabelText = TEXT(""); }
-        else if (!bOccupied)
-        {
-            LabelText = FString::Printf(TEXT("%02d"), ProjectedSlot->SlotIndex + 1);
-        }
-        else
-        {
-            // 图标目录尚未完成时仅展示权威物品定义短标识，完整标识放入工具提示。
-            const FString DefinitionName = FDivineBeastsInventoryPresentationCatalog::Find(
-                ProjectedSlot->Item.ItemDefinitionId).DisplayName.ToString();
-            LabelText = bIconReady
-                ? FString::Printf(TEXT("×%d"), ProjectedSlot->Item.Quantity)
-                : DefinitionName.Left(7) + FString::Printf(TEXT("\n×%d"), ProjectedSlot->Item.Quantity);
-            if (ProjectedSlot->Item.bPending) { LabelText += TEXT("…"); }
-        }
-        SetCellText(FString::Printf(TEXT("SlotText_%d"), Index),
-            LabelText, bIconReady, false);
-        const FString ButtonName = FString::Printf(TEXT("SlotButton_%d"), Index);
-        if (UButton* Button = Cast<UButton>(GetWidgetFromName(FName(*ButtonName))))
-        {
-            Button->SetIsEnabled(ProjectedSlot && bReady);
-            Button->SetBackgroundColor(
-                bOccupied && ProjectedSlot->Item.ItemInstanceId == SelectedItemInstanceId
-                ? FLinearColor(0.34f, 0.55f, 0.40f, 1.0f)
-                : FLinearColor(0.12f, 0.24f, 0.22f, 1.0f));
-            Button->SetToolTipText(
-                bOccupied
-                ? FDivineBeastsInventoryPresentationCatalog::Find(ProjectedSlot->Item.ItemDefinitionId).DisplayName
-                : LOCTEXT("InventoryEmptySlot", "空背包格"));
-        }
+        const auto Cell = FDivineBeastsInventoryCellPresenter::MakeInventoryCell(
+            ProjectedSlot, bIconReady, bReady, SelectedItemInstanceId);
+        FDivineBeastsInventoryCellPresenter::ApplyCell(
+            *this, Index, false, bIconReady, Cell);
     }
 
     for (int32 Index = 0; Index < 12; ++Index)
@@ -680,26 +570,10 @@ void UDivineBeastsInventoryScreen::RefreshInventoryVisuals()
         const bool bQuickIconReady = RenderInventoryIcon(
             FString::Printf(TEXT("QuickIcon_%d"), Index),
             Quick && Quick->bAssigned ? Quick->Item.ItemDefinitionId : NAME_None);
-        FString LabelText = FString::FromInt(Index + 1);
-        if (Quick && Quick->bAssigned)
-        {
-            LabelText = bQuickIconReady
-                ? FString::Printf(TEXT("×%d"), Quick->Item.Quantity)
-                : FDivineBeastsInventoryPresentationCatalog::Find(
-                    Quick->Item.ItemDefinitionId).DisplayName.ToString().Left(7) +
-                    FString::Printf(TEXT("\n×%d"), Quick->Item.Quantity);
-        }
-        if (Quick && Quick->bPending) { LabelText += TEXT("…"); }
-        SetCellText(FString::Printf(TEXT("QuickText_%d"), Index),
-            LabelText, bQuickIconReady, true);
-        const FString ButtonName = FString::Printf(TEXT("QuickButton_%d"), Index);
-        if (UButton* Button = Cast<UButton>(GetWidgetFromName(FName(*ButtonName))))
-        {
-            Button->SetIsEnabled(bReady);
-            Button->SetBackgroundColor(Index == SelectedQuickbarIndex
-                ? FLinearColor(0.38f, 0.48f, 0.28f, 1.0f)
-                : FLinearColor(0.14f, 0.24f, 0.23f, 1.0f));
-        }
+        const auto Cell = FDivineBeastsInventoryCellPresenter::MakeQuickbarCell(
+            Quick, Index, bQuickIconReady, bReady, SelectedQuickbarIndex);
+        FDivineBeastsInventoryCellPresenter::ApplyCell(
+            *this, Index, true, bQuickIconReady, Cell);
     }
 
     const FGamePlatformInventoryItemInstance* Selected = IsValid(Service) &&

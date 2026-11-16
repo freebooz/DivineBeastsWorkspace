@@ -94,6 +94,13 @@ bool GamePlatformSurfaceEditor::EnsureCoreParameterCollection(
         Collection->ScalarParameters.Add(Parameter);
     }
 
+    for (const auto& Pair : FGamePlatformSurfaceAssetContract::GetRequiredVectorParameters())
+    {
+        FCollectionVectorParameter Parameter;
+        Parameter.ParameterName = Pair.Key;
+        Parameter.DefaultValue = Pair.Value;
+        Collection->VectorParameters.Add(Parameter);
+    }
     Collection->StateId = FGuid::NewGuid();
 
     if (!FGamePlatformSurfaceAssetContract::ValidateGlobalParameterCollection(*Collection, OutError))

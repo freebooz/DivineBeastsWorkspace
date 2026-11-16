@@ -1,6 +1,6 @@
 # SSLM竞技场十二生肖VFX优化执行记录（2026-10-15）
 
-执行依据：`Docs/Implementation/ArenaVFXOptimizationPlan_20261015.md`（P0—P7实施计划）、`AGENTS.md`（全局策略）和`Docs/Architecture/SSLM十二生肖技能VFX性能与视觉质量规范.md`（视觉与高并发规范）。
+执行依据：`Docs/Implementation/ArenaVFXOptimizationPlan_20261015.md`（P0—P7实施计划）、`AGENTS.md`（全局策略）和`Docs/SSLMEngineeringStandard.md#vfx`（视觉与高并发规范）。
 
 ## 实际工作树与保护边界
 

@@ -51,6 +51,10 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformWorldUIRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
     FText SelectionText;
 
+    /** 紧凑选中样式将箭头并入名称，避免独立边框和第二行文字遮挡邻近实体。 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
+    bool bCompactSelection = false;
+
     /** 本地显示偏好及来源合法性；隐藏不影响业务生命值或网络相关性。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|WorldUI")
     bool bDisplayRequested = true;

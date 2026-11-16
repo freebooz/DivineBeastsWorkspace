@@ -3,11 +3,13 @@
 #include "CommonUserWidget.h"
 #include "GamePlatformUITypes.h"
 #include "Styling/GamePlatformUIThemeTypes.h"
+#include "Input/GamePlatformUIWindowDragSettings.h"
 #include "GamePlatformWidgetBase.generated.h"
 
 class UGamePlatformUIThemeBinding;
 class UGamePlatformUIAdaptiveSubsystem;
 class UGamePlatformViewModelBase;
+class UGamePlatformUIWindowDrag;
 
 /**
  * UGamePlatformWidgetBase（游戏平台普通用户界面基类）。
@@ -33,6 +35,10 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformWidgetBase : public UCommonUserWidge
     GENERATED_BODY()
 
 public:
+    /** 现有普通窗口/通知通过同一基类配置启用拖拽；默认关闭，不改变 HUD 的输入。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="UI|Window")
+    FGamePlatformUIWindowDragSettings WindowDrag;
+
     /** 显式语义绑定，默认空保持历史Widget的布局/样式与业务行为；仅由编辑器资产配置。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="UI|Theme")
     TArray<FGamePlatformUIWidgetStyleBinding> ThemeBindings;
@@ -53,6 +59,14 @@ public:
     FGamePlatformUIAdaptiveContext GetAdaptiveContext() const;
 
 protected:
+    virtual int32 NativePaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,
+        FSlateWindowElementList& Elements, int32 Layer, const FWidgetStyle& Style, bool bParentEnabled) const override;
+    virtual FReply NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event) override;
+    virtual FReply NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event) override;
+    virtual FReply NativeOnMouseButtonUp(const FGeometry& Geometry, const FPointerEvent& Event) override;
+    virtual void NativeOnMouseCaptureLost(const FCaptureLostEvent& Event) override;
+    virtual void NativeOnFocusLost(const FFocusEvent& Event) override;
+
     /** UUserWidget 构造完成后统一绑定平台事件和业务扩展事件。 */
     virtual void NativeConstruct() override;
 
@@ -83,6 +97,10 @@ protected:
     void BP_OnAdaptiveContextChanged(FGamePlatformUIAdaptiveContext Context);
 
 private:
+    /** 只由当前宿主持有；输入算法在平台内部共享，不由项目页面各自实现。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformUIWindowDrag> WindowDragState = nullptr;
+
     /** 绑定对象由当前控件实例持有，销毁/失活注销事件，不修改共享CDO。 */
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformUIThemeBinding> ThemeBinding = nullptr;

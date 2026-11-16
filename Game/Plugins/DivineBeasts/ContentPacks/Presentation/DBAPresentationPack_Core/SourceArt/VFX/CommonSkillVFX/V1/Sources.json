@@ -1,0 +1,896 @@
+{
+  "schemaVersion": 1,
+  "scope": "Project reusable visual content",
+  "units": "centimeters",
+  "paletteAuthority": "Docs/Art/SSLM全局美术配色策略与色彩设计规范_V3.0.md",
+  "concepts": [
+    {
+      "Category": "attack",
+      "Path": "E:\\work\\2026\\DivineBeastsWorkspace\\Saved\\ArtPreviews\\CommonSkillVFX_20261018\\SSLM_CommonVFX_Attack_V1.png",
+      "Width": 1536,
+      "Height": 1024,
+      "Bytes": 2946307,
+      "SHA256": "83C23B13D414AC9941A03301375034FC91058690F33696B5E214E87E022983B6",
+      "CopyHashMatches": true
+    },
+    {
+      "Category": "defense",
+      "Path": "E:\\work\\2026\\DivineBeastsWorkspace\\Saved\\ArtPreviews\\CommonSkillVFX_20261018\\SSLM_CommonVFX_Defense_V1.png",
+      "Width": 1536,
+      "Height": 1024,
+      "Bytes": 2756080,
+      "SHA256": "690D3E41A39AB9D3F50CBD016CDBE584F8168313077F488A22E5FC3ABCAED52F",
+      "CopyHashMatches": true
+    },
+    {
+      "Category": "control",
+      "Path": "E:\\work\\2026\\DivineBeastsWorkspace\\Saved\\ArtPreviews\\CommonSkillVFX_20261018\\SSLM_CommonVFX_Control_V1.png",
+      "Width": 1536,
+      "Height": 1024,
+      "Bytes": 2602529,
+      "SHA256": "E6A2176591BFF08EEC86B0087ACBA3956476F35464E843C8E8BAEE8303A9AF01",
+      "CopyHashMatches": true
+    },
+    {
+      "Category": "healing",
+      "Path": "E:\\work\\2026\\DivineBeastsWorkspace\\Saved\\ArtPreviews\\CommonSkillVFX_20261018\\SSLM_CommonVFX_Healing_V1.png",
+      "Width": 1536,
+      "Height": 1024,
+      "Bytes": 2838654,
+      "SHA256": "1530E317833BF299F3D492F4D37B02B576C21858E4997D17FE8578FD3B798251",
+      "CopyHashMatches": true
+    },
+    {
+      "Category": "movement",
+      "Path": "E:\\work\\2026\\DivineBeastsWorkspace\\Saved\\ArtPreviews\\CommonSkillVFX_20261018\\SSLM_CommonVFX_Movement_V1.png",
+      "Width": 1536,
+      "Height": 1024,
+      "Bytes": 2578481,
+      "SHA256": "ECFD2A8D10A3BE441BE0C879582FA6C6D0FBABE60CDFFBA2FC77A96F0334072C",
+      "CopyHashMatches": true
+    }
+  ],
+  "templates": [
+    {
+      "key": "Attack_Slash",
+      "nameZh": "弧刃斩击",
+      "index": 0,
+      "category": "Attack",
+      "referenceSRGB": "F16B46",
+      "behavior": "Instant",
+      "duration": 0.8,
+      "definitionId": "presentation.dba.common.vfx.attack.slash@1",
+      "requiredShapeZh": "弧刃斩击：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Attack_Slash_Core.obj",
+          "vertices": 1243,
+          "triangles": 2240,
+          "sha256": "a1ab9f62eface5cb6df1c32eb2741725d3b28886ef708863afbe3845a6b2f61c"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Attack_Slash_Rim.obj",
+          "vertices": 729,
+          "triangles": 1280,
+          "sha256": "938cdfc129a7eb4dc190ae259dcd5c9c75b121e27340fe695f75dcbd1ad2eaed"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Attack_Slash_Accent.obj",
+          "vertices": 729,
+          "triangles": 1280,
+          "sha256": "a8333a2fd231d92872287875b740f2f1ad32f5f01436623967d09b9cff05c4d9"
+        }
+      ]
+    },
+    {
+      "key": "Attack_Projectile",
+      "nameZh": "定向飞弹",
+      "index": 1,
+      "category": "Attack",
+      "referenceSRGB": "F16B46",
+      "behavior": "Projectile",
+      "duration": 1.2,
+      "definitionId": "presentation.dba.common.vfx.attack.projectile@1",
+      "requiredShapeZh": "定向飞弹：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Attack_Projectile_Core.obj",
+          "vertices": 1717,
+          "triangles": 3200,
+          "sha256": "6d6f2b4c60e18fa4a91dd44f59bca6046d6a858943430f673fc181a6e5df4274"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Attack_Projectile_Rim.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "f31d45c8ae4b397c2b9c606a55f642e01da8f57d2fdd0fd3ecc5c133b21ffeab"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Attack_Projectile_Accent.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "f148e77c14546e1a6cd54ce8d4b41bbe558a242772068d205e696fff41a42ddf"
+        }
+      ]
+    },
+    {
+      "key": "Attack_AreaPulse",
+      "nameZh": "范围冲击",
+      "index": 2,
+      "category": "Attack",
+      "referenceSRGB": "F16B46",
+      "behavior": "Area",
+      "duration": 1.2,
+      "definitionId": "presentation.dba.common.vfx.attack.areapulse@1",
+      "requiredShapeZh": "范围冲击：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Attack_AreaPulse_Core.obj",
+          "vertices": 3789,
+          "triangles": 6656,
+          "sha256": "f41347a352e0771289c7e00e2fa292253ec9df2b3ec6ae2f9c3d447ca7235e31"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Attack_AreaPulse_Rim.obj",
+          "vertices": 873,
+          "triangles": 1536,
+          "sha256": "83f6dad1c68809feb8fb0fe40210e9c35518d94f76c2822ebac8d972ea5771b8"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Attack_AreaPulse_Accent.obj",
+          "vertices": 8748,
+          "triangles": 15360,
+          "sha256": "ecce9879973f2953ff5bc6a07ff8b2e0e3aafeeb20411f9e263cf8f73d09a4c9"
+        }
+      ]
+    },
+    {
+      "key": "Attack_Pierce",
+      "nameZh": "直线贯穿",
+      "index": 3,
+      "category": "Attack",
+      "referenceSRGB": "F16B46",
+      "behavior": "Beam",
+      "duration": 1.2,
+      "definitionId": "presentation.dba.common.vfx.attack.pierce@1",
+      "requiredShapeZh": "直线贯穿：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Attack_Pierce_Core.obj",
+          "vertices": 1717,
+          "triangles": 3200,
+          "sha256": "81f19314b174599f20b5128a3061aebe1b6ebf32a9284b61ca6ba22fb0ade310"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Attack_Pierce_Rim.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "a7ff75b29103edcd828e7117ae138b6e25c52a6efadb054fc64a450f0e3acc85"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Attack_Pierce_Accent.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "063e695b1da19e9a85a958b819b633bb1fd542784d085e55f7ca7a2e51246d55"
+        }
+      ]
+    },
+    {
+      "key": "Defense_Shield",
+      "nameZh": "单体护盾",
+      "index": 4,
+      "category": "Defense",
+      "referenceSRGB": "B5CADC",
+      "behavior": "Shield",
+      "duration": 3.0,
+      "definitionId": "presentation.dba.common.vfx.defense.shield@1",
+      "requiredShapeZh": "单体护盾：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Sustain",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Defense_Shield_Core.obj",
+          "vertices": 6305,
+          "triangles": 12288,
+          "sha256": "7bff55fdefb21fdf3b92b20eca308a6fa4d48f648fd3f921b455f9934b2ba6f2"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Defense_Shield_Rim.obj",
+          "vertices": 2187,
+          "triangles": 3840,
+          "sha256": "9de6791092f6db0d52519baa44673010a77136750f0675094d0e1af41514e027"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Defense_Shield_Accent.obj",
+          "vertices": 2501,
+          "triangles": 4416,
+          "sha256": "2e9a1d5731b2db3bddc5436c950a54f93f5bc3f7e56ba3083cf8977e5445ca40"
+        }
+      ]
+    },
+    {
+      "key": "Defense_Wall",
+      "nameZh": "定向盾墙",
+      "index": 5,
+      "category": "Defense",
+      "referenceSRGB": "B5CADC",
+      "behavior": "Shield",
+      "duration": 3.0,
+      "definitionId": "presentation.dba.common.vfx.defense.wall@1",
+      "requiredShapeZh": "定向盾墙：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Sustain",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Defense_Wall_Core.obj",
+          "vertices": 2701,
+          "triangles": 5184,
+          "sha256": "790679db93ccd1e12ee3cc6ba3ca49ec85bf2361f5d3a1874632c68fb7eb9fa8"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Defense_Wall_Rim.obj",
+          "vertices": 2916,
+          "triangles": 5120,
+          "sha256": "23816b1dfd674ce563613a049d78d37f936e94ea4bcba0a290979b760d07623f"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Defense_Wall_Accent.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "7b70de0208dbe992a6c1284280e80fc348854cc911289d7309aab547e1f77dad"
+        }
+      ]
+    },
+    {
+      "key": "Defense_Parry",
+      "nameZh": "瞬时格挡",
+      "index": 6,
+      "category": "Defense",
+      "referenceSRGB": "B5CADC",
+      "behavior": "Instant",
+      "duration": 0.8,
+      "definitionId": "presentation.dba.common.vfx.defense.parry@1",
+      "requiredShapeZh": "瞬时格挡：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Defense_Parry_Core.obj",
+          "vertices": 2401,
+          "triangles": 4608,
+          "sha256": "329ef2b2d96adf4f863c80ce7eee2f1c3e4c8b1d728caddfc4a6a44f72e6b0c3"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Defense_Parry_Rim.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "213db235bec243e93297de5d348c6fac607f243acd68228a3dfd696afccf990b"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Defense_Parry_Accent.obj",
+          "vertices": 729,
+          "triangles": 1280,
+          "sha256": "44a6258af140cb296741f61652739f07b24350d1035f5f7815fbf4da849c103a"
+        }
+      ]
+    },
+    {
+      "key": "Defense_Dome",
+      "nameZh": "群体庇护",
+      "index": 7,
+      "category": "Defense",
+      "referenceSRGB": "B5CADC",
+      "behavior": "Shield",
+      "duration": 3.0,
+      "definitionId": "presentation.dba.common.vfx.defense.dome@1",
+      "requiredShapeZh": "群体庇护：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Sustain",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Defense_Dome_Core.obj",
+          "vertices": 6305,
+          "triangles": 12288,
+          "sha256": "420f27738dc9f5061532d3a98e97d5ccc7fad27877a01f6d61f72b7844af235b"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Defense_Dome_Rim.obj",
+          "vertices": 2187,
+          "triangles": 3840,
+          "sha256": "2a8a877989691dcd5acd505b483fb98d70c0c5e6e3d600fbc7f43638c6337312"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Defense_Dome_Accent.obj",
+          "vertices": 2501,
+          "triangles": 4416,
+          "sha256": "6c2692c5f83e10b193245e65713867e04aee0549e91515e18653d1591dbc300c"
+        }
+      ]
+    },
+    {
+      "key": "Control_Root",
+      "nameZh": "束缚定身",
+      "index": 8,
+      "category": "Control",
+      "referenceSRGB": "409CE5",
+      "behavior": "Attached",
+      "duration": 3.0,
+      "definitionId": "presentation.dba.common.vfx.control.root@1",
+      "requiredShapeZh": "束缚定身：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Sustain",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Control_Root_Core.obj",
+          "vertices": 2187,
+          "triangles": 3840,
+          "sha256": "89d2ffaa504c2c162cb05794a1d0bf7d5bb3cd9c9f3fc5f3e1735acc5476bb56"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Control_Root_Rim.obj",
+          "vertices": 1746,
+          "triangles": 3072,
+          "sha256": "fea51577bdb41f658d3004b10a065a6dcf2ab056eb8e0ca9c3e79eea4da7606d"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Control_Root_Accent.obj",
+          "vertices": 2187,
+          "triangles": 3840,
+          "sha256": "bb80826a437f7453faf207a22becd2792c7f6c1fd58d48b81f4d9dc3150b7a30"
+        }
+      ]
+    },
+    {
+      "key": "Control_Stun",
+      "nameZh": "眩晕标记",
+      "index": 9,
+      "category": "Control",
+      "referenceSRGB": "409CE5",
+      "behavior": "Attached",
+      "duration": 3.0,
+      "definitionId": "presentation.dba.common.vfx.control.stun@1",
+      "requiredShapeZh": "眩晕标记：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Sustain",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Control_Stun_Core.obj",
+          "vertices": 2619,
+          "triangles": 4608,
+          "sha256": "fd73555d6b4d81d0730ffa0b4d1df3faa158eb78a65e15f95b1c7c50e663fc41"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Control_Stun_Rim.obj",
+          "vertices": 729,
+          "triangles": 1280,
+          "sha256": "2ee8b74ec8a1a1543bf686880f734b4d62a91d0cbc5e5686723d3fa718874cee"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Control_Stun_Accent.obj",
+          "vertices": 2501,
+          "triangles": 4416,
+          "sha256": "a7d5ad5d767d5cd4c8da5894be71c1358ea44d318bb01b4ded8ff00320f248a9"
+        }
+      ]
+    },
+    {
+      "key": "Control_SlowArea",
+      "nameZh": "区域减速",
+      "index": 10,
+      "category": "Control",
+      "referenceSRGB": "409CE5",
+      "behavior": "Area",
+      "duration": 3.0,
+      "definitionId": "presentation.dba.common.vfx.control.slowarea@1",
+      "requiredShapeZh": "区域减速：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Sustain",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Control_SlowArea_Core.obj",
+          "vertices": 4374,
+          "triangles": 7680,
+          "sha256": "a2bbfe44114a56d58a31c2b57dffe9166baa88afc6afc3ff88e2e8f26fa948b5"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Control_SlowArea_Rim.obj",
+          "vertices": 873,
+          "triangles": 1536,
+          "sha256": "871023bbdbaecc269ea2163a66ce753083836453720e60fab959ab2ff6ea6981"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Control_SlowArea_Accent.obj",
+          "vertices": 8748,
+          "triangles": 15360,
+          "sha256": "d6f14c675597052441b4077b63f597bf4d71cb6c51e254001ecb3c990b34e4db"
+        }
+      ]
+    },
+    {
+      "key": "Control_KnockUp",
+      "nameZh": "击飞反馈",
+      "index": 11,
+      "category": "Control",
+      "referenceSRGB": "409CE5",
+      "behavior": "Trail",
+      "duration": 1.2,
+      "definitionId": "presentation.dba.common.vfx.control.knockup@1",
+      "requiredShapeZh": "击飞反馈：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Control_KnockUp_Core.obj",
+          "vertices": 729,
+          "triangles": 1280,
+          "sha256": "98be8827df42771a9dd5c6e0a0d3390e4fb26da0f75a95580023a5d63120a503"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Control_KnockUp_Rim.obj",
+          "vertices": 873,
+          "triangles": 1536,
+          "sha256": "2e003cc0788289a7bd521b33f4ac990533d2c1d5474bd13b971e5d380ec9e718"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Control_KnockUp_Accent.obj",
+          "vertices": 2187,
+          "triangles": 3840,
+          "sha256": "dc0228b15e13e64cbc1d2a7149752c35c8fb72a442236883afec22c19ecb6857"
+        }
+      ]
+    },
+    {
+      "key": "Healing_Burst",
+      "nameZh": "瞬时恢复",
+      "index": 12,
+      "category": "Healing",
+      "referenceSRGB": "47B986",
+      "behavior": "Instant",
+      "duration": 0.8,
+      "definitionId": "presentation.dba.common.vfx.healing.burst@1",
+      "requiredShapeZh": "瞬时恢复：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Healing_Burst_Core.obj",
+          "vertices": 1628,
+          "triangles": 2880,
+          "sha256": "2196accce64d29081c9b73f676308f24752f5a2d57ea1d564c4c728ef79c3b88"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Healing_Burst_Rim.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "0d9df5ad75ccca4cc9c80242c1dcf07744456e11e2e5baf2c6ae268054e89c33"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Healing_Burst_Accent.obj",
+          "vertices": 1628,
+          "triangles": 2880,
+          "sha256": "45fe76e2561e65f24993b39867606151f4f3fbd5378e2259f3be56430c6622fb"
+        }
+      ]
+    },
+    {
+      "key": "Healing_Regen",
+      "nameZh": "持续再生",
+      "index": 13,
+      "category": "Healing",
+      "referenceSRGB": "47B986",
+      "behavior": "Attached",
+      "duration": 3.0,
+      "definitionId": "presentation.dba.common.vfx.healing.regen@1",
+      "requiredShapeZh": "持续再生：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Sustain",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Healing_Regen_Core.obj",
+          "vertices": 1221,
+          "triangles": 2160,
+          "sha256": "ca0ab051850ee931d78b8e8334e3f356f3011c0948743980e9a7724c2139f628"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Healing_Regen_Rim.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "ef1c2942ce30f55d17db6697e7025e20707b133a581ee6d45b1610cb0e2ca726"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Healing_Regen_Accent.obj",
+          "vertices": 1628,
+          "triangles": 2880,
+          "sha256": "ea89f0fc2e457fed1727acbbe1493d286396abacc009562898a7a55d6c2c0015"
+        }
+      ]
+    },
+    {
+      "key": "Healing_Area",
+      "nameZh": "治疗领域",
+      "index": 14,
+      "category": "Healing",
+      "referenceSRGB": "47B986",
+      "behavior": "Area",
+      "duration": 3.0,
+      "definitionId": "presentation.dba.common.vfx.healing.area@1",
+      "requiredShapeZh": "治疗领域：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Sustain",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Healing_Area_Core.obj",
+          "vertices": 1628,
+          "triangles": 2880,
+          "sha256": "9cbff56936efd87a1317a934f76d5f3e826692654c49ebd1a9eda08cf6a43f5b"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Healing_Area_Rim.obj",
+          "vertices": 873,
+          "triangles": 1536,
+          "sha256": "d43ca0424eb19d2a6fb6d13106ad714ff67ce324348eb703eadb53e864564f73"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Healing_Area_Accent.obj",
+          "vertices": 6512,
+          "triangles": 11520,
+          "sha256": "c923c709c700de3bb169f4eebe070c1bc8f1ae556471e03e50877c086580ec40"
+        }
+      ]
+    },
+    {
+      "key": "Healing_Link",
+      "nameZh": "恢复连线",
+      "index": 15,
+      "category": "Healing",
+      "referenceSRGB": "47B986",
+      "behavior": "Beam",
+      "duration": 3.0,
+      "definitionId": "presentation.dba.common.vfx.healing.link@1",
+      "requiredShapeZh": "恢复连线：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Sustain",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Healing_Link_Core.obj",
+          "vertices": 729,
+          "triangles": 1280,
+          "sha256": "a2fc61073cd46c36a009495179c01a2dfbf5192c263ac51ac2527155edb137f0"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Healing_Link_Rim.obj",
+          "vertices": 729,
+          "triangles": 1280,
+          "sha256": "40e25db827fadccd038bdea2812ef0d907338d77dc20b17d68d45ae589bb20ec"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Healing_Link_Accent.obj",
+          "vertices": 1628,
+          "triangles": 2880,
+          "sha256": "084099bbafa2ff0c1429ca632b05831e11311d9e5ce9f1e7ce50291d1a5799ac"
+        }
+      ]
+    },
+    {
+      "key": "Movement_Dash",
+      "nameZh": "短距冲刺",
+      "index": 16,
+      "category": "Movement",
+      "referenceSRGB": "68D7B4",
+      "behavior": "Trail",
+      "duration": 1.2,
+      "definitionId": "presentation.dba.common.vfx.movement.dash@1",
+      "requiredShapeZh": "短距冲刺：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Movement_Dash_Core.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "f6981907729649d6f487c838602ec4c7a80dad2b71ec5309f2b53ae2b4bab2b6"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Movement_Dash_Rim.obj",
+          "vertices": 1746,
+          "triangles": 3072,
+          "sha256": "b63d250f61a9e452668225536d0c85319a1801f6b2600b2ac862a00695572b1f"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Movement_Dash_Accent.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "578f36b314c71711c8e4a2bc53c23b06d7bd1345c27cb553f5633b68064c22e2"
+        }
+      ]
+    },
+    {
+      "key": "Movement_Blink",
+      "nameZh": "瞬间闪现",
+      "index": 17,
+      "category": "Movement",
+      "referenceSRGB": "68D7B4",
+      "behavior": "Instant",
+      "duration": 1.2,
+      "definitionId": "presentation.dba.common.vfx.movement.blink@1",
+      "requiredShapeZh": "瞬间闪现：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Movement_Blink_Core.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "e72a583ae158d0b92041a79e1a416cc84d086b2f02672f86d2a841eed3475560"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Movement_Blink_Rim.obj",
+          "vertices": 1746,
+          "triangles": 3072,
+          "sha256": "6d102979d0808c22f75499dcd9979681d33eec50383e5cec5c6b82b096e67aa2"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Movement_Blink_Accent.obj",
+          "vertices": 3256,
+          "triangles": 5760,
+          "sha256": "f3dedb71c2cd7e3f2e037b6eb9264eadb675e8ee15f9eb3b33f6ee3a03915d7f"
+        }
+      ]
+    },
+    {
+      "key": "Movement_Leap",
+      "nameZh": "跳跃落点",
+      "index": 18,
+      "category": "Movement",
+      "referenceSRGB": "68D7B4",
+      "behavior": "Trail",
+      "duration": 1.2,
+      "definitionId": "presentation.dba.common.vfx.movement.leap@1",
+      "requiredShapeZh": "跳跃落点：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Movement_Leap_Core.obj",
+          "vertices": 729,
+          "triangles": 1280,
+          "sha256": "c77ef23ea0ab6fecee75c9e9ba32e736dc2fda1f637204b3bc411e56e296801a"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Movement_Leap_Rim.obj",
+          "vertices": 1746,
+          "triangles": 3072,
+          "sha256": "d97b895be5c12b140b4072ab94031ee240a5457c0511b44b36f79db1cf0a0268"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Movement_Leap_Accent.obj",
+          "vertices": 2187,
+          "triangles": 3840,
+          "sha256": "7f79acc65be422c58cf6209b185f898c821d633b3d7ff8ff90372f7186a4d6b4"
+        }
+      ]
+    },
+    {
+      "key": "Movement_Haste",
+      "nameZh": "加速疾行",
+      "index": 19,
+      "category": "Movement",
+      "referenceSRGB": "68D7B4",
+      "behavior": "Trail",
+      "duration": 1.2,
+      "definitionId": "presentation.dba.common.vfx.movement.haste@1",
+      "requiredShapeZh": "加速疾行：确认稿主体轮廓、独立边缘、少量辅助；无噪声和碎粒堆积",
+      "stages": [
+        "Start",
+        "Peak",
+        "Release",
+        "End",
+        "Cancel"
+      ],
+      "manualAccepted": false,
+      "meshes": [
+        {
+          "part": "Core",
+          "file": "Meshes/SM_DBA_Common_Movement_Haste_Core.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "67c5f1461c7d905ee69a6024f227971212008f1cd77703fda0c84d8d1ae0cc2c"
+        },
+        {
+          "part": "Rim",
+          "file": "Meshes/SM_DBA_Common_Movement_Haste_Rim.obj",
+          "vertices": 1458,
+          "triangles": 2560,
+          "sha256": "788d9585aa40399a7b019efc3fc8834285294c07310016728808e2e829dfbfc9"
+        },
+        {
+          "part": "Accent",
+          "file": "Meshes/SM_DBA_Common_Movement_Haste_Accent.obj",
+          "vertices": 729,
+          "triangles": 1280,
+          "sha256": "e81530cc454302323bbfc0f84df5f442488cc15f870ea25da31991c5e3144742"
+        }
+      ]
+    }
+  ],
+  "nativeCreated": false
+}

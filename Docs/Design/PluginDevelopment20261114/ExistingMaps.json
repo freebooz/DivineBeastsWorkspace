@@ -1,0 +1,868 @@
+[
+  {
+    "Map": "/Game/Development/Audio/L_SSLM_AudioLibrary_Review",
+    "File": "Game/Content/Development/Audio/L_SSLM_AudioLibrary_Review.umap",
+    "Bytes": 28882,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview",
+    "File": "Game/Content/Development/BirdFlock/Maps/L_DBA_BirdFlockIntegrationReview.umap",
+    "Bytes": 30261,
+    "ScenarioOwners": [
+      "DBAClient",
+      "GamePlatformVFX"
+    ],
+    "Scenarios": [
+      "DBAClient.BirdFlock.Count",
+      "DBAClient.BirdFlock.Reset",
+      "GamePlatformVFX.fauna.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/BirdFlock/Maps/L_DBA_BirdFlockReview",
+    "File": "Game/Content/Development/BirdFlock/Maps/L_DBA_BirdFlockReview.umap",
+    "Bytes": 40371,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/DivineBeasts/ProjectileMotion/L_DBA_ProjectileMotion_Demo",
+    "File": "Game/Content/Development/DivineBeasts/ProjectileMotion/L_DBA_ProjectileMotion_Demo.umap",
+    "Bytes": 59594,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Maps/L_DBA_FallingFoliageReview",
+    "File": "Game/Content/Development/FallingFoliage/Maps/L_DBA_FallingFoliageReview.umap",
+    "Bytes": 28291,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_AgeSafeFoliageGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_AgeSafeFoliageGameReview.umap",
+    "Bytes": 28791,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoAgeCompilerGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoAgeCompilerGameReview.umap",
+    "Bytes": 29073,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoHlslCompilerGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_AmbientPBR_NoHlslCompilerGameReview.umap",
+    "Bytes": 29095,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_BothMotionFoliageGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_BothMotionFoliageGameReview.umap",
+    "Bytes": 28863,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_FoliageShaderIsolationReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_FoliageShaderIsolationReview.umap",
+    "Bytes": 40482,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_FoliageShaderMeshControlReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_FoliageShaderMeshControlReview.umap",
+    "Bytes": 29678,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_NoOpMotionFoliageGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_NoOpMotionFoliageGameReview.umap",
+    "Bytes": 28859,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherBaselineGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherBaselineGameReview.umap",
+    "Bytes": 27635,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherDerivedPBRGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherDerivedPBRGameReview.umap",
+    "Bytes": 27734,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSoftLightPBRGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSoftLightPBRGameReview.umap",
+    "Bytes": 27982,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSSSPBRGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNeutralSSSPBRGameReview.umap",
+    "Bytes": 27862,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherNoTintPBRGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherNoTintPBRGameReview.umap",
+    "Bytes": 27712,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherPearMasksCorrectGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherPearMasksCorrectGameReview.umap",
+    "Bytes": 29058,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherScaledDensityPBRGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherScaledDensityPBRGameReview.umap",
+    "Bytes": 29073,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRGameReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRGameReview.umap",
+    "Bytes": 28975,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRNearReview",
+    "File": "Game/Content/Development/FallingFoliage/Probes/L_DBA_WeatherTruePearPBRNearReview.umap",
+    "Bytes": 28974,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Fauna/Maps/L_DBA_FaunaReview",
+    "File": "Game/Content/Development/Fauna/Maps/L_DBA_FaunaReview.umap",
+    "Bytes": 157479,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Foundation/Maps/L_AnimationHUD_CaptureBackup",
+    "File": "Game/Content/Development/Foundation/Maps/L_AnimationHUD_CaptureBackup.umap",
+    "Bytes": 13252,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Foundation/Maps/L_FoundationBootstrap",
+    "File": "Game/Content/Development/Foundation/Maps/L_FoundationBootstrap.umap",
+    "Bytes": 17564,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Foundation/Maps/L_FoundationSandbox",
+    "File": "Game/Content/Development/Foundation/Maps/L_FoundationSandbox.umap",
+    "Bytes": 17536,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1",
+    "File": "Game/Content/Development/Foundation/PCG/Validation/PCG_GoldLevel_M1.umap",
+    "Bytes": 91043,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase",
+    "File": "Game/Content/Development/Foundation/PluginReviews/Maps/L_DBA_HeroShowcase.umap",
+    "Bytes": 113655,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Foundation/PluginReviews/Maps/L_DBA_MainArenaReview",
+    "File": "Game/Content/Development/Foundation/PluginReviews/Maps/L_DBA_MainArenaReview.umap",
+    "Bytes": 45198,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_CombatReview",
+    "File": "Game/Content/Development/Foundation/PluginReviews/Maps/L_GP_CombatReview.umap",
+    "Bytes": 35740,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview",
+    "File": "Game/Content/Development/Foundation/PluginReviews/Maps/L_GP_InteractionAIReview.umap",
+    "Bytes": 46251,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview",
+    "File": "Game/Content/Development/Foundation/PluginReviews/Maps/L_GP_SFXReview.umap",
+    "Bytes": 41963,
+    "ScenarioOwners": [
+      "GamePlatformSFX"
+    ],
+    "Scenarios": [
+      "GamePlatformSFX.spaces.Manual",
+      "GamePlatformSFX.parameters.Manual",
+      "GamePlatformSFX.lifecycle_prediction.Manual",
+      "GamePlatformSFX.user_volume.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/MossSnow/Maps/L_DBA_MossSnowReview",
+    "File": "Game/Content/Development/MossSnow/Maps/L_DBA_MossSnowReview.umap",
+    "Bytes": 29273,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/PluginDemos/Maps/L_DBA_AssetGallery",
+    "File": "Game/Content/Development/PluginDemos/Maps/L_DBA_AssetGallery.umap",
+    "Bytes": 26620,
+    "ScenarioOwners": [
+      "DBAContentPack_Common",
+      "DBAFoliagePack_Core",
+      "DBAFrontEndPack",
+      "DBAHeroPack_Boar",
+      "DBAHeroPack_Dog",
+      "DBAHeroPack_Dragon",
+      "DBAHeroPack_Goat",
+      "DBAHeroPack_Horse",
+      "DBAHeroPack_Monkey",
+      "DBAHeroPack_Ox",
+      "DBAHeroPack_Rabbit",
+      "DBAHeroPack_Rat",
+      "DBAHeroPack_Rooster",
+      "DBAHeroPack_Snake",
+      "DBAHeroPack_Tiger",
+      "DBAPresentationPack_Core",
+      "DBASFXPack_Core",
+      "DBAUIPack_Core",
+      "DBAWorldPack_MainArena",
+      "DBAWorldPack_Village"
+    ],
+    "Scenarios": [
+      "DBAContentPack_Common.model_material.AssetInspection",
+      "DBAContentPack_Common.animation.AssetInspection",
+      "DBAContentPack_Common.consumers.AssetInspection",
+      "DBAFoliagePack_Core.model_material.AssetInspection",
+      "DBAFoliagePack_Core.foliagetype.AssetInspection",
+      "DBAFrontEndPack.frontend.AssetInspection",
+      "DBAFrontEndPack.studio.AssetInspection",
+      "DBAFrontEndPack.environment.AssetInspection",
+      "DBAHeroPack_Boar.appearance.AssetInspection",
+      "DBAHeroPack_Boar.portrait.AssetInspection",
+      "DBAHeroPack_Boar.icons.AssetInspection",
+      "DBAHeroPack_Dog.appearance.AssetInspection",
+      "DBAHeroPack_Dog.portrait.AssetInspection",
+      "DBAHeroPack_Dog.icons.AssetInspection",
+      "DBAHeroPack_Dragon.appearance.AssetInspection",
+      "DBAHeroPack_Dragon.portrait.AssetInspection",
+      "DBAHeroPack_Dragon.icons.AssetInspection",
+      "DBAHeroPack_Goat.appearance.AssetInspection",
+      "DBAHeroPack_Goat.portrait.AssetInspection",
+      "DBAHeroPack_Goat.icons.AssetInspection",
+      "DBAHeroPack_Horse.appearance.AssetInspection",
+      "DBAHeroPack_Horse.portrait.AssetInspection",
+      "DBAHeroPack_Horse.icons.AssetInspection",
+      "DBAHeroPack_Monkey.appearance.AssetInspection",
+      "DBAHeroPack_Monkey.portrait.AssetInspection",
+      "DBAHeroPack_Monkey.icons.AssetInspection",
+      "DBAHeroPack_Ox.appearance.AssetInspection",
+      "DBAHeroPack_Ox.portrait.AssetInspection",
+      "DBAHeroPack_Ox.icons.AssetInspection",
+      "DBAHeroPack_Rabbit.appearance.AssetInspection",
+      "DBAHeroPack_Rabbit.portrait.AssetInspection",
+      "DBAHeroPack_Rabbit.icons.AssetInspection",
+      "DBAHeroPack_Rat.appearance.AssetInspection",
+      "DBAHeroPack_Rat.portrait.AssetInspection",
+      "DBAHeroPack_Rat.icons.AssetInspection",
+      "DBAHeroPack_Rooster.appearance.AssetInspection",
+      "DBAHeroPack_Rooster.portrait.AssetInspection",
+      "DBAHeroPack_Rooster.icons.AssetInspection",
+      "DBAHeroPack_Snake.appearance.AssetInspection",
+      "DBAHeroPack_Snake.portrait.AssetInspection",
+      "DBAHeroPack_Snake.icons.AssetInspection",
+      "DBAHeroPack_Tiger.appearance.AssetInspection",
+      "DBAHeroPack_Tiger.portrait.AssetInspection",
+      "DBAHeroPack_Tiger.icons.AssetInspection",
+      "DBAPresentationPack_Core.vfx.AssetInspection",
+      "DBAPresentationPack_Core.materials.AssetInspection",
+      "DBAPresentationPack_Core.camera.AssetInspection",
+      "DBAPresentationPack_Core.geometry_animation.AssetInspection",
+      "DBAPresentationPack_Core.water_weather_ambient.AssetInspection",
+      "DBASFXPack_Core.oneshot.AssetInspection",
+      "DBASFXPack_Core.spatial_loop.AssetInspection",
+      "DBAUIPack_Core.screens.AssetInspection",
+      "DBAUIPack_Core.hud.AssetInspection",
+      "DBAUIPack_Core.texture.AssetInspection",
+      "DBAUIPack_Core.demoui.AssetInspection",
+      "DBAWorldPack_MainArena.world.AssetInspection",
+      "DBAWorldPack_MainArena.definitions.AssetInspection",
+      "DBAWorldPack_MainArena.worldcontent.AssetInspection",
+      "DBAWorldPack_Village.world.AssetInspection",
+      "DBAWorldPack_Village.definitions.AssetInspection",
+      "DBAWorldPack_Village.worldcontent.AssetInspection"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/PluginDemos/Maps/L_DBA_CameraEffects",
+    "File": "Game/Content/Development/PluginDemos/Maps/L_DBA_CameraEffects.umap",
+    "Bytes": 31207,
+    "ScenarioOwners": [
+      "GamePlatformCamera"
+    ],
+    "Scenarios": [
+      "GamePlatformCamera.cinematic.Manual",
+      "GamePlatformCamera.hit_shake.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/PluginDemos/Maps/L_DBA_CinematicCameraReview",
+    "File": "Game/Content/Development/PluginDemos/Maps/L_DBA_CinematicCameraReview.umap",
+    "Bytes": 40171,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub",
+    "File": "Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoHub.umap",
+    "Bytes": 54531,
+    "ScenarioOwners": [
+      "BlueprintAutoLayout",
+      "GamePlatformAI",
+      "GamePlatformAbilitySystem",
+      "GamePlatformAnimation",
+      "GamePlatformCharacter",
+      "GamePlatformCombat",
+      "GamePlatformCore",
+      "GamePlatformData",
+      "GamePlatformDebug",
+      "GamePlatformDeveloperTools",
+      "GamePlatformGameplay",
+      "GamePlatformInteraction",
+      "GamePlatformNavigation",
+      "GamePlatformPCG",
+      "GamePlatformPresentation",
+      "GamePlatformQuest",
+      "GamePlatformSurface",
+      "GamePlatformTelemetry",
+      "GamePlatformUI",
+      "GamePlatformWorld",
+      "GlooPrint"
+    ],
+    "Scenarios": [
+      "GamePlatformUI.ResourceBar.Normal",
+      "GamePlatformUI.ResourceBar.InvalidMaximum",
+      "GamePlatformData.Resources.SharedLease",
+      "GamePlatformData.Resources.Cancel",
+      "GamePlatformCore.Identity.Normal",
+      "GamePlatformCore.Identity.InvalidName",
+      "GamePlatformCore.Identity.InvalidVersion",
+      "GamePlatformDebug.snapshots.Manual",
+      "GamePlatformDebug.command_catalog.Manual",
+      "GamePlatformPresentation.catalog.Manual",
+      "GamePlatformPresentation.routing.Manual",
+      "GamePlatformPresentation.preview.Manual",
+      "GamePlatformUI.screens.Manual",
+      "GamePlatformUI.theme.Manual",
+      "GamePlatformUI.adaptive.Manual",
+      "GamePlatformUI.notification_feedback.Manual",
+      "GamePlatformUI.world_projection.Manual",
+      "GamePlatformSurface.editor_wind.Manual",
+      "GamePlatformWorld.readiness.Manual",
+      "GamePlatformWorld.regions.Manual",
+      "GamePlatformWorld.streaming.Manual",
+      "GamePlatformPCG.generation.Manual",
+      "GamePlatformPCG.inspection.Manual",
+      "GamePlatformPCG.authoring.Manual",
+      "GamePlatformPCG.spatial_bake.Manual",
+      "GamePlatformNavigation.path.Manual",
+      "GamePlatformNavigation.invoker.Manual",
+      "GamePlatformNavigation.links.Manual",
+      "GamePlatformInteraction.focus.Manual",
+      "GamePlatformInteraction.session.Manual",
+      "GamePlatformInteraction.outcome.Manual",
+      "GamePlatformTelemetry.record.Manual",
+      "GamePlatformTelemetry.sink.Manual",
+      "GamePlatformTelemetry.context.Manual",
+      "GamePlatformDeveloperTools.asset_audit.Manual",
+      "GamePlatformDeveloperTools.validation.Manual",
+      "GamePlatformDeveloperTools.human_review.Manual",
+      "GamePlatformDeveloperTools.performance.Manual",
+      "GamePlatformGameplay.experience.Manual",
+      "GamePlatformGameplay.admission_spawn.Manual",
+      "GamePlatformGameplay.eligibility.Manual",
+      "GamePlatformCharacter.definition.Manual",
+      "GamePlatformCharacter.initialize.Manual",
+      "GamePlatformCharacter.creation_catalog.Manual",
+      "GamePlatformAbilitySystem.avatar_gate.Manual",
+      "GamePlatformAbilitySystem.tag_input.Manual",
+      "GamePlatformAbilitySystem.cast_facts.Manual",
+      "GamePlatformAbilitySystem.abilityset_definition.Manual",
+      "GamePlatformCombat.damage_heal.Manual",
+      "GamePlatformCombat.shield.Manual",
+      "GamePlatformCombat.control_displacement.Manual",
+      "GamePlatformCombat.projectile.Manual",
+      "GamePlatformCombat.energy.Manual",
+      "GamePlatformAnimation.locomotion.Manual",
+      "GamePlatformAnimation.hitstop.Manual",
+      "GamePlatformAnimation.hitflash.Manual",
+      "GamePlatformAI.brain.Manual",
+      "GamePlatformAI.targets.Manual",
+      "GamePlatformAI.attack.Manual",
+      "GamePlatformQuest.quest_progress.Manual",
+      "GamePlatformQuest.persistence.Manual",
+      "GamePlatformQuest.tracking.Manual",
+      "BlueprintAutoLayout.whole.Manual",
+      "BlueprintAutoLayout.selected.Manual",
+      "BlueprintAutoLayout.group.Manual",
+      "BlueprintAutoLayout.route.Manual",
+      "BlueprintAutoLayout.settings.Manual",
+      "GlooPrint.format.Manual",
+      "GlooPrint.wires.Manual",
+      "GlooPrint.settings.Manual",
+      "GlooPrint.cancelundo.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoStream",
+    "File": "Game/Content/Development/PluginDemos/Maps/L_DBA_PluginDemoStream.umap",
+    "Bytes": 9166,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Snow/Maps/L_DBA_SnowReview",
+    "File": "Game/Content/Development/Snow/Maps/L_DBA_SnowReview.umap",
+    "Bytes": 31293,
+    "ScenarioOwners": [
+      "GamePlatformSurface"
+    ],
+    "Scenarios": [
+      "GamePlatformSurface.snow_contact.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpBaselineReview",
+    "File": "Game/Content/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpBaselineReview.umap",
+    "Bytes": 30534,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpVariantReview",
+    "File": "Game/Content/Development/Terrain/Maps/L_DBA_CliffRock01LowWarpVariantReview.umap",
+    "Bytes": 30520,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Terrain/Maps/L_DBA_CliffRock01MacroReview",
+    "File": "Game/Content/Development/Terrain/Maps/L_DBA_CliffRock01MacroReview.umap",
+    "Bytes": 30264,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Terrain/Maps/L_DBA_CliffRock01Review",
+    "File": "Game/Content/Development/Terrain/Maps/L_DBA_CliffRock01Review.umap",
+    "Bytes": 30240,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Terrain/Maps/L_DBA_TerrainColorV3Review",
+    "File": "Game/Content/Development/Terrain/Maps/L_DBA_TerrainColorV3Review.umap",
+    "Bytes": 9371459,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Terrain/Maps/L_DBA_TerrainFunctionReview",
+    "File": "Game/Content/Development/Terrain/Maps/L_DBA_TerrainFunctionReview.umap",
+    "Bytes": 9370361,
+    "ScenarioOwners": [
+      "GamePlatformSurface"
+    ],
+    "Scenarios": [
+      "GamePlatformSurface.environment.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Terrain/Maps/L_DBA_TerrainMaskReview",
+    "File": "Game/Content/Development/Terrain/Maps/L_DBA_TerrainMaskReview.umap",
+    "Bytes": 7135756,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Terrain/Maps/L_DBA_VillageGrassPaintValidation",
+    "File": "Game/Content/Development/Terrain/Maps/L_DBA_VillageGrassPaintValidation.umap",
+    "Bytes": 11507300,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Vendor/PN_OpenWorldFoliage/Maps/Showroom",
+    "File": "Game/Content/Development/Vendor/PN_OpenWorldFoliage/Maps/Showroom.umap",
+    "Bytes": 1154203,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Levels/Preview_Scene",
+    "File": "Game/Content/Development/Vendor/StyleHex_Studio/Free_Packs/FREE_Stylized_Grass_Flowers_Foliage/Levels/Preview_Scene.umap",
+    "Bytes": 575031,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Water/L_GP_WaterReview",
+    "File": "Game/Content/Development/Water/L_GP_WaterReview.umap",
+    "Bytes": 364046,
+    "ScenarioOwners": [
+      "GamePlatformWater"
+    ],
+    "Scenarios": [
+      "GamePlatformWater.sampling.Manual",
+      "GamePlatformWater.presence.Manual",
+      "GamePlatformWater.visual.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Water/Maps/L_GP_WaterReview",
+    "File": "Game/Content/Development/Water/Maps/L_GP_WaterReview.umap",
+    "Bytes": 6424,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Weather/Maps/L_DBA_WeatherReview",
+    "File": "Game/Content/Development/Weather/Maps/L_DBA_WeatherReview.umap",
+    "Bytes": 29238,
+    "ScenarioOwners": [
+      "GamePlatformWeather"
+    ],
+    "Scenarios": [
+      "GamePlatformWeather.transition.Manual",
+      "GamePlatformWeather.schedule.Manual",
+      "GamePlatformWeather.atmosphere.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Weather/VillageMorning/Maps/L_Monolith_EnvironmentCapability",
+    "File": "Game/Content/Development/Weather/VillageMorning/Maps/L_Monolith_EnvironmentCapability.umap",
+    "Bytes": 29718,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Weather/VillageMorning/Maps/L_Village_Baseline_Overcast",
+    "File": "Game/Content/Development/Weather/VillageMorning/Maps/L_Village_Baseline_Overcast.umap",
+    "Bytes": 20407609,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Weather/VillageMorning/Maps/L_Village_Morning_Clear",
+    "File": "Game/Content/Development/Weather/VillageMorning/Maps/L_Village_Morning_Clear.umap",
+    "Bytes": 20408465,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Weather/VillageMorning/Maps/L_Village_Morning_LightFog",
+    "File": "Game/Content/Development/Weather/VillageMorning/Maps/L_Village_Morning_LightFog.umap",
+    "Bytes": 20408752,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/Game/Development/Weather/VillageMorning/Maps/L_Village_Morning_Mist",
+    "File": "Game/Content/Development/Weather/VillageMorning/Maps/L_Village_Morning_Mist.umap",
+    "Bytes": 20408408,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAFrontEndPack/Maps/L_DBA_CharacterStudio",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/Content/Maps/L_DBA_CharacterStudio.umap",
+    "Bytes": 410237,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": false,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAFrontEndPack/Maps/L_DBA_FrontEnd",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAFrontEndPack/Content/Maps/L_DBA_FrontEnd.umap",
+    "Bytes": 10382,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": false,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V1/DirectedMissile/Review/L_DBA_Review_DirectedMissileV1",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/CommonSkillVFX/Review/V1/DirectedMissile/Review/L_DBA_Review_DirectedMissileV1.umap",
+    "Bytes": 38572,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V2/AttackSlash/Review/L_DBA_Review_AttackSlashV2",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/CommonSkillVFX/Review/V2/AttackSlash/Review/L_DBA_Review_AttackSlashV2.umap",
+    "Bytes": 32676,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V3/AttackSlash/Review/L_DBA_Review_AttackSlashV3",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/CommonSkillVFX/Review/V3/AttackSlash/Review/L_DBA_Review_AttackSlashV3.umap",
+    "Bytes": 35841,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAPresentationPack_Core/VFX/IceArrow/Maps/Review/L_DBA_IceArrow_A_Review",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/IceArrow/Maps/Review/L_DBA_IceArrow_A_Review.umap",
+    "Bytes": 30635,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAPresentationPack_Core/VFX/OrbProjectile/Review/V3/PalmRedesign/Maps/L_DBA_PalmRedesign_Review",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/OrbProjectile/Review/V3/PalmRedesign/Maps/L_DBA_PalmRedesign_Review.umap",
+    "Bytes": 35377,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAWorldPack_MainArena/Maps/L_DBA_MainArena",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_MainArena/Content/Maps/L_DBA_MainArena.umap",
+    "Bytes": 732617,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": false,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAWorldPack_Village/Development/PCG/Maps/L_DBA_Village_HillsideForest_Review",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/PCG/Maps/L_DBA_Village_HillsideForest_Review.umap",
+    "Bytes": 16504142,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAWorldPack_Village/Development/Terrain/Art/Maps/L_DBA_Material_Lab",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/Terrain/Art/Maps/L_DBA_Material_Lab.umap",
+    "Bytes": 11483375,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAWorldPack_Village/Development/Terrain/Maps/L_DBA_VillageGaeaHeightmap_Review",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/Terrain/Maps/L_DBA_VillageGaeaHeightmap_Review.umap",
+    "Bytes": 9422712,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAWorldPack_Village/Development/Wind/Maps/L_DBA_VegetationWind_Review",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/Wind/Maps/L_DBA_VegetationWind_Review.umap",
+    "Bytes": 54286,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/DBAWorldPack_Village/Maps/L_Village_Start",
+    "File": "Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Maps/L_Village_Start.umap",
+    "Bytes": 15583600,
+    "ScenarioOwners": [],
+    "Scenarios": [],
+    "Development": false,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/GamePlatformSurface/Development/Review/Maps/L_GP_SurfaceMarksReview",
+    "File": "Game/Plugins/GamePlatform/Presentation/GamePlatformSurface/Content/Development/Review/Maps/L_GP_SurfaceMarksReview.umap",
+    "Bytes": 34395,
+    "ScenarioOwners": [
+      "GamePlatformSurface"
+    ],
+    "Scenarios": [
+      "GamePlatformSurface.marks.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  },
+  {
+    "Map": "/GamePlatformVFX/Development/Review/Maps/L_VFXReview",
+    "File": "Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Development/Review/Maps/L_VFXReview.umap",
+    "Bytes": 26524,
+    "ScenarioOwners": [
+      "GamePlatformVFX"
+    ],
+    "Scenarios": [
+      "GamePlatformVFX.ten_behaviors.Manual",
+      "GamePlatformVFX.preload.Manual",
+      "GamePlatformVFX.quality_prediction.Manual",
+      "GamePlatformVFX.dissolve.Manual"
+    ],
+    "Development": true,
+    "RuntimeVerification": "not_run_this_audit"
+  }
+]

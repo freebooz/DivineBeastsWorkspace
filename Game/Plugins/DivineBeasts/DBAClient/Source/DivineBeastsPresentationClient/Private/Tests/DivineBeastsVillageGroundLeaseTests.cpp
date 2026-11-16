@@ -1,4 +1,4 @@
-// 六纹理世界租约的真实异步集成：使用平台Data签发，不伪造Scope/Proof，不连接业务后端。
+// 八纹理世界租约的真实异步集成：使用平台Data签发，不伪造Scope/Proof，不连接业务后端。
 // 夹具世界不创建WeatherClient；验证静态草地仍可申请，旧代拒绝、真实释放及错误类型回滚。
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
@@ -30,7 +30,7 @@ public:
     bool Update() override
     {
         if (FPlatformTime::Seconds() - Started > 30.)
-        { Test->AddError(TEXT("六纹理真实异步租约超时")); return true; }
+        { Test->AddError(TEXT("八纹理真实异步租约超时")); return true; }
         if (Phase == 0)
         {
             Instance.Reset(NewObject<UGameInstance>(GEngine));
@@ -43,7 +43,7 @@ public:
             Test->TestFalse(TEXT("夹具不绑定天气服务"), Service->WeatherClient.IsValid());
             Service->TryRequestSnowTextures();
             Lease = Service->TextureLease;
-            if (!Test->TestTrue(TEXT("六纹理平台真实签发"), Lease.IsValid() && Lease.ResourcePaths.Num() == 6)) return true;
+            if (!Test->TestTrue(TEXT("八纹理平台真实签发"), Lease.IsValid() && Lease.ResourcePaths.Num() == 8)) return true;
             Service->HandleTexturesReady(Service->RequestGeneration - 1, Lease, FGamePlatformResult::Success());
             Test->TestFalse(TEXT("资源未完成/旧代不能就绪"), Service->bTexturesReady);
             Phase = 1; return false;
@@ -54,7 +54,7 @@ public:
         {
             const auto State = Data->GetLeaseState(Lease);
             if (State == EGamePlatformDataRequestState::Loading) return false;
-            if (!Test->TestTrue(TEXT("真实六纹理异步成功"), State == EGamePlatformDataRequestState::Succeeded)) return true;
+            if (!Test->TestTrue(TEXT("真实八纹理异步成功"), State == EGamePlatformDataRequestState::Succeeded)) return true;
             Test->TestTrue(TEXT("真实成功回调启用就绪"), Service->bTexturesReady);
             Service->ReleaseResources();
             Test->TestTrue(TEXT("生产清理真实释放平台租约"), Data->GetLeaseState(Lease) == EGamePlatformDataRequestState::Released);

@@ -9,6 +9,18 @@
 class USceneComponent;
 class UWorld;
 
+/** 中立用户混音分组，与2D/3D播放空间正交；项目Definition明确选择，默认归效果音。 */
+UENUM(BlueprintType)
+enum class EGamePlatformSFXSoundGroup : uint8
+{
+    /** 技能、战斗、脚步及界面/交互反馈。 */
+    Effects,
+    /** 环境循环、水流、天气及环境生物声音。 */
+    Ambient,
+    /** 背景音乐。 */
+    Music
+};
+
 /** EGamePlatformSFXPlaybackSpace（音效播放空间）。 */
 UENUM(BlueprintType)
 enum class EGamePlatformSFXPlaybackSpace : uint8

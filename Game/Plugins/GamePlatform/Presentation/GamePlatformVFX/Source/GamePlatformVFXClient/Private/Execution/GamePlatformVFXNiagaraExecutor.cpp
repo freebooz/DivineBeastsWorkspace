@@ -11,6 +11,7 @@
 #include "Components/SceneComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/GamePlatformMotionSource.h"
 
 bool FGamePlatformVFXNiagaraExecutor::IsAttachmentValid(const UWorld& World,
     const UGamePlatformVFXDefinition& Definition, const FGamePlatformVFXSpawnContext& Spawn)
@@ -48,7 +49,9 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     const FGamePlatformVFXSpawnContext& Spawn = Request.SpawnContext;
 
     UNiagaraComponent* Component = nullptr;
-    if (USceneComponent* AttachTarget = Spawn.AttachComponent.Get())
+    USceneComponent* AttachTarget = Spawn.AttachComponent.Get();
+    const bool bWorldOwnedProjectile = Definition.GetBehavior() == EGamePlatformVFXBehavior::Projectile;
+    if (AttachTarget && !bWorldOwnedProjectile)
     {
         FName AttachPointName = Spawn.AttachPointName;
         if (AttachPointName.IsNone())
@@ -91,6 +94,13 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
 
     if (IsValid(Component))
     {
+        // 投射物组件由WorldSettings/原生World池拥有；附着只跟随变换，不随来源Actor销毁。
+        if (bWorldOwnedProjectile && AttachTarget)
+        {
+            // SpawnSystemAtLocation默认绝对变换；只挂父指针不会随弹体移动，需恢复相对变换。
+            Component->SetAbsolute(false, false, false);
+            Component->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepWorldTransform, Spawn.AttachPointName);
+        }
         // 默认参数先写、请求覆盖后写，避免每次Spawn复制并合并六个TMap。
         ApplyParameters(*Component, Definition.GetDefaultParameters());
         ApplyParameters(*Component, Request.Parameters);
@@ -110,6 +120,51 @@ UNiagaraComponent* FGamePlatformVFXNiagaraExecutor::Spawn(
     }
 
     return Component;
+}
+
+int32 FGamePlatformVFXNiagaraExecutor::ApplyMotionParameters(UNiagaraComponent& Component,const FGamePlatformMotionSnapshot& S)
+{
+    const UNiagaraSystem* System=Component.GetAsset();
+    if(!System || !S.bValid || !S.bEnableSpeedBasedVFX || !FMath::IsFinite(S.Speed) ||
+        !FMath::IsFinite(S.SpeedNormalized) || !FMath::IsFinite(S.AccelerationNormalized) ||
+        !FMath::IsFinite(S.TrailLengthScale) || S.FlightDirection.ContainsNaN())return 0;
+    const auto Has=[&](const FNiagaraTypeDefinition& Type,const FName Name)
+    {return System->GetExposedParameters().IndexOf(FNiagaraVariable(Type,Name))!=INDEX_NONE;};
+    int32 Count=0;
+    const auto Float=[&](const TCHAR* Name,float Value)
+    {if(Has(FNiagaraTypeDefinition::GetFloatDef(),Name)){Component.SetVariableFloat(Name,Value);++Count;}};
+    Float(TEXT("User.ProjectileSpeed"),S.Speed);
+    Float(TEXT("User.SpeedNormalized"),S.SpeedNormalized);
+    Float(TEXT("User.AccelerationNormalized"),S.AccelerationNormalized);
+    Float(TEXT("User.TrailLengthScale"),S.TrailLengthScale);
+    if(Has(FNiagaraTypeDefinition::GetVec3Def(),TEXT("User.FlightDirection")))
+    {Component.SetVariableVec3(TEXT("User.FlightDirection"),S.FlightDirection);++Count;}
+    if(Has(FNiagaraTypeDefinition::GetIntDef(),TEXT("User.FlightPhase")))
+    {Component.SetVariableInt(TEXT("User.FlightPhase"),S.FlightPhase);++Count;}
+    return Count;
+}
+
+bool FGamePlatformVFXNiagaraExecutor::UpdateProjectileMotion(UNiagaraComponent& Component,TFunctionRef<bool()> StillOwned)
+{
+    const auto* Parent=Component.GetAttachParent();
+    AActor* Source=Parent ? Parent->GetOwner() : nullptr;
+    if(!IsValid(Source) || Source->IsActorBeingDestroyed() || Source->GetWorld()!=Component.GetWorld() ||
+        !Source->GetClass()->ImplementsInterface(UGamePlatformMotionSource::StaticClass()))return false;
+    if(!StillOwned())return false;
+    const TWeakObjectPtr<UNiagaraComponent> WeakComponent(&Component);
+    const TWeakObjectPtr<USceneComponent> OriginalParent(Component.GetAttachParent());
+    const TWeakObjectPtr<AActor> OriginalSource(Source);
+    const TWeakObjectPtr<UWorld> OriginalWorld(Component.GetWorld());
+    const TWeakObjectPtr<UNiagaraSystem> OriginalSystem(Component.GetAsset());
+    const auto Snapshot=IGamePlatformMotionSource::Execute_GetMotionSnapshot(Source);
+    // 查询是外部可重入边界：原生池可在回调中把同一UObject交给新Owner，IsValid不足以证明所有权。
+    if(!StillOwned() || !WeakComponent.IsValid() || !OriginalWorld.IsValid() || OriginalWorld->bIsTearingDown ||
+        !OriginalParent.IsValid() || !OriginalSource.IsValid() || OriginalSource->IsActorBeingDestroyed() ||
+        WeakComponent->GetWorld()!=OriginalWorld.Get() || WeakComponent->GetAttachParent()!=OriginalParent.Get() ||
+        OriginalParent->GetOwner()!=OriginalSource.Get() || WeakComponent->GetAsset()!=OriginalSystem.Get())return false;
+    const int32 Written=ApplyMotionParameters(*WeakComponent,Snapshot);
+    // 初始复制尚未齐全时保留已有绑定，后续真实运动帧可重新读到有效样本。
+    return !Snapshot.bValid || (Snapshot.bEnableSpeedBasedVFX && Written>0);
 }
 
 void FGamePlatformVFXNiagaraExecutor::ApplyParameters(

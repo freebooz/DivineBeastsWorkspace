@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayEffectTypes.h"
+#include "TimerManager.h"
 #include "GameplayTagContainer.h"
 #include "Interfaces/GamePlatformCombatStateProvider.h"
 #include "Types/GamePlatformCombatEvent.h"
@@ -10,6 +11,8 @@
 #include "Types/GamePlatformCombatResult.h"
 #include "Types/GamePlatformCombatSpec.h"
 #include "GamePlatformCombatComponent.generated.h"
+
+struct FOnAttributeChangeData;
 
 class APawn;
 class AController;
@@ -78,6 +81,11 @@ public:
      * 不复制选择列表、不查询UI、不跨世界引用；调用方不得把此查询当作伤害授权。 */
     AActor* GetSelectedProjectileTarget(float MaximumRangeCm,int32& OutTargetGeneration) const;
 
+    /** GT只读瞄准点（世界厘米）：取当前启用碰撞的包围盒中心，无碰撞时退回Actor原点。
+     * 施法起射、服务器追踪及确认命中表现共用；不依赖骨骼、Niagara或客户端模型资源。
+     * 不提供命中资格或伤害授权，调用者仍须检查世界、存活与化身代次。 */
+    FVector GetCombatTargetPoint() const;
+
     /**
      * GT服务器只读选中意图，不做存活/距离/化身过滤；true表示当前控制者曾明确选择目标。
      * 弱目标可因销毁/GC而为空，但双方冻结代次仍保留，治疗等策略可拒绝失效选择而不是误自疗。
@@ -110,6 +118,33 @@ public:
         EGamePlatformControlType ControlType,
         float DurationSeconds);
 
+    /** GT服务器减速：数值比例0.05～0.70、持续1～10秒，真正降低GAS MoveSpeedMultiplier；
+     * 目标必须持有可注册的ACharacterMovement和CombatAttributeSet。
+     * 客户端只观察该属性复制；没有任意客户端施加减速RPC。 */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
+    FGamePlatformCombatResult ApplySlow(
+        const FGamePlatformCombatSpec& InSpec,
+        float SlowFraction,
+        float DurationSeconds);
+
+    /** 平台中立方向计算：零分离、过高落差、不合法方向或速度均拒绝。 */
+    static bool BuildDisplacementVelocity(
+        const FVector& Epicenter,
+        const FVector& TargetPosition,
+        EGamePlatformDisplacementMode Mode,
+        float HorizontalSpeedCmPerSecond,
+        FVector& OutVelocity);
+
+    /** GT服务器排队真实CharacterMovement移动，不将其伪装为传送或确定的落点。
+     * Epicenter由权威施法逻辑传入；对目标身份、距离、世界、地面状态与近端胶囊路径失败关闭。
+     */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat|Displacement")
+    FGamePlatformCombatResult ApplyForcedDisplacement(
+        const FGamePlatformCombatSpec& InSpec,
+        EGamePlatformDisplacementMode Mode,
+        FVector Epicenter,
+        float HorizontalSpeedCmPerSecond);
+
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
     bool RemoveControl(EGamePlatformControlType ControlType);
 
@@ -140,6 +175,16 @@ public:
     FGamePlatformCombatEventDelegate OnCombatEvent;
 
 private:
+    /** 只有权威方缺能量时启动；满值/死亡/退出停止，属性与上限变化通过委托收敛。 */
+    void HandleEnergyAttributeChanged(const FOnAttributeChangeData& Data);
+    void UpdateEnergyRecovery();
+    void ApplyEnergyRecovery();
+    void StopEnergyRecovery();
+    FDelegateHandle EnergyChangedSubscription;
+    FDelegateHandle MaxEnergyChangedSubscription;
+    FTimerHandle EnergyRecoveryTimer;
+    float EnergyRecoveryPerSecond = 0.f;
+
     /** GT组件生命周期身份；BeginPlay建立新作用域，EndPlay先失效，旧同步栈不能复活。 */
     uint64 ComponentLifecycleGeneration = 0;
     /** 与复制Avatar值独立的重置操作身份；本次合法推进Avatar不会自行使操作失效。 */
@@ -173,6 +218,8 @@ private:
 
     TArray<FGamePlatformCombatSpec> PendingResolutionStack;
     TMap<FGuid, FGamePlatformCombatResult> ResolvedResults;
+    /** Slow的GAS GE应用会同步广播监听者：相同事件ID尚在应用中时，拒绝递归重复执行。 */
+    TSet<FGuid> InFlightSlowEventIds;
     TSet<FGuid> CompletedEventIds;
     TArray<FGuid> CompletedEventOrder;
 

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "scope": "Editor authoring and PIE review only; formal merge requires P5 human approval",
+  "shared": {
+    "sun_altitude_deg": 12.0,
+    "sun_intensity_lux": 3.5,
+    "sun_source_angle_deg": 3.0,
+    "sun_temperature_kelvin": 6250.0,
+    "sky_intensity": 2.5,
+    "fixed_exposure_bias": 2.5,
+    "fog_srgb": [68, 79, 82],
+    "volumetric_albedo_srgb": [235, 241, 242],
+    "volumetric_scattering": 0.2,
+    "volumetric_distance_cm": 12000.0,
+    "volumetric_extinction_scale": 0.45,
+    "local_start_cm": 900.0
+  },
+  "presets": {
+    "Village_Morning_Clear": {"fog_density": 0.008, "height_falloff": 0.20, "start_cm": 1500.0, "max_opacity": 0.38, "second_density": 0.002, "local_enabled": false, "local_radial": 0.0, "local_height": 0.0, "volumetric_enabled": true},
+    "Village_Morning_LightFog": {"fog_density": 0.012, "height_falloff": 0.22, "start_cm": 1200.0, "max_opacity": 0.48, "second_density": 0.004, "local_enabled": true, "local_radial": 0.012, "local_height": 0.08, "volumetric_enabled": true},
+    "Village_Morning_Mist": {"fog_density": 0.016, "height_falloff": 0.25, "start_cm": 900.0, "max_opacity": 0.56, "second_density": 0.006, "local_enabled": true, "local_radial": 0.022, "local_height": 0.14, "volumetric_enabled": true}
+  },
+  "quality": {
+    "High": {"scalability": 2, "r.VolumetricFog": 1, "r.VolumetricFog.GridPixelSize": 16, "r.VolumetricFog.GridSizeZ": 64},
+    "Medium": {"scalability": 1, "r.VolumetricFog": 1, "r.VolumetricFog.GridPixelSize": 24, "r.VolumetricFog.GridSizeZ": 48},
+    "Low": {"scalability": 0, "r.VolumetricFog": 0, "r.VolumetricFog.GridPixelSize": 32, "r.VolumetricFog.GridSizeZ": 32}
+  }
+}

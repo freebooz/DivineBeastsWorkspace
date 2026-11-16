@@ -4,6 +4,10 @@
 
 `GamePlatformSFX` 位于 `GamePlatform/Presentation（平台表现层）`，定位为**跨游戏、客户端专用的通用音效执行基础设施**。它不保存玩法事实、不拥有项目音频内容，也不实现第二套 Audio Mixer（音频混音器）。
 
+2026-10-21用户音量扩展：`IGamePlatformSFXUserSettingsService` 由客户端GameInstance作用域提供Effects/Ambient/Music三个0..1有限增益。初始快照后仅用变化通知更新UI和既有World执行器；设置页拖动即时生效，在捕获结束或关闭页面时写专属 `GamePlatformAudioUserSettings.ini`，不逐事件Flush磁盘。文件目录复用引擎用户设置目录；写盘失败保留运行值和脏标记并报告中文错误，不伪装保存成功。
+
+Definition明确SoundGroup（旧资产默认Effects）；唯一执行器保存未混音BaseVolume并乘当前组增益，更新已存组件和新组件，保留引擎Fade包络。分类、增益、持久化均属音频领域，设备设置插件和项目UI不再保存一套。Editor/PIE按每个GameInstance的独立GUID目录保存本会话值，不覆盖真实Client配置或其他PIE；正式Client继续使用引擎用户设置目录。Dedicated Server与烘焙命令行不创建用户设置实例；World退出解绑自身订阅，GameInstance退出提交剩余脏值。循环资源是否静音后连续恢复须核验真实SoundBase的VirtualizationMode，静态受理和测试组件不能替代客户端试听。
+
 当前正式链路：
 
 ```text

@@ -156,6 +156,8 @@ func RunGameServerControl(ctx context.Context, cfg config.ServiceConfig) error {
 	if err := service.ConfigureArenaLifecycle(redisstore.NewArenaLifecycleStore(redisClient)); err != nil {
 		return err
 	}
+	// 生产只读同一Match Redis事务快照，不创建第二套报名或发放逻辑。
+	service.ConfigureVillageQueueOriginAuthority(matchapi.NewVillageQueueOriginAuthority(redisstore.NewPartyRepository(redisClient, 24*time.Hour)))
 
 	dispatcher := outbox.NewDispatcherWithOptions(matchOutboxStore, natsjs.NewOutboxPublisher(publisher), func() time.Time { return time.Now().UTC() }, cfg.Name+":"+config.Getenv("POD_NAME", "local"), 30*time.Second, 100)
 	go func() {

@@ -16,6 +16,8 @@
 #include "Interfaces/IGamePlatformDataService.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIWorldPolicy.h"
 #include "Perception/AICandidateRetention.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -33,6 +35,9 @@
 #include "Tags/GamePlatformCombatTags.h"
 #include "Targeting/GamePlatformAITargetSelectionRules.h"
 #include "TimerManager.h"
+
+// 默认静默；开发专服通过LogCmds启用，仅记录移动请求和真实状态变化，不增加采样时钟。
+DEFINE_LOG_CATEGORY_STATIC(LogGamePlatformAI, Log, All);
 
 namespace
 {
@@ -151,11 +156,31 @@ void AGamePlatformAIController::OnPossess(APawn* InPawn)
         RefreshAIActivationGate();
     }
     HomeLocation = InPawn->GetActorLocation();
+    // 同一个控制器重新占有时不能沿用上一只Pawn的巡逻退避或追击刷新时间。
+    LastMoveGoal = HomeLocation;
+    NextPatrolSelectionTime = 0.0;
+    LastMoveRequestTime = -1.0;
     bStoppedForDeath = false;
     LastError = EGamePlatformAIError::None;
 
     BindCombatSignals();
     BeginDefinitionLoad();
+}
+
+void AGamePlatformAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+{
+    Super::OnMoveCompleted(RequestID, Result);
+    // 仅对成功抵达的原生脑当前目标立即重评；取消或失败不触发新的攻击请求。
+    if (!HasAuthority() || !Result.IsSuccess() || !bBrainReady || bStoppedForDeath || bSubmittingNativeChaseMove ||
+        !ActiveDefinition || ActiveDefinition->BrainType != EGamePlatformAIBrainType::None ||
+        !IsValid(GetPawn()) || !CurrentTarget.IsValid()) return;
+    const AActor* Target = CurrentTarget.Get();
+    if (IsValid(Target) && FVector::DistSquared(GetPawn()->GetActorLocation(), Target->GetActorLocation()) <=
+        FMath::Square(ActiveDefinition->AttackRange))
+    {
+        // 依旧通过原入口核验攻击合法性和冷却，不能因抵达事件提前结算伤害。
+        EvaluateDecision();
+    }
 }
 
 void AGamePlatformAIController::OnUnPossess()
@@ -389,7 +414,9 @@ void AGamePlatformAIController::HandleCombatEvent(
             Event.SourceActor->GetActorLocation(),
             false,
             false,
-            true);
+            true,
+            Event.AppliedMagnitude,
+            Event.EventId);
         EvaluateDecision();
     }
 
@@ -432,6 +459,8 @@ void AGamePlatformAIController::HandleCombatEvent(
         }
         Candidates.Reset();
         CurrentTarget.Reset();
+        NextPatrolSelectionTime = 0.0;
+        LastMoveRequestTime = -1.0;
         ResourceAIInstanceGeneration = GetCurrentGeneration();
         RefreshAIActivationGate();
         StartDecisionTimer();
@@ -820,8 +849,10 @@ void AGamePlatformAIController::PruneCandidates()
     TArray<TWeakObjectPtr<AActor>> ToRemove;
     for (const TPair<TWeakObjectPtr<AActor>, FGamePlatformAITargetCandidate>& Pair : Candidates)
     {
+        const bool bRetainedCombat = bRetainCombatTarget &&
+            (Pair.Key == CurrentTarget || Pair.Value.DamageThreat > 0.0);
         if (!Pair.Key.IsValid() ||
-            Now - Pair.Value.LastSensedTime > Memory ||
+            (!bRetainedCombat && Now - Pair.Value.LastSensedTime > Memory) ||
             !IsCandidateEligible(Pair.Value))
         {
             ToRemove.Add(Pair.Key);
@@ -850,8 +881,14 @@ void AGamePlatformAIController::PruneCandidates()
     Candidates.GenerateValueArray(RankedCandidates);
     auto* Removed = GamePlatformAICandidateRetention::SelectRetained(
         RankedCandidates.GetData(), RankedCandidates.GetData() + RankedCandidates.Num(),
-        static_cast<std::size_t>(MaxCandidates), [](const auto& A, const auto& B)
+        static_cast<std::size_t>(MaxCandidates), [this](const auto& A, const auto& B)
         {
+            // 容量仍有界；高仇恨优先保留，同分保护正在交战的目标，避免感知噪声挤掉它。
+            if (bRetainCombatTarget)
+            {
+                if (A.DamageThreat != B.DamageThreat) return A.DamageThreat > B.DamageThreat;
+                if ((A.Actor == CurrentTarget) != (B.Actor == CurrentTarget)) return A.Actor == CurrentTarget;
+            }
             if (A.LastSensedTime != B.LastSensedTime) { return A.LastSensedTime > B.LastSensedTime; }
             // 同时间按稳定EntityId显式排序，不依赖TMap扫描顺序。
             if (A.EntityId.A != B.EntityId.A) { return A.EntityId.A < B.EntityId.A; }
@@ -872,7 +909,9 @@ void AGamePlatformAIController::UpsertCandidate(
     const FVector& Location,
     bool bVisible,
     bool bHeard,
-    bool bDamageSource)
+    bool bDamageSource,
+    double ConfirmedDamage,
+    const FGuid& DamageEventId)
 {
     if (!IsValid(Actor) || Actor == GetPawn() || !ActiveDefinition)
     {
@@ -892,6 +931,14 @@ void AGamePlatformAIController::UpsertCandidate(
     const bool bNew = !Candidates.Contains(Key);
     FGamePlatformAITargetCandidate& Candidate =
         Candidates.FindOrAdd(Key);
+
+    if (!bNew && (Candidate.EntityId != Provider->GetAITargetEntityId() ||
+        Candidate.Generation != Provider->GetAITargetGeneration()))
+    {
+        // 同一个Actor换化身后不可继承旧生命的仇恨或锁定；本次新感知可重新建立候选。
+        Candidate = {};
+        if (CurrentTarget == Key) SetCurrentTarget(nullptr);
+    }
 
     Candidate.Actor = Actor;
     Candidate.EntityId = Provider->GetAITargetEntityId();
@@ -914,6 +961,15 @@ void AGamePlatformAIController::UpsertCandidate(
     Candidate.bHeard = Candidate.bHeard || bHeard;
     Candidate.bDamageSource =
         Candidate.bDamageSource || bDamageSource;
+
+    if (bRetainCombatTarget && bDamageSource && FMath::IsFinite(ConfirmedDamage) &&
+        ConfirmedDamage > 0.0 && DamageEventId.IsValid() && Candidate.LastDamageEventId != DamageEventId)
+    {
+        // 只消费本Pawn Combat确认的实际伤害，不把Sight/Damage感知强度冒充伤害。
+        // 先计分再容量裁剪，容量已满时新的高仇恨来源仍能替换低分候选。
+        Candidate.DamageThreat = FMath::Min(1.0e12, Candidate.DamageThreat + ConfirmedDamage);
+        Candidate.LastDamageEventId = DamageEventId;
+    }
 
     if (bNew)
     {
@@ -957,6 +1013,20 @@ AActor* AGamePlatformAIController::SelectBestTarget()
         if (!CandidateKey.bEligible)
         {
             continue;
+        }
+
+        if (bRetainCombatTarget && Best)
+        {
+            if (Candidate.DamageThreat != Best->DamageThreat)
+            {
+                if (Candidate.DamageThreat > Best->DamageThreat) { Best = &Candidate; BestKey = CandidateKey; }
+                continue;
+            }
+            if ((Candidate.Actor == CurrentTarget) != (Best->Actor == CurrentTarget))
+            {
+                if (Candidate.Actor == CurrentTarget) { Best = &Candidate; BestKey = CandidateKey; }
+                continue;
+            }
         }
 
         if (!Best ||
@@ -1004,7 +1074,10 @@ bool AGamePlatformAIController::IsCandidateEligible(
         }
     }
 
-    if (ActiveDefinition &&
+    // 持续交战只豁免出生点距离；死亡、跨世界、身份代次和Provider资格始终优先拒绝。
+    const bool bRetainedCombat = bRetainCombatTarget &&
+        (Candidate.Actor == CurrentTarget || Candidate.DamageThreat > 0.0);
+    if (!bRetainedCombat && ActiveDefinition &&
         ActiveDefinition->HomePolicy.LeashRadius > 0.0f &&
         FVector::DistSquared(
             HomeLocation,
@@ -1086,6 +1159,24 @@ void AGamePlatformAIController::UpdateBlackboardForTarget(
             : Target->GetActorLocation());
 }
 
+AGamePlatformAIController::EIdleMovementAction AGamePlatformAIController::DecideIdleMovement(
+    double DistanceHomeSquared, float PatrolRadius, float ReturnHomeAcceptanceRadius,
+    bool bPatrolling, bool bReturningHome, bool bMovementInProgress, bool bMayRequest)
+{
+    // 已提交的无目标路径交给PathFollowing完成，允许巡逻绕障经过采样圆外侧。
+    // 丢失目标后遗留的追击路径不满足两种意图，不能冒充仍有效的空闲移动。
+    if ((bPatrolling || bReturningHome) && bMovementInProgress)
+        return EIdleMovementAction::ContinueMove;
+    const double ReturnRadius = ReturnHomeAcceptanceRadius > 1.0f ? ReturnHomeAcceptanceRadius : 1.0f;
+    // 正常巡逻使用巡逻范围；脱战/位移后的回家仍保持原有两倍到达容差，避免边界抖动。
+    const double HomeBoundary = bPatrolling && PatrolRadius > ReturnRadius * 2.0
+        ? PatrolRadius : ReturnRadius * 2.0;
+    if (DistanceHomeSquared > HomeBoundary * HomeBoundary)
+        return bMayRequest ? EIdleMovementAction::ReturnHome : EIdleMovementAction::Wait;
+    if (PatrolRadius <= 0.0f || !bMayRequest) return EIdleMovementAction::Wait;
+    return EIdleMovementAction::SelectPatrolGoal;
+}
+
 void AGamePlatformAIController::UpdateNoTargetBehavior()
 {
     APawn* ControlledPawn = GetPawn();
@@ -1100,29 +1191,40 @@ void AGamePlatformAIController::UpdateNoTargetBehavior()
     if (LocalBlackboard)
         LocalBlackboard->SetValueAsBool(GamePlatformAIBlackboardKeys::CanAttack, false);
 
-    const float DistanceHomeSq =
-        FVector::DistSquared(
-            ControlledPawn->GetActorLocation(),
-            HomeLocation);
-
-    const float ReturnRadius =
-        FMath::Max(
-            ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius,
-            1.0f);
-
-    if (DistanceHomeSq > FMath::Square(ReturnRadius * 2.0f))
+    const FGameplayTag MovementIntent = StateComponent
+        ? StateComponent->GetSnapshot().MovementIntentTag : FGameplayTag();
+    const bool bPatrolling = MovementIntent == GamePlatformAITags::Movement_Patrol;
+    const bool bReturningHome = MovementIntent == GamePlatformAITags::Movement_ReturnHome;
+    if (!bPatrolling && !bReturningHome && GetMoveStatus() != EPathFollowingStatus::Idle)
     {
-        RequestReturnHome();
-        return;
+        // 已失去目标的MoveToActor必须撤销；即使此刻还在家附近也不能继续追着旧Actor走。
+        StopMovement();
     }
 
-    if (GetMoveStatus() == EPathFollowingStatus::Idle &&
-        GetServerTimeSeconds() >= NextPatrolSelectionTime)
+    // 使用水平距离：出生胶囊中心与地面导航点的高度差不应触发归家。
+    const EIdleMovementAction Action = DecideIdleMovement(
+        FVector::DistSquared2D(ControlledPawn->GetActorLocation(), HomeLocation),
+        ActiveDefinition->HomePolicy.PatrolRadius, ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius,
+        bPatrolling, bReturningHome, GetMoveStatus() != EPathFollowingStatus::Idle,
+        GetServerTimeSeconds() >= NextPatrolSelectionTime);
+    switch (Action)
     {
+    case EIdleMovementAction::ContinueMove:
+        return;
+    case EIdleMovementAction::ReturnHome:
+        RequestReturnHome();
+        return;
+    case EIdleMovementAction::SelectPatrolGoal:
         if (!RequestPatrolGoal())
         {
             SetPublicState(EGamePlatformAIPublicState::Idle);
         }
+        return;
+    case EIdleMovementAction::Wait:
+        // 两个巡逻点之间仍保留巡逻意图；否则等待一次后又会误套脱战归家的短容差。
+        SetPublicState(EGamePlatformAIPublicState::Idle,
+            bPatrolling ? MovementIntent : FGameplayTag());
+        return;
     }
 }
 
@@ -1141,12 +1243,26 @@ void AGamePlatformAIController::UpdateTargetBehavior(AActor& Target)
         return;
     }
 
+    // 平台自身不决定怪物速度；只有项目基于已验证目标提供基础速度时才更新移动组件。
+    const TOptional<float> BaseWalkSpeed = ResolveCombatTargetBaseWalkSpeed(Target);
+    if (BaseWalkSpeed.IsSet() && FMath::IsFinite(BaseWalkSpeed.GetValue()) && BaseWalkSpeed.GetValue() > 0.0f)
+    {
+        if (ACharacter* ChasingCharacter = Cast<ACharacter>(GetPawn()))
+        {
+            if (UCharacterMovementComponent* Movement = ChasingCharacter->GetCharacterMovement())
+            {
+                if (!FMath::IsNearlyEqual(Movement->MaxWalkSpeed, BaseWalkSpeed.GetValue()))
+                    Movement->MaxWalkSpeed = BaseWalkSpeed.GetValue();
+            }
+        }
+    }
+
     const float Distance =
         FVector::Distance(
             GetPawn()->GetActorLocation(),
             Target.GetActorLocation());
 
-    if (!Candidate->bVisible && Candidate->bHeard)
+    if (!Candidate->bVisible && Candidate->bHeard && !bRetainCombatTarget)
     {
         if (UBlackboardComponent* LocalBlackboard =
             GetBlackboardComponent())
@@ -1208,12 +1324,16 @@ bool AGamePlatformAIController::RequestPatrolGoal()
         return false;
     }
 
+    // 首次无目标立即尝试；失败（含服务尚未创建）后只由现有决策时钟按秒退避重试。
+    NextPatrolSelectionTime = GetServerTimeSeconds() + 1.0;
+
     UGamePlatformNavigationWorldSubsystem* Navigation =
         GetWorld()->GetSubsystem<UGamePlatformNavigationWorldSubsystem>();
 
     if (!Navigation)
     {
         LastError = EGamePlatformAIError::NavigationUnavailable;
+        LogIdleMovementRequest(TEXT("Patrol"), TEXT("NoNavigationSubsystem"), nullptr, TEXT("NavigationUnavailable"));
         return false;
     }
 
@@ -1233,8 +1353,9 @@ bool AGamePlatformAIController::RequestPatrolGoal()
     if (!bFound)
     {
         LastError = EGamePlatformAIError::NavigationUnavailable;
-        NextPatrolSelectionTime =
-            GetServerTimeSeconds() + 1.0;
+        // 导航失败只作诊断；记录稳定错误码，避免日志引入跨DLL未导出的枚举反射符号。
+        LogIdleMovementRequest(TEXT("Patrol"), TEXT("NoReachablePoint"), nullptr,
+            *FString::Printf(TEXT("NavigationError(%d)"), static_cast<int32>(NavigationError)));
         return false;
     }
 
@@ -1249,13 +1370,28 @@ bool AGamePlatformAIController::RequestPatrolGoal()
     }
 
     if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
-        MoveToLocation(PatrolLocation, ActiveDefinition->HomePolicy.PatrolAcceptanceRadius);
+    {
+        const EPathFollowingRequestResult::Type Result =
+            MoveToLocation(PatrolLocation, ActiveDefinition->HomePolicy.PatrolAcceptanceRadius);
+        LastError = Result == EPathFollowingRequestResult::Failed
+            ? EGamePlatformAIError::NavigationUnavailable : EGamePlatformAIError::None;
+        LogIdleMovementRequest(TEXT("Patrol"), Result == EPathFollowingRequestResult::Failed ? TEXT("Failed")
+            : Result == EPathFollowingRequestResult::AlreadyAtGoal ? TEXT("AlreadyAtGoal") : TEXT("RequestSuccessful"), &PatrolLocation);
+        if (Result == EPathFollowingRequestResult::Failed)
+        {
+            return false;
+        }
+        if (Result == EPathFollowingRequestResult::AlreadyAtGoal)
+        {
+            SetPublicState(EGamePlatformAIPublicState::Idle, GamePlatformAITags::Movement_Patrol);
+            return true;
+        }
+    }
+    LastError = EGamePlatformAIError::None;
     SetPublicState(
         EGamePlatformAIPublicState::Moving,
         GamePlatformAITags::Movement_Patrol);
 
-    NextPatrolSelectionTime =
-        GetServerTimeSeconds() + 1.0;
     return true;
 }
 
@@ -1274,8 +1410,22 @@ void AGamePlatformAIController::RequestReturnHome()
             HomeLocation);
     }
 
+    NextPatrolSelectionTime = GetServerTimeSeconds() + 1.0;
     if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
-        MoveToLocation(HomeLocation, ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius);
+    {
+        const EPathFollowingRequestResult::Type Result =
+            MoveToLocation(HomeLocation, ActiveDefinition->HomePolicy.ReturnHomeAcceptanceRadius);
+        LastError = Result == EPathFollowingRequestResult::Failed
+            ? EGamePlatformAIError::NavigationUnavailable : EGamePlatformAIError::None;
+        LogIdleMovementRequest(TEXT("ReturnHome"), Result == EPathFollowingRequestResult::Failed ? TEXT("Failed")
+            : Result == EPathFollowingRequestResult::AlreadyAtGoal ? TEXT("AlreadyAtGoal") : TEXT("RequestSuccessful"), &HomeLocation);
+        if (Result != EPathFollowingRequestResult::RequestSuccessful)
+        {
+            SetPublicState(EGamePlatformAIPublicState::Idle);
+            return;
+        }
+    }
+    LastError = EGamePlatformAIError::None;
     SetPublicState(
         EGamePlatformAIPublicState::Moving,
         GamePlatformAITags::Movement_ReturnHome);
@@ -1306,7 +1456,11 @@ void AGamePlatformAIController::RequestChase(AActor& Target)
     if (bMovedEnough || bRefreshTime)
     {
         if (ActiveDefinition->BrainType == EGamePlatformAIBrainType::None)
+        {
+            // 引擎在已到达目标时同步调用OnMoveCompleted；延后到既有决策时钟，避免无限重入。
+            TGuardValue<bool> RequestGuard(bSubmittingNativeChaseMove, true);
             MoveToActor(&Target, ActiveDefinition->PreferredRange);
+        }
         LastMoveGoal = TargetLocation;
         LastMoveRequestTime = Now;
 
@@ -1334,10 +1488,39 @@ void AGamePlatformAIController::SetPublicState(
         return;
     }
 
+    const FGamePlatformAIStateSnapshot& Before = StateComponent->GetSnapshot();
+    const bool bChanged = Before.PublicState != NewState || Before.MovementIntentTag != MovementIntent ||
+        Before.CombatIntentTag != CombatIntent;
     StateComponent->SetServerPublicState(NewState);
     StateComponent->SetServerIntentTags(
         MovementIntent,
         CombatIntent);
+
+    // 合并本次状态/意图写入后再输出，重复决策不记录；同一实体的后续位置可作为实际位移证据。
+    const APawn* ControlledPawn = GetPawn();
+    if (bChanged && StateComponent && IsValid(ControlledPawn))
+    {
+        const FGamePlatformAIStateSnapshot& Snapshot = StateComponent->GetSnapshot();
+        UE_LOG(LogGamePlatformAI, Verbose,
+            TEXT("AIState Pawn=%s AIEntityId=%s Generation=%d Revision=%d PublicState=%s MovementIntent=%s CombatIntent=%s Target=%s Location=%s Home=%s LastError=%s"),
+            *GetNameSafe(ControlledPawn), *Snapshot.AIEntityId.ToString(), Snapshot.AIInstanceGeneration, Snapshot.StateRevision,
+            *UEnum::GetValueAsString(Snapshot.PublicState), *Snapshot.MovementIntentTag.ToString(), *Snapshot.CombatIntentTag.ToString(),
+            *Snapshot.CurrentTargetEntityId.ToString(), *ControlledPawn->GetActorLocation().ToString(), *HomeLocation.ToString(),
+            *UEnum::GetValueAsString(LastError));
+    }
+}
+
+void AGamePlatformAIController::LogIdleMovementRequest(
+    const TCHAR* Movement, const TCHAR* Result, const FVector* Goal, const TCHAR* NavigationError) const
+{
+    const APawn* ControlledPawn = GetPawn();
+    if (!ControlledPawn || !StateComponent) return;
+    const FGamePlatformAIStateSnapshot& Snapshot = StateComponent->GetSnapshot();
+    UE_LOG(LogGamePlatformAI, Verbose,
+        TEXT("AIMovementRequest Pawn=%s AIEntityId=%s Generation=%d Movement=%s Result=%s Target=%s Location=%s Goal=%s Home=%s LastError=%s NavigationError=%s"),
+        *GetNameSafe(ControlledPawn), *Snapshot.AIEntityId.ToString(), Snapshot.AIInstanceGeneration, Movement, Result,
+        *Snapshot.CurrentTargetEntityId.ToString(), *ControlledPawn->GetActorLocation().ToString(),
+        Goal ? *Goal->ToString() : TEXT("Unavailable"), *HomeLocation.ToString(), *UEnum::GetValueAsString(LastError), NavigationError);
 }
 
 bool AGamePlatformAIController::IsSelfDead() const

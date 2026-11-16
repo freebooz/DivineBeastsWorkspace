@@ -1,0 +1,43 @@
+{
+  "tool": "built-in image_gen",
+  "referenceFile": "Reference_DirectedMissile.png",
+  "referenceSHA256": "968abf98233540c9db1ade43f9b73ff7fc25da78d1a41f9f4118be0e088a39c0",
+  "textures": [
+    {
+      "file": "T_DBA_MissileV1_Head_Color.png",
+      "sha256": "64699d63fd854895c2a1502560bc7d5471db7a8b977aff188f0241c3ed177244",
+      "sourceRGBA": [
+        2172,
+        724
+      ],
+      "promptFile": "HeadTexturePrompt.txt",
+      "promptSHA256": "860f620b3eb0f0dfe461cfab9471164ebc677785dcc20388cbdcc72e78624655",
+      "nativeSRGB": true,
+      "nativeCompression": "BC7",
+      "nativeBuiltSize": [
+        2048,
+        512
+      ],
+      "sourcePixelEditing": false
+    },
+    {
+      "file": "T_DBA_MissileV1_Trail_Color.png",
+      "sha256": "4ebe38c095ba47fb08be7394e26147de11f41ab379ab0e9d69b958681abc8ff1",
+      "sourceRGBA": [
+        2172,
+        724
+      ],
+      "promptFile": "TrailTexturePrompt.txt",
+      "promptSHA256": "ba5f41d42677c19b865fa9d56cf88ab513cae65c3c8be141a51d7b75649b7d5a",
+      "nativeSRGB": true,
+      "nativeCompression": "BC7",
+      "nativeBuiltSize": [
+        2048,
+        512
+      ],
+      "sourcePixelEditing": false
+    }
+  ],
+  "nativeScreenshotsAreGeneratedArt": false,
+  "manualAccepted": false
+}

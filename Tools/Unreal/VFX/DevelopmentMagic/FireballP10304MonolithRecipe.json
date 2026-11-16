@@ -1,0 +1,1438 @@
+{
+  "scope": "Only P1 03/04 independent review; no gameplay changes",
+  "source": "/DBAPresentationPack_Core/VFX/Library/Game/FireMage/Niagara/NS_PY_Charge",
+  "userParameters": [
+    {
+      "name": "User.LeftPalmWS",
+      "type": "position"
+    },
+    {
+      "name": "User.RightPalmWS",
+      "type": "position"
+    },
+    {
+      "name": "User.ConvergeCenterWS",
+      "type": "position"
+    },
+    {
+      "name": "User.PhaseProgress",
+      "type": "float",
+      "default": 0
+    },
+    {
+      "name": "User.FlameScale",
+      "type": "float",
+      "default": 1
+    },
+    {
+      "name": "User.FlameIntensity",
+      "type": "float",
+      "default": 1
+    },
+    {
+      "name": "User.QualityLevel",
+      "type": "int",
+      "default": 3
+    }
+  ],
+  "systems": [
+    {
+      "path": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Niagara/NS_DBA_Fireball_P1_03_StreamConverge_Review",
+      "initialize": [
+        {
+          "op": "rename_emitter",
+          "emitter": "HandFlame",
+          "name": "E03_LeftStream"
+        },
+        {
+          "op": "rename_emitter",
+          "emitter": "GatheringSparks",
+          "name": "E03_RightStream"
+        },
+        {
+          "op": "duplicate_emitter",
+          "source_emitter": "E03_LeftStream",
+          "new_name": "E03_GatherCore"
+        },
+        {
+          "op": "duplicate_emitter",
+          "source_emitter": "E03_LeftStream",
+          "new_name": "E03_AirRipple"
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.LeftPalmWS",
+          "type": "position"
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.RightPalmWS",
+          "type": "position"
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.ConvergeCenterWS",
+          "type": "position"
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.PhaseProgress",
+          "type": "float",
+          "default": 0
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.FlameScale",
+          "type": "float",
+          "default": 1
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.FlameIntensity",
+          "type": "float",
+          "default": 1
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.QualityLevel",
+          "type": "int",
+          "default": 3
+        }
+      ],
+      "configure": [
+        {
+          "op": "set_emitter_property",
+          "emitter": "E03_LeftStream",
+          "property": "local_space",
+          "value": "false"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_LeftStream",
+          "module_node": "55C5532C479BE557815F79A09AC2DFAF",
+          "input": "Loop Duration",
+          "value": "30"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_LeftStream",
+          "module_node": "3BDF064544DE995457200897A532537C",
+          "input": "Spawn Count",
+          "value": "64"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_LeftStream",
+          "module_node": "EDE0EBB747607501C6590CB046620158",
+          "input": "Lifetime",
+          "value": "30"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E03_LeftStream",
+          "renderer_index": 0,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_03_Residue_Review"
+        },
+        {
+          "op": "add_renderer",
+          "emitter": "E03_LeftStream",
+          "class": "NiagaraRibbonRendererProperties"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E03_LeftStream",
+          "renderer_index": 1,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_03_Stream_Review"
+        },
+        {
+          "op": "configure_ribbon",
+          "emitter": "E03_LeftStream",
+          "renderer_index": 1,
+          "preset": "tube",
+          "shape": "Tube",
+          "tube_subdivisions": 6,
+          "tessellation_mode": "Custom",
+          "tessellation_factor": 3,
+          "uv_mode": "ScaledUniformly",
+          "width_binding": "Particles.RibbonWidth",
+          "link_order_binding": "Particles.RibbonLinkOrder"
+        },
+        {
+          "op": "set_fixed_bounds",
+          "emitter": "E03_LeftStream",
+          "min": [
+            -200,
+            -200,
+            -200
+          ],
+          "max": [
+            200,
+            200,
+            200
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_emitter_property",
+          "emitter": "E03_RightStream",
+          "property": "local_space",
+          "value": "false"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_RightStream",
+          "module_node": "E986F7984B0DB88CA50EF6A3803BE93E",
+          "input": "Loop Duration",
+          "value": "30"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_RightStream",
+          "module_node": "9864CF974E24395CA221C594F86FF735",
+          "input": "Spawn Count",
+          "value": "64"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_RightStream",
+          "module_node": "A4D7397044AA747949687E8DC32999A5",
+          "input": "Lifetime",
+          "value": "30"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E03_RightStream",
+          "renderer_index": 0,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_03_Residue_Review"
+        },
+        {
+          "op": "add_renderer",
+          "emitter": "E03_RightStream",
+          "class": "NiagaraRibbonRendererProperties"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E03_RightStream",
+          "renderer_index": 1,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_03_Stream_Review"
+        },
+        {
+          "op": "configure_ribbon",
+          "emitter": "E03_RightStream",
+          "renderer_index": 1,
+          "preset": "tube",
+          "shape": "Tube",
+          "tube_subdivisions": 6,
+          "tessellation_mode": "Custom",
+          "tessellation_factor": 3,
+          "uv_mode": "ScaledUniformly",
+          "width_binding": "Particles.RibbonWidth",
+          "link_order_binding": "Particles.RibbonLinkOrder"
+        },
+        {
+          "op": "set_fixed_bounds",
+          "emitter": "E03_RightStream",
+          "min": [
+            -200,
+            -200,
+            -200
+          ],
+          "max": [
+            200,
+            200,
+            200
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_emitter_property",
+          "emitter": "E03_GatherCore",
+          "property": "local_space",
+          "value": "false"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_GatherCore",
+          "module_node": "55C5532C479BE557815F79A09AC2DFAF",
+          "input": "Loop Duration",
+          "value": "30"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_GatherCore",
+          "module_node": "3BDF064544DE995457200897A532537C",
+          "input": "Spawn Count",
+          "value": "1"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_GatherCore",
+          "module_node": "EDE0EBB747607501C6590CB046620158",
+          "input": "Lifetime",
+          "value": "30"
+        },
+        {
+          "op": "remove_renderer",
+          "emitter": "E03_GatherCore",
+          "renderer_index": 0
+        },
+        {
+          "op": "add_renderer",
+          "emitter": "E03_GatherCore",
+          "class": "NiagaraMeshRendererProperties"
+        },
+        {
+          "op": "set_renderer_mesh",
+          "emitter": "E03_GatherCore",
+          "renderer_index": 0,
+          "mesh": "/Engine/BasicShapes/Sphere"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E03_GatherCore",
+          "renderer_index": 0,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_03_Core_Review"
+        },
+        {
+          "op": "set_fixed_bounds",
+          "emitter": "E03_GatherCore",
+          "min": [
+            -200,
+            -200,
+            -200
+          ],
+          "max": [
+            200,
+            200,
+            200
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_emitter_property",
+          "emitter": "E03_AirRipple",
+          "property": "local_space",
+          "value": "false"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_AirRipple",
+          "module_node": "55C5532C479BE557815F79A09AC2DFAF",
+          "input": "Loop Duration",
+          "value": "30"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_AirRipple",
+          "module_node": "3BDF064544DE995457200897A532537C",
+          "input": "Spawn Count",
+          "value": "1"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_AirRipple",
+          "module_node": "EDE0EBB747607501C6590CB046620158",
+          "input": "Lifetime",
+          "value": "30"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E03_AirRipple",
+          "renderer_index": 0,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_AirRipple_Review"
+        },
+        {
+          "op": "set_fixed_bounds",
+          "emitter": "E03_AirRipple",
+          "min": [
+            -200,
+            -200,
+            -200
+          ],
+          "max": [
+            200,
+            200,
+            200
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_fixed_bounds",
+          "min": [
+            -220,
+            -220,
+            -220
+          ],
+          "max": [
+            220,
+            220,
+            220
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_effect_type",
+          "effect_type": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V2/AttackSlash/Scalability/NET_DBA_Review_CombatCast"
+        }
+      ],
+      "motionBindings": [
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Layer",
+          "value": "0"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "LeftPalmWS",
+          "binding": "User.LeftPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "RightPalmWS",
+          "binding": "User.RightPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "CenterWS",
+          "binding": "User.ConvergeCenterWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Phase",
+          "binding": "User.PhaseProgress"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameScale",
+          "binding": "User.FlameScale"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameIntensity",
+          "binding": "User.FlameIntensity"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Quality",
+          "binding": "User.QualityLevel"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "SpellTime",
+          "binding": "Particles.Age"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_LeftStream",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "ParticleIndex",
+          "binding": "Particles.UniqueID"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "Layer",
+          "value": "1"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "LeftPalmWS",
+          "binding": "User.LeftPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "RightPalmWS",
+          "binding": "User.RightPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "CenterWS",
+          "binding": "User.ConvergeCenterWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "Phase",
+          "binding": "User.PhaseProgress"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "FlameScale",
+          "binding": "User.FlameScale"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "FlameIntensity",
+          "binding": "User.FlameIntensity"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "Quality",
+          "binding": "User.QualityLevel"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "SpellTime",
+          "binding": "Particles.Age"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_RightStream",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "ParticleIndex",
+          "binding": "Particles.UniqueID"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Layer",
+          "value": "2"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "LeftPalmWS",
+          "binding": "User.LeftPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "RightPalmWS",
+          "binding": "User.RightPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "CenterWS",
+          "binding": "User.ConvergeCenterWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Phase",
+          "binding": "User.PhaseProgress"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameScale",
+          "binding": "User.FlameScale"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameIntensity",
+          "binding": "User.FlameIntensity"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Quality",
+          "binding": "User.QualityLevel"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "SpellTime",
+          "binding": "Particles.Age"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_GatherCore",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "ParticleIndex",
+          "binding": "Particles.UniqueID"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Layer",
+          "value": "3"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "LeftPalmWS",
+          "binding": "User.LeftPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "RightPalmWS",
+          "binding": "User.RightPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "CenterWS",
+          "binding": "User.ConvergeCenterWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Phase",
+          "binding": "User.PhaseProgress"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameScale",
+          "binding": "User.FlameScale"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameIntensity",
+          "binding": "User.FlameIntensity"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Quality",
+          "binding": "User.QualityLevel"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "SpellTime",
+          "binding": "Particles.Age"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E03_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "ParticleIndex",
+          "binding": "Particles.UniqueID"
+        }
+      ],
+      "diagnostics": {
+        "error_count": 0,
+        "warning_count": 0,
+        "errors": [],
+        "warnings": [],
+        "info": [],
+        "emitter_stats": [
+          {
+            "emitter": "E03_LeftStream",
+            "sim_target": "CPU",
+            "scripts": [
+              {
+                "script": "Particle Spawn Script Interpolated",
+                "valid": true,
+                "op_count": 289,
+                "register_count": 34,
+                "compile_status": "UpToDate"
+              },
+              {
+                "script": "Particle Update Script",
+                "valid": true,
+                "op_count": 267,
+                "register_count": 40,
+                "compile_status": "UpToDate"
+              }
+            ]
+          },
+          {
+            "emitter": "E03_RightStream",
+            "sim_target": "CPU",
+            "scripts": [
+              {
+                "script": "Particle Spawn Script Interpolated",
+                "valid": true,
+                "op_count": 288,
+                "register_count": 34,
+                "compile_status": "UpToDate"
+              },
+              {
+                "script": "Particle Update Script",
+                "valid": true,
+                "op_count": 266,
+                "register_count": 40,
+                "compile_status": "UpToDate"
+              }
+            ]
+          },
+          {
+            "emitter": "E03_GatherCore",
+            "sim_target": "CPU",
+            "scripts": [
+              {
+                "script": "Particle Spawn Script Interpolated",
+                "valid": true,
+                "op_count": 134,
+                "register_count": 18,
+                "compile_status": "UpToDate"
+              },
+              {
+                "script": "Particle Update Script",
+                "valid": true,
+                "op_count": 115,
+                "register_count": 27,
+                "compile_status": "UpToDate"
+              }
+            ]
+          },
+          {
+            "emitter": "E03_AirRipple",
+            "sim_target": "CPU",
+            "scripts": [
+              {
+                "script": "Particle Spawn Script Interpolated",
+                "valid": true,
+                "op_count": 115,
+                "register_count": 16,
+                "compile_status": "UpToDate"
+              },
+              {
+                "script": "Particle Update Script",
+                "valid": true,
+                "op_count": 92,
+                "register_count": 21,
+                "compile_status": "UpToDate"
+              }
+            ]
+          }
+        ],
+        "has_issues": false
+      }
+    },
+    {
+      "path": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Niagara/NS_DBA_Fireball_P1_04_CoreFormed_Review",
+      "initialize": [
+        {
+          "op": "rename_emitter",
+          "emitter": "HandFlame",
+          "name": "E04_CoreSphere"
+        },
+        {
+          "op": "rename_emitter",
+          "emitter": "GatheringSparks",
+          "name": "E04_FlameShell"
+        },
+        {
+          "op": "duplicate_emitter",
+          "source_emitter": "E04_CoreSphere",
+          "new_name": "E04_OuterLicks"
+        },
+        {
+          "op": "duplicate_emitter",
+          "source_emitter": "E04_CoreSphere",
+          "new_name": "E04_AirRipple"
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.LeftPalmWS",
+          "type": "position"
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.RightPalmWS",
+          "type": "position"
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.ConvergeCenterWS",
+          "type": "position"
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.PhaseProgress",
+          "type": "float",
+          "default": 0
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.FlameScale",
+          "type": "float",
+          "default": 1
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.FlameIntensity",
+          "type": "float",
+          "default": 1
+        },
+        {
+          "op": "add_user_parameter",
+          "name": "User.QualityLevel",
+          "type": "int",
+          "default": 3
+        }
+      ],
+      "configure": [
+        {
+          "op": "set_emitter_property",
+          "emitter": "E04_CoreSphere",
+          "property": "local_space",
+          "value": "false"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_CoreSphere",
+          "module_node": "55C5532C479BE557815F79A09AC2DFAF",
+          "input": "Loop Duration",
+          "value": "30"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_CoreSphere",
+          "module_node": "3BDF064544DE995457200897A532537C",
+          "input": "Spawn Count",
+          "value": "1"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_CoreSphere",
+          "module_node": "EDE0EBB747607501C6590CB046620158",
+          "input": "Lifetime",
+          "value": "30"
+        },
+        {
+          "op": "remove_renderer",
+          "emitter": "E04_CoreSphere",
+          "renderer_index": 0
+        },
+        {
+          "op": "add_renderer",
+          "emitter": "E04_CoreSphere",
+          "class": "NiagaraMeshRendererProperties"
+        },
+        {
+          "op": "set_renderer_mesh",
+          "emitter": "E04_CoreSphere",
+          "renderer_index": 0,
+          "mesh": "/Engine/BasicShapes/Sphere"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E04_CoreSphere",
+          "renderer_index": 0,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_04_Core_Review"
+        },
+        {
+          "op": "set_fixed_bounds",
+          "emitter": "E04_CoreSphere",
+          "min": [
+            -200,
+            -200,
+            -200
+          ],
+          "max": [
+            200,
+            200,
+            200
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_emitter_property",
+          "emitter": "E04_FlameShell",
+          "property": "local_space",
+          "value": "false"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_FlameShell",
+          "module_node": "E986F7984B0DB88CA50EF6A3803BE93E",
+          "input": "Loop Duration",
+          "value": "30"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_FlameShell",
+          "module_node": "9864CF974E24395CA221C594F86FF735",
+          "input": "Spawn Count",
+          "value": "1"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_FlameShell",
+          "module_node": "A4D7397044AA747949687E8DC32999A5",
+          "input": "Lifetime",
+          "value": "30"
+        },
+        {
+          "op": "remove_renderer",
+          "emitter": "E04_FlameShell",
+          "renderer_index": 0
+        },
+        {
+          "op": "add_renderer",
+          "emitter": "E04_FlameShell",
+          "class": "NiagaraMeshRendererProperties"
+        },
+        {
+          "op": "set_renderer_mesh",
+          "emitter": "E04_FlameShell",
+          "renderer_index": 0,
+          "mesh": "/Engine/BasicShapes/Sphere"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E04_FlameShell",
+          "renderer_index": 0,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_04_Shell_Review"
+        },
+        {
+          "op": "set_fixed_bounds",
+          "emitter": "E04_FlameShell",
+          "min": [
+            -200,
+            -200,
+            -200
+          ],
+          "max": [
+            200,
+            200,
+            200
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_emitter_property",
+          "emitter": "E04_OuterLicks",
+          "property": "local_space",
+          "value": "false"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_OuterLicks",
+          "module_node": "55C5532C479BE557815F79A09AC2DFAF",
+          "input": "Loop Duration",
+          "value": "30"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_OuterLicks",
+          "module_node": "3BDF064544DE995457200897A532537C",
+          "input": "Spawn Count",
+          "value": "16"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_OuterLicks",
+          "module_node": "EDE0EBB747607501C6590CB046620158",
+          "input": "Lifetime",
+          "value": "30"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E04_OuterLicks",
+          "renderer_index": 0,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_04_Licks_Review"
+        },
+        {
+          "op": "set_fixed_bounds",
+          "emitter": "E04_OuterLicks",
+          "min": [
+            -200,
+            -200,
+            -200
+          ],
+          "max": [
+            200,
+            200,
+            200
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_emitter_property",
+          "emitter": "E04_AirRipple",
+          "property": "local_space",
+          "value": "false"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_AirRipple",
+          "module_node": "55C5532C479BE557815F79A09AC2DFAF",
+          "input": "Loop Duration",
+          "value": "30"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_AirRipple",
+          "module_node": "3BDF064544DE995457200897A532537C",
+          "input": "Spawn Count",
+          "value": "1"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_AirRipple",
+          "module_node": "EDE0EBB747607501C6590CB046620158",
+          "input": "Lifetime",
+          "value": "30"
+        },
+        {
+          "op": "set_renderer_material",
+          "emitter": "E04_AirRipple",
+          "renderer_index": 0,
+          "material": "/DBAPresentationPack_Core/VFX/DevelopmentMagic/Casting/Review/V3/P1Hands/Materials/MI_DBA_Fireball_P1_AirRipple_Review"
+        },
+        {
+          "op": "set_fixed_bounds",
+          "emitter": "E04_AirRipple",
+          "min": [
+            -200,
+            -200,
+            -200
+          ],
+          "max": [
+            200,
+            200,
+            200
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_fixed_bounds",
+          "min": [
+            -220,
+            -220,
+            -220
+          ],
+          "max": [
+            220,
+            220,
+            220
+          ],
+          "enabled": true
+        },
+        {
+          "op": "set_effect_type",
+          "effect_type": "/DBAPresentationPack_Core/VFX/CommonSkillVFX/Review/V2/AttackSlash/Scalability/NET_DBA_Review_CombatCast"
+        }
+      ],
+      "motionBindings": [
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Layer",
+          "value": "4"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "LeftPalmWS",
+          "binding": "User.LeftPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "RightPalmWS",
+          "binding": "User.RightPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "CenterWS",
+          "binding": "User.ConvergeCenterWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Phase",
+          "binding": "User.PhaseProgress"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameScale",
+          "binding": "User.FlameScale"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameIntensity",
+          "binding": "User.FlameIntensity"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Quality",
+          "binding": "User.QualityLevel"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "SpellTime",
+          "binding": "Particles.Age"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_CoreSphere",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "ParticleIndex",
+          "binding": "Particles.UniqueID"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "Layer",
+          "value": "5"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "LeftPalmWS",
+          "binding": "User.LeftPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "RightPalmWS",
+          "binding": "User.RightPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "CenterWS",
+          "binding": "User.ConvergeCenterWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "Phase",
+          "binding": "User.PhaseProgress"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "FlameScale",
+          "binding": "User.FlameScale"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "FlameIntensity",
+          "binding": "User.FlameIntensity"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "Quality",
+          "binding": "User.QualityLevel"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "SpellTime",
+          "binding": "Particles.Age"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_FlameShell",
+          "module_node": "9F2F49DA4921887B40AB049522B6C11B",
+          "input": "ParticleIndex",
+          "binding": "Particles.UniqueID"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Layer",
+          "value": "6"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "LeftPalmWS",
+          "binding": "User.LeftPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "RightPalmWS",
+          "binding": "User.RightPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "CenterWS",
+          "binding": "User.ConvergeCenterWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Phase",
+          "binding": "User.PhaseProgress"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameScale",
+          "binding": "User.FlameScale"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameIntensity",
+          "binding": "User.FlameIntensity"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Quality",
+          "binding": "User.QualityLevel"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "SpellTime",
+          "binding": "Particles.Age"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_OuterLicks",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "ParticleIndex",
+          "binding": "Particles.UniqueID"
+        },
+        {
+          "op": "set_module_input_value",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Layer",
+          "value": "7"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "LeftPalmWS",
+          "binding": "User.LeftPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "RightPalmWS",
+          "binding": "User.RightPalmWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "CenterWS",
+          "binding": "User.ConvergeCenterWS"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Phase",
+          "binding": "User.PhaseProgress"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameScale",
+          "binding": "User.FlameScale"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "FlameIntensity",
+          "binding": "User.FlameIntensity"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "Quality",
+          "binding": "User.QualityLevel"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "SpellTime",
+          "binding": "Particles.Age"
+        },
+        {
+          "op": "set_module_input_binding",
+          "emitter": "E04_AirRipple",
+          "module_node": "6FB50DC54FC18720FA228ABA66D269EA",
+          "input": "ParticleIndex",
+          "binding": "Particles.UniqueID"
+        }
+      ],
+      "diagnostics": {
+        "error_count": 0,
+        "warning_count": 0,
+        "errors": [],
+        "warnings": [],
+        "info": [],
+        "emitter_stats": [
+          {
+            "emitter": "E04_CoreSphere",
+            "sim_target": "CPU",
+            "scripts": [
+              {
+                "script": "Particle Spawn Script Interpolated",
+                "valid": true,
+                "op_count": 106,
+                "register_count": 17,
+                "compile_status": "UpToDate"
+              },
+              {
+                "script": "Particle Update Script",
+                "valid": true,
+                "op_count": 87,
+                "register_count": 26,
+                "compile_status": "UpToDate"
+              }
+            ]
+          },
+          {
+            "emitter": "E04_FlameShell",
+            "sim_target": "CPU",
+            "scripts": [
+              {
+                "script": "Particle Spawn Script Interpolated",
+                "valid": true,
+                "op_count": 126,
+                "register_count": 19,
+                "compile_status": "UpToDate"
+              },
+              {
+                "script": "Particle Update Script",
+                "valid": true,
+                "op_count": 107,
+                "register_count": 28,
+                "compile_status": "UpToDate"
+              }
+            ]
+          },
+          {
+            "emitter": "E04_OuterLicks",
+            "sim_target": "CPU",
+            "scripts": [
+              {
+                "script": "Particle Spawn Script Interpolated",
+                "valid": true,
+                "op_count": 181,
+                "register_count": 24,
+                "compile_status": "UpToDate"
+              },
+              {
+                "script": "Particle Update Script",
+                "valid": true,
+                "op_count": 158,
+                "register_count": 29,
+                "compile_status": "UpToDate"
+              }
+            ]
+          },
+          {
+            "emitter": "E04_AirRipple",
+            "sim_target": "CPU",
+            "scripts": [
+              {
+                "script": "Particle Spawn Script Interpolated",
+                "valid": true,
+                "op_count": 123,
+                "register_count": 16,
+                "compile_status": "UpToDate"
+              },
+              {
+                "script": "Particle Update Script",
+                "valid": true,
+                "op_count": 100,
+                "register_count": 21,
+                "compile_status": "UpToDate"
+              }
+            ]
+          }
+        ],
+        "has_issues": false
+      }
+    }
+  ],
+  "notes": [
+    "Position parameters have no default payload; runtime review uses NiagaraComponent.set_variable_position.",
+    "Do not remove source-template update modules: preserve proven graph topology and retarget only compatibility function calls.",
+    "Repair owned motion module InputMap exposure: exposed=true required=true hidden=false.",
+    "过程记录非一键验收脚本：DuplicateEmitter遗漏系统图重建，已将两个新增发射器改用完整AddEmitterToSystem；需运行复验后才能更新最终配置。"
+  ]
+}

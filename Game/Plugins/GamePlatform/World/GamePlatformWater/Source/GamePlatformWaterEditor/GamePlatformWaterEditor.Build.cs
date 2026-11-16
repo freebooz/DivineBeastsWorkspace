@@ -7,7 +7,7 @@ public class GamePlatformWaterEditor : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "UnrealEd", "GamePlatformWaterRuntime" });
-        // 仅Editor审查WaterBodyLake水下材质与PhysicsVolume，Dedicated Server不引入Water渲染模块。
-        PrivateDependencyModuleNames.Add("Water");
+        // 水体资产、PhysicsVolume及几何审查只在Editor模块装配，服务器沿用权威Runtime边界。
+        PrivateDependencyModuleNames.AddRange(new[] { "AssetRegistry", "Water", "GeometryCore" });
     }
 }

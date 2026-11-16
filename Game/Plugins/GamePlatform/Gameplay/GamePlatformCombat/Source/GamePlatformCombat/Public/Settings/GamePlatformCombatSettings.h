@@ -11,6 +11,14 @@ class GAMEPLATFORMCOMBAT_API UGamePlatformCombatSettings final : public UDevelop
     GENERATED_BODY()
 
 public:
+    /** 服务器每秒恢复的通用能量；0关闭，项目配置决定实际默认，不驱动UI轮询。 */
+    UPROPERTY(Config, EditAnywhere, Category="Energy", meta=(ClampMin="0.0"))
+    float EnergyRegenerationPerSecond = 0.0f;
+
+    /** 未声明专用能量成本时可采用的默认费用；具体技能负责选择是否使用，0为免费。 */
+    UPROPERTY(Config, EditAnywhere, Category="Energy", meta=(ClampMin="0.0"))
+    float DefaultAbilityEnergyCost = 0.0f;
+
     UPROPERTY(Config, EditAnywhere, Category="Magnitude", meta=(ClampMin="0.0"))
     float MaxDamageMagnitude = 100000.0f;
 
@@ -36,6 +44,22 @@ public:
 
     UPROPERTY(Config, EditAnywhere, Category="Control", meta=(ClampMin="0.0"))
     float MaxControlDuration = 60.0f;
+
+    /** 减速最大比例：最多70%，最终倍率下限0.30；服务端与GE/属性聚合共同限制。 */
+    UPROPERTY(Config, EditAnywhere, Category="Control", meta=(ClampMin="0.05", ClampMax="0.70"))
+    float MaxSlowFraction = 0.70f;
+
+    /** 持续减速不超过10秒；V6控制槽另限制最多3秒。 */
+    UPROPERTY(Config, EditAnywhere, Category="Control", meta=(ClampMin="0.1", ClampMax="10.0"))
+    float MaxSlowDuration = 10.0f;
+
+    /** 受迫移动最多800cm/s；实际碰撞与最终移动距离归CharacterMovement。 */
+    UPROPERTY(Config, EditAnywhere, Category="Displacement", meta=(ClampMin="100", ClampMax="800"))
+    float MaxDisplacementSpeedCmPerSecond = 800.0f;
+
+    /** 受迫移动需验证施法者至目标距离，默认不超过1400厘米。 */
+    UPROPERTY(Config, EditAnywhere, Category="Displacement", meta=(ClampMin="100", ClampMax="1400"))
+    float MaxDisplacementSourceRangeCm = 1400.0f;
 
     UPROPERTY(Config, EditAnywhere, Category="Targeting")
     bool bAllowSelfDamage = false;

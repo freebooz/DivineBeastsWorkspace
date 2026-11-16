@@ -57,6 +57,7 @@ type arenaModeMapping struct {
 	ArenaMode  string `json:"arenaMode"`
 	ServerRole string `json:"serverRole"`
 	Experience string `json:"experience"`
+	TeamSize   int    `json:"teamSize"` // 单队人数唯一真源，不从模式字符串或枚举值推算。
 }
 
 type compatibilityMatrix struct {
@@ -352,9 +353,9 @@ func generateDivineBeastsGo(catalog divineBeastsCatalog) []byte {
 			fmt.Fprintf(&b, "\t%q: %q,\n", experienceID, mapping.ServerRole)
 		}
 	}
-	b.WriteString("}\n\n// ArenaModeContexts（竞技模式对应的权威角色与体验）由Shared ServerCatalog生成。\ntype ArenaModeContext struct { ServerRoleID, ExperienceID string }\nvar ArenaModeContexts = map[string]ArenaModeContext{\n")
+	b.WriteString("}\n\n// ArenaModeContexts（竞技模式的角色、体验和单队人数）由Shared ServerCatalog生成。\ntype ArenaModeContext struct { ServerRoleID, ExperienceID string; TeamSize int }\nvar ArenaModeContexts = map[string]ArenaModeContext{\n")
 	for _, mapping := range catalog.arenaModeMappings {
-		fmt.Fprintf(&b, "\t%q: {ServerRoleID: %q, ExperienceID: %q},\n", mapping.ArenaMode, mapping.ServerRole, mapping.Experience)
+		fmt.Fprintf(&b, "\t%q: {ServerRoleID: %q, ExperienceID: %q, TeamSize: %d},\n", mapping.ArenaMode, mapping.ServerRole, mapping.Experience, mapping.TeamSize)
 	}
 	b.WriteString("}\n")
 	return []byte(b.String())
@@ -428,12 +429,12 @@ func generateDivineBeastsCpp(catalog divineBeastsCatalog) []byte {
 		}
 	}
 	b.WriteString("}};\ninline constexpr const auto& ExperienceServerRoleMappings = ExperienceMappings;\n")
-	fmt.Fprintf(&b, "struct ArenaModeContextMapping { const char* ArenaModeId; const char* ServerRoleId; const char* ExperienceId; };\ninline constexpr std::array<ArenaModeContextMapping, %d> ArenaModeMappings = {{", len(catalog.arenaModeMappings))
+	fmt.Fprintf(&b, "struct ArenaModeContextMapping { const char* ArenaModeId; const char* ServerRoleId; const char* ExperienceId; int TeamSize; };\ninline constexpr std::array<ArenaModeContextMapping, %d> ArenaModeMappings = {{", len(catalog.arenaModeMappings))
 	for i, mapping := range catalog.arenaModeMappings {
 		if i > 0 {
 			b.WriteString(", ")
 		}
-		fmt.Fprintf(&b, "ArenaModeContextMapping{%q, %q, %q}", mapping.ArenaMode, mapping.ServerRole, mapping.Experience)
+		fmt.Fprintf(&b, "ArenaModeContextMapping{%q, %q, %q, %d}", mapping.ArenaMode, mapping.ServerRole, mapping.Experience, mapping.TeamSize)
 	}
 	b.WriteString("}};\n")
 	b.WriteString("}\n")
@@ -625,6 +626,9 @@ func validateArenaModeMappings(modes, experiences, roles []string, experienceMap
 	}
 	seen := make(map[string]struct{}, len(mappings))
 	for _, mapping := range mappings {
+		if mapping.TeamSize < 1 || mapping.TeamSize > 5 {
+			panic("ServerCatalog竞技模式单队人数必须为1至5")
+		}
 		if _, ok := modeSet[mapping.ArenaMode]; !ok {
 			panic(fmt.Sprintf("ServerCatalog竞技模式映射包含未声明模式: %s", mapping.ArenaMode))
 		}

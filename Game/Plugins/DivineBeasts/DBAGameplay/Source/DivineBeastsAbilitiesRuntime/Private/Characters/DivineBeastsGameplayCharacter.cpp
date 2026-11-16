@@ -4,7 +4,9 @@
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformGameplayEligibilityComponent.h"
 #include "Components/DivineBeastsAbilityLoadoutComponent.h"
+#include "Components/DivineBeastsV6PassiveComponent.h"
 #include "Components/GamePlatformWaterInteractorComponent.h"
+#include "Components/GamePlatformCombatComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -30,13 +32,15 @@ ADivineBeastsGameplayCharacter::ADivineBeastsGameplayCharacter()
     bUseControllerRotationYaw = true;
     GetCharacterMovement()->bOrientRotationToMovement = false;
     GetCharacterMovement()->MaxWalkSpeed = 450.f; GetCharacterMovement()->JumpZVelocity = 500.f;
-    // 原生Swimming依赖关卡中bWaterVolume=true的PhysicsVolume；由CharacterMovement执行并复用网络预测/校正。
-    // 这里只设置游泳参数，绝不根据水下特效或客户端Overlap私自调用SetMovementMode。
+    // 原生水物理体积和CharacterMovement共用预测/服务器运动；浮力略大于1支持静止浮水。
+    GetCharacterMovement()->GetNavAgentPropertiesRef().bCanSwim = true;
     GetCharacterMovement()->MaxSwimSpeed = 280.f;
-    GetCharacterMovement()->Buoyancy = 1.05f;
-    GetCharacterMovement()->BrakingDecelerationSwimming = 260.f;
+    GetCharacterMovement()->Buoyancy = 1.1f;
+    GetCharacterMovement()->BrakingDecelerationSwimming = 256.f;
     // 基类已拥有唯一ASC/Combat/CharacterIdentity/GameplayEligibility；不能重建主线旧HeroIdentity或遮蔽继承成员。
     AbilityLoadout = CreateDefaultSubobject<UDivineBeastsAbilityLoadoutComponent>(TEXT("AbilityLoadout"));
+    // 挂载实体而不激活：V6正式批准DataAsset尚不存在，默认所有12固有被动都不生效。
+    V6Passive = CreateDefaultSubobject<UDivineBeastsV6PassiveComponent>(TEXT("V6Passive"));
     // 服务器只复制水域进入/离开和深浅状态；普通竞技地图无水区域时保持干态。
     WaterInteractor = CreateDefaultSubobject<UGamePlatformWaterInteractorComponent>(TEXT("WaterInteractor"));
 }
@@ -46,14 +50,34 @@ void ADivineBeastsGameplayCharacter::SetupPlayerInputComponent(UInputComponent* 
     // 原生输入只请求ACharacter运动，不提交坐标RPC；服务器仍校验运动与准入资格。
     Input->BindAxis(TEXT("DBA.MoveForward"), this, &ThisClass::MoveForward);
     Input->BindAxis(TEXT("DBA.MoveRight"), this, &ThisClass::MoveRight);
-    Input->BindAxis(TEXT("DBA.SwimVertical"), this, &ThisClass::MoveSwimmingVertical);
+    Input->BindAxis(TEXT("DBA.SwimVertical"), this, &ThisClass::SwimVertical);
     Input->BindAxis(TEXT("DBA.Turn"), this, &ThisClass::TurnCamera);
     Input->BindAxis(TEXT("DBA.Look"), this, &ThisClass::LookCamera);
     Input->BindAction(TEXT("DBA.Jump"), IE_Pressed, this, &ACharacter::Jump);
     Input->BindAction(TEXT("DBA.Jump"), IE_Released, this, &ACharacter::StopJumping);
     // 槽位由已注册的稳定输入标签指定，不按授权数组顺序推算生肖技能。
-    const TCHAR* Actions[] = { TEXT("DBA.PrimaryAbility"), TEXT("DBA.AbilityOne"), TEXT("DBA.AbilityTwo"), TEXT("DBA.UltimateAbility") };
-    const TCHAR* AbilityInputTagNames[] = { TEXT("Platform.Ability.Input.DivineBeasts.Primary"), TEXT("Platform.Ability.Input.DivineBeasts.Slot1"), TEXT("Platform.Ability.Input.DivineBeasts.Slot2"), TEXT("Platform.Ability.Input.DivineBeasts.Slot4") };
+    // 继续复用原生Pawn键盘绑定作为DefaultInput.ini（旧式输入配置）的兼容通路。
+    // 8槽先保留用户熟悉的1~4键，新扩展5~8为移动/防御/控制/特色；绝不按技能列表顺序推断。
+    const TCHAR* Actions[] =
+    {
+        TEXT("DBA.PrimaryAbility"), TEXT("DBA.AbilityOne"),
+        TEXT("DBA.AbilityTwo"), TEXT("DBA.UltimateAbility"),
+        TEXT("DBA.AbilitySlot3"), TEXT("DBA.AbilitySlot5"),
+        TEXT("DBA.AbilitySlot6"), TEXT("DBA.AbilitySlot7")
+    };
+    const TCHAR* AbilityInputTagNames[] =
+    {
+        TEXT("Platform.Ability.Input.DivineBeasts.Primary"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot1"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot2"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot4"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot3"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot5"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot6"),
+        TEXT("Platform.Ability.Input.DivineBeasts.Slot7")
+    };
+    static_assert(UE_ARRAY_COUNT(Actions) == UE_ARRAY_COUNT(AbilityInputTagNames),
+        "SSLM八槽键名与GAS标签映射必须一一对应");
     for (int32 Index = 0; Index < UE_ARRAY_COUNT(Actions); ++Index)
     {
         const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(AbilityInputTagNames[Index]));
@@ -77,27 +101,29 @@ void ADivineBeastsGameplayCharacter::HandleAbilityInputReleased(FGameplayTag Inp
 }
 void ADivineBeastsGameplayCharacter::MoveForward(float Value)
 {
-    if (!Controller || Controller->IsMoveInputIgnored()) return;
-    // 水下前进跟随镜头俯仰，实现W向潜水方向游动；陆地保留原有水平WASD控制。
-    const UCharacterMovementComponent* Movement = GetCharacterMovement();
-    const FRotator ControlRotation = Controller->GetControlRotation();
-    const FRotator InputRotation = Movement && Movement->IsSwimming()
-        ? ControlRotation : FRotator(0.f, ControlRotation.Yaw, 0.f);
-    AddMovementInput(FRotationMatrix(InputRotation).GetUnitAxis(EAxis::X), Value);
+    if (Controller && !Controller->IsMoveInputIgnored())
+    {
+        const FRotator View = Controller->GetControlRotation();
+        const bool bSwimming = GetCharacterMovement()->IsSwimming();
+        if (bSwimming && GetGamePlatformCombatComponent()->IsCombatDead()) return;
+        AddMovementInput(FRotationMatrix(bSwimming ? FRotator(View.Pitch,View.Yaw,0) : FRotator(0,View.Yaw,0)).GetUnitAxis(EAxis::X), Value);
+    }
 }
 void ADivineBeastsGameplayCharacter::MoveRight(float Value)
 {
     if (Controller && !Controller->IsMoveInputIgnored())
-    { AddMovementInput(FRotationMatrix(FRotator(0, Controller->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), Value); }
+    {
+        if (GetCharacterMovement()->IsSwimming() && GetGamePlatformCombatComponent()->IsCombatDead()) return;
+        AddMovementInput(FRotationMatrix(FRotator(0, Controller->GetControlRotation().Yaw, 0)).GetUnitAxis(EAxis::Y), Value);
+    }
+}
+void ADivineBeastsGameplayCharacter::SwimVertical(float Value)
+{
+    if (Controller && !Controller->IsMoveInputIgnored() && GetCharacterMovement()->IsSwimming() &&
+        !GetGamePlatformCombatComponent()->IsCombatDead() && FMath::IsFinite(Value))
+        AddMovementInput(FVector::UpVector, FMath::Clamp(Value,-1.f,1.f));
 }
 void ADivineBeastsGameplayCharacter::TurnCamera(float Value) { AddControllerYawInput(Value); }
-void ADivineBeastsGameplayCharacter::MoveSwimmingVertical(float Value)
-{
-    if (FMath::IsNearlyZero(Value) || !Controller || Controller->IsMoveInputIgnored()) return;
-    const UCharacterMovementComponent* Movement = GetCharacterMovement();
-    // 上浮/下潜只走引擎AddMovementInput→CharacterMovement网络预测，不复制独立深度或坐标。
-    if (Movement && Movement->IsSwimming()) AddMovementInput(FVector::UpVector, Value);
-}
 void ADivineBeastsGameplayCharacter::LookCamera(float Value) { AddControllerPitchInput(Value); }
 
 UAbilitySystemComponent* ADivineBeastsGameplayCharacter::GetAbilitySystemComponent() const

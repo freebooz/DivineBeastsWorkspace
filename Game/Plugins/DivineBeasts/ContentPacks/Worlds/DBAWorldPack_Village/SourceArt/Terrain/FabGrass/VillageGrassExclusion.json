@@ -1,0 +1,21 @@
+{
+  "mapSha256": "befce449f7783e73be033411d07c94095fb37c780408f0c36ff36cc7f521f1a9",
+  "bounds": [
+    -25200.0,
+    -25200.0,
+    50400.0,
+    50400.0
+  ],
+  "size": 2048,
+  "survey": "E:\\work\\2026\\DivineBeastsWorkspace\\Saved\\Validation\\FabVillageGrass\\d19d0742-6ea1-45ff-be7a-8340a6f1e910\\VillageWaterAndSpatialSurvey.json",
+  "domains": [
+    "ManualLock",
+    "Building.Parcel",
+    "Road.Main",
+    "Road.ForestPath",
+    "Road.ForestPath",
+    "Road.ForestPath"
+  ],
+  "pngSha256": "28a2d31d578aebc6180fd762f3be06c2a90f9d32a2c62a1453cb36ea8da9a9e2",
+  "whiteMeansExcluded": true
+}

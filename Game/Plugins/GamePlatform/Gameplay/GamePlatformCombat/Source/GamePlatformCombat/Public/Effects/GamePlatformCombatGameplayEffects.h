@@ -3,6 +3,15 @@
 #include "GameplayEffect.h"
 #include "GamePlatformCombatGameplayEffects.generated.h"
 
+/** 通用瞬时能量恢复；服务器Spec通过DataName GamePlatform.Energy.Restore声明恢复量。 */
+UCLASS()
+class GAMEPLATFORMCOMBAT_API UGamePlatformEnergyRecoveryGameplayEffect final : public UGameplayEffect
+{
+    GENERATED_BODY()
+public:
+    UGamePlatformEnergyRecoveryGameplayEffect();
+};
+
 UCLASS()
 class GAMEPLATFORMCOMBAT_API UGamePlatformDamageGameplayEffect final
     : public UGameplayEffect
@@ -62,4 +71,15 @@ public:
      * @param ObjectInitializer UE 默认子对象构造器；必须由引擎传入，禁止在构造期改用无名称 NewObject。
      */
     explicit UGamePlatformSilenceGameplayEffect(const FObjectInitializer& ObjectInitializer);
+};
+
+/** 平台通用限时减速GE：每个来源独立有GAS有效句柄；服务端SetByCaller提供负比例。
+ * 只修改MoveSpeedMultiplier GAS属性，不在GE中直接写CharacterMovement或执行客户端命令。 */
+UCLASS()
+class GAMEPLATFORMCOMBAT_API UGamePlatformSlowGameplayEffect final
+    : public UGameplayEffect
+{
+    GENERATED_BODY()
+public:
+    explicit UGamePlatformSlowGameplayEffect(const FObjectInitializer& ObjectInitializer);
 };

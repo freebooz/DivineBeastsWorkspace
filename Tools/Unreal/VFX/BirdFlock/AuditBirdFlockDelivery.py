@@ -19,6 +19,8 @@ OUT = ROOT/'Saved/Validation/BirdFlockDelivery'
 DBA = '/DBAPresentationPack_Core/VFX/Environment/BirdFlock'
 GP = '/GamePlatformVFX/Environment/BirdFlock'
 CONTENT = ROOT/'Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAPresentationPack_Core/Content/VFX/Environment/BirdFlock'
+HISTORY = CONTENT.parents[2]/'Development/History/BirdFlock/Meshes'
+HISTORY_ROOT = '/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes'
 EXPECTED = {'Seagull': 32, 'Swallow': 72, 'Eagle': 5}
 MAP_ROOT = '/Game/Development/BirdFlock/Maps/'
 
@@ -26,6 +28,7 @@ MAP_ROOT = '/Game/Development/BirdFlock/Maps/'
 def snapshot():
     """仅记录本次有关资产及代码，前后精确比较；不读取账号配置、用户存档或凭据。"""
     files = list(CONTENT.rglob('*.uasset'))
+    files += list(HISTORY.glob('*.uasset'))
     files += list((ROOT/'Game/Plugins/GamePlatform/Presentation/GamePlatformVFX/Content/Environment/BirdFlock').rglob('*.uasset'))
     files += list((ROOT/'Game/Content/Development/BirdFlock').rglob('*.umap'))
     source = ROOT/'Game/Plugins/DivineBeasts/DBAClient/Source/DivineBeastsPresentationClient'
@@ -106,15 +109,15 @@ def main():
             expected_mesh = DBA+'/Meshes/Flight/SM_DBA_Bird_'+species
             if expected_mesh not in closure:
                 raise RuntimeError('正式Niagara没有引用Flight模型：'+species)
-            legacy = [p for p in closure if p.startswith(DBA+'/Meshes/SM_DBA_Bird_')]
+            legacy = [p for p in closure if p.startswith(DBA+'/Meshes/SM_DBA_Bird_') or p.startswith(HISTORY_ROOT+'/')]
             if legacy:
                 raise RuntimeError('正式Niagara仍依赖旧原型：'+repr(legacy))
             report['formalDependencies'].append({'species': species, 'system': path,
                 'flightMesh': expected_mesh, 'legacyDependencies': legacy, 'closure': closure})
         report['legacyInventory'] = []
-        for file in sorted((CONTENT/'Meshes').glob('SM_DBA_Bird_*.uasset')):
-            package = DBA+'/Meshes/'+file.stem
-            refs = sorted(str(v) for v in registry.get_referencers(package, options))
+        for file in sorted(HISTORY.glob('SM_DBA_Bird_*.uasset')):
+            package = HISTORY_ROOT+'/'+file.stem
+            refs = sorted(str(v) for v in (registry.get_referencers(package, options) or []))
             report['legacyInventory'].append({'asset': package, 'referencers': refs, 'sourceDeleted': False})
         report['maps'] = [inspect_map(MAP_ROOT+'L_DBA_BirdFlockReview'),
                           inspect_map(MAP_ROOT+'L_DBA_BirdFlockIntegrationReview')]

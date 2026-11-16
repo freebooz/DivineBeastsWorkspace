@@ -21,6 +21,10 @@ namespace GamePlatformCombatTags
 
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Control_Stun);
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Control_Silence);
+    /** Slow：服务器经可过期GAS GE授予，不能只依赖外观标签替代运动计算。 */
+    GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Control_Slow);
+    /** 动态SetByCaller减速比例，施加时填入负数倍率，例：-0.3为减速30%。 */
+    GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Control_SlowFraction);
 
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Damage);
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Healing);
@@ -30,6 +34,8 @@ namespace GamePlatformCombatTags
     // 历史暴击结果标签只作资产兼容，当前战斗不产生暴击结果。
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Result_Critical);
     // 历史结果标签保留已发布身份；当前控制流程不再根据数值韧性产生抵抗事件。
+    /** 受迫移动仅确认服务器已排队速度，不能声明最终距离/落点。 */
+    GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Result_DisplacementQueued);
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Result_ControlResisted);
 
     GAMEPLATFORMCOMBAT_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Damage);

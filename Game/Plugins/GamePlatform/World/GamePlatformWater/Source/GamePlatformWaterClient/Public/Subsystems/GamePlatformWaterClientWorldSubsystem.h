@@ -57,7 +57,18 @@ public:
     UFUNCTION(BlueprintCallable, Category="GamePlatform|Water")
     void ClearPresentation();
 
+    /** 仅原先空表现的显式Standalone开发世界；完整租约阻止外部配置写入。 */
+    bool BeginDevelopmentPresentation(FGuid Owner,FGuid& OutScope);
+    bool ConfigureDevelopmentPresentation(const FGuid& Scope,UGamePlatformWaterPresentationPreset* Preset);
+    bool SetDevelopmentWaterQuality(const FGuid& Scope,EGamePlatformWaterQualityTier Tier);
+    bool EndDevelopmentPresentation(const FGuid& Scope);
 private:
+    FGuid DevelopmentPresentationScope;
+    EGamePlatformWaterQualityTier DevelopmentQualityBaseline=EGamePlatformWaterQualityTier::High;
+    bool ConfigurePresentationOwned(const FGuid&,UGamePlatformWaterPresentationPreset*);
+    bool SetWaterQualityTierOwned(const FGuid&,EGamePlatformWaterQualityTier);
+    void ClearPresentationInternal();
+
     /** 只监听本世界新出生Actor，在服务器权威涉水状态到达时触发局部水纹。 */
     void ObserveSpawnedActor(AActor* Actor);
     void HandleWaterPresenceChanged(const AActor* Actor, const FGamePlatformWaterPresence& WaterState);

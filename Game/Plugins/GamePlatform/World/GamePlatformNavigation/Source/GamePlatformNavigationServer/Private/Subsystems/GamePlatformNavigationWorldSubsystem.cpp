@@ -603,6 +603,7 @@ bool UGamePlatformNavigationWorldSubsystem::RegisterInvoker(
         Profile->TileRemovalRadius);
 
     RegisteredInvokers.Add(ActorKey);
+    RegisteredInvokerProfiles.Add(ActorKey,AgentProfileId);
     Actor.OnDestroyed.AddUniqueDynamic(
         this,
         &UGamePlatformNavigationWorldSubsystem::HandleInvokerDestroyed);
@@ -630,6 +631,7 @@ void UGamePlatformNavigationWorldSubsystem::UnregisterInvoker(
         &UGamePlatformNavigationWorldSubsystem::HandleInvokerDestroyed);
 
     RegisteredInvokers.Remove(Key);
+    RegisteredInvokerProfiles.Remove(Key);
 }
 
 FGamePlatformNavigationDiagnostics
@@ -854,8 +856,10 @@ bool UGamePlatformNavigationWorldSubsystem::ResolveQueryContext(
         return false;
     }
 
+    // NavData::GetQueryFilter只读已有缓存，冷启动时自定义平台过滤器必定尚未存在。
+    // 引擎工厂负责初始化/缓存，并接收当前世界服务作为查询上下文；不能依赖别的查询偶然预热。
     OutFilter =
-        OutNavData->GetQueryFilter(*FilterClass);
+        UNavigationQueryFilter::GetQueryFilter(*OutNavData, this, *FilterClass);
 
     if (!OutFilter.IsValid())
     {
@@ -1165,4 +1169,12 @@ void UGamePlatformNavigationWorldSubsystem::HandleInvokerDestroyed(
     {
         UnregisterInvoker(*DestroyedActor);
     }
+}
+
+bool UGamePlatformNavigationWorldSubsystem::UnregisterAgentProfile(const UGamePlatformNavigationAgentProfile* Profile){
+ check(IsInGameThread());if(!Profile)return false;const auto* Registered=AgentProfiles.Find(Profile->ProfileId);
+ if(!Registered||Registered->Get()!=Profile)return false;
+ for(const auto& Pair:RegisteredInvokerProfiles)if(Pair.Key.IsValid()&&Pair.Value==Profile->ProfileId)return false;
+ for(const auto& Pair:AsyncRequests)if(Pair.Value.Request.AgentProfileId==Profile->ProfileId)return false;
+ AgentProfiles.Remove(Profile->ProfileId);return true;
 }

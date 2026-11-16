@@ -4,7 +4,7 @@
 
 ## 本轮授权与依据
 
-用户提供任务00、01、02、03、最终验收要求，并明确确认：按00→03补齐前置，保留旧接口兼容扩展。实施依据为本轮完整提示词及附件；FoundationM0Design.md、四份独立任务文档、AcceptanceChecklist.md 和 ReferenceDocs 参考包未在工作树及 Downloads 文件搜索中找到。`OverallPlan.md` 不存在，现行对应文件为 `Docs/Architecture/解决方案总体规划.md`，不复制改名。
+用户提供任务00、01、02、03、最终验收要求，并明确确认：按00→03补齐前置，保留旧接口兼容扩展。实施依据为本轮完整提示词及附件；FoundationM0Design.md、四份独立任务文档、AcceptanceChecklist.md 和 ReferenceDocs 参考包未在工作树及 Downloads 文件搜索中找到。`OverallPlan.md` 不存在，现行对应文件为 `Docs/SSLMEngineeringStandard.md#architecture`，不复制改名。
 
 遵循当前 AGENTS.md 和插件规范，不修改 Backend／Shared／Deploy 的并发修改，不创建额外宿主、不强制提交。按用户直接实施指示，在当前工作树增量执行，使用本文件代替另建总体设计和多份进度。
 

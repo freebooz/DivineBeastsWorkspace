@@ -92,7 +92,14 @@ bool AGamePlatformArenaGameMode::Transition(
     if ((NewPhase == EGamePlatformArenaMatchPhase::Failed || NewPhase == EGamePlatformArenaMatchPhase::Aborted ||
          NewPhase == EGamePlatformArenaMatchPhase::Ending) && GameplayLifecycleAdapter)
     {
-        for (const auto& Slot : CurrentAssignment.Roster) { FString Ignored; GameplayLifecycleAdapter->SetPlayerGameplayActive(Slot.PlayerId, false, Ignored); }
+        auto* Lifecycle = GameplayLifecycleAdapter;
+        const FGuid BindingId = GetGameplayLifecycleBindingId();
+        for (const auto& Slot : CurrentAssignment.Roster)
+        {
+            if (!IsGameplayLifecycleAdapter(Lifecycle, BindingId)) { break; }
+            FString Ignored;
+            Lifecycle->SetPlayerGameplayActive(Slot.PlayerId, false, Ignored);
+        }
     }
     if (AGamePlatformArenaGameState* ArenaState = GetGameState<AGamePlatformArenaGameState>())
     {
@@ -201,6 +208,11 @@ bool AGamePlatformArenaGameMode::ApplyAssignmentWithModeSpec(
     return Transition(EGamePlatformArenaMatchPhase::WaitingPlayers, OutError);
 }
 
+void AGamePlatformArenaGameMode::ChangeName(AController*, const FString&, bool)
+{
+    // 竞技场只在可信名册准入或重连时给PlayerState写入角色名。
+}
+
 bool AGamePlatformArenaGameMode::AdmitPlayer(
     AGamePlatformArenaPlayerState* PlayerState,
     const FGamePlatformArenaTransferTicketClaims& VerifiedTicket,
@@ -238,7 +250,7 @@ bool AGamePlatformArenaGameMode::AdmitPlayer(
         return false;
     }
 
-    PlayerState->AuthorityApplyRosterIdentity(Slot->PlayerId, Slot->CharacterId, Slot->TeamId);
+    PlayerState->AuthorityApplyRosterIdentity(Slot->PlayerId, Slot->CharacterId, Slot->TeamId, Slot->CharacterName);
     PlayerStatesById.Add(Slot->PlayerId, PlayerState);
     OutError.Reset();
     BeginHeroSelectionIfReady();
@@ -305,7 +317,7 @@ bool AGamePlatformArenaGameMode::AreAllPlayersSelected() const
     for (const TPair<FString, TWeakObjectPtr<AGamePlatformArenaPlayerState>>& Pair : PlayerStatesById)
     {
         const AGamePlatformArenaPlayerState* State = Pair.Value.Get();
-        if (State == nullptr || State->HeroDefinitionId.IsEmpty()) { return false; }
+        if (!IsCurrentConnectedPlayer(State) || State->HeroDefinitionId.IsEmpty()) { return false; }
     }
     return true;
 }
@@ -339,12 +351,12 @@ void AGamePlatformArenaGameMode::BeginHeroSelectionIfReady()
             {
                 auto* State=PlayerStatesById.FindRef(Slot.PlayerId).Get();
                 if(!State||!RequestHeroSelection(State,Slot.HeroDefinitionId,HeroEligibilityProvider,Error))
-                {Transition(EGamePlatformArenaMatchPhase::Failed,Error);return;}
+                {AbortMatchStart(EGamePlatformArenaStartAbortReason::StartupFailed, Error);return;}
             }
             for(const auto& Slot:CurrentAssignment.Roster)
             {
                 auto* State=PlayerStatesById.FindRef(Slot.PlayerId).Get();
-                if(!State||!RequestReady(State,Error)){Transition(EGamePlatformArenaMatchPhase::Failed,Error);return;}
+                if(!State||!RequestReady(State,Error)){AbortMatchStart(EGamePlatformArenaStartAbortReason::StartupFailed, Error);return;}
             }
         }
     }
@@ -372,6 +384,7 @@ void AGamePlatformArenaGameMode::BeginCountdownIfReady()
     GetWorldTimerManager().ClearTimer(PreMatchTimeoutTimer);
     FString Error;
     if (!Transition(EGamePlatformArenaMatchPhase::Countdown, Error, CountdownSeconds)) { return; }
+    if (GetMatchPhase() != EGamePlatformArenaMatchPhase::Countdown) { return; }
     GetWorldTimerManager().SetTimer(
         CountdownTimer,
         this,
@@ -388,19 +401,56 @@ void AGamePlatformArenaGameMode::HandlePreMatchTimeout()
     {
         return;
     }
+    AbortMatchStart(EGamePlatformArenaStartAbortReason::PreMatchTimeout);
+}
+
+void AGamePlatformArenaGameMode::AbortMatchStart(EGamePlatformArenaStartAbortReason Reason, const FString& Detail)
+{
+    const auto Phase = GetMatchPhase();
+    if (!bAssignmentApplied || !HasAuthority() || !GetWorld() || GetWorld()->bIsTearingDown ||
+        (Phase != EGamePlatformArenaMatchPhase::HeroSelection && Phase != EGamePlatformArenaMatchPhase::ReadyCheck &&
+            Phase != EGamePlatformArenaMatchPhase::Countdown && !(bStartingMatch && Phase == EGamePlatformArenaMatchPhase::InProgress)))
+    {
+        return;
+    }
+
+    GetWorldTimerManager().ClearTimer(CountdownTimer);
+    GetWorldTimerManager().ClearTimer(PreMatchTimeoutTimer);
+    GetWorldTimerManager().ClearTimer(MatchDeadlineTimer);
+    for (auto& Pair : ReconnectTimers) { GetWorldTimerManager().ClearTimer(Pair.Value); }
+    ReconnectTimers.Reset();
+    RecoveryStatesById.Reset();
+
+    const auto Terminal = Reason == EGamePlatformArenaStartAbortReason::PreMatchTimeout ||
+        Reason == EGamePlatformArenaStartAbortReason::PlayerDisconnected
+        ? EGamePlatformArenaMatchPhase::Aborted : EGamePlatformArenaMatchPhase::Failed;
+    auto* Lifecycle = GameplayLifecycleAdapter;
+    const FGuid BindingId = GetGameplayLifecycleBindingId();
     FString Error;
-    Transition(EGamePlatformArenaMatchPhase::Aborted, Error);
-    UE_LOG(LogTemp, Warning, TEXT("Arena pre-match timeout; first-version policy is abort."));
+    if (!Transition(Terminal, Error)) { return; }
+    for (const auto& Slot : CurrentAssignment.Roster)
+    {
+        if (!IsGameplayLifecycleAdapter(Lifecycle, BindingId)) { break; }
+        Lifecycle->RollbackPlayerStart(Slot.PlayerId);
+    }
+    UE_LOG(LogTemp, Warning, TEXT("Arena start aborted, reason %d: %s"), static_cast<int32>(Reason), *Detail);
+    MatchStartAbortedDelegate.Broadcast(Reason);
 }
 
 void AGamePlatformArenaGameMode::StartMatchFromCountdown()
 {
-    if (PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::Countdown) { return; }
-    FString Error;
-    if (GameplayLifecycleAdapter == nullptr)
+    if (GetMatchPhase() != EGamePlatformArenaMatchPhase::Countdown || bStartingMatch) { return; }
+    TGuardValue<bool> StartGuard(bStartingMatch, true);
+    auto* Lifecycle = GameplayLifecycleAdapter;
+    const FGuid BindingId = GetGameplayLifecycleBindingId();
+    if (!Lifecycle)
     {
-        Transition(EGamePlatformArenaMatchPhase::Failed, Error);
-        UE_LOG(LogTemp, Error, TEXT("Arena start rejected: GameplayLifecycleAdapter is not configured."));
+        AbortMatchStart(EGamePlatformArenaStartAbortReason::StartupFailed, TEXT("GameplayLifecycleAdapter is not configured."));
+        return;
+    }
+    if (!AreAllPlayersReady())
+    {
+        AbortMatchStart(EGamePlatformArenaStartAbortReason::PlayerDisconnected);
         return;
     }
     // 全部参赛者必须先完成权威Pawn出生与Character初始化，再允许比赛进入InProgress。
@@ -408,42 +458,43 @@ void AGamePlatformArenaGameMode::StartMatchFromCountdown()
     for (const FGamePlatformArenaRosterSlot& Slot : CurrentAssignment.Roster)
     {
         FString SpawnError;
-        if (!GameplayLifecycleAdapter->SpawnPlayer(
+        if (!Lifecycle->SpawnPlayer(
             Slot.PlayerId,
             Slot.TeamId,
             ActiveModeSpec.SpawnPolicyId,
             SpawnError))
         {
-            FString FailureError;
-            Transition(EGamePlatformArenaMatchPhase::Failed, FailureError);
-            UE_LOG(
-                LogTemp,
-                Error,
-                TEXT("Arena spawn failed for player %s: %s"),
-                *Slot.PlayerId,
-                *SpawnError);
+            AbortMatchStart(EGamePlatformArenaStartAbortReason::SpawnFailed, SpawnError);
+            return;
+        }
+        if (GetMatchPhase() != EGamePlatformArenaMatchPhase::Countdown) { return; }
+        if (!IsGameplayLifecycleAdapter(Lifecycle, BindingId))
+        {
+            AbortMatchStart(EGamePlatformArenaStartAbortReason::StartupFailed);
             return;
         }
     }
 
+    FString Error;
     if (!Transition(
             EGamePlatformArenaMatchPhase::InProgress,
             Error,
             ActiveModeSpec.TimeLimitSeconds))
     {
-        UE_LOG(
-            LogTemp,
-            Error,
-            TEXT("Arena could not enter InProgress after successful character initialization: %s"),
-            *Error);
+        AbortMatchStart(EGamePlatformArenaStartAbortReason::StartupFailed, Error);
         return;
     }
 
     for (const auto& Slot : CurrentAssignment.Roster)
     {
-        if (!GameplayLifecycleAdapter->SetPlayerGameplayActive(Slot.PlayerId, true, Error))
-        { Transition(EGamePlatformArenaMatchPhase::Failed, Error); return; }
+        if (GetMatchPhase() != EGamePlatformArenaMatchPhase::InProgress) { return; }
+        if (!IsGameplayLifecycleAdapter(Lifecycle, BindingId) || !Lifecycle->SetPlayerGameplayActive(Slot.PlayerId, true, Error))
+        {
+            AbortMatchStart(EGamePlatformArenaStartAbortReason::StartupFailed, Error);
+            return;
+        }
     }
+    if (GetMatchPhase() != EGamePlatformArenaMatchPhase::InProgress) { return; }
     MatchStartedAtUtc = FDateTime::UtcNow();
     GetWorldTimerManager().SetTimer(
         MatchDeadlineTimer,
@@ -473,7 +524,7 @@ void AGamePlatformArenaGameMode::HandleMatchTimeLimit()
 bool AGamePlatformArenaGameMode::HandleTrustedEvent(const FGamePlatformArenaTrustedEvent& Event, FString& OutError)
 {
     if (!HasAuthority()) { OutError = TEXT("竞技事件只能由服务器处理。"); return false; }
-    if (PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("比赛未处于InProgress。"); return false; }
+    if (bStartingMatch || PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("比赛尚未正式开始。"); return false; }
     if (Event.EventId.IsEmpty()) { OutError = TEXT("可信事件必须包含EventId用于幂等。"); return false; }
     if (Event.EventId.Len() > MaxTrustedEventIdLength) { OutError = TEXT("可信事件EventId长度超过平台安全上限。"); return false; }
     if (ProcessedEventIds.Contains(Event.EventId)) { OutError.Reset(); return true; }
@@ -596,8 +647,16 @@ FName AGamePlatformArenaGameMode::GetOpponentTeam(FName TeamId) const
 bool AGamePlatformArenaGameMode::RequestForfeit(AGamePlatformArenaPlayerState* PlayerState, FString& OutError)
 {
     if (!HasAuthority() || PlayerState == nullptr) { OutError = TEXT("无效弃权请求。"); return false; }
-    if (PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("只有进行中的比赛可以弃权。"); return false; }
     if (!IsCurrentConnectedPlayer(PlayerState)) { OutError = TEXT("非Roster玩家不能弃权。"); return false; }
+    const auto Phase = PhaseMachine.GetPhase();
+    // 结算和弃权请求交错时保留退出意图，已冻结的胜负和统计不再写入。
+    if (Phase == EGamePlatformArenaMatchPhase::Ending || Phase == EGamePlatformArenaMatchPhase::ResultPending ||
+        Phase == EGamePlatformArenaMatchPhase::Completed)
+    {
+        OutError.Reset();
+        return true;
+    }
+    if (bStartingMatch || Phase != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("只有进行中的比赛可以弃权。"); return false; }
     PlayerState->AuthoritySetForfeitState(EGamePlatformArenaForfeitState::Accepted);
     if(IsSingleRoundElimination())
     {
@@ -618,6 +677,14 @@ void AGamePlatformArenaGameMode::MarkPlayerDisconnected(const FString& PlayerId)
     AGamePlatformArenaPlayerState* State = StatePtr->Get();
     // 重复Logout/过期事件保持幂等，不延长已经开始的重连宽限。
     if (State->ConnectionState != EGamePlatformArenaConnectionState::Connected) { return; }
+    const auto Phase = GetMatchPhase();
+    if (Phase == EGamePlatformArenaMatchPhase::Countdown || (bStartingMatch && Phase == EGamePlatformArenaMatchPhase::InProgress))
+    {
+        State->AuthoritySetConnectionState(EGamePlatformArenaConnectionState::Disconnected);
+        AbortMatchStart(EGamePlatformArenaStartAbortReason::PlayerDisconnected);
+        return;
+    }
+    if (Phase == EGamePlatformArenaMatchPhase::Aborted || Phase == EGamePlatformArenaMatchPhase::Failed) { return; }
     FPlayerRecoveryState& Recovery = RecoveryStatesById.FindOrAdd(PlayerId);
     Recovery.HeroDefinitionId = State->HeroDefinitionId;
     Recovery.bReady = State->bReady;
@@ -663,7 +730,7 @@ bool AGamePlatformArenaGameMode::TryReconnectPlayer(
     if (Handle == nullptr || !GetWorldTimerManager().IsTimerActive(*Handle)) { OutError = TEXT("重连宽限期已结束。"); return false; }
 
     const TWeakObjectPtr<AGamePlatformArenaPlayerState> PreviousState = PlayerStatesById.FindRef(PlayerId);
-    NewPlayerState->AuthorityApplyRosterIdentity(PlayerId, Slot->CharacterId, Slot->TeamId);
+    NewPlayerState->AuthorityApplyRosterIdentity(PlayerId, Slot->CharacterId, Slot->TeamId, Slot->CharacterName);
     if (const FPlayerRecoveryState* Recovery = RecoveryStatesById.Find(PlayerId))
     {
         NewPlayerState->AuthorityRestoreCompetitiveState(
@@ -702,6 +769,8 @@ bool AGamePlatformArenaGameMode::TryReconnectPlayer(
     GetWorldTimerManager().ClearTimer(*Handle); ReconnectTimers.Remove(PlayerId);
     RecoveryStatesById.Remove(PlayerId);
     OutError.Reset();
+    BeginReadyCheckIfReady();
+    BeginCountdownIfReady();
     return true;
 }
 
@@ -777,6 +846,7 @@ void AGamePlatformArenaGameMode::BuildPendingResult(FName WinningTeamId, EGamePl
                 PlayerResult.PlayerId = Pair.Key;
                 PlayerResult.TeamId = Slot->TeamId;
                 PlayerResult.CharacterId = Slot->CharacterId;
+                PlayerResult.PlayerName = Slot->CharacterName.TrimStartAndEnd();
                 PlayerResult.Kills = Recovery->Kills;
                 PlayerResult.Deaths = Recovery->Deaths;
                 PlayerResult.Assists = Recovery->Assists;
@@ -789,6 +859,7 @@ void AGamePlatformArenaGameMode::BuildPendingResult(FName WinningTeamId, EGamePl
             PlayerResult.PlayerId = State->PlayerIdPublic;
             PlayerResult.TeamId = State->TeamId;
             PlayerResult.CharacterId = State->CharacterId;
+            PlayerResult.PlayerName = State->GetPlayerName();
             PlayerResult.Kills = State->Kills;
             PlayerResult.Deaths = State->Deaths;
             PlayerResult.Assists = State->Assists;
@@ -807,7 +878,7 @@ bool AGamePlatformArenaGameMode::EndMatch(FName WinningTeamId, EGamePlatformAren
         OutError = TEXT("比赛已处于Ending/ResultPending/Completed，重复结束请求被忽略。");
         return false;
     }
-    if (PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("只有InProgress比赛可正常结束。"); return false; }
+    if (bStartingMatch || PhaseMachine.GetPhase() != EGamePlatformArenaMatchPhase::InProgress) { OutError = TEXT("只有正式开局的比赛可正常结束。"); return false; }
     bEndStarted = true;
     FCoreDelegates::OnEndFrame.Remove(EliminationResolutionHandle);EliminationResolutionHandle.Reset();
     if (!Transition(EGamePlatformArenaMatchPhase::Ending, OutError)) { bEndStarted = false; return false; }
@@ -819,6 +890,15 @@ bool AGamePlatformArenaGameMode::EndMatch(FName WinningTeamId, EGamePlatformAren
         Summary.WinningTeamId = WinningTeamId;
         Summary.EndReason = Reason;
         Summary.EndRevision = PendingResult.EndRevision;
+        Summary.Teams = PendingResult.Teams;
+        for (FGamePlatformArenaTeamResult& Team : Summary.Teams)
+        {
+            for (FGamePlatformArenaPlayerResult& Player : Team.Players)
+            {
+                Player.PlayerId.Reset();
+                Player.CharacterId.Reset();
+            }
+        }
         ArenaState->AuthoritySetResult(Summary);
     }
     if (!Transition(EGamePlatformArenaMatchPhase::ResultPending, OutError))

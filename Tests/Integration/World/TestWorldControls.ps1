@@ -75,9 +75,15 @@ $SelectionStart = $Controller.IndexOf('void ADivineBeastsWorldPlayerController::
 $SelectionEnd = $Controller.IndexOf('void ADivineBeastsWorldPlayerController::HandleSelectedTargetEndPlay(', $SelectionStart)
 $Selection = $Controller.Substring($SelectionStart, $SelectionEnd - $SelectionStart)
 $RequestIndex = $Selection.IndexOf('Combat->RequestProjectileTarget(Target)')
-$DeduplicateIndex = $Selection.IndexOf('if (SelectedWorldTarget.Get() == Target) return;')
+$DeduplicateIndex = $Selection.IndexOf('if (SelectedWorldTarget.Get() == Target)')
 if ($RequestIndex -lt 0 -or $DeduplicateIndex -lt 0 -or $RequestIndex -gt $DeduplicateIndex) {
     throw '同Actor显式重选必须重新提交服务器目标意图，不能被UI指针去重拦截。'
+}
+# 当前合同允许同Actor显式重选恢复死亡/重生后已清理的显示，检查事件分支而非过期的单行return写法。
+$PreviousTargetIndex = $Selection.IndexOf('if (AActor* Previous', $DeduplicateIndex)
+if ($PreviousTargetIndex -le $DeduplicateIndex -or
+    -not $Selection.Substring($DeduplicateIndex, $PreviousTargetIndex - $DeduplicateIndex).Contains('OnWorldTargetChanged.Broadcast()')) {
+    throw '同Actor显式重选必须保留目标变化通知，不能让旧显示去重吞掉恢复事件。'
 }
 if ($PolicyExecutable) {
     if (-not (Test-Path -LiteralPath $PolicyExecutable -PathType Leaf)) { throw 'Policy executable does not exist.' }

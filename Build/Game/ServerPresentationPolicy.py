@@ -134,10 +134,12 @@ def _virtual_package(filename: str) -> str | None:
         if part == "content":
             if index == 0 or parts[index - 1] in ("game", "divinebeastsarena"):
                 return "/game/" + "/".join(parts[index + 1:])
+            if parts[index - 1] == 'engine':
+                return '/engine/' + '/'.join(parts[index + 1:])
             if "plugins" in parts[:index]:
                 return "/" + parts[index - 1] + "/" + "/".join(parts[index + 1:])
     # 直接输入的插件长包名，例如/DBAGameplay/Definitions/A.uasset。
-    if parts[0].startswith(("dba", "gameplatform")):
+    if parts[0] == 'engine' or parts[0].startswith(("dba", "gameplatform")):
         return "/" + "/".join(parts)
     return None
 
@@ -207,9 +209,11 @@ class ServerPresentationPolicy:
         """构造本次真源快照及固定Stage匹配表；不在逐文件审计时重复生成目录规则。"""
         self.raw = raw
         rules = raw["CookDirectories"] + raw["StageOnlyDirectories"]
+        self._editor_tools = {f"Engine/Plugins/{name}" for name in raw["StageOnlyEnginePlugins"]}
         self._stage_roots = tuple(sorted(
             {path[1:].casefold() for rule in rules for path in _package_variants(rule["PackagePath"])}
-            | {path[5:].casefold() for rule in rules for path in _source_variants(rule["SourceDirectory"])}))
+            | {path[5:].casefold() for rule in rules for path in _source_variants(rule["SourceDirectory"])}
+            | {path.casefold() for path in self._editor_tools}))
 
     def resolve_profile(self, custom_config: str) -> str:
         """只接受已登记实际Cook配置，FoundationStandalone仅映射服务器兼容调用。"""
@@ -270,6 +274,7 @@ class ServerPresentationPolicy:
         """从同一真源生成专服收据的Pak规则；只保留已确认的精确插件/内容目录。"""
         directories = {source[5:] for group in ("CookDirectories", "StageOnlyDirectories")
                        for rule in self.raw[group] for source in _source_variants(rule["SourceDirectory"])}
+        directories.update(self._editor_tools)
         lines = ["; 真源: Build/Game/ServerPresentationExclusions.json；精确目录边界，无英雄通配符。",
                  "; Common/十二英雄当前均为表现；权威定义及必要权威资源归DBAGameplay。",
                  PAK_SECTION, "bExcludeFromPaks=true", "bOverrideChunkManifest=true",
@@ -346,7 +351,7 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise PolicyError(f"无法读取规则真源: {path}: {exc}") from exc
     _closed_fields(raw, {"$schema", "SchemaVersion", "Description", "Profiles", "CookConfigProfiles",
-                         "CookDirectories", "StageOnlyDirectories"}, "规则")
+                         "CookDirectories", "StageOnlyDirectories", "StageOnlyEnginePlugins"}, "规则")
     if type(raw["SchemaVersion"]) is not int or raw["SchemaVersion"] != 1:
         raise PolicyError("只支持SchemaVersion=1")
     if raw["$schema"] != "./ServerPresentationExclusions.schema.json" or not isinstance(raw["Description"], str) or not raw["Description"].strip():
@@ -359,6 +364,10 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
     for custom, profile in raw["CookConfigProfiles"].items():
         if profile != (custom if custom in PROFILES else "DedicatedServer"):
             raise PolicyError(f"不允许重定向已有Cook profile: {custom}")
+    tools = raw["StageOnlyEnginePlugins"]
+    if (not isinstance(tools, list) or not all(isinstance(name, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name) for name in tools)
+            or len({name.casefold() for name in tools}) != len(tools)):
+        raise PolicyError("编辑器工具只接受精确且唯一的引擎插件身份")
     for group in ("CookDirectories", "StageOnlyDirectories"):
         rules = raw[group]
         if not isinstance(rules, list) or not rules:
@@ -375,12 +384,19 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
             if package.casefold() in seen:
                 raise PolicyError(f"重复排除目录: {package}")
             seen.add(package.casefold())
-            # 世界包同时拥有地图/权威水域与纯视觉预设。仅准许本次实际Cook核验的
-            # 水材质、三项视觉蓝图和狼模型/动画所在叶子；地图与权威AI定义仍禁止剥离。
+            # 世界包同时拥有地图/权威水域与纯视觉预设。仅准许明确登记的视觉叶子；
+            # Ferns由独立装饰类剥离，真实Cook结果仍须另验，地图与权威AI定义禁止剥离。
             is_reviewed_world_visual_leaf = package.casefold() in (
+                "/dbaworldpack_village/vfx/activities/arena",  # 客户端门内旋涡，不含交互实体
+                "/dbaworldpack_village/definitions/presentation/activities",  # Attached纯表现定义
                 "/dbaworldpack_village/water/materials",
+                "/dbaworldpack_village/water/textures",  # 只供水下材质采样，CPU水域不依赖纹理
                 "/dbaworldpack_village/water/blueprints",
                 "/dbaworldpack_village/creatures/wolf",
+                "/dbaworldpack_village/creatures/vampirealusth",
+                "/dbaworldpack_village/pcg/ferns",
+                "/dbaworldpack_village/development/wind",  # 独立植物风审核夹具，不是正式地图/权威定义
+                "/dbaworldpack_village/development/terrain",  # 12项世界绑定审核材质；正式地形/权威地图不在此叶子
             )
             if package in ("/Game", "/Engine", "/Game/Development") or (not is_reviewed_world_visual_leaf and any(
                     _under(package.casefold(), root.casefold()) or _under(root.casefold(), package.casefold())
@@ -424,8 +440,16 @@ def load_policy(path: Path, workspace: Path = WORKSPACE) -> ServerPresentationPo
     return ServerPresentationPolicy(raw)
 
 
-def read_iostore_csv(path: Path) -> list[ArtifactEntry]:
+def package_from_artifact(filename: str) -> str | None:
+    """将已验证的项目/插件容器文件名还原为小写长包名，供其它Build门禁复用。"""
+    return _virtual_package(filename)
+
+
+def read_iostore_csv(path: Path, target: str = 'Server') -> list[ArtifactEntry]:
     """读取UE5.8 ListContainer CSV；拒绝空/截断/错误平台/无名资源，不能只相信工具退出0。"""
+    if target not in ('Client','Server'):
+        raise PolicyError('IoStore解析目标必须为Client或Server')
+    expected_platform='Windows'+target
     try:
         with path.open("r", encoding="utf-8-sig", newline="") as handle:
             rows = list(csv.reader(handle, skipinitialspace=True, strict=True))
@@ -447,13 +471,14 @@ def read_iostore_csv(path: Path) -> list[ArtifactEntry]:
             raise PolicyError(f"IoStore CSV第{index}行尺寸无效: {path}")
         if not chunk:
             raise PolicyError(f"IoStore CSV第{index}行缺少ChunkType")
-        if (filename,chunk) in (("<ContainerHeader>","ContainerHeader"),("<ScriptObjects>","ScriptObjects")):
+        native_client_shader = target == 'Client' and (filename,chunk) == ('<ShaderCode>','ShaderCode')
+        if (filename,chunk) in (("<ContainerHeader>","ContainerHeader"),("<ScriptObjects>","ScriptObjects")) or native_client_shader:
             # UE5.8真实ListContainer将容器头写成精确占位标记，并非文件路径。
             # global.utoc的ScriptObjects没有目标平台，真实CSV为Unknown；仅精确global容器例外。
             # 其余元数据仍须专服目标；不允许实际资产借Unknown或改块类型绕过路径审计。
             global_script_objects = chunk == "ScriptObjects" and platform == "Unknown" and row.get("ContainerName") == "global"
-            if platform != "WindowsServer" and not global_script_objects:
-                raise PolicyError(f"IoStore容器头目标不是WindowsServer: {platform}")
+            if platform != expected_platform and not global_script_objects:
+                raise PolicyError(f"IoStore容器头目标不是{expected_platform}: {platform}")
             filename = ""
         elif not filename or filename == "-":
             if chunk not in METADATA_CHUNKS:
@@ -461,8 +486,8 @@ def read_iostore_csv(path: Path) -> list[ArtifactEntry]:
             filename = ""  # 明确元数据不能计为资产存在，也不解释成任意文件名。
         else:
             _evidence_path(filename)
-            if filename.casefold().endswith(ASSET_EXTENSIONS) and platform != "WindowsServer":
-                raise PolicyError(f"IoStore资源目标不是WindowsServer: {platform}")
+            if filename.casefold().endswith(ASSET_EXTENSIONS) and platform != expected_platform:
+                raise PolicyError(f"IoStore资源目标不是{expected_platform}: {platform}")
         entries.append(ArtifactEntry(filename, int(row["Size"]), chunk, platform))
     return entries
 

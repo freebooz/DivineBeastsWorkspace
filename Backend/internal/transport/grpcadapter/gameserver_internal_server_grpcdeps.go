@@ -4,6 +4,7 @@ package grpcadapter
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"divinebeasts/backend/internal/app/gameservercontrol"
@@ -62,6 +63,9 @@ func (s *GameServerControlInternalServer) IssuePlayerTransfer(ctx context.Contex
 		DestinationWorldID: req.GetDestinationWorldId(), DestinationExperienceID: req.GetDestinationExperienceId(), MatchID: req.GetMatchId(), TTL: time.Duration(req.GetTtlMilliseconds()) * time.Millisecond,
 	})
 	if err != nil {
+		if errors.Is(err, gameservercontrol.ErrWorldMatchMigrationRequired) {
+			return &gameservercontrolv1.IssuePlayerTransferResponse{ErrorCode: "WORLD_MATCH_MIGRATION_REQUIRED"}, nil
+		}
 		return &gameservercontrolv1.IssuePlayerTransferResponse{Issued: false, ErrorCode: "TRANSFER_TICKET_ISSUE_FAILED"}, nil
 	}
 	return &gameservercontrolv1.IssuePlayerTransferResponse{

@@ -48,7 +48,7 @@ Describe '神兽联盟项目插件按DBA边界收敛' {
             DBAArena = @('DivineBeastsArenaRuntime', 'DivineBeastsArenaClient', 'DivineBeastsArenaServer')
             # DivineBeastsInputClient 是项目输入语义与平台输入/GAS之间的客户端组合边界，
             # 必须作为 DBAClient 的独立 ClientOnly 模块纳入正式身份清单。
-            DBAClient = @('DivineBeastsApplicationFlowClient', 'DivineBeastsInputClient', 'DivineBeastsPresentationClient', 'DivineBeastsPresentationRuntime', 'DivineBeastsUIClient')
+            DBAClient = @('DivineBeastsApplicationFlowClient', 'DivineBeastsDemoClient', 'DivineBeastsInputClient', 'DivineBeastsPresentationClient', 'DivineBeastsPresentationRuntime', 'DivineBeastsUIClient')
             # 主线真实技能授权模块归既有DBAGameplay，保持五插件身份；它不是新竞技或内容播放器。
             DBAGameplay = @('DivineBeastsAbilitiesRuntime', 'DivineBeastsCharactersRuntime', 'DivineBeastsRuntime')
             DBAServer = @('DBAServer')
@@ -64,6 +64,12 @@ Describe '神兽联盟项目插件按DBA边界收敛' {
             $actual = @($descriptor.Modules | ForEach-Object { $_.Name } | Sort-Object)
             $expected = @($expectedModules[$pluginName] | Sort-Object)
             ($actual -join ',') | Should Be ($expected -join ',')
+            if ($pluginName -eq 'DBAClient') {
+                $demo = $descriptor.Modules | Where-Object Name -eq 'DivineBeastsDemoClient'
+                $demo.Type | Should Be 'ClientOnly'
+                (($demo.TargetAllowList | Sort-Object) -join ',') | Should Be 'Client,Editor,Game'
+                (($demo.TargetConfigurationAllowList | Sort-Object) -join ',') | Should Be 'Debug,DebugGame,Development'
+            }
         }
     }
 

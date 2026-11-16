@@ -50,13 +50,19 @@ void AGamePlatformArenaPlayerController::ServerRequestForfeit_Implementation()
     FString Error;
     if (Mode == nullptr || State == nullptr || !Mode->RequestForfeit(State, Error))
     {
-        ClientArenaRequestRejected(Error.IsEmpty() ? TEXT("弃权请求失败。") : Error);
+        ClientArenaForfeitRejected(Error.IsEmpty() ? TEXT("弃权请求失败。") : Error);
     }
 }
 
 void AGamePlatformArenaPlayerController::ClientArenaRequestRejected_Implementation(const FString& Reason)
 {
     UE_LOG(LogTemp, Warning, TEXT("Arena request rejected: %s"), *Reason);
+}
+
+void AGamePlatformArenaPlayerController::ClientArenaForfeitRejected_Implementation(const FString& Reason)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Arena forfeit rejected: %s"), *Reason);
+    OnArenaForfeitRejected.Broadcast();
 }
 
 void AGamePlatformArenaPlayerController::PawnLeavingGame()

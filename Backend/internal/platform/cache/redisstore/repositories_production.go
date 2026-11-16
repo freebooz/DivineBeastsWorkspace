@@ -4,6 +4,8 @@ package redisstore
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +24,7 @@ const (
 	sessionKeyPrefix               = "identity:session:"
 	accessKeyPrefix                = "identity:access:"
 	refreshKeyPrefix               = "identity:refresh:"
+	revokedSessionKeyPrefix        = "identity:revoked:"
 	partyKeyPrefix                 = "party:"
 	matchRequestKeyPrefix          = "matchmaking:request:"
 	transferReplayKeyPrefix        = "transfer:consumed:"
@@ -41,11 +44,12 @@ func (r *SessionRepository) Save(ctx context.Context, session identity.Session) 
 	if session.SessionID == "" || session.AccessToken == "" || session.RefreshToken == "" {
 		return errors.New("Identity Session关键字段不能为空")
 	}
+	// 游客兼容仓储也只保存摘要；刷新历史索引保留用于重放撤销与幂等退出。
+	session.AccessToken, session.RefreshToken = sessionTokenDigest(session.AccessToken), sessionTokenDigest(session.RefreshToken)
 	payload, err := json.Marshal(session)
 	if err != nil {
 		return err
 	}
-	now := time.Now().UTC()
 	refreshTTL := time.Until(session.RefreshExpiresAt)
 	accessTTL := time.Until(session.AccessExpiresAt)
 	if refreshTTL <= 0 || accessTTL <= 0 {
@@ -55,24 +59,28 @@ func (r *SessionRepository) Save(ctx context.Context, session identity.Session) 
 	if oldPayload, err := r.client.inner.Get(ctx, sessionKeyPrefix+session.SessionID).Bytes(); err == nil {
 		var old identity.Session
 		if json.Unmarshal(oldPayload, &old) == nil {
-			_ = r.client.inner.Del(ctx, accessKeyPrefix+old.AccessToken, refreshKeyPrefix+old.RefreshToken).Err()
+			_ = r.client.inner.Del(ctx, accessKeyPrefix+old.AccessToken).Err()
 		}
 	}
 	pipe := r.client.inner.TxPipeline()
-	pipe.Set(ctx, sessionKeyPrefix+session.SessionID, payload, refreshTTL)
+	// 同SQL/内存仓储保留历史元数据，截止由唯一领域规则判断；不因TTL丢失退出幂等性。
+	pipe.Set(ctx, sessionKeyPrefix+session.SessionID, payload, 0)
 	pipe.Set(ctx, accessKeyPrefix+session.AccessToken, session.SessionID, accessTTL)
-	pipe.Set(ctx, refreshKeyPrefix+session.RefreshToken, session.SessionID, refreshTTL)
+	pipe.Set(ctx, refreshKeyPrefix+session.RefreshToken, session.SessionID, 0)
 	_, err = pipe.Exec(ctx)
-	_ = now
 	return err
 }
 
 func (r *SessionRepository) GetByRefreshToken(ctx context.Context, refreshToken string) (identity.Session, error) {
-	return r.byIndex(ctx, refreshKeyPrefix+refreshToken)
+	s, err := r.byIndex(ctx, refreshKeyPrefix+sessionTokenDigest(refreshToken))
+	if err == nil && s.RefreshToken != sessionTokenDigest(refreshToken) {
+		return identity.Session{}, identity.ErrInvalidToken
+	}
+	return s, err
 }
 
 func (r *SessionRepository) GetByAccessToken(ctx context.Context, accessToken string) (identity.Session, error) {
-	return r.byIndex(ctx, accessKeyPrefix+accessToken)
+	return r.byIndex(ctx, accessKeyPrefix+sessionTokenDigest(accessToken))
 }
 
 func (r *SessionRepository) byIndex(ctx context.Context, indexKey string) (identity.Session, error) {
@@ -82,6 +90,11 @@ func (r *SessionRepository) byIndex(ctx context.Context, indexKey string) (ident
 	}
 	if err != nil {
 		return identity.Session{}, err
+	}
+	if revoked, err := r.client.inner.Exists(ctx, revokedSessionKeyPrefix+sessionID).Result(); err != nil {
+		return identity.Session{}, err
+	} else if revoked != 0 {
+		return identity.Session{}, identity.ErrInvalidToken
 	}
 	payload, err := r.client.inner.Get(ctx, sessionKeyPrefix+sessionID).Bytes()
 	if errors.Is(err, redis.Nil) {
@@ -109,7 +122,107 @@ func (r *SessionRepository) Revoke(ctx context.Context, sessionID string) error 
 	if err := json.Unmarshal(payload, &session); err != nil {
 		return err
 	}
-	return r.client.inner.Del(ctx, sessionKeyPrefix+sessionID, accessKeyPrefix+session.AccessToken, refreshKeyPrefix+session.RefreshToken).Err()
+	pipe := r.client.inner.TxPipeline()
+	pipe.Set(ctx, revokedSessionKeyPrefix+sessionID, "1", 0)
+	pipe.Del(ctx, accessKeyPrefix+session.AccessToken)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+func sessionTokenDigest(token string) string {
+	digest := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(digest[:])
+}
+
+// Rotate（Redis原子轮换）只适配WATCH/MULTI事务；截止和重放业务判断来自唯一领域规则。
+func (r *SessionRepository) Rotate(ctx context.Context, digest string, n identity.TokenRotation) (identity.StoredSession, error) {
+	started := time.Now()
+	id, err := r.client.inner.Get(ctx, refreshKeyPrefix+digest).Result()
+	if errors.Is(err, redis.Nil) {
+		return identity.StoredSession{}, identity.ErrInvalidToken
+	}
+	if err != nil {
+		return identity.StoredSession{}, err
+	}
+	if err := ctx.Err(); err != nil {
+		return identity.StoredSession{}, err
+	}
+	key, revokedKey := sessionKeyPrefix+id, revokedSessionKeyPrefix+id
+	for {
+		var fresh identity.StoredSession
+		var domainErr error
+		err = r.client.inner.Watch(ctx, func(tx *redis.Tx) error {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if revoked, e := tx.Exists(ctx, revokedKey).Result(); e != nil {
+				return e
+			} else if revoked != 0 {
+				return identity.ErrInvalidToken
+			}
+			payload, e := tx.Get(ctx, key).Bytes()
+			if errors.Is(e, redis.Nil) {
+				return identity.ErrInvalidToken
+			}
+			if e != nil {
+				return e
+			}
+			var previous identity.Session
+			if e = json.Unmarshal(payload, &previous); e != nil {
+				return e
+			}
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			rotation := n
+			rotation.Now = rotation.Now.Add(time.Since(started))
+			fresh, domainErr = rotation.Apply(identity.StoredSession{Session: previous, AccessDigest: previous.AccessToken, RefreshDigest: previous.RefreshToken}, digest)
+			_, e = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+				if err := ctx.Err(); err != nil {
+					return err
+				}
+				pipe.Del(ctx, accessKeyPrefix+previous.AccessToken)
+				if domainErr != nil {
+					pipe.Set(ctx, revokedKey, "1", 0)
+					return nil
+				}
+				stored := fresh.Session
+				stored.AccessToken, stored.RefreshToken = fresh.AccessDigest, fresh.RefreshDigest
+				encoded, marshalErr := json.Marshal(stored)
+				if marshalErr != nil {
+					return marshalErr
+				}
+				pipe.Set(ctx, key, encoded, 0)
+				pipe.Set(ctx, accessKeyPrefix+fresh.AccessDigest, id, 0)
+				pipe.PExpireAt(ctx, accessKeyPrefix+fresh.AccessDigest, fresh.AccessExpiresAt)
+				pipe.Set(ctx, refreshKeyPrefix+fresh.RefreshDigest, id, 0)
+				return nil
+			})
+			return e
+		}, key, revokedKey)
+		if errors.Is(err, redis.TxFailedErr) {
+			continue
+		}
+		if err != nil {
+			return identity.StoredSession{}, err
+		}
+		if domainErr != nil {
+			return identity.StoredSession{}, domainErr
+		}
+		return fresh, nil
+	}
+}
+
+// Logout（历史凭据幂等退出）保留摘要归属，重复请求仍可定位原会话。
+func (r *SessionRepository) Logout(ctx context.Context, digest string) error {
+	id, err := r.client.inner.Get(ctx, refreshKeyPrefix+digest).Result()
+	if errors.Is(err, redis.Nil) {
+		return identity.ErrInvalidToken
+	}
+	if err != nil {
+		return err
+	}
+	return r.client.inner.Set(ctx, revokedSessionKeyPrefix+id, "1", 0).Err()
 }
 
 // PartyRepository（Redis Party仓储）实现matchapi.PartyRepository。

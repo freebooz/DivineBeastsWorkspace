@@ -10,7 +10,7 @@ class UAbilitySystemComponent;
 class USceneComponent;
 class UGamePlatformWorldUIService;
 class UGamePlatformWorldWidgetBase;
-class ADivineBeastsWorldPlayerController;
+class UDivineBeastsPlayerControlsComponent;
 class UDivineBeastsCharacterComponent;
 class AGamePlatformPlayerStateBase;
 class UDecalComponent;
@@ -27,6 +27,7 @@ struct FDivineBeastsWorldHealthBarBinding
     TWeakObjectPtr<UDivineBeastsCharacterComponent> Identity;
     TWeakObjectPtr<AGamePlatformPlayerStateBase> PlayerState;
     FDelegateHandle IdentityHandle, PlayerStateHandle; // 身份就绪/公开准入变化驱动关系与化身失效检查。
+    FDelegateHandle PawnPlayerStateHandle, PlayerNameHandle; // 迟到State/名称复制及换绑通知，移除时成对解绑。
     TWeakObjectPtr<UGamePlatformCombatComponent> Combat;
     FDelegateHandle CombatObservationHandle; // 可靠复制死亡/化身通知，不能依赖可丢包VFX反馈。
     FGamePlatformWorldUIRequest Request;
@@ -53,14 +54,17 @@ public:
 private:
     // 隔离自动化只注入观察作用域，验证真实Actor通知和换Pawn；不伪装屏幕注册或后端准入。
     friend class FDivineBeastsWorldHealthBarLifecycleTest;
+    friend class FDivineBeastsPlayerNameplateEventsTest;
+    friend class FDivineBeastsPlayerNameplateBudgetTest;
     friend class FDivineBeastsWorldTargetSelectionTest;
     void ObserveActor(AActor* Actor, bool bSelectionOnly = false);
     void ApplyHealth(AActor* Actor, float Health, float Maximum);
     void ReadPlayerHealth(AActor* Actor);
-    void Publish(AActor* Actor);
+    /** 位置通知只移动已注册控件；首次注册和内容事件继续提交完整快照。 */
+    void Publish(AActor* Actor, bool bLocationOnly = false);
     void RemoveActor(AActor* Actor);
     /** 本地控制器是唯一选择源；先订阅再读一次当前目标，重复同来源不会重复订阅。 */
-    void BindSelectionController(ADivineBeastsWorldPlayerController* Controller);
+    void BindSelectionController(UDivineBeastsPlayerControlsComponent* Controller);
     void RefreshSelectedTarget();
     /** 只更改本Presenter显示缓存；死亡撤销不能清除Gameplay保留的失效治疗意图。 */
     void SetSelectedTarget(AActor* Actor);
@@ -78,7 +82,7 @@ private:
     /** 世界内换Pawn时移除新自己，重新观察仍存在的旧Pawn；不再次扫描世界。 */
     TWeakObjectPtr<AActor> ExcludedLocalPawn;
     TWeakObjectPtr<UGamePlatformWorldUIService> Service;
-    TWeakObjectPtr<ADivineBeastsWorldPlayerController> SelectionController;
+    TWeakObjectPtr<UDivineBeastsPlayerControlsComponent> SelectionController;
     TWeakObjectPtr<AActor> SelectedTarget;
     int32 SelectedAvatarGeneration = 0; // 旧Actor同地址的新化身不能继承旧UI选择。
     uint64 SelectionRevision = 0; // 同一世界同步选择回调重入时，后继选择拥有显示，旧栈不得恢复。

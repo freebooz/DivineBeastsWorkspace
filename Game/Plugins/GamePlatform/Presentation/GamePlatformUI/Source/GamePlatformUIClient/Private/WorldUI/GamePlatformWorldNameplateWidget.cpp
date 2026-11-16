@@ -27,7 +27,10 @@ void UGamePlatformWorldNameplateWidget::ApplyWorldUIRequest(const FGamePlatformW
     }
     if (Name)
     {
-        Name->SetText(InRequest.PrimaryText);
+        // 项目可选单行提示：名称本身保留非颜色选中符号，不再让第二行标记遮住远处名称板。
+        Name->SetText(InRequest.bSelected && InRequest.bCompactSelection
+            ? FText::Format(NSLOCTEXT("GamePlatformWorldUI", "CompactSelectedName", "▶ {0}"), InRequest.PrimaryText)
+            : InRequest.PrimaryText);
         Name->SetColorAndOpacity(InRequest.bSelected ? FSlateColor(InRequest.SelectionTint) : DefaultNameColor);
     }
     if (auto* Value = Cast<UTextBlock>(GetWidgetFromName(TEXT("ValueText"))))
@@ -35,13 +38,16 @@ void UGamePlatformWorldNameplateWidget::ApplyWorldUIRequest(const FGamePlatformW
     if (auto* Outline = Cast<UImage>(GetWidgetFromName(TEXT("SelectionOutline"))))
     {
         Outline->SetColorAndOpacity(InRequest.SelectionTint);
-        Outline->SetVisibility(InRequest.bSelected ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        // 紧凑模式用于怪物血条：保留脚下选中圈及名称箭头，不绘制血条边框。
+        Outline->SetVisibility(InRequest.bSelected && !InRequest.bCompactSelection
+            ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
     }
     if (auto* Marker = Cast<UTextBlock>(GetWidgetFromName(TEXT("SelectionMarker"))))
     {
         // 装饰文案可由项目本地化；未提供时仍有箭头形状，保证状态不只依赖红/绿识别。
         Marker->SetText(InRequest.SelectionText.IsEmpty() ? FText::FromString(TEXT("▶  ◀")) : InRequest.SelectionText);
         Marker->SetColorAndOpacity(InRequest.SelectionTint);
-        Marker->SetVisibility(InRequest.bSelected ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        Marker->SetVisibility(InRequest.bSelected && !InRequest.bCompactSelection
+            ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
     }
 }

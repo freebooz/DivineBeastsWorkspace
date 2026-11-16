@@ -128,6 +128,15 @@ FGamePlatformResult FGamePlatformSaveStorage::WriteAtomically(
     const FString& PrimaryPath,
     const TArray<uint8>& Encoded)
 {
+    // 上游EncodeRecord虽已限额，但存储适配是独立边界：必须在创建目录、临时文件
+    // 或覆盖现有主档/备份之前再次验证长度，避免未来调用方绕过策略而耗尽磁盘。
+    if (Encoded.Num() > FGamePlatformSavePolicy::GetMaxEncodedBytes())
+    {
+        return FGamePlatformResult::Failure(
+            TEXT("SaveFileTooLarge"),
+            TEXT("编码后存档超过单文件写入预算，未创建目录或修改任何已有文件。"));
+    }
+
     IPlatformFile& PlatformFile =
         FPlatformFileManager::Get().GetPlatformFile();
 
@@ -155,6 +164,9 @@ FGamePlatformResult FGamePlatformSaveStorage::WriteAtomically(
 
         if (!PlatformFile.CopyFile(*BackupTempPath, *PrimaryPath))
         {
+            // CopyFile失败也可能已经留下部分写入的临时备份。仅清理本次独立路径，
+            // 主档与已有.bak保持不变，避免连续失败积累孤儿备份占用磁盘。
+            PlatformFile.DeleteFile(*BackupTempPath);
             PlatformFile.DeleteFile(*TempPath);
             return FGamePlatformResult::Failure(
                 TEXT("SaveBackupCopyFailed"),

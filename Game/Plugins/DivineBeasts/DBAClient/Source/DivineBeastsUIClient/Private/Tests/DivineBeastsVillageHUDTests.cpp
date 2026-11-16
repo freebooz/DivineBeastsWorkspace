@@ -85,6 +85,18 @@ bool FDivineBeastsCastBarEventBindingTest::RunTest(const FString&)
     // 本用例仅验证同一事实终态通道，不在同一引擎帧强推TimerManager伪造到期。
     TestTrue(TEXT("后继终态由真实组件发布"), CastComponent->CancelConfirmedCast(SecondId));
     TestFalse(TEXT("终态通知收敛"), Bar->GetCastSnapshot().bActive);
+    // 施法资格来自服务器事实，不能因UI未列出某个表现样式名称而丢弃治疗或后续技能。
+    for (const FName Style : {FName(TEXT("DBA.Development.Healing")), FName(TEXT("Test.NewConfirmedCastStyle"))})
+    {
+        const FGuid Id = FGuid::NewGuid();
+        TestTrue(TEXT("发布其他合法施法窗口"), CastComponent->PublishConfirmedCast(
+            Id, TEXT("ability.test.confirmed@1"), Style, 1, 0.7f));
+        TestTrue(TEXT("治疗及未枚举样式仍显示服务器确认进度"), Bar->GetCastSnapshot().bActive);
+        TestFalse(TEXT("缺少专用名称时提供本地化通用标签"), Bar->GetCastSnapshot().DisplayName.IsEmpty());
+        TestEqual(TEXT("其他样式实际展开施法控件"), Bar->GetVisibility(), ESlateVisibility::SelfHitTestInvisible);
+        TestTrue(TEXT("取消其他样式立即隐藏"), CastComponent->CancelConfirmedCast(Id));
+        TestEqual(TEXT("其他样式终态隐藏"), Bar->GetVisibility(), ESlateVisibility::Collapsed);
+    }
     TestTrue(TEXT("可再次发布"), CastComponent->PublishConfirmedCast(
         FGuid::NewGuid(), TEXT("ability.test.fireball@1"), TEXT("DBA.Development.Fireball"), 1, 0.7f));
     const FGuid PreviousScope = Bar->GetCastSnapshot().SourceScopeId;
@@ -306,7 +318,7 @@ bool FDivineBeastsResourceValueDisplayTest::RunTest(const FString&)
     for (const TCHAR* Asset : {TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_HealthBar.WBP_DBA_UI_HealthBar_C"),
                               TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_MomentumBar.WBP_DBA_UI_MomentumBar_C"),
                               TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameHealthBar.WBP_DBA_UI_PlayerFrameHealthBar_C"),
-                              TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameMomentumBar.WBP_DBA_UI_PlayerFrameMomentumBar_C")})
+                              TEXT("/DBAUIPack_Core/UI/Components/WBP_DBA_UI_PlayerFrameEnergyBar.WBP_DBA_UI_PlayerFrameEnergyBar_C")})
     {
         UClass* Class = LoadClass<UGamePlatformResourceBarWidget>(nullptr, Asset);
         if (!TestNotNull(TEXT("真实资源条类"), Class)) return false;
@@ -428,11 +440,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDivineBeastsVillageMapProjectionTest,
 bool FDivineBeastsVillageMapProjectionTest::RunTest(const FString&)
 {
     FVector2D UV;
-    TestTrue(TEXT("地图中心有效"), UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(FVector::ZeroVector, UV));
+    const FVector VillageCenter(24800, 79000, 12200);
+    TestTrue(TEXT("地图中心有效"), UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(VillageCenter, UV));
     TestEqual(TEXT("地图中心位于图像中心"), UV, FVector2D(0.5, 0.5));
-    TestTrue(TEXT("北部边界有效"), UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(FVector(25200, 0, 0), UV));
+    TestTrue(TEXT("北部边界有效"), UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(VillageCenter + FVector(25200, 0, 0), UV));
     TestEqual(TEXT("+X北方对应图像上边"), UV, FVector2D(0.5, 0));
-    UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(FVector(0, 25200, 0), UV);
+    UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(VillageCenter + FVector(0, 25200, 0), UV);
     TestEqual(TEXT("+Y东方对应图像右边"), UV, FVector2D(1, 0.5));
     UDivineBeastsVillageMinimapWidget::ProjectVillagePosition(FVector(-99999, -99999, 0), UV);
     TestEqual(TEXT("地图外玩家有界显示"), UV, FVector2D(0, 1));

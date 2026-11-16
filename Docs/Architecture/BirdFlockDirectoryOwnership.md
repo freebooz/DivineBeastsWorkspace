@@ -1,5 +1,7 @@
 # BirdFlock（通用鸟群）三层目录归属补充
 
+2026-10-31现行补充：当前三项`Meshes/Flight`网格及平台/项目20项鸟群资源身份保持不变；七项旧网格已由Monolith迁入`/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes`。历史网格不在当前作者、Catalog或运行Cook闭包中，保留源模型与旧审核记录，禁止以旧历史作者回写当前绑定。正式及演示Client均排除History，专服继续剥离纯表现包；本轮保效/原生迁移证据见`Docs/Implementation/Resources/ResourceOwnershipDelivery_20261031.md`。下文保留原阶段记录。
+
 2026-10-11；本说明是正式《解决方案总体目录规划说明》的独立增量，不修改可能被其他任务同时编辑且含混合换行符的V1.3.0源文件。
 
 - GamePlatform（平台层）：`Game/Plugins/GamePlatform/Presentation/GamePlatformVFX`；公有/私有 `Environment/GamePlatformBirdFlock*` 用于客户端通用群飞、配置和数量边界；`Content/Environment/BirdFlock/Materials/M_GP_BirdFlock_Master` 是独立于项目内容的通用母材质。

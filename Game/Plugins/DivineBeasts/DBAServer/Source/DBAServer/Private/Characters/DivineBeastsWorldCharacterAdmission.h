@@ -6,16 +6,21 @@
 #include "Interfaces/IHttpRequest.h"
 #include "TimerManager.h"
 class ADivineBeastsWorldGameMode;
+class ADivineBeastsWorldPlayerController;
 class AGamePlatformPlayerStateBase;
 class UDivineBeastsCharacterComponent;
+struct FGamePlatformCombatEvent;
 
 /** 后端只读响应解码；必须同时核对玩家、已拥有的选中角色、Active状态及项目Catalog。失败不返回默认英雄。 */
 namespace DivineBeasts::WorldCharacterAdmission
 {
     bool ParseSelectedCharacter(const FString& Json, const FString& VerifiedPlayerId, FString& OutCharacterId);
-    bool ParseSelectedHero(const FString& Json, const FString& SelectedCharacterId, FName& OutHeroId);
+    /** 可选输出已选角色公开名称；名称缺失只影响显示，不改变既有英雄准入资格。 */
+    bool ParseSelectedHero(const FString& Json, const FString& SelectedCharacterId, FName& OutHeroId, FString* OutCharacterName = nullptr);
     /** 仅消费当前实际Pawn的角色Ready，不能把AuthorityBind返回的受理结论当作初始化成功。 */
     bool IsPawnReadyForActivation(const APlayerController& Controller);
+    /** Shared目录映射的Village/OpenWorld才有五秒自动重生；竞技世界继续由模式决定淘汰结果。 */
+    bool SupportsAutomaticRespawn(FName ExperienceId);
 }
 
 /** 游戏线程世界作用域桥；仅Bootstrap配置。共享指针负责原生请求寿命，弱引用拒绝旧世界/连接回调。 */
@@ -31,10 +36,15 @@ public:
     /** 先关闭新回调再取消HTTP/解绑事件；不停止其他世界的资源或请求。 */
     void Close();
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+    // 仅第三层私有桥的资源/拒绝边界夹具；不授予平台准入或玩家Active资格。
+    friend class FWorldCharacterAdmissionDeathLifecycleTest;
+#endif
     struct FConnection
     {
         FGamePlatformServerVerifiedAdmission Verified;
         FString CharacterId;
+        FString CharacterName; // 可信Roster已选角色的公开名称；不使用账号或客户端Travel名称。
         FName HeroId;
         FGuid OperationId;
         TWeakObjectPtr<AGamePlatformPlayerStateBase> PlayerState;
@@ -48,9 +58,23 @@ private:
         FTimerHandle FailureTimer;
         /** 每次绑定后继Pawn更新；旧Ready/超时/失败闭包不能凭同连接身份撤销后继Avatar。 */
         FGuid PawnOperationId;
+        /** 本Pawn死亡订阅及五秒单次截止；只由当前连接持有，替换Pawn/撤销/Close成对清理。 */
+        FDelegateHandle DeathHandle;
+        FTimerHandle RespawnTimer;
+        /** 已受理的死亡Avatar代次；同代次重复事件不能延后截止或再次请求重生。 */
+        int32 DeathAvatarGeneration = 0;
+        /** 单次重生票据；截止执行前先消费，旧闭包不能清掉后继Pawn的新票据。 */
+        FGuid RespawnOperationId;
         bool bWasCharacterReady = false;
         bool bFailureScheduled = false;
         TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> Request;
+        /** 世界准入内绑定采样，返程首次角色Ready时只尝试一次。 */
+        TWeakObjectPtr<ADivineBeastsWorldPlayerController> QueueOriginController;
+        FDelegateHandle QueueOriginHandle;
+        FHttpRequestPtr QueueOriginRequest;
+        FString LastQueueOriginTicketId;
+        double NextQueueOriginReportTime = 0.0;
+        bool bTriedReturnSpawn = false;
     };
     /** 每次请求完成/外部通知后重验真实准入、Controller世界与操作身份；结构相同不等于授权仍有效。 */
     bool IsCurrent(APlayerController* Controller, const TSharedPtr<FConnection>& Connection) const;
@@ -60,8 +84,23 @@ private:
         TFunction<void(FString)> Completed);
     void PublishAdmission(APlayerController& Controller, const TSharedPtr<FConnection>& Connection);
     void BindSpawnedPawn(APlayerController& Controller, const TSharedPtr<FConnection>& Connection);
+    /** 仅已验证连接的当前有效Pawn可生成本轮位置；请求只收排队身份。 */
+    void RecordVillageQueueOrigin(ADivineBeastsWorldPlayerController& Controller, const TSharedPtr<FConnection>& Connection, const FString& QueueTicketId);
     /** 成功清除本Pawn截止，失败/取消或已Ready后失活撤销本连接；不会操作后继Pawn的计时器。 */
     void ObserveCharacterInitialization(APlayerController& Controller, const TSharedPtr<FConnection>& Connection);
+    /** 订阅当前项目Pawn的已结算权威死亡；不使用Tick、不改变角色Ready或平台玩家生命周期。 */
+    void ObservePawnDeath(APlayerController& Controller, const TSharedPtr<FConnection>& Connection);
+    /** 受信连接、当前控制权/Avatar、Active及真实体验策略同时满足后才签发一次五秒票据。 */
+    void HandlePawnDeath(APlayerController& Controller, const TSharedPtr<FConnection>& Connection,
+        FGuid PawnOperationId, const FGamePlatformCombatEvent& Death);
+    /** 只读复核当前死亡实体；首次事件和截止共用，死亡不等于角色定义失效或准入失败。 */
+    bool IsCurrentDeadPawn(APlayerController* Controller, const TSharedPtr<FConnection>& Connection,
+        int32 AvatarGeneration) const;
+    /** 先消费匹配票据，再调用唯一平台Restart；同步替换Pawn后不继续访问旧Pawn。 */
+    void RestartDeadPawn(APlayerController* Controller, const TSharedPtr<FConnection>& Connection,
+        FGuid PawnOperationId, FGuid RespawnOperationId, int32 AvatarGeneration);
+    /** 精确解绑当前Pawn死亡订阅、取消本连接计时器并失效票据；不撤销后继连接的资源。 */
+    void ReleasePawnDeath(const TSharedPtr<FConnection>& Connection);
     /** 错误只记固定诊断码；下一游戏线程时隙撤销避免在平台Publish的同步栈中删除其玩家记录。 */
     void Fail(APlayerController& Controller, const TSharedPtr<FConnection>& Connection, FName Code);
     void ReleaseConnection(const TSharedPtr<FConnection>& Connection);

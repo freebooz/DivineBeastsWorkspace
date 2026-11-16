@@ -88,6 +88,8 @@ struct GAMEPLATFORMMOBACORE_API FGamePlatformArenaRosterSlot
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FString PlayerId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FString CharacterId;
+    /** 可信分配中的已选角色显示名；历史分配可为空。 */
+    UPROPERTY(BlueprintReadOnly) FString CharacterName;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName TeamId;
     /** 后端已确认的英雄；LockedRoster策略必须非空，其他旧模式保留手工选人兼容。 */
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FString HeroDefinitionId;
@@ -166,6 +168,8 @@ struct GAMEPLATFORMMOBACORE_API FGamePlatformArenaPlayerResult
     UPROPERTY(BlueprintReadOnly) FString PlayerId;
     UPROPERTY(BlueprintReadOnly) FName TeamId;
     UPROPERTY(BlueprintReadOnly) FString CharacterId;
+    /** 可信名单的公开角色名；历史名单可为空。 */
+    UPROPERTY(BlueprintReadOnly) FString PlayerName;
     UPROPERTY(BlueprintReadOnly) int32 Kills = 0;
     UPROPERTY(BlueprintReadOnly) int32 Deaths = 0;
     UPROPERTY(BlueprintReadOnly) int32 Assists = 0;
@@ -209,6 +213,8 @@ struct GAMEPLATFORMMOBACORE_API FGamePlatformArenaResultSummary
     UPROPERTY(BlueprintReadOnly) FName WinningTeamId;
     UPROPERTY(BlueprintReadOnly) EGamePlatformArenaMatchEndReason EndReason = EGamePlatformArenaMatchEndReason::None;
     UPROPERTY(BlueprintReadOnly) int32 EndRevision = 0;
+    /** 终局冻结的公开队伍及玩家统计，玩家行不含原始玩家或角色标识。 */
+    UPROPERTY(BlueprintReadOnly) TArray<FGamePlatformArenaTeamResult> Teams;
 };
 
 /** FGamePlatformArenaTrustedEvent（由Combat/Objective等权威系统产生的中立事实）。 */

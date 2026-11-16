@@ -34,7 +34,7 @@ $map='/Game/Development/Terrain/Maps/L_DBA_TerrainMaskReview'
 $material='/DBAWorldPack_Village/Terrain/Materials/M_DBA_Terrain_MultiLayer10'
 if($ProductionPBR){
     $rawRoot=Join-Path $root 'Game\Plugins\DivineBeasts\ContentPacks\Worlds\DBAWorldPack_Village\SourceArt\Terrain\CalibrationDerivedV2\Raw'
-    $material='/DBAPresentationPack_Core/Materials/Terrain/MI_DBA_Terrain_Production10_Review'
+    $material='/DBAWorldPack_Village/Development/Terrain/Production10/MI_DBA_Terrain_Production10_Review'
     $scannedManifest=Join-Path $PSScriptRoot 'TerrainProductionPBRManifest_v1.json'
     if(!(Test-Path -LiteralPath $scannedManifest -PathType Leaf)){
         throw '正式扫描PBR素材尚未提交/校验，禁止用技术校准源伪造正式审核地图'

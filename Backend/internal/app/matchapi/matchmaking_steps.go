@@ -29,8 +29,11 @@ func (s *Service) ReadCandidateContext(ctx context.Context, id string) (matchmak
 		if !found {
 			return matchmaking.Candidate{}, nil, nil, errors.New("MATCH_CHARACTER_REQUIRED: 已确认角色上下文缺失")
 		}
-		contexts[slot.PlayerID] = value
 		entry := queue.Entries[queue.Reservations[slot.PlayerID]]
+		if entry.CandidateID == candidate.ID {
+			value.QueueTicketID = entry.Ticket.TicketID
+		}
+		contexts[slot.PlayerID] = value
 		parties[slot.PlayerID] = entry.Ticket.PartyID
 	}
 	return candidate, contexts, parties, nil

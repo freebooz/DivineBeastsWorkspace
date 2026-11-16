@@ -1,6 +1,7 @@
 #include "Backend/GamePlatformArenaServerBackendClient.h"
 
 #include "Dom/JsonObject.h"
+#include "Framework/GamePlatformArenaGameMode.h"
 #include "HttpModule.h"
 #include "GenericPlatform/GenericPlatformHttp.h"
 #include "Interfaces/IHttpRequest.h"
@@ -10,6 +11,18 @@
 
 namespace
 {
+    const TCHAR* WireStartAbortReason(EGamePlatformArenaStartAbortReason Reason)
+    {
+        switch (Reason)
+        {
+        case EGamePlatformArenaStartAbortReason::PreMatchTimeout: return TEXT("pre_match_timeout");
+        case EGamePlatformArenaStartAbortReason::PlayerDisconnected: return TEXT("player_disconnected");
+        case EGamePlatformArenaStartAbortReason::SpawnFailed: return TEXT("spawn_failed");
+        case EGamePlatformArenaStartAbortReason::StartupFailed: return TEXT("startup_failed");
+        }
+        return nullptr;
+    }
+
     TSharedPtr<FJsonObject> ParseJsonObject(const FString& Body)
     {
         TSharedPtr<FJsonObject> Object;
@@ -32,6 +45,7 @@ namespace
         {
             const TSharedPtr<FJsonObject>* Row=nullptr;FGamePlatformArenaRosterSlot Slot;FString Team;
             if(!Value||!Value->TryGetObject(Row)||!String(*Row,TEXT("PlayerID"),Slot.PlayerId)||!String(*Row,TEXT("CharacterID"),Slot.CharacterId)||!String(*Row,TEXT("TeamID"),Team)||!String(*Row,TEXT("PartyID"),Slot.PartyId)||!String(*Row,TEXT("HeroDefinitionID"),Slot.HeroDefinitionId)||!Integer(*Row,TEXT("SlotIndex"),Slot.SlotIndex))return false;
+            String(*Row, TEXT("CharacterName"), Slot.CharacterName); // 可选显示数据，旧名单无此字段也可准入。
             Slot.TeamId=FName(*Team);if(!Slot.IsValid()||Slot.HeroDefinitionId.IsEmpty())return false;Next.Roster.Add(MoveTemp(Slot));
         }
         if(Next.MatchId.IsEmpty()||Next.GameServerId.IsEmpty()||Next.ProjectRuleRevision<1||Next.ContentRevision.IsEmpty()||Next.HeroCatalogRevision<1||Next.TeamSize<1||Next.TeamSize>5||Next.TotalPlayers!=Next.TeamSize*2||Next.Roster.Num()!=Next.TotalPlayers)return false;
@@ -134,28 +148,111 @@ void FGamePlatformArenaServerBackendClient::SubmitMatchResult(
     Request->SetVerb(TEXT("POST"));
     Request->SetURL(MakeUrl(TEXT("/internal/v1/gameservers/match-result")));
     ApplyCommonHeaders(Request);
+    Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
     Request->SetContentAsString(SerializeJson(ResultToJson(Result)));
     Request->OnProcessRequestComplete().BindLambda(
-        [Completion](FHttpRequestPtr, FHttpResponsePtr Response, bool bSucceeded) mutable
+        [Completion, MatchId = Result.MatchId, GameServerId = Result.GameServerId, EndRevision = Result.EndRevision]
+        (FHttpRequestPtr, FHttpResponsePtr Response, bool bSucceeded) mutable
         {
+            const int32 Code = Response.IsValid() ? Response->GetResponseCode() : 0;
+            if (Code == 409) { Completion(EGamePlatformArenaSubmitStatus::Conflict, TEXT("MatchResult conflict.")); return; }
+            if (Code >= 400 && Code < 500)
+            {
+                Completion(EGamePlatformArenaSubmitStatus::TerminalFailure, FString::Printf(TEXT("Backend HTTP %d"), Code));
+                return;
+            }
             if (!bSucceeded || !Response.IsValid())
             {
                 Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("MatchResult transport outcome unknown."));
                 return;
             }
-            const int32 Code = Response->GetResponseCode();
-            if (Code == 409) { Completion(EGamePlatformArenaSubmitStatus::Conflict, TEXT("MatchResult conflict.")); return; }
-            if (Code >= 500) { Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, FString::Printf(TEXT("Backend HTTP %d"), Code)); return; }
+            if (Code >= 500 && Code < 600) { Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, FString::Printf(TEXT("Backend HTTP %d"), Code)); return; }
             if (Code != 200) { Completion(EGamePlatformArenaSubmitStatus::TerminalFailure, FString::Printf(TEXT("Backend HTTP %d"), Code)); return; }
 
             const TSharedPtr<FJsonObject> Json = ParseJsonObject(Response->GetContentAsString());
-            FString ResultId;
-            if(!Json||!Json->HasTypedField<EJson::String>(TEXT("ResultID"))||!Json->TryGetStringField(TEXT("ResultID"),ResultId)||ResultId.IsEmpty())
-            {Completion(EGamePlatformArenaSubmitStatus::RetryableFailure,TEXT("MatchResult response malformed; outcome unknown."));return;}
-            Completion(EGamePlatformArenaSubmitStatus::Committed,FString());
+            const TSharedPtr<FJsonObject>* StoredResult = nullptr;
+            FString ResultId, StoredMatchId, StoredServerId;
+            double StoredRevision = 0;
+            if (!Json || !Json->HasTypedField<EJson::String>(TEXT("ResultID")) ||
+                !Json->TryGetStringField(TEXT("ResultID"), ResultId) || ResultId.IsEmpty() ||
+                !Json->TryGetObjectField(TEXT("Result"), StoredResult) || !StoredResult || !StoredResult->IsValid() ||
+                !(*StoredResult)->HasTypedField<EJson::String>(TEXT("MatchID")) ||
+                !(*StoredResult)->TryGetStringField(TEXT("MatchID"), StoredMatchId) || StoredMatchId.IsEmpty() ||
+                !(*StoredResult)->HasTypedField<EJson::String>(TEXT("GameServerID")) ||
+                !(*StoredResult)->TryGetStringField(TEXT("GameServerID"), StoredServerId) || StoredServerId.IsEmpty() ||
+                !(*StoredResult)->HasTypedField<EJson::Number>(TEXT("EndRevision")) ||
+                !(*StoredResult)->TryGetNumberField(TEXT("EndRevision"), StoredRevision))
+            {
+                Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("MatchResult response malformed; outcome unknown."));
+                return;
+            }
+            if (StoredMatchId != MatchId || StoredServerId != GameServerId || StoredRevision != EndRevision)
+            {
+                Completion(EGamePlatformArenaSubmitStatus::TerminalFailure, TEXT("MatchResult acknowledgement identity mismatch."));
+                return;
+            }
+            // 首次提交与幂等重放都返回同一持久结果；该协议不区分两者。
+            Completion(EGamePlatformArenaSubmitStatus::Committed, FString());
         });
     TrackRequest(Request);
     if (!Request->ProcessRequest()) { Requests.Remove(Request);Completion(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("MatchResult request did not start.")); }
+}
+
+void FGamePlatformArenaServerBackendClient::SubmitMatchStartAbort(const FGamePlatformArenaAssignment& Assignment,
+    EGamePlatformArenaStartAbortReason Reason, TFunction<void(EGamePlatformArenaSubmitStatus, const FString&)> InCompletion)
+{
+    const auto Completed = MakeShared<bool>(false);
+    const auto Complete = [Completed, Done = MoveTemp(InCompletion)](EGamePlatformArenaSubmitStatus Status, const FString& Error)
+    {
+        if (*Completed) { return; }
+        *Completed = true;
+        Done(Status, Error);
+    };
+    const TCHAR* ReasonValue = WireStartAbortReason(Reason);
+    if (!Config.IsValid() || Assignment.MatchId.IsEmpty() || Assignment.GameServerId != Config.GameServerId || !ReasonValue)
+    {
+        Complete(EGamePlatformArenaSubmitStatus::TerminalFailure, TEXT("Invalid MainArena start abort identity or reason."));
+        return;
+    }
+    auto Body = MakeShared<FJsonObject>();
+    Body->SetStringField(TEXT("matchId"), Assignment.MatchId);
+    Body->SetStringField(TEXT("gameServerId"), Config.GameServerId);
+    Body->SetStringField(TEXT("serverBootId"), Config.ServerBootId);
+    Body->SetStringField(TEXT("reason"), ReasonValue);
+    const TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+    Request->SetVerb(TEXT("POST"));
+    Request->SetURL(MakeUrl(TEXT("/internal/v1/gameservers/match-start-abort")));
+    ApplyCommonHeaders(Request);
+    Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
+    Request->SetContentAsString(SerializeJson(Body));
+    Request->OnProcessRequestComplete().BindLambda([Complete](FHttpRequestPtr, FHttpResponsePtr Response, bool bSucceeded)
+    {
+        const int32 Code = Response.IsValid() ? Response->GetResponseCode() : 0;
+        if (Code == 409)
+        {
+            Complete(EGamePlatformArenaSubmitStatus::Conflict, TEXT("MainArena start abort conflict."));
+            return;
+        }
+        if (Code >= 400 && Code < 500 && Code != 408 && Code != 429)
+        {
+            Complete(EGamePlatformArenaSubmitStatus::TerminalFailure, FString::Printf(TEXT("MainArena start abort HTTP %d."), Code));
+            return;
+        }
+        const auto Json = bSucceeded && Code == 200 ? ParseJsonObject(Response->GetContentAsString()) : nullptr;
+        bool bAccepted = false;
+        if (Json && Json->HasTypedField<EJson::Boolean>(TEXT("accepted")) && Json->TryGetBoolField(TEXT("accepted"), bAccepted) && bAccepted)
+        {
+            Complete(EGamePlatformArenaSubmitStatus::Committed, FString());
+            return;
+        }
+        Complete(EGamePlatformArenaSubmitStatus::RetryableFailure, FString::Printf(TEXT("MainArena start abort unconfirmed HTTP %d."), Code));
+    });
+    TrackRequest(Request);
+    if (!Request->ProcessRequest())
+    {
+        Requests.Remove(Request);
+        Complete(EGamePlatformArenaSubmitStatus::RetryableFailure, TEXT("MainArena start abort request did not start."));
+    }
 }
 
 void FGamePlatformArenaServerBackendClient::CancelAll()

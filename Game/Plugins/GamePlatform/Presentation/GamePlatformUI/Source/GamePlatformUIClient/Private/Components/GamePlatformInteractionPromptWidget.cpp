@@ -1,11 +1,11 @@
 #include "Components/GamePlatformInteractionPromptWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 bool UGamePlatformInteractionPromptWidget::ApplyInteractionPrompt(
     const FGamePlatformUIInteractionPromptState& InState)
 {
-    if (InState.TargetDisplayId.IsNone() || InState.Revision < 0 ||
-        (State.TargetDisplayId == InState.TargetDisplayId &&
-         InState.Revision <= State.Revision))
+    if (!FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            State.TargetDisplayId, State.Revision, InState.TargetDisplayId, InState.Revision))
     {
         return false;
     }

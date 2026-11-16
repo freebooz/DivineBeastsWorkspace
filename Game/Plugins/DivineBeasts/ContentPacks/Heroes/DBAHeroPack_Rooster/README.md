@@ -7,11 +7,13 @@
 ## 已有内容与接入
 
 - `Content/Characters/`：外观DataAsset与原型材质实例；由项目外观适配使用。
-- `Content/UI/Abilities/`：五张已导入技能图标纹理；文件名中的美术名称不代表正式技能身份已经批准。
+- `Content/UI/Abilities/`：保留五张V1图标；`V6/Textures/`新增八张原生48×48运行纹理。现有唯一UIProfile增补五项视觉条目，并接入当前授权八槽，保留九项旧条目的ID、名称和说明。
+- `Content/UI/Review/`：八张原生64×64审核纹理及通过Monolith制作的`WBP_DBA_Rooster_SkillIconReviewV6`，用于明确标注“仅美术预览、不可施放”的审核。
+- `SourceArt/UI/SkillIcons/V6/{Masters,Review64,Runtime48}/`：本次下载包中24份原始PNG，保持1254/64/48真实尺寸与原稿RGB，不以放大图替代原稿。
 - `Content/UI/Portraits/`：一张头像纹理。
 - [Monolith生成记录](Docs/MonolithGenerationManifest.json)：既有真实资产制作与引用证据。
 
-本轮文件系统观察为8份.uasset：外观配置1、原型材质1、图标5、头像1。现有形象仍属于开发/原型表现，不等于正式生肖模型。此数量不是UE重载、Cook、联机或人工艺术验收结果。
+2026-10-21实际库存为26份.uasset，含唯一UIProfile、V1与V6图标、审核页和既有外观/头像。16张V6纹理均已由Monolith导入、保存、重载、阻断审计，并与原始PNG逐像素比较。GPU、HUD及人工签收分项证据见`Saved/Validation/RoosterV6Import20261021/Delivery.json`；库存数量不代表Cook或联机验收。
 
 ## 数据身份与资源生命周期
 

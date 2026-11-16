@@ -1,5 +1,8 @@
 # 《神兽联盟》十大业务域与通用组件 Widget Blueprint 交付清单
 
+> **2026-10-17 最新文件级复核：** 公共C++ Catalog登记18项UI、竞技目录登记6项（后者在DBAArena内容包），公共另含唯一RootLayout；本轮全部24项保存WBP存在、预期父类名称符号24/24、所抽查8类页面共46处原生必需控件名46/46。见`Docs/Implementation/UIPluginArchitectureRemediation_20261017.md`。下文“待由Monolith创建”是2026-10-09历史规划状态，不代表当前文件缺失。实际蓝图编译/实机/Cook须分别验收。
+
+
 > **最新实施状态（2026-10-09，覆盖后文历史规划阶段的「待创建」状态）：** Monolith MCP 0.23.0 已接通正式 UE5.8 编辑器并完成战斗核心12项真实Widget Blueprint创建、编译、保存，另新建通用视觉组件5项，共17份`.uasset`。项目原有6份Widget资产保留；新资产已通过磁盘静态扫描，部分通过Monolith同编辑器树回读，尚未做完整独立重启/PIE/联机/Cook验收。详见`Docs/AAACombatWidgetDelivery_20261009.md`及`Docs/AAACombatWidgetDelivery_20261009.json`。本页其余十域非战斗蓝图仍按实际资产存在情况验收。
 
 > 视觉资产所有者：第三层`DBAUIPack_Core`（神兽联盟公共界面内容包）。

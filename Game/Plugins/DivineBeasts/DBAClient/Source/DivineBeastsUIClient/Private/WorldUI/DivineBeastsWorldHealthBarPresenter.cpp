@@ -2,9 +2,11 @@
 #include "WorldUI/DivineBeastsWorldHealthBarPresenter.h"
 #include "Characters/DivineBeastsCharacter.h"
 #include "Characters/DivineBeastsVillageWolf.h" // 狼怪是现有ADivineBeastsCharacter子类，复用相同ASC生命通知。
+#include "Characters/DivineBeastsVillageVampire.h" // 人型怪物沿用同一生命通知，但显示独立名称。
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Attributes/GamePlatformCombatAttributeSet.h"
 #include "Components/SceneComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Manager/GamePlatformUIManagerSubsystem.h"
 #include "Services/GamePlatformWorldUIService.h"
 #include "WorldUI/GamePlatformWorldWidgetBase.h"
@@ -12,8 +14,9 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/PlayerState.h"
-#include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Gameplay/DivineBeastsPlayerControlsComponent.h"
 #include "Components/DivineBeastsCharacterComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
 #include "Components/GamePlatformExperienceComponent.h"
@@ -23,6 +26,16 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/GameInstance.h"
 #include "GameFramework/GameStateBase.h"
+
+namespace
+{
+/** 远端Controller并不复制；在PlayerState尚未到达时按现有项目角色类别为玩家预留显示资格。 */
+bool IsPlayerCharacterCandidate(const AActor* Actor)
+{
+    return Actor && Actor->IsA<ADivineBeastsCharacter>() &&
+        !Actor->IsA<ADivineBeastsVillageWolf>() && !Actor->IsA<ADivineBeastsVillageVampire>();
+}
+}
 
 void UDivineBeastsWorldHealthBarPresenter::Initialize(ULocalPlayer* InPlayer, UWorld* InWorld,
     TSubclassOf<UGamePlatformWorldWidgetBase> InWidgetClass, UMaterialInterface* InSelectionRingMaterial)
@@ -36,7 +49,7 @@ void UDivineBeastsWorldHealthBarPresenter::Initialize(ULocalPlayer* InPlayer, UW
         if (OldPawn != NewPawn) SetSelectedTarget(nullptr);
         RemoveActor(NewPawn);
         if (OldPawn && OldPawn != NewPawn && !OldPawn->IsActorBeingDestroyed()) ObserveActor(OldPawn);
-        BindSelectionController(Cast<ADivineBeastsWorldPlayerController>(Controller));
+        BindSelectionController(Controller ? Controller->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr);
         return;
     }
     Clear();
@@ -61,27 +74,60 @@ void UDivineBeastsWorldHealthBarPresenter::Initialize(ULocalPlayer* InPlayer, UW
         { if (Generation == ObservationGeneration && ObservedWorld.Get() == World) Clear(); });
     // 仅进入世界的一次性冷启动盘点；新实体和生命变化以后均来自通知，不执行定时扫描。
     for (TActorIterator<ADivineBeastsCharacter> It(InWorld); It; ++It) ObserveActor(*It);
-    BindSelectionController(Cast<ADivineBeastsWorldPlayerController>(InPlayer->GetPlayerController(InWorld)));
+    BindSelectionController(InPlayer->GetPlayerController(InWorld) ? InPlayer->GetPlayerController(InWorld)->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr);
 }
 
 void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSelectionOnly)
 {
-    if (!IsValid(Actor) || (!bSelectionOnly && !Actor->IsA<ADivineBeastsCharacter>()) || Actor->GetWorld() != ObservedWorld.Get() ||
-        Bindings.Contains(Actor) || Bindings.Num() >= 128) return;
+    UWorld* World = ObservedWorld.Get();
+    if (!World || World->bIsTearingDown || !IsValid(Actor) ||
+        (!bSelectionOnly && !Actor->IsA<ADivineBeastsCharacter>()) || Actor->GetWorld() != World ||
+        Bindings.Contains(Actor)) return;
     auto* Controller = LocalPlayer.IsValid() ? LocalPlayer->GetPlayerController(ObservedWorld.Get()) : nullptr;
     if (Controller && Controller->GetPawn() == Actor) return; // 自己已有主HUD血条。
+    if (Bindings.Num() >= 128)
+    {
+        if (!IsPlayerCharacterCandidate(Actor)) return;
+        // 不扩大平台128个实例预算；后来玩家优先替换最远的未选中怪物，避免200怪物耗尽玩家位置。
+        const FVector Origin = Controller && Controller->GetPawn() ? Controller->GetPawn()->GetActorLocation() : Actor->GetActorLocation();
+        TWeakObjectPtr<AActor> Candidate; double Farthest = -1.;
+        for (const auto& Pair : Bindings)
+            if (auto* Existing = Pair.Key.Get(); Existing && !Pair.Value.bSelectionOnly &&
+                Existing != SelectedTarget.Get() &&
+                (Existing->IsA<ADivineBeastsVillageWolf>() || Existing->IsA<ADivineBeastsVillageVampire>()))
+            {
+                const double Distance = FVector::DistSquared(Origin, Existing->GetActorLocation());
+                if (Distance > Farthest) { Candidate = Existing; Farthest = Distance; }
+            }
+        if (!Candidate.IsValid()) return;
+        const uint64 BeforeEviction = ObservationGeneration;
+        RemoveActor(Candidate.Get());
+        // 注销Widget可能同步结束作用域；旧栈不能在Clear或后继注册后继续加入实体。
+        if (BeforeEviction != ObservationGeneration || !ObservedWorld.IsValid() || World->bIsTearingDown ||
+            !IsValid(Actor) || Bindings.Contains(Actor) || Bindings.Num() >= 128) return;
+    }
     auto& Binding = Bindings.Add(Actor);
-    Binding.bSelectionOnly = bSelectionOnly;
+    Binding.bSelectionOnly = bSelectionOnly && !IsPlayerCharacterCandidate(Actor);
     Binding.Request.RequestId = FGuid::NewGuid();
     Binding.Request.SurfaceKey = TEXT("DBA.World.HealthBar"); Binding.Request.StyleId = TEXT("DBA.World.HealthBar");
     Binding.Request.MaxVisibleDistance = 6000.f; Binding.Request.Resource.ResourceId = TEXT("Health");
-    Binding.Request.PrimaryText = FText::FromString(Actor->IsA<ADivineBeastsVillageWolf>() ? TEXT("野狼") :
+    Binding.Request.PrimaryText = FText::FromString(Actor->IsA<ADivineBeastsVillageVampire>() ? TEXT("吸血鬼") :
+        Actor->IsA<ADivineBeastsVillageWolf>() ? TEXT("野狼") :
         Actor->IsA<ADivineBeastsCharacter>() ? TEXT("玩家") : TEXT("目标"));
-    Binding.Request.SelectionText = NSLOCTEXT("DivineBeastsWorldUI", "SelectedTarget", "▶ 已选中 ◀");
+    // 项目名称板已移除选中框/标记Widget；也不再向名称添加箭头或已选中文案。
+    Binding.Request.SelectionText = FText::GetEmpty();
+    Binding.Request.bCompactSelection = false;
     Actor->OnDestroyed.AddUniqueDynamic(this, &ThisClass::HandleActorDestroyed);
     Actor->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleActorEndPlay);
     const uint64 Generation = ObservationGeneration;
     const TWeakObjectPtr<AActor> WeakActor(Actor);
+    if (auto* Character = Cast<ADivineBeastsCharacter>(Actor))
+        Binding.PawnPlayerStateHandle = Character->OnPlayerStateChangedEvent().AddWeakLambda(this,
+            [this, Generation, WeakActor]()
+            {
+                if (Generation != ObservationGeneration || !WeakActor.IsValid()) return;
+                BindPlayerState(WeakActor.Get()); Publish(WeakActor.Get());
+            });
     if (auto* Combat = Actor->FindComponentByClass<UGamePlatformCombatComponent>())
     {
         Binding.Combat = Combat;
@@ -105,7 +151,7 @@ void UDivineBeastsWorldHealthBarPresenter::ObserveActor(AActor* Actor, bool bSel
         Binding.TransformSource = Root;
         Binding.TransformHandle = Root->TransformUpdated.AddWeakLambda(this,
             [this, Generation, WeakActor](USceneComponent*, EUpdateTransformFlags, ETeleportType)
-            { if (Generation == ObservationGeneration && WeakActor.IsValid()) Publish(WeakActor.Get()); });
+            { if (Generation == ObservationGeneration && WeakActor.IsValid()) Publish(WeakActor.Get(), true); });
     }
     // 已移除远古石灵独立LifeState；狼怪与玩家都从平台GAS属性读客户端复制真值。
     if (auto* ASC = Actor->FindComponentByClass<UGamePlatformAbilitySystemComponent>())
@@ -140,10 +186,21 @@ void UDivineBeastsWorldHealthBarPresenter::ApplyHealth(AActor* Actor, float Heal
     Publish(Actor);
 }
 
-void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor)
+void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor, bool bLocationOnly)
 {
+    // Travel销毁Pawn时仍可能同步触发控制器关系通知；旧World开始退出后禁止再创建UMG实例。
+    UWorld* World = ObservedWorld.Get();
+    if (!World || World->bIsTearingDown || !IsValid(Actor) || Actor->GetWorld() != World) return;
+    const auto* Controller = LocalPlayer.IsValid() ? LocalPlayer->GetPlayerController(World) : nullptr;
+    if (Controller && Controller->GetPawn() == Actor) { RemoveActor(Actor); return; }
     auto* Binding = Bindings.Find(Actor);
-    if (!Binding || !IsValid(Actor)) return;
+    if (!Binding) return;
+    if (!bLocationOnly && IsPlayerCharacterCandidate(Actor))
+    {
+        const auto* State = Binding->PlayerState.Get();
+        const FString Name = State ? State->GetPlayerName() : FString();
+        Binding->Request.PrimaryText = FText::FromString(Name.IsEmpty() ? TEXT("玩家") : Name);
+    }
     if (SelectedTarget.Get() == Actor)
     {
         const auto* Combat = Actor->FindComponentByClass<UGamePlatformCombatComponent>();
@@ -159,15 +216,42 @@ void UDivineBeastsWorldHealthBarPresenter::Publish(AActor* Actor)
             return;
         }
     }
-    Binding->Request.SelectionTint = ResolveSelectionTint(Actor);
-    FVector Origin, Extent; Actor->GetActorBounds(true, Origin, Extent);
-    Binding->Request.WorldLocation = Origin + FVector(0, 0, Extent.Z + 24.f);
-    Binding->Request.bDisplayRequested = (bVisible && Binding->Request.Resource.MaximumValue > 0.f) || Binding->Request.bSelected;
+    const auto* Character = Cast<ACharacter>(Actor);
+    const auto* Capsule = Character ? Character->GetCapsuleComponent() : nullptr;
+    if (IsValid(Capsule) && Capsule->IsRegistered())
+    {
+        // 导入外观的碰撞Bounds可能把名称板抬到远处目标血条上；胶囊是稳定锚点。
+        // 无血条NPC只显示选中提示，放低半个胶囊高度，避开其后方怪物的血条。
+        Binding->Request.WorldLocation = Capsule->GetComponentLocation() +
+            FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight() *
+                (Binding->bSelectionOnly ? 0.5f : 1.0f) + 24.f);
+    }
+    else
+    {
+        FVector Origin, Extent;
+        Actor->GetActorBounds(true, Origin, Extent);
+        Binding->Request.WorldLocation = Origin + FVector(0, 0, Extent.Z + 24.f);
+    }
+    if (!bLocationOnly)
+    {
+        Binding->Request.SelectionTint = ResolveSelectionTint(Actor);
+        Binding->Request.bDisplayRequested = (bVisible && Binding->Request.Resource.MaximumValue > 0.f) || Binding->Request.bSelected;
+    }
+
+    const FGuid RequestId = Binding->Request.RequestId;
+    const uint64 Generation = ObservationGeneration;
     if (SelectedTarget.Get() == Actor) RefreshSelectionRing();
-    auto* UI = Service.Get(); if (!UI) return;
+    auto* UI = Service.Get();
+    Binding = Bindings.Find(Actor);
+    if (!UI || Generation != ObservationGeneration || !Binding || Binding->Request.RequestId != RequestId) return;
+    if (bLocationOnly)
+    {
+        if (!UI->UpdateWorldUILocation(RequestId, Binding->Request.WorldLocation)) Publish(Actor);
+        return;
+    }
     // 重建来源在Travel之后由新代次负责；注册失败时保留缓存，后续真实事件可重试。
     const auto Request = Binding->Request;
-    if (!UI->UpdateWorldUI(Request.RequestId, Request)) UI->RegisterWorldUI(Request, WidgetClass);
+    if (!UI->UpdateWorldUI(RequestId, Request)) UI->RegisterWorldUI(Request, WidgetClass);
 }
 
 void UDivineBeastsWorldHealthBarPresenter::RefreshProjection()
@@ -183,7 +267,7 @@ void UDivineBeastsWorldHealthBarPresenter::SetVisible(bool bInVisible)
     for (const auto& Actor : Actors) if (Actor.IsValid()) Publish(Actor.Get());
 }
 
-void UDivineBeastsWorldHealthBarPresenter::BindSelectionController(ADivineBeastsWorldPlayerController* Controller)
+void UDivineBeastsWorldHealthBarPresenter::BindSelectionController(UDivineBeastsPlayerControlsComponent* Controller)
 {
     if (SelectionController.Get() == Controller) return;
     if (auto* Previous = SelectionController.Get())
@@ -197,7 +281,7 @@ void UDivineBeastsWorldHealthBarPresenter::BindSelectionController(ADivineBeasts
     if (Generation != ObservationGeneration) return;
     SelectionController = Controller;
     if (!Controller || Controller->GetWorld() != ObservedWorld.Get()) return;
-    const TWeakObjectPtr<ADivineBeastsWorldPlayerController> WeakController(Controller);
+    const TWeakObjectPtr<UDivineBeastsPlayerControlsComponent> WeakController(Controller);
     SelectionHandle = Controller->OnWorldTargetChanged.AddWeakLambda(this, [this, Generation, WeakController]()
     {
         if (Generation == ObservationGeneration && WeakController.IsValid() && SelectionController == WeakController)
@@ -230,7 +314,9 @@ void UDivineBeastsWorldHealthBarPresenter::SetSelectedTarget(AActor* Actor)
         if (bRemovePrevious) RemoveActor(Previous.Get()); else Publish(Previous.Get());
     }
     // UMG应用事件可同步拆除整个世界UI；旧选择栈不能在Clear之后重新持有目标。
-    if (Generation != ObservationGeneration || Revision != SelectionRevision || !IsValid(Actor) || Actor->GetWorld() != ObservedWorld.Get()) return;
+    UWorld* World = ObservedWorld.Get();
+    if (Generation != ObservationGeneration || Revision != SelectionRevision || !World || World->bIsTearingDown ||
+        !IsValid(Actor) || Actor->GetWorld() != World) return;
     if (!Bindings.Contains(Actor)) ObserveActor(Actor, true);
     auto* Binding = Bindings.Find(Actor);
     auto* Combat = Actor->FindComponentByClass<UGamePlatformCombatComponent>();
@@ -247,15 +333,24 @@ void UDivineBeastsWorldHealthBarPresenter::BindPlayerState(AActor* Actor)
     auto* Pawn = Cast<APawn>(Actor);
     auto* State = Pawn ? Pawn->GetPlayerState<AGamePlatformPlayerStateBase>() : nullptr;
     if (Binding->PlayerState.Get() == State) return;
-    if (auto* Previous = Binding->PlayerState.Get()) Previous->OnLifecycleChanged.Remove(Binding->PlayerStateHandle);
-    Binding->PlayerState = State; Binding->PlayerStateHandle.Reset();
+    if (auto* Previous = Binding->PlayerState.Get())
+    {
+        Previous->OnLifecycleChanged.Remove(Binding->PlayerStateHandle);
+        Previous->OnPublicPlayerNameChanged.Remove(Binding->PlayerNameHandle);
+    }
+    Binding->PlayerState = State; Binding->PlayerStateHandle.Reset(); Binding->PlayerNameHandle.Reset();
     if (!State) return;
     const uint64 Generation = ObservationGeneration;
     const TWeakObjectPtr<AActor> WeakActor(Actor);
-    Binding->PlayerStateHandle = State->OnLifecycleChanged.AddWeakLambda(this, [this, Generation, WeakActor]()
+    const TWeakObjectPtr<AGamePlatformPlayerStateBase> WeakState(State);
+    auto Changed = [this, Generation, WeakActor, WeakState]()
     {
-        if (Generation == ObservationGeneration && WeakActor.IsValid()) Publish(WeakActor.Get());
-    });
+        if (Generation != ObservationGeneration || !WeakActor.IsValid() || !WeakState.IsValid()) return;
+        const auto* Current = Bindings.Find(WeakActor);
+        if (Current && Current->PlayerState == WeakState) Publish(WeakActor.Get());
+    };
+    Binding->PlayerStateHandle = State->OnLifecycleChanged.AddWeakLambda(this, Changed);
+    Binding->PlayerNameHandle = State->OnPublicPlayerNameChanged.AddWeakLambda(this, Changed);
 }
 
 void UDivineBeastsWorldHealthBarPresenter::RefreshRelations()
@@ -279,7 +374,8 @@ FLinearColor UDivineBeastsWorldHealthBarPresenter::ResolveSelectionTint(AActor* 
     FName Role;
     const auto* Pawn = Cast<APawn>(Actor);
     const auto* Player = Pawn ? Pawn->GetPlayerState<AGamePlatformPlayerStateBase>() : nullptr;
-    const auto* Controller = SelectionController.Get();
+    const auto* Controls = SelectionController.Get();
+    const auto* Controller = Controls ? Cast<APlayerController>(Controls->GetOwner()) : nullptr;
     const auto* OwnPlayer = Controller ? Controller->GetPlayerState<AGamePlatformPlayerStateBase>() : nullptr;
     const FGamePlatformId ExperienceId = Experience ? Experience->GetExperienceSnapshot().ExperienceId : FGamePlatformId();
     // 与Village服务器已批准的“玩家互为友方”一致：双方必须是当前公开准入Pawn。
@@ -312,9 +408,17 @@ void UDivineBeastsWorldHealthBarPresenter::RefreshSelectionRing()
         SelectionRing->RegisterComponentWithWorld(World);
     }
     FVector Origin, Extent; Actor->GetActorBounds(true, Origin, Extent);
-    const float RadiusCm = FMath::Clamp(FMath::Max(Extent.X, Extent.Y) * 1.15f, 45.f, 180.f);
-    SelectionRing->DecalSize = FVector(24.f, RadiusCm, RadiusCm);
-    SelectionRing->SetWorldLocation(Origin - FVector(0, 0, Extent.Z - 4.f));
+    // 远处人型目标的原始Bounds过窄；最低一米半径让脚下状态在常用选择距离仍可辨认。
+    const float RadiusCm = FMath::Clamp(FMath::Max(Extent.X, Extent.Y) * 1.35f, 100.f, 220.f);
+    const FVector BoundsFoot = Origin - FVector(0.f, 0.f, Extent.Z);
+    FHitResult GroundHit;
+    FCollisionQueryParams GroundQuery(SCENE_QUERY_STAT(DivineBeastsTargetRingGround), false, Actor);
+    // 动画和导入模型可改变网格Bounds；用真实地面命中定位，不让法环埋入地形。
+    const bool bGroundHit = World->LineTraceSingleByChannel(GroundHit,
+        BoundsFoot + FVector(0.f, 0.f, 150.f), BoundsFoot - FVector(0.f, 0.f, 250.f),
+        ECC_Visibility, GroundQuery);
+    SelectionRing->DecalSize = FVector(64.f, RadiusCm, RadiusCm);
+    SelectionRing->SetWorldLocation((bGroundHit ? GroundHit.ImpactPoint : BoundsFoot) + FVector(0.f, 0.f, 12.f));
     SelectionRingInstance->SetVectorParameterValue(TEXT("SelectionColor"), Binding->Request.SelectionTint);
     SelectionRing->MarkRenderStateDirty();
 }
@@ -340,7 +444,12 @@ void UDivineBeastsWorldHealthBarPresenter::RemoveActor(AActor* Actor)
     }
     if (auto* Root = Binding.TransformSource.Get()) Root->TransformUpdated.Remove(Binding.TransformHandle);
     if (auto* Identity = Binding.Identity.Get()) Identity->OnReadinessChanged().Remove(Binding.IdentityHandle);
-    if (auto* State = Binding.PlayerState.Get()) State->OnLifecycleChanged.Remove(Binding.PlayerStateHandle);
+    if (auto* State = Binding.PlayerState.Get())
+    {
+        State->OnLifecycleChanged.Remove(Binding.PlayerStateHandle);
+        State->OnPublicPlayerNameChanged.Remove(Binding.PlayerNameHandle);
+    }
+    if (auto* Character = Cast<ADivineBeastsCharacter>(Actor)) Character->OnPlayerStateChangedEvent().Remove(Binding.PawnPlayerStateHandle);
     if (auto* Combat = Binding.Combat.Get()) Combat->OnCombatObservationChanged().Remove(Binding.CombatObservationHandle);
     if (Actor) Actor->OnDestroyed.RemoveDynamic(this, &ThisClass::HandleActorDestroyed);
     if (Actor) Actor->OnEndPlay.RemoveDynamic(this, &ThisClass::HandleActorEndPlay);

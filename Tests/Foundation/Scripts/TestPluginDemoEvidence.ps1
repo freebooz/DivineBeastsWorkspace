@@ -18,17 +18,20 @@ foreach($name in @('DivineBeastsApplicationFlowClient','GamePlatformData','GameP
     $build.VerifiedModuleFiles[$name]=@{Path="Game/Plugins/Fixture/Binaries/Win64/$name.dll";SHA256='d'*64}
     $raw.runtime_origin.loaded_modules+=@{name=$name;path=$build.VerifiedModuleFiles[$name].Path;sha256='d'*64}
 }
-$tests=@('Definition','Catalog','Lifecycle','Menu','BirdScenario','Samples','Evidence','LaunchPolicy') | ForEach-Object { @{fullTestPath="DivineBeasts.PluginDemos.$_";state='Success'} }
+$tests=@('Definition','Catalog','Lifecycle','Menu','BirdScenario','Samples','Evidence','LaunchPolicy',
+    'World.ContractRejectsInjectedOperations','World.FactoryRejectsForeignFeature','World.FeatureWhitelist','World.FullRunIdentity',
+    'World.IdentifierAndAssetTypes','World.InteractionArgumentDefaults','World.NonFiniteAndRange','World.RotatedWaterAndClearedMiss','World.WrongWorldThenStop') |
+    ForEach-Object { @{fullTestPath="DivineBeasts.PluginDemos.$_";state='Success'} }
 $process=@{ExitCode=0;TimedOut=$false;Cleaned=$true;ProcessId=123}
 function Invoke-Contract($Raw=$raw,$Build=$build,$Launch=$launch,$Content=('f'*64),$Tests=$tests,$Process=$process) {
     Assert-PluginDemoPromotionContract -Raw $Raw -CurrentBuild $Build -RecordedBuild $build -Launch $Launch -ContentSHA256 $Content -ManifestSHA256 ('e'*64) -Cases $Tests -NativeProcess $Process
 }
 function Reject([scriptblock]$Action) { $caught=$false; try { & $Action } catch { $caught=$true }; Require $caught '非法合同被接受。' }
-Require ((Invoke-Contract) -eq 8) '合法独立合同不能绑定8个必需测试。'
+Require ((Invoke-Contract) -eq 17) '合法独立合同不能绑定17个必需测试。'
 # EditorGame的-game不加载Type=Editor审核模块；完整Editor收据含它不意味着运行也必须加载它。
 # 保留完整构建摘要和后续Review组核对，只把运行所需模块与Editor测试模块的职责分开。
 $build.VerifiedModuleFiles.GamePlatformDeveloperTools=@{Path='Game/Plugins/GamePlatform/Diagnostics/GamePlatformDeveloperTools/Binaries/Win64/Review.dll';SHA256='a'*64}
-Require ((Invoke-Contract) -eq 8) '合法-game运行因未加载Editor审核模块而不能提升。'
+Require ((Invoke-Contract) -eq 17) '合法-game运行因未加载Editor审核模块而不能提升。'
 $changed=$raw | ConvertTo-Json -Depth 12 | ConvertFrom-Json -AsHashtable; $changed.runtime_origin.live_coding_state_verified=$false
 Reject { Invoke-Contract -Raw $changed }
 $changed=$raw | ConvertTo-Json -Depth 12 | ConvertFrom-Json -AsHashtable; $changed.runtime_origin.hot_reload_state_verified=$false
@@ -79,7 +82,7 @@ $changedTests=$tests | ConvertTo-Json -Depth 6 | ConvertFrom-Json -AsHashtable; 
 Reject { Invoke-Contract -Process @{ExitCode=0;TimedOut=$true;Cleaned=$true;ProcessId=123} }
 # 预期失败是可核验事实，不强改原始失败为成功；但仍须实际完成命令且清理成功。
 $changed=$raw | ConvertTo-Json -Depth 12 | ConvertFrom-Json -AsHashtable; $changed.raw_state.run_state=5; $changed.raw_state.terminal_result.status=2
-Require ((Invoke-Contract -Raw $changed) -eq 8) '预期失败被误改成不可审事实。'
+Require ((Invoke-Contract -Raw $changed) -eq 17) '预期失败被误改成不可审事实。'
 $temporary=Join-Path ([IO.Path]::GetTempPath()) ('PluginDemoEvidenceContract-'+[guid]::NewGuid().ToString('N'))
 try {
     $null=New-Item -ItemType Directory -Path $temporary

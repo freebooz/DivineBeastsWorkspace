@@ -352,7 +352,7 @@ paths:
         服务端从Bearer Access Token解析PlayerID和SessionID，并核对当前玩家资料中的selectedCharacterId及角色修订号。
         客户端只能声明目标体验和首选区域，不能声明GameServer、PlayerID、SessionID或目标Endpoint。
         返回的transferTicket仅供GamePlatformSession一次性交给安全传输层，不得写入URL、日志或长期持久化。
-        MainArena由MatchService比赛编排链路分配，不经过本接口。
+        MainArena由MatchService比赛编排链路分配。当前仍绑定竞技实例的玩家需要通过匹配迁移恢复或返回。
       security: [{bearerAuth: []}]
       requestBody:
         required: true
@@ -368,7 +368,7 @@ paths:
         '400': {$ref: '#/components/responses/InvalidRequest'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '404': {description: 玩家资料或角色不存在。}
-        '409': {description: 当前角色选择、角色修订或目标世界分配发生冲突。}
+        '409': {description: 当前角色选择、角色修订或目标世界分配发生冲突。WORLD_MATCH_MIGRATION_REQUIRED表示应使用当前比赛的权威迁移。}
         '413': {$ref: '#/components/responses/TooLarge'}
         '503': {$ref: '#/components/responses/Unavailable'}
 

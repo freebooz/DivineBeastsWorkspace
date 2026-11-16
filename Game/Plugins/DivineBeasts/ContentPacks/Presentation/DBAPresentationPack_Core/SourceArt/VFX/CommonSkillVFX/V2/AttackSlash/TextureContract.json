@@ -1,0 +1,24 @@
+{
+  "resolution": [
+    2048,
+    512
+  ],
+  "colorSRGB": true,
+  "maskSRGB": false,
+  "normalSRGB": false,
+  "noise": false,
+  "files": [
+    {
+      "file": "T_DBA_SlashV2_Color.png",
+      "sha256": "f7504d3418140750a9ab4dfb467fac6be00707b32cc8dd3510624f41132620e0"
+    },
+    {
+      "file": "T_DBA_SlashV2_Masks.png",
+      "sha256": "084c21b734517c15d3744b21358685d3a07b9c06801e6bcde2a910d20356be9a"
+    },
+    {
+      "file": "T_DBA_SlashV2_Normal.png",
+      "sha256": "89640d45b72b721e6d9c7f92009c74f7836bb7a46e8c0e0938a1ab7e56706bcc"
+    }
+  ]
+}

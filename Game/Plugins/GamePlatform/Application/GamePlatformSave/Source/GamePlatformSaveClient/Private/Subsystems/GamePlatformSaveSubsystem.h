@@ -3,12 +3,12 @@
 #include "Interfaces/IGamePlatformSaveService.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GamePlatformSaveSubsystem.generated.h"
+class FGamePlatformSaveProcessSlotLease; // 私有线程安全租约，只在.cpp构造；无需反射类型参与UHT。
 
 /**
  * GamePlatformSave（游戏平台本地存档）GameInstance级执行器。
- *
- * 公开调用和Provider迁移均只在Game Thread（游戏线程）执行；实际文件IO在线程池执行。
- * 同一逻辑Key同时只允许一个Load/Save/Delete，避免本地文件竞态。
+ * 公开调用和Provider迁移仅在Game Thread执行；实际文件IO在线程池执行。
+ * 同进程各GameInstance共用物理Key互斥租约，取消/销毁旧实例不提前释放后台IO占有。
  */
 UCLASS(Transient)
 class UGamePlatformSaveSubsystem final
@@ -49,6 +49,8 @@ private:
         FGamePlatformSaveRequestHandle Handle;
         FGamePlatformSaveKey Key;
         FString StableStorageId;
+        /** 本GI回调与后台任务共享的进程槽位占有；取消只能撤销回调，不能提前解锁磁盘IO。 */
+        TSharedPtr<FGamePlatformSaveProcessSlotLease, ESPMode::ThreadSafe> ProcessSlotLease;
         EGamePlatformSaveOperation Operation = EGamePlatformSaveOperation::Load;
         FGamePlatformSaveCallback Callback;
         TSharedPtr<IGamePlatformSaveProvider> ProviderSnapshot;

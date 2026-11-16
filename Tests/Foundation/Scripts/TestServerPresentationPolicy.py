@@ -51,6 +51,34 @@ class ConfigCoverageTests(unittest.TestCase):
                          '+MapsToCook=(FilePath="/DBAWorldPack_Village/Maps/L_Village_Start")'):
             self.assertIn(expected, text)
 
+    def test_server_profiles_remove_only_client_class_and_input_defaults(self):
+        base = ROOT / "Game/Config"
+        game = (base / "DefaultGame.ini").read_text(encoding="utf-8-sig")
+        inventory = next(line[1:] for line in game.splitlines()
+                         if line.startswith('+PrimaryAssetTypesToScan=(PrimaryAssetType="GamePlatformInventoryItemDefinition"'))
+        self.assertIn("InputData=/GamePlatformUI/Input/BP_GP_UIInputData.BP_GP_UIInputData_C", game)
+        self.assertIn("GameViewportClientClassName=/Script/CommonUI.CommonGameViewportClient",
+                      (base / "DefaultEngine.ini").read_text(encoding="utf-8-sig"))
+        for profile in PROFILES:
+            with self.subTest(profile=profile):
+                root = base / "Custom" / profile
+                self.assertIn("-" + inventory, (root / "DefaultGame.ini").read_text(encoding="utf-8-sig"))
+                self.assertIn("InputData=None", (root / "DefaultGame.ini").read_text(encoding="utf-8-sig"))
+                self.assertIn("GameViewportClientClassName=/Script/Engine.GameViewportClient",
+                              (root / "DefaultEngine.ini").read_text(encoding="utf-8-sig"))
+
+    def test_village_profiles_exclude_native_water_render_actors(self):
+        """只有明确的Village Cook边界剥离纯渲染WaterBody，保留权威水域和其他服务器角色。"""
+        base = ROOT / "Game/Config"
+        for profile in ("VillageServer", "VillageDevelopmentServer", "DedicatedServer"):
+            with self.subTest(profile=profile):
+                engine = (base / "Custom" / profile / "DefaultEngine.ini").read_text(encoding="utf-8-sig")
+                cooker = re.search(r"^\[/Script/UnrealEd.CookerSettings\]\n([^\[]*)", engine, re.M).group(1)
+                exclusions = re.findall(r"^\+ClassesExcludedOnDedicatedServer=(\w+)$", cooker, re.M)
+                self.assertEqual(exclusions.count("WaterBody"), int(profile != "DedicatedServer"))
+                self.assertNotIn("GamePlatformWaterRegion", exclusions)
+                self.assertNotIn("GamePlatformWaterPhysicsVolume", exclusions)
+
 
 class PolicyBehaviorTests(unittest.TestCase):
     """真实生产API的行为夹具；修改匹配/解析/生成语义会改变断言结果。"""
@@ -95,6 +123,7 @@ class PolicyBehaviorTests(unittest.TestCase):
             "/GamePlatformVFX/Water/Niagara/NS_GP_WaterRipple.uasset",
             "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_Lake.uasset",
             "/DBAWorldPack_Village/Water/Materials/MI_DBA_Village_Waterfall.uasset",
+            "/DBAWorldPack_Village/Water/Textures/T_DBA_Village_LakeMask.uasset",
             "/DBAWorldPack_Village/Water/Blueprints/BP_DBA_VillageLake.uasset",
             "/DBAWorldPack_Village/Water/Blueprints/BP_DBA_VillageRiver.uasset",
             "/DBAWorldPack_Village/Water/Blueprints/BP_DBA_VillageWaterfall.uasset",
@@ -103,6 +132,7 @@ class PolicyBehaviorTests(unittest.TestCase):
             # Stage已排除VFX整包仍不能代替Cook排除；检查真实Cook输入策略，两阶段缺一不可。
             self.assertIn("/GamePlatformVFX/Water", self.policy.cook_paths(profile))
             self.assertIn("/DBAWorldPack_Village/Water/Materials", self.policy.cook_paths(profile))
+            self.assertIn("/DBAWorldPack_Village/Water/Textures", self.policy.cook_paths(profile))
             self.assertIn("/DBAWorldPack_Village/Water/Blueprints", self.policy.cook_paths(profile))
             for package in visual_packages:
                 with self.subTest(profile=profile, package=package):
@@ -111,6 +141,32 @@ class PolicyBehaviorTests(unittest.TestCase):
                 "/DBAWorldPack_Village/Maps/L_Village_Start.umap", profile))
             self.assertFalse(self.policy.is_forbidden(
                 "/Game/Development/DivineBeasts/Abilities/DA_Dev.uasset", profile))
+
+    def test_wind_review_leaf_is_stripped_but_formal_village_remains(self):
+        raw = copy.deepcopy(self.raw)
+        raw['CookDirectories'] = [row for row in raw['CookDirectories']
+                                  if row['PackagePath'] != '/DBAWorldPack_Village/Development/Wind']
+        source = 'Game/Plugins/DivineBeasts/ContentPacks/Worlds/DBAWorldPack_Village/Content/Development/Wind'
+        raw['CookDirectories'].append({'PackagePath': '/DBAWorldPack_Village/Development/Wind',
+            'SourceDirectory': source, 'Profiles': 'AllServers',
+            'Availability': 'Present' if (ROOT / source).is_dir() else 'LegacyAbsent', 'Reason': '独立植物风审核夹具测试'})
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'policy.json'; path.write_text(json.dumps(raw), encoding='utf-8')
+            accepted = self.api.load_policy(path, ROOT)
+        self.assertTrue(accepted.is_forbidden('/DBAWorldPack_Village/Development/Wind/Maps/Review.umap', 'DedicatedServer'))
+        self.assertFalse(accepted.is_forbidden('/DBAWorldPack_Village/Maps/L_Village_Start.umap', 'DedicatedServer'))
+
+    def test_resource_owner_migration_strips_review_history_and_vendor_only(self):
+        packages=('/DBAWorldPack_Village/Development/Terrain/Production10/M_DBA_Terrain_Production10.uasset',
+            '/DBAPresentationPack_Core/Development/History/BirdFlock/Meshes/Old.uasset',
+            '/Game/Development/Vendor/PN_OpenWorldFoliage/Maps/Showroom.umap',
+            '/DBAFoliagePack_Core/Vendor/PN_OpenWorldFoliage/Meshes/openWorld_grass_01_01_01.uasset',
+            '/DBAPresentationPack_Core/Textures/Terrain/Production10/T_DBA_Terrain_Grass_BaseColor_V3.uasset')
+        for profile in PROFILES:
+            for package in packages:
+                self.assertTrue(self.policy.is_forbidden(package,profile),package)
+            self.assertFalse(self.policy.is_forbidden('/DBAWorldPack_Village/Maps/L_Village_Start.umap',profile))
+            self.assertFalse(self.policy.is_forbidden('/DBAWorldPack_Village/Terrain/M_DBA_VillageLandscape.uasset',profile))
 
     def test_wolf_visual_leaf_is_stripped_but_ai_and_map_remain(self):
         """狼的外观不得把客户端动画模块带入专服；AI和真实导航地图必须保留。"""
@@ -121,6 +177,19 @@ class PolicyBehaviorTests(unittest.TestCase):
                 for package in ("/DBAWorldPack_Village/AI/DA_DBA_VillageWolfAI.uasset",
                                 "/DBAWorldPack_Village/Maps/L_Village_Start.umap"):
                     self.assertFalse(self.policy.is_forbidden(package, profile))
+
+    def test_forest_server_parent_remap_preserves_world_assets(self):
+        for profile in PROFILES:
+            engine = (ROOT / f'Game/Config/Custom/{profile}/DefaultEngine.ini').read_text(encoding='utf-8-sig')
+            self.assertIn('[CoreRedirects]', engine)
+            self.assertIn('OldName="/DBAFoliagePack_Core/Foliage/Materials/M_DBA_Foliage_PrototypeTree.M_DBA_Foliage_PrototypeTree"', engine)
+            self.assertIn('NewName="/DBAWorldPack_Village/PCG/HillsideForest/Materials/M_DBA_Review_TreeSimple.M_DBA_Review_TreeSimple"', engine)
+            self.assertNotIn('MatchSubstring=true', engine)
+            for package in ('/DBAWorldPack_Village/PCG/HillsideForest/Materials/MI_DBA_Review_Bark.uasset',
+                            '/DBAWorldPack_Village/PCG/HillsideForest/SM_DBA_Review_WideCrown.uasset',
+                            '/DBAWorldPack_Village/PCG/HillsideForest/DA_DBA_HillsideForest.uasset',
+                            '/DBAWorldPack_Village/Maps/L_Village_Start.umap'):
+                self.assertFalse(self.policy.is_forbidden(package, profile))
 
     def test_unknown_schema_and_unknown_fields_are_rejected(self):
         self.rejected_policy(lambda raw: raw.update(SchemaVersion=99))
@@ -268,6 +337,16 @@ class PolicyBehaviorTests(unittest.TestCase):
         # 三profile共用DedicatedServer的Pak收据，最终产物禁入集合必须一致。
         for profile in PROFILES:
             self.assertTrue(self.policy.is_forbidden("/Game/Development/DivineBeasts/Abilities/UI/Profile.uasset", profile))
+
+    def test_client_input_and_known_editor_plugins_are_rejected_from_final_server(self):
+        for profile in PROFILES:
+            with self.subTest(profile=profile):
+                self.assertIn("/GamePlatformUI/Input", self.policy.cook_paths(profile))
+                for path in ("/GamePlatformUI/Input/DT_GP_UIActions.uasset",
+                             "../../../Engine/Plugins/Fab/Fab.uplugin",
+                             "../../../Engine/Plugins/Bridge/Config/DefaultBridge.ini"):
+                    self.assertTrue(self.policy.is_forbidden(path, profile), path)
+                self.assertFalse(self.policy.is_forbidden("../../../Engine/Plugins/Editor/SpeedTreeImporter/Content/SpeedTree9/SpeedTreeMaster.uasset", profile))
 
     def test_foundation_cooker_uses_distinct_add_tokens_without_clear(self):
         args = self.policy.cooker_arguments("FoundationStandalone")

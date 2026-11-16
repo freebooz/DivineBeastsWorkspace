@@ -5,11 +5,13 @@
 #include "CommonActivatableWidget.h"
 #include "GamePlatformUITypes.h"
 #include "Styling/GamePlatformUIThemeTypes.h"
+#include "Input/GamePlatformUIWindowDragSettings.h"
 #include "GamePlatformActivatableWidgetBase.generated.h"
 
 class UGamePlatformUIThemeBinding;
 class UGamePlatformUIAdaptiveSubsystem;
 class UGamePlatformViewModelBase;
+class UGamePlatformUIWindowDrag;
 
 /**
  * UGamePlatformActivatableWidgetBase（游戏平台可激活用户界面基类）。
@@ -31,6 +33,10 @@ class GAMEPLATFORMUICLIENT_API UGamePlatformActivatableWidgetBase
     GENERATED_BODY()
 
 public:
+    /** 页面/模态窗口继承同一拖拽合同；默认关闭，仅内容资产声明窗口边界与移动组。 */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="UI|Window")
+    FGamePlatformUIWindowDragSettings WindowDrag;
+
     /** 默认空数组保持旧页面不变；名称只引用自身WidgetTree，不更改按钮类型或业务命令。 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="UI|Theme")
     TArray<FGamePlatformUIWidgetStyleBinding> ThemeBindings;
@@ -51,6 +57,15 @@ public:
     FGamePlatformUIAdaptiveContext GetAdaptiveContext() const;
 
 protected:
+    virtual int32 NativePaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& CullingRect,
+        FSlateWindowElementList& Elements, int32 Layer, const FWidgetStyle& Style, bool bParentEnabled) const override;
+    virtual FReply NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event) override;
+    virtual FReply NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event) override;
+    virtual FReply NativeOnMouseButtonUp(const FGeometry& Geometry, const FPointerEvent& Event) override;
+    virtual void NativeOnMouseCaptureLost(const FCaptureLostEvent& Event) override;
+    virtual void NativeOnFocusLost(const FFocusEvent& Event) override;
+    virtual void NativeDestruct() override;
+
     /** 页面激活时启动 ViewModel 生命周期并绑定事件。 */
     virtual void NativeOnActivated() override;
 
@@ -81,6 +96,10 @@ protected:
     void BP_OnAdaptiveContextChanged(FGamePlatformUIAdaptiveContext Context);
 
 private:
+    /** 与普通 UI 基类复用同一实现；每页独立状态，失活立即取消捕获。 */
+    UPROPERTY(Transient)
+    TObjectPtr<UGamePlatformUIWindowDrag> WindowDragState = nullptr;
+
     /** 激活期间接收主题事件，失活保留实际绘制类引用，重新激活使用最新主题。 */
     UPROPERTY(Transient)
     TObjectPtr<UGamePlatformUIThemeBinding> ThemeBinding = nullptr;

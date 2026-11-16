@@ -31,9 +31,6 @@
 
 先前正式Server构建遭遇MSVC C1001编译器内部错误以及UE Chaos模块的访问冲突，不能宣称Server全部通过。SSLM_CinematicCameraReview_20261016.png为前一版白模演示截图，不代表新增UMG完成视觉验收。
 
-## 下一步
-
-其他开发任务保存并关闭正在使用的UE Editor后，重新编译DivineBeastsDemoClient的Editor DLL，在同一正式工程重新运行Review地图，录制带真实可点击UMG面板的界面及使用光圈、焦点、重置的证据；之后完善正式业务摄像机接线、多人及性能门禁。所有资源只允许由真实UE5.8生成。
 ## 2026-10-16 深化验证补录（20:50之后）
 
 本次仍只使用E:/work/2026/DivineBeastsWorkspace以及正式UE5.8引擎；审查的是独立电影镜头演示、项目角色预览切换和项目已有开发模式接入，并不替换竞技镜头。

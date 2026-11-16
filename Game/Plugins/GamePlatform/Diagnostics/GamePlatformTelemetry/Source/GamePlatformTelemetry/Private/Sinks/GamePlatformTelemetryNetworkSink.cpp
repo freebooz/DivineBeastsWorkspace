@@ -236,34 +236,60 @@ void FGamePlatformTelemetryNetworkSink::ScheduleRetry(
 
     const float Delay = ComputeRetryDelay(Batch.BatchId, NextAttempt, RetryAfterSeconds);
     TWeakPtr<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe> WeakThis = AsShared();
+    // 只追踪尚未触发的Ticker，连续产生新Batch时不可积累已执行的历史Handle。
+    const TSharedRef<FTSTicker::FDelegateHandle, ESPMode::ThreadSafe> HandleIdentity =
+        MakeShared<FTSTicker::FDelegateHandle, ESPMode::ThreadSafe>();
+    const TSharedRef<FGamePlatformTelemetrySubmitCompletion, ESPMode::ThreadSafe> CompletionHolder =
+        MakeShared<FGamePlatformTelemetrySubmitCompletion, ESPMode::ThreadSafe>(MoveTemp(Completion));
     const FTSTicker::FDelegateHandle Handle = FTSTicker::GetCoreTicker().AddTicker(
         FTickerDelegate::CreateLambda(
             [WeakThis,
+             HandleIdentity,
              Batch = MoveTemp(Batch),
              NextAttempt,
              FirstAttemptSeconds,
-             Completion = MoveTemp(Completion)](float) mutable
+             CompletionHolder](float) mutable
             {
                 if (TSharedPtr<FGamePlatformTelemetryNetworkSink, ESPMode::ThreadSafe> Self = WeakThis.Pin())
                 {
+                    {
+                        FScopeLock Lock(&Self->Mutex);
+                        Self->RetryTickerHandles.Remove(*HandleIdentity);
+                    }
+                    // 移除已经触发的旧句柄后才安排下一次退避，确保每批至多一个未触发Ticker。
                     Self->SubmitAttempt(
                         MoveTemp(Batch),
                         NextAttempt,
                         FirstAttemptSeconds,
-                        MoveTemp(Completion));
+                        MoveTemp(*CompletionHolder));
                 }
                 return false;
             }),
         Delay);
-
-    FScopeLock Lock(&Mutex);
-    if (!bShuttingDown)
+    if (!Handle.IsValid())
     {
-        RetryTickerHandles.Add(Handle);
+        // 调度失败不能留下永远占位的PendingBatch或吞掉原调用方Completion。
+        FinishPending(false, TEXT("retry_schedule_failed"), MoveTemp(*CompletionHolder));
+        return;
     }
-    else
+    *HandleIdentity = Handle;
+
+    bool bCancelledByShutdown = false;
+    {
+        FScopeLock Lock(&Mutex);
+        if (!bShuttingDown)
+        {
+            RetryTickerHandles.Add(Handle);
+        }
+        else
+        {
+            bCancelledByShutdown = true;
+        }
+    }
+    if (bCancelledByShutdown)
     {
         FTSTicker::GetCoreTicker().RemoveTicker(Handle);
+        FinishPending(false, TEXT("sink_shutdown"), MoveTemp(*CompletionHolder));
     }
 }
 
@@ -364,11 +390,16 @@ void FGamePlatformTelemetryNetworkSink::Shutdown(
     float BudgetSeconds)
 {
     check(IsInGameThread());
-    CancelRetryTickers();
 
     bool bNeedsBudget = false;
     {
         FScopeLock Lock(&Mutex);
+        // Shutdown可能由外部回调同步重入。第一代关闭已负责取消、预算与CancelAll；
+        // 再次调用不能重复创建Shutdown Ticker或提前覆盖已安排的关闭期限。
+        if (bShuttingDown)
+        {
+            return;
+        }
         bShuttingDown = true;
         bStarted = false;
         bNeedsBudget = PendingBatches > 0 && BudgetSeconds > 0.0f;
@@ -376,6 +407,8 @@ void FGamePlatformTelemetryNetworkSink::Shutdown(
             ? EGamePlatformTelemetrySinkHealth::Degraded
             : EGamePlatformTelemetrySinkHealth::Stopped;
     }
+    // 先禁止后续重试，随后移除未触发Ticker；锁外执行原生RemoveTicker避免递归。
+    CancelRetryTickers();
 
     if (!bNeedsBudget)
     {
@@ -392,6 +425,11 @@ void FGamePlatformTelemetryNetworkSink::Shutdown(
             return false;
         }),
         FMath::Max(0.01f, BudgetSeconds));
+    if (!ShutdownTickerHandle.IsValid())
+    {
+        // 无法安排预算到期回调时立即进行有界清理，不能永久卡在Degraded。
+        FinalizeShutdownAfterBudget();
+    }
 }
 
 void FGamePlatformTelemetryNetworkSink::FinalizeShutdownAfterBudget()

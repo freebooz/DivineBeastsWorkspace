@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "reference": "C:/Users/Administrator/AppData/Local/Temp/codex-clipboard-06db9747-799d-4a2c-be7b-b47fe48c49bb.png",
+  "source_size": [
+    640,
+    180
+  ],
+  "default_size": [
+    213,
+    60
+  ],
+  "minimum_size": [
+    142,
+    40
+  ],
+  "export_size": [
+    213,
+    60
+  ],
+  "margin": [
+    0.16,
+    0.44,
+    0.16,
+    0.44
+  ],
+  "mount": "/DBAUIPack_Core/UI",
+  "material": "/DBAUIPack_Core/UI/Materials/Buttons/M_DBA_UI_CloudButton",
+  "families": [
+    "Primary",
+    "Secondary"
+  ],
+  "states": {
+    "Normal": {
+      "Brightness": 1,
+      "Saturation": 1,
+      "Opacity": 1
+    },
+    "Hovered": {
+      "Brightness": 1.12,
+      "Saturation": 1,
+      "Opacity": 1
+    },
+    "Pressed": {
+      "Brightness": 0.78,
+      "Saturation": 0.96,
+      "Opacity": 1
+    },
+    "Disabled": {
+      "Brightness": 0.62,
+      "Saturation": 0.12,
+      "Opacity": 0.72
+    }
+  },
+  "generated": [
+    {
+      "id": "Primary",
+      "source": "Saved/Validation/GenericCloudButtons20261103/GeneratedSources/Primary.png"
+    },
+    {
+      "id": "Secondary",
+      "source": "Saved/Validation/GenericCloudButtons20261103/GeneratedSources/Secondary.png"
+    }
+  ],
+  "prompts": [
+    {
+      "id": "Primary",
+      "prompt": "Extract and reconstruct ONE button from the provided SSLM fantasy game UI reference as a clean reusable game UI asset. Keep the reference button's exact elegant horizontal capsule shape, finely polished warm GOLD double rim, rounded ends, subtle symmetrical flowing cloud scrolls inside the lower corners, rich glasslike colored interior, broad continuous soft highlights. Remove ALL Chinese text completely and fill the center seamlessly with the same interior material, no ghost letters. Remove wood, other UI, nearby border strips and decorative jewels. This button is a reusable text-free background; no text, numbers, symbols or icons anywhere. Exquisite AAA game finish, clean polished satin gold, no noise, grit, dense engraving, speckled highlights, excessive sharpening or bloom. Fixed front orthographic view, one complete horizontal button only, visible aspect approximately3.6:1, a very thin transparent margin, centered. Genuine transparent RGBA outside button, antialiased edge, no surrounding shadow, dark matte or checkerboard. Preserve opaque dark interior. Reference image contains two buttons; ONLY produce the specified button, never a two-button sheet. Output a high-resolution clean sprite that will be normalized to640x180 for production.\nSELECT LEFT BUTTON: clear vivid emerald GREEN interior, deep dark emerald center and bright soft green inner highlights, warm gold rim. No 确认 characters."
+    },
+    {
+      "id": "Secondary",
+      "prompt": "Extract and reconstruct ONE button from the provided SSLM fantasy game UI reference as a clean reusable game UI asset. Keep the reference button's exact elegant horizontal capsule shape, finely polished warm GOLD double rim, rounded ends, subtle symmetrical flowing cloud scrolls inside the lower corners, rich glasslike colored interior, broad continuous soft highlights. Remove ALL Chinese text completely and fill the center seamlessly with the same interior material, no ghost letters. Remove wood, other UI, nearby border strips and decorative jewels. This button is a reusable text-free background; no text, numbers, symbols or icons anywhere. Exquisite AAA game finish, clean polished satin gold, no noise, grit, dense engraving, speckled highlights, excessive sharpening or bloom. Fixed front orthographic view, one complete horizontal button only, visible aspect approximately3.6:1, a very thin transparent margin, centered. Genuine transparent RGBA outside button, antialiased edge, no surrounding shadow, dark matte or checkerboard. Preserve opaque dark interior. Reference image contains two buttons; ONLY produce the specified button, never a two-button sheet. Output a high-resolution clean sprite that will be normalized to640x180 for production.\nSELECT RIGHT BUTTON: deep cyan-leaning OCEAN SEA BLUE interior, dark teal center and soft cyan inner highlights, warm gold rim. No 取消 characters. Its geometry should match the left button's capsule family."
+    }
+  ]
+}

@@ -85,8 +85,11 @@ def check_ownership() -> None:
            "DOREPLIFETIME_CONDITION(" in runtime and "COND_OwnerOnly" in runtime
            and "ReplicatedUsing=OnRep_LoadoutState" in state)
     verify("异步主资产获取沿用平台GamePlatformData租约",
-           "AcquireDefinition(" in runtime and "ReleaseDefinition(DefinitionLease)" in runtime
-           and "GetLeaseState(" in runtime)
+           "AcquireDefinition(" in runtime and "GetLeaseState(" in runtime
+           # 撤销时先摘除组件当前租约，外部回调不得释放后继请求的新租约。
+           and "const FGamePlatformDataLease LeaseToRelease = DefinitionLease" in runtime
+           and "DefinitionLease = {}" in runtime
+           and "ReleaseDefinition(LeaseToRelease)" in runtime)
     verify("UI只读取复制快照而不授予技能",
            "GetLoadoutStateRef()" in ui and "AcquireResources(" in ui
            and "ReleaseResources(" in ui
@@ -197,6 +200,10 @@ def check_runtime_safety() -> None:
            "GetActiveEffectsTimeRemainingAndDuration" in ui and
            "MakeQuery_MatchAnyOwningTags" in ui and
            "FMath::Clamp(Pair.Key / Pair.Value" in ui)
+    panel_cpp = read(CLIENT_UI / "Private/Panels/Combat/DivineBeastsAbilityBarPanel.cpp")
+    verify("同数值冷却重置仍刷新材质截止时钟",
+           "!FMath::IsNearlyEqual(A.CooldownEndsAtAppSeconds, B.CooldownEndsAtAppSeconds" in ui
+           and "Binding.Widget->ApplyOverlayTiming(EndsAtAppSeconds, DurationSeconds)" in panel_cpp)
 
     verify("技能界面阻止错误AbilityDefinitionId跨技能冒用",
            "Configured->AbilityDefinitionId.PrimaryAssetName != Grant.AbilityId" in ui)
@@ -247,6 +254,18 @@ def check_runtime_safety() -> None:
            "ActualCooldownSeconds, Balance.CooldownSeconds, 0.01f" in grant and
            "EGameplayEffectDurationType::Instant" in grant and
            "EGameplayEffectDurationType::HasDuration" in grant)
+    verify("服务器二次核对技能集合UClass与执行策略",
+           "Set.GetPrimaryAssetId() != ExpectedSetAssetId" in grant
+           and "NewAbilityClasses.Contains(AbilityClass)" in grant
+           and "AbilityClass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists)" in grant
+           and "GetInstancingPolicy() == EGameplayAbilityInstancingPolicy::NonInstanced" in grant
+           and "GetNetExecutionPolicy() == EGameplayAbilityNetExecutionPolicy::LocalOnly" in grant)
+    verify("技能成本与冷却GE禁止未声明副作用",
+           "!CostEffect->Executions.IsEmpty()" in grant
+           and "CostEffect->FindComponent(UGameplayEffectComponent::StaticClass())" in grant
+           and "!CooldownEffect->Modifiers.IsEmpty()" in grant
+           and "!CooldownEffect->Executions.IsEmpty()" in grant
+           and "!FMath::IsNearlyZero(CooldownPeriod)" in grant)
 
     verify("UI额外以死亡眩晕和非普攻沉默标志禁用技能",
            "ASC->HasMatchingGameplayTag" in ui and
@@ -278,7 +297,63 @@ def check_runtime_safety() -> None:
            and "LineTraceSingleByChannel" in ability
            and "Source->HasAuthority()" in ability
            and "HitContext.bHasValidatedHit = true" in ability
-           and "AuthorityApplyConfiguredDamage(Hit.GetActor()" in ability)
+           # 同项目另一会话已将Hit改为指针，新增Pawn对象射线补偿；两种实现均须服务端
+           # bHasValidatedHit、真实命中Actor与唯一Combat结算，不能因局部变量命名升级误报失败。
+           and ('AuthorityApplyConfiguredDamage(Hit.GetActor()' in ability or
+                'AuthorityApplyConfiguredDamage(Hit->GetActor()' in ability))
+
+
+
+def placeholder_visual_contract(visual: str, policy: str, placeholder: str) -> dict[str, bool]:
+    """按真实的表现桥＋独立白名单合同审查；不能靠旧CPP的字面字符串位置报通过。
+
+    这里只证明源码门禁仍存在；运行时World包装、GAS资格和VFX资产仍须UE原生验证。
+    """
+    visible = " ".join(visual.split())
+    permitted = " ".join(policy.split())
+    heroes_match = re.search(
+        r"static const TCHAR\* const Heroes\[\]\s*=\s*\{(.*?)\};", policy, re.S)
+    heroes = re.findall(r'TEXT\("([a-z]+)"\)', heroes_match.group(1)) if heroes_match else []
+    expected_heroes = [
+        "rat", "ox", "tiger", "rabbit", "dragon", "snake",
+        "horse", "goat", "monkey", "rooster", "dog", "boar"
+    ]
+    village = all(text in visible for text in (
+        '#include "Development/DivineBeastsPlaceholderMagicVisualPolicy.h"',
+        "DivineBeastsPlaceholderMagicVisualPolicy::IsVillageWorld(World)",
+        "(!bDevelopment && !bPlaceholderVillage)",
+        "World->GetNetMode() == NM_DedicatedServer",
+    )) and all(text in permitted for text in (
+        'TEXT("/DBAWorldPack_Village/Maps/L_Village_Start")',
+        'TEXT("/DBAWorldPack_Village/Maps/UEDPIE_")',
+        'TEXT("_L_Village_Start")',
+        "PieTail.Left(PieTail.Len() - MapSuffix.Len()).IsNumeric()",
+        "PackageName == VillagePath",
+    ))
+    identity = heroes == expected_heroes and all(text in permitted for text in (
+        "inline bool IsApprovedPlaceholderSpell(FName AbilityId, FName Magic)",
+        'Magic != TEXT("Fireball")',
+        'Magic != TEXT("Frostbolt")',
+        'Magic != TEXT("ArcaneMissiles")',
+        'FString(TEXT("_placeholder_"))',
+        'TEXT("@1")',
+        'Value == FString(TEXT("dba.ability.")) + Hero + Suffix',
+    )) and all(text in visible for text in (
+        "DivineBeastsPlaceholderMagicVisualPolicy::IsApprovedPlaceholderSpell(Snapshot.AbilityId, Name)",
+        "Snapshot.AbilityId",
+    )) and all(text in placeholder for text in (
+        'CastStyle = TEXT("DBA.Development.Fireball")',
+        'CastStyle = TEXT("DBA.Development.Frostbolt")',
+        'CastStyle = TEXT("DBA.Development.ArcaneMissiles")',
+        "EGameplayAbilityNetExecutionPolicy::ServerOnly",
+    ))
+    development = all(text in visible for text in (
+        "const bool bDevelopment = UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess()",
+        "(!bDevelopment && !bPlaceholderVillage)",
+        "!UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess() &&",
+        "!DivineBeastsPlaceholderMagicVisualPolicy::IsApprovedPlaceholderSpell(Snapshot.AbilityId, Name)",
+    ))
+    return {"village_identity": village and identity, "development_gate": development}
 
 
 def check_assets_and_policy() -> None:
@@ -286,17 +361,15 @@ def check_assets_and_policy() -> None:
     cfg = read(ROOT / "Game/Config/DefaultGame.ini")
     verify("GamePlatformDefinition 扫描项目技能逻辑目录",
            '(Path="/DBAGameplay/Abilities")' in cfg)
-    # 仅在第三层扩展临时魔法的视觉回放；开发技能本身仍不能进入正式准入。
+    # 村地图身份和精确生肖白名单已迁至独立策略头；只验证真实调用链，不复活旧位置断言。
     visual = read(BASE / "DBAClient/Source/DivineBeastsPresentationClient/Private/"
                   "Adapters/DivineBeastsDevelopmentMagicPresentation.cpp")
+    policy = read(BASE / "DBAClient/Source/DivineBeastsPresentationClient/Private/"
+                  "Development/DivineBeastsPlaceholderMagicVisualPolicy.h")
     placeholder = read(ABILITIES / "Private/Abilities/DivineBeastsPlaceholderGameplayAbility.cpp")
+    visual_contract = placeholder_visual_contract(visual, policy, placeholder)
     verify("正式Village占位冰火奥术仅以明确12生肖技能身份触发客户端Niagara",
-           "IsApprovedPlaceholderSpell(" in visual
-           and "DBAWorldPack_Village/Maps/L_Village_Start" in visual
-           and "Snapshot.AbilityId" in visual
-           and "bPlaceholderVillage" in visual
-           and 'TEXT("_placeholder_")' in visual
-           and 'CastStyle = TEXT("DBA.Development.Fireball")' in placeholder)
+           visual_contract["village_identity"])
     client_cook = read(ROOT / "Game/Config/Custom/FrontEndClient/DefaultGame.ini")
     server_cook = read(ROOT / "Game/Config/Custom/VillageServer/DefaultGame.ini")
     verify("临时法术Niagara和图标仅客户端显式Cook，Village服务器仍排除视觉资源",
@@ -304,9 +377,7 @@ def check_assets_and_policy() -> None:
            and '+DirectoriesToAlwaysCook=(Path="/DBAUIPack_Core/UI/Abilities/MagicTests")' in client_cook
            and '+DirectoriesToNeverCook=(Path="/DBAPresentationPack_Core/VFX/DevelopmentMagic")' in server_cook)
     verify("开发魔法授权开关未因正式占位技能而删除",
-           "UDivineBeastsDevelopmentMagicDefinition::IsDevelopmentEnabledForCurrentProcess()" in visual
-           and "!IsApprovedPlaceholderSpell(Snapshot.AbilityId, Name)" in visual
-           and "bDevelopment" in visual)
+           visual_contract["development_gate"])
     old_rules = read(ROOT / "AGENTS.md")
     verify("尊重现行已取消玩法禁令",
            "禁止恢复" in old_rules and "Element" in old_rules and "共鸣" in old_rules)

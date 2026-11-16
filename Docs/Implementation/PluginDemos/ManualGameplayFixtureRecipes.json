@@ -1,0 +1,164 @@
+{
+  "reuse": [
+    {
+      "path": "/Engine/BasicShapes/Cube.Cube",
+      "purpose": "Data-leased owned fixture/projectile/obstacle markers; geometric diagnostics, no new magic art"
+    },
+    {
+      "path": "/DBAGameplay/Definitions/DA_Hero_Zodiac_Rat.DA_Hero_Zodiac_Rat",
+      "purpose": "actual Hero.Zodiac.Rat identity; initializer owns its real Data lease; root must cold-read DefinitionId,version,revision"
+    },
+    {
+      "path": "/DBAGameplay/Abilities/Placeholders/DA_DBA_Rat_PlaceholderAbilitySet.DA_DBA_Rat_PlaceholderAbilitySet",
+      "purpose": "actual AbilitySet fields validation only; not a grant/revoke implementation"
+    },
+    {
+      "path": "/DBAContentPack_Common/Mannequins/DBA/Meshes/SKM_Manny_Simple.SKM_Manny_Simple",
+      "purpose": "canonical existing Manny; no mesh copy"
+    },
+    {
+      "path": "/DBAContentPack_Common/Mannequins/DBA/Animations/ABP_DBA_WorldLocomotion.ABP_DBA_WorldLocomotion_C",
+      "purpose": "existing native graph; root cold-read must confirm GPLocomotion-compatible parent and skeleton, keep existing graph"
+    }
+  ],
+  "create": [
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Gameplay/DA_DBA_ManualAI.DA_DBA_ManualAI",
+      "class": "/Script/GamePlatformAI.GamePlatformAIDefinition",
+      "properties": {
+        "AIDefinitionId": "Demo.Manual.AI",
+        "BrainType": "None",
+        "HomePolicy.PatrolRadius": 0,
+        "HomePolicy.LeashRadius": 1000,
+        "HomePolicy.ReturnHomeAcceptanceRadius": 100,
+        "AttackRange": 180,
+        "PreferredRange": 140,
+        "PrimaryAbilityTag": "",
+        "RequiredDefinitions": []
+      },
+      "instruction": "Use native defaults for Perception/TargetSelection/Update; ValidateDefinition must succeed. BrainType None exercises existing native decision/perception; base native attack stays false. No new attack implementation."
+    },
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Gameplay/M_DBA_ManualHitFlash.M_DBA_ManualHitFlash",
+      "class": "/Script/Engine.Material",
+      "properties": {
+        "BlendMode": "Translucent",
+        "ShadingModel": "Unlit",
+        "TwoSided": true
+      },
+      "graph": "Constant3Vector(1,1,1) -> EmissiveColor; Constant(.6) -> Opacity; no SceneColor/noise/new magic VFX",
+      "instruction": "Compile/save/reload. Material domain Surface; native Overlay only on owned marker mesh; duration max 2/60 second."
+    },
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Gameplay/DA_DBA_ManualPawn.DA_DBA_ManualPawn",
+      "class": "/Script/GamePlatformGameplay.GamePlatformPawnDefinition",
+      "properties": {
+        "LogicalId": {
+          "Namespace": "pawn.demo",
+          "Name": "gameplay",
+          "LogicalVersion": 1
+        },
+        "DataVersion": {
+          "SchemaVersion": 1,
+          "ContentRevision": 1
+        },
+        "PawnClass": "/Script/Engine.DefaultPawn",
+        "SpawnEnvelopeHalfExtentCentimeters": [
+          42,
+          42,
+          96
+        ],
+        "PawnPurpose": "OfflineManualSphere",
+        "RequiredDefinitions": [],
+        "SharedDefinitions": []
+      },
+      "validation": "ValidateDefinition Success; GetPrimaryAssetId == GamePlatformDefinition:pawn.demo.gameplay@1; native DefaultPawn existing sphere visible to Player0, isolated controller has no LocalPlayer. Class is preloaded through GameplayShared."
+    },
+    {
+      "path": "/DBAUIPack_Core/Development/PluginDemos/Fixtures/Gameplay/DA_DBA_ManualExperience.DA_DBA_ManualExperience",
+      "class": "/Script/GamePlatformGameplay.GamePlatformExperienceDefinition",
+      "properties": {
+        "LogicalId": {
+          "Namespace": "experience.demo",
+          "Name": "gameplay",
+          "LogicalVersion": 1
+        },
+        "DataVersion": {
+          "SchemaVersion": 1,
+          "ContentRevision": 1
+        },
+        "SupportedWorldIds": [
+          {
+            "Namespace": "world.demo",
+            "Name": "hub",
+            "LogicalVersion": 1
+          }
+        ],
+        "Purpose": "OfflineManualGameplay",
+        "DefaultPawnDefinitionId": "GamePlatformDefinition:pawn.demo.gameplay@1",
+        "RequiredDefinitions": [
+          "GamePlatformDefinition:pawn.demo.gameplay@1"
+        ],
+        "SharedDefinitions": [
+          "GamePlatformDefinition:pawn.demo.gameplay@1"
+        ],
+        "ServerDefinitions": [],
+        "SpawnPolicyId": "DemoGameplayFixture",
+        "AssemblyEntries": [],
+        "RespawnPolicy": "ServerAuthorized",
+        "bDevelopmentOnly": true,
+        "PlayerExperienceTimeoutSeconds": 30,
+        "SpawnTimeoutSeconds": 30,
+        "ClientPreparationTimeoutSeconds": 60,
+        "MaximumWaitingPlayers": 1
+      },
+      "validation": "ValidateDefinition Success; PrimaryAssetId == GamePlatformDefinition:experience.demo.gameplay@1; current General scan already includes Fixtures; no new AssetManager or scan list."
+    }
+  ],
+  "fixture_native_class": "/Script/DivineBeastsDemoClient.DivineBeastsDemoGameplayFixture",
+  "fixture_instruction": "Spawned only by adapter after ManualHost Acquire; three transient real Authority ACharacters with native Capsule/Movement/ASC/Combat/Eligibility/Cast/AIState/AITarget. No placed instance or map override needed. Source (-350,100,100), target (0,100,100), alternate (350,100,100), adjust-if-clear collision. Player0/Hub GameMode/PlayerStart unchanged.",
+  "initializer_chain": [
+    "FGamePlatformCharacterInitializationExecutor::InitializeCharacter",
+    "unique FDivineBeastsCharacterSpawnInitializer (registered by DivineBeastsCharactersRuntime module)",
+    "existing/added UDivineBeastsCharacterComponent::AuthorityBindTrustedContext",
+    "component Data lease -> actual Hero definition -> ApplyDefinition -> OnReadinessChanged; no player session invented"
+  ],
+  "initializer_requirements": [
+    "real same-world Authority ACharacter already BeginPlay",
+    "registered Capsule/CharacterMovement/ASC/Combat; ASC ActorInfo bound to this Character",
+    "HeroId=Hero.Zodiac.Rat; SpawnGeneration=1; AvatarGeneration>=current Combat generation; bPersistentCharacterIdRequired=false",
+    "Data recognizes real Hero primary ID and validates Definition; native asset mismatch remains real failure",
+    "initialization acceptance does not grant PC/PS/Gameplay Active or bypass project activation gate"
+  ],
+  "native_validation": [
+    "Monolith create/compile/save/reload only by root",
+    "Cold-read exact object paths and parents and ValidateDefinition outcomes",
+    "Manual CreateFixture/Activate/Damage/Shield/Control; real movement visible in fixed Hub camera",
+    "Projectile select/move/switch selection/clear/invalidate/obstacle/cancel: preserve original target and collision rules; no artificial hit events",
+    "Animation LoadAnimation/Move/Jump/Stop; natural hitstop finish event; flash short expiry via existing subsystem. Stop destroys only owned meshes, never CancelAll foreign effects.",
+    "All GPU/audio/human checks remain pending; no new magical Niagara or general artistic expansion"
+  ],
+  "ui_authoring": "Root merge delta, regenerate real catalog and independent pages through existing Monolith author chain; no asset text files were generated.",
+  "gameplay_host": {
+    "native_mode": "/Script/DivineBeastsDemoClient.DivineBeastsDemoGameplayHostMode",
+    "startup_url": "/Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub?game=/Script/DivineBeastsDemoClient.DivineBeastsDemoGameplayHostMode",
+    "flags": [
+      "Hub真实启动URL为 /Game/Development/PluginDemos/Maps/L_DBA_PluginDemoHub?game=/Script/DivineBeastsDemoClient.DivineBeastsDemoGameplayHostMode；不修改Hub WorldSettings/PlayerStart",
+      "附加-DBAManualGameplayHost -FoundationGameplayOffline -FoundationWorld -DBAManualWorldHost；保留-DBAPluginDemo -DBAPluginDemoMap=不含query的原Hub路径 -GamePlatformManualFixture",
+      "复用既有WorldHost真实world.demo.hub@1及区域；Experience/Pawn夹具已原生创建保存重载。无生产Session/账号/后端写入",
+      "体验每World只Begin一次；Drain后原生Released不热重建，正常复测须重启新的独立Standalone World。"
+    ],
+    "no_asset_override": "Do not save a new WorldSettings/Map GameMode or touch PlayerStart. Explicit URL selects native real platform Mode only in isolated process. Local Player0 uses existing WorldPC and existing camera. Isolated fixture Controller/PS are separate actors without account or network connection.",
+    "world_owner": "existing UDivineBeastsDemoManualWorldHostSubsystem initializes same World once; no second GI/World service",
+    "authority": "mode creates one local offline context with exact Run+WorldGeneration+Controller identity; private authority validates every field, no constant allow/production session",
+    "spawn": "own Anchor; one candidate Transform(0,500,110), Source=own Anchor. Platform validates World/Experience/definition/collision and owns spawn/possess/preparation. No PlayerStart created/moved.",
+    "cleanup": "exact token: BeginExperienceDrain if this Run started it; unregister own Authority/SpawnPolicy; remove own PS event; destroy only own spawned Pawn, PS, Controller, Anchor. Failure retains handle/object for Stop retry. Experience Released is terminal for this World; next positive run needs fresh process."
+  },
+  "root_authored_evidence": [
+    "Gameplay.Fixtures.Authored.json",
+    "Gameplay.Fixtures.Readback.Cold.json",
+    "Gameplay.Reuse.NativeAudit.json",
+    "Gameplay.HostDefinitions.Authored.json"
+  ],
+  "root_status": "4 native assets saved; AI/HitFlash cold passed, Pawn/Experience cold pending; runtime/human pending"
+}

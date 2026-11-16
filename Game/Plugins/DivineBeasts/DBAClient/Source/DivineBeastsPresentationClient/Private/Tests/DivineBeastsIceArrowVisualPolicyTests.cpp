@@ -31,6 +31,14 @@ bool FDivineBeastsIceArrowVisualPolicyTest::RunTest(const FString&)
         IsApprovedPlaceholderSpell(TEXT("dba.ability.rat_placeholder_frostbolt@1"), TEXT("OtherSpell")));
     TestFalse(TEXT("旧版本身份不得获准"),
         IsApprovedPlaceholderSpell(TEXT("dba.ability.rat_placeholder_frostbolt@2"), TEXT("Frostbolt")));
+    TestTrue(TEXT("选中角色的控制槽临时映射仍播放既有冰箭"),
+        IsApprovedPlaceholderSpell(TEXT("dba.ability.rat_eight_shadow_snare@1"), TEXT("Frostbolt")));
+    TestTrue(TEXT("角色特色槽临时映射仍播放既有奥术飞弹"),
+        IsApprovedPlaceholderSpell(TEXT("dba.ability.rat_eight_fang_mark@1"), TEXT("ArcaneMissiles")));
+    TestTrue(TEXT("角色防御槽临时恢复具有确认治疗表现"),
+        IsApprovedPlaceholderSpell(TEXT("dba.ability.rat_eight_mist_guard@1"), TEXT("Healing")));
+    TestFalse(TEXT("映射技能不得串用其它法术样式"),
+        IsApprovedPlaceholderSpell(TEXT("dba.ability.rat_eight_shadow_snare@1"), TEXT("ArcaneMissiles")));
     return true;
 }
 #endif

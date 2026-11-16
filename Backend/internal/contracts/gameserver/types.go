@@ -44,14 +44,6 @@ const (
 	ArenaMode5v5 = divinebeastscatalog.ArenaModeTeam5v5
 )
 
-var arenaTeamSizes = map[string]int{
-	ArenaMode1v1: 1,
-	ArenaMode2v2: 2,
-	ArenaMode3v3: 3,
-	ArenaMode4v4: 4,
-	ArenaMode5v5: 5,
-}
-
 // RoleForExperience（根据体验解析服务器角色）读取由Shared ServerCatalog生成的正式角色映射。
 func RoleForExperience(experienceID string) (string, bool) {
 	roleID, ok := divinebeastscatalog.ExperienceServerRoles[experienceID]
@@ -60,8 +52,8 @@ func RoleForExperience(experienceID string) (string, bool) {
 
 // TeamSizeForArenaMode（获取竞技模式单队人数）返回1v1至5v5标准TeamSize。
 func TeamSizeForArenaMode(arenaModeID string) (int, bool) {
-	size, ok := arenaTeamSizes[arenaModeID]
-	return size, ok
+	mode, ok := divinebeastscatalog.ArenaModeContexts[arenaModeID]
+	return mode.TeamSize, ok
 }
 
 // Endpoint（网络端点）描述Game Client或服务间连接所需的Host与Port。
@@ -96,6 +88,9 @@ type RosterPlayer struct {
 	PartyID          string // 不可拆分原队伍；单排为空。
 	SlotIndex        int    // 整场唯一出生槽位，0至TotalPlayers-1；各队按Roster次序映射地图出生位。
 	HeroDefinitionID string // 后端已选角色对应英雄。
+
+	// 已选角色的公开显示名；省略空值以兼容旧分配记录与幂等指纹。
+	CharacterName string `json:"CharacterName,omitempty"`
 }
 
 // WorldAssignment（世界分配）描述OpenWorld/Village服务器运行和玩家跨服所需的权威目标。
@@ -179,6 +174,9 @@ func (a Assignment) Validate() error {
 	}
 	return nil
 }
+
+// ArenaServerAssignmentID把已确认的MatchID映射到专服任务和准入共同使用的身份。
+func ArenaServerAssignmentID(matchID string) string { return "match:" + matchID }
 
 // ServerAssignment（统一服务器任务）供Dedicated Server查询自身运行上下文。
 // WorldAssignment用于OpenWorld/Village；ArenaAssignment用于MainArena，二者只允许一个非空。

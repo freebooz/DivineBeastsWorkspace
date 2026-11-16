@@ -35,7 +35,9 @@ public:
 
     /**
      * 异步保存记录。
-     * 启动成功返回有效Handle；同一逻辑Key已有IO时拒绝，避免Load/Save/Delete竞态。
+     * 启动成功返回有效Handle；同进程所有GameInstance对同一逻辑Key仅允许一个真实后台IO。
+     * GameInstance销毁后的回调取消不强杀已提交的磁盘操作；旧IO结束前新请求返回SaveSlotBusy。
+     * 该门禁不等于不同Client进程共用Saved目录时的系统级文件锁。
      */
     virtual FGamePlatformSaveRequestHandle SaveRecordAsync(
         const FGamePlatformSaveRecord& Record,

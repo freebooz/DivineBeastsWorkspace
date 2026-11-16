@@ -1,11 +1,11 @@
 #include "Components/GamePlatformTooltipWidget.h"
+#include "ViewModels/GamePlatformUISnapshotScope.h"
 
 bool UGamePlatformTooltipWidget::ApplyTooltip(
     const FGamePlatformUITooltipState& InState)
 {
-    if (InState.ContentId.IsNone() || InState.Revision < 0 ||
-        (State.ContentId == InState.ContentId &&
-         InState.Revision <= State.Revision))
+    if (!FGamePlatformUISnapshotScope::CanAcceptNamedRevision(
+            State.ContentId, State.Revision, InState.ContentId, InState.Revision))
     {
         return false;
     }

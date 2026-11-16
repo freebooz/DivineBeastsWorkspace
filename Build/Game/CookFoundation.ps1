@@ -10,25 +10,39 @@ Server先验证单源排除规则及受管INI漂移，UAT成功后逐个读取�
 返回0成功，1脚本失败，2未执行；外部非零退出码原样保留。
 #>
 param([string]$EngineRoot, [switch]$Cook, [ValidateSet('Client','Server')][string]$Target = 'Client',
+    [string]$EditorBuildResult,
     # 保留Foundation默认行为；新手村开发验证必须显式选配置，不在发行默认中启用候选技能。
-    [ValidateSet('FoundationStandalone','VillageServer','VillageDevelopmentServer','PluginDemoClient')][string]$CustomConfig='FoundationStandalone',
+    [ValidateSet('FoundationStandalone','DedicatedServer','VillageServer','VillageDevelopmentServer','PluginDemoClient')][string]$CustomConfig='FoundationStandalone',
+    [switch]$WithoutArena,
     [switch]$Pak,
     # 可选仅省略Stage中的PDB等调试符号，缓解磁盘不足；不改变构建模式、Cook内容或测试门禁。
     [switch]$SkipDebugSymbols,
+    # 本机Zen不可用时显式使用原生文件Cook；仍保留Stage及服务器内容剥离门禁。
+    [switch]$SkipZenStore,
     [string[]]$Maps = @('/Game/Development/Foundation/Maps/L_FoundationBootstrap','/Game/Development/Foundation/Maps/L_FoundationSandbox'),
     [ValidateRange(1,86400)][int]$TimeoutSeconds = 1800, [guid]$RunId = [guid]::NewGuid())
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FoundationTools.psm1') -Force
-$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Maps=$Maps; Configuration='Development'; Platform='Win64'; CustomConfig=$CustomConfig; Pak=[bool]$Pak; SkipDebugSymbols=[bool]$SkipDebugSymbols }
+Import-Module (Join-Path $PSScriptRoot 'FoundationTargetAssembly.psm1') -Force
+$context = $null; $lock = $null; $code = 2; $message = ''; $details = @{ Target=$Target; Maps=$Maps; Configuration='Development'; Platform='Win64'; CustomConfig=$CustomConfig; Pak=[bool]$Pak; SkipDebugSymbols=[bool]$SkipDebugSymbols; SkipZenStore=[bool]$SkipZenStore }
 try {
     $context = New-FoundationContext "Cook-$Target" $RunId
     if (-not $Cook) { throw [IO.FileNotFoundException]::new('需显式指定-Cook。') }
     if ($CustomConfig -eq 'PluginDemoClient' -and $Target -ne 'Client') { throw 'PluginDemoClient只允许开发Client，不能用于任何服务器角色。' }
-    if ($CustomConfig -eq 'VillageDevelopmentServer' -and $Target -ne 'Server') {
-        throw 'VillageDevelopmentServer只允许专用服务器目标；客户端开发验证使用CookFrontEndClient。'
+    if ($Target -ne 'Server' -and $CustomConfig -in @('DedicatedServer','VillageServer','VillageDevelopmentServer')) {
+        throw '服务器配置只用于专用服务器目标。'
+    }
+    if ($WithoutArena) {
+        if ($Target -ne 'Server') { throw '无竞技前端Cook使用CookFrontEndClient。' }
+        if (-not $PSBoundParameters.ContainsKey('CustomConfig')) { $CustomConfig='VillageServer' }
+        if ($CustomConfig -ne 'VillageServer') { throw '无竞技专服Cook要求VillageServer配置。' }
+        if (-not $PSBoundParameters.ContainsKey('Maps')) { $Maps=@('/DBAWorldPack_Village/Maps/L_Village_Start') }
+        if ($Maps.Count -ne 1 -or $Maps[0] -cne '/DBAWorldPack_Village/Maps/L_Village_Start') { throw '无竞技专服验证只Cook正式Village地图。' }
+        $details.CustomConfig=$CustomConfig; $details.Maps=$Maps
     }
     $engine = Get-FoundationEngine $EngineRoot
     $details.EngineVersion = $engine.Version; $details.EngineRoot = $engine.Root
+    Import-Module (Join-Path $PSScriptRoot 'FoundationCookEvidence.psm1') -Force
     # 在UAT/引擎锁之前验证全部受管配置；配置漂移时不开始本次Cook，也不修改旧产物。
     $serverPresentationPolicy = $null
     if ($Target -eq 'Server') {
@@ -67,34 +81,55 @@ try {
     Assert-FoundationFile (Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe')
     $tool = Get-FoundationManagedTool $engine AutomationTool
     $lock = Enter-FoundationEngineLock $engine.Root
+    $details.TargetAssembly=Read-FoundationTargetAssembly -Workspace $context.Workspace -Target $Target -WithoutArena:$WithoutArena
+    $details.CookEditorGate=Assert-FoundationCookEditorBuildResult -Workspace $context.Workspace -EngineRoot $engine.Root -BuildResultPath $EditorBuildResult
+    $pairedCook = $Target -ceq 'Server' -and $CustomConfig -ceq 'VillageDevelopmentServer' -and $Maps.Count -eq 2
+    if ($pairedCook) {
+        Import-Module (Join-Path $PSScriptRoot 'FoundationBuildEvidence.psm1')
+        Import-Module (Join-Path $PSScriptRoot 'LocalValidationPackageEvidence.psm1')
+        $battleInput = Get-FoundationBattleInputSHA256 -Workspace $context.Workspace -CookRelevantCompileSHA256 $details.CookEditorGate.CookRelevantCompileSHA256
+    }
     # UE单平台-outputdir不自动附加平台；Stage仅在目录末段匹配CookPlatform时使用原路径。
     $cookDirectory = Join-Path $context.Directory "Cooked/Windows$Target"
+    if ($SkipZenStore) {
+        # 文件Cook拼接插件长路径，沿用前端Cook已验证的独占短目录策略。
+        $cookDirectory = Join-Path $context.Workspace ('Saved/C/'+$RunId.ToString('N').Substring(0,8)+"/Windows$Target")
+        if (Test-Path -LiteralPath $cookDirectory) { throw '文件Cook独占短路径已存在，拒绝覆盖。' }
+    }
     $stageDirectory = Join-Path $context.Directory 'Stage'
     $details.CookDirectory = $cookDirectory; $details.StageDirectory = $stageDirectory
     # Cook只由AdditionalCookerOptions选择角色/开发配置；不向UAT顶层传CustomConfig。
     # UBT ConfigCache仍会读取全局CustomConfig并改变Stage配置层；专服必须保留收据DedicatedServer剥离规则。
     $additionalCookerOptions = "-CustomConfig=$CustomConfig -ddc=NoZenLocalFallback"
+    if ($SkipZenStore) { $additionalCookerOptions += ' -SkipZenStore' }
+    $cookLocalCacheDirectory = Join-Path $context.Workspace 'Game/DerivedDataCache'
+    $additionalCookerOptions += (' -LocalDataCachePath="'+$cookLocalCacheDirectory+'" -ini:EditorSettings:/Script/UnrealEd.EditorSettings:LocalDerivedDataCache=(Path="'+$cookLocalCacheDirectory+'")')
+    $details.LocalDataCacheDirectory = $cookLocalCacheDirectory
     if ($Target -eq 'Server' -and @($serverPresentationPolicy.CookerArguments).Count -gt 0) {
         # FoundationStandalone仍保留原开发许可；只给Server Cooker追加逐目录+Key。
         # UE5.8 ConfigCacheIni按ArrayAdd处理独立token；不用同名Set、清数组或逗号拼接。
         $additionalCookerOptions += (' ' + ($serverPresentationPolicy.CookerArguments -join ' '))
     }
+    if ($WithoutArena) { $additionalCookerOptions += (' ' + (Get-FoundationWithoutArenaCookerOptions)) }
     $arguments = @($tool.Dll,'BuildCookRun',"-project=$($context.Project)","-target=DivineBeastsArena$Target",'-nop4','-unattended','-utf8output','-cook','-stage','-skipbuild','-skipbuildeditor','-platform=Win64','-clientconfig=Development','-serverconfig=Development',"-AdditionalCookerOptions=$additionalCookerOptions",'-ddc=NoZenLocalFallback',('-map=' + ($Maps -join '+')),"-CookOutputDir=$cookDirectory", "-stagingdirectory=$stageDirectory")
-    if ($CustomConfig -eq 'VillageDevelopmentServer') {
-        # Stage的AllowedConfigFiles先于收据CustomConfig目录过滤；只为显式开发发布加入两份运行INI。
-        # 不改变正式Target、DedicatedServer的Pak规则或默认发行关闭状态；其他配置没有这些白名单。
-        $developmentConfigFiles = @('DefaultGame.ini','DefaultGameplayTags.ini')
-        $details.StagedDevelopmentConfigFiles = @()
-        foreach ($configFile in $developmentConfigFiles) {
+    if ($CustomConfig -in @('VillageServer','VillageDevelopmentServer')) {
+        # 保留收据DedicatedServer的Pak规则，只精确Stage所选Village配置的实际运行层。
+        $roleConfigFiles = @('DefaultGame.ini','DefaultEngine.ini')
+        $details.RequiredRuntimeArguments = "-CustomConfig=$CustomConfig -textconfig"
+        if ($CustomConfig -eq 'VillageDevelopmentServer') {
+            $roleConfigFiles += 'DefaultGameplayTags.ini'
+            $details.RequiredDevelopmentRuntimeArguments = "-CustomConfig=$CustomConfig -DBADevelopmentSkills -textconfig"
+        }
+        $details.StagedRoleConfigFiles = @()
+        foreach ($configFile in $roleConfigFiles) {
             Assert-FoundationFile (Join-Path $context.Workspace "Game/Config/Custom/$CustomConfig/$configFile")
             $stageConfigPath = "DivineBeastsArena/Config/Custom/$CustomConfig/$configFile"
             $arguments += "-ini:Game:[Staging]:+AllowedConfigFiles=$stageConfigPath"
-            $details.StagedDevelopmentConfigFiles += $stageConfigPath
+            $details.StagedRoleConfigFiles += $stageConfigPath
         }
-        # 发布后启动还须指定这组参数；textconfig令实际进程重新读取已Stage的自定义INI层。
-        $details.RequiredDevelopmentRuntimeArguments = "-CustomConfig=$CustomConfig -DBADevelopmentSkills -textconfig"
-
+        if ($CustomConfig -eq 'VillageDevelopmentServer') { $details.StagedDevelopmentConfigFiles=$details.StagedRoleConfigFiles }
     }
+    if ($WithoutArena) { $details.RequiredRuntimeArguments += (' ' + ((Get-FoundationWithoutArenaCookArguments) -join ' ')) }
     if ($CustomConfig -eq 'PluginDemoClient') {
         # Stage需保留显式开发INI层；只白名单本任务实际存在的文件，不启用发行默认或把全部Config搬入包。
         $configFile='DefaultGame.ini'
@@ -111,6 +146,14 @@ try {
     if ($Target -eq 'Server') { $arguments += @('-server','-noclient','-serverplatform=Win64') } else { $arguments += '-client' }
     $tool.Environment.uebp_LogFolder = Join-Path $context.Directory 'UATLogs'
     $tool.Environment.uebp_EngineSavedFolder = Join-Path $context.Directory 'EngineSaved'
+    # 与前端入口一致，仅覆盖本次UAT子进程环境，不修改用户/系统级TEMP或TMP。
+    $cookTemporaryDirectory = Join-Path $context.Workspace ('Saved/T/'+$RunId.ToString('N').Substring(0,8))
+    if (Test-Path -LiteralPath $cookTemporaryDirectory) { throw '本次Cook临时目录已存在，拒绝复用。' }
+    $null = New-Item -ItemType Directory -Path $cookTemporaryDirectory -Force
+    $tool.Environment.TEMP = $cookTemporaryDirectory
+    $tool.Environment.TMP = $cookTemporaryDirectory
+    $tool.Environment['UE-LocalDataCachePath'] = $cookLocalCacheDirectory
+    $details.TemporaryDirectory = $cookTemporaryDirectory
     $result = Invoke-FoundationProcess -FilePath $tool.Executable -Arguments $arguments -WorkingDirectory (Split-Path $tool.Dll) -OutputDirectory $context.Directory -TimeoutSeconds $TimeoutSeconds -Environment $tool.Environment
     $code = $result.ExitCode; $details.Result = $result
     if ($code -eq 0) {
@@ -131,6 +174,27 @@ try {
             $details.ServerPresentationAuditReport = Join-Path $auditDirectory 'ServerPresentationAudit.json'
             if ($code -eq 0) { $details.ServerPresentationAudit = ($auditOutput -join "\n") | ConvertFrom-Json }
         }
+    }
+    if ($code -eq 0) {
+        # Server及显式PluginDemoClient共用同一退休资源合同，演示只允许批准的terrain_review目标。
+        $resourcePython=Join-Path $engine.Root 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+        $resourceGate=Join-Path $context.Workspace 'Tools/Unreal/Resources/ValidateResourceOwnershipContainer.py'
+        Assert-FoundationFile $resourcePython; Assert-FoundationFile $resourceGate
+        $resourceDirectory=Join-Path $context.Directory 'ResourceOwnershipGate'
+        $null=New-Item -ItemType Directory -Path $resourceDirectory
+        $resourceReport=Join-Path $resourceDirectory 'ResourceOwnership.json'
+        $resourceArguments=@($resourceGate,'--stage',$stageDirectory,'--unreal-pak',(Join-Path $engine.Root 'Engine/Binaries/Win64/UnrealPak.exe'),'--profile',$CustomConfig,'--target',$Target,'--report',$resourceReport)
+        if ($WithoutArena) { $resourceArguments += '--without-arena' }
+        $resourceResult=Invoke-FoundationProcess -FilePath $resourcePython -Arguments $resourceArguments -WorkingDirectory $context.Workspace -OutputDirectory $resourceDirectory -TimeoutSeconds 300
+        $details.ResourceOwnershipGateResult=$resourceResult; $details.ResourceOwnershipReport=$resourceReport
+        $code=$resourceResult.ExitCode
+    }
+    if ($code -eq 0 -and $pairedCook) {
+        $csv = @(Get-ChildItem -LiteralPath $auditDirectory -Recurse -File -Filter 'Container.csv' |
+            Where-Object DirectoryName -Match 'DivineBeastsArena-WindowsServer\.utoc$')
+        if ($csv.Count -ne 1) { throw '缺少唯一 Server 主容器导出清单。' }
+        $details.LocalValidationPackage = Complete-LocalValidationCookProof -Workspace $context.Workspace -StageDirectory $stageDirectory `
+            -Target Server -ContainerCsv $csv[0].FullName -BattleInputSHA256 $battleInput
     }
     $message = if ($Target -eq 'Server') { '实际UAT Cook/Stage及服务器表现产物门禁结束；结果见独立容器证据，不代表运行或联机通过。' }
         else { '实际UAT客户端开发地图Cook/Stage结束；不代表运行通过。' }

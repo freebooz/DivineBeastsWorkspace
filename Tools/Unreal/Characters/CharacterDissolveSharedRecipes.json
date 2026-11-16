@@ -1,0 +1,26 @@
+{
+  "Progress": {
+    "asset": "/DBAPresentationPack_Core/MaterialFunctions/Character/MF_DBA_CharacterDissolveProgress",
+    "description": "角色消散进度：预览非负时优先，否则按生命周期时间计算；禁用返回-1。仅表现，不决定死亡或重生。",
+    "input_descriptions": {"Enabled":"平台消散启用开关，大于0.5启用。", "Now":"当前游戏世界时间，秒。", "Start":"本次消散开始时间，秒。", "Duration":"消散时长，秒，运算最小值0.01。", "Preview":"人工预览进度，负数关闭预览覆盖，非负时钳制至0～1。"},
+    "inputs": [["Enabled", "S"], ["Now", "S"], ["Start", "S"], ["Duration", "S"], ["Preview", "S"]],
+    "output": "S",
+    "code": "return Preview>=0 ? saturate(Preview) : (Enabled>.5 ? saturate((Now-Start)/max(Duration,.01)) : -1.0);"
+  },
+  "PreserveMask": {
+    "asset": "/DBAPresentationPack_Core/MaterialFunctions/Character/MF_DBA_CharacterDissolveMask",
+    "description": "保留原角色透明度/裁剪遮罩，消散期间相乘，完成时输出0；不改变混合模式。",
+    "input_descriptions": {"Old":"原材质透明度或裁剪遮罩。", "Progress":"消散归一化进度；小于等于0保留原值，大于等于1清零。", "Mask":"既有角色消散噪声函数输出的遮罩。"},
+    "inputs": [["Old", "S"], ["Progress", "S"], ["Mask", "S"]],
+    "output": "S",
+    "code": "return Old*(Progress<=0 ? 1.0 : (Progress>=1 ? 0.0 : Mask));"
+  },
+  "PreserveEmissive": {
+    "asset": "/DBAPresentationPack_Core/MaterialFunctions/Character/MF_DBA_CharacterDissolveEmission",
+    "description": "保留原角色自发光，仅在消散进度严格位于0与1之间时叠加边缘发光。",
+    "input_descriptions": {"Old":"原材质线性RGB自发光。", "Edge":"既有消散函数输出的线性RGB边缘发光。", "Strength":"平台消散边缘发光倍率。", "Progress":"消散归一化进度，端点及禁用状态不叠加边缘。"},
+    "inputs": [["Old", "V3"], ["Edge", "V3"], ["Strength", "S"], ["Progress", "S"]],
+    "output": "V3",
+    "code": "return Old+Edge*Strength*((Progress>0 && Progress<1) ? 1.0 : 0.0);"
+  }
+}

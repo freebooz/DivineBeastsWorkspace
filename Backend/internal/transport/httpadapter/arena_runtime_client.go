@@ -31,6 +31,9 @@ func (c *GameServerControlClient) GetArenaStatus(ctx context.Context, id string)
 // AllocateWorldTransfer每次按来源逻辑体验重新找安全实例；不信任历史连接地址。
 func (c *GameServerControlClient) AllocateWorldTransfer(ctx context.Context, input gameservercontrol.AllocateWorldTransferInput) (gameservercontrol.WorldTransferResult, error) {
 	request := map[string]any{"world": input.World, "ticketId": input.Transfer.TicketID, "gameId": input.Transfer.GameID, "playerId": input.Transfer.PlayerID, "sessionId": input.Transfer.SessionID, "sourceGameServerId": input.Transfer.SourceGameServerID, "ttlMilliseconds": input.Transfer.TTL.Milliseconds()}
+	if input.VillageQueueOrigin != nil {
+		request["villageQueueOrigin"] = input.VillageQueueOrigin
+	}
 	var result gameservercontrol.WorldTransferResult
 	err := c.postAuthorized(ctx, "/internal/v1/gameservers/allocate-world-transfer", request, &result)
 	return result, err

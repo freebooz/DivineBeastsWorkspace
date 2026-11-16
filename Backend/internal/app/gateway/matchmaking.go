@@ -45,6 +45,7 @@ func (a *api) authenticatedMatchmakingActor(ctx context.Context, session Authent
 	for _, character := range items {
 		if character.CharacterID == profile.SelectedCharacterID && character.CharacterID != "" && character.Status == "Active" && character.CharacterRevision > 0 {
 			actor.CharacterID = character.CharacterID
+			actor.CharacterName = character.CharacterName
 			actor.HeroDefinitionID = character.HeroDefinitionID
 			actor.CharacterRevision = character.CharacterRevision
 			return actor, nil
@@ -65,16 +66,18 @@ func (a *api) commandMatchmaking(w http.ResponseWriter, r *http.Request, session
 		return
 	}
 	var command matchmaking.Command
-	if err := DecodeOnlineJSON(r, &command, []string{"action", "clientRequestId", "expectedRevision", "ticketId", "candidateId", "arenaModeId", "partyId", "regionId", "accept"}, []string{"action", "clientRequestId", "expectedRevision"}); err != nil {
+	if err := DecodeOnlineJSON(r, &command, []string{"action", "clientRequestId", "expectedRevision", "ticketId", "candidateId", "arenaModeId", "partyId", "regionId", "accept", "targetPlayerId", "challengeId"}, []string{"action", "clientRequestId", "expectedRevision"}); err != nil {
 		writeOnlineError(w, err)
 		return
 	}
-	actor, err := a.authenticatedMatchmakingActor(r.Context(), session, command.Action == "start" || command.Action == "reply")
+	requireCharacter := command.Action == "start" || command.Action == "reply" || command.Action == "challenge" || command.Action == "challengeReply" ||
+		(command.Action == "ready" && command.Accept)
+	actor, err := a.authenticatedMatchmakingActor(r.Context(), session, requireCharacter)
 	if err != nil {
 		writeMatchmakingError(w, err)
 		return
 	}
-	if command.Action == "start" || command.Action == "reply" {
+	if requireCharacter {
 		if err := a.attachMatchmakingPresence(r.Context(), &actor); err != nil {
 			writeMatchmakingError(w, err)
 			return
@@ -133,7 +136,7 @@ func (a *api) getMatchmakingMigration(w http.ResponseWriter, r *http.Request, se
 		writeOnlineError(w, ServiceError("INVALID_REQUEST"))
 		return
 	}
-	if err := DecodeOnlineJSON(r, &request, []string{"candidateId", "direction", "clientRequestId"}, []string{"candidateId", "direction", "clientRequestId"}); err != nil {
+	if err := decodeMatchmakingMigration(r, &request); err != nil {
 		writeOnlineError(w, err)
 		return
 	}
@@ -158,7 +161,7 @@ func MatchmakingErrorCode(err error) string {
 	}
 	code := strings.SplitN(err.Error(), ":", 2)[0]
 	switch code {
-	case "MATCH_WORLD_REQUIRED", "MATCH_COMMAND_REQUIRED", "MATCH_COMMAND_INVALID", "MATCH_MODE_INVALID", "MATCH_PARTY_TOO_LARGE", "MATCH_FORBIDDEN", "MATCH_NOT_FOUND", "MATCH_REVISION_CONFLICT", "MATCH_IDEMPOTENCY_CONFLICT", "MATCH_PHASE_CONFLICT", "MATCH_DEADLINE_EXPIRED", "MATCH_PLAYER_RESERVED", "MATCH_PARTY_REQUIRED", "MATCH_PARTY_NOT_READY", "MATCH_CHARACTER_REQUIRED", "MATCH_QUEUE_CAPACITY":
+	case "MATCH_WORLD_REQUIRED", "MATCH_COMMAND_REQUIRED", "MATCH_COMMAND_INVALID", "MATCH_MODE_INVALID", "MATCH_PARTY_TOO_LARGE", "MATCH_FORBIDDEN", "MATCH_NOT_FOUND", "MATCH_REVISION_CONFLICT", "MATCH_IDEMPOTENCY_CONFLICT", "MATCH_PHASE_CONFLICT", "MATCH_DEADLINE_EXPIRED", "MATCH_PLAYER_RESERVED", "MATCH_PARTY_REQUIRED", "MATCH_PARTY_NOT_READY", "MATCH_CHARACTER_REQUIRED", "MATCH_QUEUE_CAPACITY", "MATCH_OPERATION_BUSY", "MATCH_MIGRATION_EXPIRED":
 		return code
 	default:
 		if code == "INVALID_REQUEST" {

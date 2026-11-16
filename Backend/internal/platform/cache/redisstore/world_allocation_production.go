@@ -12,6 +12,19 @@ import (
 	"time"
 )
 
+func (s *ArenaLifecycleStore) GetWorldAllocation(ctx context.Context, id string) (gameservercontrol.WorldAllocationRecord, bool, error) {
+	var result gameservercontrol.WorldAllocationRecord
+	raw, err := s.client.inner.Get(ctx, "gameserver:world-transfer:"+id).Bytes()
+	if errors.Is(err, redis.Nil) {
+		return result, false, nil
+	}
+	if err != nil {
+		return result, false, err
+	}
+	err = json.Unmarshal(raw, &result)
+	return result, err == nil, err
+}
+
 func (s *ArenaLifecycleStore) GetOrCreateWorldAllocation(ctx context.Context, id, fp string, now time.Time, create func() (gameservercontrol.WorldAllocationRecord, error)) (gameservercontrol.WorldAllocationRecord, error) {
 	var result gameservercontrol.WorldAllocationRecord
 	if _, cluster := s.client.inner.(*redis.ClusterClient); cluster {

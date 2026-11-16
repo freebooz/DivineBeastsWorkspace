@@ -14,6 +14,14 @@ bool FGamePlatformSFXLifecycleRegressionTest::RunTest(const FString&)
     TStrongObjectPtr<UWorld> World(UWorld::CreateWorld(EWorldType::Game, false));
     auto* Service=NewObject<UGamePlatformSFXWorldSubsystem>(World.Get());
     auto* Component=NewObject<UAudioComponent>(World.Get());
+    // 无硬件夹具只核对生产起播边界交给引擎的基础增益，不把它当作扬声器试听。
+    // 带淡入的音乐不能被初始化为永久零增益；无淡入和显式静音仍保持原合同。
+    Service->StartComponentPlayback(*Component, 0.4f, 1.0f, 1.8f, 0.0f);
+    TestEqual(TEXT("淡入音乐保留非零基础音量，包络负责从静音渐入"), Component->VolumeMultiplier, 0.4f);
+    Service->StartComponentPlayback(*Component, 0.85f, 1.0f, 0.0f, 0.0f);
+    TestEqual(TEXT("无淡入音效基础音量不变"), Component->VolumeMultiplier, 0.85f);
+    Service->StartComponentPlayback(*Component, 0.0f, 1.0f, 1.8f, 0.0f);
+    TestEqual(TEXT("显式零音量不被修复强行放大"), Component->VolumeMultiplier, 0.0f);
     FGamePlatformSFXHandle Handle; Handle.Id=FGuid::NewGuid(); Handle.Generation=1; Handle.World=World.Get();
     FGamePlatformSFXRequest Request; Request.RequestId=FGuid::NewGuid(); Request.DefinitionId=TEXT("presentation.sfx.hit@1");
     UGamePlatformSFXWorldSubsystem::FActiveInstance Active;

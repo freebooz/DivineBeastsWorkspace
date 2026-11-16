@@ -1,6 +1,7 @@
 // 平台客户端UI主题公开值契约；不引用游戏资源、网络状态或全局可变样式。
 #pragma once
 #include "CoreMinimal.h"
+#include "UObject/PrimaryAssetId.h"
 #include "GamePlatformUIThemeTypes.generated.h"
 
 /** 当前第一批统一样式种类；对应CommonUI原生样式类。 */
@@ -20,6 +21,20 @@ struct GAMEPLATFORMUICLIENT_API FGamePlatformUIThemeContext
     /** 0..4为具体档位；-1为未指定。 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI|Theme") int32 QualityTier = -1;
     bool IsValid() const { return QualityTier >= -1 && QualityTier <= 4; }
+};
+
+/** 同一LocalPlayer主题完整只读快照；Scope阻止跨玩家恢复，Revision用于拒绝覆盖外部新状态。 */
+USTRUCT(BlueprintType)
+struct GAMEPLATFORMUICLIENT_API FGamePlatformUIThemeSnapshot
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly,Category="UI|Theme") FGuid ScopeId;
+    /** 无效身份明确表示原来没有主题；不是错误资产路径。 */
+    UPROPERTY(BlueprintReadOnly,Category="UI|Theme") FPrimaryAssetId ThemeId;
+    UPROPERTY(BlueprintReadOnly,Category="UI|Theme") FGamePlatformUIThemeContext Context;
+    UPROPERTY(BlueprintReadOnly,Category="UI|Theme") int64 Revision=0;
+    /** 捕获时是否有在途请求；只读诊断，不赋予取消其他调用者的资格。 */
+    UPROPERTY(BlueprintReadOnly,Category="UI|Theme") bool bRequestPending=false;
 };
 
 /** 单条样式选择规则：只允许显式等值约束计入具体度，不依赖数组顺序。 */

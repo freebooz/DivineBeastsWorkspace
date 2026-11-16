@@ -9,3 +9,9 @@ Backend本轮验证：`go test ./internal/app/gateway ./internal/transport/httpa
 当前已经形成默认UE Session Transport、可靠准入RPC载体和HTTP Admission Provider实现，但“实现存在”不等于运行验证通过。真实两个客户端/Multi-PIE、跨进程ClientTravel、断线重连、服务器Boot切换、OpenWorld/Village/MainArena跨服往返和Cook隔离仍需执行。服务端Admission子系统/握手测试只证明契约、敏感证明生命周期和状态边界，不能替代真实Dedicated Server网络证据。
 
 2026-09-29后续改造已消除原“Binding四字段缺失”阻塞：GameServer注册持有ServerBootId/ProtocolVersion，ServerTransfer签票生成GameSessionId和单调SessionEpoch，目标Server验证Boot/协议并回传完整Binding；生产Redis还原子维护已接受Epoch栅栏。当前剩余阻塞转为UE最终构建与真实E2E运行证据，而不是契约字段缺失。
+## 2026-10-18 增量验证与取消安全整改
+
+- 修复 `VerifySession.ps1` 的工具定位：系统环境未配置CMake时使用锁定UE5.8安装目录提供的CMake/CTest，不改PATH或引擎文件。新运行 `Verify-97fdde22a1d64ffc8ba7d7fbd5ecb60e` 在MSVC 19.44下真实编译Debug/Release，两配置SessionState各1/1测试通过；综合门禁返回2（跨服联调仍缺），不能改为成功0。
+- `GamePlatformSessionClientSubsystem.cpp`、`GamePlatformUESessionTransport.cpp` 处理同步传输拒绝/取消和同步完成时回调自身被撤销的生命周期风险，`GamePlatformSessionSubsystemTests.cpp` 补相关原生回归；3个C++单元最新 /Zs（语法）检查通过，最新UE原生Automation仍未执行。
+- 跨服真实ClientTravel（客户端旅行）、完整握手、旧实例重连、双客户端/服务器及Cook（资源烘焙）仍待独立验证。详细见 `Docs/Implementation/PluginQualityAudit/RuntimeSafetyReview_20261018.md`。
+

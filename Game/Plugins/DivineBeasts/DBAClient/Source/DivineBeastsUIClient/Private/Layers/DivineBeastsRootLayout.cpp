@@ -1,9 +1,14 @@
 // 项目客户端根布局：保存作者组合HUD，按本地控制器/Pawn事件重绑视图；平台Travel仍清理临时世界控件。
 // 只恢复本根布局拥有的既有资产实例，退出解除旧委托与展示来源，不持有玩法权威或轮询世界。
 #include "Layers/DivineBeastsRootLayout.h"
+#include "Layers/DivineBeastsWorldHUDRoute.h"
 
 #include "Components/GamePlatformAbilitySystemComponent.h"
 #include "Components/GamePlatformCombatComponent.h"
+#include "Subsystems/GamePlatformCombatFeedbackWorldSubsystem.h"
+#include "Types/GamePlatformCombatEvent.h"
+#include "Adapters/Combat/DivineBeastsCombatUIFeedbackLibrary.h"
+#include "Feedback/GamePlatformFeedbackWidget.h"
 #include "Components/GamePlatformAbilityCastComponent.h"
 #include "Components/GamePlatformCastProgressWidget.h"
 #include "Components/DivineBeastsCharacterComponent.h"
@@ -33,6 +38,7 @@
 #include "Components/WidgetSwitcher.h"
 #include "Components/Button.h"
 #include "Gameplay/DivineBeastsWorldPlayerController.h"
+#include "Gameplay/DivineBeastsPlayerControlsComponent.h"
 #include "WorldUI/DivineBeastsWorldHealthBarPresenter.h"
 #include "WorldUI/GamePlatformWorldWidgetBase.h"
 #include "UObject/StrongObjectPtr.h"
@@ -136,6 +142,7 @@ void UDivineBeastsRootLayout::RefreshForPlayerController(APlayerController* Cont
 void UDivineBeastsRootLayout::NativeDestruct()
 {
     bWorldHUDHostConstructed=false;bWorldHUDRefreshQueued=false;
+    UnbindWorldCombatFeedback();
     BindWorldHealthBars(nullptr);
     if (auto* Owner=WorldUIOwner.Get()) Owner->OnStateChanged().Remove(WorldUIStateHandle);
     WorldUIStateHandle.Reset(); WorldUIOwner.Reset(); ReleaseWorldContextHUD();
@@ -209,11 +216,9 @@ void UDivineBeastsRootLayout::RefreshWorldContextHUDOnce()
     const APawn* Pawn=GetOwningPlayerPawn();
     const bool bWorldVisible=Owner&&State.CurrentStep==TEXT("DBA.Flow.InWorld")&&!State.World.WorldId.IsNone()&&
         IsValid(Pawn)&&Pawn->IsLocallyControlled()&&FDivineBeastsProjectCatalog::TryGetServerRoleForExperience(State.World.ExperienceId,Role)&&
-        (Role==FDivineBeastsProjectCatalog::GetOpenWorldServerRole()||Role==FDivineBeastsProjectCatalog::GetVillageServerRole());
+        FDivineBeastsWorldHUDRoute::IsSupportedWorldRole(Role);
     if(!Switcher||!bWorldVisible){ReleaseWorldContextHUD();if(Switcher)Switcher->SetVisibility(ESlateVisibility::Collapsed);return;}
-    int32 Index=Role==FDivineBeastsProjectCatalog::GetOpenWorldServerRole()?0:1;
-    if(State.World.ExperienceId==FDivineBeastsProjectCatalog::GetVillageTutorialExperience())Index=2;
-    if(State.World.ExperienceId==FDivineBeastsProjectCatalog::GetVillageTrainingExperience())Index=3;
+    const int32 Index=FDivineBeastsWorldHUDRoute::ResolveSwitcherIndex(Role,State.World.ExperienceId);
     auto* Selected=Cast<UDivineBeastsWorldHUDBase>(Switcher->GetWidgetAtIndex(Index));
     if(!Selected){ReleaseWorldContextHUD();Switcher->SetVisibility(ESlateVisibility::Collapsed);return;}
     if(Selected!=ActiveWorldContextHUD.Get())
@@ -264,6 +269,7 @@ void UDivineBeastsRootLayout::RefreshCombatHUDVisibility()
     APawn* DisplayPawn = bHasGameplayAvatar ? const_cast<APawn*>(CurrentPawn) : nullptr;
     BindCastDisplay(DisplayPawn);
     BindWorldHealthBars(DisplayPawn);
+    BindWorldCombatFeedback(DisplayPawn);
     for (FName PortraitName : {FName(TEXT("PlayerPortrait")), FName(TEXT("ActionBarPortrait"))})
     {
         if (auto* Portrait = Cast<UDivineBeastsPlayerPortraitWidget>(CombatHUD->GetWidgetFromName(PortraitName)))
@@ -355,10 +361,12 @@ void UDivineBeastsRootLayout::HandleCastFactsChanged(UGamePlatformAbilityCastCom
         Incoming.bActive != Facts.bActive) return;
     // 从未发布时没有合法施法身份，保留已绑定的空条，不能制造假技能。
     if (!Facts.ActivationId.IsValid()) return;
-    FText Name;
+    // 表现样式只决定显示名，不是服务器已确认施法的资格白名单。
+    FText Name = NSLOCTEXT("DivineBeastsUI", "ConfirmedCast", "施法中");
     if (Facts.PresentationStyleId == TEXT("DBA.Development.Fireball")) Name = FText::FromString(TEXT("火焰弹 · 施法动作"));
     else if (Facts.PresentationStyleId == TEXT("DBA.Development.Frostbolt")) Name = FText::FromString(TEXT("寒冰箭 · 施法动作"));
     else if (Facts.PresentationStyleId == TEXT("DBA.Development.ArcaneMissiles")) Name = FText::FromString(TEXT("奥术飞弹 · 施法动作"));
+    else if (Facts.PresentationStyleId == TEXT("DBA.Development.Healing")) Name = FText::FromString(TEXT("治疗 · 施法动作"));
     auto* Combat = Pawn->FindComponentByClass<UGamePlatformCombatComponent>();
     auto* Identity = BoundCastIdentity.Get();
     const int32 AvatarGeneration = Identity ? Identity->GetAvatarGeneration() : Combat ? Combat->GetCombatAvatarGeneration() : 0;
@@ -375,10 +383,10 @@ void UDivineBeastsRootLayout::HandleCastFactsChanged(UGamePlatformAbilityCastCom
     Snapshot.TotalSeconds = bValidWindow ? Facts.DurationSeconds : 0;
     Snapshot.RemainingSeconds = bValidWindow
         ? FMath::Clamp(Snapshot.TotalSeconds - FMath::Max(0.0, ServerSeconds - Facts.StartedServerSeconds), 0.0, Snapshot.TotalSeconds) : 0;
-    Snapshot.bActive = Facts.bActive && !Name.IsEmpty() && bValidWindow && Snapshot.RemainingSeconds > 0 &&
+    Snapshot.bActive = Facts.bActive && bValidWindow && Snapshot.RemainingSeconds > 0 &&
         Facts.AvatarGeneration == AvatarGeneration && Combat &&
         !(Combat->GetCombatAvatarGeneration() == AvatarGeneration && Combat->IsCombatDead());
-    // 当前0.7/1秒是已确认动作窗口，弹体已由服务器释放；既不是额外蓄力，也不是UI可打断的资格。
+    // 显示服务器给出的真实窗口；UI不决定起手、释放时机、结束或可打断资格。
     Snapshot.bChanneling = false; Snapshot.bInterruptible = false;
     Snapshot.Revision = ++CastDisplayRevision;
     Widget->ApplyCastSnapshot(Snapshot);
@@ -633,8 +641,8 @@ void UDivineBeastsRootLayout::RenderCombatEffects()
 
 void UDivineBeastsRootLayout::BindWorldHealthBars(APawn* DisplayPawn)
 {
-    auto* Controller = DisplayPawn ? Cast<ADivineBeastsWorldPlayerController>(GetOwningPlayer()) : nullptr;
-    if (auto* Previous = Cast<ADivineBeastsWorldPlayerController>(WorldHealthController.Get()); Previous != Controller)
+    auto* Controller = DisplayPawn && GetOwningPlayer() ? GetOwningPlayer()->FindComponentByClass<UDivineBeastsPlayerControlsComponent>() : nullptr;
+    if (auto* Previous = WorldHealthController.Get(); Previous != Controller)
     {
         if (Previous)
         {
@@ -664,6 +672,103 @@ void UDivineBeastsRootLayout::BindWorldHealthBars(APawn* DisplayPawn)
         }
     }
     RefreshWorldHealthBarToggleText();
+}
+
+void UDivineBeastsRootLayout::UnbindWorldCombatFeedback()
+{
+    if (auto* Bus = BoundCombatFeedbackBus.Get())
+    {
+        if (CombatFeedbackHandle.IsValid()) Bus->OnConfirmedFeedback().Remove(CombatFeedbackHandle);
+    }
+    CombatFeedbackHandle.Reset();
+    BoundCombatFeedbackBus.Reset();
+}
+
+void UDivineBeastsRootLayout::BindWorldCombatFeedback(APawn* DisplayPawn)
+{
+    // 只有普通世界控制器拥有此订阅；竞技场使用自己的组合根，不能重复显示同一事实。
+    UWorld* World = IsValid(DisplayPawn) ? DisplayPawn->GetWorld() : nullptr;
+    const bool bWorldReady = World && !World->bIsTearingDown &&
+        World->GetNetMode() != NM_DedicatedServer &&
+        IsValid(Cast<ADivineBeastsWorldPlayerController>(GetOwningPlayer())) &&
+        IsValid(GetOwningLocalPlayer()); // 红屏与飘字独立：未配置飘字控件也必须接收受击事件。
+    auto* Bus = bWorldReady ? World->GetSubsystem<UGamePlatformCombatFeedbackWorldSubsystem>() : nullptr;
+    if (BoundCombatFeedbackBus.Get() == Bus) return;
+    UnbindWorldCombatFeedback();
+    if (Bus)
+    {
+        BoundCombatFeedbackBus = Bus;
+        CombatFeedbackHandle = Bus->OnConfirmedFeedback().AddUObject(
+            this, &ThisClass::HandleConfirmedWorldCombatFeedback);
+    }
+}
+
+bool UDivineBeastsRootLayout::TryBuildLocalDamageFeedback(
+    const FGamePlatformCombatEvent& Event, const AActor* LocalPawn, float MaxHealth, float& OutDamageFraction)
+{
+    OutDamageFraction = 0.0f;
+    if (!IsValid(LocalPawn) || Event.TargetActor.Get() != LocalPawn || !Event.EventId.IsValid() ||
+        Event.EventType != EGamePlatformCombatEventType::Damage ||
+        !FMath::IsFinite(Event.AppliedToHealth) || Event.AppliedToHealth <= 0.0f ||
+        !FMath::IsFinite(MaxHealth) || MaxHealth <= 0.0f) return false;
+    // 强度使用本地可信最大生命进行归一化，客户端只作视觉提示，绝不回写Gameplay。
+    OutDamageFraction = FMath::Clamp(Event.AppliedToHealth / MaxHealth, 0.0f, 1.0f);
+    return OutDamageFraction > 0.0f;
+}
+
+void UDivineBeastsRootLayout::HandleConfirmedWorldCombatFeedback(const FGamePlatformCombatEvent& Event)
+{
+    ULocalPlayer* Player = GetOwningLocalPlayer();
+    UWorld* World = GetWorld();
+    AActor* Target = Event.TargetActor;
+    if (!IsInGameThread() || !Player || !World || World->bIsTearingDown ||
+        Player->GetWorld() != World || !BoundCombatFeedbackBus.IsValid() ||
+        !Event.EventId.IsValid() || !IsValid(Target) ||
+        Target->GetWorld() != World || Target->IsActorBeingDestroyed()) return;
+
+    // 单一权威网络事实仅影响自己的本地视口；远端玩家受击与仅护盾吸收均不得触发红屏。
+    if (Target == GetOwningPlayerPawn())
+    {
+        const auto* Combat = Target->FindComponentByClass<UGamePlatformCombatComponent>();
+        float DamageFraction = 0.0f;
+        if (IsValid(Combat) && TryBuildLocalDamageFeedback(Event, Target,
+            Combat->GetCombatMaxHealth(), DamageFraction))
+            BP_OnLocalPlayerDamaged(DamageFraction);
+    }
+    // 飘字是独立可选表现，不再决定本地受击视觉通知能否运行。
+    if (!CombatFloatingTextClass || CombatFloatingTextClass->HasAnyClassFlags(CLASS_Abstract)) return;
+
+    FVector Origin, Extent;
+    Target->GetActorBounds(true, Origin, Extent);
+    FDivineBeastsCombatFeedbackInput Input;
+    Input.EventId = Event.EventId;
+    Input.TargetVisualKey = Target->GetFName();
+    // 近战没有可靠命中点时原事件坐标可为世界原点；飘字始终锚定目标头部。
+    Input.WorldLocation = Origin + FVector(0.0, 0.0, FMath::Max(Extent.Z * 0.75, 60.0));
+    auto Submit = [Player, this, &Input](EDivineBeastsCombatFeedbackKind Kind, double Magnitude, uint32 Salt)
+    {
+        if (!FMath::IsFinite(Magnitude) || Magnitude < 0.0) return;
+        Input.Kind = Kind;
+        Input.Magnitude = Magnitude;
+        Input.EventId.A ^= Salt;
+        UDivineBeastsCombatUIFeedbackLibrary::SubmitFloatingText(Player, Input, CombatFloatingTextClass);
+        Input.EventId.A ^= Salt;
+    };
+    switch (Event.EventType)
+    {
+    case EGamePlatformCombatEventType::Damage:
+        if (Event.AppliedToHealth > 0.0f) Submit(EDivineBeastsCombatFeedbackKind::Damage, Event.AppliedToHealth, 0u);
+        if (Event.AppliedToShield > 0.0f) Submit(EDivineBeastsCombatFeedbackKind::ShieldDamage, Event.AppliedToShield, 0x53484C44u);
+        break;
+    case EGamePlatformCombatEventType::Healing:
+        if (Event.AppliedMagnitude > 0.0f) Submit(EDivineBeastsCombatFeedbackKind::Healing, Event.AppliedMagnitude, 0x4845414Cu);
+        break;
+    case EGamePlatformCombatEventType::Death:
+        Submit(EDivineBeastsCombatFeedbackKind::Death, 0.0, 0x44454154u);
+        break;
+    default:
+        break;
+    }
 }
 
 void UDivineBeastsRootLayout::ToggleWorldHealthBars()

@@ -91,7 +91,14 @@ bool AGamePlatformBirdFlockActor::RefreshFlock()
         BirdInstances->AddInstance(FTransform::Identity);
     }
     UpdateBirdTransforms(SimulationTimeSeconds);
-    SetActorTickEnabled(GetWorld() && GetWorld()->IsGameWorld());
+    const bool bGameWorld = GetWorld() && GetWorld()->IsGameWorld();
+    if (bGameWorld)
+    {
+        // 使用UE原生TickInterval而非每帧调度后手动判断是否到更新窗口：
+        // 数百鸟的同一ISM按预设5..60Hz有界刷新，减少60/120FPS下的空回调。
+        SetActorTickInterval(1.0f / BirdProfile->UpdateRateHz);
+    }
+    SetActorTickEnabled(bGameWorld);
     return true;
 }
 
@@ -201,11 +208,14 @@ void AGamePlatformBirdFlockActor::Tick(float DeltaSeconds)
     SimulationTimeSeconds += DeltaSeconds;
     UpdateAccumulatorSeconds += DeltaSeconds;
     const float Rate = FMath::Max(5.0f, BirdProfile->UpdateRateHz);
-    if (UpdateAccumulatorSeconds < 1.0f / Rate)
+    const float StepSeconds = 1.0f / Rate;
+    // 调度器首次触发或更新频率切换时可能有短抖动；仅以累积时间推进，
+    // 保留小于一帧的尾数，防止长期按0重置带来更新频率系统性下降。
+    if (UpdateAccumulatorSeconds + UE_KINDA_SMALL_NUMBER < StepSeconds)
     {
         return;
     }
-    UpdateAccumulatorSeconds = 0.0f;
+    UpdateAccumulatorSeconds = FMath::Fmod(UpdateAccumulatorSeconds, StepSeconds);
     // 背景/非可见区域继续推进时钟，但暂停CPU矩阵批量更新，回到视野时无时间滞后。
     if (BirdInstances->WasRecentlyRendered(0.5f))
     {
