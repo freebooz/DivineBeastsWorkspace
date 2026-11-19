@@ -1,0 +1,67 @@
+{
+  "schema_version": "3.1",
+  "project": "SSLM（神兽联盟项目代号）",
+  "stage": "PendingHumanReview（待人工审核）",
+  "production_replacement_allowed": false,
+  "layout": {
+    "canvas": [
+      640,
+      65
+    ],
+    "skill_slot_size": [
+      48,
+      48
+    ],
+    "skill_slot_x": [
+      36,
+      87,
+      138,
+      189,
+      240,
+      291,
+      342,
+      393
+    ],
+    "function_slot_x": [
+      455,
+      506,
+      557
+    ],
+    "slot_top": 9,
+    "cast_bar": {
+      "x": 40,
+      "y": 3,
+      "width": 560,
+      "height": 3
+    },
+    "momentum_bar": {
+      "x": 36,
+      "y": 62,
+      "width": 568,
+      "height": 3
+    },
+    "momentum_bubble": {
+      "width": 13,
+      "height": 3
+    },
+    "endcap": {
+      "width": 24,
+      "height": 65
+    }
+  },
+  "asset_paths": {
+    "source_review_directory": "Game/Plugins/DivineBeasts/ContentPacks/Presentation/DBAUIPack_Core/SourceArt/UI/SkillBarReview",
+    "review_texture_package": "/DBAUIPack_Core/UI/Textures/SkillBarReview",
+    "ability_bar_widget": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilityBar",
+    "ability_slot_widget": "/DBAUIPack_Core/UI/Combat/WBP_DBA_UI_AbilitySlot"
+  },
+  "runtime_contracts": {
+    "ability_slots_visual_count": 8,
+    "existing_ability_bindings_count": 5,
+    "non_authorized_visual_slots": "disabled/empty（禁用空槽）",
+    "resource_state": "GAS/ViewModel（能力系统与只读视图模型）",
+    "casting": "event-driven（事件驱动）",
+    "momentum": "0..100（气势范围）"
+  },
+  "import_policy": "Only approved RGBA PNGs; no automatic modifications to production Widget Blueprints.（仅允许审批通过的RGBA纹理导入审核目录，不自动替换正式控件蓝图）"
+}
